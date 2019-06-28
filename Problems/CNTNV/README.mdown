@@ -1,0 +1,7 @@
+# Continuous Newsvendor Problem
+
+### Problem Overview
+
+Determine the vendor order quantity that maximizes the vendor's expected profit.
+
+For full details, see the [documentation.](https://github.com/simopt-admin/simopt/tree/master/Problems/CNTNV/ContinuousNewsvendor.pdf)
