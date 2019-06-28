@@ -1,0 +1,7 @@
+# Stochastic Activity Network (SAN) Duration
+
+### Problem Overview
+
+Given a stochastic activity network, minimize the expected duration of the longest path from a starting node to an ending node.
+
+For full details, see the [documentation.](https://github.com/simopt-admin/simopt/tree/master/Problems/SAN/SAN_Duration.pdf)
