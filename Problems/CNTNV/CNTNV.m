@@ -40,14 +40,22 @@ else
     alpha = 2;
     beta = 20; %parameters for demand distribution (Burr Type XII)
     
-    % Generate a new stream for random numbers
+    % Generate a new stream for random numbers and set as global stream
     DemandStream = problemRng{1};
-    
-    % Set the substream to the "seed"
     RandStream.setGlobalStream(DemandStream);
     
-    % Generate demands
-    demand = ((1-rand(runlength, 1)).^(-1/beta)-1).^(1/alpha);
+    % Initialize for storage
+    demand = zeros(runlength, 1);
+    
+    % Run simulation
+    for i = 1:runlength
+        
+        % Start on a new substream
+        DemandStream.Substream = seed + i - 1;
+    
+        % Generate demands
+        demand(i) = ((1-rand(1)).^(-1/beta)-1).^(1/alpha);    
+    end
     
     % Compute daily profit
     PerPeriodCost = cost * x;
@@ -56,6 +64,8 @@ else
     revenueSalvage = salvage * (x - sales);
     profit = revenueSales + revenueSalvage - PerPeriodCost;
     RHDerivProfit = sellPrice * (demand > x) + salvage * (demand < x) - cost;   %partial derivative wrt x? not differentialble when demand=x
+    
+    % Calculate summary measures
     fn = mean(profit);  %mean of sample mean
     FnVar = var(profit) / runlength;	%variance of sample mean = var/n
     FnGrad = mean(RHDerivProfit);
