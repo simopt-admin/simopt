@@ -98,8 +98,8 @@ VarBds(:,2) = VarBds(:,2) - sensitivity;
 
 NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
 budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-if min(budget(2:end)) < r*numExtPts % Need to evaluate all initial solns in ssolsM
-    fprintf('A budget is too small for a good quality run of Anderson-Ferris.');
+if budget(end) < r*numExtPts % Need to evaluate all initial solns in ssolsM
+    fprintf('The budget is too small for a good quality run of Anderson-Ferris.');
     return
 end
 
@@ -181,7 +181,7 @@ while Bspent <= budgetR(2)
     end
 
     % Check if finish referring to current budget
-    if Bspent + r > budget(Bref)
+    while Bspent + r > budget(Bref)
         % Record current best soln
         A(Bref,:) = bestPt;
         Afn(Bref) = -minmax*bestFnVal;
@@ -242,7 +242,7 @@ while Bspent <= budgetR(2)
         end
         
         % Check if finish referring to current budget
-        if Bspent + r > budget(Bref)
+        while Bspent + r > budget(Bref)
             % Record current best soln
             A(Bref,:) = bestPt;
             Afn(Bref) = -minmax*bestFnVal;
@@ -285,7 +285,7 @@ while Bspent <= budgetR(2)
         end
         
         % Check if finish referring to current Budget
-        if Bspent + r > budget(Bref)
+        while Bspent + r > budget(Bref)
             % Record current best soln
             A(Bref,:) = bestPt;
             Afn(Bref) = -minmax*bestFnVal;
