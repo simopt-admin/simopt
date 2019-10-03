@@ -199,7 +199,7 @@ while Bspent <= budgetR(2)
         end
         
         % Generate expanded structure (this way first point is still vS)
-        U = 2*TssolsM - repmat(vS, numExtPts, 1);
+        U = 2*TssolsMl2h - repmat(vS, numExtPts, 1);
         
         % Check if expanded structure respects VarBds, if not, modify it
         for d = 1:dim
@@ -323,11 +323,20 @@ end
 
 % Helper 2: Check & Modify (if needed) the new matrix, based on VarBds.
     function modi = modify(VarBds, A, B, d, numExtPts)
+        
+        % Calculate the step size (and sign) in dimension d
         stepV = A - B;
+        
+        % Will determine if the original step sizes take the new structure
+        % out of bounds.
+        
+        % For each point in the sturcture, record the ratio of the maximum 
+        % allowable step size to the desired the step size. Initialize to 1.
         tmaxV = ones(numExtPts, 2);
    
         uV = VarBds(d, 2); 
-        lV = VarBds(d, 1); 
+        lV = VarBds(d, 1);
+        % Consider steps that increase/decrease the d-coordinate separately.
         if max(A) > uV
             tmaxV(stepV > 0, 2) = (uV - B(stepV > 0))./stepV(stepV > 0);
         end
@@ -335,6 +344,9 @@ end
             tmaxV(stepV < 0, 1) = (lV - B(stepV < 0))./stepV(stepV < 0);
         end
         t = min(min(tmaxV));
+        
+        % Take steps for each point according to the smallest maximum 
+        % allowed ratio 
         modi = B + t*stepV;
             
     end 
