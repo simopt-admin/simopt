@@ -3,6 +3,7 @@
 %==========================================================================
 % DATE
 %        February 2018
+%        edited November 2019
 %
 % AUTHOR
 %        Sait Cakmak
@@ -68,7 +69,7 @@ function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
      AConstraintGradCov] = GASSO(probHandle, probstructHandle, ...
     problemRng, solverRng, numBudget)
 
-%% unreported
+% not reported
 AFnGrad = NaN;
 AFnGradCov = NaN;
 Aconstraint = NaN;
@@ -81,31 +82,26 @@ solverInitialRng = solverRng{1}; % RNG for finding initial solutions
 solverInternalRng = solverRng{2}; % RNG for the solver's internal randomness
 
 %% Gather parameters
-NumStartingSols = 1;
+NumStartingSols = 100;
 
 % Get problem dimension and bounds and initial solution(s)
 RandStream.setGlobalStream(solverInitialRng)
-[minmax, dim, ~, ~, VarBds, ~, ~, x0, budgetR, ~, ~, ~] = probstructHandle(NumStartingSols);
-
-% x0 
-%     Matrix (size = 'dim' X 'NumStartingSol') of 'NumStartingSol' 
-%     initial solutions to the solver
-%     For GASSO, NumStartingSol = 0 or 1 (set in Structure)
+[minmax, dim, ~, ~, VarBds, ~, ~, ssolsM, budgetR, ~, ~, ~] = probstructHandle(NumStartingSols);
+x0 = mean(ssolsM);
 
 % Set parameters
 N = round(50 * sqrt(dim)); % number of samples for each iteration
-M = 10; % each candidate solution is simulated M times
-rho = 0.1; % quantile parameter
+M = 15; % each candidate solution is simulated M times
+rho = 0.15; % quantile parameter
 
 % step size - alpha_k = alpha_0 / (k + alpha_c)^alpha_p
-alpha_0 = 50; % step size numerator default = 50
-alpha_c = 1500; % step size denominator constant default = 1500
+alpha_0 = 15; % step size numerator default = 15
+alpha_c = 150; % step size denominator constant default = 150
 alpha_p = 0.6; % step size denominator exponent default = 0.6
 
 NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
 budget = round(linspace(budgetR(1), budgetR(2), numBudget));
 
-% Set parameters
 K_v = floor(budget./(N*M)); % number of iterations - vector
 
 % Initialize
@@ -126,7 +122,7 @@ Ancalls(1) = M;
 % If a budget is too small, the initial solution is returned.
 skip = 2;
 while K_v(1) < 1 % Need to evaluate all initial solns in first iteration
-    fprintf('A budget is too small for a good quality run of GASSO. \n');
+    fprintf('A budget may be too small for a good quality run of GASSO. \n');
     fprintf('The initial solution will be returned. \n');
     A(skip,:) = x0;
     Afn(skip) = Afn(1);
@@ -136,20 +132,8 @@ while K_v(1) < 1 % Need to evaluate all initial solns in first iteration
     skip = skip+1;
 end
 
-% run the algorithm
-%[samples, Hbar, xbar, hvar] = GASSO_elite(x0, NumStartingSols, VarBds, N, K_v, M, problem, problemseed, solverseed, dim, rho, minmax, alpha_0, alpha_c, alpha_p);
-[samples, Hbar, xbar, hvar] = GASSO_elite(x0, NumStartingSols, VarBds, N, K_v, M, probHandle, problemRng, problemseed, solverInternalRng, dim, rho, minmax, alpha_0, alpha_c, alpha_p);
-
-% return solutions
-A(skip:end,:) = xbar(K_v,:);
-Afn(skip:end) = minmax*Hbar(K_v);
-Ancalls(skip:end) = samples(K_v);
-AFnVar(skip:end) = hvar(K_v);
-
-end
 
 %% The actual algorithm
-function [samples, Hbar, xbar, hvar] = GASSO_elite(x0, NumStartingSols, VarBds, N, K_v, M, probHandle, problemRng, problemseed, solverInternalRng, dim, rho, minmax, alpha_0, alpha_c, alpha_p)
 % GASSO: sampling distribution is normal (for unbounded solution set) or truncated normal (for bounded solution set)
 % 
 % N: # of samples
@@ -169,36 +153,19 @@ function [samples, Hbar, xbar, hvar] = GASSO_elite(x0, NumStartingSols, VarBds, 
 
 %% Initialization
 
-% initialize mu_k based on starting solution or solution set bounds
-mu_k = zeros(1,dim);
-if NumStartingSols == 1
-    mu_k = x0;
-else
-    for i=1:dim
-        if VarBds(i,1) ~= -inf && VarBds(i,2) == inf
-            mu_k(i) = VarBds(i,1) + 50;
-        elseif VarBds(i,1) == -inf && VarBds(i,2) ~= inf 
-            mu_k(i) = VarBds(i,2) - 50;
-        elseif VarBds(i,1) ~= -inf && VarBds(i,2) ~= inf 
-            mu_k(i) = (VarBds(i,1) + VarBds(i,2)) / 2;
-        end 
-    end
-end
+% initialize mu_k based on starting solutions
+mu_k = x0;
 
-% set the initial variance
-if all(VarBds(:,1) ~= -inf) && all(VarBds(:,2) ~= inf)
-    % if bounded - gap = 6sigma
-    gap = max(abs(VarBds(:,1) - VarBds(:,2)))/6;
-else
-    % if unbounded
-    gap = sqrt(1000);
-end
-var_k = gap^2*ones(1,dim);
+% set the initial search variance based on starting solutions
+[~, ~, ~, ~, ~, ~, ~, ssolsM, ~, ~, ~, ~] = probstructHandle(100);
+var_k = var(ssolsM);
 
+% reparameterization for exponential family
 theta1_k=mu_k./var_k;
 theta2_k=-0.5*ones(1,dim)./var_k;
 theta_k=[theta1_k, theta2_k];
 
+% max iteration count
 K = max(K_v);
 
 % Set random number generator for generating random candidate solutions
@@ -210,6 +177,8 @@ kk = 1;
 while kk<=N
     X_k=randn(N,dim)*diag(sqrt(var_k))+ones(N,1)*mu_k;
     for i=1:N
+        % accept / reject samples based on variable bounds
+        % can be extended to handle deterministic constraints
         if all(X_k(i,:)' >= VarBds(:,1)) && all(X_k(i,:)' <= VarBds(:,2)) && kk<=N
             x(kk,:) = X_k(i,:);
             kk = kk+1;
@@ -220,7 +189,7 @@ X_k = x;
 
 k=1;
 samples=zeros(K,1);
-Hbar = zeros(K,1);
+Hbar = Afn(1); % best value so far. Start with initial solution value
 xbar = zeros(K,dim);
 hvar = zeros(K,1);
 Ntotal=0;
@@ -236,9 +205,11 @@ while k<=K
         [fn, H_var(i), ~, ~, ~, ~, ~, ~] = probHandle(X_k(i,:), M, problemRng, problemseed);
         result = minmax*fn;
         H(i) = result;
-    end
+    end %for
     problemseed = problemseed + 1;
-    
+
+    % return an error message and stop the algorithm
+    % if the problem returns -inf for feasible solutions
     if all(H == -inf)
         fprintf('The problem returns -inf for valid x values!!!');
         return
@@ -246,19 +217,19 @@ while k<=K
 
     Ntotal = Ntotal+N*M;
     samples(k) = Ntotal; % record the budget
-        
+    
     % keep the best candidate
-    [Hbar(k), I] = max(H); 
+    [Hbar(k), I] = max(H);
     hvar(k) = H_var(I);
     xbar(k,:) = X_k(I,:);
-           
-    if k>2
+    
+    if k>1
         if Hbar(k)<Hbar(k-1)|| isnan(Hbar(k))==1      
             Hbar(k) = Hbar(k-1);
             xbar(k,:) = xbar(k-1,:);
             hvar(k) = hvar(k-1);
-        end 
-    end
+        end %if
+    end %if
     
     % Shape function - take elite samples
     [G_sort, ~] = sort(H,'descend');   % sorted performances
@@ -298,6 +269,8 @@ while k<=K
     while kk<=N
         X_k=randn(N,dim)*diag(sqrt(abs(var_k)))+ones(N,1)*mu_k;
         for i=1:N
+            % accept / reject samples based on variable bounds
+            % can be extended to handle deterministic constraints
             if all(X_k(i,:)' >= VarBds(:,1)) && all(X_k(i,:)' <= VarBds(:,2)) && kk<=N
                 x(kk,:) = X_k(i,:);
                 kk = kk+1;
@@ -308,6 +281,12 @@ while k<=K
 
     k=k+1;
     clear H_var H S_theta w_k theta1_k theta2_k CX_k grad_k Hes_k Hes_inv_k;
-end %end while
+end %while
 
-end % GASSO_elite
+% return solutions
+A(skip:end,:) = xbar(K_v,:);
+Afn(skip:end) = minmax*Hbar(K_v);
+Ancalls(skip:end) = samples(K_v);
+AFnVar(skip:end) = hvar(K_v);
+
+end %GASSO
