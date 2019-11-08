@@ -27,7 +27,7 @@ for k1 = 1:length(problemnameArray)
     
     % Create function handles for problem and problem structure
     problemname = problemnameArray{k1};
-    problempath = strcat(pwd,'\..\Problems\',problemname);
+    problempath = strcat(pwd,'/../Problems/',problemname);
     if exist(problempath, 'dir') ~= 7
         disp(strcat('The problem folder ', problemname, ' does not exist.'))
         continue
@@ -44,7 +44,7 @@ for k1 = 1:length(problemnameArray)
         
         % Create function handle for solver
         solvername = solvernameArray{k2};        
-        solverpath = strcat(pwd,'\..\Solvers\',solvername);
+        solverpath = strcat(pwd,'/../Solvers/',solvername);
         if exist(solverpath, 'dir') ~= 7
             disp(strcat('The solver folder ', solvername, ' does not exist.'))
             continue
@@ -88,10 +88,10 @@ for k1 = 1:length(problemnameArray)
         
         % Store data in .mat file as a matrix with dimensions: repsAlg x numBudget x dim
         solnsfilename = strcat('RawData_',solvername,'_on_',problemname,'.mat');
-        if exist(strcat('RawData\',solnsfilename), 'file') == 2
+        if exist(strcat('RawData/',solnsfilename), 'file') == 2
             fprintf('\t Overwriting \t --> ')
         end
-        save(strcat(pwd,'\RawData\RawData_',solvername,'_on_',problemname,'.mat'), 'SMatrix', 'FnMeanMatrix', 'FnVarMatrix');
+        save(strcat(pwd,'/RawData/RawData_',solvername,'_on_',problemname,'.mat'), 'SMatrix', 'FnMeanMatrix', 'FnVarMatrix');
         fprintf('\t Saved output to file "%s" \n', solnsfilename)
     end
 end

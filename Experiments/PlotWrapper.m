@@ -22,7 +22,7 @@ for k1 = 1:length(problemnameArray)
         
     % Create function handles for problem and problem structure
     problemname = problemnameArray{k1};
-    problempath = strcat(pwd,'\..\Problems\',problemname);
+    problempath = strcat(pwd,'/../Problems/',problemname);
     if exist(problempath, 'dir') ~= 7
         disp(strcat('The problem folder ', problemname, ' does not exist.'))
         continue
@@ -49,7 +49,7 @@ for k1 = 1:length(problemnameArray)
         solvername = solvernameArray{k2};
         
         % Read in output for the solver-problem pairing as "SMatrix"
-        load(strcat('RawData\RawData_',solvername,'_on_',problemname,'.mat'),'SMatrix');
+        load(strcat('RawData/RawData_',solvername,'_on_',problemname,'.mat'),'SMatrix');
         [repsAlg, ~, ~] = size(SMatrix); % Number of times the solver was run on the problem 
         
         % Initialize matrix of function values
@@ -116,7 +116,7 @@ for k1 = 1:length(problemnameArray)
     set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3),pos(4)]);
 
     % Save as a .fig file
-    plot1filename = strcat('Plots\',problemname,'_MeanCI.fig');
+    plot1filename = strcat('Plots/',problemname,'_MeanCI.fig');
     saveas(gcf,plot1filename);
     fprintf('\t Saved plot of Mean + CI to file "%s" \n', plot1filename)
 
@@ -139,7 +139,7 @@ for k1 = 1:length(problemnameArray)
     set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3),pos(4)]);
     
     % Save as a .fig file
-    plot2filename = strcat('Plots\',problemname,'_Quantile.fig');
+    plot2filename = strcat('Plots/',problemname,'_Quantile.fig');
     saveas(gcf, plot2filename);
     fprintf('\t Saved plot of Median + Quantiles to file "%s" \n', plot2filename)
     
