@@ -85,10 +85,6 @@ r = 30;  % Number of replications taken at each solution
 
 NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
 budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-if min(budget(2:end)) < r*(dim + 2) % Need to evaluate all initial solns in ssolsM
-   fprintf('A budget is too small for a good quality run of Random Search.');
-   return
-end
 
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
