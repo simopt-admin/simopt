@@ -98,7 +98,7 @@ numExtPts = dim + 1;
 NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
 budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
 if min(budget(2:end)) < r*numExtPts % Need to evaluate all initial solns in ssolsM
-    fprintf('A budget is too small for a good quality run of Anderson-Ferris.');
+    fprintf('A budget is too small for a good quality run of Nelder-Mead.');
     return
 end
 
