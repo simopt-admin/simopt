@@ -1,4 +1,4 @@
-# (NELDMD) - Nelder-Mead Simplex Method
+# (RANDSH) - Random Search
 
 ### About the Solver
 
