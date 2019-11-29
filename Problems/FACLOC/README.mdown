@@ -8,10 +8,10 @@ For full details, see the [documentation.](https://github.com/simopt-admin/simop
 
 ### Properties
 
-**Variable Class:** Continuous
+**Variable Class:** Continuous.
 
-**Constraints Class:** Variable Bounds
+**Constraints Class:** Variable bounds.
 
-**Optimal Solutions:** Unknown
+**Optimal Solutions:** Unknown.
 
-**Known Structure:** None
+**Known Structure:** None.

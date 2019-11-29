@@ -2,18 +2,18 @@
 
 ### About the Problem
 
-Choose ambulance base locations that minimize the long-run average call response time.
+Choose ambulance base locations that minimize the expected long-run average call response time.
 
-For full details, see the [documentation.](https://github.com/simopt-admin/simopt/tree/master/Problems/AMBUSQ/AmbulanceLocationsInSquare.pdf)
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/AMBUSQ/AmbulanceLocationsInSquare.pdf).
 
 ### Properties
 
-**Variable Class:** Continuous
+**Variable Class:** Continuous.
 
-**Constraints Class:** Variable Bounds
+**Constraints Class:** Variable bounds.
 
-**Optimal Solutions:** Unknown
+**Optimal Solutions:** Unknown.
 
-**Known Structure:** None
+**Known Structure:** None.
 
 
