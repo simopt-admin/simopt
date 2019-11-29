@@ -17,7 +17,7 @@ For full details, see the [documentation](https://github.com/simopt-admin/simopt
 **Known Structure:** None.
 
 ### References
-Ecuyer, P. L. and Glynn, P. W. (1994). Stochastic optimization by simulation: Convergence proofs for the GI/G/1 queue in steady-state. *Management Science* 40(11):1562-1578.
+Ecuyer, P. L., and Glynn, P. W. (1994). Stochastic optimization by simulation: Convergence proofs for the GI/G/1 queue in steady-state. *Management Science* 40(11):1562-1578.
 [Paper](https://pubsonline.informs.org/doi/10.1287/mnsc.40.11.1562).
 
 

@@ -17,7 +17,7 @@ For full details, see the [documentation](https://github.com/simopt-admin/simopt
 **Known Structure:** None.
 
 ### References
-Cheng, R. and Kleijnen, J. (1999). Improved design of queueing simulation experiments with highly heteroscedastic responses. *Operations Research* 47(5):762-777.
+Cheng, R., and Kleijnen, J. (1999). Improved design of queueing simulation experiments with highly heteroscedastic responses. *Operations Research* 47(5):762-777.
 [Paper](https://pubsonline.informs.org/doi/10.1287/opre.47.5.762).
 
 
