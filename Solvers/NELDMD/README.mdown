@@ -2,13 +2,13 @@
 
 ### About the Solver
 
-The algorithm maintains a simplex of points that moves around the feasible region according to set geometric operations, including reflection, expansion, contraction, and shrinking.
+The algorithm maintains a simplex of points that moves around the feasible region according to certain geometric operations: reflection, expansion, contraction, and shrinking.
 
 ### Properties
 
 **Variable Class:** Continuous.
 
-**Constraints Class:** Unconstrained, variable bounds, deterministic constraints.
+**Constraints Class:** Unconstrained and variable bounds.
 
 ### References
 Nelder, J. A., and R. Mead (1965). A simplex method for function minimization. *The Computer Journal* 7(4):308-313.

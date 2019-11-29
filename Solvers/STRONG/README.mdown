@@ -1,0 +1,17 @@
+# (STRONG) - Stochastic Trust-Region Response-Surface Method
+
+### About the Solver
+
+A trust-region-based algorithm that fits first- or second-order models through function evaluations taken within a neighborhood of the incumbent solution.
+
+### Properties
+
+**Variable Class:** Continuous.
+
+**Constraints Class:** Unconstrained and variable bounds.
+
+### References
+Chang, K.-H., L. J. Hong, and H. Wan. (1992). Stochastic trust-region response-surface method (STRONG) - A new response-surface framework for simulation optimization. *INFORMS Journal on Computing* 25(2):230-243.
+[Paper](https://pubsonline.informs.org/doi/10.1287/ijoc.1120.0498).
+
+
