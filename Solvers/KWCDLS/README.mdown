@@ -2,7 +2,7 @@
 
 ### About the Solver
 
-A Kiefer-Wolfowitz stochastic approximation algorithms that estimates the gradient using central finite differences and uses a line-search to find an improved solution. The algorithm also restarts at a random solution when progress has stalled.
+A Kiefer-Wolfowitz stochastic approximation algorithm that estimates the gradient using central finite differences and uses a line search to find an improved solution. The algorithm also restarts at a random solution when progress has stalled.
 
 ### Properties
 
