@@ -71,20 +71,28 @@ else % main simulation
     OverallVarEstimate = mean(varWait); % Row vector containing an estimator of sigma^2, indexed by rho
     fn = sum((OverallMeanEstimate - approx).^2 ./ OverallVarEstimate); % Objective function - temporary because we will average pseudovalues instead
 
-    % To get an estimate of the variability of the function estimate we use
-    % Jackknifing
-    Pseudovalues = zeros(runlength, 1); % This vector will contain the pseudovalues
-    SumOfAvgs = sum(avgWait);
-    SumOfVars = sum(varWait);
-    
-    for k = 1:runlength % Compute the pseudovalues
-        SmallAvg = (SumOfAvgs - avgWait(k, :)) / (runlength - 1);
-        SmallVar = (SumOfVars - varWait(k, :)) / (runlength - 1);
-        SmallEst = sum((SmallAvg - approx).^2 ./ SmallVar);
-        Pseudovalues(k) = runlength * fn - (runlength - 1) * SmallEst;
-    end
-    
-    fn = mean(Pseudovalues);
-    FnVar = var(Pseudovalues) / runlength;
+    if runlength == 1
+        
+        % No variance estimate to report;
+        FnVar = NaN;
+        
+    else
 
+        % To get an estimate of the variability of the function estimate we use
+        % Jackknifing
+        Pseudovalues = zeros(runlength, 1); % This vector will contain the pseudovalues
+        SumOfAvgs = sum(avgWait);
+        SumOfVars = sum(varWait);
+
+        for k = 1:runlength % Compute the pseudovalues
+            SmallAvg = (SumOfAvgs - avgWait(k, :)) / (runlength - 1);
+            SmallVar = (SumOfVars - varWait(k, :)) / (runlength - 1);
+            SmallEst = sum((SmallAvg - approx).^2 ./ SmallVar);
+            Pseudovalues(k) = runlength * fn - (runlength - 1) * SmallEst;
+        end
+
+        fn = mean(Pseudovalues);
+        FnVar = var(Pseudovalues) / runlength;
+
+    end
 end
