@@ -67,8 +67,8 @@ else % main simulation
 
     % Compute overall objective function estimator and variance
     approx = ((beta(1) + beta(2)*rho + beta(3)*(rho.^2))./(1-rho)); % Row vector giving metamodel approximation for each utilization
-    OverallMeanEstimate = mean(avgWait); % Row vector containing an estimator of f bar, indexed by rho
-    OverallVarEstimate = mean(varWait); % Row vector containing an estimator of sigma^2, indexed by rho
+    OverallMeanEstimate = mean(avgWait, 1); % Row vector containing an estimator of f bar, indexed by rho
+    OverallVarEstimate = mean(varWait, 1); % Row vector containing an estimator of sigma^2, indexed by rho
     fn = sum((OverallMeanEstimate - approx).^2 ./ OverallVarEstimate); % Objective function - temporary because we will average pseudovalues instead
 
     if runlength == 1
