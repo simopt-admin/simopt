@@ -8,7 +8,7 @@ function PlotWrapper(problemnameArray, solvernameArray, repsSoln)
 
 %   *************************************************************
 %   ***                 Written by David Eckman               ***
-%   ***            dje88@cornell.edu     Sept 4, 2018         ***
+%   ***            dje88@cornell.edu     Dec 20, 2018         ***
 %   *************************************************************
 
 % Other default parameters
@@ -55,21 +55,21 @@ for k1 = 1:length(problemnameArray)
         % Initialize matrix of function values
         FMatrix = zeros(repsAlg, numBudget+1);
         
+        % Create a common set of new random number streams (#s = NumRngs*(j-1)+1, ... NumRngs*j)
+        % to use for each macrorep solution.
+        % I.e., Streams 1, ..., NumRngs, will be used for ALL solutions recorded at ALL time
+        % points across ALL macroreplications.
+        problemRng = cell(1, NumRngs);
+        for i = 1:NumRngs
+            problemRng{i} = RandStream.create('mrg32k3a', 'NumStreams', NumRngs, 'StreamIndices', i);
+        end
+            
         % Post-evaluate the function at the initial and returned solutions
         fprintf('Post-evaluating solutions from solver %s on problem %s: \n', solvername, problemname)
         for j = 1:repsAlg        
             
             fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
 
-            % Create a set of new random number streams (#s = NumRngs*(j-1)+1, ... NumRngs*j)
-            % to use for each macrorep solution.
-            % I.e., Streams 1, ..., NumRngs, will be used for the first macrorep solutions for all
-            % algorithms at all time points.      
-            problemRng = cell(1, NumRngs);
-            for i = 1:NumRngs
-                problemRng{i} = RandStream.create('mrg32k3a', 'NumStreams', NumRngs*repsAlg, 'StreamIndices', NumRngs*(j-1)+i);
-            end
-            
             for k = 1:numBudget+1
                 % Obtain repsSoln replications of the obj fn (using CRN via substreams)
                 [FMatrix(j,k), ~, ~, ~, ~, ~, ~, ~] = probHandle(reshape(SMatrix(j,k,:),1,dim), repsSoln, problemRng, 1);
