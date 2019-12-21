@@ -1,14 +1,13 @@
-function PlotWrapper(problemnameArray, solvernameArray, repsSoln)
+function PlotWrapper(problemnameArray, solvernameArray)
 % Make plots for each problem comparing the performance of different algorithms
 
 % Inputs:
 % problemnameArray: structure listing the problem names
 % solvernameArray: structure listing the solver names
-% repsSoln: number of replications for post-evaluation of solutions
 
 %   *************************************************************
 %   ***                 Written by David Eckman               ***
-%   ***            dje88@cornell.edu     Dec 20, 2018         ***
+%   ***            dje88@cornell.edu     Dec 21, 2018         ***
 %   *************************************************************
 
 % Other default parameters
@@ -28,19 +27,11 @@ for k1 = 1:length(problemnameArray)
         continue
     end
     addpath(problempath)
-    probHandle = str2func(problemname);
     probstructHandle = str2func(strcat(problemname, 'Structure'));
-    
-    % If Parallel Computing Toolbox installed...
-    if exist('gcp', 'file') == 2
-        % Share problem file PROBLEMNAME.m to all processors
-        addAttachedFiles(gcp, strcat(problemname,'.m'))
-    end
-    
     rmpath(problempath)
             
     % Get the problem's dimension, min/max, budget, and # of streams 
-    [minmax, dim, ~, ~, ~, ~, ~, ~, budgetR, ~, ~, NumRngs] = probstructHandle(0);
+    [minmax, ~, ~, ~, ~, ~, ~, ~, budgetR, ~, ~, ~] = probstructHandle(0);
     
     % Initialize vectors for storing data for this problem
     FMeanVector = zeros(numAlgs, numBudget+1);
@@ -56,39 +47,15 @@ for k1 = 1:length(problemnameArray)
         solvername = solvernameArray{k2};
         
         % Read in output for the solver-problem pairing as "SMatrix"
-        load(strcat('RawData/RawData_',solvername,'_on_',problemname,'.mat'),'SMatrix');
-        [repsAlg, ~, ~] = size(SMatrix); % Number of times the solver was run on the problem 
-        
-        % Initialize matrix of function values
-        FMatrix = zeros(repsAlg, numBudget+1);
-        
-        % Create a common set of new random number streams (#s = NumRngs*(j-1)+1, ... NumRngs*j)
-        % to use for each macrorep solution.
-        % I.e., Streams 1, ..., NumRngs, will be used for ALL solutions recorded at ALL time
-        % points across ALL macroreplications.
-        problemRng = cell(1, NumRngs);
-        for i = 1:NumRngs
-            problemRng{i} = RandStream.create('mrg32k3a', 'NumStreams', NumRngs, 'StreamIndices', i);
-        end
-   
-        % Post-evaluate the function at the initial and returned solutions
-        fprintf('Post-evaluating solutions from solver %s on problem %s: \n', solvername, problemname)
-        for j = 1:repsAlg        
-            
-            fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
-
-            parfor k = 1:numBudget+1
-                % Obtain repsSoln replications of the obj fn (using CRN via substreams)
-                [FMatrix(j,k), ~, ~, ~, ~, ~, ~, ~] = probHandle(reshape(SMatrix(j,k,:),1,dim), repsSoln, problemRng, 1);
-            end          
-        end
+        load(strcat('PostData/PostData_',solvername,'_on_',problemname,'.mat'),'FMatrix');
+        repsAlg = size(FMatrix, 1);
         
         % Calculate descriptive statistics (mean, median, quantiles)
-        FMeanVector(k2,:) = mean(FMatrix);
-        if repsAlg==1
+        FMeanVector(k2,:) = mean(FMatrix,1);
+        if repsAlg == 1
             FVarVector(k2,:) = zeros(1,numBudget+1);
         else
-            FVarVector(k2,:) = var(FMatrix);
+            FVarVector(k2,:) = var(FMatrix,[],1);
         end
         FnSEM(k2,:) = sqrt(FVarVector(k2,:)/repsAlg); % Std error
         EWidth(k2,:) = norminv(1-(1-CILevel)/2,0,1)*FnSEM(k2,:);
