@@ -35,6 +35,14 @@ for k1 = 1:length(problemnameArray)
     addpath(problempath)
     probHandle = str2func(problemname);
     probstructHandle = str2func(strcat(problemname, 'Structure'));
+    
+    % If Parallel Computing Toolbox installed...
+    if exist('gcp', 'file') == 2
+        % Share problem file PROBLEMNAME.m to all processors
+        addAttachedFiles(gcp, strcat(problemname,'.m'))
+        addAttachedFiles(gcp, strcat(problemname,'Structure.m'))
+    end
+    
     rmpath(problempath)
     
     % Get the dimension of the problem and number of streams needed
@@ -51,6 +59,13 @@ for k1 = 1:length(problemnameArray)
         end
         addpath(solverpath)
         solverHandle = str2func(solvername);
+        
+        % If Parallel Computing Toolbox installed...
+        if exist('gcp', 'file') == 2
+            % Share problem file SOLVERNAME.m to all processors
+            addAttachedFiles(gcp, strcat(solvername,'.m'))
+        end
+    
         rmpath(solverpath)
         
         % Initialize matrices for solutions and objective function mean and
@@ -62,7 +77,7 @@ for k1 = 1:length(problemnameArray)
         % Do repsAlg macroreplications of the algorithm on the problem
         fprintf('Solver %s on problem %s: \n', solvername, problemname)
         
-        for j = 1:repsAlg
+        parfor j = 1:repsAlg
             
             fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
             

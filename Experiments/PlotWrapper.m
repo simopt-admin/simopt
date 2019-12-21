@@ -30,8 +30,13 @@ for k1 = 1:length(problemnameArray)
     addpath(problempath)
     probHandle = str2func(problemname);
     probstructHandle = str2func(strcat(problemname, 'Structure'));
-    % Share problem file PROBLEMNAME.m to all processors (in parallel)
-    addAttachedFiles(gcp, strcat(problemname,'.m'))
+    
+    % If Parallel Computing Toolbox installed...
+    if exist('gcp', 'file') == 2
+        % Share problem file PROBLEMNAME.m to all processors
+        addAttachedFiles(gcp, strcat(problemname,'.m'))
+    end
+    
     rmpath(problempath)
             
     % Get the problem's dimension, min/max, budget, and # of streams 
