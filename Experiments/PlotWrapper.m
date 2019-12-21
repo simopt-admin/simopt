@@ -30,8 +30,10 @@ for k1 = 1:length(problemnameArray)
     addpath(problempath)
     probHandle = str2func(problemname);
     probstructHandle = str2func(strcat(problemname, 'Structure'));
+    % Share problem file PROBLEMNAME.m to all processors (in parallel)
+    addAttachedFiles(gcp, strcat(problemname,'.m'))
     rmpath(problempath)
-    
+            
     % Get the problem's dimension, min/max, budget, and # of streams 
     [minmax, dim, ~, ~, ~, ~, ~, ~, budgetR, ~, ~, NumRngs] = probstructHandle(0);
     
@@ -63,19 +65,19 @@ for k1 = 1:length(problemnameArray)
         for i = 1:NumRngs
             problemRng{i} = RandStream.create('mrg32k3a', 'NumStreams', NumRngs, 'StreamIndices', i);
         end
-            
+   
         % Post-evaluate the function at the initial and returned solutions
         fprintf('Post-evaluating solutions from solver %s on problem %s: \n', solvername, problemname)
         for j = 1:repsAlg        
             
             fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
 
-            for k = 1:numBudget+1
+            parfor k = 1:numBudget+1
                 % Obtain repsSoln replications of the obj fn (using CRN via substreams)
                 [FMatrix(j,k), ~, ~, ~, ~, ~, ~, ~] = probHandle(reshape(SMatrix(j,k,:),1,dim), repsSoln, problemRng, 1);
             end          
         end
-
+        
         % Calculate descriptive statistics (mean, median, quantiles)
         FMeanVector(k2,:) = mean(FMatrix);
         if repsAlg==1
@@ -120,7 +122,7 @@ for k1 = 1:length(problemnameArray)
     saveas(gcf,plot1filename);
     fprintf('\t Saved plot of Mean + CI to file "%s" \n', plot1filename)
 
-    
+  
     % PLOT 2: Median + Quantiles
     figure;
     errorbar(offsetbudget,FMedianVector',FMedianVector'-Fquant25',Fquant75'-FMedianVector','-o', 'LineWidth',1.5);
