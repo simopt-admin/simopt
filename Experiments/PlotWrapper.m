@@ -6,14 +6,14 @@ function PlotWrapper(problemnameArray, solvernameArray)
 % solvernameArray: structure listing the solver names
 
 %   *************************************************************
-%   ***                 Written by David Eckman               ***
-%   ***            dje88@cornell.edu     Dec 21, 2018         ***
+%   ***                 Updated by David Eckman               ***
+%   ***     david.eckman@northwestern.edu   Dec 22, 2019      ***
 %   *************************************************************
 
 % Other default parameters
-numBudget = 20; % Number of budget points recorded between lower and upper budget
-% If numBudget is changed --> Need to change in RunWrapper.m too
 CILevel = 0.95; % Confidence interval level
+low_quantile = 0.25; % Low quantile
+high_quantile = 0.75; % High quantile
 
 numAlgs = length(solvernameArray);
 
@@ -31,48 +31,51 @@ for k1 = 1:length(problemnameArray)
     rmpath(problempath)
             
     % Get the problem's dimension, min/max, budget, and # of streams 
-    [minmax, ~, ~, ~, ~, ~, ~, ~, budgetR, ~, ~, ~] = probstructHandle(0);
-    
-    % Initialize vectors for storing data for this problem
-    FMeanVector = zeros(numAlgs, numBudget+1);
-    FVarVector = zeros(numAlgs, numBudget+1);
-    FnSEM = zeros(numAlgs, numBudget+1);
-    EWidth = zeros(numAlgs, numBudget+1);
-    FMedianVector = zeros(numAlgs, numBudget+1);
-    Fquant25 = zeros(numAlgs, numBudget+1);
-    Fquant75 = zeros(numAlgs, numBudget+1);
+    [minmax, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = probstructHandle(0);
     
     for k2 = 1:numAlgs       
         
         solvername = solvernameArray{k2};
         
         % Read in output for the solver-problem pairing as "SMatrix"
-        load(strcat('PostData/PostData_',solvername,'_on_',problemname,'.mat'),'FMatrix');
-        repsAlg = size(FMatrix, 1);
+        load(strcat('PostData/PostData_',solvername,'_on_',problemname,'.mat'),'BudgetMatrix','FMatrix');
+        repsAlg = max(BudgetMatrix(:,1)); %%%size(FMatrix, 1);
         
-        % Calculate descriptive statistics (mean, median, quantiles)
-        FMeanVector(k2,:) = mean(FMatrix,1);
-        if repsAlg == 1
-            FVarVector(k2,:) = zeros(1,numBudget+1);
-        else
-            FVarVector(k2,:) = var(FMatrix,[],1);
+        % Extract budget points
+        budget_pts = unique(BudgetMatrix(:,2));
+        num_budget_pts = length(budget_pts);
+        
+        % Initialize and fill in function values at budget points
+        FBudget = zeros(repsAlg, num_budget_pts);
+        for i = 1:repsAlg            
+            for j = 1:num_budget_pts
+                index_lookup = max(intersect(find(BudgetMatrix(:,1) == i), find(BudgetMatrix(:,2) <= budget_pts(j))));
+                FBudget(i,j) = FMatrix(index_lookup);
+            end
         end
-        FnSEM(k2,:) = sqrt(FVarVector(k2,:)/repsAlg); % Std error
-        EWidth(k2,:) = norminv(1-(1-CILevel)/2,0,1)*FnSEM(k2,:);
-        FMedianVector(k2,:) = median(FMatrix);
-        Fquant25(k2,:) = quantile(FMatrix, 0.25); % 0.25 quantile
-        Fquant75(k2,:) = quantile(FMatrix, 0.75); % 0.75 quantile
+        
+        % Compute descriptive statistics (mean, median, quantiles)       
+        FMeanVector = mean(FBudget,1);
+        if repsAlg == 1
+            FVarVector = zeros(1, num_budget_pts);
+        else
+            FVarVector = var(FBudget,[],1);
+        end
+        FnSEM = sqrt(FVarVector/repsAlg); % Std error
+        EWidth = norminv(1-(1-CILevel)/2,0,1)*FnSEM(k2,:);
+        FMedianVector = median(FBudget);
+        Flowquant = quantile(FBudget, low_quantile);
+        Fhighquant = quantile(FBudget, high_quantile);
 
     end
-
-    % Offset the x-coordinates of the plotted points to avoid overlap
-    budget = round(linspace(budgetR(1),budgetR(2),numBudget));
-    increm = (budget(2)-budget(1))/(2*numAlgs);
-    offsetbudget = repmat([0,budget]',1,numAlgs) + repmat(increm*(0:(numAlgs-1)),numBudget+1,1);
-     
+    
     % PLOT 1: Mean + Confidence Intervals   
     figure;
-    errorbar(offsetbudget,FMeanVector',EWidth','-o', 'LineWidth',1.5);
+    hold on;
+    stairs(budget_pts, FMeanVector, 'b-', 'LineWidth', 1.5);
+    stairs(budget_pts, FMeanVector - FnSEM, 'b:', 'LineWidth', 1.5);
+    stairs(budget_pts, FMeanVector + FnSEM, 'b:', 'LineWidth', 1.5);
+    hold off;
     
     % Label and format the plot
     xlabel('Budget','FontSize',14); 
@@ -83,7 +86,7 @@ for k1 = 1:length(problemnameArray)
     legend(AlgNamesLegend,'Location','best');
     miny = min(min(FMeanVector - EWidth));
     maxy = max(max(FMeanVector + EWidth));
-    axis([0,max(budget)*1.01, miny*0.99, maxy*1.01]);
+    axis([0,max(budget_pts), miny*0.99, maxy*1.01]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');
@@ -91,22 +94,26 @@ for k1 = 1:length(problemnameArray)
 
     % Save as a .fig file
     plot1filename = strcat('Plots/',problemname,'_MeanCI.fig');
-    saveas(gcf,plot1filename);
+    saveas(gcf, plot1filename);
     fprintf('\t Saved plot of Mean + CI to file "%s" \n', plot1filename)
 
   
     % PLOT 2: Median + Quantiles
     figure;
-    errorbar(offsetbudget,FMedianVector',FMedianVector'-Fquant25',Fquant75'-FMedianVector','-o', 'LineWidth',1.5);
+    hold on;
+    stairs(budget_pts, FMedianVector, 'b-', 'LineWidth', 1.5);
+    stairs(budget_pts, Flowquant, 'b:', 'LineWidth', 1.5);
+    stairs(budget_pts, Fhighquant, 'b:', 'LineWidth', 1.5);
+    hold off;
 
     % Label and format the plot
     xlabel('Budget','FontSize',14); 
     ylabel('Objective Function Value','FontSize',14);
     title(['Problem: ', problemname, ' (',minmaxList{minmax+2},') -- Quantile'],'FontSize',15);
     legend(AlgNamesLegend,'Location','best');
-    miny = min(min(Fquant25));
-    maxy = max(max(Fquant75));
-    axis([0,max(budget)*1.01, miny*0.99, maxy*1.01]);
+    miny = min(min(Flowquant));
+    maxy = max(max(Fhighquant));
+    axis([0,max(budget_pts), miny*0.99, maxy*1.01]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');

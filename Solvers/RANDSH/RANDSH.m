@@ -2,7 +2,7 @@
 %                The Random Search Algorithm
 %==========================================================================
 % DATE
-%        Sept 2018
+%        Dec 2019
 %
 % AUTHOR
 %        David Eckman
@@ -21,10 +21,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%
 %
 % OUTPUT
 %        Ancalls
@@ -32,7 +28,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -41,7 +37,7 @@
 %              Equals NaN if solution is infeasible
 %        AFnGrad
 %              An array of gradient estimates at A; not reported
-%        AFnGardCov
+%        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
 %        Aconstraint
 %              A vector of constraint function estimators; not applicable
@@ -58,10 +54,10 @@
 %==========================================================================
 
 %% Random Search
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
     Aconstraint, AConstraintCov, AConstraintGrad, ...
     AConstraintGradCov] = RANDSH(probHandle, probstructHandle, ...
-    problemRng, solverRng, numBudget)
+    problemRng, solverRng)
 
 
 %% Unreported
@@ -81,10 +77,7 @@ solverInternalRng = solverRng{2}; % RNG for the solver's internal randomness
 r = 30;  % Number of replications taken at each solution
 
 % Get parameters of the problem
-[minmax, dim, ~, ~, ~, ~, ~, ~, budgetR, ~, ~, ~] = probstructHandle(0);
-
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
+[minmax, dim, ~, ~, ~, ~, ~, ~, budget, ~, ~, ~] = probstructHandle(0);
 
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
@@ -95,38 +88,60 @@ numPointsV = floor(budget/r);
 
 % Get initial solutions
 RandStream.setGlobalStream(solverInitialRng)
-[~, ~, ~, ~, ~, ~, ~, ssolsM, ~, ~, ~, ~] = probstructHandle(numPointsV(end));
+[~, ~, ~, ~, ~, ~, ~, ssolsM, ~, ~, ~, ~] = probstructHandle(numPointsV);
 
 % Initialize
-fnV = zeros(dim + 1, 1);
-fnVarV = zeros(dim + 1, 1);
+FnMeanV = zeros(numPointsV, 1);
+FnVarV = zeros(numPointsV, 1);
 
 % Evaluate all solutions
-for i = 1:numPointsV(end)
-    [fnV(i), fnVarV(i), ~, ~, ~, ~, ~, ~] = probHandle(ssolsM(i,:), r, problemRng, problemseed);
+for i = 1:numPointsV
+    [FnMeanV(i), FnVarV(i), ~, ~, ~, ~, ~, ~] = probHandle(ssolsM(i,:), r, problemRng, problemseed);
 end
 
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Initialize A larger than necessary (extra point for end of budget)
+Ancalls = zeros(numPointsV + 1, 1);
+A = zeros(numPointsV + 1, dim);
+AFnMean = zeros(numPointsV + 1, 1);
+AFnVar = zeros(numPointsV + 1, 1);
 
 % Record first solution
+Ancalls(1) = 1; % first value = 1 to avoid zeros
 A(1,:) = ssolsM(1,:);
-Afn(1) = fnV(1);
-AFnVar(1) = fnVarV(1);
-Ancalls(1) = r;
+AFnMean(1) = FnMeanV(1);
+AFnVar(1) = FnVarV(1);
+
+% Record only when recommended solution changes
+record_index = 2;
+oldbestID = 1;
 
 % Record data from the best solution visited up to each budget point
-for Bref = 2:NumFinSoln
+for i = 1:numPointsV
     
     % Identify "best" solution visited up to budget point
-    [~, bestId] = min(-minmax*fnV(1:numPointsV(Bref),:));
+    [~, newbestID] = min(-minmax*FnMeanV(1:i,:));
     
-    A(Bref,:) = ssolsM(bestId,:);
-    Afn(Bref) = fnV(bestId);
-    AFnVar(Bref) = fnVarV(bestId);
-    Ancalls(Bref) = numPointsV(Bref)*r;
+    if newbestID ~= oldbestID
+        
+        Ancalls(record_index) = i*r;
+        A(record_index,:) = ssolsM(newbestID,:);
+        AFnMean(record_index) = FnMeanV(newbestID);
+        AFnVar(record_index) = FnVarV(newbestID);
+
+        oldbestID = newbestID;
+        record_index = record_index + 1;
+
+    end
     
 end
+
+% Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = ssolsM(newbestID,:);
+AFnMean(record_index) = FnMeanV(newbestID);
+AFnVar(record_index) = FnVarV(newbestID);
+
+Ancalls = Ancalls(Ancalls ~= 0);
+A = A(Ancalls ~= 0,:);
+AFnMean = AFnMean(Ancalls ~= 0);
+AFnVar = AFnVar(Ancalls ~= 0);

@@ -9,8 +9,8 @@ function RunWrapper(problemnameArray, solvernameArray, repsAlg)
 % repsAlg: number of macroreplications of each solver on each problem
 
 %   *************************************************************
-%   ***                 Written by David Eckman               ***
-%   ***            dje88@cornell.edu     Sept 4, 2018         ***
+%   ***                 Updated by David Eckman               ***
+%   ***     david.eckman@northwestern.edu   Dec 22, 2019      ***
 %   *************************************************************
 
 
@@ -19,9 +19,6 @@ if (repsAlg <= 0) || (mod(repsAlg,1) ~= 0)
     disp('The number of macroreplications (repsAlg) must be a positive integer.')
     return
 end
-
-% Number of budget points to record between lower and upper budgets
-numBudget = 20; % If changed --> Need to change in PlotWrapper.m too
 
 for k1 = 1:length(problemnameArray)
     
@@ -45,8 +42,8 @@ for k1 = 1:length(problemnameArray)
     
     rmpath(problempath)
     
-    % Get the dimension of the problem and number of streams needed
-    [~, dim, ~, ~, ~, ~, ~, ~, ~, ~, ~, NumRngs] = probstructHandle(0);
+    % Get the number of streams needed for the problem
+    [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, NumRngs] = probstructHandle(0);
         
     for k2 = 1:length(solvernameArray)   
         
@@ -68,16 +65,16 @@ for k1 = 1:length(problemnameArray)
     
         rmpath(solverpath)
         
-        % Initialize matrices for solutions and objective function mean and
-        % variance
-        SMatrix = zeros(repsAlg, numBudget+1, dim);
-        FnMeanMatrix = zeros(repsAlg, numBudget+1);
-        FnVarMatrix = zeros(repsAlg, numBudget+1);
-        
+        % Initialize matrices for intermediate budgets and recommended solutions
+        BudgetMatrix = [];
+        SolnMatrix = [];
+        FnMeanMatrix = [];
+        FnVarMatrix = [];
+                
         % Do repsAlg macroreplications of the algorithm on the problem
         fprintf('Solver %s on problem %s: \n', solvername, problemname)
         
-        parfor j = 1:repsAlg
+        for j = 1:repsAlg
             
             fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
             
@@ -88,7 +85,6 @@ for k1 = 1:length(problemnameArray)
             solverRng = cell(1, 2);
             [solverRng{1}, solverRng{2}] = RandStream.create('mrg32k3a', 'NumStreams', (2 + NumRngs)*repsAlg, ...
                 'StreamIndices', [(2 + NumRngs)*(j - 1) + 1, (2 + NumRngs)*(j - 1) + 2]);
-            %solverRng = RandStream.create('mrg32k3a', 'NumStreams', (1 + NumRngs)*repsAlg, 'StreamIndices', (1 + NumRngs)*(j - 1) + 1);
             
             problemRng = cell(1, NumRngs);
             for i = 1:NumRngs
@@ -96,17 +92,21 @@ for k1 = 1:length(problemnameArray)
             end
                         
             % Run the solver on the problem and return the solutions (and
-            % obj fn mean and variance) at the budget points (including the initial solution)
-            [~, SMatrix(j, :, :), FnMeanMatrix(j,:), FnVarMatrix(j,:), ~, ~, ~, ~, ~, ~] = solverHandle(probHandle, probstructHandle, problemRng, solverRng, numBudget);
-            
+            % obj fn mean and variance) whenever the recommended solution changes
+            [Ancalls, A, AFnMean, AFnVar, ~, ~, ~, ~, ~, ~] = solverHandle(probHandle, probstructHandle, problemRng, solverRng);
+            BudgetMatrix = [BudgetMatrix; j*ones(length(Ancalls),1), Ancalls];
+            SolnMatrix = [SolnMatrix; A];
+            FnMeanMatrix = [FnMeanMatrix; AFnMean];
+            FnVarMatrix = [FnVarMatrix; AFnVar];
+          
         end
         
-        % Store data in .mat file as a matrix with dimensions: repsAlg x numBudget x dim
+        % Store data in .mat file in RawData folder
         solnsfilename = strcat('RawData_',solvername,'_on_',problemname,'.mat');
         if exist(strcat('RawData/',solnsfilename), 'file') == 2
             fprintf('\t Overwriting \t --> ')
         end
-        save(strcat(pwd,'/RawData/RawData_',solvername,'_on_',problemname,'.mat'), 'SMatrix', 'FnMeanMatrix', 'FnVarMatrix');
+        save(strcat(pwd,'/RawData/RawData_',solvername,'_on_',problemname,'.mat'), 'BudgetMatrix', 'SolnMatrix', 'FnMeanMatrix', 'FnVarMatrix');
         fprintf('\t Saved output to file "%s" \n', solnsfilename)
     end
 end
