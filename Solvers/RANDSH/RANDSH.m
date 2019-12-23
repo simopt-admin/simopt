@@ -141,6 +141,7 @@ A(record_index,:) = ssolsM(newbestID,:);
 AFnMean(record_index) = FnMeanV(newbestID);
 AFnVar(record_index) = FnVarV(newbestID);
 
+% Trim empty rows from data
 Ancalls = Ancalls(Ancalls ~= 0);
 A = A(Ancalls ~= 0,:);
 AFnMean = AFnMean(Ancalls ~= 0);

@@ -65,16 +65,16 @@ for k1 = 1:length(problemnameArray)
     
         rmpath(solverpath)
         
-        % Initialize matrices for intermediate budgets and recommended solutions
-        BudgetMatrix = [];
-        SolnMatrix = [];
-        FnMeanMatrix = [];
-        FnVarMatrix = [];
+        % Initialize cells for reporting recommended solutions, etc.
+        Ancalls_cell = cell(1, repsAlg);
+        A_cell = cell(1, repsAlg);
+        AFnMean_cell = cell(1, repsAlg);
+        AFnVar_cell = cell(1, repsAlg);
                 
         % Do repsAlg macroreplications of the algorithm on the problem
         fprintf('Solver %s on problem %s: \n', solvername, problemname)
         
-        for j = 1:repsAlg
+        parfor j = 1:repsAlg
             
             fprintf('\t Macroreplication %d of %d ... \n', j, repsAlg)
             
@@ -93,13 +93,18 @@ for k1 = 1:length(problemnameArray)
                         
             % Run the solver on the problem and return the solutions (and
             % obj fn mean and variance) whenever the recommended solution changes
-            [Ancalls, A, AFnMean, AFnVar, ~, ~, ~, ~, ~, ~] = solverHandle(probHandle, probstructHandle, problemRng, solverRng);
-            BudgetMatrix = [BudgetMatrix; j*ones(length(Ancalls),1), Ancalls];
-            SolnMatrix = [SolnMatrix; A];
-            FnMeanMatrix = [FnMeanMatrix; AFnMean];
-            FnVarMatrix = [FnVarMatrix; AFnVar];
+            [Ancalls_cell{j}, A_cell{j}, AFnMean_cell{j}, AFnVar_cell{j}, ~, ~, ~, ~, ~, ~] = solverHandle(probHandle, probstructHandle, problemRng, solverRng);
+            
+            % Append macroreplication number to reporting of budget points
+            Ancalls_cell{j} = [j*ones(length(Ancalls_cell{j}),1), Ancalls_cell{j}];
           
         end
+        
+        % Concatenate cell data across macroreplications
+        BudgetMatrix = cat(1, Ancalls_cell{:});
+        SolnMatrix = cat(1, A_cell{:});
+        FnMeanMatrix = cat(1, AFnMean_cell{:});
+        FnVarMatrix = cat(1, AFnVar_cell{:});
         
         % Store data in .mat file in RawData folder
         solnsfilename = strcat('RawData_',solvername,'_on_',problemname,'.mat');
