@@ -15,6 +15,16 @@ CILevel = 0.95; % Confidence interval level
 low_quantile = 0.25; % Low quantile
 high_quantile = 0.75; % High quantile
 
+% MATLAB default colors
+color_matrix = [
+    [0, 0.4470, 0.7410]; ... % blue
+    [0.8500, 0.3250, 0.0980]; ... % orange 	          	
+    [0.9290, 0.6940, 0.1250]; ... % yellow
+    [0.4940, 0.1840, 0.5560]; ... % purple
+    [0.4660, 0.6740, 0.1880]; ... % green
+    [0.3010, 0.7450, 0.9330]; ... % light blue,
+    [0.6350, 0.0780, 0.1840]];    % burgundy
+            
 numAlgs = length(solvernameArray);
 
 for k1 = 1:length(problemnameArray)
@@ -30,8 +40,12 @@ for k1 = 1:length(problemnameArray)
     probstructHandle = str2func(strcat(problemname, 'Structure'));
     rmpath(problempath)
             
-    % Get the problem's dimension, min/max, budget, and # of streams 
-    [minmax, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = probstructHandle(0);
+    % Get the problem's min/max and budget 
+    [minmax, ~, ~, ~, ~, ~, ~, ~, budget, ~, ~, ~] = probstructHandle(0);
+    
+    % Initialize cell for storing summary statistics for each algorithm
+    plot_data_cell = cell(numAlgs, 7);
+    % (budget pts, mean, lowerCI, upperCI, median, lowerquant, upperquant)
     
     for k2 = 1:numAlgs       
         
@@ -42,7 +56,7 @@ for k1 = 1:length(problemnameArray)
         repsAlg = max(BudgetMatrix(:,1)); %%%size(FMatrix, 1);
         
         % Extract budget points
-        budget_pts = unique(BudgetMatrix(:,2));
+        budget_pts = unique(BudgetMatrix(:,2))';
         num_budget_pts = length(budget_pts);
         
         % Initialize and fill in function values at budget points
@@ -61,36 +75,48 @@ for k1 = 1:length(problemnameArray)
         else
             FVarVector = var(FBudget,[],1);
         end
-        FnSEM = sqrt(FVarVector/repsAlg); % Std error
-        EWidth = norminv(1-(1-CILevel)/2,0,1)*FnSEM(k2,:);
+        FnLowerCI = FMeanVector - norminv(1-(1-CILevel)/2,0,1)*sqrt(FVarVector/repsAlg);
+        FnUpperCI = FMeanVector + norminv(1-(1-CILevel)/2,0,1)*sqrt(FVarVector/repsAlg);
         FMedianVector = median(FBudget);
         Flowquant = quantile(FBudget, low_quantile);
         Fhighquant = quantile(FBudget, high_quantile);
 
+        plot_data_cell(k2, :) = {budget_pts, FMeanVector, FnLowerCI, FnUpperCI, FMedianVector, Flowquant, Fhighquant};
+        
     end
     
-    % PLOT 1: Mean + Confidence Intervals   
+    % PLOT 1: Mean + Confidence Intervals    
     figure;
     hold on;
-    stairs(budget_pts, FMeanVector, 'b-', 'LineWidth', 1.5);
-    stairs(budget_pts, FMeanVector - FnSEM, 'b:', 'LineWidth', 1.5);
-    stairs(budget_pts, FMeanVector + FnSEM, 'b:', 'LineWidth', 1.5);
-    hold off;
     
-    % Label and format the plot
+    % Initialize handles for lines to label with legend
+    line_handles = zeros(1, numAlgs);
+    
+    % Add mean + CI curves for each solver
+    for k2 = 1:numAlgs
+        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,2}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', '-', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,3}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,4}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+    end
+    
+    % Labeling
     xlabel('Budget','FontSize',14); 
     ylabel('Objective Function Value','FontSize',14);
-    minmaxList = {'minimize','nah','maximize'};
-    title(['Problem: ', problemname, ' (',minmaxList{minmax+2},') -- Mean + CI'],'FontSize',15);
+    minmaxList = {'min','-','max'};
+    title(['Mean-CI Plot for ', problemname, ' Problem (',minmaxList{minmax+2},')'],'FontSize',15);
+    
+    % Add a legend
     AlgNamesLegend = solvernameArray;
-    legend(AlgNamesLegend,'Location','best');
-    miny = min(min(FMeanVector - EWidth));
-    maxy = max(max(FMeanVector + EWidth));
-    axis([0,max(budget_pts), miny*0.99, maxy*1.01]);
+    legend(line_handles, AlgNamesLegend,'Location','best');
+
+    % Formatting
+    axis([0, budget, min([plot_data_cell{:,3}])*0.99, max([plot_data_cell{:,4}])*1.01]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');
     set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3),pos(4)]);
+
+    hold off;
 
     % Save as a .fig file
     plot1filename = strcat('Plots/',problemname,'_MeanCI.fig');
@@ -101,24 +127,36 @@ for k1 = 1:length(problemnameArray)
     % PLOT 2: Median + Quantiles
     figure;
     hold on;
-    stairs(budget_pts, FMedianVector, 'b-', 'LineWidth', 1.5);
-    stairs(budget_pts, Flowquant, 'b:', 'LineWidth', 1.5);
-    stairs(budget_pts, Fhighquant, 'b:', 'LineWidth', 1.5);
-    hold off;
-
-    % Label and format the plot
+    
+    % Initialize handles for lines to label with legend
+    line_handles = zeros(1, numAlgs);
+    
+    % Add median + quantile curves for each solver
+    for k2 = 1:numAlgs
+        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,5}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', '-', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,6}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,7}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+    end
+    
+    % Labeling
     xlabel('Budget','FontSize',14); 
     ylabel('Objective Function Value','FontSize',14);
-    title(['Problem: ', problemname, ' (',minmaxList{minmax+2},') -- Quantile'],'FontSize',15);
-    legend(AlgNamesLegend,'Location','best');
-    miny = min(min(Flowquant));
-    maxy = max(max(Fhighquant));
-    axis([0,max(budget_pts), miny*0.99, maxy*1.01]);
+    minmaxList = {'min','-','max'};
+    title(['Median-Quantile Plot for ', problemname, ' Problem (',minmaxList{minmax+2},')'],'FontSize',15);
+    
+    % Add a legend
+    AlgNamesLegend = solvernameArray;
+    legend(line_handles, AlgNamesLegend,'Location','best');
+
+    % Formatting
+    axis([0, budget, min([plot_data_cell{:,6}])*0.99, max([plot_data_cell{:,7}])*1.01]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');
     set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3),pos(4)]);
     
+    hold off;
+
     % Save as a .fig file
     plot2filename = strcat('Plots/',problemname,'_Quantile.fig');
     saveas(gcf, plot2filename);

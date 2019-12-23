@@ -39,7 +39,7 @@
 %              An array of gradient estimates at A; not reported
 %        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -55,7 +55,7 @@
 
 %% Random Search
 function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, ...
+    AConstraint, AConstraintCov, AConstraintGrad, ...
     AConstraintGradCov] = RANDSH(probHandle, probstructHandle, ...
     problemRng, solverRng)
 
@@ -63,7 +63,7 @@ function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
 %% Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -83,7 +83,7 @@ r = 30;  % Number of replications taken at each solution
 problemseed = 1;
 % If not using CRN: problemseed needs to be updated throughout the code
 
-% Determine maximum number of pts to evaluate at each budget point
+% Determine maximum number of solutions that can be sampled within max budget
 numPointsV = floor(budget/r);
 
 % Get initial solutions
@@ -99,7 +99,7 @@ for i = 1:numPointsV
     [FnMeanV(i), FnVarV(i), ~, ~, ~, ~, ~, ~] = probHandle(ssolsM(i,:), r, problemRng, problemseed);
 end
 
-% Initialize A larger than necessary (extra point for end of budget)
+% Initialize larger than necessary (extra point for end of budget)
 Ancalls = zeros(numPointsV + 1, 1);
 A = zeros(numPointsV + 1, dim);
 AFnMean = zeros(numPointsV + 1, 1);

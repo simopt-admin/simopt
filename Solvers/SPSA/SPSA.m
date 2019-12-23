@@ -2,7 +2,7 @@
 %                       The SPSA Algorithm
 %==========================================================================
 % DATE
-%        Feb 2017 (Updated in Sept 2018 by David Eckman)
+%        Feb 2017 (Updated in Dec 2019 by David Eckman)
 %
 % AUTHOR
 %        Anna Dong
@@ -22,13 +22,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%        logOption
-%              produce log if =1, not write a log if =0
-%        logfilename
-%              string, no need for .txt
 %
 % OUTPUT
 %        Ancalls
@@ -36,7 +29,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -47,7 +40,7 @@
 %              An array of gradient estimates at A; not reported
 %        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -62,15 +55,15 @@
 %==========================================================================
 
 %% Simultaneous Perturbation Stochastic Approximation (SPSA)
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, ...
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
+    AConstraint, AConstraintCov, AConstraintGrad, ...
     AConstraintGradCov] = SPSA(probHandle, probstructHandle, problemRng, ...
-    solverRng, numBudget)
+    solverRng)
 
 %% Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -90,30 +83,28 @@ NL = 2; % 'How many loss function evaluations do you want to use in this gain ca
 % NL/(2*gavg) SP gradient estimates
 
 % Get initial information about the problem
-[minmax, dim, ~, ~, VarBds, ~, ~, ~, budgetR, ~, ~, ~] = probstructHandle(0);
+[minmax, dim, ~, ~, VarBds, ~, ~, ~, budget, ~, ~, ~] = probstructHandle(0);
 
 % Shrink VarBds to prevent floating point errors
 VarBds(:,1) = VarBds(:,1) + sensitivity;
 VarBds(:,2) = VarBds(:,2) - sensitivity;
 
-% Setup budget
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-Bref = 1; % The budget currently referred to, = 1, ..., numBudget + 1
+% Determine maximum number of solutions that can be sampled within max budget
+MaxNumSoln = floor(budget/r); 
 
-% Get initial solution
-RandStream.setGlobalStream(solverInitialRng);
-[~, ~, ~, ~, ~, ~, ~, theta0, ~, ~, ~, ~] = probstructHandle(1);
-
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Initialize larger than necessary (extra point for end of budget)
+Ancalls = zeros(MaxNumSoln + 1, 1);
+A = zeros(MaxNumSoln + 1, dim);
+AFnMean = zeros(MaxNumSoln + 1, 1);
+AFnVar = zeros(MaxNumSoln + 1, 1);
 
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
 % If not using CRN: problemseed needs to be updated throughout the code
+
+% Get initial solution
+RandStream.setGlobalStream(solverInitialRng);
+[~, ~, ~, ~, ~, ~, ~, theta0, ~, ~, ~, ~] = probstructHandle(1);
 
 % Evaluate theta0
 [ftheta, fthetaVar, ~, ~, ~, ~, ~, ~] = probHandle(theta0, r, problemRng, problemseed);
@@ -122,11 +113,13 @@ Bspent = r;
 c = max(fthetaVar/gavg^0.5, .0001);
 
 % Record initial solution data
-A(Bref,:) = theta0;
-Afn(Bref) = ftheta;
-AFnVar(Bref) = fthetaVar;
-Ancalls(Bref) = Bspent;
-Bref = Bref + 1;
+Ancalls(1) = 1; % first value = 1 to avoid zeros
+A(1,:) = theta0;
+AFnMean(1) = ftheta;
+AFnVar(1) = fthetaVar;
+
+% Record only when recommended solution changes
+record_index = 2;
 
 % Relabel initial solution and mark as the best so far
 theta = theta0;
@@ -135,7 +128,7 @@ ftheta_best = ftheta;
 fthetaVar_best = fthetaVar;
 
 % Set other parameters
-nEvals = round((budgetR(2)/r)/3 *2); % 'What is the expected number of loss evaluations per run? '
+nEvals = round((budget/r)/3 *2); % 'What is the expected number of loss evaluations per run? '
 Aalg = .10*nEvals/(2*gavg);
 
 % Determine initial value for the parameter a (according to Section III.B of Spall (1998)) 
@@ -175,7 +168,7 @@ a = step*((Aalg + 1)^alpha)/meangbar;
 
 k = 1; % Iteration counter
 
-while Bspent <= budgetR(2)
+while Bspent <= budget
     
     ak = a/(k + Aalg)^alpha;
     ck = c/(k^gamma);
@@ -210,25 +203,33 @@ while Bspent <= budgetR(2)
 
     % Check if new solution is an improvement
     if -minmax*ftheta < -minmax*ftheta_best
+        
         theta_best = theta;
         ftheta_best = ftheta;
         fthetaVar_best = fthetaVar;
-    end        
-
-    % Check if finish referring to current budget
-    while Bspent + 2*r > budget(Bref)
-        % Record current best soln
-        A(Bref,:) = theta_best;
-        Afn(Bref) = -minmax*ftheta_best;
-        AFnVar(Bref) = fthetaVar_best;
-        Ancalls(Bref) = Bspent;
-        Bref = Bref + 1; % Now refer to next budget
-        if Bref > numBudget + 1 % If exceeds the max budget
-            return
-        end   
+        
+        %Record data from the new best solution
+        Ancalls(record_index) = Bspent;
+        A(record_index,:) = theta_best;
+        AFnMean(record_index) = -minmax*ftheta_best;
+        AFnVar(record_index) = fthetaVar_best;
+        record_index = record_index + 1;
+        
     end
     
 end
+
+% Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = theta_best;
+AFnMean(record_index) = -minmax*ftheta_best;
+AFnVar(record_index) = fthetaVar_best;
+
+% Trim empty rows from data
+Ancalls = Ancalls(Ancalls ~= 0);
+A = A(Ancalls ~= 0,:);
+AFnMean = AFnMean(Ancalls ~= 0);
+AFnVar = AFnVar(Ancalls ~= 0);
 
 %% Helper Functions
 % Helper 1: Check & Modify (if needed) the new point, based on VarBds.
