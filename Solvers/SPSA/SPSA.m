@@ -113,7 +113,7 @@ Bspent = r;
 c = max(fthetaVar/gavg^0.5, .0001);
 
 % Record initial solution data
-Ancalls(1) = 1; % first value = 1 to avoid zeros
+Ancalls(1) = 0; % first value = 1 to avoid zeros
 A(1,:) = theta0;
 AFnMean(1) = ftheta;
 AFnVar(1) = fthetaVar;
@@ -202,7 +202,7 @@ while Bspent <= budget
     Bspent = Bspent + r;
 
     % Check if new solution is an improvement
-    if -minmax*ftheta < -minmax*ftheta_best
+    if -minmax*ftheta < -minmax*ftheta_best && Bspent <= budget
         
         theta_best = theta;
         ftheta_best = ftheta;
@@ -211,7 +211,7 @@ while Bspent <= budget
         %Record data from the new best solution
         Ancalls(record_index) = Bspent;
         A(record_index,:) = theta_best;
-        AFnMean(record_index) = -minmax*ftheta_best;
+        AFnMean(record_index) = ftheta_best;
         AFnVar(record_index) = fthetaVar_best;
         record_index = record_index + 1;
         
@@ -222,14 +222,14 @@ end
 % Record solution at max budget
 Ancalls(record_index) = budget;
 A(record_index,:) = theta_best;
-AFnMean(record_index) = -minmax*ftheta_best;
+AFnMean(record_index) = ftheta_best;
 AFnVar(record_index) = fthetaVar_best;
 
 % Trim empty rows from data
-Ancalls = Ancalls(Ancalls ~= 0);
-A = A(Ancalls ~= 0,:);
-AFnMean = AFnMean(Ancalls ~= 0);
-AFnVar = AFnVar(Ancalls ~= 0);
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
 
 %% Helper Functions
 % Helper 1: Check & Modify (if needed) the new point, based on VarBds.

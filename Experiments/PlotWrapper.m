@@ -110,7 +110,7 @@ for k1 = 1:length(problemnameArray)
     legend(line_handles, AlgNamesLegend,'Location','best');
 
     % Formatting
-    axis([0, budget, min([plot_data_cell{:,3}])*0.99, max([plot_data_cell{:,4}])*1.01]);
+    axis([0, budget, min([plot_data_cell{:,3}]), max([plot_data_cell{:,4}])]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');
@@ -149,7 +149,7 @@ for k1 = 1:length(problemnameArray)
     legend(line_handles, AlgNamesLegend,'Location','best');
 
     % Formatting
-    axis([0, budget, min([plot_data_cell{:,6}])*0.99, max([plot_data_cell{:,7}])*1.01]);
+    axis([0, budget, min([plot_data_cell{:,6}]), max([plot_data_cell{:,7}])]);
     set(gca,'FontSize',12);
     set(gcf,'Units','Inches');
     pos = get(gcf,'Position');

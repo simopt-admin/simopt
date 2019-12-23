@@ -106,7 +106,7 @@ AFnMean = zeros(numPointsV + 1, 1);
 AFnVar = zeros(numPointsV + 1, 1);
 
 % Record first solution
-Ancalls(1) = 1; % first value = 1 to avoid zeros
+Ancalls(1) = 0;
 A(1,:) = ssolsM(1,:);
 AFnMean(1) = FnMeanV(1);
 AFnVar(1) = FnVarV(1);
@@ -142,7 +142,7 @@ AFnMean(record_index) = FnMeanV(newbestID);
 AFnVar(record_index) = FnVarV(newbestID);
 
 % Trim empty rows from data
-Ancalls = Ancalls(Ancalls ~= 0);
-A = A(Ancalls ~= 0,:);
-AFnMean = AFnMean(Ancalls ~= 0);
-AFnVar = AFnVar(Ancalls ~= 0);
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
