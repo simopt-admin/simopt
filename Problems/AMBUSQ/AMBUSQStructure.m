@@ -24,7 +24,7 @@ function [minmax, d, m, VarNature, VarBds, FnGradAvail, NumConstraintGradAvail, 
 %        constraints come first in the vector of constraints.
 %     h) StartingSol: One starting solution in each row, or NaN if NumStartingSol=0.
 %        Solutions generated as per problem writeup
-%     i) budget: Column vector of suggested budgets, or NaN if none suggested
+%     i) budget: maximum budget, or NaN if none suggested
 %     j) ObjBd is a bound (upper bound for maximization problems, lower
 %        bound for minimization problems) on the optimal solution value, or
 %        NaN if no such bound is known.
@@ -51,7 +51,7 @@ VarNature = zeros(d, 1); % Real variables
 VarBds = ones(d, 1) * [0, 1]; % x, y are in [0, 1]
 FnGradAvail = 0; % No derivatives when number of ambulances is > 1
 NumConstraintGradAvail = 0; % No constraints
-budget = [1000, 10000];
+budget = 10000;
 ObjBd = NaN;
 OptimalSol = NaN;
 NumRngs = 3;

@@ -23,7 +23,7 @@ function [minmax, d, m, VarNature, VarBds, FnGradAvail, NumConstraintGradAvail, 
 %        constraints come first in the vector of constraints.
 %   h) StartingSol: One starting solution in each row, or NaN if NumStartingSol=0.
 %        Solutions generated as per problem writeup
-%   i) budget: Column vector of suggested budgets, or NaN if none suggested
+%   i) budget: maximum budget, or NaN if none suggested
 %   j) ObjBd is a bound (upper bound for maximization problems, lower
 %        bound for minimization problems) on the optimal solution value, or
 %        NaN if no such bound is known.

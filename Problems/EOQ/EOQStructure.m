@@ -23,8 +23,7 @@ function [minmax, d, m, VarNature, VarBds, FnGradAvail, NumConstraintGradAvail, 
 %        gradients of the LHS values are available. If positive, then those
 %        constraints come first in the vector of constraints.
 %     h) StartingSol: Q- order quantity
-%     i) budget: Column vector of suggested budgets, or NaN if none
-%        suggested 
+%     i) budget: maximum budget, or NaN if none suggested 
 %     j) ObjBd is a bound (upper bound for maximization problems, lower 
 %        bound for minimization problems) on the optimal solution value, or
 %        NaN if no such bound is known.
@@ -60,7 +59,7 @@ VarNature = 0; % real
 VarBds = [0 inf]; % bounds set for Q
 FnGradAvail = 1; % Derivatives are available
 NumConstraintGradAvail = 0; % No constraint gradients
-budget = [500, 15000];
+budget = 15000;
 ObjBd = NaN;
 OptimalSol = sqrt(2*mu*K/h);
 NumRngs = 1;

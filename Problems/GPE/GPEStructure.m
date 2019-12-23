@@ -23,8 +23,7 @@ function [minmax d m VarNature VarBds FnGradAvail NumConstraintGradAvail Startin
 %        constraints come first in the vector of constraints.
 %     h) StartingSol: One starting solution in each row, or NaN if NumStartingSol=0.
 %        Solutions generated as per problem writeup
-%     i) budget: Column vector of suggested budgets, or NaN if none
-%        suggested
+%     i) budget: maximum budget, or NaN if none suggested
 %     j) NumRngs: the number of random number streams needed by the
 %        simulation model
 
@@ -43,7 +42,7 @@ VarNature = 0; % x is a vector of real variables
 VarBds = [0 20;0 20];
 FnGradAvail = 0; % No derivative is computed
 NumConstraintGradAvail = 0; % No constraints
-budget = [1000; 10000; 30000];
+budget = 10000;
 ObjBd = NaN;
 OptimalSol = [2 5]; %the optimal solution is found where x* = [2,5]
 NumRngs = 2;
