@@ -2,7 +2,7 @@
 %                       The Nelder-Mead Algorithm
 %==========================================================================
 % DATE
-%        Feb 2016 (Updated in Oct 2019 by David Eckman)
+%        Feb 2016 (Updated in Dec 2019 by David Eckman)
 %
 % AUTHOR
 %        Anna Dong, Nellie Wu
@@ -23,10 +23,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%
 %
 % OUTPUT
 %        Ancalls
@@ -34,7 +30,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -43,9 +39,9 @@
 %              Equals NaN if solution is infeasible
 %        AFnGrad
 %              An array of gradient estimates at A; not reported
-%        AFnGardCov
+%        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -60,15 +56,15 @@
 %==========================================================================
 
 %% Nelder-Mead
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, ...
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
+    AConstraint, AConstraintCov, AConstraintGrad, ...
     AConstraintGradCov] = NELDMD(probHandle, probstructHandle, problemRng, ...
-    solverRng, numBudget)
+    solverRng)
 
 %% Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -87,213 +83,250 @@ delta = 0.5;
 sensitivity = 10^(-7); % shrinking scale for VarBds
 
 % Get details of the problem
-[minmax, dim, ~, ~, VarBds, ~, ~, ~, budgetR, ~, ~, ~] = probstructHandle(0);
+[minmax, dim, ~, ~, VarBds, ~, ~, ~, budget, ~, ~, ~] = probstructHandle(0);
 
 % Shrink VarBds to prevent floating errors
 VarBds(:,1) = VarBds(:,1) + sensitivity; 
 VarBds(:,2) = VarBds(:,2) - sensitivity;
 
-% Setup budget
+% Check for sufficiently large budget
 numExtPts = dim + 1;
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-if min(budget(2:end)) < r*numExtPts % Need to evaluate all initial solns in ssolsM
+if budget < r*numExtPts % Need to evaluate all initial solns in ssolsM
     fprintf('A budget is too small for a good quality run of Nelder-Mead.');
     return
 end
+
+% Determine maximum number of solutions that can be sampled within max budget
+MaxNumSoln = floor(budget/r); 
 
 % Generate initial simplex from dim+1 random points
 RandStream.setGlobalStream(solverInitialRng);
 [~, ~, ~, ~, ~, ~, ~, ssolsM, ~, ~, ~] = probstructHandle(numExtPts);
 
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Initialize larger than necessary (extra point for end of budget)
+Ancalls = zeros(MaxNumSoln, 1);
+A = zeros(MaxNumSoln + 1, dim);
+AFnMean = zeros(MaxNumSoln, 1);
+AFnVar = zeros(MaxNumSoln, 1);
 
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
 % If not using CRN: problemseed needs to be updated throughout the code
 
-%% Start Solving
-%display(['Maximum Budget = ',num2str(budgetR(2)),'.'])
-Bref = 1; % The budget currently referred to, = 1, ..., numBudget + 1
+% Track overall budget spent
+Bspent = 0;
 
-% Evaluate points in initial structure and sort low to high
-[ssolsMl2h, l2hfnV, l2hfnVarV] = evalExtM(ssolsM, numExtPts, r, probHandle, problemRng, problemseed, minmax);
-Bspent = r*numExtPts; % Total budget spent
+%% Start Solving
+
+% Evaluate solutions in initial structure 
+fnV = zeros(numExtPts,1); % To track soln
+fnVarV = zeros(numExtPts,1);
+for i1 = 1:numExtPts
+    [fn, FnVar, ~, ~, ~, ~, ~, ~] = probHandle(ssolsM(i1,:), r, problemRng, problemseed);
+    Bspent = Bspent + r;
+    fnV(i1) = -minmax*fn; % Minimize fn
+    fnVarV(i1) = FnVar;
+end
+
+% Record initial solution data
+Ancalls(1) = 0;
+A(1,:) = ssolsM(1,:);
+AFnMean(1) = -minmax*fnV(1); % flip sign back
+AFnVar(1) = fnVarV(1);
+
+% Sort solutions by obj function estimate
+[l2hfnV,l2hfnIndV1] = sort(fnV);
+l2hfnVarV = fnVarV(l2hfnIndV1,:);
+ssolsMl2h = ssolsM(l2hfnIndV1,:);
+
+% Record only when recommended solution changes
+record_index = 2;
 
 % Reflect Worst & Update ssolsMl2h
 % Maximization problem is converted to minimization by -z.
-while Bspent <= budgetR(2)
+while Bspent <= budget
     % Reflect worst point
     Phigh = ssolsMl2h(end,:); % Current worst pt
     Pcent = mean(ssolsMl2h(1:end-1,:)); % Centroid for other pts
     Prefl2 = Phigh; % Save the original point
     Prefl = (1+alpha)*Pcent - alpha*Phigh; % Reflection
-    Prefl = checkCons(VarBds,Prefl,Prefl2); % Check if Prefl respects VarBds (if not, change it)
-        
+    Prefl = checkCons(VarBds,Prefl,Prefl2); % Check if Prefl respects VarBds (if not, change it)        
     
-    % Check if finish referring to current Budget
-    while Bspent + r > budget(Bref)
-        % Record current best soln
-        A(Bref,:) = ssolsMl2h(1,:);
-        Afn(Bref) = -minmax*l2hfnV(1);
-        AFnVar(Bref) = l2hfnVarV(1);
-        Ancalls(Bref) = Bspent;
-        Bref = Bref + 1; % Now refer to next budget
-        if Bref > numBudget + 1% If exceeds the current Budget
-            return
-        end   
-    end
-    
+    % Evaluate reflected point
     [Frefl, FreflVar, ~, ~, ~, ~, ~, ~] = probHandle(Prefl, r, problemRng, problemseed); % Cost r
     Bspent = Bspent + r;
     Frefl = -minmax*Frefl;
     
-    %
+    % Track best, worst, and second worst points
     Plow = ssolsMl2h(1,:); % Current best pt
     Flow = l2hfnV(1);
     Fsechi = l2hfnV(end-1); % Current 2nd worst z
-    Fhigh = l2hfnV(end);
+    Fhigh = l2hfnV(end); % Worst z from unreflected structure
+    
     % Check if accept reflection
-    if Flow<=Frefl && Frefl<=Fsechi
+    if Flow <= Frefl && Frefl <= Fsechi
         ssolsMl2h(end,:) = Prefl; % Prefl replaces Phigh
         l2hfnV(end) = Frefl;
         l2hfnVarV(end) = FreflVar;
-        % Sort & End updating
+        % Sort & end updating
         [l2hfnV,l2hfnIndV] = sort(l2hfnV);
         l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
         ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
+        
+        % Best solution remains the same, so no reporting
+        
     % Check if accept expansion (of reflection in the same direction)
-    elseif Frefl<Flow
+    elseif Frefl < Flow
         Pexp2 = Prefl;
         Pexp = gammap*Prefl + (1-gammap)*Pcent;
         Pexp = checkCons(VarBds,Pexp,Pexp2);
-            % Check if finish referring to current Budget
-            if Bspent + r > budget(Bref)
-                % Record current best soln
-                A(Bref,:) = ssolsMl2h(1,:);
-                Afn(Bref) = -minmax*l2hfnV(1);
-                AFnVar(Bref) = l2hfnVarV(1);
-                Ancalls(Bref) = Bspent;
-                Bref = Bref + 1; % Now refer to next budget
-                if Bref > numBudget + 1 % If exceeds the current Budget
-                    return
-                end   
-            end
+        
+        % Evaluate expansion point    
         [Fexp, FexpVar, ~, ~, ~, ~, ~, ~] = probHandle(Pexp, r, problemRng, problemseed); % Cost r
-            Bspent = Bspent + r;        
+        Bspent = Bspent + r;        
         Fexp = -minmax*Fexp;
-        if Fexp<Flow
-            ssolsMl2h(end,:) = Pexp; % Pexp replaces Phigh
+        
+        % Check if expansion point is an improvement relative to simplex
+        if Fexp < Flow
+            
+            % Pexp replaces Phigh
+            ssolsMl2h(end,:) = Pexp; 
             l2hfnV(end) = Fexp;
             l2hfnVarV(end) = FexpVar;
-            % Sort & End updating
+            
+            % Sort & end updating
             [l2hfnV,l2hfnIndV] = sort(l2hfnV);
             l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
+            
+            % Record data from expansion point (new best)
+            Ancalls(record_index) = Bspent;
+            A(record_index,:) = Pexp;
+            AFnMean(record_index) = -minmax*Fexp; % flip sign back
+            AFnVar(record_index) = FexpVar;
+            record_index = record_index + 1;
+            
         else
-            ssolsMl2h(end,:) = Prefl; % Prefl replaces Phigh
+            
+            % Prefl replaces Phigh
+            ssolsMl2h(end,:) = Prefl; 
             l2hfnV(end) = Frefl;
             l2hfnVarV(end) = FreflVar;
-            % Sort & End updating
+            
+            % Sort & end updating
             [l2hfnV,l2hfnIndV] = sort(l2hfnV);
             l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
+            
+            % Record data from reflected point (new best)
+            Ancalls(record_index) = Bspent;
+            A(record_index,:) = Prefl;
+            AFnMean(record_index) = -minmax*Frefl; % flip sign back
+            AFnVar(record_index) = FreflVar;
+            record_index = record_index + 1;
+            
         end
+        
     % Check if accept contraction or shrink
-    elseif Frefl>Fsechi % When Frefl is the worst z in nex simplex
-        if Frefl<=Fhigh
+    elseif Frefl > Fsechi % When Frefl is the worst z in nex simplex
+        
+        if Frefl <= Fhigh
             Phigh = Prefl; % Prefl replaces Phigh
             Fhigh = Frefl; % Frefl replaces Fhigh
         end
-        % Keep attempting contraction or shrinking
+        
+        % Attempt contraction or shrinking
         Pcont2 = Phigh;
         Pcont = betap*Phigh + (1-betap)*Pcent;
         Pcont = checkCons(VarBds,Pcont,Pcont2);
-            % Check if finish referring to current Budget
-            if Bspent + r > budget(Bref)
-                % Record current best soln
-                A(Bref,:) = ssolsMl2h(1,:);
-                Afn(Bref) = -minmax*l2hfnV(1);
-                AFnVar(Bref) = l2hfnVarV(1);
-                Ancalls(Bref) = Bspent;
-                Bref = Bref + 1; % Now refer to next budget
-                if Bref > numBudget + 1 % If exceeds the current Budget
-                    return
-                end   
-            end        
-        [Fcont, FcontVar, ~, ~, ~, ~, ~, ~] = probHandle(Pcont, r, problemRng, problemseed); % Cost r
-        	Bspent = Bspent + r;
+        
+        % Evaluate contraction point
+        [Fcont, FcontVar, ~, ~, ~, ~, ~, ~] = probHandle(Pcont, r, problemRng, problemseed);
+        Bspent = Bspent + r;
         Fcont = -minmax*Fcont;
+        
         % Accept contraction
-        if Fcont<=Fhigh
-            ssolsMl2h(end,:) = Pcont; % Pcont replaces Phigh
+        if Fcont <= Fhigh
+            
+            % Pcont replaces Phigh
+            ssolsMl2h(end,:) = Pcont;
             l2hfnV(end) = Fcont;
             l2hfnVarV(end) = FcontVar;
-            % Sort & End updating
+            
+            % Sort & end updating
             [l2hfnV,l2hfnIndV] = sort(l2hfnV);
             l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
-        % Contraction fails -> Simplex shrinks by delta, Plow retains
-        else
-            ssolsMl2h(end,:) = Phigh; % Replaced by Prefl
-                % Check if finish referring to current Budget
-                if Bspent + r*(numExtPts-1) > budget(Bref)
-                    % Record current best soln
-                    A(Bref,:) = ssolsMl2h(1,:);
-                    Afn(Bref) = -minmax*l2hfnV(1);
-                    AFnVar(Bref) = l2hfnVarV(1);
-                    Ancalls(Bref) = Bspent;
-                    Bref = Bref + 1; % Now refer to next budget
-                    if Bref > numBudget + 1 % If exceeds the current Budget
-                        return
-                    end   
-                end            
+            
+            % Check if contraction point is new best
+            if Fcont <= Flow
+                % Record data from contraction point (new best)
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = Pcont;
+                AFnMean(record_index) = -minmax*Fcont; % flip sign back
+                AFnVar(record_index) = FcontVar;
+                record_index = record_index + 1;
+            end
+                
+        else % Contraction fails -> Simplex shrinks by delta with Plow fixed
+            
+            ssolsMl2h(end,:) = Phigh; % Replaced by Prefl              
+            
+            % Check for new best
+            new_best = 0;
+            
             for i = 2:size(ssolsMl2h,1) % From Pseclo to Phigh
                 Pnew2 = Plow;
                 Pnew = delta*ssolsMl2h(i,:) + (1-delta)*Plow;
                 Pnew = checkCons(VarBds,Pnew,Pnew2);
                 [Fnew, FnewVar, ~, ~, ~, ~, ~, ~] = probHandle(Pnew, r, problemRng, problemseed); % Cost r/loop
+                Bspent = Bspent + r;
                 Fnew = -minmax*Fnew;
+                
+                % Check for new best
+                if Fnew <= Flow
+                    new_best = 1;
+                end
+                
                 % Update ssolsM
                 ssolsMl2h(i,:) = Pnew; % Pnew replaces Pi
                 l2hfnV(i) = Fnew;
                 l2hfnVarV(i) = FnewVar;
-            end % Total cost = r*(numExtPts-1)
-            	Bspent = Bspent + r*(numExtPts-1);
-            % Sort & End updating
+            end
+                
+            % Sort & end updating
             [l2hfnV,l2hfnIndV] = sort(l2hfnV);
             l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
+            
+            % Record data if there is a new best solution in the contraction
+            if new_best == 1
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = ssolsMl2h(1,:);
+                AFnMean(record_index) = -minmax*l2hfnV(1); % flip sign back
+                AFnVar(record_index) = l2hfnVarV(1);
+                record_index = record_index + 1;
+            end
         end
     end
     
 end
 
+% Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = ssolsMl2h(1);
+AFnMean(record_index) = -minmax*l2hfnV(1);
+AFnVar(record_index) = l2hfnVarV(1);
+
+% Trim empty rows from data
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
 
 %% Helper Functions
-% Helper 1: Evaluate obj fcn values z at all extreme points & Sort low2high
-% If called, will spend (r*numExtPts) budget.
-% Maximization problem is converted to minimization by -z.
-    function [ssolsMl2h, l2hfnV, l2hfnVarV] = evalExtM(ssolsM, numExtPts,...
-            r, probHandle, problemRng, problemseed, minmax)
-        fnV = zeros(numExtPts,1); % To track soln
-        fnVarV = zeros(numExtPts,1);
-        for i1 = 1:numExtPts
-            [fn, FnVar, ~, ~, ~, ~, ~, ~] = probHandle(ssolsM(i1,:), r, problemRng, problemseed);
-            fnV(i1) = -minmax*fn; % Minimize fn
-            fnVarV(i1) = FnVar;
-        end
-        [l2hfnV,l2hfnIndV1] = sort(fnV);
-        l2hfnVarV = fnVarV(l2hfnIndV1,:);
-        ssolsMl2h = ssolsM(l2hfnIndV1,:);
-    end
 
-
-% Helper 2: Check & Modify (if needed) the new point, based on VarBds.
+% Helper: Check & Modify (if needed) the new point, based on VarBds.
     function modiSsolsV = checkCons(VarBds,ssolsV,ssolsV2)
         col = size(ssolsV,2);
         stepV = ssolsV - ssolsV2;
