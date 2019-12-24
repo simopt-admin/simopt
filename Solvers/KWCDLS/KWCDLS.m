@@ -2,7 +2,7 @@
 % Kiefer-Wolfowitz Central Differences with Line Search and Random Restarts
 %==========================================================================
 % DATE
-%        Nov 2016
+%        Nov 2016 (Updated in Dec 2019 by David Eckman)
 %
 % AUTHOR
 %        Xueqi Zhao
@@ -21,10 +21,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%
 %
 % OUTPUT
 %        Ancalls
@@ -32,7 +28,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -41,9 +37,9 @@
 %              Equals NaN if solution is infeasible
 %        AFnGrad
 %              An array of gradient estimates at A; not reported
-%        AFnGardCov
+%        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -58,15 +54,14 @@
 %==========================================================================
 
 %% Gradient Search Constrained
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, AConstraintGradCov] = ...
-    KWCDLS(probHandle, probstructHandle, problemRng, solverRng, ...
-    numBudget)
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
+    AConstraint, AConstraintCov, AConstraintGrad, AConstraintGradCov] = ...
+    KWCDLS(probHandle, probstructHandle, problemRng, solverRng)
 
 % Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -83,7 +78,7 @@ sensitivity = 10^(-7); % shrinking scale for VarBds
 
 % Generate two initial solutions (will use the first) and get other inputs
 RandStream.setGlobalStream(solverInitialRng);
-[minmax, dim, ~, ~, VarBds, ~, ~, x0, budgetR, ~, ~, ~] = probstructHandle(2);
+[minmax, dim, ~, ~, VarBds, ~, ~, x0, budget, ~, ~, ~] = probstructHandle(2);
 
 % Shrink VarBds to prevent floating errors
 VarBds(:,1) = VarBds(:,1) + sensitivity;
@@ -93,14 +88,14 @@ VarBds(:,2) = VarBds(:,2) - sensitivity;
 steph = ones(1,dim)*min(abs(x0(2,:)-x0(1,:)))/3;
 x0 = x0(1,:); % Use the first solution as the initial solution
 
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
+% Determine maximum number of solutions that can be sampled within max budget
+MaxNumSoln = floor(budget/r); 
 
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Initialize larger than necessary (extra point for end of budget)
+Ancalls = zeros(MaxNumSoln, 1);
+A = zeros(MaxNumSoln, dim);
+AFnMean = zeros(MaxNumSoln, 1);
+AFnVar = zeros(MaxNumSoln, 1);
 
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
@@ -111,28 +106,26 @@ x0current = x0;
 x0best = x0;
 graV = zeros(1,dim);
 
+% Track overall budget spent
+Bspent = 0;
+
 % Evaluate the initial solution
 [fn0current, fn0varcurrent, ~, ~, ~, ~, ~, ~] = probHandle(x0current, r, problemRng, problemseed);
-fn0current = -minmax*fn0current;
-Bref = 1; % The budget currently referred to, = 1,...,numBudget
-Bspent = r;
+Bspent = Bspent + r;
 fn0best = fn0current;
+fn0current = -minmax*fn0current;
 fn0varbest = fn0varcurrent;
 
-while Bspent <= budgetR(2)
+% Record initial solution data
+Ancalls(1) = 0;
+A(1,:) = x0;
+AFnMean(1) = -minmax*fn0current; % flip sign back
+AFnVar(1) = fn0varcurrent;
 
-    % Check if finish referring to current budget
-    while Bspent + 2*r*dim > budget(Bref)
-        % Record current best solution
-        Ancalls(Bref) = Bspent;
-        A(Bref,:) = x0best;
-        Afn(Bref) = -minmax*fn0best;
-        AFnVar(Bref) = fn0varbest;     
-        Bref = Bref + 1; % Now refer to next budget
-        if Bref > numBudget + 1 % If exceeds the max budget
-            return
-        end
-    end
+% Record only when recommended solution changes
+record_index = 2;
+
+while Bspent <= budget
     
     % Approximate gradient via central finite differences
     for i = 1:dim
@@ -146,6 +139,7 @@ while Bspent <= budgetR(2)
             steph1 = abs(x1(i) - x0current(i)); % can remove abs()
         end
         [fn1, ~, ~, ~, ~, ~, ~, ~] = probHandle(x1, r, problemRng, problemseed);
+        Bspent = Bspent + r;
         fn1 = -minmax*fn1;
 
         x2 = x0current;
@@ -155,12 +149,13 @@ while Bspent <= budgetR(2)
             steph2 = abs(x0current(i) - x2(i)); % can remove abs()
         end        
         [fn2, ~, ~, ~, ~, ~, ~, ~] = probHandle(x2, r, problemRng, problemseed);
+        Bspent = Bspent + r;
         fn2 = -minmax*fn2;
         
         graV(i) = (fn1-fn2)/(steph1 + steph2);
     end
     
-    if Bspent == r % If this was the first iteration...
+    if Bspent == (2*dim + 1)*r % If this was the first iteration...
         steph = abs(sqrt(fn0varcurrent)./(sqrt(2*r)*graV));
     end
     
@@ -169,6 +164,7 @@ while Bspent <= budgetR(2)
     xG = x0current - t.*graV;
     xG = checkCons(VarBds, xG, x0current);
     [fnG, fnGvar, ~, ~, ~, ~, ~, ~] = probHandle(xG, r, problemRng, problemseed);
+    Bspent = Bspent + r;
     fnG = -minmax*fnG;
     
     % Update best soln so far
@@ -176,21 +172,13 @@ while Bspent <= budgetR(2)
         x0best = xG;
         fn0best = fnG;
         fn0varbest = fnGvar;
-    end
-    
-    % Update budget
-    Bspent = Bspent + (2*dim + 1)*r;
-    
-    % Check if finish referring to current budget
-    while Bspent + r > budget(Bref)
-        % Record current best solution
-        Ancalls(Bref) = Bspent;
-        A(Bref,:) = x0best;
-        Afn(Bref) = -minmax*fn0best;
-        AFnVar(Bref) = fn0varbest;     
-        Bref = Bref + 1; % Now refer to next budget
-        if Bref > numBudget + 1 % If exceeds the max budget
-            return
+        
+        if Bspent <= budget
+            Ancalls(record_index) = Bspent;
+            A(record_index,:) = x0best;
+            AFnMean(record_index) = -minmax*fn0best; % flip sign back
+            AFnVar(record_index) = fn0varbest;
+            record_index = record_index + 1;
         end
     end
         
@@ -202,29 +190,24 @@ while Bspent <= budgetR(2)
         
         % Evaluate the new solution xG
         [fnG, fnGvar, ~, ~, ~, ~, ~, ~] = probHandle(xG, r, problemRng, problemseed);
+        Bspent = Bspent + r;
         fnG = -minmax*fnG;
+
         % Update best soln so far
         if fnG < fn0best
             x0best = xG;
             fn0best = fnG;
             fn0varbest = fnGvar;
-        end
-        
-        % Update budget
-        Bspent = Bspent + r;
-        
-        % Check if finish referring to current budget
-        while Bspent + r > budget(Bref)
-            % Record current best solution
-            Ancalls(Bref) = Bspent;
-            A(Bref,:) = x0best;
-            Afn(Bref) = -minmax*fn0best;
-            AFnVar(Bref) = fn0varbest;     
-            Bref = Bref + 1; % Now refer to next budget
-            if Bref > numBudget + 1 % If exceeds the max budget
-                return
+            
+            if Bspent <= budget
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = x0best;
+                AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                AFnVar(record_index) = fn0varbest;
+                record_index = record_index + 1;
             end
         end
+        
     end
     
     % If no significant improvement, then randomly jump to another point
@@ -233,22 +216,10 @@ while Bspent <= budgetR(2)
         % Restart at a randomly generated solution
         RandStream.setGlobalStream(solverInternalRng);
         [~, ~, ~, ~, ~, ~, ~, x0current, ~, ~, ~, ~] = probstructHandle(1);
-
-        % Check if finish referring to current budget
-        while Bspent + r > budget(Bref)
-            % Record current best solution
-            Ancalls(Bref) = Bspent;
-            A(Bref,:) = x0best;
-            Afn(Bref) = -minmax*fn0best;
-            AFnVar(Bref) = fn0varbest;     
-            Bref = Bref + 1; % Now refer to next budget
-            if Bref > numBudget + 1 % If exceeds the max budget
-                return
-            end
-        end
         
         % Evaluate (new) current solution
         [fn0current, fn0varcurrent, ~, ~, ~, ~, ~, ~] = probHandle(x0current, r, problemRng, problemseed);
+        Bspent = Bspent + r;
         fn0current = -minmax*fn0current;
              
         % Update best soln so far
@@ -256,21 +227,13 @@ while Bspent <= budgetR(2)
             x0best = x0current;
             fn0best = fn0current;
             fn0varbest = fn0varcurrent;
-        end
-        
-        % Update budget
-        Bspent = Bspent + r;
-        
-        % Check if finish referring to current budget
-        while Bspent + r > budget(Bref)
-            % Record current best solution
-            Ancalls(Bref) = Bspent;
-            A(Bref,:) = x0best;
-            Afn(Bref) = -minmax*fn0best;
-            AFnVar(Bref) = fn0varbest;     
-            Bref = Bref + 1; % Now refer to next budget
-            if Bref > numBudget + 1 % If exceeds the max budget
-                return
+            
+            if Bspent <= budget
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = x0best;
+                AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                AFnVar(record_index) = fn0varbest;
+                record_index = record_index + 1;
             end
         end
         
@@ -281,6 +244,18 @@ while Bspent <= budgetR(2)
     end
     
 end 
+
+% Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = x0best;
+AFnMean(record_index) = -minmax*fn0best; % flip sign back
+AFnVar(record_index) = fn0varbest;
+
+% Trim empty rows from data
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
 
 %% check and modify (if needed) the new point, based on VarBds.
     function modiSsolsV = checkCons(VarBds, ssolsV, ssolsV2) 

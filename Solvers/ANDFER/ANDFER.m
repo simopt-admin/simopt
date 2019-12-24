@@ -101,10 +101,10 @@ end
 MaxNumSoln = floor(budget/r);
 
 % Initialize larger than necessary (extra point for end of budget)
+Ancalls = zeros(MaxNumSoln, 1);
 A = zeros(MaxNumSoln, dim);
 AFnMean = zeros(MaxNumSoln, 1);
 AFnVar = zeros(MaxNumSoln, 1);
-Ancalls = zeros(MaxNumSoln, 1);
 
 % Create initial (cross) structure of 4d+1 points
 ssolsM = repmat(x0, numExtPts, 1);
