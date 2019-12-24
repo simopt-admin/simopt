@@ -165,9 +165,11 @@ while Bspent <= budget
     
     % Check if accept reflection
     if Flow <= Frefl && Frefl <= Fsechi
+        
         ssolsMl2h(end,:) = Prefl; % Prefl replaces Phigh
         l2hfnV(end) = Frefl;
         l2hfnVarV(end) = FreflVar;
+        
         % Sort & end updating
         [l2hfnV,l2hfnIndV] = sort(l2hfnV);
         l2hfnVarV = l2hfnVarV(l2hfnIndV,:);
@@ -177,6 +179,7 @@ while Bspent <= budget
         
     % Check if accept expansion (of reflection in the same direction)
     elseif Frefl < Flow
+        
         Pexp2 = Prefl;
         Pexp = gammap*Prefl + (1-gammap)*Pcent;
         Pexp = checkCons(VarBds,Pexp,Pexp2);
@@ -200,11 +203,13 @@ while Bspent <= budget
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
             
             % Record data from expansion point (new best)
-            Ancalls(record_index) = Bspent;
-            A(record_index,:) = Pexp;
-            AFnMean(record_index) = -minmax*Fexp; % flip sign back
-            AFnVar(record_index) = FexpVar;
-            record_index = record_index + 1;
+            if Bspent <= budget
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = Pexp;
+                AFnMean(record_index) = -minmax*Fexp; % flip sign back
+                AFnVar(record_index) = FexpVar;
+                record_index = record_index + 1;
+            end
             
         else
             
@@ -219,11 +224,13 @@ while Bspent <= budget
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
             
             % Record data from reflected point (new best)
-            Ancalls(record_index) = Bspent;
-            A(record_index,:) = Prefl;
-            AFnMean(record_index) = -minmax*Frefl; % flip sign back
-            AFnVar(record_index) = FreflVar;
-            record_index = record_index + 1;
+            if Bspent <= budget
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = Prefl;
+                AFnMean(record_index) = -minmax*Frefl; % flip sign back
+                AFnVar(record_index) = FreflVar;
+                record_index = record_index + 1;
+            end
             
         end
         
@@ -261,11 +268,13 @@ while Bspent <= budget
             % Check if contraction point is new best
             if Fcont <= Flow
                 % Record data from contraction point (new best)
-                Ancalls(record_index) = Bspent;
-                A(record_index,:) = Pcont;
-                AFnMean(record_index) = -minmax*Fcont; % flip sign back
-                AFnVar(record_index) = FcontVar;
-                record_index = record_index + 1;
+                if Bspent <= budget
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = Pcont;
+                    AFnMean(record_index) = -minmax*Fcont; % flip sign back
+                    AFnVar(record_index) = FcontVar;
+                    record_index = record_index + 1;
+                end
             end
                 
         else % Contraction fails -> Simplex shrinks by delta with Plow fixed
@@ -300,7 +309,7 @@ while Bspent <= budget
             ssolsMl2h = ssolsMl2h(l2hfnIndV,:);
             
             % Record data if there is a new best solution in the contraction
-            if new_best == 1
+            if new_best == 1 && Bspent <= budget
                 Ancalls(record_index) = Bspent;
                 A(record_index,:) = ssolsMl2h(1,:);
                 AFnMean(record_index) = -minmax*l2hfnV(1); % flip sign back
@@ -314,7 +323,7 @@ end
 
 % Record solution at max budget
 Ancalls(record_index) = budget;
-A(record_index,:) = ssolsMl2h(1);
+A(record_index,:) = ssolsMl2h(1,:);
 AFnMean(record_index) = -minmax*l2hfnV(1);
 AFnVar(record_index) = l2hfnVarV(1);
 

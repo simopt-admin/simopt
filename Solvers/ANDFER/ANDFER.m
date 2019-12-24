@@ -2,7 +2,7 @@
 %                 The Anderson-Ferris Direct Search Algorithm
 %==========================================================================
 % DATE
-%        Dec 2017 (Updated in Jan 2018 by David Eckman)
+%        Dec 2017 (Updated in Dec 2019 by David Eckman)
 %
 % AUTHOR
 %        Jae Won Jung, David Eckman
@@ -23,10 +23,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%
 %
 % OUTPUT
 %        Ancalls
@@ -34,7 +30,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -43,9 +39,9 @@
 %              Equals NaN if solution is infeasible
 %        AFnGrad
 %              An array of gradient estimates at A; not reported
-%        AFnGardCov
+%        AFnGradCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -60,15 +56,14 @@
 %==========================================================================
 
 %% Anderson-Ferris
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, ...
-    AConstraintGradCov] = ANDFER(probHandle, probstructHandle, problemRng, solverRng, ...
-    numBudget)
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
+    AConstraint, AConstraintCov, AConstraintGrad, ...
+    AConstraintGradCov] = ANDFER(probHandle, probstructHandle, problemRng, solverRng)
 
 %% Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -89,25 +84,27 @@ e2 = std(ssolsM);
 
 % Generate new starting point x0
 RandStream.setGlobalStream(solverInitialRng);
-[minmax, dim, ~, ~, VarBds, ~, ~, x0, budgetR, ~, ~, ~] = probstructHandle(1); 
-numExtPts = 4*dim + 1; % Using (4d+1)-point cross structure
+[minmax, dim, ~, ~, VarBds, ~, ~, x0, budget, ~, ~, ~] = probstructHandle(1); 
 
 % Shrink VarBds to prevent floating errors
 VarBds(:,1) = VarBds(:,1) + sensitivity; 
 VarBds(:,2) = VarBds(:,2) - sensitivity;
 
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-if budget(end) < r*numExtPts % Need to evaluate all initial solns in ssolsM
+% Check for sufficiently large budget
+numExtPts = 4*dim + 1; % Using (4d+1)-point cross structure
+if budget < r*numExtPts % Need to evaluate all initial solns in ssolsM
     fprintf('The budget is too small for a good quality run of Anderson-Ferris.');
     return
 end
 
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Determine maximum number of solutions that can be sampled within max budget
+MaxNumSoln = floor(budget/r);
+
+% Initialize larger than necessary (extra point for end of budget)
+A = zeros(MaxNumSoln, dim);
+AFnMean = zeros(MaxNumSoln, 1);
+AFnVar = zeros(MaxNumSoln, 1);
+Ancalls = zeros(MaxNumSoln, 1);
 
 % Create initial (cross) structure of 4d+1 points
 ssolsM = repmat(x0, numExtPts, 1);
@@ -127,22 +124,35 @@ end
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
 % If not using CRN: problemseed needs to be updated throughout the code
- 
+
+% Track overall budget spent
+Bspent = 0;
+
 %% Start Solving
-%display(['Maximum Budget = ',num2str(budgetR(2)),'.'])
-Bref = 1; % The budget currently referred to, = 1, ..., numBudget + 1
+
+% For reporting purposes only, evaluate x0 and record data. Do not count
+% the function evaluations towards the budget.
+% Record initial solution data
+Ancalls(1) = 0;
+A(1,:) = x0;
+[AFnMean(1), AFnVar(1), ~, ~, ~, ~, ~, ~] = probHandle(x0, r, problemRng, problemseed);
+
+% Record only when recommended solution changes
+record_index = 2;
 
 % Evaluate points in initial structure and sort
 [ssolsMl2h, l2hfnV, l2hfnVarV] = evalExtM(ssolsM, numExtPts,r, probHandle, problemRng, problemseed, minmax);
-Bspent = r*numExtPts; % Total budget spent
+Bspent = Bspent + r*numExtPts; % Total budget spent
 b = l2hfnV(1); % Best obj function value in initial structure
 
-% For reporting purposes later
-bestFnVal = b;
-bestPt = ssolsMl2h(1,:);
-bestFnValVar = l2hfnVarV(1);
+% Record data for best solution in initial structure
+Ancalls(record_index) = Bspent;
+A(record_index,:) = ssolsMl2h(1,:);
+AFnMean(record_index) = -minmax*l2hfnV(1); % flip sign back
+AFnVar(record_index) = l2hfnVarV(1);
+record_index = record_index + 1;
 
-while Bspent <= budgetR(2)
+while Bspent <= budget
 
     % Structure S is stored in ssolsM12h
     FS = l2hfnV(1); % Best obj function value in structure S
@@ -171,28 +181,18 @@ while Bspent <= budgetR(2)
     Tl2hfnVarV = TfnVar(Tl2hfnIndV1,:);
     
     FT = Tl2hfnV(1); % Best objective value in T
-    vT = TssolsMl2h(1,:); % Best solution in T
+    %vT = TssolsMl2h(1,:); % Best solution in T
 
-    % For reporting purposes
-    if FT < bestFnVal
-        bestFnVal = FT;
-        bestPt = vT;
-        bestFnValVar = Tl2hfnVarV(1);        
-    end
-
-    % Check if finish referring to current budget
-    while Bspent + r > budget(Bref)
-        % Record current best soln
-        A(Bref,:) = bestPt;
-        Afn(Bref) = -minmax*bestFnVal;
-        AFnVar(Bref) = bestFnValVar;
-        Ancalls(Bref) = Bspent;
-        Bref = Bref + 1; % Now refer to next budget
-        if Bref > numBudget + 1 % If exceeds the max budget
-            return
-        end   
-    end
+    % Reporting
+    if FT < FS && Bspent <= budget
         
+        Ancalls(record_index) = Bspent;
+        A(record_index,:) = TssolsMl2h(1,:);
+        AFnMean(record_index) = -minmax*Tl2hfnV(1); % flip sign back
+        AFnVar(record_index) = Tl2hfnVarV(1);
+        record_index = record_index + 1;
+    end
+
     if FT < FS % Best val in reflected T is better than best val in old S
         if FT < b
             b = FT;
@@ -220,38 +220,27 @@ while Bspent <= budgetR(2)
         UssolsMl2h = UssolsM(Ul2hfnIndV1,:);
         Ul2hfnVarV = UfnVar(Ul2hfnIndV1,:);
         FU = Ul2hfnV(1); % Best objective value in U
-        vU = UssolsMl2h(1,:); % Best solution in U
           
         % Determine whether to use expanded or reflected structure
         if FU < b - seq % Accept expansion
             b = FU;
             ssolsMl2h = UssolsMl2h; % Set S = U for next iteration
             l2hfnV = Ul2hfnV;
-            l2hfnVarV = Ul2hfnVarV;            
+            l2hfnVarV = Ul2hfnVarV;
+            
+            % Reporting
+            if Bspent <= budget
+                Ancalls(record_index) = Bspent;
+                A(record_index,:) = UssolsMl2h(1,:);
+                AFnMean(record_index) = -minmax*Ul2hfnV(1); % flip sign back
+                AFnVar(record_index) = Ul2hfnVarV(1);
+                record_index = record_index + 1;
+            end
+            
         else % Accept reflection
             ssolsMl2h = TssolsMl2h; % Set S = T for next iteration
             l2hfnV = Tl2hfnV;
             l2hfnVarV = Tl2hfnVarV;
-        end
-        
-        % For reporting purposes
-        if FU < bestFnVal
-            bestFnVal = FU;
-            bestPt = vU;
-            bestFnValVar = Ul2hfnVarV(1); 
-        end
-        
-        % Check if finish referring to current budget
-        while Bspent + r > budget(Bref)
-            % Record current best soln
-            A(Bref,:) = bestPt;
-            Afn(Bref) = -minmax*bestFnVal;
-            AFnVar(Bref) = bestFnValVar;
-            Ancalls(Bref) = Bspent;
-            Bref = Bref + 1; % Now refer to next budget
-            if Bref > numBudget + 1 % If exceeds the max budget
-                return
-            end   
         end
     
     else % Contraction: no improvement
@@ -266,7 +255,6 @@ while Bspent <= budgetR(2)
         % In which case, there wouldn't be a need to re-evaluate vS
         
         FC = Cl2hfnV(1); % Best objective value in C
-        vC = CssolsMl2h(1); % Best solution in C
         
         if FC < b  % Accept contraction
             b = FC; 
@@ -276,30 +264,31 @@ while Bspent <= budgetR(2)
         ssolsMl2h = CssolsMl2h;
         l2hfnV = Cl2hfnV;
         l2hfnVarV = Cl2hfnVarV;
-        
-        % For reporting purposes
-        if FC < bestFnVal
-            bestFnVal = FC;
-            bestPt = vC;
-            bestFnValVar = Cl2hfnVarV(1);
-        end
-        
-        % Check if finish referring to current Budget
-        while Bspent + r > budget(Bref)
-            % Record current best soln
-            A(Bref,:) = bestPt;
-            Afn(Bref) = -minmax*bestFnVal;
-            AFnVar(Bref) = bestFnValVar;
-            Ancalls(Bref) = Bspent;
-            Bref = Bref + 1; % Now refer to next budget
-            if Bref > numBudget + 1 % If exceeds the max budget
-                return
-            end   
+                
+        % Reporting
+        if Bspent <= budget
+            Ancalls(record_index) = Bspent;
+            A(record_index,:) = CssolsMl2h(1,:);
+            AFnMean(record_index) = -minmax*Cl2hfnV(1); % flip sign back
+            AFnVar(record_index) = Cl2hfnVarV(1);
+            record_index = record_index + 1;
         end
     
     end 
     
 end
+
+% Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = ssolsMl2h(1,:);
+AFnMean(record_index) = -minmax*l2hfnV(1);
+AFnVar(record_index) = l2hfnVarV(1);
+
+% Trim empty rows from data
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
  
 
 %% Helper Functions
