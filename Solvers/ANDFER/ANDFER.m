@@ -280,9 +280,9 @@ end
 
 % Record solution at max budget
 Ancalls(record_index) = budget;
-A(record_index,:) = ssolsMl2h(1,:);
-AFnMean(record_index) = -minmax*l2hfnV(1);
-AFnVar(record_index) = l2hfnVarV(1);
+A(record_index,:) = A(record_index - 1,:);
+AFnMean(record_index) = AFnMean(record_index - 1);
+AFnVar(record_index) = AFnVar(record_index - 1);
 
 % Trim empty rows from data
 Ancalls = Ancalls(1:record_index);

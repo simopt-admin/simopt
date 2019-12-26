@@ -347,9 +347,9 @@ record_index = 2;
   
  % Record solution at max budget
 Ancalls(record_index) = budget;
-A(record_index,:) = x0best;
-AFnMean(record_index) = -minmax*fn0best; % flip sign back
-AFnVar(record_index) = fn0varbest;
+A(record_index,:) = A(record_index - 1,:);
+AFnMean(record_index) = AFnMean(record_index - 1);
+AFnVar(record_index) = AFnVar(record_index - 1);
 
 % Trim empty rows from data
 Ancalls = Ancalls(1:record_index);
