@@ -68,6 +68,28 @@ for k1 = 1:length(problemnameArray)
             end
         end
         
+        % Plot convergence curves for all macroreplications of the solver
+        figure('visible','off');
+        stairs(budget_pts, FBudget', 'LineStyle', '-', 'LineWidth', 1.5);
+        
+        % Labeling
+        xlabel('Budget','FontSize',14); 
+        ylabel('Objective Function Value','FontSize',14);
+        minmaxList = {'min','-','max'};
+        title([num2str(repsAlg), ' Macroreps of ', solvername, ' Solver on ', problemname, ' Problem (',minmaxList{minmax+2},')'],'FontSize',15);
+        
+        % Formatting
+        axis([0, budget, min(min(FBudget)), max(max(FBudget))]);
+        set(gca,'FontSize',12);
+        set(gcf,'Units','Inches');
+        pos = get(gcf,'Position');
+        set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3),pos(4)]);
+        
+        % Save as a .fig file
+        indplotfilename = strcat('Plots/',problemname,'_',solvername,'.fig');
+        saveas(gcf, indplotfilename);
+        fprintf('\t Saved plot of all macroreplications to file "%s" \n', indplotfilename)
+ 
         % Compute descriptive statistics (mean, median, quantiles)       
         FMeanVector = mean(FBudget,1);
         if repsAlg == 1
