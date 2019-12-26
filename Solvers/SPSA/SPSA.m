@@ -113,7 +113,7 @@ Bspent = r;
 c = max(fthetaVar/gavg^0.5, .0001);
 
 % Record initial solution data
-Ancalls(1) = 0; % first value = 1 to avoid zeros
+Ancalls(1) = 0; 
 A(1,:) = theta0;
 AFnMean(1) = ftheta;
 AFnVar(1) = fthetaVar;

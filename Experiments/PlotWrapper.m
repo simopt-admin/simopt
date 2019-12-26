@@ -94,9 +94,9 @@ for k1 = 1:length(problemnameArray)
     
     % Add mean + CI curves for each solver
     for k2 = 1:numAlgs
-        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,2}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', '-', 'LineWidth', 1.5);
-        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,3}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
-        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,4}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,2}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', '-', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,3}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', ':', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,4}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', ':', 'LineWidth', 1.5);
     end
     
     % Labeling
@@ -133,9 +133,9 @@ for k1 = 1:length(problemnameArray)
     
     % Add median + quantile curves for each solver
     for k2 = 1:numAlgs
-        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,5}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', '-', 'LineWidth', 1.5);
-        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,6}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
-        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,7}, 'color', color_matrix(mod(k2,7),:), 'LineStyle', ':', 'LineWidth', 1.5);
+        line_handles(k2) = stairs(plot_data_cell{k2,1}, plot_data_cell{k2,5}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', '-', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,6}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', ':', 'LineWidth', 1.5);
+        stairs(plot_data_cell{k2,1}, plot_data_cell{k2,7}, 'color', color_matrix(mod(k2-1,7)+1,:), 'LineStyle', ':', 'LineWidth', 1.5);
     end
     
     % Labeling

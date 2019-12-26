@@ -2,7 +2,7 @@
 %                           The STRONG Algorithm
 %==========================================================================
 % DATE
-%        Feb 2017 (Updated in Oct 2019 by David Eckman)
+%        Feb 2017 (Updated in Dec 2019 by David Eckman)
 %
 % AUTHOR
 %        Xueqi Zhao and Naijia Dong
@@ -25,10 +25,6 @@
 %              Random number generators (streams) for problems
 %        solverRng
 %              Random number generator (stream) for solver
-%        numBudget
-%              number of budgets to record, >=3; the spacing between
-%              adjacent budget points should be about the same
-%
 %
 % OUTPUT
 %        Ancalls
@@ -36,7 +32,7 @@
 %        A
 %              An array (size = 'NumSoln' X 'dim') of solutions
 %              returned by solver
-%        Afn
+%        AFnMean
 %              An array (size = 'NumSoln' X 1) of estimates of expected
 %              objective function value
 %        AFnVar
@@ -47,7 +43,7 @@
 %              An array of gradient estimates at A; not reported
 %        AFnGardCov
 %              An array of gradient covariance matrices at A; not reported
-%        Aconstraint
+%        AConstraint
 %              A vector of constraint function estimators; not applicable
 %        AConstraintCov
 %              An array of covariance matrices corresponding to the
@@ -62,15 +58,15 @@
 %==========================================================================
 
 %% STRONG
-function [Ancalls, A, Afn, AFnVar, AFnGrad, AFnGradCov, ...
-    Aconstraint, AConstraintCov, AConstraintGrad, ...
+function [Ancalls, A, AFnMean, AFnVar, AFnGrad, AFnGradCov, ...
+    AConstraint, AConstraintCov, AConstraintGrad, ...
     AConstraintGradCov] = STRONG(probHandle, probstructHandle, problemRng, ...
-    solverRng, numBudget)
+    solverRng)
 
 %% Unreported
 AFnGrad = NaN;
 AFnGradCov = NaN;
-Aconstraint = NaN;
+AConstraint = NaN;
 AConstraintCov = NaN;
 AConstraintGrad = NaN;
 AConstraintGradCov = NaN;
@@ -85,23 +81,26 @@ sensitivity = 10^(-7); % shrinking scale for VarBds
 
 % Get details of the problem and random initial solution
 RandStream.setGlobalStream(solverInitialRng);
-[minmax, dim, ~, ~, VarBds, ~, ~, solution, budgetR, ~, ~, ~] = probstructHandle(1);
+[minmax, dim, ~, ~, VarBds, ~, ~, solution, budget, ~, ~, ~] = probstructHandle(1);
 
 % Shrink VarBds to prevent floating errors
 VarBds(:,1) = VarBds(:,1) + sensitivity; 
 VarBds(:,2) = VarBds(:,2) - sensitivity;
 
-NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
+%NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
+%budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
 
-% Initialize
-A = zeros(NumFinSoln, dim);
-Afn = zeros(NumFinSoln, 1);
-AFnVar = zeros(NumFinSoln, 1);
-Ancalls = zeros(NumFinSoln, 1);
+% Determine maximum number of solutions that can be sampled within max budget
+MaxNumSoln = floor(budget/r); 
 
-Bspent = 0; % Total budget spent
-Bref = 1; % The budget currently referred to, = 1, ..., numBudget
+% Initialize larger than necessary (extra point for end of budget) 
+Ancalls = zeros(MaxNumSoln + 1, 1);
+A = zeros(MaxNumSoln + 1, dim);
+AFnMean = zeros(MaxNumSoln + 1, 1);
+AFnVar = zeros(MaxNumSoln + 1, 1);
+
+% Track cumulative budget spent
+Bspent = 0;
 iterCount = 1;
 
 % Using CRN: for each solution, start at substream 1
@@ -117,14 +116,24 @@ gamma1 = 0.9;     %the constant of shrinking the trust regionthe new solution
 gamma2 = 1.11;    %the constant of expanding the trust region
 
 [Q_bar_old, fn0varcurrent, ~, ~, ~, ~, ~, ~] = probHandle(solution, r, problemRng, problemseed);
-Q_bar_old = -minmax*Q_bar_old;
 Bspent = Bspent + r;
+Q_bar_old = -minmax*Q_bar_old;
+
 x0best = solution;
 fn0best = Q_bar_old;
 fn0varbest = fn0varcurrent;
 
+% Record initial solution data
+Ancalls(1) = 0;
+A(1,:) = x0best;
+AFnMean(1) = -minmax*fn0best; % flip sign back
+AFnVar(1) = fn0varbest;
+
+% Record only when recommended solution changes
+record_index = 2;
+
  %..........................Main Framework..............................  
- while Bspent <= budgetR(2)
+ while Bspent <= budget
      
      % check variable bounds
      forward = (solution == VarBds(:,1)');
@@ -134,31 +143,41 @@ fn0varbest = fn0varcurrent;
 
      if delta_T > delta_threshold    %stage I
          
+%         if Bspent <= budget
+%             % Record data from the best solution
+%             Ancalls(record_index) = Bspent;
+%             A(record_index,:) = x0best;
+%             AFnMean(record_index) = -minmax*fn0best; % flip sign back
+%             AFnVar(record_index) = fn0varbest;
+%             record_index = record_index + 1;
+%         end
+        
          % check budget
-         NumOfEval = 2*dim - sum(BdsCheck ~= 0); % num of fn evaluations to compute grad
-         while budget(Bref) - Bspent < (NumOfEval + 1)*r % budget required for one update
-             Ancalls(Bref) = Bspent;
-             A(Bref,:) = x0best;
-             Afn(Bref) = -minmax*fn0best;
-             AFnVar(Bref) = fn0varbest;
-             Bref = Bref + 1;
-             if Bref > numBudget
-                 
-                 return
-             end
-         end
+%          NumOfEval = 2*dim - sum(BdsCheck ~= 0); % num of fn evaluations to compute grad
+%          while budget(Bref) - Bspent < (NumOfEval + 1)*r % budget required for one update
+%              Ancalls(Bref) = Bspent;
+%              A(Bref,:) = x0best;
+%              AFnMean(Bref) = -minmax*fn0best;
+%              AFnVar(Bref) = fn0varbest;
+%              Bref = Bref + 1;
+%              if Bref > numBudget
+%                  
+%                  return
+%              end
+%          end
          
          %step1 Build the linear model
+         NumOfEval = 2*dim - sum(BdsCheck ~= 0);
          [Grad, Hessian] = FiniteDiff(solution, Q_bar_old, BdsCheck, 1, r, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
          Bspent = Bspent + NumOfEval*r;
          
          %step2 Solve the subproblem
-         [new_solution]=Cauchy_point(Grad, Hessian, solution, VarBds, delta_T); %generate the new solution
+         [new_solution] = Cauchy_point(Grad, Hessian, solution, VarBds, delta_T); %generate the new solution
          
          %step3 Compute the ratio
          [Q_bar_new, newVar, ~, ~, ~, ~, ~, ~] = probHandle(new_solution, r, problemRng, problemseed);
-         Q_bar_new = -minmax*Q_bar_new;
          Bspent = Bspent + r;
+         Q_bar_new = -minmax*Q_bar_new;
          r_old = Q_bar_old;
          r_new = Q_bar_old + (new_solution - solution)*Grad + (1/2)*(new_solution - solution)*Hessian*(new_solution - solution)';
          rho = (Q_bar_old - Q_bar_new)/(r_old - r_new);
@@ -176,6 +195,15 @@ fn0varbest = fn0varcurrent;
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
+                 
+                 if Bspent <= budget
+                    % Record data from the best solution
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = x0best;
+                    AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                    AFnVar(record_index) = fn0varbest;
+                    record_index = record_index + 1;
+                end
              end
          else
              delta_T = gamma2*delta_T;
@@ -187,6 +215,15 @@ fn0varbest = fn0varcurrent;
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
+                 
+                 if Bspent <= budget
+                    % Record data from the best solution
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = x0best;
+                    AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                    AFnVar(record_index) = fn0varbest;
+                    record_index = record_index + 1;
+                end
              end
          end
          r = ceil(1.01*r);
@@ -200,17 +237,17 @@ fn0varbest = fn0varcurrent;
          else
             NumOfEval = dim^2 + dim - nchoosek(num,2); 
          end
-         while budget(Bref) - Bspent < (NumOfEval+1)*r % budget required for one update
-             Ancalls(Bref) = Bspent;
-             A(Bref,:) = x0best;
-             Afn(Bref) = -minmax*fn0best;
-             AFnVar(Bref) = fn0varbest;
-             Bref = Bref+1;
-             if Bref > numBudget
-                 
-                 return
-             end
-         end
+%          while budget(Bref) - Bspent < (NumOfEval+1)*r % budget required for one update
+%              Ancalls(Bref) = Bspent;
+%              A(Bref,:) = x0best;
+%              AFnMean(Bref) = -minmax*fn0best;
+%              AFnVar(Bref) = fn0varbest;
+%              Bref = Bref+1;
+%              if Bref > numBudget
+%                  
+%                  return
+%              end
+%          end
          
          %step1 Build the quadratic model
          [Grad, Hessian] = FiniteDiff(solution, Q_bar_old, BdsCheck, 2, r, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
@@ -231,14 +268,23 @@ fn0varbest = fn0varcurrent;
          if rho < eta_0 || (Q_bar_old - Q_bar_new) <= 0 || (r_old - r_new) <= 0
 
              [n_solution, Q_bar_old, soln_var] = inner_loop(solution, r_old, BdsCheck, NumOfEval, r,  probHandle, problemRng, problemseed);
-             if Bref > numBudget
-                 return
-             end
+             %if Bspent > budget
+             %    return
+             %end
              
              if sum(n_solution ~= solution) > 0 && (Q_bar_old < fn0best)
                  x0best = n_solution;
                  fn0best = Q_bar_old;
                  fn0varbest = soln_var;
+                 
+                 if Bspent <= budget
+                    % Record data from the best solution
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = x0best;
+                    AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                    AFnVar(record_index) = fn0varbest;
+                    record_index = record_index + 1;
+                end
              end
              solution = n_solution;
         
@@ -252,6 +298,15 @@ fn0varbest = fn0varcurrent;
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
+                 
+                 if Bspent <= budget
+                    % Record data from the best solution
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = x0best;
+                    AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                    AFnVar(record_index) = fn0varbest;
+                    record_index = record_index + 1;
+                end
              end
          else
              delta_T = gamma2*delta_T;
@@ -263,6 +318,15 @@ fn0varbest = fn0varcurrent;
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
+                 
+                 if Bspent <= budget
+                    % Record data from the best solution
+                    Ancalls(record_index) = Bspent;
+                    A(record_index,:) = x0best;
+                    AFnMean(record_index) = -minmax*fn0best; % flip sign back
+                    AFnVar(record_index) = fn0varbest;
+                    record_index = record_index + 1;
+                end
              end
              
          end
@@ -270,7 +334,19 @@ fn0varbest = fn0varcurrent;
      end 
      iterCount = iterCount + 1;
  end
- 
+  
+ % Record solution at max budget
+Ancalls(record_index) = budget;
+A(record_index,:) = x0best;
+AFnMean(record_index) = -minmax*fn0best; % flip sign back
+AFnVar(record_index) = fn0varbest;
+
+% Trim empty rows from data
+Ancalls = Ancalls(1:record_index);
+A = A(1:record_index,:);
+AFnMean = AFnMean(1:record_index);
+AFnVar = AFnVar(1:record_index);
+
  %% Helper Function FiniteDiff
     function [Grad, Hessian] = FiniteDiff(solution, fn, BdsCheck, stage, runlen, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax)
 
@@ -509,17 +585,21 @@ fn0varbest = fn0varcurrent;
         value = 0;
         var = 0;
         while sum(result_solution ~= solution) == 0  %was while result_solution==solution
-            numEval = NumOfEval*(sub_counter + 1)*runlength + runlength + ceil(sub_counter^1.01) + ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01);
-            while budget(Bref) - Bspent < numEval % budget required for one update
-                Ancalls(Bref) = Bspent;
-                A(Bref,:) = x0best;
-                Afn(Bref) = -minmax*fn0best;
-                AFnVar(Bref) = fn0varbest;
-                Bref = Bref+1;
-                if Bref>numBudget
-                    return
-                end
+            %numEval = NumOfEval*(sub_counter + 1)*runlength + runlength + ceil(sub_counter^1.01) + ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01);
+%             while budget(Bref) - Bspent < numEval % budget required for one update
+%                 Ancalls(Bref) = Bspent;
+%                 A(Bref,:) = x0best;
+%                 AFnMean(Bref) = -minmax*fn0best;
+%                 AFnVar(Bref) = fn0varbest;
+%                 Bref = Bref+1;
+%                 if Bref>numBudget
+%                     return
+%                 end
+%             end
+            if Bspent > budget
+                return
             end
+            
             [G, H] = FiniteDiff(solution, rr_old, BdsCheck, 2, (sub_counter + 1)*runlength, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
             Bspent = Bspent + NumOfEval*(sub_counter + 1)*runlength;
             %step2 determine the new inner solution based on the accumulated design matrix X
