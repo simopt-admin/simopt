@@ -87,9 +87,6 @@ RandStream.setGlobalStream(solverInitialRng);
 VarBds(:,1) = VarBds(:,1) + sensitivity; 
 VarBds(:,2) = VarBds(:,2) - sensitivity;
 
-%NumFinSoln = numBudget + 1; % Number of solutions returned by solver (+1 for initial solution)
-%budget = [0, round(linspace(budgetR(1), budgetR(2), numBudget))];
-
 % Determine maximum number of solutions that can be sampled within max budget
 MaxNumSoln = floor(budget/r); 
 
@@ -142,29 +139,6 @@ record_index = 2;
      % BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff
 
      if delta_T > delta_threshold    %stage I
-         
-%         if Bspent <= budget
-%             % Record data from the best solution
-%             Ancalls(record_index) = Bspent;
-%             A(record_index,:) = x0best;
-%             AFnMean(record_index) = -minmax*fn0best; % flip sign back
-%             AFnVar(record_index) = fn0varbest;
-%             record_index = record_index + 1;
-%         end
-        
-         % check budget
-%          NumOfEval = 2*dim - sum(BdsCheck ~= 0); % num of fn evaluations to compute grad
-%          while budget(Bref) - Bspent < (NumOfEval + 1)*r % budget required for one update
-%              Ancalls(Bref) = Bspent;
-%              A(Bref,:) = x0best;
-%              AFnMean(Bref) = -minmax*fn0best;
-%              AFnVar(Bref) = fn0varbest;
-%              Bref = Bref + 1;
-%              if Bref > numBudget
-%                  
-%                  return
-%              end
-%          end
          
          %step1 Build the linear model
          NumOfEval = 2*dim - sum(BdsCheck ~= 0);
@@ -237,17 +211,6 @@ record_index = 2;
          else
             NumOfEval = dim^2 + dim - nchoosek(num,2); 
          end
-%          while budget(Bref) - Bspent < (NumOfEval+1)*r % budget required for one update
-%              Ancalls(Bref) = Bspent;
-%              A(Bref,:) = x0best;
-%              AFnMean(Bref) = -minmax*fn0best;
-%              AFnVar(Bref) = fn0varbest;
-%              Bref = Bref+1;
-%              if Bref > numBudget
-%                  
-%                  return
-%              end
-%          end
          
          %step1 Build the quadratic model
          [Grad, Hessian] = FiniteDiff(solution, Q_bar_old, BdsCheck, 2, r, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
@@ -267,16 +230,63 @@ record_index = 2;
          %step4 Update the trust region size and determine to accept or reject the solution
          if rho < eta_0 || (Q_bar_old - Q_bar_new) <= 0 || (r_old - r_new) <= 0
 
-             [n_solution, Q_bar_old, soln_var] = inner_loop(solution, r_old, BdsCheck, NumOfEval, r,  probHandle, problemRng, problemseed);
-             %if Bspent > budget
-             %    return
-             %end
+            % Inner Loop
+            rr_old = r_old;
+            Q_b_old = rr_old;
+            sub_counter = 1;
+            result_solution = solution;
+            value = 0;
+            var = 0;
+        
+            while sum(result_solution ~= solution) == 0  %was while result_solution==solution
+
+                if Bspent > budget
+                    break
+                end
+
+                [G, H] = FiniteDiff(solution, rr_old, BdsCheck, 2, (sub_counter + 1)*r, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
+                Bspent = Bspent + NumOfEval*(sub_counter + 1)*r;
+                %step2 determine the new inner solution based on the accumulated design matrix X
+                [try_solution] = Cauchy_point(G, H, solution, VarBds, delta_T);
+                [Q_b_new, var, ~, ~, ~, ~, ~, ~] = probHandle(try_solution, r + ceil(sub_counter^1.01), problemRng, problemseed);
+                Q_b_new = -minmax*Q_b_new;
+                Bspent = Bspent + r + ceil(sub_counter^1.01); %%%
+                [dummy, ~, ~, ~, ~, ~, ~, ~] = probHandle(solution, ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01), problemRng, problemseed); %%%
+                dummy = -minmax*dummy;
+                Bspent = Bspent + ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01); %%%
+                Q_b_old = (Q_b_old*(r + ceil((sub_counter - 1)^1.01)) + (ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01))*dummy)/(r + ceil(sub_counter^1.01)); %update the Q_bar_old
+                rr_new = Q_b_old + (try_solution - solution)*G + (1/2)*(try_solution - solution)*H*(try_solution - solution)';          
+                rr_old = Q_b_old;
+                rrho = (Q_b_old - Q_b_new)/(rr_old - rr_new);
+                if rrho < eta_0 || (Q_b_old - Q_b_new) <= 0 || (rr_old - rr_new) <= 0
+                    delta_T = gamma1*delta_T;
+                    result_solution = solution;
+
+                elseif (eta_0 <= rrho) && (rrho < eta_1)
+
+                    result_solution = try_solution;         %accept the solution and remains the size of  trust ra=[]egion
+                    rr_old = Q_b_new;
+                    value = Q_b_new;
+                else
+                    delta_T = gamma2*delta_T;
+                    result_solution = try_solution;         %accept the solution and expand the size of trust reigon
+                    rr_old = Q_b_new;
+                    value = Q_b_new;
+                end
+                sub_counter = sub_counter + 1;
+
+            end
+        
+            n_solution = result_solution;
+            Q_bar_old = value;
+            soln_var = var;
              
-             if sum(n_solution ~= solution) > 0 && (Q_bar_old < fn0best)
+             
+            if sum(n_solution ~= solution) > 0 && (Q_bar_old < fn0best)
                  x0best = n_solution;
                  fn0best = Q_bar_old;
                  fn0varbest = soln_var;
-                 
+
                  if Bspent <= budget
                     % Record data from the best solution
                     Ancalls(record_index) = Bspent;
@@ -287,18 +297,18 @@ record_index = 2;
                 end
              end
              solution = n_solution;
-        
+
          elseif (eta_0 <= rho) && (rho < eta_1)
 
              solution = new_solution;         %accept the solution and remains the size of  trust region
              Q_bar_old = Q_bar_new;
-             
+
              % update best soln so far
              if Q_bar_new < fn0best
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
-                 
+
                  if Bspent <= budget
                     % Record data from the best solution
                     Ancalls(record_index) = Bspent;
@@ -318,7 +328,7 @@ record_index = 2;
                  x0best = solution;
                  fn0best = Q_bar_new;
                  fn0varbest = newVar;
-                 
+
                  if Bspent <= budget
                     % Record data from the best solution
                     Ancalls(record_index) = Bspent;
@@ -328,7 +338,7 @@ record_index = 2;
                     record_index = record_index + 1;
                 end
              end
-             
+
          end
          r = ceil(1.01*r);
      end 
@@ -574,63 +584,6 @@ AFnVar = AFnVar(1:record_index);
             if modiSsolsV(kc) < 0 && modiSsolsV(kc) > -0.00000005
                 modiSsolsV(kc) = 0;
             end
-        end
-    end
-
-%% Helper Function InnerLoop
-    function [result_solution, value, var] = inner_loop(solution, rr_old, BdsCheck, NumOfEval, runlength, probHandle, problemRng, problemseed)        
-        Q_b_old = rr_old;
-        sub_counter = 1;
-        result_solution = solution;
-        value = 0;
-        var = 0;
-        while sum(result_solution ~= solution) == 0  %was while result_solution==solution
-            %numEval = NumOfEval*(sub_counter + 1)*runlength + runlength + ceil(sub_counter^1.01) + ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01);
-%             while budget(Bref) - Bspent < numEval % budget required for one update
-%                 Ancalls(Bref) = Bspent;
-%                 A(Bref,:) = x0best;
-%                 AFnMean(Bref) = -minmax*fn0best;
-%                 AFnVar(Bref) = fn0varbest;
-%                 Bref = Bref+1;
-%                 if Bref>numBudget
-%                     return
-%                 end
-%             end
-            if Bspent > budget
-                return
-            end
-            
-            [G, H] = FiniteDiff(solution, rr_old, BdsCheck, 2, (sub_counter + 1)*runlength, probHandle, problemRng, problemseed, dim, delta_T, VarBds, minmax);
-            Bspent = Bspent + NumOfEval*(sub_counter + 1)*runlength;
-            %step2 determine the new inner solution based on the accumulated design matrix X
-            [try_solution] = Cauchy_point(G, H, solution, VarBds, delta_T);
-            [Q_b_new, var, ~, ~, ~, ~, ~, ~] = probHandle(try_solution, runlength + ceil(sub_counter^1.01), problemRng, problemseed);
-            Q_b_new = -minmax*Q_b_new;
-            Bspent = Bspent + runlength + ceil(sub_counter^1.01); %%%
-            [dummy, ~, ~, ~, ~, ~, ~, ~] = probHandle(solution, ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01), problemRng, problemseed); %%%
-            dummy = -minmax*dummy;
-            Bspent = Bspent + ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01); %%%
-            Q_b_old = (Q_b_old*(runlength + ceil((sub_counter - 1)^1.01)) + (ceil(sub_counter^1.01) - ceil((sub_counter - 1)^1.01))*dummy)/(runlength + ceil(sub_counter^1.01)); %update the Q_bar_old
-            rr_new = Q_b_old + (try_solution - solution)*G + (1/2)*(try_solution - solution)*H*(try_solution - solution)';          
-            rr_old = Q_b_old;
-            rrho = (Q_b_old - Q_b_new)/(rr_old - rr_new);
-            if rrho < eta_0 || (Q_b_old - Q_b_new) <= 0 || (rr_old - rr_new) <= 0
-                delta_T = gamma1*delta_T;
-                result_solution = solution;
-                
-            elseif (eta_0 <= rrho) && (rrho < eta_1)
-
-                result_solution = try_solution;         %accept the solution and remains the size of  trust ra=[]egion
-                rr_old = Q_b_new;
-                value = Q_b_new;
-            else
-                delta_T = gamma2*delta_T;
-                result_solution = try_solution;         %accept the solution and expand the size of trust reigon
-                rr_old = Q_b_new;
-                value = Q_b_new;
-            end
-            sub_counter = sub_counter + 1;
-
         end
     end
 
