@@ -69,7 +69,9 @@ for k1 = 1:length(problemnameArray)
         end
         
         % Plot convergence curves for all macroreplications of the solver
+        % Don't display to the screen
         figure('visible','off');
+        set(gcf,'Visible','off','CreateFcn','set(gcf,''Visible'',''on'')')
         stairs(budget_pts, FBudget', 'LineStyle', '-', 'LineWidth', 1.5);
         
         % Labeling
