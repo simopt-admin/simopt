@@ -37,8 +37,12 @@ function [minmax, d, m, VarNature, VarBds, FnGradAvail, NumConstraintGradAvail, 
 %   *** Written by Shane Henderson to   ***
 %   *** use standard calling and random ***
 %   *** number streams                  ***
+%   *** Modified by Shane Henderson to  ***
+%   *** run as a terminating simulation ***
+%   *** where each day is one rep.      ***
+%   *** Ambs start out avail at base.   ***
 %   ***************************************
-%  Last updated November 22, 2019
+%  Last updated February 3, 2020
 
 % Number of ambulances is user selectable, but in this version we use 3
 % ambulances
@@ -51,7 +55,7 @@ VarNature = zeros(d, 1); % Real variables
 VarBds = ones(d, 1) * [0, 1]; % x, y are in [0, 1]
 FnGradAvail = 0; % No derivatives when number of ambulances is > 1
 NumConstraintGradAvail = 0; % No constraints
-budget = 10000;
+budget = 500; % Number of one-day simulation replications allowed
 ObjBd = NaN;
 OptimalSol = NaN;
 NumRngs = 3;
