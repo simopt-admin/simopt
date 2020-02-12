@@ -65,7 +65,7 @@ else % main simulation
 
     % Set up array to contain results from each day/replication
     nDays = runlength;
-    Daily_Mean_Response_Time = zeros(nDays);
+    Daily_Mean_Response_Time = zeros(1,nDays);
     
     for replication = 1:nDays
                 
@@ -214,6 +214,6 @@ else % main simulation
     end % for replication
     
     % Calculate statistics
-    fn = mean(Daily_Mean_Response_Time)
-    FnVar = var(Daily_Mean_Response_Time)
+    fn = mean(Daily_Mean_Response_Time);
+    FnVar = var(Daily_Mean_Response_Time);
 end % if input parameters are valid
