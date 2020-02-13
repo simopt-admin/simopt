@@ -19,7 +19,7 @@ function [fn, FnVar, FnGrad, FnGradCov, constraint, ConstraintCov, ConstraintGra
 %   ***          bhc34@cornell.edu    September 13th, 2014    ***
 %   *************************************************************
 %
-% Last updated November 22, 2019
+% Last updated Februrary 13, 2020 by Kurtis Konrad
 
 %% -- SET known outputs (note that function only returns fn and FnVar)
 FnGrad = NaN;
@@ -94,7 +94,13 @@ else % main simulation
         end
         MeanCustTime(k) = mean(Customer(21:total,4));     % Calculate mean sojourn time for last 50 customers
     end
-    fn = mean(MeanCustTime)+ theta^2;                      % Mean and Variance of Alpha Function=Mean sojourn time + theta^2
-    FnVar = var(MeanCustTime)/nRuns;
+    if runlength==1
+        fn=MeanCustTime + theta^2;
+        FnVar=0;
+    else
+        fn = mean(MeanCustTime)+ theta^2;                      % Mean and Variance of Alpha Function=Mean sojourn time + theta^2
+        FnVar = var(MeanCustTime)/nRuns;
+    end
+    
 end
 end
