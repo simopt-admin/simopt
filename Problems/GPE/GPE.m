@@ -18,7 +18,7 @@ function [fn, FnVar, FnGrad, FnGradCov, constraint, ConstraintCov, ConstraintGra
 %   ****************************************
 %
 
-% Last updated Oct 16, 2018 by David Newton
+% Last updated Feb 13, 2020 by Kurtis Konrad
 
 % RETURNS:  the value G_m giving the sample average of the log likelihood
 % m is the "runlength" input
@@ -65,8 +65,13 @@ else
     ReplicationVector = -y1 - y2 + (x(1) * y2 - 1).* log(y1) + (x(2)-1)* log(y2)-log(gamma(x(1)*y2))-log(gamma(x(2)));
   
     % Calculate summary measures
-    fn = mean(ReplicationVector);
-    FnVar = var(ReplicationVector)/runlength;
+    if runlength==1
+        fn = ReplicationVector;
+        FnVar = 0;
+    else
+        fn = mean(ReplicationVector);
+        FnVar = var(ReplicationVector)/runlength;
+    end
     FnGrad = NaN;
     FnGradCov = NaN;
     
