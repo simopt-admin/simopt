@@ -121,11 +121,9 @@ AFnVar(1) = fthetaVar;
 % Record only when recommended solution changes
 record_index = 2;
 
-% Relabel initial solution and mark as the best so far
+% Relabel initial solution and mark its estimate as best so far
 theta = theta0;
-theta_best = theta;
 ftheta_best = ftheta;
-fthetaVar_best = fthetaVar;
 
 % Set other parameters
 nEvals = round((budget/r)/3 *2); % 'What is the expected number of loss evaluations per run? '
@@ -189,6 +187,25 @@ while Bspent <= budget
     [fn, ~] = probHandle(thetaminus2, r, problemRng, problemseed); 
     yminus = -minmax*fn;
     Bspent = Bspent + 2*r;
+    
+    % Estimate current solution's obj fun value by averaging 
+    % estimates at thetaplus2 and thetaminus2
+    ftheta = -minmax*(yplus + yminus)/2;
+    
+    % Check if current solution looks better than the best so far
+    if -minmax*ftheta < -minmax*ftheta_best && Bspent <= budget
+        
+        theta_best = theta;
+        ftheta_best = ftheta;
+        
+        %Record data from the new best solution
+        Ancalls(record_index) = Bspent;
+        A(record_index,:) = theta_best;
+        AFnMean(record_index) = ftheta_best;
+        AFnVar(record_index) = NaN; % no estimate of variance
+        record_index = record_index + 1;
+        
+    end
 
     % Estimate gradient
     ghat = (yplus - yminus)./(2*c*delta);
@@ -196,26 +213,6 @@ while Bspent <= budget
     % Take step and check feasibility
     theta_next = theta - ak*ghat;
     theta = checkCons(VarBds, theta_next, theta);
-
-    % Evaluate new solution and update budget spent
-    [ftheta, fthetaVar, ~, ~, ~, ~, ~, ~] = probHandle(theta, r, problemRng, problemseed);
-    Bspent = Bspent + r;
-
-    % Check if new solution is an improvement
-    if -minmax*ftheta < -minmax*ftheta_best && Bspent <= budget
-        
-        theta_best = theta;
-        ftheta_best = ftheta;
-        fthetaVar_best = fthetaVar;
-        
-        %Record data from the new best solution
-        Ancalls(record_index) = Bspent;
-        A(record_index,:) = theta_best;
-        AFnMean(record_index) = ftheta_best;
-        AFnVar(record_index) = fthetaVar_best;
-        record_index = record_index + 1;
-        
-    end
     
 end
 
