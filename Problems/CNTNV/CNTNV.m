@@ -7,6 +7,10 @@
 %   *** number streams                  ***
 %   ***                                 ***
 %   *** Edited by David Newton 10/5/18  ***
+%   ***                                 ***
+%   *** Edited by Kurtis Konrad         ***
+%   *** 2/13/2020 Improve performance   ***
+%   *** when runlength==1               ***
 %   ***************************************
 
 
@@ -66,9 +70,16 @@ else
     RHDerivProfit = sellPrice * (demand > x) + salvage * (demand < x) - cost;   %partial derivative wrt x? not differentialble when demand=x
     
     % Calculate summary measures
-    fn = mean(profit);  %mean of sample mean
-    FnVar = var(profit) / runlength;	%variance of sample mean = var/n
-    FnGrad = mean(RHDerivProfit);
-    FnGradCov = var(RHDerivProfit) / runlength;
+    if runlength==1
+        fn=profit;
+        FnVar=0;
+        FnGrad=RHDerivProfit;
+        FnGradCov=0;
+    else
+        fn = mean(profit);  %mean of sample mean
+        FnVar = var(profit) / runlength;	%variance of sample mean = var/n
+        FnGrad = mean(RHDerivProfit);
+        FnGradCov = var(RHDerivProfit) / runlength;
+    end
     
 end

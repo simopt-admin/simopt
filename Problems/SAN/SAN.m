@@ -20,6 +20,8 @@ function [fn, FnVar, FnGrad, FnGradCov, constraint, ConstraintCov, ConstraintGra
 %   ***            bhc34@cornell.edu    Sept 10, 2014         ***
 %   ***                Edited by David Eckman                 ***
 %   ***            dje88@cornell.edu    Sept 4, 2018          ***
+%   ***                Edited by Kurtis Konrad                ***
+%   ***            kekonrad@ncsu.edu    Feb 13, 2020          ***
 %   *************************************************************
 
 constraint = NaN;
@@ -137,8 +139,15 @@ else % main simulation
     end
     
     % Calculate summary measures
-    fn = mean(cost);
-    FnVar = var(cost)/runlength;
-    FnGrad = mean(CostGrad, 1); % Calculates the mean of each column as desired
-    FnGradCov = cov(CostGrad); %FnGradCov = cov(CostGrad, 2);
+    if runlength==1
+        fn=cost;
+        FnVar=0;
+        FnGrad=CostGrad;
+        FnGradCov=zeros(length(CostGrad));
+    else
+        fn = mean(cost);
+        FnVar = var(cost)/runlength;
+        FnGrad = mean(CostGrad, 1); % Calculates the mean of each column as desired
+        FnGradCov = cov(CostGrad); %FnGradCov = cov(CostGrad, 2);
+    end
 end

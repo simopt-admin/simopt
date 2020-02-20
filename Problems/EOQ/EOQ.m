@@ -18,9 +18,11 @@ function [fn, FnVar, FnGrad, FnGradCov, constraint, ConstraintCov, ConstraintGra
 %   *** Edited by Shane Henderson sgh9@cornell.edu, 7/14/14   ***
 %   ***                Edited by David Eckman                 ***
 %   ***          dje88@cornell.edu    Sept 14th, 2018         ***
+%   ***                Edited by Kurtis Konrad                ***
+%   ***            kekonrad@ncsu.edu    Feb 13, 2020          ***
 %   *************************************************************
 %
-% Last updated Sept 14, 2018
+% Last updated Feb 13, 2020
 
 %% -- SET known outputs 
 constraint = NaN;
@@ -63,8 +65,13 @@ else % main simulation
     end    
     
     %% Main
-    MeanRate = mean(rate);
-    VarRate = var(rate);
+    if runlength==1
+        MeanRate=rate;
+        VarRate=0;
+    else
+        MeanRate = mean(rate);
+        VarRate = var(rate);
+    end
     fn = (c + k / x) * MeanRate + h * x / 2;    %value of objective
     FnVar = (c + k / x)^2 * VarRate / runlength;
     FnGrad = (-k / x^2) * MeanRate + h / 2;
