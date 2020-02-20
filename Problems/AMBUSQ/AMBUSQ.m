@@ -215,5 +215,5 @@ else % main simulation
     
     % Calculate statistics
     fn = mean(Daily_Mean_Response_Time);
-    FnVar = var(Daily_Mean_Response_Time);
+    FnVar = var(Daily_Mean_Response_Time)/nDays;
 end % if input parameters are valid

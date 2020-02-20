@@ -194,7 +194,7 @@ else % main simulation
 
     % Record final mean and variance of cumulative costs
 	fn = mean(revenue - costs);
-	FnVar = var(revenue - costs);
+	FnVar = var(revenue - costs)/runlength;
 
 end
 
