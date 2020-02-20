@@ -83,7 +83,6 @@ NumStartingSols = 100;
 % Get problem dimension and bounds and initial solution(s)
 RandStream.setGlobalStream(solverInitialRng)
 [minmax, dim, ~, ~, VarBds, ~, ~, ssolsM, budget, ~, ~, ~] = probstructHandle(NumStartingSols);
-x0 = mean(ssolsM);
 
 % Set parameters
 N = round(50 * sqrt(dim)); % number of samples for each iteration
@@ -108,11 +107,14 @@ AFnVar = zeros(MaxNumSoln, 1);
 % Using CRN: for each solution, start at substream 1
 problemseed = 1;
 
-% Record initial solution and stats based on M samples
-% This is for reporting only: GASSO does not use these values
+% Record initial solution (first one in ssolsM)
 Ancalls(1) = 0;
-A(1,:) = x0;
-[AFnMean(1), AFnVar(1), ~, ~, ~, ~, ~, ~] = probHandle(x0, M, problemRng, problemseed);
+A(1,:) = ssolsM(1,:);
+AFnMean(1) = NaN; % unevaluated
+AFnVar(1) = NaN; % unevaluated
+
+% Average initial solutions
+x0 = mean(ssolsM);
 
 %% The actual algorithm
 % GASSO: sampling distribution is normal (for unbounded solution set) or truncated normal (for bounded solution set)
