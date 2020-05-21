@@ -2,10 +2,10 @@
 % ASTRO-DF (Adaptive Sampling Trust Region Optimization - Derivative Free)
 %==========================================================================
 % DATE
-%        Spring 2019
+%        Spring 2020
 %
 % AUTHOR
-%        Kurtis Konrad, Sara Shashaani, Pranav Jain, Yunsoo Ha.
+%        Pranav Jain, Yunsoo Ha, Sara Shashaani, Kurtis Konrad.
 %
 % REFERENCE		
 %        Sara Shashaani, Fatemeh S. Hashemi and Raghu Pasupathy (2018)
@@ -96,7 +96,8 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
     Delta0 = .08*Delta_max; % initial trust region radius 
     shrink=.5^log(dim+1);
     expand=1/shrink;
-    radiustry=[1 shrink expand]; %fraction of initial trust region to use for parameter tuning    
+    radiustry=[1 shrink expand]; %fraction of initial trust region to use for parameter tuning  
+    Delta1 = [Delta0 Delta0*shrink Delta0*expand];
     setupprct=.03; %the initial percentage of the budget to use for finding a good initial radius
 
     ptdict=[];
@@ -107,15 +108,20 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
     var_points = [];
     calls=0;
     funcbest=zeros(size(radiustry));
-    xbest=zeros(length(radiustry),dim);
+    xbest=zeros(length(radiustry),dim);    
+    point_precision = 7; %number of decimal places to keep for any points in ptdict
+
+    ptdict = struct('pts',[x0],'counts',[0],'means',[0],'variances',[0],...
+        'rands',[1],'decimal',point_precision, 'iterationNumber', [0 0 0]);
 
     for i=1:length(radiustry)
         %try to run the algorithm on setupprct of the budget at different
         %fractions of the initial suggested radius
          [callcounti, x_pointsi, func_pointsi, var_pointsi, ptdict]= ASTRDF_Internal(...
             probHandle, problemRng, solverRng, minmax, dim, VarBds, x0, ...
-            floor(setupprct*budgetmaxPT), type, radiustry(i)*Delta0, Delta_max, ptdict, 1);        
- 
+            floor(setupprct*budgetmaxPT), type, Delta1(i), Delta_max, ptdict, 1, 0);        
+        
+        
         infoi=ptdict.info;
         ptdict=rmfield(ptdict,'info'); %only save the points
         x_pointsi_{i} = x_pointsi;
@@ -124,12 +130,12 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
         var_pointsi_{i} = var_pointsi;
  
         calls=calls+infoi.calls; %total number of calls
-        
+                
         if ~isempty(func_pointsi) %if the attempt had a successful iteration
             %use the last point
             funcbest(i)=func_pointsi(end);
-            xbest(i,:)=x_pointsi(end,:);
-            Delta_par(i) = infoi.delta(end);
+            xbest(i,:)=x_pointsi(end,:);            
+            Delta_par(i) = ptdict.PTinfo(i).Delta;
         else
             if minmax==-1 %minimzation
                 funcbest(i)=Inf; %no success means value was Inf
@@ -137,7 +143,7 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
                 funcbest(i)=0;
             end
             xbest(i,:)=x0;
-            Delta_par(i) = radiustry(i)*Delta0;
+            Delta_par(i) = Delta1(i);
         end
     end
 
@@ -149,13 +155,11 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
         [bestval,best]=max(funcbest);
     end
     
-    x_points_par = x_pointsi_{1};
-    func_points_par = cell2mat(func_pointsi_(1));
-    callcount_par = cell2mat(callcounti_(1));
-    var_points_par = cell2mat(var_pointsi_(1));
+    BestS = 0;
     
     for i = 1:3
         if best == i
+            BestS = i;    
             x_aft_tune = xbest(i,:);
             Delta = Delta_par(i);
             x_points_par = x_pointsi_{i};
@@ -169,7 +173,7 @@ function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
     
     %run the main algorithm
     [callcount, x_points, func_points, var_points]= ASTRDF_Internal(probHandle,...
-        problemRng, solverRng, minmax, dim, VarBds, x_aft_tune, budgetmaxPT-3*floor(setupprct*budgetmaxPT), type, Delta, Delta_max, ptdict, 0);
+        problemRng, solverRng, minmax, dim, VarBds, x_aft_tune, budgetmaxPT-3*floor(setupprct*budgetmaxPT), type, Delta, Delta_max, ptdict, 0, BestS);
     
     callcount = callcount+3*floor(setupprct*budgetmaxPT);
     
@@ -184,7 +188,7 @@ end
 
 function [callcount, x_points, func_points, var_points, ptdict] ...
     = ASTRDF_Internal(probHandle, problemRng, solverRng, ...
-        minmax, dim, VarBds, xk, budgetmax, type, Delta0, Delta_max, ptdict, PT)
+        minmax, dim, VarBds, xk, budgetmax, type, Delta0, Delta_max, ptdict, PT, BestS)
 %ASTRDF_Internal runs the main portion of the ASTRO-DF Algorithm
 %
 %   INPUTS
@@ -256,31 +260,21 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
     beta = 1/mu;
     gamma_1 = (1.25)^(2/dim);  %successful step radius increase
     gamma_2 = 1/gamma_1;    %unsuccessful step radius decrease
-    point_precision = 7; %number of decimal places to keep for any points in ptdict
-
-    %if ptdict isn't passed in as a structure
-    if ~exist('ptdict','var') || ~isstruct(ptdict)
-        %Point Dictionary
-        ptdict = struct('pts',[xk],'counts',[0],'means',[0],'variances',[0],...
-            'rands',[1],'decimal',point_precision);
-    end
-
+  
     %create the output variables or load them if available
-    if nargin< 12  || ~isfield(ptdict,'info')
-        x_points=[];
-        callcount=[];
-        func_points =[];
-        var_points = [];
-        %Initializations
-        calls = 0;
+    %if nargin< 12  || ~isfield(ptdict,'info')
+
+    x_points=[];
+    callcount=[];
+    func_points =[];
+    var_points = [];
+    %Initializations
+    calls = 0;
+    
+    if PT == 1
         iteration_number = 1;
     else
-        x_points=ptdict.x_points;
-        callcount=ptdict.callcount;
-        func_points =ptdict.func_points;
-        var_points = ptdict.var_points;
-        calls = ptdict.info.calls;
-        iteration_number=ptdict.info.iteration_number;
+        iteration_number = ptdict.iterationNumber(BestS);
     end
 
     % Shrink VarBds to prevent floating errors
@@ -289,7 +283,7 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
     VarBds(:,1) = VarBds(:,1) + sensitivity; 
     VarBds(:,2) = VarBds(:,2) - sensitivity;
     ptdict.sensitivity = sensitivity;
-
+    
     Delta = Delta0;
     while calls <= budgetmax
         o = 100;
@@ -301,13 +295,12 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
         
         %run the adaptive sampling part of the algorithm
         [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(probHandle, xk, Delta, iteration_number, ...
-            type, w, mu, beta, calls, solverInternalRng, problemRng, minmax,ptdict,VarBds,lin_quad,budgetmax, PT);
-
+            type, w, mu, beta, calls, solverInternalRng, problemRng, minmax, ptdict, VarBds,lin_quad,budgetmax, PT, BestS);
+        
         % Record Fbar
         x_incumbent = xk;
         Fbar_incumbent = Fbar(1);
         Fvar_incumbent = Fvar(1);
-
 
         % Step 3
         % Minimize the constrained model
@@ -379,6 +372,21 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
             end
         end
         
+        if calls > budgetmax 
+            if PT == 1
+                if Delta0 == .08*Delta_max
+                    ptdict.iterationNumber(1) = iteration_number;
+                    ptdict.PTinfo(1).Delta = Delta;
+                elseif Delta0 < .08*Delta_max
+                    ptdict.iterationNumber(2) = iteration_number;
+                    ptdict.PTinfo(2).Delta = Delta;
+                else
+                    ptdict.iterationNumber(3) = iteration_number;
+                    ptdict.PTinfo(3).Delta = Delta;
+               end                          
+            end
+        end
+        
         Fbar_tilde = Fb;
         Fvar_tilde = sig2;
 
@@ -399,7 +407,8 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
         if Fbar_tilde > min(Fbar)
             Fbar_tilde = min(Fbar);
             x_tilde = ptdict.pts(Fbar_tilde == ptdict.means,:);
-        end
+        end 
+        
         % Step 5 - Model Accuracy
         rho = (Fbar(1) - Fbar_tilde)/ (Model_Approximation(xk-xk,lin_quad,q) - Model_Approximation(x_tilde-xk,lin_quad,q));
 
@@ -414,7 +423,7 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
         elseif rho >= eta_1 %good accuracy
             xk = x_tilde;
             Delta = min(Deltak, Delta_max); %maintain same trust region size 
-            x_points = [x_points;x_tilde];
+            x_points = [x_points; x_tilde];
             callcount = [callcount; calls];
             func_points = [func_points; Fbar_tilde];
             var_points = [var_points; Fvar_tilde];
@@ -423,7 +432,7 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
         end 
        
         [~,currentgrad] = Model_Approximation(xk-xk,lin_quad,q);
-        iteration_number = iteration_number + 1;
+        iteration_number = iteration_number + 1;        
     end
 
     %save final information before exiting
@@ -441,7 +450,7 @@ function [callcount, x_points, func_points, var_points, ptdict] ...
 end
 
 function [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(probHandle, x, Delta, k, type, ...
-    w, mu, beta, calls, solverInternalRng, problemRng, minmax, ptdict,VarBds,lin_quad,budgetmax, PT)
+    w, mu, beta, calls, solverInternalRng, problemRng, minmax, ptdict,VarBds,lin_quad, budgetmax, PT, BestS)
 %Model_Construction creates a model in the trust region
 %
 %   INPUTS
@@ -494,9 +503,10 @@ function [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(
     j = 1;
     while 1
         Deltak = Delta*w^(j-1);
+        
         %get the set of points to use
-        Solverrecall=solverInternalRng;
         Y = Interpolation_Points(x, Deltak, solverInternalRng, ptdict, k+j/2,VarBds,lin_quad);
+
         %build the model
         [~,~,~,A] = Model_Approximation(Y-Y(1,:),lin_quad);
         if rcond(A) < eps^.8 %if the model is not well poised, try again
@@ -508,7 +518,22 @@ function [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(
                 warning("The Poisedness Improvement Algorithm generated a poorly conditioned Vandermonde Matrix.")
             end
         end
-
+                 
+        if PT == 0 
+            if k == ptdict.iterationNumber(BestS)
+                Y = ptdict.PTinfo(BestS).pts;
+                [~,~,~,A] = Model_Approximation(Y-Y(1,:),lin_quad);
+            end
+        else           
+            if ptdict.iterationNumber(1) == 0
+                ptdict.PTinfo(1).pts = Y;
+            elseif ptdict.iterationNumber(2) == 0
+                ptdict.PTinfo(2).pts = Y;
+            elseif ptdict.iterationNumber(3) == 0
+                ptdict.PTinfo(3).pts = Y;
+            end
+        end
+        
         p = size(Y, 1);
         Fbar = zeros(p, 1);
         Fvar = zeros(p, 1);
@@ -576,12 +601,12 @@ function [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(
             end
         end
 
-            %add the new points to the dictionary
-            ptdict.pts = [ptdict.pts; round(Y(pts_exist==0,:),ptdict.decimal)];
-            ptdict.means = [ptdict.means; Fbar(pts_exist==0)];
-            ptdict.counts = [ptdict.counts; ks_counts(pts_exist==0)];
-            ptdict.variances = [ptdict.variances; stddev2(pts_exist==0)];
-            ptdict.rands = [ptdict.rands; randseeds(pts_exist==0)];
+        %add the new points to the dictionary
+        ptdict.pts = [ptdict.pts; round(Y(pts_exist==0,:),ptdict.decimal)];
+        ptdict.means = [ptdict.means; Fbar(pts_exist==0)];
+        ptdict.counts = [ptdict.counts; ks_counts(pts_exist==0)];
+        ptdict.variances = [ptdict.variances; stddev2(pts_exist==0)];
+        ptdict.rands = [ptdict.rands; randseeds(pts_exist==0)];
 
         %get model parameters
         q = A \ Fbar;
@@ -599,15 +624,13 @@ function [q, Fbar, Fvar, Deltak, calls, ptdict, budgetmax] = Model_Construction(
         %check size of adaptive sample
         if Deltak <= mu*norm(grad0)
             break
-        elseif calls > budgetmax
+        elseif calls > budgetmax            
             break
         end
     end
     %contract radius
-    Deltak = min(max(beta*norm(grad0), Deltak), Delta);    
-
+    Deltak = min(max(beta*norm(grad0), Deltak), Delta);
 end
-
 
 function [Y] = Interpolation_Points(center, radius, solverInternalRng, ptdict, iterations,VarBds,lin_quad)
 %   Interpolation_Points selects the initial points to be used for the adaptive sampling
@@ -898,7 +921,6 @@ function [M,Y] = Algorithm_6_2(Y, Delta,alpha,lin_quad,vb)
         for j=1:q
             if j~=i
                 M(j,:)=M(j,:)-(M(j,:)*lyi')*M(i,:);
-
             end
         end
 
