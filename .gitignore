@@ -5,3 +5,4 @@ simopt/rng/.vscode/settings.json
 simopt/rng/__pycache__/mrg32k3a.cpython-37.pyc
 simopt/rng/__pycache__/mrg32k3a.cpython-38.pyc
 simopt/rng/__pycache__/setup_jump.cpython-38.pyc
+simopt/rng/__pycache__/matmodops.cpython-38.pyc

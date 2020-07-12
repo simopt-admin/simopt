@@ -1,6 +1,6 @@
 import unittest
 from mrg32k3a import *
-#from mrg32k3a import MRG32k3a, mat333mult, matrix_power_mod, matrix_matrix_mod, mat33prod, mat33mod, mat311mod
+#from mrg32k3a import MRG32k3, aadvance_stream, advance_substream, advance_subsubstream, reset_stream, reset_substream, reset_subsubstream, start_fixed_s_ss_sss
 #from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
 #from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n
 
@@ -29,34 +29,34 @@ seed = (12345, 12345, 12345, 12345, 12345, 12345)
 class TestMRG(unittest.TestCase):
     
     def test_A1p127(self):
-        self.assertEqual(matrix_power_mod(A1p0, 2**127, mrgm1), A1p127)
+        self.assertEqual(mat33_power_mod(A1p0, 2**127, mrgm1), A1p127)
 
     def test_A2p127(self):
-        self.assertEqual(matrix_power_mod(A2p0, 2**127, mrgm2), A2p127)
+        self.assertEqual(mat33_power_mod(A2p0, 2**127, mrgm2), A2p127)
 
     def test_A1p76(self):
-        self.assertEqual(matrix_power_mod(A1p0, 2**76, mrgm1), A1p76)
+        self.assertEqual(mat33_power_mod(A1p0, 2**76, mrgm1), A1p76)
 
     def test_A2p76(self):
-        self.assertEqual(matrix_power_mod(A2p0, 2**76, mrgm2), A2p76)
+        self.assertEqual(mat33_power_mod(A2p0, 2**76, mrgm2), A2p76)
 
     def test_A1p47(self):
-        self.assertEqual(matrix_power_mod(A1p0, 2**47, mrgm1), A1p47)
+        self.assertEqual(mat33_power_mod(A1p0, 2**47, mrgm1), A1p47)
 
     def test_A2p47(self):
-        self.assertEqual(matrix_power_mod(A2p0, 2**47, mrgm2), A2p47)
+        self.assertEqual(mat33_power_mod(A2p0, 2**47, mrgm2), A2p47)
 
     def test_A1p94(self):
-        self.assertEqual(matrix_power_mod(A1p0, 2**94, mrgm1), A1p94)
+        self.assertEqual(mat33_power_mod(A1p0, 2**94, mrgm1), A1p94)
 
     def test_A2p94(self):
-        self.assertEqual(matrix_power_mod(A2p0, 2**94, mrgm2), A2p94)
+        self.assertEqual(mat33_power_mod(A2p0, 2**94, mrgm2), A2p94)
 
     def test_A1p141(self):
-        self.assertEqual(matrix_power_mod(A1p0, 2**141, mrgm1), A1p141)
+        self.assertEqual(mat33_power_mod(A1p0, 2**141, mrgm1), A1p141)
 
     def test_A2p141(self):
-        self.assertEqual(matrix_power_mod(A2p0, 2**141, mrgm2), A2p141)
+        self.assertEqual(mat33_power_mod(A2p0, 2**141, mrgm2), A2p141)
 
     def test_first_state(self):
         rng = MRG32k3a()
@@ -65,26 +65,26 @@ class TestMRG(unittest.TestCase):
     def test_second_state(self):
         rng = MRG32k3a()
         rng.random()
-        st1 = mat311mod(mat333mult(A1p0, seed[0:3]), mrgm1)
-        st2 = mat311mod(mat333mult(A2p0, seed[3:6]), mrgm2)
+        st1 = mat31_mod(mat33_mat31_mult(A1p0, seed[0:3]), mrgm1)
+        st2 = mat31_mod(mat33_mat31_mult(A2p0, seed[3:6]), mrgm2)
         self.assertSequenceEqual(rng._current_state, st1 + st2)
 
     def test_third_state(self):
         rng = MRG32k3a()
         rng.random()
         rng.random()
-        A1sq = mat33prod(A1p0, A1p0)
-        A2sq = mat33prod(A2p0, A2p0)
-        st1 = mat311mod(mat333mult(A1sq, seed[0:3]), mrgm1)
-        st2 = mat311mod(mat333mult(A2sq, seed[3:6]), mrgm2)
+        A1sq = mat33_mat33_mult(A1p0, A1p0)
+        A2sq = mat33_mat33_mult(A2p0, A2p0)
+        st1 = mat31_mod(mat33_mat31_mult(A1sq, seed[0:3]), mrgm1)
+        st2 = mat31_mod(mat33_mat31_mult(A2sq, seed[3:6]), mrgm2)
         self.assertSequenceEqual(rng._current_state, st1 + st2)
 
     def test_hundreth_state(self):
         rng = MRG32k3a()
         for _ in range(99):
             rng.random()
-        st1 = mat311mod(mat333mult(matrix_power_mod(A1p0, 99, mrgm1), seed[0:3]),mrgm1)
-        st2 = mat311mod(mat333mult(matrix_power_mod(A2p0, 99, mrgm2), seed[3:6]),mrgm2)
+        st1 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A1p0, 99, mrgm1), seed[0:3]),mrgm1)
+        st2 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A2p0, 99, mrgm2), seed[3:6]),mrgm2)
         self.assertSequenceEqual(rng._current_state, st1 + st2)
 
 if __name__ == '__main__':
