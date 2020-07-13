@@ -26,7 +26,7 @@ A2p76 = [[1511326704, 3759209742, 1610795712],
 
 seed = (12345, 12345, 12345, 12345, 12345, 12345)
 
-class TestMRG(unittest.TestCase):
+class TestMRG32k3a(unittest.TestCase):
     
     def test_A1p127(self):
         self.assertEqual(mat33_power_mod(A1p0, 2**127, mrgm1), A1p127)

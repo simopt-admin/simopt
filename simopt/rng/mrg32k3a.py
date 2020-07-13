@@ -394,8 +394,8 @@ def start_fixed_s_ss_sss(rng, s_ss_sss_triplet):
     # advance to start of specified subsubstream
     for _ in range(s_ss_sss_triplet[2]):
         # efficiently advance state -> A*s % m for both state parts
-        nst1m = mat33_mat31_mult(A1p94, st1)
-        nst2m = mat33_mat31_mult(A2p94, st2)
+        nst1m = mat33_mat31_mult(A1p47, st1)
+        nst2m = mat33_mat31_mult(A2p47, st2)
         st1 = mat31_mod(nst1m, mrgm1)
         st2 = mat31_mod(nst2m, mrgm2)
     rng.subsubstream_start = tuple(st1 + st2)
