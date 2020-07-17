@@ -86,6 +86,12 @@ A2p141 = [[2196438580, 805386227, 4266375092],
     [94452540, 4124675351, 2825656399]
 ]
 
+# constants used in Beasley-Springer-Moro algorithm for approximating 
+# the inverse cdf of the standard normal distribution
+bsma = [2.50662823884, -18.61500062529, 41.39119773534, -25.44106049637]
+bsmb = [-8.47351093090, 23.08336743743, -21.06224101826, 3.13082909833]
+bsmc = [0.3374754822726147, 0.9761690190917186, 0.1607979714918209, 0.0276438810333863, 0.0038405729373609,0.0003951896511919, 0.0000321767881768, 0.0000002888167364, 0.0000003960315187]
+
 # this is adapted to pure Python from the P. L'Ecuyer code referenced above
 def mrg32k3a(state):
     """
@@ -122,6 +128,51 @@ def mrg32k3a(state):
         u = (p1 - p2)*mrgnorm
     new_state = (state[1], state[2], int(p1), state[4], state[5], int(p2))
     return new_state, u
+
+def bsm(u):
+    """
+    Approximate a quantile of the standard normal distribution via
+    the Beasley-Springer-Moro algorithm.
+
+    Arguments
+    ---------
+    u : float
+        probability value for the desired quantile (between 0 and 1)
+
+    Returns
+    -------
+    z : float
+    """
+    y = u - 0.5
+    if abs(y) < 0.42:
+        # approximate from the center (Beasly-Springer 1977)
+        r = pow(y, 2)
+        r2 = pow(r, 2)
+        r3 = pow(r, 3)
+        r4 = pow(r, 4)
+        asum = sum([bsma[0], bsma[1]*r, bsma[2]*r2, bsma[3]*r3])
+        bsum = sum([1, bsmb[0]*r, bsmb[1]*r2, bsmb[2]*r3, bsmb[3]*r4])
+        z = y*(asum/bsum)
+    else:
+        # approximate from the tails (Moro 1995)
+        if y < 0.0:
+            signum = -1
+            r = u
+        else:
+            signum = 1
+            r = 1 - u
+        s = log(-log(r))
+        s0 = pow(s, 2)
+        s1 = pow(s, 3)
+        s2 = pow(s, 4)
+        s3 = pow(s, 5)
+        s4 = pow(s, 6)
+        s5 = pow(s, 7)
+        s6 = pow(s, 8)
+        clst = [bsmc[0], bsmc[1]*s, bsmc[2]*s0, bsmc[3]*s1, bsmc[4]*s2, bsmc[5]*s3, bsmc[6]*s4, bsmc[7]*s5, bsmc[8]*s6]
+        t = sum(clst)
+        z = signum*t
+    return z
 
 class MRG32k3a(random.Random):
     """
@@ -232,6 +283,29 @@ class MRG32k3a(random.Random):
         """
         self.seed(state[0])
         super().setstate(state[1])
+
+    def normalvariate(self, mu=0, sigma=1):
+        """
+        Generate a normal random variate.
+
+        Arguments
+        ---------
+        mu : float
+            expected value of the normal distribution from which to
+            generate
+        sigma : float
+            standard deviation of the normal distribution from which to
+            generate
+
+        Returns
+        -------
+        float
+            a normal random variate from the specified distribution
+
+        """
+        u = self.random()
+        z = bsm(u)
+        return mu + sigma*z
 
 def advance_stream(rng):
     """
