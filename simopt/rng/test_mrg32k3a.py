@@ -1,6 +1,6 @@
 import unittest
 from mrg32k3a import *
-#from mrg32k3a import MRG32k3, aadvance_stream, advance_substream, advance_subsubstream, reset_stream, reset_substream, reset_subsubstream, start_fixed_s_ss_sss
+#from mrg32k3a import MRG32k3a
 #from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
 #from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n
 
@@ -94,8 +94,7 @@ class TestMRG32k3a(unittest.TestCase):
     def test_advance_stream(self):
         rng = MRG32k3a()
         rng.advance_stream()        
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [1, 0, 0])
+        rng2 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, rng._current_state)
         self.assertEqual(rng.substream_start, rng._current_state)
@@ -104,9 +103,8 @@ class TestMRG32k3a(unittest.TestCase):
 
     def test_advance_substream(self):
         rng = MRG32k3a()
-        rng.advance_substream()        
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [0, 1, 0])
+        rng.advance_substream()
+        rng2 = MRG32k3a(s_ss_sss_index=[0, 1, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, seed)
         self.assertEqual(rng.substream_start, rng._current_state)
@@ -116,8 +114,7 @@ class TestMRG32k3a(unittest.TestCase):
     def test_advance_subsubstream(self):
         rng = MRG32k3a()
         rng.advance_subsubstream()        
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [0, 0, 1])
+        rng2 = MRG32k3a(s_ss_sss_index=[0, 0, 1])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, seed)
         self.assertEqual(rng.substream_start, seed)
@@ -125,12 +122,10 @@ class TestMRG32k3a(unittest.TestCase):
         self.assertEqual(rng.s_ss_sss_index, [0, 0, 1])
 
     def test_reset_stream(self):
-        rng = MRG32k3a()
-        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng = MRG32k3a(s_ss_sss_index=[1, 1, 1])
         rng.random()
         rng.reset_stream()
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [1, 0, 0])
+        rng2 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, rng._current_state)
         self.assertEqual(rng.substream_start, rng._current_state)
@@ -138,36 +133,52 @@ class TestMRG32k3a(unittest.TestCase):
         self.assertEqual(rng.s_ss_sss_index, [1, 0, 0])
 
     def test_reset_substream(self):
-        rng = MRG32k3a()
-        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng = MRG32k3a(s_ss_sss_index=[1, 1, 1])
         rng.random()
         rng.reset_substream()
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [1, 1, 0])
+        rng2 = MRG32k3a(s_ss_sss_index=[1, 1, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
-        rng3 = MRG32k3a()
-        start_fixed_s_ss_sss(rng3, [1, 0, 0])
+        rng3 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         self.assertEqual(rng.stream_start, rng3._current_state)
         self.assertEqual(rng.substream_start, rng._current_state)
         self.assertEqual(rng.subsubstream_start, rng._current_state)
         self.assertEqual(rng.s_ss_sss_index, [1, 1, 0])
 
     def test_reset_subsubstream(self):
-        rng = MRG32k3a()
-        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng = MRG32k3a(s_ss_sss_index=[1, 1, 1])
         rng.random()
         rng.reset_subsubstream()
-        rng2 = MRG32k3a()
-        start_fixed_s_ss_sss(rng2, [1, 1, 1])
+        rng2 = MRG32k3a(s_ss_sss_index=[1, 1, 1])
         self.assertEqual(rng._current_state, rng2._current_state)
-        rng3 = MRG32k3a()
-        start_fixed_s_ss_sss(rng3, [1, 0, 0])
-        rng4 = MRG32k3a()
-        start_fixed_s_ss_sss(rng4, [1, 1, 0])
+        rng3 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+        rng4 = MRG32k3a(s_ss_sss_index=[1, 1, 0])
         self.assertEqual(rng.stream_start, rng3._current_state)
         self.assertEqual(rng.substream_start, rng4._current_state)
         self.assertEqual(rng.subsubstream_start, rng._current_state)
         self.assertEqual(rng.s_ss_sss_index, [1, 1, 1])
+
+    def test_init_fixed_s_ss_sss(self):
+        rng = MRG32k3a(s_ss_sss_index=[1, 1, 1])
+        rng2 = MRG32k3a()
+        rng2.start_fixed_s_ss_sss([1, 1, 1])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, rng2.stream_start)
+        self.assertEqual(rng.substream_start, rng2.substream_start)
+        self.assertEqual(rng.subsubstream_start, rng2.subsubstream_start)
+        self.assertEqual(rng.s_ss_sss_index, rng2.s_ss_sss_index)
+
+    def test_jump_fixed_s_ss_sss(self):
+        rng = MRG32k3a()
+        rng.start_fixed_s_ss_sss([1, 1, 1])
+        rng2 = MRG32k3a()
+        rng2.advance_stream()
+        rng2.advance_substream()
+        rng2.advance_subsubstream()
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, rng2.stream_start)
+        self.assertEqual(rng.substream_start, rng2.substream_start)
+        self.assertEqual(rng.subsubstream_start, rng2.subsubstream_start)
+        self.assertEqual(rng.s_ss_sss_index, rng2.s_ss_sss_index)
 
 if __name__ == '__main__':
     unittest.main()
