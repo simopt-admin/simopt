@@ -6,13 +6,13 @@ with stream/substream/subsubstream support.
 
 Listing
 -------
-MRG323k3a
-advance_stream
-advance_substream
-advance_subsubstream
-reset_stream
-reset_substream
-reset_subsubstream
+MRG323k3a : class
+advance_stream : method
+advance_substream : method
+advance_subsubstream : method
+reset_stream : method
+reset_substream : method
+reset_subsubstream : method
 start_fixed_s_ss_sss
 """
 
@@ -249,7 +249,7 @@ class MRG32k3a(random.Random):
             current state of the generator
         """
         return self._current_state
-        
+
     def normalvariate(self, mu=0, sigma=1):
         """
         Generate a normal random variate.
@@ -267,138 +267,107 @@ class MRG32k3a(random.Random):
         -------
         float
             a normal random variate from the specified distribution
-
         """
         u = self.random()
         z = bsm(u)
         return mu + sigma*z
 
-def advance_stream(rng):
-    """
-    Advance the state of the generator to the start of the next stream.
-    Streams are of length 2**141.
+    def advance_stream(self):
+        """
+        Advance the state of the generator to the start of the next stream.
+        Streams are of length 2**141.
+        """
+        state = self.stream_start
+        # split the state into 2 components of length 3
+        st1 = state[0:3]
+        st2 = state[3:6]
+        # efficiently advance state -> A*s % m for both state parts
+        nst1m = mat33_mat31_mult(A1p141, st1)
+        nst2m = mat33_mat31_mult(A2p141, st2)
+        nst1 = mat31_mod(nst1m, mrgm1)
+        nst2 = mat31_mod(nst2m, mrgm2)
+        nstate = tuple(nst1 + nst2)
+        self.seed(nstate)
+        # increment the stream index
+        self.s_ss_sss_index[0] += 1
+        # update state referencing
+        self.stream_start = nstate
+        self.substream_start = nstate
+        self.subsubstream_start = nstate
 
-    Arguments
-    ---------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    state = rng.stream_start
-    # split the state into 2 components of length 3
-    st1 = state[0:3]
-    st2 = state[3:6]
-    # efficiently advance state -> A*s % m for both state parts
-    nst1m = mat33_mat31_mult(A1p141, st1)
-    nst2m = mat33_mat31_mult(A2p141, st2)
-    nst1 = mat31_mod(nst1m, mrgm1)
-    nst2 = mat31_mod(nst2m, mrgm2)
-    nstate = tuple(nst1 + nst2)
-    rng.seed(nstate)
-    # increment the stream index
-    rng.s_ss_sss_index[0] += 1
-    # update state referencing
-    rng.stream_start = nstate
-    rng.substream_start = nstate
-    rng.subsubstream_start = nstate
+    def advance_substream(self):
+        """
+        Advance the state of the generator to the start of the next substream.
+        Substreams are of length 2**94.
+        """
+        state = self.substream_start
+        # split the state into 2 components of length 3
+        st1 = state[0:3]
+        st2 = state[3:6]
+        # efficiently advance state -> A*s % m for both state parts
+        nst1m = mat33_mat31_mult(A1p94, st1)
+        nst2m = mat33_mat31_mult(A2p94, st2)
+        nst1 = mat31_mod(nst1m, mrgm1)
+        nst2 = mat31_mod(nst2m, mrgm2)
+        nstate = tuple(nst1 + nst2)
+        self.seed(nstate)
+        # increment the substream index
+        self.s_ss_sss_index[1] += 1
+        # update state referencing
+        self.substream_start = nstate
+        self.subsubstream_start = nstate
 
-def advance_substream(rng):
-    """
-    Advance the state of the generator to the start of the next substream.
-    Substreams are of length 2**94.
+    def advance_subsubstream(self):
+        """
+        Advance the state of the generator to the start of the next subsubstream.
+        Subsubstreams are of length 2**47.
+        """
+        state = self.subsubstream_start
+        # split the state into 2 components of length 3
+        st1 = state[0:3]
+        st2 = state[3:6]
+        # efficiently advance state -> A*s % m for both state parts
+        nst1m = mat33_mat31_mult(A1p47, st1)
+        nst2m = mat33_mat31_mult(A2p47, st2)
+        nst1 = mat31_mod(nst1m, mrgm1)
+        nst2 = mat31_mod(nst2m, mrgm2)
+        nstate = tuple(nst1 + nst2)
+        self.seed(nstate)
+        # increment the subsubstream index
+        self.s_ss_sss_index[2] += 1
+        # update state referencing
+        self.subsubstream_start = nstate
 
-    Arguments
-    ---------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    state = rng.substream_start
-    # split the state into 2 components of length 3
-    st1 = state[0:3]
-    st2 = state[3:6]
-    # efficiently advance state -> A*s % m for both state parts
-    nst1m = mat33_mat31_mult(A1p94, st1)
-    nst2m = mat33_mat31_mult(A2p94, st2)
-    nst1 = mat31_mod(nst1m, mrgm1)
-    nst2 = mat31_mod(nst2m, mrgm2)
-    nstate = tuple(nst1 + nst2)
-    rng.seed(nstate)
-    # increment the substream index
-    rng.s_ss_sss_index[1] += 1
-    # update state referencing
-    rng.substream_start = nstate
-    rng.subsubstream_start = nstate
+    def reset_stream(self):
+        """
+        Reset the state of the generator to the start of the current stream.
+        """
+        nstate = self.stream_start
+        self.seed(nstate)
+        # update state referencing
+        self.substream_start = nstate
+        self.subsubstream_start = nstate
+        # reset index for substream and subsubstream
+        self.s_ss_sss_index[1] = 0
+        self.s_ss_sss_index[2] = 0
 
-def advance_subsubstream(rng):
-    """
-    Advance the state of the generator to the start of the next subsubstream.
-    Subsubstreams are of length 2**47.
+    def reset_substream(self):
+        """
+        Reset the state of the generator to the start of the current substream.
+        """
+        nstate = self.substream_start
+        self.seed(nstate)
+        # update state referencing
+        self.subsubstream_start = nstate
+        # reset index for substream and subsubstream
+        self.s_ss_sss_index[2] = 0
 
-    Arguments
-    ---------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    state = rng.subsubstream_start
-    # split the state into 2 components of length 3
-    st1 = state[0:3]
-    st2 = state[3:6]
-    # efficiently advance state -> A*s % m for both state parts
-    nst1m = mat33_mat31_mult(A1p47, st1)
-    nst2m = mat33_mat31_mult(A2p47, st2)
-    nst1 = mat31_mod(nst1m, mrgm1)
-    nst2 = mat31_mod(nst2m, mrgm2)
-    nstate = tuple(nst1 + nst2)
-    rng.seed(nstate)
-    # increment the subsubstream index
-    rng.s_ss_sss_index[2] += 1
-    # update state referencing
-    rng.subsubstream_start = nstate
-
-def reset_stream(rng):
-    """
-    Reset the state of the generator to the start of the current stream.
-
-    Arguments
-    ---------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    nstate = rng.stream_start
-    rng.seed(nstate)
-    # update state referencing
-    rng.substream_start = nstate
-    rng.subsubstream_start = nstate
-    # reset index for substream and subsubstream
-    rng.s_ss_sss_index[1] = 0
-    rng.s_ss_sss_index[2] = 0
-
-def reset_substream(rng):
-    """
-    Reset the state of the generator to the start of the current substream.
-
-    Parameters
-    ----------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    nstate = rng.substream_start
-    rng.seed(nstate)
-    # update state referencing
-    rng.subsubstream_start = nstate
-    # reset index for substream and subsubstream
-    rng.s_ss_sss_index[2] = 0
-
-def reset_subsubstream(rng):
-    """
-    Reset the state of the generator to the start of the current subsubstream.
-
-    Parameters
-    ----------
-    rng : MRG32k3a object
-        mrg32k3a generator
-    """
-    nstate = rng.subsubstream_start
-    rng.seed(nstate)
+    def reset_subsubstream(self):
+        """
+        Reset the state of the generator to the start of the current subsubstream.
+        """
+        nstate = self.subsubstream_start
+        self.seed(nstate)
 
 def start_fixed_s_ss_sss(rng, s_ss_sss_triplet):
     """

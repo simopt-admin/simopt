@@ -58,6 +58,10 @@ class TestMRG32k3a(unittest.TestCase):
     def test_A2p141(self):
         self.assertEqual(mat33_power_mod(A2p0, 2**141, mrgm2), A2p141)
 
+    def test_get_current_state(self):
+        rng = MRG32k3a()
+        self.assertEqual(rng.get_current_state(), seed)
+
     def test_first_state(self):
         rng = MRG32k3a()
         self.assertEqual(rng._current_state, seed)
@@ -86,6 +90,84 @@ class TestMRG32k3a(unittest.TestCase):
         st1 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A1p0, 99, mrgm1), seed[0:3]),mrgm1)
         st2 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A2p0, 99, mrgm2), seed[3:6]),mrgm2)
         self.assertSequenceEqual(rng._current_state, st1 + st2)
+
+    def test_advance_stream(self):
+        rng = MRG32k3a()
+        rng.advance_stream()        
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [1, 0, 0])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, rng._current_state)
+        self.assertEqual(rng.substream_start, rng._current_state)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [1, 0, 0])
+
+    def test_advance_substream(self):
+        rng = MRG32k3a()
+        rng.advance_substream()        
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [0, 1, 0])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, seed)
+        self.assertEqual(rng.substream_start, rng._current_state)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [0, 1, 0])
+
+    def test_advance_subsubstream(self):
+        rng = MRG32k3a()
+        rng.advance_subsubstream()        
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [0, 0, 1])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, seed)
+        self.assertEqual(rng.substream_start, seed)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [0, 0, 1])
+
+    def test_reset_stream(self):
+        rng = MRG32k3a()
+        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng.random()
+        rng.reset_stream()
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [1, 0, 0])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        self.assertEqual(rng.stream_start, rng._current_state)
+        self.assertEqual(rng.substream_start, rng._current_state)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [1, 0, 0])
+
+    def test_reset_substream(self):
+        rng = MRG32k3a()
+        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng.random()
+        rng.reset_substream()
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [1, 1, 0])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        rng3 = MRG32k3a()
+        start_fixed_s_ss_sss(rng3, [1, 0, 0])
+        self.assertEqual(rng.stream_start, rng3._current_state)
+        self.assertEqual(rng.substream_start, rng._current_state)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [1, 1, 0])
+
+    def test_reset_subsubstream(self):
+        rng = MRG32k3a()
+        start_fixed_s_ss_sss(rng, [1, 1, 1])
+        rng.random()
+        rng.reset_subsubstream()
+        rng2 = MRG32k3a()
+        start_fixed_s_ss_sss(rng2, [1, 1, 1])
+        self.assertEqual(rng._current_state, rng2._current_state)
+        rng3 = MRG32k3a()
+        start_fixed_s_ss_sss(rng3, [1, 0, 0])
+        rng4 = MRG32k3a()
+        start_fixed_s_ss_sss(rng4, [1, 1, 0])
+        self.assertEqual(rng.stream_start, rng3._current_state)
+        self.assertEqual(rng.substream_start, rng4._current_state)
+        self.assertEqual(rng.subsubstream_start, rng._current_state)
+        self.assertEqual(rng.s_ss_sss_index, [1, 1, 1])
 
 if __name__ == '__main__':
     unittest.main()
