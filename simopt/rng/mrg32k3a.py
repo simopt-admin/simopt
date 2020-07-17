@@ -249,41 +249,7 @@ class MRG32k3a(random.Random):
             current state of the generator
         """
         return self._current_state
-
-    def getstate(self):
-        """
-        Return the state of the generator.
-
-        Returns
-        -------
-        _current_state : tuple of int of length 6
-            current state of the generator
-        random.Random.getstate() : tuple of int
-            Random.getstate output
-
-        See also
-        --------
-        random.Random
-        """
-        return self.get_current_state(), super().getstate()
-
-    def setstate(self, state):
-        """
-        Set the internal state of the generator.
-
-        Arguments
-        ---------
-        state : tuple
-            state[0] is new state for the generator
-            state[1] is random.Random.getstate()
-
-        See also
-        --------
-        random.Random
-        """
-        self.seed(state[0])
-        super().setstate(state[1])
-
+        
     def normalvariate(self, mu=0, sigma=1):
         """
         Generate a normal random variate.
