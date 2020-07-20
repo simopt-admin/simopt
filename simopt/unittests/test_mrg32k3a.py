@@ -1,5 +1,7 @@
 import unittest
-from mrg32k3a import *
+import sys
+print(sys.path)
+from rng.mrg32k3a import *
 #from mrg32k3a import MRG32k3a
 #from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
 #from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n

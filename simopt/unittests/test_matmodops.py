@@ -1,5 +1,5 @@
 import unittest
-from matmodops import *
+from rng.matmodops import *
 
 A = [[1, 2, 3],
     [4, 5, 6],

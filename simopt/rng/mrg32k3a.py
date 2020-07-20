@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Summary
 -------
@@ -21,7 +22,7 @@ start_fixed_s_ss_sss : method
 import random
 from math import log
 import functools
-from matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
+from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
 ## constants used in mrg32k3a and in substream generation
 ## all from:
