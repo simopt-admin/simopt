@@ -32,7 +32,8 @@ myoracle.simulate(mysoln, m=3)
 
 all_resp = [True, True]
 is_obj = [True, False]
-print('For a batch of 3 replications:')
+
+print('\nFor a batch of 3 replications:\n')
 print('The responses are {}'.format(mysoln.responses))
 print('The mean responses are {}'.format(mysoln.response_mean(which=all_resp)))
 print('The first mean response is {}'.format(mysoln.response_mean(which=is_obj)))

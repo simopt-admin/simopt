@@ -253,8 +253,7 @@ class Solution(object):
         gradient_std_error : array of rank (n_reponses, dim)
             sample standard errors of the components of the gradients of the specified responses    
         """
-        #gradient_std_error = np.std(np.array(self.gradients)[:,which], axis=0, ddof=1) #/np.sqrt(self.n_reps)
-        gradient_std_error = np.std(np.array(self.gradients)[:,which].astype(np.float64), axis=0, ddof=1)/np.sqrt(self.n_reps)
+        gradient_std_error = np.std(np.array(self.gradients)[:,which], axis=0, ddof=1)/np.sqrt(self.n_reps)
         return gradient_std_error
 
     def gradient_cov(self, which):
