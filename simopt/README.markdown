@@ -1,10 +1,8 @@
 # Base classes and functions
 
-The `base` module includes base classes for solvers, problems, and oracles and miscellaneous functions.
+The `base` module includes base classes for solvers, problems, oracles and solutions.
 
-## Oracles
-The `Oracle` class implements simulation oracles (models).
-
+## `Oracle` class
 New oracles can be added to the library by subclassing the `Oracle` class.
 
 Any subclass <ins>**must**</ins> define the following attributes:
@@ -13,13 +11,22 @@ Any subclass <ins>**must**</ins> define the following attributes:
 * `n_responses` : the number of stochastic responses (performance measures);
 
 and the following methods:
-* `check_simulatable` : checks whether the system characterized by a given vector of decision variables can be simulated;
-* `simulate` : generates a single simulation replication.
+* `check_simulatable` : checks whether the system characterized by a given vector of decision variables can be simulated; and
+* `replicate` : generates a single simulation replication.
 
 The `Oracle` class also features several useful methods:
 * `attach_rngs` : assigns a set of random number generators to the oracle;
-* `batch` : takes a fixed number of replications, using distinct subsubstreams for each replication.
+* `simulate` : takes a fixed number of replications, using distinct subsubstreams for each replication.
 
-## Miscellaneous functions
+## `Solution` class
+Objects in the `Solution` class store the outputs of past replications taken a given solution.
+Attributes include:
+* `x` : the vector of decision variables describing the solution;
+* `dim` : the length of `x`;
+* `n_reps` : the number of replications taken at the solution thus far;
+* `responses` : the performance measures of interest from each replication; and
+* `gradients` : the gradients of the responses from each replication.
 
-The `aggregate` function takes the outputs (responses and gradient estimates) from the replications run by `oracle.batch` and calculates the sample means and covariances.
+The `Solution` class includes the following methods:
+* `response_mean`, `response_var`, `response_std_error`, `response_cov` : calculate summary statistics of the responses; and
+* `gradient_mean`, `gradient_var`, `gradient_std_error`, `gradient_cov` : calculate summary statistics of the gradients.
