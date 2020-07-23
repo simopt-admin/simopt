@@ -11,7 +11,8 @@ Any subclass <ins>**must**</ins> define the following attributes:
 * `n_responses` : the number of stochastic responses (performance measures);
 
 and the following methods:
-* `check_simulatable` : checks whether the system characterized by a given vector of decision variables can be simulated; and
+* `check_simulatable_params` : checks whether the oracle characterized by the given parameters can be simulated;
+* `check_simulatable_x` : checks whether the system characterized by `x` can be simulated; and
 * `replicate` : generates a single simulation replication.
 
 The `Oracle` class also features several useful methods:

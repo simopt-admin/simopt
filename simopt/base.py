@@ -46,7 +46,18 @@ class Oracle(object):
         """
         self.rng_list = rng_list
 
-    def check_simulatable(self, x):
+    def check_simulatable_params(self):
+        """
+        Determine if a simulation replication can be run with the given parameters.
+
+        Returns
+        -------
+        is_simulatable : bool
+            indicates if oracle specified by parameters is simulatable
+        """
+        raise NotImplementedError
+
+    def check_simulatable_x(self, x):
         """
         Determine if a simulation replication can be run at solution `x`.
 
@@ -57,7 +68,7 @@ class Oracle(object):
 
         Returns
         -------
-        issimulatable : bool
+        is_simulatable : bool
             indicates if `x` is simulatable
         """
         raise NotImplementedError

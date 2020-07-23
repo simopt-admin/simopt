@@ -13,12 +13,12 @@ rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
 myoracle.attach_rngs(rng_list)
 # print(myoracle.rng_list)
 
-print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable(x=(1,))))
-print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable(x=(1,))))
-print('For x = (-1,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(-1,))))
-print('For x = (0,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(0,))))
-print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(1,2))))
-print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x='hi')))
+print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable_x(x=(1,))))
+print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable_x(x=(1,))))
+print('For x = (-1,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_x(x=(-1,))))
+print('For x = (0,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_x(x=(0,))))
+print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_x(x=(1,2))))
+print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_x(x='hi')))
 
 mysoln = Solution(x=(3,))
 response, gradient = myoracle.replicate(mysoln.x)

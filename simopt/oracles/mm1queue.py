@@ -51,7 +51,25 @@ class MM1Queue(Oracle):
                 params[key] = self.default_params[key]
         self.params = params
 
-    def check_simulatable(self, x):
+    def check_simulatable_params(self):
+        """
+        Determine if a simulation replication can be run with the given parameters.
+
+        Returns
+        -------
+        is_simulatable : bool
+            indicates if oracle specified by parameters is simulatable
+        """
+        is_simulatable = True
+        if self.params["lambd"] < 0:
+            is_simulatable = False
+        if self.params["warmup"] < 0 or not isinstance(self.params["warmup"], int):
+            is_simulatable = False
+        if self.params["people"] < 0 or not isinstance(self.params["people"], int):
+            is_simulatable = False
+        return is_simulatable
+
+    def check_simulatable_x(self, x):
         """
         Determine if a simulation replication can be run at solution `x`.
 
@@ -62,14 +80,14 @@ class MM1Queue(Oracle):
 
         Returns
         -------
-        issimulatable : bool
+        is_simulatable : bool
             indicates if `x` is simulatable
         """
         if len(x) == 1 and x[0] > 0:
-            issimulatable = True
+            is_simulatable = True
         else:
-            issimulatable = False
-        return issimulatable
+            is_simulatable = False
+        return is_simulatable
 
     def replicate(self, x):
         """
