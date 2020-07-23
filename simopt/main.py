@@ -2,7 +2,7 @@ import numpy as np
 
 from rng.mrg32k3a import MRG32k3a
 from oracles.gig1queue import GIG1Queue
-from base import aggregate
+from base import Solution
 
 myoracle = GIG1Queue()
 myoracle = GIG1Queue(params={"lambd": 10})
@@ -13,34 +13,31 @@ rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
 myoracle.attach_rngs(rng_list)
 # print(myoracle.rng_list)
 
-# print(myoracle.check_simulatable(x=[1]))
-# print(myoracle.check_simulatable(x=[-1]))
-# print(myoracle.check_simulatable(x=[0]))
-# print(myoracle.check_simulatable(x=[1,2]))
-# print(myoracle.check_simulatable(x='hi'))
+print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable(x=(1,))))
+print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable(x=(1,))))
+print('For x = (-1,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(-1,))))
+print('For x = (0,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(0,))))
+print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(1,2))))
+print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x='hi')))
 
-# output = myoracle.simulate(x=[1.5])
-# print(output["response"])
-# print(output["gradient"])
+mysoln = Solution(x=(1.5,))
+response, gradient = myoracle.replicate(mysoln.x)
+print('For a single replication:')
+print('The responses are {}'.format(response))
+print('The gradients are {}'.format(gradient))
+for rng in myoracle.rng_list:
+    rng.reset_substream()
+myoracle.simulate(mysoln, m=3)
 
-# response, gradient = myoracle.simulate(x=[1.5])
-# print(response)
-# print(gradient)
+print('For a batch of 3 replications:')
+print('The responses are {}'.format(mysoln.responses))
+print('The mean responses are {}'.format(mysoln.response_mean()))
+print('The variances of the responses are {}'.format(mysoln.response_var()))
+print('The standard errors of the responses are {}'.format(mysoln.response_std_error()))
+print('The covariances of the responses are {}'.format(mysoln.response_cov()))
 
-responses, gradients = myoracle.batch(x=[1.5], m=10)
-# print(responses)
-# print(gradients)
-
-response_mean, response_cov, gradient_mean, gradient_cov = aggregate(responses, gradients)
-print(response_mean)
-print(response_cov)
-# print(gradient_mean)
-# print(gradient_cov)
-
-# responses = np.array([[1,2],[4,8],[16,32]])
-# gradients = np.array([[[1,2,3,4],[10,9,8,7]],[[2,3,4,5],[9,8,7,6]],[[3,4,5,6],[8,7,6,5]]])
-# response_mean, response_cov, gradient_mean, gradient_cov = aggregate(responses, gradients)
-# print(response_mean)
-# print(response_cov)
-# print(gradient_mean)
-# print(gradient_cov)
+print('The gradients are {}'.format(mysoln.gradients))
+#print('The mean gradients are {}'.format(mysoln.gradient_mean()))
+#print('The variances of the gradients are {}'.format(mysoln.gradient_var()))
+#print('The standard errors of the gradients are {}'.format(mysoln.gradient_std_error()))
+#print('The covariances of the gradients are {}'.format(mysoln.gradient_cov()))

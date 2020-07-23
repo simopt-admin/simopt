@@ -22,13 +22,13 @@ class GIG1Queue(Oracle):
         number of decision variables
     n_responses : int
         number of responses (performance measures)
-    lambd : float (nonnegative)
-        interarrival rate parameter for exponential distribution
+    params : dict
+        changeable parameters of the simulation model
 
     Arguments
     ---------
     params : dict
-        dictionary of changeable parameters of the simulation model
+        changeable parameters of the simulation model
 
     See also
     --------
@@ -56,7 +56,7 @@ class GIG1Queue(Oracle):
 
         Arguments
         ---------
-        x : list of length 1
+        x : tuple of length 1
             solution to evalaute
 
         Returns
@@ -70,13 +70,13 @@ class GIG1Queue(Oracle):
             issimulatable = False
         return issimulatable
 
-    def simulate(self, x):
+    def replicate(self, x):
         """
         Simulate a single replication at solution `x`.
 
         Arguments
         ---------
-        x : list of length 1
+        x : tuple of length 1
             solution to evaluate
 
         Returns
