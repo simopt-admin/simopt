@@ -184,7 +184,7 @@ class Solution(object):
         """
         response_cov = np.cov(self.responses, rowvar=False, ddof=1)
         return response_cov
-
+        
     def gradient_mean(self):
         """
         Compute sample mean of all gradient components.

@@ -1,11 +1,11 @@
 import numpy as np
 
 from rng.mrg32k3a import MRG32k3a
-from oracles.gig1queue import GIG1Queue
+from oracles.mm1queue import MM1Queue
 from base import Solution
 
-myoracle = GIG1Queue()
-myoracle = GIG1Queue(params={"lambd": 10})
+myoracle = MM1Queue()
+myoracle = MM1Queue(params={"lambd": 1.5})
 print(myoracle.params)
 
 rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
@@ -20,11 +20,12 @@ print('For x = (0,), is_simulatable should be False and is {}'.format(myoracle.c
 print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x=(1,2))))
 print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable(x='hi')))
 
-mysoln = Solution(x=(1.5,))
+mysoln = Solution(x=(3,))
 response, gradient = myoracle.replicate(mysoln.x)
 print('For a single replication:')
 print('The responses are {}'.format(response))
 print('The gradients are {}'.format(gradient))
+
 for rng in myoracle.rng_list:
     rng.reset_substream()
 myoracle.simulate(mysoln, m=3)
@@ -38,6 +39,6 @@ print('The covariances of the responses are {}'.format(mysoln.response_cov()))
 
 print('The gradients are {}'.format(mysoln.gradients))
 #print('The mean gradients are {}'.format(mysoln.gradient_mean()))
-#print('The variances of the gradients are {}'.format(mysoln.gradient_var()))
-#print('The standard errors of the gradients are {}'.format(mysoln.gradient_std_error()))
-#print('The covariances of the gradients are {}'.format(mysoln.gradient_cov()))
+# print('The variances of the gradients are {}'.format(mysoln.gradient_var()))
+# print('The standard errors of the gradients are {}'.format(mysoln.gradient_std_error()))
+# print('The covariances of the gradients are {}'.format(mysoln.gradient_cov()))
