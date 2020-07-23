@@ -134,5 +134,5 @@ class MM1Queue(Oracle):
         # return mean sojourn time w/ gradient estimate
         # return fraction who wait w/o gradient estimate
         response = [mean_sojourn_time, fraction_wait]
-        gradient = [grad_mean_sojourn_time, [None]]
+        gradient = [[grad_mean_sojourn_time], [None]]
         return response, gradient

@@ -137,103 +137,145 @@ class Solution(object):
         self.responses = []
         self.gradients = []
 
-    def response_mean(self):
+    def response_mean(self, which):
         """
-        Compute sample mean of all responses.
+        Compute sample mean of specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         response_mean : array of rank (n_responses)
-            sample means of the responses
+            sample means of the specified responses
         """
-        response_mean = np.mean(self.responses, axis=0)
+        response_mean = np.mean(np.array(self.responses)[:,which], axis=0)
         return response_mean
 
-    def response_var(self):
+    def response_var(self, which):
         """
-        Compute sample variance of all responses.
+        Compute sample variance of specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         response_var : array of rank (n_responses)
-            sample variances of the responses
+            sample variances of the specified responses
         """
-        response_var = np.var(self.responses, axis=0, ddof=1)
+        response_var = np.var(np.array(self.responses)[:,which], axis=0, ddof=1)
         return response_var
 
-    def response_std_error(self):
+    def response_std_error(self, which):
         """"
-        Compute sample standard error of all responses.
+        Compute sample standard error of specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         response_std_error : array of rank (n_responses)
-            sample standard errors of the responses
+            sample standard errors of the specified responses
         """
-        response_std_error = np.std(self.responses, axis=0, ddof=1)/np.sqrt(self.n_reps)
+        response_std_error = np.std(np.array(self.responses)[:,which], axis=0, ddof=1)/np.sqrt(self.n_reps)
         return response_std_error
 
-    def response_cov(self):
+    def response_cov(self, which):
         """"
-        Compute sample covariance of all responses.
+        Compute sample covariance of specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         response_cov : array of rank (n_responses, n_responses)
-            sample covariance matrix of the responses
+            sample covariance matrix of the specified responses
         """
-        response_cov = np.cov(self.responses, rowvar=False, ddof=1)
+        response_cov = np.cov(np.array(self.responses)[:,which], rowvar=False, ddof=1)
         return response_cov
         
-    def gradient_mean(self):
+    def gradient_mean(self, which):
         """
-        Compute sample mean of all gradient components.
+        Compute sample mean of specified gradient components.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         gradient_mean : array of rank (n_responses, dim)
-            sample means of the components of the gradients of the responses
+            sample means of the components of the gradients of the specified responses
         """
-        gradient_mean = np.mean(self.gradients, axis=0)
+        gradient_mean = np.mean(np.array(self.gradients)[:,which], axis=0)
         return gradient_mean
 
-    def gradient_var(self):
+    def gradient_var(self, which):
         """
-        Compute sample variance of all gradient components.
+        Compute sample variance of specified gradient components.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         gradient_var : array of rank (n_reponses, dim)
-            sample variances of the components of the gradients of the respones
+            sample variances of the components of the gradients of the specified responses
         """
-        gradient_var = np.var(self.gradients, axis=0, ddof=1)
+        gradient_var = np.var(np.array(self.gradients)[:,which], axis=0, ddof=1)
         return gradient_var
 
-    def gradient_std_error(self):
+    def gradient_std_error(self, which):
         """"
-        Compute sample standard error of all gradient components.
+        Compute sample standard error of all gradient components for specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         gradient_std_error : array of rank (n_reponses, dim)
-            sample standard errors of the components of the gradients of the respones    
+            sample standard errors of the components of the gradients of the specified responses    
         """
-        gradient_std_error = np.std(self.gradients, axis=0, ddof=1)/np.sqrt(self.n_reps)
+        #gradient_std_error = np.std(np.array(self.gradients)[:,which], axis=0, ddof=1) #/np.sqrt(self.n_reps)
+        gradient_std_error = np.std(np.array(self.gradients)[:,which].astype(np.float64), axis=0, ddof=1)/np.sqrt(self.n_reps)
         return gradient_std_error
 
-    def gradient_cov(self):
+    def gradient_cov(self, which):
         """"
         Compute sample covariance of all gradient components,
-        separately for each response.
+        separately for specified responses.
+
+        Arguments
+        ---------
+        which : list of bools of length n_responses
+            responses of which to compute statistics 
 
         Returns
         -------
         response_cov : array of rank (n_responses, dim, dim)
-            sample covariance matrices of the gradients, for each response
+            sample covariance matrices of the gradients, for the specified responses
         """
-        n_responses = len(self.responses[0])
-        #dim = len(self.gradients[0][0])
-        gradient_cov = np.zeros((n_responses,self.dim,self.dim))
-        for i in range(n_responses):
-            gradient_cov[i,:,:] = np.cov(self.gradients[:,i,:], rowvar=False, ddof=1)
+        gradient_cov = np.zeros((sum(which),self.dim,self.dim))
+        for i in range(len(which)):
+            if which[i]:
+                new_index = sum(which[:i])
+                sliced_gradient = [sublist[i] for sublist in self.gradients]
+                gradient_cov[new_index,:,:] = np.cov(sliced_gradient, rowvar = False, ddof=1)
         return gradient_cov
