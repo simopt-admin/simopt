@@ -1,8 +1,8 @@
-# (SASGD) - Stratified Adaptive Stochastic Gradient Descent
+# (SSSGD) - Stratified Stopping Stochastic Gradient Descent
 
 ### About the Solver
 
-An iterative algorithm that approximates the gradient using finite-differences, sets the step size using backtracking, allows for stratified sampling, and chooses the total sample size based on one-time adaptive rules that update to keep the stochastic and optimality error in a fixed lock-step.
+An iterative algorithm that approximates the gradient using finite-differences, sets the step size using backtracking, allows for stratified sampling, and chooses the sample size for each stratum based on stopping time adaptive rules that keep the stochastic and optimality error in a fixed lock-step.
 
 ### Properties
 
