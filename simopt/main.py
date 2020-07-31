@@ -55,6 +55,14 @@ print('The variance of the first gradients is {}'.format(mysoln.gradient_var(whi
 print('The standard error of the first gradient is {}'.format(mysoln.gradient_std_error(which=is_obj)))
 print('The variance of the first gradients is (again) {}'.format(mysoln.gradient_cov(which=is_obj)))
 
+noise_factors = {
+    "lambda": 1.5,
+    "warmup": 20,
+    "people": 50
+}
+myneworacle = MM1Queue(noise_factors)
+for key in noise_factors:
+    print(key, myneworacle.check_simulatable_factor(key))
 
 # OLD VERSION OF DECISION VARIABLES & FACTORS
 

@@ -48,7 +48,7 @@ class Problem(object):
         associated simulation oracle that generates replications
     """
     def __init__(self):
-        self.oracle = None
+        #self.oracle = None
         super().__init__()
 
     def vector_to_factor_dict(self, vector):
@@ -153,6 +153,8 @@ class Oracle(object):
         number of responses (performance measures)
     factors : dict
         changeable factors of the simulation model
+    specifications : nested dict
+        details of each factor (for GUI and data validation)
     """
     def __init__(self):
         super().__init__()
@@ -182,7 +184,11 @@ class Oracle(object):
         is_simulatable : bool
             indicates if oracle specified by factors is simulatable
         """
-        raise NotImplementedError
+        is_simulatable = True
+        is_simulatable *= self.check_factor_datatype(factor_name)
+        is_simulatable *= self.check_factor_list[factor_name]()
+        return is_simulatable
+        #raise NotImplementedError
 
     def check_simulatable_factors(self):
         """
@@ -196,21 +202,17 @@ class Oracle(object):
         pass
         #raise NotImplementedError
 
-    # def check_simulatable_x(self, x):
-    #     """
-    #     Determine if a simulation replication can be run at solution `x`.
+    def check_factor_datatype(self, factor_name):
+        """
+        Determine if a factor's data type matches its specification.
 
-    #     Arguments
-    #     ---------
-    #     x : tuple
-    #         solution to evaluate
-
-    #     Returns
-    #     -------
-    #     is_simulatable : bool
-    #         indicates if `x` is simulatable
-    #     """
-    #     raise NotImplementedError
+        Returns
+        -------
+        is_right_type : bool
+            indicates if factor is of specified data type
+        """
+        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        return is_right_type
 
     def replicate(self, decision_factors):
         """

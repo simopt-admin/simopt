@@ -23,10 +23,12 @@ class MM1Queue(Oracle):
         number of responses (performance measures)
     factors : dict
         changeable factors of the simulation model
+    specifications : dict
+        details of each factor (for GUI and data validation)
 
     Arguments
     ---------
-    noise_factors : dict
+    noise_factors : nested dict
         noise_factors of the simulation model
 
     See also
@@ -37,7 +39,30 @@ class MM1Queue(Oracle):
         self.n_rngs = 2
         self.n_responses = 2
         self.factors = noise_factors
-
+        self.specifications = {
+            "lambda": {
+                "description": "Rate parameter of interarrival time distribution.",
+                "datatype": float
+            },
+            "mu": {
+                "description": "Rate parameter of service time distribution.",
+                "datatype": float
+            },
+            "warmup": {
+                "description": "Number of people as warmup before collecting statistics",
+                "datatype": int
+            },
+            "people": {
+                "description": "Number of people from which to calculate the average sojourn time",
+                "datatype": int
+            }
+        }
+        self.check_factor_list = {
+            "lambda": self.check_lambda,
+            "mu": self.check_mu,
+            "warmup": self.check_warmup,
+            "people": self.check_people
+        }
         # # Default parameters
         # self.default_params = {
         #     "lambd": 2, # rate parameter of interarrival time
@@ -50,48 +75,21 @@ class MM1Queue(Oracle):
         #         params[key] = self.default_params[key]
         # self.params = params
 
-    # def check_simulatable_params(self):
-    #     """
-    #     Determine if a simulation replication can be run with the given parameters.
+    def check_lambda(self):
+        return self.factors["lambda"] > 0
 
-    #     Returns
-    #     -------
-    #     is_simulatable : bool
-    #         indicates if oracle specified by parameters is simulatable
-    #     """
-    #     is_simulatable = True
-    #     if self.params["lambd"] < 0:
-    #         is_simulatable = False
-    #     if self.params["warmup"] < 0 or not isinstance(self.params["warmup"], int):
-    #         is_simulatable = False
-    #     if self.params["people"] < 0 or not isinstance(self.params["people"], int):
-    #         is_simulatable = False
-    #     return is_simulatable
+    def check_mu(self):
+        return self.factors["mu"] > 0
 
-    # def check_simulatable_x(self, x):
-    #     """
-    #     Determine if a simulation replication can be run at solution `x`.
+    def check_warmup(self):
+        return self.factors["warmup"] >= 1
 
-    #     Arguments
-    #     ---------
-    #     x : tuple of length 1
-    #         solution to evalaute
-
-    #     Returns
-    #     -------
-    #     is_simulatable : bool
-    #         indicates if `x` is simulatable
-    #     """
-    #     if len(x) == 1 and x[0] > 0:
-    #         is_simulatable = True
-    #     else:
-    #         is_simulatable = False
-    #     return is_simulatable
-
-    def check_simulatable_factor(self, factor_name):
-        return True
+    def check_people(self):
+        return self.factors["people"] >= 1
 
     def check_simulatable_factors(self):
+        #demo for condition that queue must be stable
+        #return self.factors["mu"] > self.factors["lambda"]
         return True
 
     def replicate(self, decision_factors):
@@ -154,10 +152,9 @@ class MM1Queue(Oracle):
         # return mean sojourn time w/ gradient estimate
         # return fraction who wait w/o gradient estimate
         response = [mean_sojourn_time, fraction_wait]
-        #gradient = [[grad_mean_sojourn_time], [np.nan for _ in range(len(x))]]
         mean_sojourn_time_grad = {
             "mu": grad_mean_sojourn_time,
-            "lambda": np.nan,
+            "lambda": np.nan, # to be derived...
             "warmup": np.nan,
             "people": np.nan 
         }
