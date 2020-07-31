@@ -48,6 +48,7 @@ class Problem(object):
         associated simulation oracle that generates replications
     """
     def __init__(self):
+        self.oracle = None
         super().__init__()
 
     def vector_to_factor_dict(self, vector):
@@ -66,14 +67,15 @@ class Problem(object):
         """
         raise NotImplementedError
 
-    def factor_dict_to_vector(self, factor_dict):
+    def list_of_factor_dict_to_vector(self, list_factor_dict):
         """
-        Convert a dictionary with factor keys to a vector of variables
+        Convert a list of dictionarys with factor keys to a vector
+        of variables.
 
         Arguments
         ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
+        list_factor_dict : dictionary
+            List of dicts with factor keys and associated values
 
         Returns
         -------
@@ -108,6 +110,33 @@ class Problem(object):
             vector of decision variables
         """
         pass
+    
+    def simulate(self, solution, m=1):
+        """
+        Simulate `m` i.i.d. replications at solution `x`.
+
+        Arguments
+        ---------
+        solution : Solution object
+            solution to evalaute
+        m : int
+            number of replications to simulate at `x`
+        """
+        if m < 1:
+            print('--* Error: Number of replications must be at least 1. ')
+            print('--* Aborting. ')
+        else:
+            for _ in range(m):
+                # generate one replication at x
+                response, gradient = self.oracle.replicate(solution.decision_factors)
+                # increment counter 
+                solution.n_reps += 1
+                # append results
+                solution.responses.append(response)
+                solution.gradients.append(self.list_of_factor_dict_to_vector(gradient))
+                # advance rngs to start of next subsubstream
+                for rng in self.oracle.rng_list:
+                    rng.advance_subsubstream()
 
 class Oracle(object):
     """
@@ -200,33 +229,6 @@ class Oracle(object):
             gradient estimate for each response
         """
         raise NotImplementedError
-
-    def simulate(self, solution, m=1):
-        """
-        Simulate `m` i.i.d. replications at solution `x`.
-
-        Arguments
-        ---------
-        solution : Solution object
-            solution to evalaute
-        m : int
-            number of replications to simulate at `x`
-        """
-        if m < 1:
-            print('--* Error: Number of replications must be at least 1. ')
-            print('--* Aborting. ')
-        else:
-            for _ in range(m):
-                # generate one replication at x
-                response, gradient = self.replicate(solution.x)
-                # increment counter 
-                solution.n_reps += 1
-                # append results
-                solution.responses.append(response)
-                solution.gradients.append(gradient)
-                # advance rngs to start of next subsubstream
-                for rng in self.rng_list:
-                    rng.advance_subsubstream()
 
 class Solution(object):
     """
