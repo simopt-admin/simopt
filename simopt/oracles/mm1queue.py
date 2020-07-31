@@ -19,84 +19,89 @@ class MM1Queue(Oracle):
         number of random-number generators used to run a simulation replication
     rng_list : list of rng.MRG32k3a objects
         list of random-number generators used to run a simulation replication
-    dim : int
-        number of decision variables
     n_responses : int
         number of responses (performance measures)
-    params : dict
-        changeable parameters of the simulation model
+    factors : dict
+        changeable factors of the simulation model
 
     Arguments
     ---------
-    params : dict
-        changeable parameters of the simulation model
+    noise_factors : dict
+        noise_factors of the simulation model
 
     See also
     --------
     base.Oracle
     """
-    def __init__(self, params={}):
+    def __init__(self, noise_factors={}):
         self.n_rngs = 2
-        self.dim = 1
         self.n_responses = 2
-        # Default parameters
-        self.default_params = {
-            "lambd": 2, # rate parameter of interarrival time
-            "warmup": 20, # number of people as warmup before collecting statistics
-            "people": 50 # number of people from which to calculate the average sojourn time
-        }
-        # Set parameters of the simulation oracle -> fill in missing entries with defaults
-        for key in self.default_params:
-            if key not in params:
-                params[key] = self.default_params[key]
-        self.params = params
+        self.factors = noise_factors
 
-    def check_simulatable_params(self):
-        """
-        Determine if a simulation replication can be run with the given parameters.
+        # # Default parameters
+        # self.default_params = {
+        #     "lambd": 2, # rate parameter of interarrival time
+        #     "warmup": 20, # number of people as warmup before collecting statistics
+        #     "people": 50 # number of people from which to calculate the average sojourn time
+        # }
+        # # Set parameters of the simulation oracle -> fill in missing entries with defaults
+        # for key in self.default_params:
+        #     if key not in params:
+        #         params[key] = self.default_params[key]
+        # self.params = params
 
-        Returns
-        -------
-        is_simulatable : bool
-            indicates if oracle specified by parameters is simulatable
-        """
-        is_simulatable = True
-        if self.params["lambd"] < 0:
-            is_simulatable = False
-        if self.params["warmup"] < 0 or not isinstance(self.params["warmup"], int):
-            is_simulatable = False
-        if self.params["people"] < 0 or not isinstance(self.params["people"], int):
-            is_simulatable = False
-        return is_simulatable
+    # def check_simulatable_params(self):
+    #     """
+    #     Determine if a simulation replication can be run with the given parameters.
 
-    def check_simulatable_x(self, x):
+    #     Returns
+    #     -------
+    #     is_simulatable : bool
+    #         indicates if oracle specified by parameters is simulatable
+    #     """
+    #     is_simulatable = True
+    #     if self.params["lambd"] < 0:
+    #         is_simulatable = False
+    #     if self.params["warmup"] < 0 or not isinstance(self.params["warmup"], int):
+    #         is_simulatable = False
+    #     if self.params["people"] < 0 or not isinstance(self.params["people"], int):
+    #         is_simulatable = False
+    #     return is_simulatable
+
+    # def check_simulatable_x(self, x):
+    #     """
+    #     Determine if a simulation replication can be run at solution `x`.
+
+    #     Arguments
+    #     ---------
+    #     x : tuple of length 1
+    #         solution to evalaute
+
+    #     Returns
+    #     -------
+    #     is_simulatable : bool
+    #         indicates if `x` is simulatable
+    #     """
+    #     if len(x) == 1 and x[0] > 0:
+    #         is_simulatable = True
+    #     else:
+    #         is_simulatable = False
+    #     return is_simulatable
+
+    def check_simulatable_factor(self, factor_name):
+        return True
+
+    def check_simulatable_factors(self):
+        return True
+
+    def replicate(self, decision_factors):
         """
-        Determine if a simulation replication can be run at solution `x`.
+        Simulate a single replication at solution described by `decision_factors`.
 
         Arguments
         ---------
-        x : tuple of length 1
-            solution to evalaute
-
-        Returns
-        -------
-        is_simulatable : bool
-            indicates if `x` is simulatable
-        """
-        if len(x) == 1 and x[0] > 0:
-            is_simulatable = True
-        else:
-            is_simulatable = False
-        return is_simulatable
-
-    def replicate(self, x):
-        """
-        Simulate a single replication at solution `x`.
-
-        Arguments
-        ---------
-        x : tuple of length 1
-            solution to evaluate
+        decision_factors : dict
+            decision factors of the simulation model
 
         Returns
         -------
@@ -104,23 +109,20 @@ class MM1Queue(Oracle):
             performance measures of interest
             response[0] = average sojourn time
             response[1] = fraction of customers who wait
-        gradient : list of lists
-            gradient estimate for each response
+        gradient : list of dicts
+            gradient estimates for each response
         """
-        # extract parameters
-        lambd = self.params["lambd"]
-        warmup = self.params["warmup"]
-        people = self.params["people"]
-        mu = x[0]
+        # set the decision factors of the model
+        self.factors.update(decision_factors) 
         # total number of arrivals to simulate
-        total = warmup + people
+        total = self.factors["warmup"] + self.factors["people"]
         # designate separate random number generators
         arrival_rng = self.rng_list[0]
         service_rng = self.rng_list[1]
         # generate all interarrival times up front
-        arrival_times = [arrival_rng.expovariate(lambd) for _ in range(total)]
+        arrival_times = [arrival_rng.expovariate(self.factors["lambda"]) for _ in range(total)]
         # generate all service times up front
-        service_times = [service_rng.expovariate(mu) for _ in range(total)]
+        service_times = [service_rng.expovariate(self.factors["mu"]) for _ in range(total)]
         # create matrix storing times and metrics for each customer
         cust_mat = np.zeros((total, 6))
         # column 0 : arrival time to queue
@@ -135,22 +137,37 @@ class MM1Queue(Oracle):
         cust_mat[0,2] = cust_mat[0,0] + cust_mat[0,1]
         cust_mat[0,3] = cust_mat[0,1]
         cust_mat[0,4] = 0
-        cust_mat[0,5] = -cust_mat[0,1]/mu
+        cust_mat[0,5] = -cust_mat[0,1]/self.factors["mu"]
         # fill in times for remaining customers
         for i in range(1,total):
             cust_mat[i,2] = max(cust_mat[i,0], cust_mat[i-1,2]) + cust_mat[i,1]
             cust_mat[i,3] = cust_mat[i,2] - cust_mat[i,0]
             cust_mat[i,4] = sum(cust_mat[i-int(cust_mat[i-1,4])-1:i,2] > cust_mat[i,0])
-            cust_mat[i,5] = -sum(cust_mat[i-int(cust_mat[i,4]):i+1,1])/mu
+            cust_mat[i,5] = -sum(cust_mat[i-int(cust_mat[i,4]):i+1,1])/self.factors["mu"]
         # with np.printoptions(precision=3, suppress=True):
         #     print(cust_mat)    
         # compute mean sojourn time and its gradient
-        mean_sojourn_time = np.mean(cust_mat[warmup:,3])
-        grad_mean_sojourn_time = np.mean(cust_mat[warmup:,5])
+        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:,3])
+        grad_mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:,5])
         # compute fraction of customers who wait
-        fraction_wait = np.mean(cust_mat[warmup:,4] > 0)
+        fraction_wait = np.mean(cust_mat[self.factors["warmup"]:,4] > 0)
         # return mean sojourn time w/ gradient estimate
         # return fraction who wait w/o gradient estimate
         response = [mean_sojourn_time, fraction_wait]
-        gradient = [[grad_mean_sojourn_time], [np.nan for _ in range(self.dim)]]
+        #gradient = [[grad_mean_sojourn_time], [np.nan for _ in range(len(x))]]
+        mean_sojourn_time_grad = {
+            "mu": grad_mean_sojourn_time,
+            "lambda": np.nan,
+            "warmup": np.nan,
+            "people": np.nan 
+        }
+        fraction_wait_grad = {
+            "mu": np.nan,
+            "lambda": np.nan,
+            "warmup": np.nan,
+            "people": np.nan
+        }
+        gradient = []
+        gradient.append(dict((key, mean_sojourn_time_grad[key]) for key in decision_factors))
+        gradient.append(dict((key, fraction_wait_grad[key]) for key in decision_factors))
         return response, gradient

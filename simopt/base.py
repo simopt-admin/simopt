@@ -14,6 +14,101 @@ Solution : class
 import numpy as np
 from rng.mrg32k3a import MRG32k3a
 
+class Problem(object):
+    """
+    Base class to implement simulation-optimization problems.
+
+    Attributes
+    ----------
+    minmax : int (+/- 1)
+        indicator of maximization (+1) or minimization (-1)
+    dim : int
+        number of decision variables
+    constraint_type : string
+        description of constraints types: 
+            "unconstrained", "box", "deterministic", "stochastic"
+    variable_type : string
+        description of variable types:
+            "discrete", "continuous", "mixed"
+    gradient_available : bool
+        indicates if gradient of objective function is available
+    budget : int
+        max number of replications (fn evals) for a solver to take
+    optimal_bound : float
+        bound on optimal objective function value
+    optimal_solution : tuple
+        optimal solution (if known)
+    initial_solution : tuple
+        default initial solution from which solvers start
+    is_objective : list of bools
+        indicates if response appears in objective function
+    is_constraint : list of bools
+        indicates if response appears in stochastic constraint
+    oracle : Oracle object
+        associated simulation oracle that generates replications
+    """
+    def __init__(self):
+        super().__init__()
+
+    def vector_to_factor_dict(self, vector):
+        """
+        Convert a vector of variables to a dictionary with factor keys
+
+        Arguments
+        ---------
+        vector : list
+            vector of values associated with decision variables
+
+        Returns
+        -------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+        """
+        raise NotImplementedError
+
+    def factor_dict_to_vector(self, factor_dict):
+        """
+        Convert a dictionary with factor keys to a vector of variables
+
+        Arguments
+        ---------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+
+        Returns
+        -------
+        vector : list
+            vector of values associated with decision variables
+        """
+        raise NotImplementedError
+
+    def check_deterministic_constraints(self, x):
+        """
+        Check if a solution `x` satisfies the problem's deterministic constraints.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        satisfies : bool
+            indicates if solution `x` satisfies the deterministic constraints.
+        """
+        pass
+
+    def get_random_solution(self):
+        """
+        Generate a random solution, to be used for starting or restarting solvers.
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+        pass
+
 class Oracle(object):
     """
     Base class to implement simulation oracles (models) featured in
@@ -25,12 +120,10 @@ class Oracle(object):
         number of random-number generators used to run a simulation replication
     rng_list : list of rng.MRG32k3a objects
         list of random-number generators used to run a simulation replication
-    dim : int
-        number of decision variables
     n_responses : int
         number of responses (performance measures)
-    params : dict
-        changeable parameters of the simulation model
+    factors : dict
+        changeable factors of the simulation model
     """
     def __init__(self):
         super().__init__()
@@ -46,47 +139,64 @@ class Oracle(object):
         """
         self.rng_list = rng_list
 
-    def check_simulatable_params(self):
+    def check_simulatable_factor(self, factor_name):
         """
-        Determine if a simulation replication can be run with the given parameters.
+        Determine if a simulation replication can be run with the given factor.
+
+        Arguments
+        ---------
+        factor_name : string
+            name of factor for dictionary lookup (i.e., key)
 
         Returns
         -------
         is_simulatable : bool
-            indicates if oracle specified by parameters is simulatable
+            indicates if oracle specified by factors is simulatable
         """
         raise NotImplementedError
 
-    def check_simulatable_x(self, x):
+    def check_simulatable_factors(self):
         """
-        Determine if a simulation replication can be run at solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            solution to evaluate
+        Determine if a simulation replication can be run with the given factors.
 
         Returns
         -------
         is_simulatable : bool
-            indicates if `x` is simulatable
+            indicates if oracle specified by factors is simulatable
         """
-        raise NotImplementedError
+        pass
+        #raise NotImplementedError
 
-    def replicate(self, x):
+    # def check_simulatable_x(self, x):
+    #     """
+    #     Determine if a simulation replication can be run at solution `x`.
+
+    #     Arguments
+    #     ---------
+    #     x : tuple
+    #         solution to evaluate
+
+    #     Returns
+    #     -------
+    #     is_simulatable : bool
+    #         indicates if `x` is simulatable
+    #     """
+    #     raise NotImplementedError
+
+    def replicate(self, decision_factors):
         """
-        Simulate a single replication at solution `x`.
+        Simulate a single replication at solution described by decision factors.
 
         Arguments
         ---------
-        x : tuple
-            solution to evaluate
+        decision_factors : dict
+            decision factor names and values
 
         Returns
         -------
         response : list
             performance measures of interest
-        gradient : list of lists
+        gradient : list of dicts
             gradient estimate for each response
         """
         raise NotImplementedError
@@ -120,7 +230,8 @@ class Oracle(object):
 
 class Solution(object):
     """
-    Base class for solutions, i.e., vectors of decision variables.
+    Base class for solutions represented as vectors of decision variables
+    and dictionaries of decision factors.
 
     Attributes
     ----------
@@ -128,6 +239,8 @@ class Solution(object):
         vector of decision variables
     dim : tuple
         number of decision variables describing `x`
+    decision_factors : dict
+        decision factor names and values
     n_reps : int
         number of replications run at the solution
     responses: list of lists (# replications x # responses)
@@ -139,11 +252,14 @@ class Solution(object):
     ---------
     x : tuple
         vector of decision variables
+    problem : Problem object
+        problem to which x is a solution
     """
-    def __init__(self, x):
+    def __init__(self, x, problem):
         super().__init__()
         self.x = x
         self.dim = len(x)
+        self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
         self.responses = []
         self.gradients = []
