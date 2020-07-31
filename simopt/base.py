@@ -98,7 +98,7 @@ class Problem(object):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        pass
+        return True
 
     def get_random_solution(self):
         """
@@ -199,7 +199,7 @@ class Oracle(object):
         is_simulatable : bool
             indicates if oracle specified by factors is simulatable
         """
-        pass
+        return True
         #raise NotImplementedError
 
     def check_factor_datatype(self, factor_name):
