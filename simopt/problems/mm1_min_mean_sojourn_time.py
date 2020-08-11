@@ -61,6 +61,8 @@ class MM1MinMeanSojournTime(Problem):
         self.inital_solution = [3]
         self.is_objective = [True, False]
         self.is_constraint = [False, False]
+        self.n_objectives = 1
+        self.n_stochastic_constraints = 1
         self.oracle = MM1Queue(noise_factors)
 
     def vector_to_factor_dict(self, vector):
@@ -117,3 +119,21 @@ class MM1MinMeanSojournTime(Problem):
         """
         objectives = [response_dict["avg_sojourn_time"]]
         return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] >= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : list
+            vector of LHSs of stochastic constraint
+        """
+        stoch_constraints = [response_dict["frac_cust_wait"]]
+        return stoch_constraints

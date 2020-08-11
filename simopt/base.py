@@ -116,7 +116,48 @@ class Problem(object):
         stoch_constraints : list
             vector of LHSs of stochastic constraint
         """
-        return []
+        stoch_constraints = []
+        return stoch_constraints
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : list
+            vector of deterministic components of objectives
+        det_objectives_gradients : list
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = [0]*self.n_objectives
+        det_objectives_gradients = [[0]*self.dim]*self.n_objectives
+        return det_objectives, det_objectives_gradients
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : list
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : list
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = [0]*self.n_stochastic_constraints
+        det_stoch_constraints_gradients = [[0]*self.dim]*self.n_stochastic_constraints
+        return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
         """
@@ -167,12 +208,19 @@ class Problem(object):
                 solution.n_reps += 1
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 vector_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
-                # convert responses and gradients to objectives and gradients and record
-                solution.objectives.append(self.response_dict_to_objectives(responses))
-                solution.objectives_gradients.append(self.response_dict_to_objectives(vector_gradients))
-                # convert responses and gradients to stochastic constraints and gradients and record
-                solution.stoch_constraints.append(self.response_dict_to_stoch_constraints(responses))
-                solution.stoch_constraints_gradients.append(self.response_dict_to_stoch_constraints(vector_gradients))
+                # convert responses and gradients to objectives and gradients and add
+                # to those of deterministic components of objectives
+                new_objectives = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)]
+                new_objectives_gradients = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)]
+                # convert responses and gradients to stochastic constraints and gradients and add
+                # to those of deterministic components of stochastic constraints
+                new_stoch_constraints = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)]
+                new_stoch_constraints_gradients = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients),solution.det_stoch_constraints_gradients)]
+                # record
+                solution.objectives.append(new_objectives)
+                solution.objectives_gradients.append(new_objectives_gradients)
+                solution.stoch_constraints.append(new_stoch_constraints)
+                solution.stoch_constraints_gradients.append(new_stoch_constraints_gradients)                
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()
@@ -286,9 +334,13 @@ class Solution(object):
         decision factor names and values
     n_reps : int
         number of replications run at the solution
+    det_objectives : list
+        deterministic components added to objectives
+    det_objectives_gradients : list of lists (# objectives x dimension)
+        gradients of deterministic components added to objectives
     objectives : list of lists (# replications x # objectives)
         objective(s) estimates from each replication
-    objectives_gradients : list of lists of lists (# replications x # objectives # dimension)
+    objectives_gradients : list of lists of lists (# replications x # objectives x dimension)
         gradient estimates of objective(s) from each replication
     Arguments
     ---------
@@ -303,6 +355,8 @@ class Solution(object):
         self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
+        self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
+        self.det_stoch_constraints, self.det_stoch_constraints_gradients = problem.deterministic_stochastic_constraints_and_gradients(self.x)
         self.objectives = []
         self.objectives_gradients = []
         self.stoch_constraints = []

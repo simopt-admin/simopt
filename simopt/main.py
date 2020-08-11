@@ -20,6 +20,8 @@ myproblem.oracle.attach_rngs(rng_list)
 #print(myproblem.oracle.rng_list)
 
 mysoln = Solution(x=[3], problem=myproblem)
+print(mysoln.det_objectives)
+print(mysoln.det_objectives_gradients)
 #print(mysoln.x)
 #print(mysoln.decision_factors)
 
