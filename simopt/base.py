@@ -67,15 +67,15 @@ class Problem(object):
         """
         raise NotImplementedError
 
-    def list_of_factor_dict_to_vector(self, list_factor_dict):
+    def factor_dict_to_vector(self, factor_dict):
         """
-        Convert a list of dictionarys with factor keys to a vector
+        Convert a dictionary with factor keys to a vector
         of variables.
 
         Arguments
         ---------
-        list_factor_dict : dictionary
-            List of dicts with factor keys and associated values
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
 
         Returns
         -------
@@ -133,7 +133,9 @@ class Problem(object):
                 solution.n_reps += 1
                 # append results
                 solution.responses.append(response)
-                solution.gradients.append(self.list_of_factor_dict_to_vector(gradient))
+                # convert list of gradient dictionaries to list of vectors
+                slim_gradients = [self.factor_dict_to_vector(gradient_dict) for gradient_dict in gradient]
+                solution.gradients.append(slim_gradients)
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()

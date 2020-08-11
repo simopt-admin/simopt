@@ -82,22 +82,20 @@ class MM1MinMeanSojournTime(Problem):
         }
         return factor_dict
 
-    def list_of_factor_dict_to_vector(self, list_factor_dict):
+    def factor_dict_to_vector(self, factor_dict):
         """
-        Convert a list of dictionarys with factor keys to a vector
+        Convert a dictionary with factor keys to a vector
         of variables.
 
         Arguments
         ---------
-        list_factor_dict : dictionary
-            List of dicts with factor keys and associated values
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
 
         Returns
         -------
         vector : list
             vector of values associated with decision variables
         """
-        vector = []
-        for i in range(len(list_factor_dict)):
-            vector.append([list_factor_dict[i]["mu"]])
+        vector = [factor_dict["mu"]]
         return vector

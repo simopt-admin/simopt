@@ -164,7 +164,5 @@ class MM1Queue(Oracle):
             "warmup": np.nan,
             "people": np.nan
         }
-        gradient = []
-        gradient.append(dict((key, mean_sojourn_time_grad[key]) for key in decision_factors))
-        gradient.append(dict((key, fraction_wait_grad[key]) for key in decision_factors))
+        gradient = [mean_sojourn_time_grad, fraction_wait_grad]
         return response, gradient
