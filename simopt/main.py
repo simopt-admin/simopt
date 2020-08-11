@@ -56,8 +56,10 @@ myproblem.simulate(mysoln, m=3)
 # print('The standard error of the first gradient is {}'.format(mysoln.gradient_std_error(which=is_obj)))
 # print('The variance of the first gradients is (again) {}'.format(mysoln.gradient_cov(which=is_obj)))
 
-print('The objective is {}'.format(mysoln.objectives))
-print('The gradient of the objective is {}'.format(mysoln.objectives_gradients))
+print('The objectives are {}'.format(mysoln.objectives))
+print('The gradients of the objectives are {}'.format(mysoln.objectives_gradients))
+print('The stochastic constraint LHSs are {}'.format(mysoln.stoch_constraints))
+print('The gradients of the stochastic constraint LHSs are {}'.format(mysoln.stoch_constraints_gradients))
 
 # noise_factors = {
 #     "lambda": 1.5,

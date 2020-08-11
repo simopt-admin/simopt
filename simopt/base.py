@@ -101,6 +101,22 @@ class Problem(object):
         """
         raise NotImplementedError
 
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] >= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : list
+            vector of LHSs of stochastic constraint
+        """
+        return []
 
     def check_deterministic_constraints(self, x):
         """
@@ -149,10 +165,14 @@ class Problem(object):
                 responses, gradients = self.oracle.replicate(solution.decision_factors)
                 # increment counter 
                 solution.n_reps += 1
+                # convert gradient subdictionaries to vectors mapping to decision variables
+                vector_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # convert responses and gradients to objectives and gradients and record
                 solution.objectives.append(self.response_dict_to_objectives(responses))
-                slim_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
-                solution.objectives_gradients.append(self.response_dict_to_objectives(slim_gradients))
+                solution.objectives_gradients.append(self.response_dict_to_objectives(vector_gradients))
+                # convert responses and gradients to stochastic constraints and gradients and record
+                solution.stoch_constraints.append(self.response_dict_to_stoch_constraints(responses))
+                solution.stoch_constraints_gradients.append(self.response_dict_to_stoch_constraints(vector_gradients))
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()
@@ -285,6 +305,8 @@ class Solution(object):
         self.n_reps = 0
         self.objectives = []
         self.objectives_gradients = []
+        self.stoch_constraints = []
+        self.stoch_constraints_gradients = []
 
     def response_mean(self, which):
         """
