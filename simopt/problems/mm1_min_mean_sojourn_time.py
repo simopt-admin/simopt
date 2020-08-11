@@ -99,3 +99,21 @@ class MM1MinMeanSojournTime(Problem):
         """
         vector = [factor_dict["mu"]]
         return vector
+
+    def response_dict_to_objectives(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of objectives.
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        objectives : list
+            vector of objectives
+        """
+        objectives = [response_dict["avg_sojourn_time"]]
+        return objectives

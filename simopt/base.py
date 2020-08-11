@@ -84,6 +84,24 @@ class Problem(object):
         """
         raise NotImplementedError
 
+    def response_dict_to_objectives(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of objectives.
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        objectives : list
+            vector of objectives
+        """
+        raise NotImplementedError
+
+
     def check_deterministic_constraints(self, x):
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
@@ -128,14 +146,13 @@ class Problem(object):
         else:
             for _ in range(m):
                 # generate one replication at x
-                response, gradient = self.oracle.replicate(solution.decision_factors)
+                responses, gradients = self.oracle.replicate(solution.decision_factors)
                 # increment counter 
                 solution.n_reps += 1
-                # append results
-                solution.responses.append(response)
-                # convert list of gradient dictionaries to list of vectors
-                slim_gradients = [self.factor_dict_to_vector(gradient_dict) for gradient_dict in gradient]
-                solution.gradients.append(slim_gradients)
+                # convert responses and gradients to objectives and gradients and record
+                solution.objectives.append(self.response_dict_to_objectives(responses))
+                slim_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                solution.objectives_gradients.append(self.response_dict_to_objectives(slim_gradients))
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()
@@ -218,18 +235,18 @@ class Oracle(object):
 
     def replicate(self, decision_factors):
         """
-        Simulate a single replication at solution described by decision factors.
+        Simulate a single replication at solution described by `decision_factors`.
 
         Arguments
         ---------
         decision_factors : dict
-            decision factor names and values
+            decision factors of the simulation model
 
         Returns
         -------
-        response : list
+        responses : dict
             performance measures of interest
-        gradient : list of dicts
+        gradients : dict of dicts
             gradient estimate for each response
         """
         raise NotImplementedError
@@ -249,11 +266,10 @@ class Solution(object):
         decision factor names and values
     n_reps : int
         number of replications run at the solution
-    responses: list of lists (# replications x # responses)
-        performance measures of interest from each replication
-    gradients: list of lists of lists (# replications x # responses x dimension)
-        gradient estimate for each response from each replication
-    
+    objectives : list of lists (# replications x # objectives)
+        objective(s) estimates from each replication
+    objectives_gradients : list of lists of lists (# replications x # objectives # dimension)
+        gradient estimates of objective(s) from each replication
     Arguments
     ---------
     x : tuple
@@ -267,8 +283,8 @@ class Solution(object):
         self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
-        self.responses = []
-        self.gradients = []
+        self.objectives = []
+        self.objectives_gradients = []
 
     def response_mean(self, which):
         """

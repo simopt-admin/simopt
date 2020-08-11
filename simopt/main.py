@@ -23,10 +23,10 @@ mysoln = Solution(x=[3], problem=myproblem)
 #print(mysoln.x)
 #print(mysoln.decision_factors)
 
-response, gradient = myproblem.oracle.replicate(mysoln.decision_factors)
+responses, gradients = myproblem.oracle.replicate(mysoln.decision_factors)
 print('For a single replication:')
-print('The responses are {}'.format(response))
-print('The gradients are {}'.format(gradient))
+print('The responses are {}'.format(responses))
+print('The gradients are {}'.format(gradients))
 
 for rng in myproblem.oracle.rng_list:
     rng.reset_substream()
@@ -40,7 +40,7 @@ myproblem.simulate(mysoln, m=3)
 # is_obj = [True, False]
 
 # print('\nFor a batch of 3 replications:\n')
-print('The responses are {}'.format(mysoln.responses))
+#print('The responses are {}'.format(mysoln.responses))
 # print('The mean responses are {}'.format(mysoln.response_mean(which=all_resp)))
 # print('The first mean response is {}'.format(mysoln.response_mean(which=is_obj)))
 # print('The variances of the responses are {}'.format(mysoln.response_var(which=all_resp)))
@@ -50,11 +50,14 @@ print('The responses are {}'.format(mysoln.responses))
 # print('The covariances of the responses are {}'.format(mysoln.response_cov(which=all_resp)))
 # print('The variance of the first response is (again) {}'.format(mysoln.response_cov(which=is_obj)))
 # print('')
-print('The gradients are {}'.format(mysoln.gradients))
+#print('The gradients are {}'.format(mysoln.gradients))
 # print('The mean of the first gradient is {}'.format(mysoln.gradient_mean(which=is_obj)))
 # print('The variance of the first gradients is {}'.format(mysoln.gradient_var(which=is_obj)))
 # print('The standard error of the first gradient is {}'.format(mysoln.gradient_std_error(which=is_obj)))
 # print('The variance of the first gradients is (again) {}'.format(mysoln.gradient_cov(which=is_obj)))
+
+print('The objective is {}'.format(mysoln.objectives))
+print('The gradient of the objective is {}'.format(mysoln.objectives_gradients))
 
 # noise_factors = {
 #     "lambda": 1.5,

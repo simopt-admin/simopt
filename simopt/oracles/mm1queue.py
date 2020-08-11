@@ -103,11 +103,11 @@ class MM1Queue(Oracle):
 
         Returns
         -------
-        response : list
+        responses : dict
             performance measures of interest
-            response[0] = average sojourn time
-            response[1] = fraction of customers who wait
-        gradient : list of dicts
+            "avg_sojourn_time" = average sojourn time
+            "frac_cust_wait" = fraction of customers who wait
+        gradients : dict of dicts
             gradient estimates for each response
         """
         # set the decision factors of the model
@@ -151,7 +151,10 @@ class MM1Queue(Oracle):
         fraction_wait = np.mean(cust_mat[self.factors["warmup"]:,4] > 0)
         # return mean sojourn time w/ gradient estimate
         # return fraction who wait w/o gradient estimate
-        response = [mean_sojourn_time, fraction_wait]
+        responses = {
+            "avg_sojourn_time": mean_sojourn_time,
+            "frac_cust_wait": fraction_wait
+        }
         mean_sojourn_time_grad = {
             "mu": grad_mean_sojourn_time,
             "lambda": np.nan, # to be derived...
@@ -164,5 +167,8 @@ class MM1Queue(Oracle):
             "warmup": np.nan,
             "people": np.nan
         }
-        gradient = [mean_sojourn_time_grad, fraction_wait_grad]
-        return response, gradient
+        gradients = {
+            "avg_sojourn_time": mean_sojourn_time_grad,
+            "frac_cust_wait": fraction_wait_grad
+        }
+        return responses, gradients
