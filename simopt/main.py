@@ -63,6 +63,24 @@ print('The gradients of the objectives are {}'.format(mysoln.objectives_gradient
 print('The stochastic constraint LHSs are {}'.format(mysoln.stoch_constraints))
 print('The gradients of the stochastic constraint LHSs are {}'.format(mysoln.stoch_constraints_gradients))
 
+# Print summary statistics
+print('The mean of the objectives are {}'.format(mysoln.objectives_mean))
+print('The variance of the objectives are {}'.format(mysoln.objectives_var))
+print('The standard error of the objectives are {}'.format(mysoln.objectives_stderr))
+print('The covariance matrix of the objectives is {}'.format(mysoln.objectives_cov))
+print('The mean of the objectives gradients are {}'.format(mysoln.objectives_gradients_mean))
+print('The variance of the objectives gradients are {}'.format(mysoln.objectives_gradients_var))
+print('The standard error of the objectives gradients are {}'.format(mysoln.objectives_gradients_stderr))
+print('The covariance matrix of the objectives gradients is {}'.format(mysoln.objectives_gradients_cov))
+print('The mean of the stochastic constraints are {}'.format(mysoln.stoch_constraints_mean))
+print('The variance of the stochastic constraints are {}'.format(mysoln.stoch_constraints_var))
+print('The standard error of the stochastic constraints are {}'.format(mysoln.stoch_constraints_stderr))
+print('The covariance matrix of the stochastic constraints is {}'.format(mysoln.stoch_constraints_cov))
+print('The mean of the stochastic constraints gradients are {}'.format(mysoln.stoch_constraints_gradients_mean))
+print('The variance of the stochastic constraints gradients are {}'.format(mysoln.stoch_constraints_gradients_var))
+print('The standard error of the stochastic constraints gradients are {}'.format(mysoln.stoch_constraints_gradients_stderr))
+print('The covariance matrix of the stochastic constraints gradients is {}'.format(mysoln.stoch_constraints_gradients_cov))
+
 # noise_factors = {
 #     "lambda": 1.5,
 #     "warmup": 20,

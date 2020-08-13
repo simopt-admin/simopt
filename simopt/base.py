@@ -12,6 +12,8 @@ Oracle : class
 Solution : class
 """
 import numpy as np
+from statistics import mean, variance
+from math import sqrt
 from rng.mrg32k3a import MRG32k3a
 
 class Problem(object):
@@ -228,7 +230,9 @@ class Problem(object):
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()
-
+            # update summary statistics
+            solution.recompute_summary_statistics()
+            
 class Oracle(object):
     """
     Base class to implement simulation oracles (models) featured in
@@ -371,6 +375,47 @@ class Solution(object):
         self.objectives_gradients = []
         self.stoch_constraints = []
         self.stoch_constraints_gradients = []
+        self.objectives_mean = ()
+        self.objectives_var = ()
+        self.objectives_stderr = ()
+        self.objectives_cov = ()
+        self.objectives_gradients_mean = ()
+        self.objectives_gradients_var = ()
+        self.objectives_gradients_stderr = ()
+        self.objectives_gradients_cov = ()
+        self.stoch_constraints_mean = ()
+        self.stoch_constraints_var = ()
+        self.stoch_constraints_stderr = ()
+        self.stoch_constraints_cov = ()
+        self.stoch_constraints_gradients_mean = ()
+        self.stoch_constraints_gradients_var = ()
+        self.stoch_constraints_gradients_stderr = ()
+        self.stoch_constraints_gradients_cov = ()
+
+    def recompute_summary_statistics(self):
+        """
+        Recompute summary statistics of the solution.
+        """
+        obj_range = range(len(self.det_objectives))
+        stcon_range = range(len(self.det_stoch_constraints))
+        dvar_range = range(self.dim)
+        rep_range = range(self.n_reps)
+        self.objectives_mean = tuple([mean([self.objectives[rep][obj] for rep in rep_range]) for obj in obj_range])
+        self.objectives_var = tuple([variance([self.objectives[rep][obj] for rep in rep_range]) for obj in obj_range])
+        self.objectives_stderr = tuple([sqrt(obj_term/self.n_reps) for obj_term in self.objectives_var])
+        self.objectives_cov = ()
+        self.objectives_gradients_mean = tuple([tuple([mean([self.objectives_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
+        self.objectives_gradients_var = tuple([tuple([variance([self.objectives_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
+        self.objectives_gradients_stderr = tuple([tuple([sqrt(dim_term/self.n_reps) for dim_term in self.objectives_gradients_var[obj]]) for obj in obj_range])
+        self.objectives_gradients_cov = ()
+        self.stoch_constraints_mean = tuple([mean([self.stoch_constraints[rep][stcon] for rep in rep_range]) for stcon in stcon_range])
+        self.stoch_constraints_var = tuple([variance([self.stoch_constraints[rep][stcon] for rep in rep_range]) for stcon in stcon_range])
+        self.stoch_constraints_stderr = tuple([sqrt(term/self.n_reps) for term in self.stoch_constraints_var])
+        self.stoch_constraints_cov = ()
+        self.stoch_constraints_gradients_mean = tuple([tuple([mean([self.stoch_constraints_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
+        self.stoch_constraints_gradients_var = tuple([tuple([variance([self.stoch_constraints_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
+        self.stoch_constraints_gradients_stderr = tuple([tuple([sqrt(dim_term/self.n_reps) for dim_term in self.stoch_constraints_gradients_var[obj]]) for obj in obj_range])
+        self.stoch_constraints_gradients_cov = ()
 
     def response_mean(self, which):
         """
