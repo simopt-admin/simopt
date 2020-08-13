@@ -87,7 +87,8 @@ class MM1Queue(Oracle):
     def check_people(self):
         return self.factors["people"] >= 1
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self, decision_factors):
+        self.factors.update(decision_factors)
         #demo for condition that queue must be stable
         #return self.factors["mu"] > self.factors["lambda"]
         return True
