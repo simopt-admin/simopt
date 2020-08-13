@@ -71,7 +71,7 @@ class MM1MinMeanSojournTime(Problem):
 
         Arguments
         ---------
-        vector : list
+        vector : tuple
             vector of values associated with decision variables
 
         Returns
@@ -96,10 +96,10 @@ class MM1MinMeanSojournTime(Problem):
 
         Returns
         -------
-        vector : list
+        vector : tuple
             vector of values associated with decision variables
         """
-        vector = [factor_dict["mu"]]
+        vector = (factor_dict["mu"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -114,10 +114,10 @@ class MM1MinMeanSojournTime(Problem):
 
         Returns
         -------
-        objectives : list
+        objectives : tuple
             vector of objectives
         """
-        objectives = [response_dict["avg_sojourn_time"]]
+        objectives = (response_dict["avg_sojourn_time"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -132,8 +132,8 @@ class MM1MinMeanSojournTime(Problem):
 
         Returns
         -------
-        stoch_constraints : list
+        stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = [response_dict["frac_cust_wait"]]
+        stoch_constraints = (response_dict["frac_cust_wait"],)
         return stoch_constraints

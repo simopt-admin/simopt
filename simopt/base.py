@@ -57,7 +57,7 @@ class Problem(object):
 
         Arguments
         ---------
-        vector : list
+        vector : tuple
             vector of values associated with decision variables
 
         Returns
@@ -79,7 +79,7 @@ class Problem(object):
 
         Returns
         -------
-        vector : list
+        vector : tuple
             vector of values associated with decision variables
         """
         raise NotImplementedError
@@ -96,7 +96,7 @@ class Problem(object):
 
         Returns
         -------
-        objectives : list
+        objectives : tuple
             vector of objectives
         """
         raise NotImplementedError
@@ -113,10 +113,10 @@ class Problem(object):
 
         Returns
         -------
-        stoch_constraints : list
+        stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = []
+        stoch_constraints = ()
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
@@ -130,13 +130,15 @@ class Problem(object):
 
         Returns
         -------
-        det_objectives : list
+        det_objectives : tuple
             vector of deterministic components of objectives
-        det_objectives_gradients : list
+        det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = [0]*self.n_objectives
-        det_objectives_gradients = [[0]*self.dim]*self.n_objectives
+        det_objectives = (0,)*self.n_objectives
+        det_objectives_gradients = tuple([(0,)*self.dim for _ in range(self.n_objectives)])
+        #det_objectives = [0]*self.n_objectives
+        #det_objectives_gradients = [[0]*self.dim]*self.n_objectives
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -150,13 +152,15 @@ class Problem(object):
 
         Returns
         -------
-        det_stoch_constraints : list
+        det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : list
+        det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = [0]*self.n_stochastic_constraints
-        det_stoch_constraints_gradients = [[0]*self.dim]*self.n_stochastic_constraints
+        det_stoch_constraints = (0,)*self.n_stochastic_constraints
+        det_stoch_constraints_gradients = tuple([(0,)*self.dim for _ in range(self.n_stochastic_constraints)])
+        #det_stoch_constraints = [0]*self.n_stochastic_constraints
+        #det_stoch_constraints_gradients = [[0]*self.dim]*self.n_stochastic_constraints
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
@@ -210,12 +214,12 @@ class Problem(object):
                 vector_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives
-                new_objectives = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)]
-                new_objectives_gradients = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)]
+                new_objectives = tuple([sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)])
+                new_objectives_gradients = tuple([tuple([sum(pairs) for pairs in zip(stoch_obj, det_obj)]) for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)])
                 # convert responses and gradients to stochastic constraints and gradients and add
                 # to those of deterministic components of stochastic constraints
-                new_stoch_constraints = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)]
-                new_stoch_constraints_gradients = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients),solution.det_stoch_constraints_gradients)]
+                new_stoch_constraints = tuple([sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)])
+                new_stoch_constraints_gradients = tuple([tuple([sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)]) for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients),solution.det_stoch_constraints_gradients)])
                 # record
                 solution.objectives.append(new_objectives)
                 solution.objectives_gradients.append(new_objectives_gradients)
@@ -334,19 +338,19 @@ class Solution(object):
     ----------
     x : tuple
         vector of decision variables
-    dim : tuple
+    dim : int
         number of decision variables describing `x`
     decision_factors : dict
         decision factor names and values
     n_reps : int
         number of replications run at the solution
-    det_objectives : list
+    det_objectives : tuple
         deterministic components added to objectives
-    det_objectives_gradients : list of lists (# objectives x dimension)
+    det_objectives_gradients : tuple of tuples (# objectives x dimension)
         gradients of deterministic components added to objectives
-    objectives : list of lists (# replications x # objectives)
+    objectives : list of tuples (# replications x # objectives)
         objective(s) estimates from each replication
-    objectives_gradients : list of lists of lists (# replications x # objectives x dimension)
+    objectives_gradients : list of tuples of tuples (# replications x # objectives x dimension)
         gradient estimates of objective(s) from each replication
     Arguments
     ---------
