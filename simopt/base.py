@@ -12,8 +12,8 @@ Oracle : class
 Solution : class
 """
 import numpy as np
-from statistics import mean, variance
-from math import sqrt
+#from statistics import mean, variance
+#from math import sqrt
 from rng.mrg32k3a import MRG32k3a
 
 class Problem(object):
@@ -207,26 +207,23 @@ class Problem(object):
             print('--* Error: Number of replications must be at least 1. ')
             print('--* Aborting. ')
         else:
+            if solution.n_reps + m > solution.storage_size:
+                solution.pad_storage(m)
             for _ in range(m):
                 # generate one replication at x
                 responses, gradients = self.oracle.replicate(solution.decision_factors)
-                # increment counter 
-                solution.n_reps += 1
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 vector_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives
-                new_objectives = tuple([sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)])
-                new_objectives_gradients = tuple([tuple([sum(pairs) for pairs in zip(stoch_obj, det_obj)]) for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)])
+                solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)]            
+                solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)]
                 # convert responses and gradients to stochastic constraints and gradients and add
                 # to those of deterministic components of stochastic constraints
-                new_stoch_constraints = tuple([sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)])
-                new_stoch_constraints_gradients = tuple([tuple([sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)]) for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients),solution.det_stoch_constraints_gradients)])
-                # record
-                solution.objectives.append(new_objectives)
-                solution.objectives_gradients.append(new_objectives_gradients)
-                solution.stoch_constraints.append(new_stoch_constraints)
-                solution.stoch_constraints_gradients.append(new_stoch_constraints_gradients)                
+                solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)]
+                solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients),solution.det_stoch_constraints_gradients)]
+                # increment counter 
+                solution.n_reps += 1
                 # advance rngs to start of next subsubstream
                 for rng in self.oracle.rng_list:
                     rng.advance_subsubstream()
@@ -352,10 +349,21 @@ class Solution(object):
         deterministic components added to objectives
     det_objectives_gradients : tuple of tuples (# objectives x dimension)
         gradients of deterministic components added to objectives
-    objectives : list of tuples (# replications x # objectives)
+    det_stoch_constraints : tuple
+        deterministic components added to LHS of stochastic constraints
+    det_stoch_constraints_gradients : tuple (# stochastic constraints x dimension)
+        gradients of deterministics components added to LHS stochastic constraints
+    storage_size : int
+        max number of replications that can be recorded in current storage 
+    objectives : numpy array (# replications x # objectives)
         objective(s) estimates from each replication
-    objectives_gradients : list of tuples of tuples (# replications x # objectives x dimension)
+    objectives_gradients : numpy array (# replications x # objectives x dimension)
         gradient estimates of objective(s) from each replication
+    stochastic_constraints : numpy array (# replications x # stochastic constraints)
+        stochastic constraint estimates from each replication
+    stochastic_constraints_gradients : numpy array (# replications x # stochastic constraints x dimension)
+        gradient estimates of stochastic constraints from each replication
+
     Arguments
     ---------
     x : tuple
@@ -371,190 +379,69 @@ class Solution(object):
         self.n_reps = 0
         self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
         self.det_stoch_constraints, self.det_stoch_constraints_gradients = problem.deterministic_stochastic_constraints_and_gradients(self.x)
-        self.objectives = []
-        self.objectives_gradients = []
-        self.stoch_constraints = []
-        self.stoch_constraints_gradients = []
-        self.objectives_mean = ()
-        self.objectives_var = ()
-        self.objectives_stderr = ()
-        self.objectives_cov = ()
-        self.objectives_gradients_mean = ()
-        self.objectives_gradients_var = ()
-        self.objectives_gradients_stderr = ()
-        self.objectives_gradients_cov = ()
-        self.stoch_constraints_mean = ()
-        self.stoch_constraints_var = ()
-        self.stoch_constraints_stderr = ()
-        self.stoch_constraints_cov = ()
-        self.stoch_constraints_gradients_mean = ()
-        self.stoch_constraints_gradients_var = ()
-        self.stoch_constraints_gradients_stderr = ()
-        self.stoch_constraints_gradients_cov = ()
+        init_size = 100 # initialize numpy arrays to store up to 100 replications
+        self.storage_size = init_size
+        # Raw data
+        self.objectives = np.zeros((init_size, problem.n_objectives))
+        self.objectives_gradients = np.zeros((init_size, problem.n_objectives, problem.dim))
+        self.stoch_constraints = np.zeros((init_size, problem.n_stochastic_constraints))
+        self.stoch_constraints_gradients = np.zeros((init_size, problem.n_stochastic_constraints, problem.dim))
+        # Summary statistics
+        # self.objectives_mean = np.full((problem.n_objectives), np.nan)
+        # self.objectives_var = np.full((problem.n_objectives), np.nan)
+        # self.objectives_stderr = np.full((problem.n_objectives), np.nan)
+        # self.objectives_cov = np.full((problem.n_objectives, problem.n_objectives), np.nan)
+        # self.objectives_gradients_mean = np.full((problem.n_objectives, problem.dim), np.nan)
+        # self.objectives_gradients_var = np.full((problem.n_objectives, problem.dim), np.nan)
+        # self.objectives_gradients_stderr = np.full((problem.n_objectives, problem.dim), np.nan)
+        # self.objectives_gradients_cov = np.full((problem.n_objectives, problem.dim, problem.dim), np.nan)
+        # self.stoch_constraints_mean = np.full((problem.n_stochastic_constraints), np.nan)
+        # self.stoch_constraints_var = np.full((problem.n_stochastic_constraints), np.nan)
+        # self.stoch_constraints_stderr = np.full((problem.n_stochastic_constraints), np.nan)
+        # self.stoch_constraints_cov = np.full((problem.n_stochastic_constraints, problem.n_stochastic_constraints), np.nan)
+        # self.stoch_constraints_gradients_mean = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
+        # self.stoch_constraints_gradients_var = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
+        # self.stoch_constraints_gradients_stderr = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
+        # self.stoch_constraints_gradients_cov = np.full((problem.n_stochastic_constraints, problem.dim, problem.dim), np.nan)
+
+    def pad_storage(self, m):
+        """
+        Append zeros to numpy arrays for summary statistics
+        
+        Arguments
+        ---------
+        m : int
+            number of replications to simulate
+        """
+        # Size of data storage
+        n_objectives = len(self.det_objectives)
+        n_stochastic_constraints = len(self.det_stoch_constraints)
+        base_pad_size = 100 # default is to append space for 100 more replications
+        # if more space needed, append in multiples of 100
+        pad_size = int(np.ceil(m/base_pad_size))*base_pad_size
+        self.storage_size += pad_size
+        self.objectives = np.concatenate((self.objectives, np.zeros((pad_size, n_objectives))))
+        self.objectives_gradients = np.concatenate((self.objectives_gradients, np.zeros((pad_size, n_objectives, self.dim))))
+        self.stoch_constraints = np.concatenate((self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints))))
+        self.stoch_constraints_gradients = np.concatenate((self.stoch_constraints_gradients, np.zeros((pad_size, n_stochastic_constraints, self.dim))))
 
     def recompute_summary_statistics(self):
         """
         Recompute summary statistics of the solution.
         """
-        obj_range = range(len(self.det_objectives))
-        stcon_range = range(len(self.det_stoch_constraints))
-        dvar_range = range(self.dim)
-        rep_range = range(self.n_reps)
-        self.objectives_mean = tuple([mean([self.objectives[rep][obj] for rep in rep_range]) for obj in obj_range])
-        self.objectives_var = tuple([variance([self.objectives[rep][obj] for rep in rep_range]) for obj in obj_range])
-        self.objectives_stderr = tuple([sqrt(obj_term/self.n_reps) for obj_term in self.objectives_var])
-        self.objectives_cov = ()
-        self.objectives_gradients_mean = tuple([tuple([mean([self.objectives_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
-        self.objectives_gradients_var = tuple([tuple([variance([self.objectives_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
-        self.objectives_gradients_stderr = tuple([tuple([sqrt(dim_term/self.n_reps) for dim_term in self.objectives_gradients_var[obj]]) for obj in obj_range])
-        self.objectives_gradients_cov = ()
-        self.stoch_constraints_mean = tuple([mean([self.stoch_constraints[rep][stcon] for rep in rep_range]) for stcon in stcon_range])
-        self.stoch_constraints_var = tuple([variance([self.stoch_constraints[rep][stcon] for rep in rep_range]) for stcon in stcon_range])
-        self.stoch_constraints_stderr = tuple([sqrt(term/self.n_reps) for term in self.stoch_constraints_var])
-        self.stoch_constraints_cov = ()
-        self.stoch_constraints_gradients_mean = tuple([tuple([mean([self.stoch_constraints_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
-        self.stoch_constraints_gradients_var = tuple([tuple([variance([self.stoch_constraints_gradients[rep][obj][dvar] for rep in rep_range]) for dvar in dvar_range]) for obj in obj_range])
-        self.stoch_constraints_gradients_stderr = tuple([tuple([sqrt(dim_term/self.n_reps) for dim_term in self.stoch_constraints_gradients_var[obj]]) for obj in obj_range])
-        self.stoch_constraints_gradients_cov = ()
-
-    def response_mean(self, which):
-        """
-        Compute sample mean of specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        response_mean : array of rank (n_responses)
-            sample means of the specified responses
-        """
-        response_mean = np.mean(np.array(self.responses)[:,which], axis=0)
-        return response_mean
-
-    def response_var(self, which):
-        """
-        Compute sample variance of specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        response_var : array of rank (n_responses)
-            sample variances of the specified responses
-        """
-        response_var = np.var(np.array(self.responses)[:,which], axis=0, ddof=1)
-        return response_var
-
-    def response_std_error(self, which):
-        """"
-        Compute sample standard error of specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        response_std_error : array of rank (n_responses)
-            sample standard errors of the specified responses
-        """
-        response_std_error = np.std(np.array(self.responses)[:,which], axis=0, ddof=1)/np.sqrt(self.n_reps)
-        return response_std_error
-
-    def response_cov(self, which):
-        """"
-        Compute sample covariance of specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        response_cov : array of rank (n_responses, n_responses)
-            sample covariance matrix of the specified responses
-        """
-        response_cov = np.cov(np.array(self.responses)[:,which], rowvar=False, ddof=1)
-        return response_cov
-        
-    def gradient_mean(self, which):
-        """
-        Compute sample mean of specified gradient components.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        gradient_mean : array of rank (n_responses, dim)
-            sample means of the components of the gradients of the specified responses
-        """
-        gradient_mean = np.mean(np.array(self.gradients)[:,which], axis=0)
-        return gradient_mean
-
-    def gradient_var(self, which):
-        """
-        Compute sample variance of specified gradient components.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        gradient_var : array of rank (n_reponses, dim)
-            sample variances of the components of the gradients of the specified responses
-        """
-        gradient_var = np.var(np.array(self.gradients)[:,which], axis=0, ddof=1)
-        return gradient_var
-
-    def gradient_std_error(self, which):
-        """"
-        Compute sample standard error of all gradient components for specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        gradient_std_error : array of rank (n_reponses, dim)
-            sample standard errors of the components of the gradients of the specified responses    
-        """
-        gradient_std_error = np.std(np.array(self.gradients)[:,which], axis=0, ddof=1)/np.sqrt(self.n_reps)
-        return gradient_std_error
-
-    def gradient_cov(self, which):
-        """"
-        Compute sample covariance of all gradient components,
-        separately for specified responses.
-
-        Arguments
-        ---------
-        which : list of bools of length n_responses
-            responses of which to compute statistics 
-
-        Returns
-        -------
-        response_cov : array of rank (n_responses, dim, dim)
-            sample covariance matrices of the gradients, for the specified responses
-        """
-        gradient_cov = np.zeros((sum(which),self.dim,self.dim))
-        for i in range(len(which)):
-            if which[i]:
-                new_index = sum(which[:i])
-                sliced_gradient = [sublist[i] for sublist in self.gradients]
-                gradient_cov[new_index,:,:] = np.cov(sliced_gradient, rowvar = False, ddof=1)
-        return gradient_cov
+        self.objectives_mean = np.mean(self.objectives[:self.n_reps], axis=0) 
+        self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
+        self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
+        self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
+        self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0) 
+        self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
+        self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
+        self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps,obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+        self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0) 
+        self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
+        self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
+        self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
+        self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0) 
+        self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
+        self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
+        self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps,stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
