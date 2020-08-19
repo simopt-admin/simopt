@@ -13,10 +13,14 @@ class MM1MinMeanSojournTime(Problem):
 
     Attributes
     ----------
-    minmax : int (+/- 1)
-        indicator of maximization (+1) or minimization (-1)
     dim : int
         number of decision variables
+    n_objectives : int
+        number of objectives
+    n_stochastic_constraints : int
+        number of stochastic constraints
+    minmax : tuple of int (+/- 1)
+        indicator of maximization (+1) or minimization (-1) for each objective
     constraint_type : string
         description of constraints types: 
             "unconstrained", "box", "deterministic", "stochastic"
@@ -25,45 +29,39 @@ class MM1MinMeanSojournTime(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
+    initial_solution : tuple
+        default initial solution from which solvers start
     budget : int
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     optimal_solution : tuple
         optimal solution (if known)
-    initial_solution : tuple
-        default initial solution from which solvers start
-    is_objective : list of bools
-        indicates if response appears in objective function
-    is_constraint : list of bools
-        indicates if response appears in stochastic constraint
     oracle : Oracle object
         associated simulation oracle that generates replications
 
     Arguments
     ---------
-    noise_factors : dict
-        noise factors to pass through to the oracle
+    oracle_factors : dict
+        subset of non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, noise_factors={}):
+    def __init__(self, oracle_factors={}):
         self.minmax = -1
         self.dim = 1
+        self.n_objectives = 1
+        self.n_stochastic_constraints = 1
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
         self.budget = 10000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.inital_solution = [3]
-        self.is_objective = [True, False]
-        self.is_constraint = [False, False]
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.oracle = MM1Queue(noise_factors)
+        self.inital_solution = (3,)
+        self.oracle = MM1Queue(oracle_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -136,4 +134,75 @@ class MM1MinMeanSojournTime(Problem):
             vector of LHSs of stochastic constraint
         """
         stoch_constraints = (response_dict["frac_cust_wait"],)
+        #print(response_dict["frac_cust_wait"])
+        #stoch_constraints = tuple([-1.0*term for term in response_dict["frac_cust_wait"]])
         return stoch_constraints
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (0.1*(x[0]**2),)
+        det_objectives_gradients = ((0.2*x[0],),)
+        return det_objectives, det_objectives_gradients
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = (0.5,)
+        det_stoch_constraints_gradients = ((0,),)
+        return det_stoch_constraints, det_stoch_constraints_gradients
+
+    def check_deterministic_constraints(self, x):
+        """
+        Check if a solution `x` satisfies the problem's deterministic constraints.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        satisfies : bool
+            indicates if solution `x` satisfies the deterministic constraints.
+        """
+        return x[0] > 0
+
+    def get_random_solution(self):
+        """
+        Generate a random solution, to be used for starting or restarting solvers.
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+        # Generate an Exponential(rate = 1/3) r.v.
+        x = (self.rng.expovariate(1/3),)
+        return x

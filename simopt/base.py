@@ -11,9 +11,8 @@ Problem : class
 Oracle : class
 Solution : class
 """
+
 import numpy as np
-#from statistics import mean, variance
-#from math import sqrt
 from rng.mrg32k3a import MRG32k3a
 
 class Problem(object):
@@ -22,10 +21,14 @@ class Problem(object):
 
     Attributes
     ----------
-    minmax : int (+/- 1)
-        indicator of maximization (+1) or minimization (-1)
     dim : int
         number of decision variables
+    n_objectives : int
+        number of objectives
+    n_stochastic_constraints : int
+        number of stochastic constraints
+    minmax : tuple of int (+/- 1)
+        indicator of maximization (+1) or minimization (-1) for each objective
     constraint_type : string
         description of constraints types: 
             "unconstrained", "box", "deterministic", "stochastic"
@@ -34,23 +37,19 @@ class Problem(object):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
+    initial_solution : tuple
+        default initial solution from which solvers start
     budget : int
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     optimal_solution : tuple
         optimal solution (if known)
-    initial_solution : tuple
-        default initial solution from which solvers start
-    is_objective : list of bools
-        indicates if response appears in objective function
-    is_constraint : list of bools
-        indicates if response appears in stochastic constraint
     oracle : Oracle object
         associated simulation oracle that generates replications
     """
     def __init__(self):
-        #self.oracle = None
+        self.oracle = None
         super().__init__()
 
     def vector_to_factor_dict(self, vector):
@@ -139,8 +138,6 @@ class Problem(object):
         """
         det_objectives = (0,)*self.n_objectives
         det_objectives_gradients = tuple([(0,)*self.dim for _ in range(self.n_objectives)])
-        #det_objectives = [0]*self.n_objectives
-        #det_objectives_gradients = [[0]*self.dim]*self.n_objectives
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -161,8 +158,6 @@ class Problem(object):
         """
         det_stoch_constraints = (0,)*self.n_stochastic_constraints
         det_stoch_constraints_gradients = tuple([(0,)*self.dim for _ in range(self.n_stochastic_constraints)])
-        #det_stoch_constraints = [0]*self.n_stochastic_constraints
-        #det_stoch_constraints_gradients = [[0]*self.dim]*self.n_stochastic_constraints
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
@@ -192,6 +187,18 @@ class Problem(object):
         """
         pass
     
+    def attach_rng(self, rng):
+        """
+        Attach random number generator to the problem.
+
+        Arguments
+        ---------
+        rng : rng.MRG32k3a object
+            random-number generator used to generate random solutions
+        """
+        self.rng = rng
+
+
     def simulate(self, solution, m=1):
         """
         Simulate `m` i.i.d. replications at solution `x`.
