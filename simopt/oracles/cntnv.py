@@ -1,21 +1,23 @@
 """
 Summary
 -------
-Simulate a Continuous Newsvendor Problem.
+Simulate a day's worth of sales for a newsvendor.
 """
-
 from base import Oracle
 import numpy as np
 
 class CntNV(Oracle):
     """
-    An oracle that simulates an Continuous Newsvendor Problem with a 
-    Burr Type XII distribution. Returns the profit in each scenario.
+    An oracle that simulates a day's worth of sales for a newsvendor 
+    with a Burr Type XII demand distribution. Returns the profit, after
+    accounting for order costs and salvage.
 
     Attributes
     ----------
     n_rngs : int
         number of random-number generators used to run a simulation replication
+    rng_list : list of rng.MRG32k3a objects
+        list of random-number generators used to run a simulation replication
     n_responses : int
         number of responses (performance measures)
     factors : dict
@@ -34,15 +36,15 @@ class CntNV(Oracle):
     """
     def __init__(self, noise_factors={}):
         self.n_rngs = 1
-        self.n_responses = 1 # just profits
+        self.n_responses = 1
         self.factors = noise_factors
         self.specifications = {
             "purchase_price": {
                 "description": "Purchasing Cost per unit",
                 "datatype": float
             },
-            "selling_price": {
-                "description": "Selling Price per unit",
+            "sales_price": {
+                "description": "Sales Price per unit",
                 "datatype": float
             },
             "salvage_price": {
@@ -50,33 +52,33 @@ class CntNV(Oracle):
                 "datatype": float
             },
             "order_quantity":{
-                "description": "Order quantity"
+                "description": "Order quantity",
+                "datatype": float # or int
             },
-            "alpha": {
-                "description": "Burr Type XII cdf parameters", # Shape parameter?
+            "Burr_c": {
+                "description": "Burr Type XII cdf shape parameter",
                 "datatype": float
             },
-            "beta": {
-                "description": "Burr Type XII cdf parameters", # Scale parameter?
+            "Burr_k": {
+                "description": "Burr Type XII cdf shape parameter",
                 "datatype": float
             } 
-        } 
-
+        }
         self.check_factor_list = {
-        "purchase_price": self.check_purchase_price(),
-        "selling_price": self.check_selling_price(),
-        "salvage_price": self.check_salvage_price(),
-        "order_quantity": self.check_order_quantity(),
-        "alpha": self.check_alpha(),
-        "beta": self.check_beta()
+            "purchase_price": self.check_purchase_price,
+            "sales_price": self.check_sales_price,
+            "salvage_price": self.check_salvage_price,
+            "order_quantity": self.check_order_quantity,
+            "Burr_c": self.check_Burr_c,
+            "Burr_k": self.check_Burr_k
         }
 
     # Check for simulatable factors
     def check_purchase_price(self):
         return self.factors["purchase_price"] > 0
 
-    def check_selling_price(self):
-        return self.factors["selling_price"] > 0
+    def check_sales_price(self):
+        return self.factors["sales_price"] > 0
 
     def check_salvage_price(self):
         return self.factors["salvage_price"] > 0
@@ -84,22 +86,17 @@ class CntNV(Oracle):
     def check_order_quantity(self):
         return self.factors["order_quantity"] > 0
 
-    def check_alpha(self):
-        return True
+    def check_Burr_c(self):
+        return self.factors["Burr_c"] > 0
 
-    def check_beta(self):
-        return True
+    def check_Burr_k(self):
+        return self.factors["Burr_k"] > 0
 
-    # Do we need simulatable factors for NV?
-    # salvage price < cost price < selling price????
     def check_simulatable_factors(self):
-        return self.factors["salvage_price"] < self.factors["purchase_price"] < self.factors["selling_price"]
+        return self.factors["salvage_price"] < self.factors["purchase_price"] < self.factors["sales_price"]
 
-    # Will replicate function run mutiple times?
-    # Do we even need replicate for NV since there is an exact solution?
-    def replicate(self, decision_factors, rng_list):
-
-         """
+    def replicate(self, decision_factors):
+        """
         Simulate a single replication at solution described by `decision_factors`.
 
         Arguments
@@ -113,16 +110,31 @@ class CntNV(Oracle):
             performance measures of interest
             "profit" = profit in this scenario
         """
-
-        # Update factors with user input
+        # update factors with user input
         self.factors.update(decision_factors)
-        demand_rng = rng_list[0] 
-
-        # Generate Burr Type XII Random number using: ((1-rand(1)).^(-1/beta)-1).^(1/alpha)
-        demand = ((1-demand_rng.random())**(-1/self.factors["beta"])-1)**(1/self.factors["alpha"])
-
-        # profit 
-        profit = -1*self.factors["purchase_price"]*self.factors["order_quantity"] + min(demand, self.factors["order_quantity"])*self.factors["selling_price"] + max(0, self.factors["order_quantity"]-demand)*self.factors["salvage_price"]
-        response = {'profit': profit} 
-
-        return response
+        # designate random number generator
+        demand_rng = self.rng_list[0]
+        # generate Burr Type XII random demand
+        demand = ((1-demand_rng.random())**(-1/self.factors["Burr_k"])-1)**(1/self.factors["Burr_c"])
+        # calculate profit 
+        profit = -1*self.factors["purchase_price"]*self.factors["order_quantity"] + min(demand, self.factors["order_quantity"])*self.factors["sales_price"] + max(0, self.factors["order_quantity"]-demand)*self.factors["salvage_price"]
+        # calculate gradient of profit w.r.t. order quantity
+        if demand > self.factors["order_quantity"]:
+            grad_profit_order_quantity = self.factors["sales_price"] - self.factors["purchase_price"]
+        elif demand < self.factors["order_quantity"]:
+            grad_profit_order_quantity = self.factors["salvage_price"] - self.factors["purchase_price"]
+        else:
+            grad_profit_order_quantity = np.nan
+        # return profit w/ gradient estimate
+        responses = {"profit": profit}
+        gradients = {
+            "profit": {
+                "purchase_price": np.nan,
+                "sales_price": np.nan,
+                "salvage_price": np.nan,
+                "order_quantity": grad_profit_order_quantity,
+                "Burr_c": np.nan,
+                "Burr_k": np.nan
+            }
+        }
+        return responses, gradients

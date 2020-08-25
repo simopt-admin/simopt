@@ -1,19 +1,24 @@
 import numpy as np
 
 from rng.mrg32k3a import MRG32k3a
-from oracles.mm1queue import MM1Queue
-#from oracles.ctsnews import CtsNews # names of .py file and Oracle subclass
+#from oracles.mm1queue import MM1Queue
+from oracles.cntnv import CntNV # names of .py file and Oracle subclass
 from base import Solution
 
 noise_factors = {
 #      dictionary of non-decision variable factors
-    "lambda": 1.5,
-    "warmup": 20,
-    "people": 50
+#    "lambda": 1.5,
+#    "warmup": 20,
+#    "people": 50
+    "purchase_price": 5.0,
+    "sales_price": 9.0,
+    "salvage_price": 1.0,
+    "Burr_c": 2.0,
+    "Burr_k": 20.0
 }
 
-myoracle = MM1Queue(noise_factors)
-#myoracle = CtsNews(noise_factors)
+#myoracle = MM1Queue(noise_factors)
+myoracle = CntNV(noise_factors)
 print(myoracle.factors)
 
 rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
@@ -24,7 +29,8 @@ myoracle.attach_rngs(rng_list)
 # Solution
 mysoln_factors = {
 #     dictionary of missing factors
-    "mu": 3.0,
+#    "mu": 3.0,
+    "order_quantity": 0.2
 }
 
 # Check simulatability
@@ -32,10 +38,11 @@ for key in noise_factors:
     print(key, myoracle.check_simulatable_factor(key))
 
 myoracle.factors.update(mysoln_factors) 
+print(myoracle.factors)
 for key in mysoln_factors:
     print(key, myoracle.check_simulatable_factor(key))
 
-print(myoracle.check_simulatable_factors(mysoln_factors))
+print(myoracle.check_simulatable_factors())
 
 # print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
 # print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
