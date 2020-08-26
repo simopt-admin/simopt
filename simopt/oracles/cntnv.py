@@ -132,16 +132,10 @@ class CntNV(Oracle):
             grad_profit_order_quantity = self.factors["salvage_price"] - self.factors["purchase_price"]
         else:
             grad_profit_order_quantity = np.nan
-        # return profit w/ gradient estimate
+        # compose responses
         responses = {"profit": profit}
-        gradients = {
-            "profit": {
-                "purchase_price": np.nan,
-                "sales_price": np.nan,
-                "salvage_price": np.nan,
-                "order_quantity": grad_profit_order_quantity,
-                "Burr_c": np.nan,
-                "Burr_k": np.nan
-            }
-        }
+        # compose gradients
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["profit"]["order_quantity"] = grad_profit_order_quantity
+        # return responses and gradients
         return responses, gradients

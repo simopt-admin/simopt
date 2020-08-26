@@ -142,26 +142,13 @@ class MM1Queue(Oracle):
         grad_mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:,5])
         # compute fraction of customers who wait
         fraction_wait = np.mean(cust_mat[self.factors["warmup"]:,4] > 0)
-        # return mean sojourn time w/ gradient estimate
-        # return fraction who wait w/o gradient estimate
+        # compose responses
         responses = {
             "avg_sojourn_time": mean_sojourn_time,
             "frac_cust_wait": fraction_wait
         }
-        mean_sojourn_time_grad = {
-            "mu": grad_mean_sojourn_time,
-            "lambda": np.nan, # to be derived...
-            "warmup": np.nan,
-            "people": np.nan 
-        }
-        fraction_wait_grad = {
-            "mu": np.nan,
-            "lambda": np.nan,
-            "warmup": np.nan,
-            "people": np.nan
-        }
-        gradients = {
-            "avg_sojourn_time": mean_sojourn_time_grad,
-            "frac_cust_wait": fraction_wait_grad
-        }
+        # compose gradients
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["avg_sojourn_time"]["mu"] = grad_mean_sojourn_time
+        # return responses and gradients
         return responses, gradients
