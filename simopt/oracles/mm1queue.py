@@ -24,7 +24,9 @@ class MM1Queue(Oracle):
     factors : dict
         changeable factors of the simulation model
     specifications : dict
-        details of each factor (for GUI and data validation)
+        details of each factor (for GUI, data validation, and defaults)
+    check_factor_list : dict
+        switch case for checking factor simulatability
 
     Arguments
     ---------
@@ -38,23 +40,26 @@ class MM1Queue(Oracle):
     def __init__(self, fixed_factors={}):
         self.n_rngs = 2
         self.n_responses = 2
-        self.factors = fixed_factors
         self.specifications = {
             "lambda": {
                 "description": "Rate parameter of interarrival time distribution.",
-                "datatype": float
+                "datatype": float,
+                "default": 1.5
             },
             "mu": {
                 "description": "Rate parameter of service time distribution.",
-                "datatype": float
+                "datatype": float,
+                "default": 3.0
             },
             "warmup": {
                 "description": "Number of people as warmup before collecting statistics",
-                "datatype": int
+                "datatype": int,
+                "default": 20
             },
             "people": {
                 "description": "Number of people from which to calculate the average sojourn time",
-                "datatype": int
+                "datatype": int,
+                "default": 50
             }
         }
         self.check_factor_list = {
@@ -63,17 +68,12 @@ class MM1Queue(Oracle):
             "warmup": self.check_warmup,
             "people": self.check_people
         }
-        # # Default parameters
-        # self.default_params = {
-        #     "lambd": 2, # rate parameter of interarrival time
-        #     "warmup": 20, # number of people as warmup before collecting statistics
-        #     "people": 50 # number of people from which to calculate the average sojourn time
-        # }
-        # # Set parameters of the simulation oracle -> fill in missing entries with defaults
-        # for key in self.default_params:
-        #     if key not in params:
-        #         params[key] = self.default_params[key]
-        # self.params = params
+        # set factors of the simulation oracle
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
 
     def check_lambda(self):
         return self.factors["lambda"] > 0

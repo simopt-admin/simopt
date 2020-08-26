@@ -6,20 +6,21 @@ from oracles.mm1queue import MM1Queue
 from base import Solution
 
 fixed_factors = {
-    "lambda": 1.5,
-    "warmup": 20,
-    "people": 50
+    "lambda": 1.0
+    #"lambda": 1.5,
+    #"warmup": 20,
+    #"people": 50
 }
 myproblem = MM1MinMeanSojournTime(fixed_factors)
 #print(myProblem.dim)
-#print(myproblem.oracle.factors)
+print(myproblem.oracle.factors)
 
 rng_list = [MRG32k3a() for _ in range(myproblem.oracle.n_rngs)]
 #print(rng_list)
 myproblem.oracle.attach_rngs(rng_list)
 #print(myproblem.oracle.rng_list)
 
-mysoln = Solution(x=[3], problem=myproblem)
+mysoln = Solution(x=[3.0], problem=myproblem)
 print(mysoln.det_objectives)
 print(mysoln.det_objectives_gradients)
 #print(mysoln.x)

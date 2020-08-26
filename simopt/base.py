@@ -255,8 +255,10 @@ class Oracle(object):
         number of responses (performance measures)
     factors : dict
         changeable factors of the simulation model
-    specifications : nested dict
-        details of each factor (for GUI and data validation)
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+    check_factor_list : dict
+        switch case for checking factor simulatability
     """
     def __init__(self):
         super().__init__()

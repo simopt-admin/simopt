@@ -23,7 +23,9 @@ class CntNV(Oracle):
     factors : dict
         changeable factors of the simulation model
     specifications : dict
-        details of each factor (for GUI and data validation)
+        details of each factor (for GUI, data validation, and defaults)
+    check_factor_list : dict
+        switch case for checking factor simulatability
 
     Arguments
     ---------
@@ -41,27 +43,33 @@ class CntNV(Oracle):
         self.specifications = {
             "purchase_price": {
                 "description": "Purchasing Cost per unit",
-                "datatype": float
+                "datatype": float,
+                "default": 5.0
             },
             "sales_price": {
                 "description": "Sales Price per unit",
-                "datatype": float
+                "datatype": float,
+                "default": 9.0
             },
             "salvage_price": {
                 "description": "Salvage cost per unit",
-                "datatype": float
+                "datatype": float,
+                "default": 1.0
             },
             "order_quantity":{
                 "description": "Order quantity",
-                "datatype": float # or int
+                "datatype": float, # or int
+                "default": 0.5
             },
             "Burr_c": {
                 "description": "Burr Type XII cdf shape parameter",
-                "datatype": float
+                "datatype": float,
+                "default": 2.0
             },
             "Burr_k": {
                 "description": "Burr Type XII cdf shape parameter",
-                "datatype": float
+                "datatype": float,
+                "default": 20.0
             } 
         }
         self.check_factor_list = {
@@ -72,6 +80,12 @@ class CntNV(Oracle):
             "Burr_c": self.check_Burr_c,
             "Burr_k": self.check_Burr_k
         }
+        # set factors of the simulation oracle
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
 
     # Check for simulatable factors
     def check_purchase_price(self):

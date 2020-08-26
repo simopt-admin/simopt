@@ -7,12 +7,9 @@ from base import Solution
 
 fixed_factors = {
 #      dictionary of non-decision variable factors
-#    "lambda": 1.5,
-#    "warmup": 20,
-#    "people": 50
-    "purchase_price": 5.0,
-    "sales_price": 9.0,
-    "salvage_price": 1.0,
+    "purchase_price": 4.0,
+#    "sales_price": 9.0,
+#    "salvage_price": 1.0,
     "Burr_c": 2.0,
     "Burr_k": 20.0
 }
@@ -52,7 +49,7 @@ print(myoracle.check_simulatable_factors())
 # print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x='hi')))
 
 # Test replicate()
-responses, gradients = myoracle.replicate(mysoln_factors)
+responses, gradients = myoracle.replicate()
 print('For a single replication:')
 print('The responses are {}'.format(responses))
 print('The gradients are {}'.format(gradients))
