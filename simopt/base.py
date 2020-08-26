@@ -218,7 +218,7 @@ class Problem(object):
             if solution.n_reps + m > solution.storage_size:
                 solution.pad_storage(m)
             # set the decision factors of the oracle
-            self.oracle.factors.update(solution.decision_factors) 
+            self.oracle.factors.update(solution.decision_factors)
             for _ in range(m):
                 # generate one replication at x
                 responses, gradients = self.oracle.replicate()
@@ -292,21 +292,15 @@ class Oracle(object):
         return is_simulatable
         #raise NotImplementedError
 
-    def check_simulatable_factors(self, decision_factors):
+    def check_simulatable_factors(self):
         """
         Determine if a simulation replication can be run with the given factors.
-
-        Arguments
-        ---------
-        decision_factors : dict
-            decision factors of the simulation model
         
         Returns
         -------
         is_simulatable : bool
             indicates if oracle specified by factors is simulatable
         """
-        self.factors.update(decision_factors) 
         return True
         #raise NotImplementedError
 

@@ -5,12 +5,12 @@ from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
 from oracles.mm1queue import MM1Queue
 from base import Solution
 
-noise_factors = {
+fixed_factors = {
     "lambda": 1.5,
     "warmup": 20,
     "people": 50
 }
-myproblem = MM1MinMeanSojournTime(noise_factors)
+myproblem = MM1MinMeanSojournTime(fixed_factors)
 #print(myProblem.dim)
 #print(myproblem.oracle.factors)
 

@@ -28,17 +28,17 @@ class MM1Queue(Oracle):
 
     Arguments
     ---------
-    noise_factors : nested dict
-        noise_factors of the simulation model
+    fixed_factors : nested dict
+        fixed factors of the simulation model
 
     See also
     --------
     base.Oracle
     """
-    def __init__(self, noise_factors={}):
+    def __init__(self, fixed_factors={}):
         self.n_rngs = 2
         self.n_responses = 2
-        self.factors = noise_factors
+        self.factors = fixed_factors
         self.specifications = {
             "lambda": {
                 "description": "Rate parameter of interarrival time distribution.",
@@ -87,8 +87,7 @@ class MM1Queue(Oracle):
     def check_people(self):
         return self.factors["people"] >= 1
 
-    def check_simulatable_factors(self, decision_factors):
-        self.factors.update(decision_factors)
+    def check_simulatable_factors(self):
         #demo for condition that queue must be stable
         #return self.factors["mu"] > self.factors["lambda"]
         return True

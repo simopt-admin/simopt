@@ -5,7 +5,7 @@ from rng.mrg32k3a import MRG32k3a
 from oracles.cntnv import CntNV # names of .py file and Oracle subclass
 from base import Solution
 
-noise_factors = {
+fixed_factors = {
 #      dictionary of non-decision variable factors
 #    "lambda": 1.5,
 #    "warmup": 20,
@@ -17,8 +17,8 @@ noise_factors = {
     "Burr_k": 20.0
 }
 
-#myoracle = MM1Queue(noise_factors)
-myoracle = CntNV(noise_factors)
+#myoracle = MM1Queue(fixed_factors)
+myoracle = CntNV(fixed_factors)
 print(myoracle.factors)
 
 rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
@@ -34,7 +34,7 @@ mysoln_factors = {
 }
 
 # Check simulatability
-for key in noise_factors:
+for key in fixed_factors:
     print(key, myoracle.check_simulatable_factor(key))
 
 myoracle.factors.update(mysoln_factors) 

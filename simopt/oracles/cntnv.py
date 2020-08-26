@@ -27,17 +27,17 @@ class CntNV(Oracle):
 
     Arguments
     ---------
-    noise_factors : nested dict
-        noise_factors of the simulation model
+    fixed_factors : nested dict
+        fixed_factors of the simulation model
 
     See also
     --------
     base.Oracle
     """
-    def __init__(self, noise_factors={}):
+    def __init__(self, fixed_factors={}):
         self.n_rngs = 1
         self.n_responses = 1
-        self.factors = noise_factors
+        self.factors = fixed_factors
         self.specifications = {
             "purchase_price": {
                 "description": "Purchasing Cost per unit",
