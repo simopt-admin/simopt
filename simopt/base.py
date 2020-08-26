@@ -214,11 +214,14 @@ class Problem(object):
             print('--* Error: Number of replications must be at least 1. ')
             print('--* Aborting. ')
         else:
+            # pad numpy arrays if necessary
             if solution.n_reps + m > solution.storage_size:
                 solution.pad_storage(m)
+            # set the decision factors of the oracle
+            self.oracle.factors.update(solution.decision_factors) 
             for _ in range(m):
                 # generate one replication at x
-                responses, gradients = self.oracle.replicate(solution.decision_factors)
+                responses, gradients = self.oracle.replicate()
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 vector_gradients = {keys:self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # convert responses and gradients to objectives and gradients and add
@@ -319,14 +322,9 @@ class Oracle(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def replicate(self, decision_factors):
+    def replicate(self):
         """
-        Simulate a single replication at solution described by `decision_factors`.
-
-        Arguments
-        ---------
-        decision_factors : dict
-            decision factors of the simulation model
+        Simulate a single replication for the current oracle factors.
 
         Returns
         -------

@@ -93,14 +93,9 @@ class MM1Queue(Oracle):
         #return self.factors["mu"] > self.factors["lambda"]
         return True
 
-    def replicate(self, decision_factors):
+    def replicate(self):
         """
-        Simulate a single replication at solution described by `decision_factors`.
-
-        Arguments
-        ---------
-        decision_factors : dict
-            decision factors of the simulation model
+        Simulate a single replication for the current oracle factors.
 
         Returns
         -------
@@ -111,8 +106,6 @@ class MM1Queue(Oracle):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # set the decision factors of the model
-        self.factors.update(decision_factors) 
         # total number of arrivals to simulate
         total = self.factors["warmup"] + self.factors["people"]
         # designate separate random number generators

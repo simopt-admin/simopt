@@ -25,7 +25,8 @@ print(mysoln.det_objectives_gradients)
 #print(mysoln.x)
 #print(mysoln.decision_factors)
 
-responses, gradients = myproblem.oracle.replicate(mysoln.decision_factors)
+myproblem.oracle.factors.update(mysoln.decision_factors)
+responses, gradients = myproblem.oracle.replicate()
 print('For a single replication:')
 print('The responses are {}'.format(responses))
 print('The gradients are {}'.format(gradients))
@@ -36,7 +37,9 @@ for rng in myproblem.oracle.rng_list:
 #myproblem.simulate(mysoln, m=1)
 #myproblem.simulate(mysoln, m=1)
 #myproblem.simulate(mysoln, m=1)
+#print(myproblem.oracle.factors) 
 myproblem.simulate(mysoln, m=3)
+#print(myproblem.oracle.factors) 
 
 # all_resp = [True, True]
 # is_obj = [True, False]

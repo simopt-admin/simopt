@@ -95,14 +95,9 @@ class CntNV(Oracle):
     def check_simulatable_factors(self):
         return self.factors["salvage_price"] < self.factors["purchase_price"] < self.factors["sales_price"]
 
-    def replicate(self, decision_factors):
+    def replicate(self):
         """
-        Simulate a single replication at solution described by `decision_factors`.
-
-        Arguments
-        ---------
-        decision_factors : dict
-            decision factors of the simulation model
+        Simulate a single replication for the current oracle factors.
 
         Returns
         -------
@@ -110,8 +105,6 @@ class CntNV(Oracle):
             performance measures of interest
             "profit" = profit in this scenario
         """
-        # update factors with user input
-        self.factors.update(decision_factors)
         # designate random number generator
         demand_rng = self.rng_list[0]
         # generate Burr Type XII random demand
