@@ -39,6 +39,8 @@ class MM1MinMeanSojournTime(Problem):
         optimal solution (if known)
     oracle : Oracle object
         associated simulation oracle that generates replications
+    oracle_default_factors : dict
+        default values for overriding oracle-level default factors
 
     Arguments
     ---------
@@ -49,11 +51,11 @@ class MM1MinMeanSojournTime(Problem):
     --------
     base.Problem
     """
-    def __init__(self, oracle_factors={}):
-        self.minmax = -1
+    def __init__(self, oracle_fixed_factors={}):
         self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
+        self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
@@ -61,7 +63,17 @@ class MM1MinMeanSojournTime(Problem):
         self.optimal_bound = 0
         self.optimal_solution = None
         self.inital_solution = (3,)
-        self.oracle = MM1Queue(oracle_factors)
+        self.oracle_default_factors = {
+            "warmup": 50,
+            "people": 200
+        }
+        # set subset of factors of the simulation oracle
+        # fill in missing oracle factors with problem-level default values
+        for key in self.oracle_default_factors:
+            if key not in oracle_fixed_factors:
+                oracle_fixed_factors[key] = self.oracle_default_factors[key]
+        # Instantiate oracle with fixed factors
+        self.oracle = MM1Queue(oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """

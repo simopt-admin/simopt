@@ -47,6 +47,8 @@ class Problem(object):
         optimal solution (if known)
     oracle : Oracle object
         associated simulation oracle that generates replications
+    oracle_default_factors : dict
+        default values for overriding oracle-level default factors
     """
     def __init__(self):
         self.oracle = None
