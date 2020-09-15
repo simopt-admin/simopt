@@ -29,7 +29,7 @@ class CntNV(Oracle):
 
     Arguments
     ---------
-    fixed_factors : nested dict
+    fixed_factors : dict
         fixed_factors of the simulation model
 
     See also
@@ -81,11 +81,7 @@ class CntNV(Oracle):
             "Burr_k": self.check_Burr_k
         }
         # set factors of the simulation oracle
-        # fill in missing factors with default values
-        self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
+        super().__init__(fixed_factors)
 
     # Check for simulatable factors
     def check_purchase_price(self):

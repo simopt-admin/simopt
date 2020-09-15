@@ -72,11 +72,7 @@ class MM1Queue(Oracle):
             "people": self.check_people
         }
         # set factors of the simulation oracle
-        # fill in missing factors with default values
-        self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
+        super().__init__(fixed_factors)
 
     def check_lambda(self):
         return self.factors["lambda"] > 0

@@ -15,6 +15,61 @@ Solution : class
 import numpy as np
 from rng.mrg32k3a import MRG32k3a
 
+class Solver(object):
+    """
+    Base class to implement simulation-optimization solvers.
+
+    Attributes
+    ----------
+    objective_type : string
+        description of objective types:
+            "single" or "multi"
+    constraint_type : string
+        description of constraints types:
+            "unconstrained", "box", "deterministic", "stochastic"
+    variable_type : string
+        description of variable types:
+            "discrete", "continuous", "mixed"
+    gradient_needed : bool
+        indicates if gradient of objective function is needed
+    factors : dict
+        changeable factors of the solver
+    rng_list : list of rng.MRG32k3a objects
+        list of random-number generators used for the solver's internal purposes    
+    """
+    def __init__(self, factors):
+        self.factors = factors
+        pass
+
+    def attach_rngs(self, rng_list):
+        """
+        Attach a list of random number generators to the solver.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            list of random-number generators used for the solver's internal purposes
+        """
+        self.rng_list = rng_list
+
+    def solve(self, problem, crn_across_solns):
+        """
+        Run a single macroreplciation of a solver on a problem.
+
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        crn_across_solns : bool 
+            indicates if CRN will be used when simulating different solutions
+        
+        Returns
+        -------
+        recommended_solns : list of Solution objects
+            list of solutions recommended throughout the budget
+        """
+        raise NotImplementedError
+
 class Problem(object):
     """
     Base class to implement simulation-optimization problems.
@@ -49,10 +104,25 @@ class Problem(object):
         associated simulation oracle that generates replications
     oracle_default_factors : dict
         default values for overriding oracle-level default factors
+    rng_list : list of rng.MRG32k3a objects
+        list of random number generators used to generate a random initial solution
+        or a random problem instance
     """
     def __init__(self):
         self.oracle = None
-        super().__init__()
+        #super().__init__()
+
+    def attach_rngs(self, rng_list):
+        """
+        Attach a list of random number generators to the problem.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            list of random-number generators used to generate a random initial solution
+            or a random problem instance
+        """
+        self.rng_list = rng_list
 
     def vector_to_factor_dict(self, vector):
         """
@@ -262,8 +332,13 @@ class Oracle(object):
     check_factor_list : dict
         switch case for checking factor simulatability
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, fixed_factors):
+        # set factors of the simulation oracle
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
 
     def attach_rngs(self, rng_list):
         """
