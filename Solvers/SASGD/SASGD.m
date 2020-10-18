@@ -1,5 +1,5 @@
 %==========================================================================
-% STASGD (Stopping Time Adaptive Sampling Stochastic Gradient Descent)
+% ASGD (Adaptive Sampling Stochastic Gradient Descent)
 %==========================================================================
 % DATE
 %        Spring 2020
@@ -13,9 +13,10 @@
 %        SIAM Journal on Optimization, 28(4), 3312-3343.
 %
 % DESCRIPTION
-%        This algorithm determines the minimum adaptive sample size such
-%        that the following inequality is satisfied for each stratum (K) 
-%        var(del_Fj{i}.*del_Fsk(i))/N(i) <=(kappa*norm(del_Fsk(i))^4/p(i)). 
+%        This algorithm determines the new sample size at each iteration
+%        using the equation 
+%        Na = p(i).*var(del_Fj{i}.*del_Fsk(i))/(kappa*norm(del_Fsk(i))^4, 
+%        for each stratum (K)
 %
 %
 %==========================================================================
@@ -70,7 +71,7 @@
 %% SASGD
 function [Ancalls, Asoln, Afn, AFnVar, AFnGrad, AFnGradCov, ...
     Aconstraint, AConstraintCov, AConstraintGrad, AConstraintGradCov] ...
-    = SSSGD(probHandle, probstructHandle, problemRng, solverRng)
+    = SASGD(probHandle, probstructHandle, problemRng, solverRng)
 
 %% Unreported
 AFnGrad = NaN;
@@ -112,15 +113,16 @@ N(k) = floor(wi(k).*(N0 - k*n0) + n0); % Size of each stratum
 N(N==0 | N==1) = 2; % Minimum size of each stratum = 2
 h = 1e-3; % Step size to eavluate gradient using finite difference method
 del_Fsk = zeros(1, K); % Gradient of each stratum
+Na = zeros(1, K); % Adaptive sample size
+%% Strat solving
 
-%% Start solving
-Fjhp = {};
-Fjhn = {};
 while 1
     del_Fs = 0; % Gradient at each iteration 
     [Fj, calls] = OracleCalls(probHandle, theta(count,:), 1, problemRng, ...
         N, calls, count, [], [], K, minmax, 1);
+
     del_Fj = {};
+    
     if sum(theta(count,:)' - h < VarBds(:,1))
         [Fjhp, calls]= OracleCalls(probHandle, theta(count,:)+h, 1, ...
             problemRng, N, calls, count, [], [], K, minmax, 1);
@@ -149,9 +151,44 @@ while 1
     end
     
     % Check for optimal sample size
-    [Na, Fj, del_Fj, del_Fsk, del_Fs, calls] = AdaptiveSampling (probHandle, ...
-        theta(count,:), problemRng, N, calls, count, Fj, del_Fj, del_Fsk, ...
-        del_Fs, p, h, kappa, Fjhp, Fjhn, K, bin, minmax, VarBds);
+    % Adaptive Sampling
+    for i = 1:K
+        Na(i) = min(max([2, floor(p(i).*var(del_Fj{i}.*del_Fsk(i))/(kappa*norm(del_Fsk(i))^4)) ...
+            ,N(i)]));
+        if Na(i) > bin(i) - 5 && bin(i) - 5 > 2
+            Na(i) = bin(i) - 5;
+        end
+    end
+    if sum(Na-N) > 0
+        [Fj, calls] = OracleCalls(probHandle, theta(count,:), 1, problemRng,...
+            N, calls, count, Na, Fj, K, minmax, 1);
+        if sum(theta(count,:)' - h < VarBds(:,1))
+            [Fjhp, calls]= OracleCalls(probHandle, theta(count,:)+h, 1, ...
+                problemRng, N, calls, count, Na, Fjhp, K, minmax, 1);
+            for i=1:K
+                del_Fj{i} = (Fjhp{i} - Fj{i})/h;
+            end
+        elseif sum(theta(count,:)' + h > VarBds(:,2))
+            [Fjhn, calls]= OracleCalls(probHandle, theta(count,:)-h, 1, ...
+                problemRng, N, calls, count, Na, Fjhn, K, minmax, 1);
+            for i=1:K
+                del_Fj{i} = (Fj{i} - Fjhn{i})/h;
+            end
+        else
+            [Fjhp, calls]= OracleCalls(probHandle, theta(count,:)+h, 1, ...
+                problemRng, N, calls, count, Na, Fjhp, K, minmax, 1);
+
+            [Fjhn, calls]= OracleCalls(probHandle, theta(count,:)-h, 1, ...
+                problemRng, N, calls, count, Na, Fjhn, K, minmax, 1);
+            for i=1:K
+                del_Fj{i} = (Fjhp{i} - Fjhn{i})/(2*h);
+            end
+        end
+        for i=1:K
+            del_Fsk(i) = 1/N(i)*sum(del_Fj{i});
+            del_Fs = del_Fs + 1/sum(N)*sum(del_Fj{i});
+        end
+    end
     
     di = -del_Fs; % Descent direction 
     
@@ -174,7 +211,7 @@ end
 
 
 Ancalls = [0; calls'];
-Asoln = [theta; theta(end,:)];
+Asoln = [solution; theta];
 Afn = -minmax*[0; mean_Fj']; % flip the sign
 AFnVar = [0; var_Fj'];
 end
@@ -245,8 +282,7 @@ else
             for j = N(i)+1:Na(i)
                 m = m+1;
                 if K == 1
-                    f_cell{i}(1,j) = -minmax*probHandle(theta, runlength, ...
-                        problemRng, m);
+                    f_cell{i}(1,j) = -minmax*probHandle(theta, runlength, problemRng, m);
                 else
                     f_cell{i}(1,j) = -minmax*probHandle([theta i sum(Na) count],...
                         runlength, problemRng, m);
@@ -280,57 +316,4 @@ for i = 1:K
 end
 end
 
-function [Na, Fja, del_Fja, del_Fska, del_Fsa, calls] = AdaptiveSampling ...
-    (probHandle, theta, problemRng, N, calls, count, ...
-    Fj, del_Fj, del_Fsk, del_Fs, p, h, kappa, Fjhp, Fjhn, K, bin, minmax, VarBds)
 
-Na = N;
-for i = 1:K
-    % Determine the optimal sample size for each stratum
-    while 1
-        if var(del_Fj{i}.*del_Fsk(i))/Na(i) <=(kappa*norm(del_Fsk(i))^4/p(i))
-           break
-        elseif N(i) == bin(i) || Na(i) == bin(i)
-           break
-        else
-           N_temp = Na;  
-           Na(i) = Na(i) + 1;
-           [Fj, calls] = OracleCalls(probHandle, theta, 1, problemRng, ...
-               N_temp, calls, count, Na, Fj, K, minmax, 1);
-           if sum(theta' - h < VarBds(:,1))
-               [Fjhp, calls]= OracleCalls(probHandle, theta + h, 1, ...
-                   problemRng, N_temp, calls, count, Na, Fjhp, K, minmax, 1);
-               for i=1:K
-                   del_Fj{i} = (Fjhp{i} - Fj{i})/h;
-               end
-           elseif sum(theta' + h > VarBds(:,2))
-               [Fjhn, calls]= OracleCalls(probHandle, theta - h, 1, ...
-                    problemRng, N_temp, calls, count, Na, Fjhn, K, minmax, 1);
-                for i=1:K
-                    del_Fj{i} = (Fj{i} - Fjhn{i})/h;
-                end
-           else
-               [Fjhp, calls]= OracleCalls(probHandle, theta + h, 1, ...
-                    problemRng, N_temp, calls, count, Na, Fjhp, K, minmax, 1);
-    
-               [Fjhn, calls]= OracleCalls(probHandle, theta - h, 1, ...
-                    problemRng, N_temp, calls, count, Na, Fjhn, K, minmax, 1);
-               for i=1:K
-                   del_Fj{i} = (Fjhp{i} - Fjhn{i})/(2*h);
-               end
-           end
-           for i=1:K
-               del_Fsk(i) = 1/Na(i)*sum(del_Fj{i});
-               del_Fs = del_Fs + 1/sum(Na)*sum(del_Fj{i});
-           end
-           if Na(i) == bin(i)
-               break
-           end
-        end
-    end
-end
-del_Fja = del_Fj; 
-Fja = Fj; 
-del_Fska = del_Fsk;
-del_Fsa = del_Fs; % Update gradient after adaptive sampling
-end
