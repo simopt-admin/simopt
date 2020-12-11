@@ -25,7 +25,9 @@ class RandomSearch(Solver):
     gradient_needed : bool
         indicates if gradient of objective function is needed
     factors : dict
-        changeable factors of the solver
+        changeable factors (i.e., parameters) of the solver
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
         list of random-number generators used for the solver's internal purposes    
 
@@ -43,7 +45,6 @@ class RandomSearch(Solver):
         self.constraint_type = "deterministic"
         self.variable_type = "mixed"
         self.gradient_needed = False
-        self.factors = fixed_factors
         self.specifications = {
             "sample_size": {
                 "description": "Sample size per solution",
@@ -54,19 +55,15 @@ class RandomSearch(Solver):
         self.check_factor_list = {
             "sample_size": self.check_sample_size,
         }
-        # NEED TO WRITE THIS INTO SOLVER SUPER CLASS __INIT__
-        # set factors of the simulation oracle
         super().__init__(fixed_factors)
 
-    # NEED TO WRITE CHECK FACTORS FRAMEWORK IN SOLVER SUPER CLASS
-    # Check for valid factors
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
 
-    def check_simulatable_factors(self):
+    def check_solver_factors(self):
         pass
     
-    def solver(self, problem):
+    def solve(self, problem,  crn_across_solns):
         """
         Run a single macroreplciation of a solver on a problem.
 
@@ -82,23 +79,28 @@ class RandomSearch(Solver):
         recommended_solns : list of Solution objects
             list of solutions recommended throughout the budget
         intermediate_budgets : list of ints
-            list of intermediate budgets at which recommended solution changes
+            list of intermediate budgets expended when changing recommended solutions
         """
-        # AT WRAPPER LEVEL, CHECK COMPATIBILITY OF SOLVER AND PROBLEM
-        # initialize
+        # initialize returns
         recommended_solns = []
         intermediate_budgets = []
         # designate random number generator
         find_next_soln_rng = self.rng_list[0]
-        
+        # begin sampling        
         expended_budget = 0
         while expended_budget < problem.budget:
-            new_x = problem.get_random_solution() # Needs to use find_next_soln_rng
+            # identify new solution to simulate
+            new_x = problem.get_random_solution(find_next_soln_rng) # Needs to use find_next_soln_rng
             new_solution = Solution(new_x, problem)
-            problem.simulate(solution=new_solution, m=self.factors["sample_size"])
+            # record initial solution
+            if expended_budget == 0:
+                best_solution = new_solution
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+            # simulate new solution
+            problem.simulate(solution=new_solution, m=self.factors["sample_size"]) # RNG control here (substream & subsubstream)
             expended_budget += self.factors["sample_size"]
-            # account for first iteration
-            # track best incumbent solution
+            # check for improvement relative to incumbent best solution
             if problem.minmax*new_solution.objectives_mean > problem.minmax*best_solution.objectives_mean:
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

@@ -33,13 +33,25 @@ class Solver(object):
     gradient_needed : bool
         indicates if gradient of objective function is needed
     factors : dict
-        changeable factors of the solver
+        changeable factors (i.e., parameters) of the solver
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
         list of random-number generators used for the solver's internal purposes    
+
+
+    Arguments
+    ---------
+    fixed_factors : dict
+        dictionary of user-specified solver factors  
     """
-    def __init__(self, factors):
-        self.factors = factors
-        pass
+    def __init__(self, fixed_factors):
+        # set factors of the solver
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
 
     def attach_rngs(self, rng_list):
         """
@@ -67,8 +79,54 @@ class Solver(object):
         -------
         recommended_solns : list of Solution objects
             list of solutions recommended throughout the budget
+        intermediate_budgets : list of ints
+            list of intermediate budgets expended when changing recommended solutions
         """
         raise NotImplementedError
+
+    def check_solver_factor(self, factor_name):
+        """
+        Determine if the setting of a solver factor is permissible.
+
+        Arguments
+        ---------
+        factor_name : string
+            name of factor for dictionary lookup (i.e., key)
+
+        Returns
+        -------
+        is_permissible : bool
+            indicates if solver factor is permissible
+        """
+        is_permissible = True
+        is_permissible *= self.check_factor_datatype(factor_name)
+        is_permissible *= self.check_factor_list[factor_name]()
+        return is_permissible
+        #raise NotImplementedError
+
+    def check_solver_factors(self):
+        """
+        Determine if the settings of solver factors are permissible.
+        
+        Returns
+        -------
+        is_simulatable : bool
+            indicates if solver factors are permissible
+        """
+        return True
+        #raise NotImplementedError
+
+    def check_factor_datatype(self, factor_name):
+        """
+        Determine if a factor's data type matches its specification.
+
+        Returns
+        -------
+        is_right_type : bool
+            indicates if factor is of specified data type
+        """
+        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        return is_right_type
 
 class Problem(object):
     """
@@ -331,6 +389,11 @@ class Oracle(object):
         details of each factor (for GUI, data validation, and defaults)
     check_factor_list : dict
         switch case for checking factor simulatability
+
+    Arguments
+    ---------
+    fixed_factors : dict
+        dictionary of user-specified oracle factors    
     """
     def __init__(self, fixed_factors):
         # set factors of the simulation oracle
