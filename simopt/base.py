@@ -10,6 +10,8 @@ Solver : class
 Problem : class
 Oracle : class
 Solution : class
+DesignPoint : class
+DataFarmingExperiment : class
 """
 
 import numpy as np
@@ -328,7 +330,6 @@ class Problem(object):
         """
         self.rng = rng
 
-
     def simulate(self, solution, m=1):
         """
         Simulate `m` i.i.d. replications at solution `x`.
@@ -547,7 +548,7 @@ class Solution(object):
 
     def pad_storage(self, m):
         """
-        Append zeros to numpy arrays for summary statistics
+        Append zeros to numpy arrays for summary statistics.
         
         Arguments
         ---------
@@ -586,3 +587,55 @@ class Solution(object):
         self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
         self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
         self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps,stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
+
+class DesignPoint(object):
+    """
+    Base class for design points represented as dictionaries of factors.
+
+    Attributes
+    ----------
+    oracle_factors : dict
+        oracle factor names and values
+    n_reps : int
+        number of replications run at a design point
+    responses : dict
+        responses observed from replications
+    gradients : dict of dict
+        gradients of responses (w.r.t. oracle factors) observed from replications
+
+    Arguments
+    ---------
+    oracle_factors : dict
+        oracle factor names and values
+    oracle : Oracle object
+        oracle to which oracle_factors corresponds
+    """
+    def __init__(self, oracle_factors, oracle):
+        super().__init__()
+        self.oracle_factors = oracle.defaults #### FIX DEFAULTS
+        self.oracle_factors.update(oracle_factors)
+        self.n_reps = 0
+        self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
+        self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
+
+class DataFarmingExperiment(object):
+    """
+    Base class for data-farming experiments consisting of an oracle
+    and design of associated factors.
+
+    Attributes
+    ----------
+    oracle_factors : dict
+        oracle factor names and values
+    n_reps : int
+        common number of runs at each design point
+
+    Arguments
+    ---------
+    oracle : Oracle object
+        oracle on which the experiment is run
+    """
+    def __init__(self, oracle):
+        super().__init__()
+        self.oracle = oracle
+        self.n_reps = 0
