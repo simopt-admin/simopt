@@ -610,13 +610,27 @@ class DesignPoint(object):
     oracle : Oracle object
         oracle to which oracle_factors corresponds
     """
-    def __init__(self, oracle_factors, oracle):
+    def __init__(self, design_oracle_factors, oracle):
         super().__init__()
-        self.oracle_factors = oracle.defaults #### FIX DEFAULTS
-        self.oracle_factors.update(oracle_factors)
+        self.oracle_factors = oracle.factors
+        self.oracle_factors.update(design_oracle_factors)
         self.n_reps = 0
         self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
         self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
+
+    def replicate(self, m=1):
+        """
+        Simulate a single replication for the current oracle factors.
+        Append results to the responses and gradients dictionaries.
+
+        Arguments
+        ---------
+        m : int > 0
+            number of macroreplications to run at the design point
+        """
+        # need to figure if design point has local copy of an oracle object, or if oracle is shared
+        responses, gradients = self.oracle.replicate()
+        # ...
 
 class DataFarmingExperiment(object):
     """
