@@ -8,7 +8,7 @@ import numpy as np
 
 class RandomSearch(Solver):
     """
-    A solver that randomly samples solutions to evaluate from the feasible region.
+    A solver that randomly samples solutions from the feasible region.
     Take a fixed number of replications at each solution.
 
     Attributes
@@ -63,16 +63,16 @@ class RandomSearch(Solver):
     def check_solver_factors(self):
         pass
     
-    def solve(self, problem,  crn_across_solns):
+    def solve(self, problem, crn_across_solns):
         """
-        Run a single macroreplciation of a solver on a problem.
+        Run a single macroreplication of a solver on a problem.
 
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool 
-            indicates if CRN will be used when simulating different solutions
+            indicates if CRN are used when simulating different solutions
         
         Returns
         -------
@@ -86,23 +86,29 @@ class RandomSearch(Solver):
         intermediate_budgets = []
         # designate random number generator
         find_next_soln_rng = self.rng_list[0]
-        # begin sampling        
+        # begin sampling
         expended_budget = 0
         while expended_budget < problem.budget:
             # identify new solution to simulate
-            new_x = problem.get_random_solution(find_next_soln_rng) # Needs to use find_next_soln_rng
+            new_x = problem.get_random_solution(find_next_soln_rng)
             new_solution = Solution(new_x, problem)
             # record initial solution
             if expended_budget == 0:
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+            # prepare to simulate new solution
+            self.prepare_sim_new_soln(problem, crn_across_solns)
             # simulate new solution
-            problem.simulate(solution=new_solution, m=self.factors["sample_size"]) # RNG control here (substream & subsubstream)
+            problem.simulate(solution=new_solution, m=self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]
             # check for improvement relative to incumbent best solution
             if problem.minmax*new_solution.objectives_mean > problem.minmax*best_solution.objectives_mean:
+                best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+        # record incumbent best solution at final budget
+        recommended_solns.append(best_solution)
+        intermediate_budgets.append(problem.budget)
         # return recommended solutions and intermediate budgets
         return recommended_solns, intermediate_budgets

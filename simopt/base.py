@@ -41,7 +41,6 @@ class Solver(object):
     rng_list : list of rng.MRG32k3a objects
         list of random-number generators used for the solver's internal purposes    
 
-
     Arguments
     ---------
     fixed_factors : dict
@@ -68,14 +67,14 @@ class Solver(object):
 
     def solve(self, problem, crn_across_solns):
         """
-        Run a single macroreplciation of a solver on a problem.
+        Run a single macroreplication of a solver on a problem.
 
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool 
-            indicates if CRN will be used when simulating different solutions
+            indicates if CRN are used when simulating different solutions
         
         Returns
         -------
@@ -108,7 +107,7 @@ class Solver(object):
 
     def check_solver_factors(self):
         """
-        Determine if the settings of solver factors are permissible.
+        Determine if the joint settings of solver factors are permissible.
         
         Returns
         -------
@@ -122,6 +121,11 @@ class Solver(object):
         """
         Determine if a factor's data type matches its specification.
 
+        Arguments
+        ---------
+        factor_name : string
+            string corresponding to name of factor to check
+
         Returns
         -------
         is_right_type : bool
@@ -129,6 +133,26 @@ class Solver(object):
         """
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
+
+    def prepare_sim_new_soln(self, problem, crn_across_solns):
+        """
+        Manipulate a problem's oracle's rngs depending on whether
+        using CRN acorss solutions.
+
+        Arguments
+        ---------
+        problem : Problem object
+            problem being solved by the solver
+        """
+        if crn_across_solns == True: # if CRN are used ...
+        # reset each rng to start of its current substream
+            for rng in problem.oracle.rng_list:
+                rng.reset_substream()
+        else: # if CRN are not used ...
+        # advance each rng to start of the substream = current substream + # of oracle RNGs 
+            for rng in problem.oracle.rng_list:
+                for _ in range(problem.oracle.n_rngs):
+                    rng.advance_substream()        
 
 class Problem(object):
     """
@@ -164,12 +188,20 @@ class Problem(object):
         associated simulation oracle that generates replications
     oracle_default_factors : dict
         default values for overriding oracle-level default factors
+    oracle_fixed_factors : dict
+        combination of overriden oracle-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
         list of random number generators used to generate a random initial solution
         or a random problem instance
     """
-    def __init__(self):
+    def __init__(self, oracle_fixed_factors):
         self.oracle = None
+        # set subset of factors of the simulation oracle
+        # fill in missing oracle factors with problem-level default values
+        for key in self.oracle_default_factors:
+            if key not in oracle_fixed_factors:
+                oracle_fixed_factors[key] = self.oracle_default_factors[key]        
+        self.oracle_fixed_factors = oracle_fixed_factors
         #super().__init__()
 
     def attach_rngs(self, rng_list):
@@ -308,9 +340,14 @@ class Problem(object):
         """
         return True
 
-    def get_random_solution(self):
+    def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution, to be used for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : rng.MRG32k3a object
+            random-number generator used to sample a new random solution
 
         Returns
         -------
@@ -319,16 +356,16 @@ class Problem(object):
         """
         pass
     
-    def attach_rng(self, rng):
-        """
-        Attach random number generator to the problem.
+    # def attach_rng(self, rng):
+    #     """
+    #     Attach random number generator to the problem.
 
-        Arguments
-        ---------
-        rng : rng.MRG32k3a object
-            random-number generator used to generate random solutions
-        """
-        self.rng = rng
+    #     Arguments
+    #     ---------
+    #     rng : rng.MRG32k3a object
+    #         random-number generator used to generate random solutions
+    #     """
+    #     self.rng = rng
 
     def simulate(self, solution, m=1):
         """
@@ -615,8 +652,8 @@ class DesignPoint(object):
         self.oracle_factors = oracle.defaults #### FIX DEFAULTS
         self.oracle_factors.update(oracle_factors)
         self.n_reps = 0
-        self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
-        self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
+        #self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
+        #self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
 
 class DataFarmingExperiment(object):
     """

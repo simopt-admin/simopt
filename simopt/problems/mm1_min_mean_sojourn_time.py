@@ -41,7 +41,12 @@ class MM1MinMeanSojournTime(Problem):
         associated simulation oracle that generates replications
     oracle_default_factors : dict
         default values for overriding oracle-level default factors
-
+    oracle_fixed_factors : dict
+        combination of overriden oracle-level factors and defaults
+    rng_list : list of rng.MRG32k3a objects
+        list of random number generators used to generate a random initial solution
+        or a random problem instance
+        
     Arguments
     ---------
     oracle_factors : dict
@@ -59,7 +64,7 @@ class MM1MinMeanSojournTime(Problem):
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.budget = 10000
+        self.budget = 100
         self.optimal_bound = 0
         self.optimal_solution = None
         self.inital_solution = (3,)
@@ -67,13 +72,9 @@ class MM1MinMeanSojournTime(Problem):
             "warmup": 50,
             "people": 200
         }
-        # set subset of factors of the simulation oracle
-        # fill in missing oracle factors with problem-level default values
-        for key in self.oracle_default_factors:
-            if key not in oracle_fixed_factors:
-                oracle_fixed_factors[key] = self.oracle_default_factors[key]
-        # Instantiate oracle with fixed factors
-        self.oracle = MM1Queue(oracle_fixed_factors)
+        super().__init__(oracle_fixed_factors)
+        # Instantiate oracle with fixed factors and over-riden defaults
+        self.oracle = MM1Queue(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -206,9 +207,14 @@ class MM1MinMeanSojournTime(Problem):
         """
         return x[0] > 0
 
-    def get_random_solution(self):
+    def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution, to be used for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : rng.MRG32k3a object
+            random-number generator used to sample a new random solution
 
         Returns
         -------
@@ -216,5 +222,5 @@ class MM1MinMeanSojournTime(Problem):
             vector of decision variables
         """
         # Generate an Exponential(rate = 1/3) r.v.
-        x = (self.rng.expovariate(1/3),)
+        x = (rand_sol_rng.expovariate(1/3),)
         return x
