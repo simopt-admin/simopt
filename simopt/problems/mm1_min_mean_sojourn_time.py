@@ -46,7 +46,7 @@ class MM1MinMeanSojournTime(Problem):
     rng_list : list of rng.MRG32k3a objects
         list of random number generators used to generate a random initial solution
         or a random problem instance
-        
+
     Arguments
     ---------
     oracle_factors : dict
@@ -67,7 +67,7 @@ class MM1MinMeanSojournTime(Problem):
         self.budget = 100
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.inital_solution = (3,)
+        self.initial_solution = (3,)
         self.oracle_default_factors = {
             "warmup": 50,
             "people": 200

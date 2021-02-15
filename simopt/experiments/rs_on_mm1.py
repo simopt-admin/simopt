@@ -27,7 +27,7 @@ class RandomSearchOnMM1(Experiment):
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
         sequences of intermediate budgets from each macroreplication
-    all_postrep_outputs : list of Solution objects
+    all_reevaluated_solns : list of Solution objects
         reevaluated solutions recommended by the solver
         """
     def __init__(self):
@@ -38,4 +38,4 @@ class RandomSearchOnMM1(Experiment):
         self.problem = MM1MinMeanSojournTime(oracle_fixed_factors=self.oracle_fixed_factors)
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
-        self.all_postrep_outputs = []
+        self.all_reevaluated_solns = []

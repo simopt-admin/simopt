@@ -9,7 +9,7 @@ from experiments.rs_on_mm1 import RandomSearchOnMM1
 
 myexperiment = RandomSearchOnMM1()
 myexperiment.run(n_macroreps=2, crn_across_solns=True)
-#myexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20)
+myexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20)
 # myexperiment.plot()
 
 print('I ran this.')

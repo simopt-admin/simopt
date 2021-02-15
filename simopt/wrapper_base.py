@@ -51,21 +51,23 @@ class Experiment(object):
         """
 
         # create, initialize, and attach random number generators
-        # Stream 0 is reserved for overhead
+        # Stream 0 is reserved for taking post-replications
+        # Stream 1 is reserved for overhead ...
         # Substream 0: rng for random problem instance
-        rng0 = MRG32k3a(s_ss_sss_index=[0, 0, 0]) # Stream 0, Substream 0, Subsubstream 0
+        rng0 = MRG32k3a(s_ss_sss_index=[1, 0, 0]) # Stream 1, Substream 0, Subsubstream 0
         # Substream 1: rng for random initial solution x0 and restart solutions 
-        rng1 = MRG32k3a(s_ss_sss_index=[0, 1, 0]) # Stream 0, Substream 1, Subsubstream 0
+        rng1 = MRG32k3a(s_ss_sss_index=[1, 1, 0]) # Stream 1, Substream 1, Subsubstream 0
         # Substream 2: rng for selecting random feasible solutions
-        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[0, 2, 0])]) # Stream 0, Substream 2, Subsubstream 0
+        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[1, 2, 0])]) # Stream 1, Substream 2, Subsubstream 0
         # Substream 3: rng for solver's internal randomness
-        rng3 = MRG32k3a(s_ss_sss_index=[0, 3, 0]) # Stream 0, Substream 3, Subsubstream 0
+        rng3 = MRG32k3a(s_ss_sss_index=[1, 3, 0]) # Stream 1, Substream 3, Subsubstream 0
 
         # run n_macroreps of the solver on the problem
         # report the recommended solutions and corresponding intermediate budgets
+        # Streams 2, 3, ..., n_macroreps + 1 are used for the macroreplications
         for mrep in range(n_macroreps):
             # create, initialize, and attach random number generators for oracle
-            oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 1, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
+            oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
             self.problem.oracle.attach_rngs(oracle_rngs)
 
             # run the solver on the problem
@@ -86,6 +88,44 @@ class Experiment(object):
         n_postreps_init_opt : int
             number of postreplications to take at initial x0 and optimal x*
         """
+
+        # create, initialize, and attach random number generators for oracle
+        # Stream 0 is reserved for post-replications
+        oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
+        self.problem.oracle.attach_rngs(oracle_rngs)
+        # simulate common initial solution x0
+        x0 = self.problem.initial_solution
+        initial_soln = Solution(x0, self.problem)
+        self.problem.simulate(solution=initial_soln, m=n_postreps_init_opt)
+        # reset each rng to start of its current substream
+        for rng in self.problem.oracle.rng_list:
+            rng.reset_substream()  
+
+        # simulate "reference" optimal solution x*
+        #xstar = self.problem.ref_opt_solution ## YET UNDEFINED
+        #ref_opt_soln = Solution(xstar, self.problem)
+        #self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
+
+        n_macroreps = len(self.all_intermediate_budgets)
+        for mrep in range(n_macroreps):            
+            evaluated_solns = []
+            for x in self.all_recommended_xs[mrep]:
+                # treat initial solution differently
+                if x == x0:
+                    evaluated_solns.append(initial_soln)
+                else:
+                    fresh_soln = Solution(x, self.problem)
+                    self.problem.simulate(solution=fresh_soln, m=n_postreps)
+                    evaluated_solns.append(fresh_soln)
+                    # reset each rng to start of its current substream
+                    for rng in self.problem.oracle.rng_list:
+                        rng.reset_substream()  
+            # record sequence of reevaluated solutions
+            self.all_reevaluated_solns.append(evaluated_solns)
+            # advance each rng to start of the substream = current substream + # of oracle RNGs 
+            for rng in self.problem.oracle.rng_list:
+                for _ in range(self.problem.oracle.n_rngs):
+                    rng.advance_substream()  
 
     def make_plots(self):
         pass
