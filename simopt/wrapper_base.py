@@ -49,7 +49,8 @@ class Experiment(object):
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
         """
-
+        # initialize
+        self.n_macroreps = n_macroreps
         # create, initialize, and attach random number generators
         # Stream 0 is reserved for taking post-replications
         # Stream 1 is reserved for overhead ...
@@ -65,7 +66,7 @@ class Experiment(object):
         # run n_macroreps of the solver on the problem
         # report the recommended solutions and corresponding intermediate budgets
         # Streams 2, 3, ..., n_macroreps + 1 are used for the macroreplications
-        for mrep in range(n_macroreps):
+        for mrep in range(self.n_macroreps):
             # create, initialize, and attach random number generators for oracle
             oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
             self.problem.oracle.attach_rngs(oracle_rngs)
@@ -88,7 +89,9 @@ class Experiment(object):
         n_postreps_init_opt : int
             number of postreplications to take at initial x0 and optimal x*
         """
-
+        # initialize
+        self.n_postreps = n_postreps
+        self.n_postreps_init_opt = n_postreps_init_opt
         # create, initialize, and attach random number generators for oracle
         # Stream 0 is reserved for post-replications
         oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
@@ -96,7 +99,7 @@ class Experiment(object):
         # simulate common initial solution x0
         x0 = self.problem.initial_solution
         initial_soln = Solution(x0, self.problem)
-        self.problem.simulate(solution=initial_soln, m=n_postreps_init_opt)
+        self.problem.simulate(solution=initial_soln, m=self.n_postreps_init_opt)
         # reset each rng to start of its current substream
         for rng in self.problem.oracle.rng_list:
             rng.reset_substream()  
@@ -106,8 +109,7 @@ class Experiment(object):
         #ref_opt_soln = Solution(xstar, self.problem)
         #self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
 
-        n_macroreps = len(self.all_intermediate_budgets)
-        for mrep in range(n_macroreps):            
+        for mrep in range(self.n_macroreps):            
             evaluated_solns = []
             for x in self.all_recommended_xs[mrep]:
                 # treat initial solution differently
@@ -115,7 +117,7 @@ class Experiment(object):
                     evaluated_solns.append(initial_soln)
                 else:
                     fresh_soln = Solution(x, self.problem)
-                    self.problem.simulate(solution=fresh_soln, m=n_postreps)
+                    self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
                     # reset each rng to start of its current substream
                     for rng in self.problem.oracle.rng_list:
@@ -126,6 +128,28 @@ class Experiment(object):
             for rng in self.problem.oracle.rng_list:
                 for _ in range(self.problem.oracle.n_rngs):
                     rng.advance_substream()  
+        # preprocessing for subsequent call to make_plots()
+        # extract all unique budget points
+        repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
+        unique_budgets = np.unique(repeat_budgets)
+        n_inter_budgets = len(unique_budgets)
+        # initialize matrix for storing all replicates of objective for each macroreplication for each budget
+        self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
+        # fill matrix (CAN MAKE THIS MORE PYTHONIC)
+        for mrep in range(self.n_macroreps):
+            for budget_index in range(n_inter_budgets):
+                mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= unique_budgets[budget_index]))
+                lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
+                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][0]) # 0 <- assuming only one objective
+        # store point estimates of objective for each macroreplication for each budget 
+        self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]      
 
     def make_plots(self):
-        pass
+        """
+        Produce of the solver's performance on the problem.
+
+        Arguments
+        ---------
+        beta : float
+            quantile to plot, e.g., beta quantile
+        """
