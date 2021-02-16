@@ -88,15 +88,25 @@ class RandomSearch(Solver):
         find_next_soln_rng = self.rng_list[0]
         # begin sampling
         expended_budget = 0
+
         while expended_budget < problem.budget:
-            # identify new solution to simulate
-            new_x = problem.get_random_solution(find_next_soln_rng)
-            new_solution = Solution(new_x, problem)
-            # record initial solution
             if expended_budget == 0:
+                # initial solution
+                new_x = problem.initial_solution
+                new_solution = Solution(new_x, problem)
+                # record as best
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
+                intermediate_budgets.append(expended_budget)            
+            else: # identify new solution to simulate
+                new_x = problem.get_random_solution(find_next_soln_rng)
+                new_solution = Solution(new_x, problem)
+            # record initial solution
+            #if expended_budget == 0:
+            #    best_solution = new_solution
+            #    recommended_solns.append(new_solution)
+            #    intermediate_budgets.append(expended_budget)
+            
             # prepare to simulate new solution
             self.prepare_sim_new_soln(problem, crn_across_solns)
             # simulate new solution

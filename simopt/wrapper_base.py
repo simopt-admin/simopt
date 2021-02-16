@@ -131,25 +131,87 @@ class Experiment(object):
         # preprocessing for subsequent call to make_plots()
         # extract all unique budget points
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
-        unique_budgets = np.unique(repeat_budgets)
-        n_inter_budgets = len(unique_budgets)
+        self.unique_budgets = np.unique(repeat_budgets)
+        n_inter_budgets = len(self.unique_budgets)
         # initialize matrix for storing all replicates of objective for each macroreplication for each budget
         self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
         # fill matrix (CAN MAKE THIS MORE PYTHONIC)
         for mrep in range(self.n_macroreps):
             for budget_index in range(n_inter_budgets):
-                mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= unique_budgets[budget_index]))
+                mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
                 self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][0]) # 0 <- assuming only one objective
         # store point estimates of objective for each macroreplication for each budget 
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]      
 
-    def make_plots(self):
+    def make_plots(self, plot_type, beta=0.95):
         """
-        Produce of the solver's performance on the problem.
+        Produce plots of the solver's performance on the problem.
 
         Arguments
         ---------
+        plot_type : string
+            indicates which type of plot to produce
+                "all" : all estimated convergence curves
+                "mean" : estimated mean convergence curve
+                "quantile" : estimated beta quantile convergence curve
         beta : float
             quantile to plot, e.g., beta quantile
         """
+        if plot_type == "all":
+            # plot all estimated convergence curves
+            for mrep in range(self.n_macroreps):
+                plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
+            self.stylize_plot(
+                xlabel = "Budget",
+                ylabel = "Objective Function Value",
+                title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
+                xlim = (0, self.problem.budget)
+            )
+            plt.show()
+        elif plot_type == "mean":
+            # plot estimated mean convergence curve
+            plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0))
+            self.stylize_plot(
+                xlabel = "Budget",
+                ylabel = "Objective Function Value",
+                title = "Solver Name on Problem Name \n" + "Estimated Mean Convergence Curve",
+                xlim = (0, self.problem.budget)
+            )
+            plt.show()
+        elif plot_type == "quantile":
+            # plot estimated beta quantile convergence curve
+            plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0))
+            self.stylize_plot(
+                xlabel = "Budget",
+                ylabel = "Objective Function Value",
+                title = "Solver Name on Problem Name \n" + "Estimated Quantile Convergence Curve",
+                xlim = (0, self.problem.budget)
+            )
+            plt.show()
+        else:
+            print("Not a valid plot type.")
+
+    def stylize_plot(self, xlabel, ylabel, title, xlim, ylim=None):
+        """
+        Add labels to plots and reformat axes.
+
+        Arguments
+        ---------
+        xlabel : string
+            label for x axis
+        ylabel : string
+            label for y axis
+        title : string
+            title for plot
+        xlim : 2-tuple
+            (lower x limit, upper x limit)
+        ylim : 2-tuple
+            (lower y limit, upper y limit)
+        """
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.title(title)
+        plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)

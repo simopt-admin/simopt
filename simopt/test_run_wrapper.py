@@ -8,10 +8,9 @@ from oracles.mm1queue import MM1Queue
 from experiments.rs_on_mm1 import RandomSearchOnMM1
 
 myexperiment = RandomSearchOnMM1()
-myexperiment.run(n_macroreps=2, crn_across_solns=True)
+myexperiment.run(n_macroreps=5, crn_across_solns=True)
 myexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=10) # handle different numbers later
-#myexperiment.make_plots()
-#print(myexperiment.all_post_replicates)
-print(myexperiment.all_est_objective)
+#myexperiment.make_plots(plot_type="mean")
+#myexperiment.make_plots(plot_type="quantile")
 
 print('I ran this.')

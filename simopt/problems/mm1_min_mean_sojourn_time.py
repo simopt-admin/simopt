@@ -67,7 +67,7 @@ class MM1MinMeanSojournTime(Problem):
         self.budget = 100
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.initial_solution = (3,)
+        self.initial_solution = (5,)
         self.oracle_default_factors = {
             "warmup": 50,
             "people": 200
