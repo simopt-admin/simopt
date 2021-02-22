@@ -395,7 +395,7 @@ class Problem(object):
                 # convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses),solution.det_objectives)]            
-                solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)]
+                #solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients),solution.det_objectives_gradients)]
                 # convert responses and gradients to stochastic constraints and gradients and add
                 # to those of deterministic components of stochastic constraints
                 solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses),solution.det_stoch_constraints)]
