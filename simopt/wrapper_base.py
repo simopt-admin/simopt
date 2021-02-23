@@ -285,3 +285,15 @@ class Experiment(object):
         plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
+
+    def areas_under_conv_curves(self):
+        """
+        Compute the area under each estimated convergence curve
+
+        Returns
+        -------
+        areas : numpy array
+            area under each estimated convergence curve
+        """
+        areas = [np.dot(conv_curve[:-1], np.diff(self.unique_frac_budgets)) for conv_curve in self.all_conv_curves]
+        return areas
