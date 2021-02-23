@@ -184,6 +184,8 @@ class Problem(object):
         bound on optimal objective function value
     optimal_solution : tuple
         optimal solution (if known)
+    ref_optimal_solution : tuple
+        reference solution (in lieu of optimal)
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict

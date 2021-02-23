@@ -9,7 +9,7 @@ from oracles.mm1queue import MM1Queue
 class RandomSearchOnMM1(Experiment):
     """
     Base class to implement wrappers for running experiments.
-    Random Search solver on M/M/1 Queueing problem
+    Example: Random Search solver on M/M/1 Queueing problem
 
     Attributes
     ----------
@@ -36,6 +36,4 @@ class RandomSearchOnMM1(Experiment):
         self.oracle_fixed_factors = {}
         self.solver = RandomSearch(fixed_factors=self.solver_fixed_factors)
         self.problem = MM1MinMeanSojournTime(oracle_fixed_factors=self.oracle_fixed_factors)
-        self.all_recommended_xs = []
-        self.all_intermediate_budgets = []
-        self.all_reevaluated_solns = []
+        super().__init__()

@@ -34,9 +34,13 @@ class Experiment(object):
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
         sequences of intermediate budgets from each macroreplication
+    all_reevaluated_solns : list of Solution objects
+        reevaluated solutions recommended by the solver
     """
     def __init__(self):
-        pass
+        self.all_recommended_xs = []
+        self.all_intermediate_budgets = []
+        self.all_reevaluated_solns = []
 
     def run(self, n_macroreps, crn_across_solns):
         """
@@ -103,18 +107,22 @@ class Experiment(object):
         # reset each rng to start of its current substream
         for rng in self.problem.oracle.rng_list:
             rng.reset_substream()  
-
         # simulate "reference" optimal solution x*
-        #xstar = self.problem.ref_opt_solution ## YET UNDEFINED
-        #ref_opt_soln = Solution(xstar, self.problem)
-        #self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
-
+        xstar = self.problem.ref_optimal_solution
+        ref_opt_soln = Solution(xstar, self.problem)
+        self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
+        # reset each rng to start of its current substream
+        for rng in self.problem.oracle.rng_list:
+            rng.reset_substream()
+        # simulate intermediate solutions
         for mrep in range(self.n_macroreps):            
             evaluated_solns = []
             for x in self.all_recommended_xs[mrep]:
-                # treat initial solution differently
+                # treat initial solution and reference solution differently
                 if x == x0:
                     evaluated_solns.append(initial_soln)
+                elif x == xstar:
+                    evaluated_solns.append(ref_opt_soln)
                 else:
                     fresh_soln = Solution(x, self.problem)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
@@ -132,19 +140,29 @@ class Experiment(object):
         # extract all unique budget points
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
         self.unique_budgets = np.unique(repeat_budgets)
+        self.unique_frac_budgets = self.unique_budgets/self.problem.budget
         n_inter_budgets = len(self.unique_budgets)
         # initialize matrix for storing all replicates of objective for each macroreplication for each budget
         self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
+        # initialize matrix for storing all convergence curve values for each macroreplication for each budget
+        self.all_conv_curves = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
+        # compute signed initial optimality gap = f(x0) - f(x*)
+        initial_obj_val = initial_soln.objectives[:initial_soln.n_reps][0] # 0 <- assuming only one objective
+        ref_opt_obj_val = ref_opt_soln.objectives[:ref_opt_soln.n_reps][0] # 0 <- assuming only one objective
+        initial_opt_gap = initial_obj_val - ref_opt_obj_val
         # fill matrix (CAN MAKE THIS MORE PYTHONIC)
         for mrep in range(self.n_macroreps):
             for budget_index in range(n_inter_budgets):
                 mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
-                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][0]) # 0 <- assuming only one objective
+                lookup_solution_obj_val = lookup_solution.objectives[:lookup_solution.n_reps][0] # 0 <- assuming only one objective
+                self.all_post_replicates[mrep][budget_index] = list(lookup_solution_obj_val)
+                current_opt_gap = lookup_solution_obj_val - ref_opt_obj_val 
+                self.all_conv_curves[mrep][budget_index] = list(current_opt_gap/initial_opt_gap)
         # store point estimates of objective for each macroreplication for each budget 
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]      
 
-    def make_plots(self, plot_type, beta=0.95):
+    def make_plots(self, plot_type, beta=0.95, normalize=True):
         """
         Produce plots of the solver's performance on the problem.
 
@@ -155,40 +173,76 @@ class Experiment(object):
                 "all" : all estimated convergence curves
                 "mean" : estimated mean convergence curve
                 "quantile" : estimated beta quantile convergence curve
+                "all" : all estimated convergence curves
+                "mean" : estimated mean convergence curve
+                "quantile" : estimated beta quantile convergence curve
         beta : float
             quantile to plot, e.g., beta quantile
         """
         if plot_type == "all":
             # plot all estimated convergence curves
-            for mrep in range(self.n_macroreps):
-                plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
-            self.stylize_plot(
-                xlabel = "Budget",
-                ylabel = "Objective Function Value",
-                title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
-                xlim = (0, self.problem.budget)
-            )
+            if normalize == True:
+                for mrep in range(self.n_macroreps):
+                    plt.step(self.unique_frac_budgets, self.all_conv_curves[mrep], where='post')
+                self.stylize_plot(
+                    xlabel = "Fraction of Budget",
+                    ylabel = "Fraction of Initial Optimality Gap",
+                    title = "Solver Name on Problem Name \n" + "Estimated Convergence Curves",
+                    xlim = (0, 1),
+                    ylim = (0, 1.1)
+                )
+            else: # unnormalized
+                for mrep in range(self.n_macroreps):
+                    plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
+                self.stylize_plot(
+                    xlabel = "Budget",
+                    ylabel = "Objective Function Value",
+                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
+                    xlim = (0, 1),
+                )
             plt.show()
         elif plot_type == "mean":
             # plot estimated mean convergence curve
-            plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0))
-            self.stylize_plot(
-                xlabel = "Budget",
-                ylabel = "Objective Function Value",
-                title = "Solver Name on Problem Name \n" + "Estimated Mean Convergence Curve",
-                xlim = (0, self.problem.budget)
-            )
-            plt.show()
+            if normalize == True:
+                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0))
+                self.stylize_plot(
+                    xlabel = "Fraction of Budget",
+                    ylabel = "Fraction of Initial Optimality Gap",
+                    title = "Solver Name on Problem Name \n" + "Estimated Mean Convergence Curve",
+                    xlim = (0, 1),
+                    ylim = (0, 1.1)
+                )
+                plt.show()
+            else: # unnormalized
+                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0))
+                self.stylize_plot(
+                    xlabel = "Budget",
+                    ylabel = "Objective Function Value",
+                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Mean Convergence Curve",
+                    xlim = (0, self.problem.budget)
+                )
+                plt.show()
         elif plot_type == "quantile":
             # plot estimated beta quantile convergence curve
-            plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0))
-            self.stylize_plot(
-                xlabel = "Budget",
-                ylabel = "Objective Function Value",
-                title = "Solver Name on Problem Name \n" + "Estimated Quantile Convergence Curve",
-                xlim = (0, self.problem.budget)
-            )
-            plt.show()
+            if normalize == True:
+                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0))
+                self.stylize_plot(
+                    xlabel = "Fraction of Budget",
+                    ylabel = "Fraction of Initial Optimality Gap",
+                    title = "Solver Name on Problem Name \n" + "Estimated Quantile Convergence Curve",
+                    xlim = (0, 1),
+                    ylim = (0, 1.1)
+                )
+                plt.show()
+            else: # unnormalized
+                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0))
+                self.stylize_plot(
+                    xlabel = "Budget",
+                    ylabel = "Objective Function Value",
+                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Quantile Convergence Curve",
+                    xlim = (0, self.problem.budget)
+                )
+                plt.show()
         else:
             print("Not a valid plot type.")
 
