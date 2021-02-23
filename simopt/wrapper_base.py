@@ -59,13 +59,13 @@ class Experiment(object):
         # Stream 0 is reserved for taking post-replications
         # Stream 1 is reserved for overhead ...
         # Substream 0: rng for random problem instance
-        rng0 = MRG32k3a(s_ss_sss_index=[1, 0, 0]) # Stream 1, Substream 0, Subsubstream 0
+        rng0 = MRG32k3a(s_ss_sss_index=[1, 0, 0]) # Stream 1, Substream 0, Subsubstream 0  # UNUSED
         # Substream 1: rng for random initial solution x0 and restart solutions 
-        rng1 = MRG32k3a(s_ss_sss_index=[1, 1, 0]) # Stream 1, Substream 1, Subsubstream 0
+        rng1 = MRG32k3a(s_ss_sss_index=[1, 1, 0]) # Stream 1, Substream 1, Subsubstream 0  # UNUSED
         # Substream 2: rng for selecting random feasible solutions
         self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[1, 2, 0])]) # Stream 1, Substream 2, Subsubstream 0
         # Substream 3: rng for solver's internal randomness
-        rng3 = MRG32k3a(s_ss_sss_index=[1, 3, 0]) # Stream 1, Substream 3, Subsubstream 0
+        rng3 = MRG32k3a(s_ss_sss_index=[1, 3, 0]) # Stream 1, Substream 3, Subsubstream 0 # UNUSED
 
         # run n_macroreps of the solver on the problem
         # report the recommended solutions and corresponding intermediate budgets
@@ -217,7 +217,7 @@ class Experiment(object):
             # plot estimated mean convergence curve
             if normalize == True:
                 plt.figure()
-                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0))
+                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0), where='post')
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
                     ylabel = "Fraction of Initial Optimality Gap",
@@ -228,7 +228,7 @@ class Experiment(object):
                 plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
-                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0))
+                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0), where='post')
                 self.stylize_plot(
                     xlabel = "Budget",
                     ylabel = "Objective Function Value",
@@ -240,7 +240,7 @@ class Experiment(object):
             # plot estimated beta quantile convergence curve
             if normalize == True:
                 plt.figure()
-                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0))
+                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0), where='post')
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
                     ylabel = "Fraction of Initial Optimality Gap",
@@ -251,7 +251,7 @@ class Experiment(object):
                 plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
-                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0))
+                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0), where='post')
                 self.stylize_plot(
                     xlabel = "Budget",
                     ylabel = "Objective Function Value",
