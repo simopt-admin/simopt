@@ -182,6 +182,7 @@ class Experiment(object):
         if plot_type == "all":
             # plot all estimated convergence curves
             if normalize == True:
+                plt.figure()
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_frac_budgets, self.all_conv_curves[mrep], where='post')
                 self.stylize_plot(
@@ -191,19 +192,22 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (0, 1.1)
                 )
+                plt.savefig('experiments/plots/all_conv_curves.png', bbox_inches='tight')
             else: # unnormalized
+                plt.figure()
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
                 self.stylize_plot(
                     xlabel = "Budget",
                     ylabel = "Objective Function Value",
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
-                    xlim = (0, 1),
+                    xlim = (0, self.problem.budget),
                 )
-            plt.show()
+                plt.savefig('experiments/plots/all_conv_curves_unnorm.png', bbox_inches='tight')
         elif plot_type == "mean":
             # plot estimated mean convergence curve
             if normalize == True:
+                plt.figure()
                 plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0))
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
@@ -212,8 +216,9 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (0, 1.1)
                 )
-                plt.show()
+                plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
+                plt.figure()
                 plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0))
                 self.stylize_plot(
                     xlabel = "Budget",
@@ -221,10 +226,11 @@ class Experiment(object):
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Mean Convergence Curve",
                     xlim = (0, self.problem.budget)
                 )
-                plt.show()
+                plt.savefig('experiments/plots/mean_conv_curve_unnorm.png', bbox_inches='tight')
         elif plot_type == "quantile":
             # plot estimated beta quantile convergence curve
             if normalize == True:
+                plt.figure()
                 plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0))
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
@@ -233,8 +239,9 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (0, 1.1)
                 )
-                plt.show()
+                plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
+                plt.figure()
                 plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0))
                 self.stylize_plot(
                     xlabel = "Budget",
@@ -242,7 +249,7 @@ class Experiment(object):
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Quantile Convergence Curve",
                     xlim = (0, self.problem.budget)
                 )
-                plt.show()
+                plt.savefig('experiments/plots/quantile_conv_curve_unnorm.png', bbox_inches='tight')
         else:
             print("Not a valid plot type.")
 
