@@ -82,7 +82,7 @@ class Experiment(object):
             # record intermediate solutions
             self.all_intermediate_budgets.append(intermediate_budgets)
 
-    def post_replicate(self, n_postreps, n_postreps_init_opt):
+    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
 
@@ -92,6 +92,10 @@ class Experiment(object):
             number of postreplications to take at each recommended solution
         n_postreps_init_opt : int
             number of postreplications to take at initial x0 and optimal x*
+        crn_across_budget : bool
+            use CRN for post-replications at solutions recommended at different times?
+        crn_across_macroreps : bool
+            use CRN for post-replications at solutions recommended on different macroreplications?
         """
         # initialize
         self.n_postreps = n_postreps
@@ -144,23 +148,20 @@ class Experiment(object):
         n_inter_budgets = len(self.unique_budgets)
         # initialize matrix for storing all replicates of objective for each macroreplication for each budget
         self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
-        # initialize matrix for storing all convergence curve values for each macroreplication for each budget
-        self.all_conv_curves = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
         # compute signed initial optimality gap = f(x0) - f(x*)
-        initial_obj_val = initial_soln.objectives[:initial_soln.n_reps][0] # 0 <- assuming only one objective
-        ref_opt_obj_val = ref_opt_soln.objectives[:ref_opt_soln.n_reps][0] # 0 <- assuming only one objective
+        initial_obj_val = np.mean(initial_soln.objectives[:initial_soln.n_reps][:,0]) # 0 <- assuming only one objective
+        ref_opt_obj_val = np.mean(ref_opt_soln.objectives[:ref_opt_soln.n_reps][:,0]) # 0 <- assuming only one objective
         initial_opt_gap = initial_obj_val - ref_opt_obj_val
         # fill matrix (CAN MAKE THIS MORE PYTHONIC)
         for mrep in range(self.n_macroreps):
             for budget_index in range(n_inter_budgets):
                 mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
-                lookup_solution_obj_val = lookup_solution.objectives[:lookup_solution.n_reps][0] # 0 <- assuming only one objective
-                self.all_post_replicates[mrep][budget_index] = list(lookup_solution_obj_val)
-                current_opt_gap = lookup_solution_obj_val - ref_opt_obj_val 
-                self.all_conv_curves[mrep][budget_index] = list(current_opt_gap/initial_opt_gap)
+                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:,0])
         # store point estimates of objective for each macroreplication for each budget 
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]      
+        # store convergence curve values for each macroreplication for each budget
+        self.all_conv_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val)/initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
     def make_plots(self, plot_type, beta=0.95, normalize=True):
         """
