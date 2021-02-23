@@ -108,16 +108,18 @@ class Experiment(object):
         x0 = self.problem.initial_solution
         initial_soln = Solution(x0, self.problem)
         self.problem.simulate(solution=initial_soln, m=self.n_postreps_init_opt)
-        # reset each rng to start of its current substream
-        for rng in self.problem.oracle.rng_list:
-            rng.reset_substream()  
+        if crn_across_budget==True:
+            # reset each rng to start of its current substream
+            for rng in self.problem.oracle.rng_list:
+                rng.reset_substream()  
         # simulate "reference" optimal solution x*
         xstar = self.problem.ref_optimal_solution
         ref_opt_soln = Solution(xstar, self.problem)
         self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
-        # reset each rng to start of its current substream
-        for rng in self.problem.oracle.rng_list:
-            rng.reset_substream()
+        if crn_across_budget==True:
+            # reset each rng to start of its current substream
+            for rng in self.problem.oracle.rng_list:
+                rng.reset_substream()
         # simulate intermediate solutions
         for mrep in range(self.n_macroreps):            
             evaluated_solns = []
@@ -131,15 +133,21 @@ class Experiment(object):
                     fresh_soln = Solution(x, self.problem)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
-                    # reset each rng to start of its current substream
-                    for rng in self.problem.oracle.rng_list:
-                        rng.reset_substream()  
+                    if crn_across_budget==True:
+                        # reset each rng to start of its current substream
+                        for rng in self.problem.oracle.rng_list:
+                            rng.reset_substream()  
             # record sequence of reevaluated solutions
             self.all_reevaluated_solns.append(evaluated_solns)
-            # advance each rng to start of the substream = current substream + # of oracle RNGs 
-            for rng in self.problem.oracle.rng_list:
-                for _ in range(self.problem.oracle.n_rngs):
-                    rng.advance_substream()  
+            if crn_across_macroreps==False:
+                # advance each rng to start of the substream = current substream + # of oracle RNGs 
+                for rng in self.problem.oracle.rng_list:
+                    for _ in range(self.problem.oracle.n_rngs):
+                        rng.advance_substream()
+            else: # if using CRN across macroreplications ...
+                # reset each rng to start of its current substream
+                for rng in self.problem.oracle.rng_list:
+                    rng.reset_substream()
         # preprocessing for subsequent call to make_plots()
         # extract all unique budget points
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
