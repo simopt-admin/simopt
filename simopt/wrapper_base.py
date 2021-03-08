@@ -36,6 +36,16 @@ class Experiment(object):
         sequences of intermediate budgets from each macroreplication
     all_reevaluated_solns : list of Solution objects
         reevaluated solutions recommended by the solver
+    all_post_replicates : list of lists of lists
+        all post-replicates from all solutions from all macroreplications
+    all_est_objective : numpy array of arrays
+        estimated objective values of all solutions from all macroreplications
+    all_conv_curves : numpy array of arrays
+        estimated convergence curves from all macroreplications
+    initial_soln : Solution object
+        initial solution (w/ postreplicates) used for normalization
+    ref_opt_soln : Solution object
+        reference optimal solution (w/ postreplicates) used for normalization
     """
     def __init__(self):
         self.all_recommended_xs = []
@@ -57,19 +67,20 @@ class Experiment(object):
         self.n_macroreps = n_macroreps
         # create, initialize, and attach random number generators
         # Stream 0 is reserved for taking post-replications
-        # Stream 1 is reserved for overhead ...
+        # Stream 1 is reserved for bootstrapping
+        # Stream 2 is reserved for overhead ...
         # Substream 0: rng for random problem instance
-        rng0 = MRG32k3a(s_ss_sss_index=[1, 0, 0]) # Stream 1, Substream 0, Subsubstream 0  # UNUSED
+        rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0]) # Stream 2, Substream 0, Subsubstream 0  # UNUSED
         # Substream 1: rng for random initial solution x0 and restart solutions 
-        rng1 = MRG32k3a(s_ss_sss_index=[1, 1, 0]) # Stream 1, Substream 1, Subsubstream 0  # UNUSED
+        rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0]) # Stream 2, Substream 1, Subsubstream 0  # UNUSED
         # Substream 2: rng for selecting random feasible solutions
-        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[1, 2, 0])]) # Stream 1, Substream 2, Subsubstream 0
+        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])]) # Stream 2, Substream 2, Subsubstream 0
         # Substream 3: rng for solver's internal randomness
-        rng3 = MRG32k3a(s_ss_sss_index=[1, 3, 0]) # Stream 1, Substream 3, Subsubstream 0 # UNUSED
+        rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0]) # Stream 2, Substream 3, Subsubstream 0 # UNUSED
 
         # run n_macroreps of the solver on the problem
         # report the recommended solutions and corresponding intermediate budgets
-        # Streams 2, 3, ..., n_macroreps + 1 are used for the macroreplications
+        # Streams 3,  4, ..., n_macroreps + 2 are used for the macroreplications
         for mrep in range(self.n_macroreps):
             # create, initialize, and attach random number generators for oracle
             oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
@@ -106,16 +117,16 @@ class Experiment(object):
         self.problem.oracle.attach_rngs(oracle_rngs)
         # simulate common initial solution x0
         x0 = self.problem.initial_solution
-        initial_soln = Solution(x0, self.problem)
-        self.problem.simulate(solution=initial_soln, m=self.n_postreps_init_opt)
+        self.initial_soln = Solution(x0, self.problem)
+        self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
         if crn_across_budget==True:
             # reset each rng to start of its current substream
             for rng in self.problem.oracle.rng_list:
                 rng.reset_substream()  
         # simulate "reference" optimal solution x*
         xstar = self.problem.ref_optimal_solution
-        ref_opt_soln = Solution(xstar, self.problem)
-        self.problem.simulate(solution=ref_opt_soln, m=n_postreps_init_opt)
+        self.ref_opt_soln = Solution(xstar, self.problem)
+        self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
         if crn_across_budget==True:
             # reset each rng to start of its current substream
             for rng in self.problem.oracle.rng_list:
@@ -126,9 +137,9 @@ class Experiment(object):
             for x in self.all_recommended_xs[mrep]:
                 # treat initial solution and reference solution differently
                 if x == x0:
-                    evaluated_solns.append(initial_soln)
+                    evaluated_solns.append(self.initial_soln)
                 elif x == xstar:
-                    evaluated_solns.append(ref_opt_soln)
+                    evaluated_solns.append(self.ref_opt_soln)
                 else:
                     fresh_soln = Solution(x, self.problem)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
@@ -157,15 +168,15 @@ class Experiment(object):
         # initialize matrix for storing all replicates of objective for each macroreplication for each budget
         self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
         # compute signed initial optimality gap = f(x0) - f(x*)
-        initial_obj_val = np.mean(initial_soln.objectives[:initial_soln.n_reps][:,0]) # 0 <- assuming only one objective
-        ref_opt_obj_val = np.mean(ref_opt_soln.objectives[:ref_opt_soln.n_reps][:,0]) # 0 <- assuming only one objective
+        initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:,0]) # 0 <- assuming only one objective
+        ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:,0]) # 0 <- assuming only one objective
         initial_opt_gap = initial_obj_val - ref_opt_obj_val
         # fill matrix (CAN MAKE THIS MORE PYTHONIC)
         for mrep in range(self.n_macroreps):
             for budget_index in range(n_inter_budgets):
                 mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
-                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:,0])
+                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:,0]) # 0 <- assuming only one objective
         # store point estimates of objective for each macroreplication for each budget 
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]      
         # store convergence curve values for each macroreplication for each budget
@@ -288,7 +299,7 @@ class Experiment(object):
 
     def areas_under_conv_curves(self):
         """
-        Compute the area under each estimated convergence curve
+        Compute the area under each estimated convergence curve.
 
         Returns
         -------
@@ -297,3 +308,97 @@ class Experiment(object):
         """
         areas = [np.dot(conv_curve[:-1], np.diff(self.unique_frac_budgets)) for conv_curve in self.all_conv_curves]
         return areas
+
+    def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
+        """
+        Generate a bootstrap sample of estimated convergence curves.
+
+        Arguments
+        ---------
+        bootstrap_rng : MRG32k3a object
+            random number generator to use for bootstrapping
+        crn_across_budget : bool
+            use CRN for resampling postreplicates at solutions recommended at different times?
+        crn_across_macroreps : bool
+            use CRN for resampling postreplicates at solutions recommended on different macroreplications?
+
+        Returns
+        -------
+        bootstrap_conv_curves : numpy array of arrays
+            bootstrapped estimated convergence curves from all macroreplications
+        """
+        # initialize matrix for bootstrap estimated convergence curves
+        bootstrap_conv_curves = np.empty((self.n_macroreps, len(self.unique_budgets)))
+        # uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1
+        # subsubstream 0 is reserved for this outer-level bootstrapping
+        mreps = bootstrap_rng.choices(range(self.n_macroreps), k=self.n_macroreps)
+        print(mreps)
+        # advance random number generator subsubstream to prepare for inner-level bootstrapping
+        bootstrap_rng.advance_subsubstream()
+        for bs_mrep in range(self.n_macroreps):
+            mrep = mreps[bs_mrep]
+            # bootstrap sample postreplicates at common initial solution x0
+            # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
+            first_postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+            # uniformly resample L-N postreps (with replacement) from N, N+1, ..., L-1
+            second_postreps = bootstrap_rng.choices(range(self.n_postreps, self.n_postreps_init_opt), k=self.n_postreps_init_opt - self.n_postreps)
+            # concatenate subsamples of postreplicate indices
+            postreps = first_postreps + second_postreps
+            # compute the mean of the resampled postreplications
+            bs_initial_obj_val = np.mean([self.initial_soln.objectives[postrep,0] for postrep in postreps])
+            # reset subsubstream if using CRN across budgets
+            if crn_across_budget == True:
+                bootstrap_rng.reset_subsubstream()
+            # bootstrap sample postreplicates at reference optimal solution x*
+            # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
+            first_postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+            # uniformly resample L-N postreps (with replacement) from N, N+1, ..., L-1
+            second_postreps = bootstrap_rng.choices(range(self.n_postreps, self.n_postreps_init_opt), k=self.n_postreps_init_opt - self.n_postreps)
+            # concatenate subsamples of postreplicate indices
+            postreps = first_postreps + second_postreps
+            # compute the mean of the resampled postreplications
+            bs_ref_opt_obj_val = np.mean([self.ref_opt_soln.objectives[postrep,0] for postrep in postreps])
+            # reset subsubstream if using CRN across budgets
+            if crn_across_budget == True:
+                bootstrap_rng.reset_subsubstream()
+            # compute initial optimality gap
+            bs_initial_opt_gap = bs_initial_obj_val - bs_ref_opt_obj_val
+            print(bs_initial_opt_gap)
+            # inner-level bootstrapping over intermediate recommended solutions
+            for budget in range(len(self.unique_budgets)):
+                n_postreps_taken = len(self.all_post_replicates[mrep][budget])
+                # if a solution is other than x0 or x*...
+                if n_postreps_taken == self.n_postreps:
+                    # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
+                    postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+                # if a solution is (a repeat of) x0 or x*
+                elif n_postreps_taken == self.n_postreps_init_opt:
+                    # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
+                    first_postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+                    # uniformly resample L-N postreps (with replacement) from N, N+1, ..., L-1
+                    n_add_postreps = self.n_postreps_init_opt - self.n_postreps
+                    second_postreps = bootstrap_rng.choices(range(self.n_postreps, self.n_postreps_init_opt), k=n_add_postreps)
+                    # concatenate subsamples of postreplicate indices
+                    postreps = first_postreps + second_postreps
+                # compute the mean of the resampled postreplications and normalize
+                bs_current_obj_val = np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in postreps])
+                bootstrap_conv_curves[bs_mrep][budget] = (bs_current_obj_val - bs_ref_opt_obj_val)/bs_initial_opt_gap
+                # reset subsubstream if using CRN across budgets
+                if crn_across_budget == True:
+                    bootstrap_rng.reset_subsubstream()
+            # advance subsubstream if not using CRN across macroreps
+            if crn_across_macroreps == False:
+                bootstrap_rng.advance_subsubstream()
+            else: # if using CRN across macroreplications
+                # reset substream 
+                bootstrap_rng.reset_substream()
+                # skip over subsubstream 0, which is used for bootstrapping on 0, 1, ..., M-1
+                bootstrap_rng.advance_subsubstream()
+        # advance substream of random number generator to prepare for next bootstrap sample
+        bootstrap_rng.advance_substream()
+        return bootstrap_conv_curves
+
+#    def bootstrap_CI(self, n_bootstraps)
+        # create random number generator for bootstrap sampling
+        # Stream 1 dedicated for bootstrapping
+#        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
