@@ -182,7 +182,7 @@ class Experiment(object):
         # store convergence curve values for each macroreplication for each budget
         self.all_conv_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val)/initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
-    def make_plots(self, plot_type, beta=0.95, normalize=True):
+    def make_plots(self, plot_type, beta=0.50, normalize=True):
         """
         Produce plots of the solver's performance on the problem.
 
@@ -190,9 +190,6 @@ class Experiment(object):
         ---------
         plot_type : string
             indicates which type of plot to produce
-                "all" : all estimated convergence curves
-                "mean" : estimated mean convergence curve
-                "quantile" : estimated beta quantile convergence curve
                 "all" : all estimated convergence curves
                 "mean" : estimated mean convergence curve
                 "quantile" : estimated beta quantile convergence curve
@@ -210,7 +207,7 @@ class Experiment(object):
                     ylabel = "Fraction of Initial Optimality Gap",
                     title = "Solver Name on Problem Name \n" + "Estimated Convergence Curves",
                     xlim = (0, 1),
-                    ylim = (0, 1.1)
+                    ylim = (-0.1, 1.1)
                 )
                 plt.savefig('experiments/plots/all_conv_curves.png', bbox_inches='tight')
             else: # unnormalized
@@ -234,8 +231,12 @@ class Experiment(object):
                     ylabel = "Fraction of Initial Optimality Gap",
                     title = "Solver Name on Problem Name \n" + "Estimated Mean Convergence Curve",
                     xlim = (0, 1),
-                    ylim = (0, 1.1)
+                    ylim = (-0.1, 1.1)
                 )
+                # construct bootstrap confidence intervals are print caption
+                max_halfwidth = self.bootstrap_CI(plot_type=plot_type)
+                txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
+                plt.text(x=0.05, y=-0.35, s=txt)
                 plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
@@ -257,8 +258,12 @@ class Experiment(object):
                     ylabel = "Fraction of Initial Optimality Gap",
                     title = "Solver Name on Problem Name \n" + "Estimated Quantile Convergence Curve",
                     xlim = (0, 1),
-                    ylim = (0, 1.1)
+                    ylim = (-0.1, 1.1)
                 )
+                # construct bootstrap confidence intervals are print caption
+                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, beta=beta)
+                txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
+                plt.text(x=0.05, y=-0.35, s=txt)
                 plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
@@ -332,7 +337,6 @@ class Experiment(object):
         # uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1
         # subsubstream 0 is reserved for this outer-level bootstrapping
         mreps = bootstrap_rng.choices(range(self.n_macroreps), k=self.n_macroreps)
-        print(mreps)
         # advance random number generator subsubstream to prepare for inner-level bootstrapping
         bootstrap_rng.advance_subsubstream()
         for bs_mrep in range(self.n_macroreps):
@@ -363,7 +367,6 @@ class Experiment(object):
                 bootstrap_rng.reset_subsubstream()
             # compute initial optimality gap
             bs_initial_opt_gap = bs_initial_obj_val - bs_ref_opt_obj_val
-            print(bs_initial_opt_gap)
             # inner-level bootstrapping over intermediate recommended solutions
             for budget in range(len(self.unique_budgets)):
                 n_postreps_taken = len(self.all_post_replicates[mrep][budget])
@@ -398,7 +401,43 @@ class Experiment(object):
         bootstrap_rng.advance_substream()
         return bootstrap_conv_curves
 
-#    def bootstrap_CI(self, n_bootstraps)
+    def bootstrap_CI(self, plot_type, n_bootstraps=100, conf_level=0.95,  beta=0.50):
+        """
+        Construct bootstrap confidence intervals and compute max half-width.
+
+        Arguments
+        ---------
+        plot_type : string
+            indicates which type of plot to produce
+                "all" : all estimated convergence curves
+                "mean" : estimated mean convergence curve
+                "quantile" : estimated beta quantile convergence curve
+        n_bootstraps : int > 0
+            number of times to generate a bootstrap sample of estimated convergence curves
+        conf_level : float in (0,1)
+            confidence level for confidence intervals, i.e., 1-alpha
+        beta : float
+            quantile for quantile aggregate convergence curve, e.g., beta quantile 
+        Returns
+        -------
+        max_halfwidth : float
+            maximum halfwidth of all bootstrap confidence intervals constructed
+        """
         # create random number generator for bootstrap sampling
         # Stream 1 dedicated for bootstrapping
-#        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+        # initialize storage for bootstrap aggregate curves
+        bs_aggregate_curves = np.zeros((n_bootstraps, len(self.unique_budgets)))
+        for bs_index in range(n_bootstraps):
+            # generate bootstrap sample of estimated convergence curves
+            bootstrap_conv_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
+            # apply the functional of the bootstrap sample, e.g., mean/quantile (aggregate) convergence curve
+            if plot_type == "mean": # mean convergence curve
+                bs_aggregate_curves[bs_index] = np.mean(bootstrap_conv_curves, axis=0)
+            elif plot_type == "quantile": # quantile convergence curve
+                bs_aggregate_curves[bs_index] = np.quantile(bootstrap_conv_curves, q=beta, axis=0)
+        # compute usual bootstrapping confidence intervals
+        bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=(1-conf_level)/2, axis=0)
+        bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=(1-(1-conf_level)/2), axis=0)
+        max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds)/2)
+        return max_halfwidth
