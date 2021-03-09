@@ -210,6 +210,7 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (-0.1, 1.1)
                 )
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/all_conv_curves.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
@@ -221,12 +222,13 @@ class Experiment(object):
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
                     xlim = (0, self.problem.budget),
                 )
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/all_conv_curves_unnorm.png', bbox_inches='tight')
         elif plot_type == "mean":
             # plot estimated mean convergence curve
             if normalize == True:
                 plt.figure()
-                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0), where='post')
+                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0), 'b-', where='post')
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
                     ylabel = "Fraction of Initial Optimality Gap",
@@ -234,10 +236,15 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (-0.1, 1.1)
                 )
-                # construct bootstrap confidence intervals are print caption
-                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.mean(self.all_conv_curves, axis=0))
+                # construct bootstrap confidence intervals
+                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.mean(self.all_conv_curves, axis=0))
+                # plot bootstrap confidence intervals
+                plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
+                plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
+                # print caption about max halfwidth
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
@@ -248,12 +255,13 @@ class Experiment(object):
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Mean Convergence Curve",
                     xlim = (0, self.problem.budget)
                 )
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/mean_conv_curve_unnorm.png', bbox_inches='tight')
         elif plot_type == "quantile":
             # plot estimated beta quantile convergence curve
             if normalize == True:
                 plt.figure()
-                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0), where='post')
+                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0), 'b-', where='post')
                 self.stylize_plot(
                     xlabel = "Fraction of Budget",
                     ylabel = "Fraction of Initial Optimality Gap",
@@ -261,10 +269,15 @@ class Experiment(object):
                     xlim = (0, 1),
                     ylim = (-0.1, 1.1)
                 )
-                # construct bootstrap confidence intervals are print caption
-                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.quantile(self.all_conv_curves, q=beta, axis=0), beta=beta)
+                # construct bootstrap confidence intervals, plot, and print caption
+                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.quantile(self.all_conv_curves, q=beta, axis=0), beta=beta)
+                # plot bootstrap confidence intervals
+                plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
+                plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
+                # print caption about max halfwidth
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
                 plt.figure()
@@ -275,6 +288,7 @@ class Experiment(object):
                     title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Quantile Convergence Curve",
                     xlim = (0, self.problem.budget)
                 )
+                # save figure to folder as .png
                 plt.savefig('experiments/plots/quantile_conv_curve_unnorm.png', bbox_inches='tight')
         else:
             print("Not a valid plot type.")
@@ -296,12 +310,13 @@ class Experiment(object):
         ylim : 2-tuple
             (lower y limit, upper y limit)
         """
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.title(title)
+        plt.xlabel(xlabel, size=14)
+        plt.ylabel(ylabel, size=14)
+        plt.title(title, size=14)
         plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
+        plt.tick_params(axis='both', which='major', labelsize=12) 
 
     def areas_under_conv_curves(self):
         """
@@ -425,6 +440,10 @@ class Experiment(object):
             quantile for quantile aggregate convergence curve, e.g., beta quantile 
         Returns
         -------
+        bs_CI_lower_bounds : numpy array
+            lower bounds of bootstrap CIs at all budgets
+        bs_CI_upper_bounds : numpy array
+            upper bounds of bootstrap CIs at all budgets
         max_halfwidth : float
             maximum halfwidth of all bootstrap confidence intervals constructed
         """
@@ -458,4 +477,4 @@ class Experiment(object):
             bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=q_lower, axis=0)
             bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=q_upper, axis=0)
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds)/2)
-        return max_halfwidth
+        return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
