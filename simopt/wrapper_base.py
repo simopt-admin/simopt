@@ -10,9 +10,10 @@ Experiment : class
 """
 
 import numpy as np
-from rng.mrg32k3a import MRG32k3a
+from rng.mrg32k3a import MRG32k3a, bsm
 from base import Solver, Problem, Oracle, Solution
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 class Experiment(object):
     """
@@ -234,7 +235,7 @@ class Experiment(object):
                     ylim = (-0.1, 1.1)
                 )
                 # construct bootstrap confidence intervals are print caption
-                max_halfwidth = self.bootstrap_CI(plot_type=plot_type)
+                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.mean(self.all_conv_curves, axis=0))
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
                 plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
@@ -261,7 +262,7 @@ class Experiment(object):
                     ylim = (-0.1, 1.1)
                 )
                 # construct bootstrap confidence intervals are print caption
-                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, beta=beta)
+                max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.quantile(self.all_conv_curves, q=beta, axis=0), beta=beta)
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
                 plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
@@ -401,7 +402,7 @@ class Experiment(object):
         bootstrap_rng.advance_substream()
         return bootstrap_conv_curves
 
-    def bootstrap_CI(self, plot_type, n_bootstraps=100, conf_level=0.95,  beta=0.50):
+    def bootstrap_CI(self, plot_type, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50):
         """
         Construct bootstrap confidence intervals and compute max half-width.
 
@@ -412,10 +413,14 @@ class Experiment(object):
                 "all" : all estimated convergence curves
                 "mean" : estimated mean convergence curve
                 "quantile" : estimated beta quantile convergence curve
+        estimator : numpy array
+            estimated mean or quantile convergence curve
         n_bootstraps : int > 0
             number of times to generate a bootstrap sample of estimated convergence curves
         conf_level : float in (0,1)
             confidence level for confidence intervals, i.e., 1-alpha
+        bias_correction : bool
+            use bias-corrected bootstrap CIs (via percentile method)?
         beta : float
             quantile for quantile aggregate convergence curve, e.g., beta quantile 
         Returns
@@ -436,8 +441,21 @@ class Experiment(object):
                 bs_aggregate_curves[bs_index] = np.mean(bootstrap_conv_curves, axis=0)
             elif plot_type == "quantile": # quantile convergence curve
                 bs_aggregate_curves[bs_index] = np.quantile(bootstrap_conv_curves, q=beta, axis=0)
-        # compute usual bootstrapping confidence intervals
-        bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=(1-conf_level)/2, axis=0)
-        bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=(1-(1-conf_level)/2), axis=0)
+        # compute bootstrapping confidence intervals via percentile method
+        # see Efron and Gong (1983) "A leisurely look at the bootstrap, the jackknife, and cross-validation"
+        if bias_correction == True: # if bias-corrected CIs
+            # see equation (17) on page 41
+            z0s = [norm.ppf(np.mean(bs_aggregate_curves[:,budget] < estimator[budget])) for budget in range(len(self.unique_budgets))]
+            zconflvl = norm.ppf(conf_level)
+            q_lowers = [norm.cdf(2*z0 - zconflvl) for z0 in z0s]
+            q_uppers = [norm.cdf(2*z0 + zconflvl) for z0 in z0s]
+            bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_curves[:,budget], q=q_lowers[budget]) for budget in range(len(self.unique_budgets))])
+            bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_curves[:,budget], q=q_uppers[budget]) for budget in range(len(self.unique_budgets))])
+        else: # if not bias-corrected CIs
+            # see equation (16) on page 41
+            q_lower = (1-conf_level)/2
+            q_upper = 1-(1-conf_level)/2
+            bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=q_lower, axis=0)
+            bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=q_upper, axis=0)
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds)/2)
         return max_halfwidth
