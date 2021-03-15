@@ -183,7 +183,7 @@ class Experiment(object):
         # store convergence curve values for each macroreplication for each budget
         self.all_conv_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val)/initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
-    def make_plots(self, plot_type, beta=0.50, normalize=True):
+    def make_plots(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
         Produce plots of the solver's performance on the problem.
 
@@ -196,127 +196,55 @@ class Experiment(object):
                 "quantile" : estimated beta quantile convergence curve
         beta : float
             quantile to plot, e.g., beta quantile
+        normalize : Boolean
+            normalize convergence curves w.r.t. optimality gaps?
+        plot_CIs : Boolean
+            plot bootstrapping confidence intervals?
         """
+        # set up plot
+        stylize_plot(plot_type=plot_type, normalize=normalize, budget=self.problem.budget, beta=beta)
+        # make the plot
         if plot_type == "all":
             # plot all estimated convergence curves
             if normalize == True:
-                plt.figure()
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_frac_budgets, self.all_conv_curves[mrep], where='post')
-                self.stylize_plot(
-                    xlabel = "Fraction of Budget",
-                    ylabel = "Fraction of Initial Optimality Gap",
-                    title = "Solver Name on Problem Name \n" + "Estimated Convergence Curves",
-                    xlim = (0, 1),
-                    ylim = (-0.1, 1.1)
-                )
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/all_conv_curves.png', bbox_inches='tight')
             else: # unnormalized
-                plt.figure()
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
-                self.stylize_plot(
-                    xlabel = "Budget",
-                    ylabel = "Objective Function Value",
-                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Convergence Curves",
-                    xlim = (0, self.problem.budget),
-                )
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/all_conv_curves_unnorm.png', bbox_inches='tight')
         elif plot_type == "mean":
             # plot estimated mean convergence curve
             if normalize == True:
-                plt.figure()
                 plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0), 'b-', where='post')
-                self.stylize_plot(
-                    xlabel = "Fraction of Budget",
-                    ylabel = "Fraction of Initial Optimality Gap",
-                    title = "Solver Name on Problem Name \n" + "Estimated Mean Convergence Curve",
-                    xlim = (0, 1),
-                    ylim = (-0.1, 1.1)
-                )
                 # construct bootstrap confidence intervals
                 bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.mean(self.all_conv_curves, axis=0))
-                # plot bootstrap confidence intervals
-                plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
+                if plot_CIs == True:
+                    # plot bootstrap confidence intervals
+                    plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
+                    plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
                 # print caption about max halfwidth
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/mean_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
-                plt.figure()
-                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0), where='post')
-                self.stylize_plot(
-                    xlabel = "Budget",
-                    ylabel = "Objective Function Value",
-                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Mean Convergence Curve",
-                    xlim = (0, self.problem.budget)
-                )
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/mean_conv_curve_unnorm.png', bbox_inches='tight')
+                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0), 'b-', where='post')
         elif plot_type == "quantile":
             # plot estimated beta quantile convergence curve
             if normalize == True:
-                plt.figure()
                 plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0), 'b-', where='post')
-                self.stylize_plot(
-                    xlabel = "Fraction of Budget",
-                    ylabel = "Fraction of Initial Optimality Gap",
-                    title = "Solver Name on Problem Name \n" + "Estimated Quantile Convergence Curve",
-                    xlim = (0, 1),
-                    ylim = (-0.1, 1.1)
-                )
                 # construct bootstrap confidence intervals, plot, and print caption
                 bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, estimator = np.quantile(self.all_conv_curves, q=beta, axis=0), beta=beta)
-                # plot bootstrap confidence intervals
-                plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
+                if plot_CIs == True:
+                    # plot bootstrap confidence intervals
+                    plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
+                    plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
                 # print caption about max halfwidth
                 txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
                 plt.text(x=0.05, y=-0.35, s=txt)
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/quantile_conv_curve.png', bbox_inches='tight')
             else: # unnormalized
-                plt.figure()
-                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0), where='post')
-                self.stylize_plot(
-                    xlabel = "Budget",
-                    ylabel = "Objective Function Value",
-                    title = "Solver Name on Problem Name \n" + "Unnormalized Estimated Quantile Convergence Curve",
-                    xlim = (0, self.problem.budget)
-                )
-                # save figure to folder as .png
-                plt.savefig('experiments/plots/quantile_conv_curve_unnorm.png', bbox_inches='tight')
+                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0), 'b-', where='post')
         else:
             print("Not a valid plot type.")
-
-    def stylize_plot(self, xlabel, ylabel, title, xlim, ylim=None):
-        """
-        Add labels to plots and reformat axes.
-
-        Arguments
-        ---------
-        xlabel : string
-            label for x axis
-        ylabel : string
-            label for y axis
-        title : string
-            title for plot
-        xlim : 2-tuple
-            (lower x limit, upper x limit)
-        ylim : 2-tuple
-            (lower y limit, upper y limit)
-        """
-        plt.xlabel(xlabel, size=14)
-        plt.ylabel(ylabel, size=14)
-        plt.title(title, size=14)
-        plt.xlim(xlim)
-        if ylim is not None:
-            plt.ylim(ylim)
-        plt.tick_params(axis='both', which='major', labelsize=12) 
+        save_plot(plot_type=plot_type, normalize=normalize)
 
     def areas_under_conv_curves(self):
         """
@@ -478,3 +406,80 @@ class Experiment(object):
             bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=q_upper, axis=0)
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds)/2)
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
+
+def stylize_plot(plot_type, normalize, budget=None, beta=None):
+    """
+    Create new figure. Add labels to plot and reformat axes.
+
+    Arguments
+    ---------
+    plot_type : string
+        indicates which type of plot to produce
+            "all" : all estimated convergence curves
+            "mean" : estimated mean convergence curve
+            "quantile" : estimated beta quantile convergence curve
+    normalize : Boolean
+        normalize convergence curves w.r.t. optimality gaps?
+    budget : int
+        budget of problem, measured in function evaluations
+    beta : float (optional)
+        quantile for quantile aggregate convergence curve, e.g., beta quantile   
+    """
+    plt.figure()
+    # format axes and axis labels
+    if normalize==True:
+        xlabel = "Fraction of Budget"
+        ylabel = "Fraction of Initial Optimality Gap"
+        xlim = (0, 1)
+        ylim = (-0.1, 1.1)
+        title = "Solver Name on Problem Name \n"
+    elif normalize==False:
+        xlabel = "Budget"
+        ylabel = "Objective Function Value"
+        xlim = (0, budget)
+        ylim = None
+        title = "Solver Name on Problem Name \n" + "Unnormalized "
+    # format title
+    if plot_type=="all":
+        title = title + "Estimated Convergence Curves"
+    elif plot_type=="mean":
+        title = title + "Mean Convergence Curve"
+    elif plot_type=="quantile":
+        title = title + str(round(beta,2)) + "-Quantile Convergence Curve"
+    # add axis labels
+    plt.xlabel(xlabel, size=14)
+    plt.ylabel(ylabel, size=14)
+    # add title
+    plt.title(title, size=14)
+    # format axes and tick marks
+    plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.tick_params(axis='both', which='major', labelsize=12) 
+
+def save_plot(plot_type, normalize):
+    """
+    Create new figure. Add labels to plot and reformat axes.
+
+    Arguments
+    ---------
+    plot_type : string
+        indicates which type of plot to produce
+            "all" : all estimated convergence curves
+            "mean" : estimated mean convergence curve
+            "quantile" : estimated beta quantile convergence curve
+    normalize : Boolean
+        normalize convergence curves w.r.t. optimality gaps? 
+    """
+    # form string name for plot
+    if plot_type == "all":
+        plot_name = "all_conv_curves"
+    elif plot_type == "mean":
+        plot_name = "mean_conv_curve"
+    elif plot_type == "quantile":
+        plot_name = "quantile_conv_curve"
+    if normalize==False:
+        plot_name = plot_name + "_unnorm"
+    path_name = "experiments/plots/" + plot_name + ".png"
+    # save figure to folder as .png
+    plt.savefig(path_name, bbox_inches="tight")
