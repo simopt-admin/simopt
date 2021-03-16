@@ -215,53 +215,24 @@ class Experiment(object):
         elif plot_type == "mean":
             # plot estimated mean convergence curve
             if normalize == True:
-                plt.step(self.unique_frac_budgets, np.mean(self.all_conv_curves, axis=0), 'b-', where='post')
-                # construct bootstrap confidence intervals
-                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator = np.mean(self.all_conv_curves, axis=0))
-                if plot_CIs == True:
-                    # plot bootstrap confidence intervals
-                    plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                    plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
-                # print caption about max halfwidth
-                txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
-                plt.text(x=0.05, y=-0.35, s=txt)
+                estimator = np.mean(self.all_conv_curves, axis=0)
+                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else: # unnormalized
-                plt.step(self.unique_budgets, np.mean(self.all_est_objective, axis=0), 'b-', where='post')
-                # construct bootstrap confidence intervals
-                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator = np.mean(self.all_est_objective, axis=0))
-                if plot_CIs == True:
-                    # plot bootstrap confidence intervals
-                    plt.step(self.unique_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                    plt.step(self.unique_budgets, bs_CI_upper_bounds, 'b--', where='post')
-                # print caption about max halfwidth
-                #txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
-                #plt.text(x=0.05, y=-0.35, s=txt)
+                estimator = np.mean(self.all_est_objective, axis=0)
+                plt.step(self.unique_budgets, estimator, 'b-', where='post')
         elif plot_type == "quantile":
             # plot estimated beta quantile convergence curve
             if normalize == True:
-                plt.step(self.unique_frac_budgets, np.quantile(self.all_conv_curves, q=beta, axis=0), 'b-', where='post')
-                # construct bootstrap confidence intervals, plot, and print caption
-                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator = np.quantile(self.all_conv_curves, q=beta, axis=0), beta=beta)
-                if plot_CIs == True:
-                    # plot bootstrap confidence intervals
-                    plt.step(self.unique_frac_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                    plt.step(self.unique_frac_budgets, bs_CI_upper_bounds, 'b--', where='post')
-                # print caption about max halfwidth
-                txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
-                plt.text(x=0.05, y=-0.35, s=txt)
+                estimator = np.quantile(self.all_conv_curves, q=beta, axis=0)
+                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else: # unnormalized
-                plt.step(self.unique_budgets, np.quantile(self.all_est_objective, q=beta, axis=0), 'b-', where='post')
-                # construct bootstrap confidence intervals
-                bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator = np.quantile(self.all_est_objective, q=beta, axis=0), beta=beta)
-                if plot_CIs == True:
-                    # plot bootstrap confidence intervals
-                    plt.step(self.unique_budgets, bs_CI_lower_bounds, 'b--', where='post')
-                    plt.step(self.unique_budgets, bs_CI_upper_bounds, 'b--', where='post')
-                # print caption about max halfwidth
-                #txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
-                #plt.text(x=0.05, y=-0.35, s=txt)
+                estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
+                plt.step(self.unique_budgets, estimator, 'b-', where='post')
         else:
             print("Not a valid plot type.")
+        if plot_type=="mean" or plot_type=="quantile":
+            # report bootstrapping error estimation and optionally plot bootstrap CIs
+            self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(plot_type=plot_type, normalize=normalize)
 
     def areas_under_conv_curves(self):
@@ -333,21 +304,17 @@ class Experiment(object):
                 if np.array_equal(self.initial_soln.objectives[0:self.n_postreps_init_opt,0], self.all_post_replicates[mrep][budget]):
                     # plug in fixed bootstrapped f(x0)
                     bootstrap_est_objective[bs_mrep][budget] = bs_initial_obj_val
-                    #bs_current_obj_val = bs_initial_obj_val
                 # elif solution is x*
                 elif np.array_equal(self.ref_opt_soln.objectives[0:self.n_postreps_init_opt,0], self.all_post_replicates[mrep][budget]):
                     # plug in fixed bootstrapped f(x*)
                     bootstrap_est_objective[bs_mrep][budget] = bs_ref_opt_obj_val
-                    #bs_current_obj_val = bs_ref_opt_obj_val
                 else: # else solution other than x0 or x*
                     # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
                     postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
                     # compute the mean of the resampled postreplications
                     bootstrap_est_objective[bs_mrep][budget] = np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in postreps])
-                    #bs_current_obj_val = np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in postreps])
                 # normalize the estimated objective function value
                 bootstrap_conv_curves[bs_mrep][budget] = (bootstrap_est_objective[bs_mrep][budget] - bs_ref_opt_obj_val)/bs_initial_opt_gap
-                #bootstrap_conv_curves[bs_mrep][budget] = (bs_current_obj_val - bs_ref_opt_obj_val)/bs_initial_opt_gap
                 # reset subsubstream if using CRN across budgets
                 if crn_across_budget == True:
                     bootstrap_rng.reset_subsubstream()
@@ -384,6 +351,7 @@ class Experiment(object):
             use bias-corrected bootstrap CIs (via percentile method)?
         beta : float
             quantile for quantile aggregate convergence curve, e.g., beta quantile 
+        
         Returns
         -------
         bs_CI_lower_bounds : numpy array
@@ -430,6 +398,44 @@ class Experiment(object):
             bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=q_upper, axis=0)
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds)/2)
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
+
+    def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs, beta):
+        """
+        Optionally plot bootstrap confidence intervals and report max half-width.
+
+        Arguments
+        ---------
+        plot_type : string
+            indicates which type of plot to produce
+                "all" : all estimated convergence curves
+                "mean" : estimated mean convergence curve
+                "quantile" : estimated beta quantile convergence curve
+        normalize : Boolean
+            normalize convergence curves w.r.t. optimality gaps?
+        estimator : numpy array
+            estimated mean or quantile convergence curve
+        plot_CIs : Boolean
+            plot bootstrapping confidence intervals?
+        beta : float (optional)
+            quantile for quantile aggregate convergence curve, e.g., beta quantile   
+        """
+        # construct bootstrap confidence intervals, plot, and print caption
+        bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta)
+        if normalize == True:
+            budgets = self.unique_frac_budgets
+            xloc = 0.05
+            yloc = -0.35
+        else:
+            budgets = self.unique_budgets
+            xloc = 0.05*self.problem.budget
+            yloc = min(bs_CI_lower_bounds) - 0.25*(max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds))
+        if plot_CIs == True:
+            # plot bootstrap confidence intervals
+            plt.step(budgets, bs_CI_lower_bounds, 'b--', where='post')
+            plt.step(budgets, bs_CI_upper_bounds, 'b--', where='post')
+        # print caption about max halfwidth
+        txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth,2)) + "."
+        plt.text(x=xloc, y=yloc, s=txt)
 
 def stylize_plot(plot_type, normalize, budget=None, beta=None):
     """
