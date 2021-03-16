@@ -235,18 +235,6 @@ class Experiment(object):
             self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(plot_type=plot_type, normalize=normalize)
 
-    def areas_under_conv_curves(self):
-        """
-        Compute the area under each estimated convergence curve.
-
-        Returns
-        -------
-        areas : numpy array
-            area under each estimated convergence curve
-        """
-        areas = [np.dot(conv_curve[:-1], np.diff(self.unique_frac_budgets)) for conv_curve in self.all_conv_curves]
-        return areas
-
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
         Generate a bootstrap sample of estimated convergence curves (normalized and unnormalized).
@@ -513,3 +501,50 @@ def save_plot(plot_type, normalize):
     path_name = "experiments/plots/" + plot_name + ".png"
     # save figure to folder as .png
     plt.savefig(path_name, bbox_inches="tight")
+
+def areas_under_conv_curve(conv_curve, frac_inter_budgets):
+    """
+    Compute the area under a normalized estimated convergence curve.
+
+    Arguments
+    ---------
+    conv_curve : numpy array
+        normalized estimated convergence curves for a macroreplication
+    frac_inter_budgets : numpy array
+        fractions of budget at which the convergence curve is defined
+
+    Returns
+    -------
+    area : float
+        area under each estimated convergence curve
+    """
+    area = np.dot(conv_curve[:-1], np.diff(frac_inter_budgets))
+    return area
+
+def solve_time_of_conv_curve(conv_curve, frac_inter_budgets, solve_tol):
+    """
+    Compute the solve time of a normalized estimated convergence curve.
+
+    Arguments
+    ---------
+    conv_curve : numpy array
+        normalized estimated convergence curves for a macroreplication
+    frac_inter_budgets : numpy array
+        fractions of budget at which the convergence curve is defined
+    solve_tol : float in (0,1)
+        tolerance for a problem to be solved, relative to initial optimality gap
+        
+    Returns
+    -------
+    solve_time : float
+        time at which the normalized convergence curve first drops below solve_tol
+        i.e., the "alpha" solve time
+    """
+    # solve_time defined as infinity if the problem is not solved to within solve_tol
+    solve_time = np.inf
+    # pass over convergence curve to find first solve_tol crossing time
+    for i in range(len(conv_curve)):
+        if conv_curve[i] < solve_tol:
+            solve_time = frac_inter_budgets[i]
+            break
+    return solve_time
