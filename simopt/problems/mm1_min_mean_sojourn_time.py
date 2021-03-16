@@ -7,6 +7,7 @@ import numpy as np
 from base import Problem
 from oracles.mm1queue import MM1Queue
 
+
 class MM1MinMeanSojournTime(Problem):
     """
     Base class to implement simulation-optimization problems.
@@ -22,7 +23,7 @@ class MM1MinMeanSojournTime(Problem):
     minmax : tuple of int (+/- 1)
         indicator of maximization (+1) or minimization (-1) for each objective
     constraint_type : string
-        description of constraints types: 
+        description of constraints types:
             "unconstrained", "box", "deterministic", "stochastic"
     variable_type : string
         description of variable types:
@@ -150,8 +151,8 @@ class MM1MinMeanSojournTime(Problem):
             vector of LHSs of stochastic constraint
         """
         stoch_constraints = (response_dict["frac_cust_wait"],)
-        #print(response_dict["frac_cust_wait"])
-        #stoch_constraints = tuple([-1.0*term for term in response_dict["frac_cust_wait"]])
+        # print(response_dict["frac_cust_wait"])
+        # stoch_constraints = tuple([-1.0*term for term in response_dict["frac_cust_wait"]])
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
@@ -170,8 +171,8 @@ class MM1MinMeanSojournTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0.1*(x[0]**2),)
-        det_objectives_gradients = ((0.2*x[0],),)
+        det_objectives = (0.1 * (x[0]**2),)
+        det_objectives_gradients = ((0.2 * x[0],),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -225,5 +226,5 @@ class MM1MinMeanSojournTime(Problem):
             vector of decision variables
         """
         # Generate an Exponential(rate = 1/3) r.v.
-        x = (rand_sol_rng.expovariate(1/3),)
+        x = (rand_sol_rng.expovariate(1 / 3),)
         return x

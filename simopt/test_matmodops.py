@@ -2,19 +2,20 @@ import unittest
 from rng.matmodops import *
 
 A = [[1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9]
-]
+     [4, 5, 6],
+     [7, 8, 9]
+     ]
 Aneg = [[-1, -2, -3],
-    [-4, -5, -6],
-    [-7, -8, -9]
-]
+        [-4, -5, -6],
+        [-7, -8, -9]
+        ]
 b = [1, 2, 3]
 bneg = [-1, -2, -3]
 m = 3
 
+
 class TestMatModOps(unittest.TestCase):
-    
+
     def test_mat33_mat31_mult(self):
         self.assertEqual(mat33_mat31_mult(A, b), [14, 32, 50])
 
@@ -38,7 +39,7 @@ class TestMatModOps(unittest.TestCase):
 
     def test_mat33_power_mod_power0(self):
         self.assertEqual(mat33_power_mod(A, 0, m), [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        
+
     def test_mat33_power_mod_power1(self):
         self.assertEqual(mat33_power_mod(A, 1, m), [[1, 2, 0], [1, 2, 0], [1, 2, 0]])
 

@@ -6,6 +6,7 @@ from solvers.randomsearch import RandomSearch
 from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
 from oracles.mm1queue import MM1Queue
 
+
 class RandomSearchOnMM1(Experiment):
     """
     Base class to implement wrappers for running experiments.
@@ -20,7 +21,7 @@ class RandomSearchOnMM1(Experiment):
     solver_fixed_factors : dict
         dictionary of user-specified solver factors
     problem_fixed_factors : dict
-        dictionary of user-specified problem factors  
+        dictionary of user-specified problem factors
     oracle_fixed_factors : dict
         dictionary of user-specified oracle factors
     all_recommended_xs : list of lists of tuples
@@ -32,7 +33,7 @@ class RandomSearchOnMM1(Experiment):
         """
     def __init__(self):
         self.solver_fixed_factors = {}
-        self.problem_fixed_factors = {} # unused
+        self.problem_fixed_factors = {}  # unused
         self.oracle_fixed_factors = {}
         self.solver = RandomSearch(fixed_factors=self.solver_fixed_factors)
         self.problem = MM1MinMeanSojournTime(oracle_fixed_factors=self.oracle_fixed_factors)
