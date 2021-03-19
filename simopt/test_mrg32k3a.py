@@ -92,7 +92,7 @@ class TestMRG32k3a(unittest.TestCase):
         self.assertSequenceEqual(rng._current_state, st1 + st2)
 
     def test_advance_stream(self):
-        rng = MRG32k3a()
+        rng = MRG32k3a(s_ss_sss_index=[0, 1, 1])
         rng.advance_stream()        
         rng2 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
@@ -102,7 +102,7 @@ class TestMRG32k3a(unittest.TestCase):
         self.assertEqual(rng.s_ss_sss_index, [1, 0, 0])
 
     def test_advance_substream(self):
-        rng = MRG32k3a()
+        rng = MRG32k3a(s_ss_sss_index=[0, 0, 1])
         rng.advance_substream()
         rng2 = MRG32k3a(s_ss_sss_index=[0, 1, 0])
         self.assertEqual(rng._current_state, rng2._current_state)

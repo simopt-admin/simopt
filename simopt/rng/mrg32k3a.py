@@ -329,6 +329,9 @@ class MRG32k3a(random.Random):
         self.seed(nstate)
         # increment the stream index
         self.s_ss_sss_index[0] += 1
+        # reset index for substream and subsubstream
+        self.s_ss_sss_index[1] = 0
+        self.s_ss_sss_index[2] = 0
         # update state referencing
         self.stream_start = nstate
         self.substream_start = nstate
@@ -352,6 +355,8 @@ class MRG32k3a(random.Random):
         self.seed(nstate)
         # increment the substream index
         self.s_ss_sss_index[1] += 1
+        # reset index for subsubstream
+        self.s_ss_sss_index[2] = 0
         # update state referencing
         self.substream_start = nstate
         self.subsubstream_start = nstate
@@ -398,7 +403,7 @@ class MRG32k3a(random.Random):
         self.seed(nstate)
         # update state referencing
         self.subsubstream_start = nstate
-        # reset index for substream and subsubstream
+        # reset index for subsubstream
         self.s_ss_sss_index[2] = 0
 
     def reset_subsubstream(self):
