@@ -17,6 +17,7 @@ DataFarmingExperiment : class
 import numpy as np
 from rng.mrg32k3a import MRG32k3a
 
+
 class Solver(object):
     """
     Base class to implement simulation-optimization solvers.
@@ -587,69 +588,3 @@ class Solution(object):
         self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
         self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)/np.sqrt(self.n_reps)
         self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps,stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
-
-class DesignPoint(object):
-    """
-    Base class for design points represented as dictionaries of factors.
-
-    Attributes
-    ----------
-    oracle_factors : dict
-        oracle factor names and values
-    n_reps : int
-        number of replications run at a design point
-    responses : dict
-        responses observed from replications
-    gradients : dict of dict
-        gradients of responses (w.r.t. oracle factors) observed from replications
-
-    Arguments
-    ---------
-    oracle_factors : dict
-        oracle factor names and values
-    oracle : Oracle object
-        oracle to which oracle_factors corresponds
-    """
-    def __init__(self, design_oracle_factors, oracle):
-        super().__init__()
-        self.oracle_factors = oracle.factors
-        self.oracle_factors.update(design_oracle_factors)
-        self.n_reps = 0
-        self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
-        self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
-
-    def replicate(self, m=1):
-        """
-        Simulate a single replication for the current oracle factors.
-        Append results to the responses and gradients dictionaries.
-
-        Arguments
-        ---------
-        m : int > 0
-            number of macroreplications to run at the design point
-        """
-        # need to figure if design point has local copy of an oracle object, or if oracle is shared
-        responses, gradients = self.oracle.replicate()
-        # ...
-
-class DataFarmingExperiment(object):
-    """
-    Base class for data-farming experiments consisting of an oracle
-    and design of associated factors.
-
-    Attributes
-    ----------
-    oracle_factors : dict
-        oracle factor names and values
-    n_reps : int
-        common number of runs at each design point
-
-    Arguments
-    ---------
-    oracle : Oracle object
-        oracle on which the experiment is run
-    """
-    def __init__(self, oracle):
-        super().__init__()
-        self.oracle = oracle
-        self.n_reps = 0
