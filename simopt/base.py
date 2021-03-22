@@ -400,10 +400,11 @@ class Problem(object):
                 # to those of deterministic components of objectives
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
                 solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
-                # convert responses and gradients to stochastic constraints and gradients and add
-                # to those of deterministic components of stochastic constraints
-                solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
-                solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
+                if self.n_stochastic_constraints > 0:
+                    # convert responses and gradients to stochastic constraints and gradients and add
+                    # to those of deterministic components of stochastic constraints
+                    solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
+                    solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
                 # increment counter
                 solution.n_reps += 1
                 # advance rngs to start of next subsubstream
@@ -569,8 +570,12 @@ class Solution(object):
         # Raw data
         self.objectives = np.zeros((init_size, problem.n_objectives))
         self.objectives_gradients = np.zeros((init_size, problem.n_objectives, problem.dim))
-        self.stoch_constraints = np.zeros((init_size, problem.n_stochastic_constraints))
-        self.stoch_constraints_gradients = np.zeros((init_size, problem.n_stochastic_constraints, problem.dim))
+        if problem.n_stochastic_constraints > 0:
+            self.stoch_constraints = np.zeros((init_size, problem.n_stochastic_constraints))
+            self.stoch_constraints_gradients = np.zeros((init_size, problem.n_stochastic_constraints, problem.dim))
+        else:
+            self.stoch_constraints = None
+            self.stoch_constraints_gradients = None
         # Summary statistics
         # self.objectives_mean = np.full((problem.n_objectives), np.nan)
         # self.objectives_var = np.full((problem.n_objectives), np.nan)
@@ -622,14 +627,15 @@ class Solution(object):
         self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
         self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
         self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
-        self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
-        self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
-        self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
-        self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
-        self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
-        self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
+        if self.stoch_constraints is not None:
+            self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
+            self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
+            self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
+            self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
+            self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
+            self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
 
 
 class DesignPoint(object):
