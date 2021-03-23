@@ -39,12 +39,10 @@ class Experiment(object):
         simulation-optimization solver
     problem : base.Problem object
         simulation-optimization problem
-    solver_fixed_factors : dict
-        dictionary of user-specified solver factors
-    problem_fixed_factors : dict
-        dictionary of user-specified problem factors
-    oracle_fixed_factors : dict
-        dictionary of user-specified oracle factors
+    solver_name = string
+        name of solver 
+    problem_name = string
+        name of problem
     all_recommended_xs : list of lists of tuples
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
@@ -57,9 +55,9 @@ class Experiment(object):
         estimated objective values of all solutions from all macroreplications
     all_conv_curves : numpy array of arrays
         estimated convergence curves from all macroreplications
-    initial_soln : Solution object
+    initial_soln : base.Solution object
         initial solution (w/ postreplicates) used for normalization
-    ref_opt_soln : Solution object
+    ref_opt_soln : base.Solution object
         reference optimal solution (w/ postreplicates) used for normalization
     
     Arguments
@@ -76,11 +74,11 @@ class Experiment(object):
         dictionary of user-specified oracle factors
     """
     def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
-        self.solver_fixed_factors = solver_fixed_factors
-        self.problem_fixed_factors = problem_fixed_factors
-        self.oracle_fixed_factors = oracle_fixed_factors
+        # TO DO: problem_fixed_factors is not used yet
         self.solver = solver_directory[solver_name](fixed_factors=self.solver_fixed_factors)
         self.problem = problem_directory[problem_name](oracle_fixed_factors=self.oracle_fixed_factors)
+        self.solver_name = solver_name
+        self.problem_name = problem_name
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
         self.all_reevaluated_solns = []
@@ -234,7 +232,7 @@ class Experiment(object):
             plot bootstrapping confidence intervals?
         """
         # set up plot
-        stylize_plot(plot_type=plot_type, normalize=normalize, budget=self.problem.budget, beta=beta)
+        stylize_plot(plot_type=plot_type, solver_name=self.solver_name, problem_name=self.problem_name, normalize=normalize, budget=self.problem.budget, beta=beta)
         # make the plot
         if plot_type == "all":
             # plot all estimated convergence curves
@@ -459,7 +457,7 @@ class Experiment(object):
 
     def record_run_results(self, file_name):
         """
-        Save Experiment object (with outputs from run() method) to .pickle file.
+        Save wrapper_base.Experiment object (with outputs from run() method) to .pickle file.
 
         Arguments
         ---------
@@ -471,7 +469,7 @@ class Experiment(object):
 
     def record_post_replicate_results(self, file_name):
         """
-        Save Experiment object (with outputs from post_replicate() method) to .pickle file.
+        Save wrapper_base.Experiment object (with outputs from post_replicate() method) to .pickle file.
 
         Arguments
         ---------
@@ -484,7 +482,7 @@ class Experiment(object):
 
 def read_run_results(file_name):
     """
-    Read in Experiment object (with outputs from run() method) from .pickle file.
+    Read in wrapper_base.Experiment object (with outputs from run() method) from .pickle file.
 
     Arguments
     ---------
@@ -493,7 +491,7 @@ def read_run_results(file_name):
 
     Returns
     -------
-    experiment : Experiment object
+    experiment : wrapper_base.Experiment object
         experimental results from run() method
     """
     with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
@@ -503,7 +501,7 @@ def read_run_results(file_name):
 
 def read_post_replicate_results(file_name):
     """
-    Read in Experiment object (with outputs from post_replicate() method) from .pickle file.
+    Read in wrapper_base.Experiment object (with outputs from post_replicate() method) from .pickle file.
 
     Arguments
     ---------
@@ -512,7 +510,7 @@ def read_post_replicate_results(file_name):
 
     Returns
     -------
-    experiment : Experiment object
+    experiment : wrapper_base.Experiment object
         experimental results from post_replicate() method
     """
     with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
@@ -520,7 +518,7 @@ def read_post_replicate_results(file_name):
     return experiment
 
 
-def stylize_plot(plot_type, normalize, budget=None, beta=None):
+def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None, beta=None):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -531,6 +529,10 @@ def stylize_plot(plot_type, normalize, budget=None, beta=None):
             "all" : all estimated convergence curves
             "mean" : estimated mean convergence curve
             "quantile" : estimated beta quantile convergence curve
+    solver_name : string
+        name of solver
+    problem_name : string
+        name of problem
     normalize : Boolean
         normalize convergence curves w.r.t. optimality gaps?
     budget : int
@@ -545,13 +547,13 @@ def stylize_plot(plot_type, normalize, budget=None, beta=None):
         ylabel = "Fraction of Initial Optimality Gap"
         xlim = (0, 1)
         ylim = (-0.1, 1.1)
-        title = "Solver Name on Problem Name \n"
+        title = solver_name + " on " + problem_name + "\n"
     elif normalize is False:
         xlabel = "Budget"
         ylabel = "Objective Function Value"
         xlim = (0, budget)
         ylim = None
-        title = "Solver Name on Problem Name \n" + "Unnormalized "
+        title = solver_name + " on " + problem_name + "\n" + "Unnormalized "
     # format title
     if plot_type == "all":
         title = title + "Estimated Convergence Curves"
