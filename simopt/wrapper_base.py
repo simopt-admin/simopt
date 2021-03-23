@@ -14,7 +14,7 @@ from rng.mrg32k3a import MRG32k3a, bsm
 from base import Solver, Problem, Oracle, Solution
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-
+import pickle
 
 class Experiment(object):
     """
@@ -426,6 +426,66 @@ class Experiment(object):
         txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth, 2)) + "."
         plt.text(x=xloc, y=yloc, s=txt)
 
+    def record_run_results(self, file_name):
+        """
+        Save Experiment object (with outputs from run() method) to .pickle file.
+
+        Arguments
+        ---------
+        file_name : string
+            base name of pickle file for recording outputs
+        """
+        with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+
+    def record_post_replicate_results(self, file_name):
+        """
+        Save Experiment object (with outputs from post_replicate() method) to .pickle file.
+
+        Arguments
+        ---------
+        file_name : string
+            base name of pickle file for recording outputs
+        """
+        with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+def read_run_results(file_name):
+    """
+    Read in Experiment object (with outputs from run() method) from .pickle file.
+
+    Arguments
+    ---------
+    file_name : string
+        base name of pickle file from which to read in outputs
+    
+    Returns
+    -------
+    experiment : Experiment object
+        experimental results from run() method
+    """
+    with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
+        experiment = pickle.load(file)
+    return experiment
+
+def read_post_replicate_results(file_name):
+    """
+    Read in Experiment object (with outputs from post_replicate() method) from .pickle file.
+
+    Arguments
+    ---------
+    file_name : string
+        base name of pickle file from which to read in outputs
+    
+    Returns
+    -------
+    experiment : Experiment object
+        experimental results from post_replicate() method
+    """
+    with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
+        experiment = pickle.load(file)
+    return experiment
 
 def stylize_plot(plot_type, normalize, budget=None, beta=None):
     """
