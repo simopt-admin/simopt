@@ -9,10 +9,10 @@ from experiments.rs_on_mm1 import RandomSearchOnMM1
 from problems.cntnv_max_profit import CntNVMaxProfit
 from experiments.rs_on_cntnv import RandomSearchOnCNTNV
 
-#myexperiment = RandomSearchOnMM1()
+# myexperiment = RandomSearchOnMM1()
 myexperiment = RandomSearchOnCNTNV()
 myexperiment.run(n_macroreps=10, crn_across_solns=True)
-myexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=50, crn_across_budget=True, crn_across_macroreps=False)
+myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 myexperiment.make_plots(plot_type="all")
 myexperiment.make_plots(plot_type="mean")
 myexperiment.make_plots(plot_type="quantile")

@@ -605,15 +605,16 @@ class Solution(object):
         """
         # Size of data storage
         n_objectives = len(self.det_objectives)
-        n_stochastic_constraints = len(self.det_stoch_constraints)
         base_pad_size = 100  # default is to append space for 100 more replications
         # if more space needed, append in multiples of 100
         pad_size = int(np.ceil(m / base_pad_size)) * base_pad_size
         self.storage_size += pad_size
         self.objectives = np.concatenate((self.objectives, np.zeros((pad_size, n_objectives))))
         self.objectives_gradients = np.concatenate((self.objectives_gradients, np.zeros((pad_size, n_objectives, self.dim))))
-        self.stoch_constraints = np.concatenate((self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints))))
-        self.stoch_constraints_gradients = np.concatenate((self.stoch_constraints_gradients, np.zeros((pad_size, n_stochastic_constraints, self.dim))))
+        if self.stoch_constraints is not None:
+            n_stochastic_constraints = len(self.det_stoch_constraints)
+            self.stoch_constraints = np.concatenate((self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints))))
+            self.stoch_constraints_gradients = np.concatenate((self.stoch_constraints_gradients, np.zeros((pad_size, n_stochastic_constraints, self.dim))))
 
     def recompute_summary_statistics(self):
         """
