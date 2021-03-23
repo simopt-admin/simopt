@@ -15,6 +15,19 @@ from base import Solver, Problem, Oracle, Solution
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pickle
+from solvers.randomsearch import RandomSearch
+from problems.cntnv_max_profit import CntNVMaxProfit
+from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
+
+solver_directory = {
+    "RNDSRCH": RandomSearch
+}
+
+problem_directory = {
+    "CNTNEWS-1": CntNVMaxProfit,
+    "MM1-1": MM1MinMeanSojournTime
+}
+
 
 class Experiment(object):
     """
@@ -48,8 +61,26 @@ class Experiment(object):
         initial solution (w/ postreplicates) used for normalization
     ref_opt_soln : Solution object
         reference optimal solution (w/ postreplicates) used for normalization
+    
+    Arguments
+    ---------
+    solver_name = string
+        name of solver 
+    problem_name = string
+        name of problem
+    solver_fixed_factors : dict
+        dictionary of user-specified solver factors
+    problem_fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        dictionary of user-specified oracle factors
     """
-    def __init__(self):
+    def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
+        self.solver_fixed_factors = solver_fixed_factors
+        self.problem_fixed_factors = problem_fixed_factors
+        self.oracle_fixed_factors = oracle_fixed_factors
+        self.solver = solver_directory[solver_name](fixed_factors=self.solver_fixed_factors)
+        self.problem = problem_directory[problem_name](oracle_fixed_factors=self.oracle_fixed_factors)
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
         self.all_reevaluated_solns = []
@@ -438,7 +469,6 @@ class Experiment(object):
         with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-
     def record_post_replicate_results(self, file_name):
         """
         Save Experiment object (with outputs from post_replicate() method) to .pickle file.
@@ -451,6 +481,7 @@ class Experiment(object):
         with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
+
 def read_run_results(file_name):
     """
     Read in Experiment object (with outputs from run() method) from .pickle file.
@@ -459,7 +490,7 @@ def read_run_results(file_name):
     ---------
     file_name : string
         base name of pickle file from which to read in outputs
-    
+
     Returns
     -------
     experiment : Experiment object
@@ -469,6 +500,7 @@ def read_run_results(file_name):
         experiment = pickle.load(file)
     return experiment
 
+
 def read_post_replicate_results(file_name):
     """
     Read in Experiment object (with outputs from post_replicate() method) from .pickle file.
@@ -477,7 +509,7 @@ def read_post_replicate_results(file_name):
     ---------
     file_name : string
         base name of pickle file from which to read in outputs
-    
+
     Returns
     -------
     experiment : Experiment object
@@ -486,6 +518,7 @@ def read_post_replicate_results(file_name):
     with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
         experiment = pickle.load(file)
     return experiment
+
 
 def stylize_plot(plot_type, normalize, budget=None, beta=None):
     """
