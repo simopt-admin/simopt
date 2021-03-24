@@ -3,6 +3,7 @@ from rng.mrg32k3a import MRG32k3a
 from copy import deepcopy
 import numpy as np
 import os
+import csv
 
 class DesignPoint(object):
     """
@@ -149,3 +150,29 @@ class DataFarmingExperiment(object):
                 for rng in rng_list:
                     for _ in range(len(rng_list)):
                         rng.advance_substream()
+
+    def print_to_csv(self, csv_filename="raw_results.csv"):
+        """
+        Extract observed responses from simulated design points.
+        Publish to .csv output file.
+
+        Argument
+        --------
+        csv_filename : string
+            name of .csv file to print output to
+        """
+        with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
+            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            # print headers
+            oracle_factor_names = list(self.oracle.specifications.keys())
+            response_names = list(self.design[0].responses.keys())
+            csv_writer.writerow(["DesignPt#"] + oracle_factor_names + ["MacroRep#"] + response_names)
+            for designpt_index in range(self.n_design_pts):
+                designpt = self.design[designpt_index]
+                # parse list of oracle factors
+                oracle_factor_list = [designpt.oracle_factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]   
+                for mrep in range(designpt.n_reps):
+                    # parse list of responses
+                    response_list = [designpt.responses[response_name][mrep] for response_name in response_names]
+                    print_list = [designpt_index] + oracle_factor_list + [mrep] + response_list
+                    csv_writer.writerow(print_list)  

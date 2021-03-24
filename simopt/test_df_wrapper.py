@@ -7,6 +7,7 @@ from csv import DictReader
 factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quantity"]
 myexperiment = DataFarmingExperiment(oracle_name="CNTNEWS", factor_settings_filename="oracle_factor_settings", factor_headers=factor_headers, design_filename=None, oracle_fixed_factors={})
 myexperiment.run(n_reps=10, crn_across_design_pts=False)
+myexperiment.print_to_csv(csv_filename="cntnews_data_farming_output")
 
 print("I ran this.")
 
