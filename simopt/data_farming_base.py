@@ -1,7 +1,8 @@
 from directory import oracle_directory
 from rng.mrg32k3a import MRG32k3a
 from copy import deepcopy
-
+import numpy as np
+import os
 
 class DesignPoint(object):
     """
@@ -61,9 +62,7 @@ class DesignPoint(object):
             self.n_reps += 1
             # advance rngs to start of next subsubstream
             for rng in self.oracle.rng_list:
-                print(rng.s_ss_sss_index)
                 rng.advance_subsubstream()
-            print("on to next run")
 
 
 class DataFarmingExperiment(object):
@@ -82,27 +81,38 @@ class DataFarmingExperiment(object):
 
     Arguments
     ---------
-    oracle : oracle name
+    oracle_name : string
         name of oracle on which the experiment is run
+    factor_settings_filename : string
+        name of .txt file containing factor ranges and # of digits
+    factor_headers : list of strings
+        ordered list of factor names appearing in factor settings/design file
+    design_filename : string
+        name of .txt file containing design matrix
     oracle_fixed_factors : dictionary
         non-default values of oracle factors that will not be varied
-    design_filename : string
-        name of file containing design matrix
     """
-    def __init__(self, oracle_name, oracle_fixed_factors={}, design_filename=None):
+    def __init__(self, oracle_name, factor_settings_filename, factor_headers, design_filename=None, oracle_fixed_factors={}):
         # initialize oracle object with fixed factors
         self.oracle = oracle_directory[oracle_name](fixed_factors=oracle_fixed_factors)
-        # HARD-CODED FOR GIVEN DESIGN MATRIX.
-        # WILL LATER READ IN DESIGN MATRIX FROM FILE
-        design_table = [[1, 3], [2, 4], [3, 5]]
+        if design_filename is None:
+            # create oracle factor design from .txt file of factor settings 
+            # hard-coded for a single-stack NOLHS
+            command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + factor_settings_filename + ".txt > ./data_farming_experiments/" + factor_settings_filename + "_design.txt"
+            os.system(command)
+            # append design to base filename
+            design_filename = factor_settings_filename + "_design"
+        # read in design matrix from .txt file
+        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        # count number of design_points
         self.n_design_pts = len(design_table)
         # create all design points
         self.design = []
+        design_pt_factors = {}
         for i in range(self.n_design_pts):
-            # HARD-CODED TO PARSE DESIGN TABLE IN A CERTAIN WAY
-            # WILL LATER GENERALIZE TO READ FACTOR NAMES FROM COLUMN HEADERS
-            # parse oracle factors for next design point
-            design_pt_factors = {"lambda": design_table[i][0], "mu": design_table[i][1]}
+            for j in range(len(factor_headers)):
+                # parse oracle factors for next design point
+                design_pt_factors[factor_headers[j]] = design_table[i][j]
             # update oracle factors according to next design point
             self.oracle.factors.update(design_pt_factors)
             # create new design point and add to design
