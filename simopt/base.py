@@ -24,6 +24,8 @@ class Solver(object):
 
     Attributes
     ----------
+    name : string
+        name of solver
     objective_type : string
         description of objective types:
             "single" or "multi"
@@ -162,6 +164,8 @@ class Problem(object):
 
     Attributes
     ----------
+    name : string
+        name of problem
     dim : int
         number of decision variables
     n_objectives : int
@@ -199,7 +203,6 @@ class Problem(object):
         or a random problem instance
     """
     def __init__(self, oracle_fixed_factors):
-        self.oracle = None
         # set subset of factors of the simulation oracle
         # fill in missing oracle factors with problem-level default values
         for key in self.oracle_default_factors:
@@ -421,6 +424,8 @@ class Oracle(object):
 
     Attributes
     ----------
+    name : string
+        name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
     rng_list : list of rng.MRG32k3a objects
@@ -637,57 +642,3 @@ class Solution(object):
             self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
             self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
             self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
-
-
-class DesignPoint(object):
-    """
-    Base class for design points represented as dictionaries of factors.
-
-    Attributes
-    ----------
-    oracle_factors : dict
-        oracle factor names and values
-    n_reps : int
-        number of replications run at a design point
-    responses : dict
-        responses observed from replications
-    gradients : dict of dict
-        gradients of responses (w.r.t. oracle factors) observed from replications
-
-    Arguments
-    ---------
-    oracle_factors : dict
-        oracle factor names and values
-    oracle : Oracle object
-        oracle to which oracle_factors corresponds
-    """
-    def __init__(self, oracle_factors, oracle):
-        super().__init__()
-        self.oracle_factors = oracle.defaults  #### FIX DEFAULTS
-        self.oracle_factors.update(oracle_factors)
-        self.n_reps = 0
-        # self.responses = oracle.{} # CREATE DICT WITH RESPONSE KEYS
-        # self.gradients = oracle.{} # CREATE DICT WITH RESPONSE KEYS AND ORACLE FACTOR INNER KEYS
-
-
-class DataFarmingExperiment(object):
-    """
-    Base class for data-farming experiments consisting of an oracle
-    and design of associated factors.
-
-    Attributes
-    ----------
-    oracle_factors : dict
-        oracle factor names and values
-    n_reps : int
-        common number of runs at each design point
-
-    Arguments
-    ---------
-    oracle : Oracle object
-        oracle on which the experiment is run
-    """
-    def __init__(self, oracle):
-        super().__init__()
-        self.oracle = oracle
-        self.n_reps = 0

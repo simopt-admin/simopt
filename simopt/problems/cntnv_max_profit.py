@@ -14,6 +14,8 @@ class CntNVMaxProfit(Problem):
 
     Attributes
     ----------
+    name : string
+        name of problem
     dim : int
         number of decision variables
     n_objectives : int
@@ -60,6 +62,7 @@ class CntNVMaxProfit(Problem):
     base.Problem
     """
     def __init__(self, oracle_fixed_factors={}):
+        self.name = "CNTNEWS-1"
         self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

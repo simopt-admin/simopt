@@ -15,6 +15,8 @@ class CntNV(Oracle):
 
     Attributes
     ----------
+    name : string
+        name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
     rng_list : list of rng.MRG32k3a objects
@@ -38,6 +40,7 @@ class CntNV(Oracle):
     base.Oracle
     """
     def __init__(self, fixed_factors={}):
+        self.name = "CNTNEWS"
         self.n_rngs = 1
         self.n_responses = 1
         self.factors = fixed_factors
