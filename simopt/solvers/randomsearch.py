@@ -1,10 +1,11 @@
 """
 Summary
 -------
-Randomly sample solutions from the feasible region. 
+Randomly sample solutions from the feasible region.
 """
 from base import Solver, Solution
 import numpy as np
+
 
 class RandomSearch(Solver):
     """
@@ -29,7 +30,7 @@ class RandomSearch(Solver):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
-        list of random-number generators used for the solver's internal purposes    
+        list of random-number generators used for the solver's internal purposes
 
     Arguments
     ---------
@@ -62,7 +63,7 @@ class RandomSearch(Solver):
 
     def check_solver_factors(self):
         pass
-    
+
     def solve(self, problem, crn_across_solns):
         """
         Run a single macroreplication of a solver on a problem.
@@ -71,9 +72,9 @@ class RandomSearch(Solver):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool 
+        crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
-        
+
         Returns
         -------
         recommended_solns : list of Solution objects
@@ -97,23 +98,23 @@ class RandomSearch(Solver):
                 # record as best
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)            
-            else: # identify new solution to simulate
+                intermediate_budgets.append(expended_budget)
+            else:  # identify new solution to simulate
                 new_x = problem.get_random_solution(find_next_soln_rng)
                 new_solution = Solution(new_x, problem)
             # record initial solution
-            #if expended_budget == 0:
+            # if expended_budget == 0:
             #    best_solution = new_solution
             #    recommended_solns.append(new_solution)
             #    intermediate_budgets.append(expended_budget)
-            
+
             # prepare to simulate new solution
             self.prepare_sim_new_soln(problem, crn_across_solns)
             # simulate new solution
             problem.simulate(solution=new_solution, m=self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]
             # check for improvement relative to incumbent best solution
-            if problem.minmax*new_solution.objectives_mean > problem.minmax*best_solution.objectives_mean:
+            if problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean:
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

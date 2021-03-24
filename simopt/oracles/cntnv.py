@@ -6,9 +6,10 @@ Simulate a day's worth of sales for a newsvendor.
 from base import Oracle
 import numpy as np
 
+
 class CntNV(Oracle):
     """
-    An oracle that simulates a day's worth of sales for a newsvendor 
+    An oracle that simulates a day's worth of sales for a newsvendor
     with a Burr Type XII demand distribution. Returns the profit, after
     accounting for order costs and salvage.
 
@@ -56,9 +57,9 @@ class CntNV(Oracle):
                 "datatype": float,
                 "default": 1.0
             },
-            "order_quantity":{
+            "order_quantity": {
                 "description": "Order quantity",
-                "datatype": float, # or int
+                "datatype": float,  # or int
                 "default": 0.5
             },
             "Burr_c": {
@@ -70,7 +71,7 @@ class CntNV(Oracle):
                 "description": "Burr Type XII cdf shape parameter",
                 "datatype": float,
                 "default": 20.0
-            } 
+            }
         }
         self.check_factor_list = {
             "purchase_price": self.check_purchase_price,
@@ -118,9 +119,9 @@ class CntNV(Oracle):
         # designate random number generator
         demand_rng = self.rng_list[0]
         # generate Burr Type XII random demand
-        demand = ((1-demand_rng.random())**(-1/self.factors["Burr_k"])-1)**(1/self.factors["Burr_c"])
-        # calculate profit 
-        profit = -1*self.factors["purchase_price"]*self.factors["order_quantity"] + min(demand, self.factors["order_quantity"])*self.factors["sales_price"] + max(0, self.factors["order_quantity"]-demand)*self.factors["salvage_price"]
+        demand = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)**(1 / self.factors["Burr_c"])
+        # calculate profit
+        profit = -1 * self.factors["purchase_price"] * self.factors["order_quantity"] + min(demand, self.factors["order_quantity"]) * self.factors["sales_price"] + max(0, self.factors["order_quantity"] - demand) * self.factors["salvage_price"]
         # calculate gradient of profit w.r.t. order quantity
         if demand > self.factors["order_quantity"]:
             grad_profit_order_quantity = self.factors["sales_price"] - self.factors["purchase_price"]
