@@ -24,6 +24,8 @@ class Solver(object):
 
     Attributes
     ----------
+    name : string
+        name of solver
     objective_type : string
         description of objective types:
             "single" or "multi"
@@ -162,6 +164,8 @@ class Problem(object):
 
     Attributes
     ----------
+    name : string
+        name of problem
     dim : int
         number of decision variables
     n_objectives : int
@@ -199,7 +203,6 @@ class Problem(object):
         or a random problem instance
     """
     def __init__(self, oracle_fixed_factors):
-        self.oracle = None
         # set subset of factors of the simulation oracle
         # fill in missing oracle factors with problem-level default values
         for key in self.oracle_default_factors:
@@ -421,6 +424,8 @@ class Oracle(object):
 
     Attributes
     ----------
+    name : string
+        name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
     rng_list : list of rng.MRG32k3a objects

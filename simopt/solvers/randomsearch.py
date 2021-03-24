@@ -14,6 +14,8 @@ class RandomSearch(Solver):
 
     Attributes
     ----------
+    name : string
+        name of solver
     objective_type : string
         description of objective types:
             "single" or "multi"
@@ -42,6 +44,7 @@ class RandomSearch(Solver):
     base.Solver
     """
     def __init__(self, fixed_factors={}):
+        self.name = "RNDSRCH"
         self.objective_type = "single"
         self.constraint_type = "deterministic"
         self.variable_type = "mixed"

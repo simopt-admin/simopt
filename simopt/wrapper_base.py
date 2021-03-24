@@ -15,19 +15,7 @@ from base import Solver, Problem, Oracle, Solution
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pickle
-from solvers.randomsearch import RandomSearch
-from problems.cntnv_max_profit import CntNVMaxProfit
-from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
-
-solver_directory = {
-    "RNDSRCH": RandomSearch
-}
-
-problem_directory = {
-    "CNTNEWS-1": CntNVMaxProfit,
-    "MM1-1": MM1MinMeanSojournTime
-}
-
+from directory import solver_directory, problem_directory, oracle_directory
 
 class Experiment(object):
     """
@@ -39,10 +27,6 @@ class Experiment(object):
         simulation-optimization solver
     problem : base.Problem object
         simulation-optimization problem
-    solver_name = string
-        name of solver 
-    problem_name = string
-        name of problem
     all_recommended_xs : list of lists of tuples
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
@@ -59,11 +43,11 @@ class Experiment(object):
         initial solution (w/ postreplicates) used for normalization
     ref_opt_soln : base.Solution object
         reference optimal solution (w/ postreplicates) used for normalization
-    
+
     Arguments
     ---------
     solver_name = string
-        name of solver 
+        name of solver
     problem_name = string
         name of problem
     solver_fixed_factors : dict
@@ -75,10 +59,8 @@ class Experiment(object):
     """
     def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
         # TO DO: problem_fixed_factors is not used yet
-        self.solver = solver_directory[solver_name](fixed_factors=self.solver_fixed_factors)
-        self.problem = problem_directory[problem_name](oracle_fixed_factors=self.oracle_fixed_factors)
-        self.solver_name = solver_name
-        self.problem_name = problem_name
+        self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
+        self.problem = problem_directory[problem_name](oracle_fixed_factors=oracle_fixed_factors)
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
         self.all_reevaluated_solns = []
@@ -232,7 +214,7 @@ class Experiment(object):
             plot bootstrapping confidence intervals?
         """
         # set up plot
-        stylize_plot(plot_type=plot_type, solver_name=self.solver_name, problem_name=self.problem_name, normalize=normalize, budget=self.problem.budget, beta=beta)
+        stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
         # make the plot
         if plot_type == "all":
             # plot all estimated convergence curves
