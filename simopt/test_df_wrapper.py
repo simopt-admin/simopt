@@ -1,13 +1,13 @@
 import numpy as np
 from rng.mrg32k3a import MRG32k3a
-from oracles.mm1queue import MM1Queue
+# from oracles.mm1queue import MM1Queue
 from data_farming_base import DesignPoint, DataFarmingExperiment
 from csv import DictReader
 
 oracle_fixed_factors = {'mu': 5} # default overrides from GUI, others set as defaults
-#myoracle = MM1Queue(fixed_factors=oracle_fixed_factors)
-#design_pt_factors = {'lambda': 1} # extracted from row of design matrix
-#myoracle.factors.update(design_pt_factors)
+# myoracle = MM1Queue(fixed_factors=oracle_fixed_factors)
+# design_pt_factors = {'lambda': 1} # extracted from row of design matrix
+# myoracle.factors.update(design_pt_factors)
 
 # # Create a design point
 # mydesignpt = DesignPoint(oracle=myoracle)
@@ -25,12 +25,12 @@ oracle_fixed_factors = {'mu': 5} # default overrides from GUI, others set as def
 # # Run 10 replications of the oracle at the design_point
 # mydesignpt.simulate(m=10)
 
-oracle_name = "MM1Queue"
+oracle_name = "MM1"
 
 myexperiment = DataFarmingExperiment(oracle_name=oracle_name, oracle_fixed_factors=oracle_fixed_factors, design_filename=None)
 myexperiment.run(n_reps=10, crn_across_design_pts=False)
 
-print('I ran this.')
+print("I ran this.")
 
 # SCRATCH
 # --------------------------------

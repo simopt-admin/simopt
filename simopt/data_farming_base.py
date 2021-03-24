@@ -1,7 +1,7 @@
-from base import Oracle
+from directory import oracle_directory
 from rng.mrg32k3a import MRG32k3a
-from oracles.mm1queue import MM1Queue
 from copy import deepcopy
+
 
 class DesignPoint(object):
     """
@@ -31,7 +31,7 @@ class DesignPoint(object):
         self.oracle = deepcopy(oracle)
         self.oracle_factors = self.oracle.factors
         self.n_reps = 0
-        self.responses = {} 
+        self.responses = {}
         self.gradients = {}
 
     def simulate(self, m=1):
@@ -56,8 +56,8 @@ class DesignPoint(object):
                 self.responses[key].append(responses[key])
             for outerkey in self.gradients:
                 for innerkey in self.gradients[outerkey]:
-                    self.gradients[outerkey][innerkey].append(gradients[outerkey][innerkey])  
-            # increment counter 
+                    self.gradients[outerkey][innerkey].append(gradients[outerkey][innerkey])
+            # increment counter
             self.n_reps += 1
             # advance rngs to start of next subsubstream
             for rng in self.oracle.rng_list:
@@ -90,16 +90,11 @@ class DataFarmingExperiment(object):
         name of file containing design matrix
     """
     def __init__(self, oracle_name, oracle_fixed_factors={}, design_filename=None):
-        # HARD-CODED FOR MM1Queue ORACLE
-        # WILL LATER MAKE THIS A SWITCH CASE USING oracle_name AS A KEY
         # initialize oracle object with fixed factors
-        if oracle_name == "MM1Queue":
-            self.oracle = MM1Queue(fixed_factors=oracle_fixed_factors)
-        else:
-            print("Problem " + oracle_name + " does not exist.")
+        self.oracle = oracle_directory[oracle_name](fixed_factors=oracle_fixed_factors)
         # HARD-CODED FOR GIVEN DESIGN MATRIX.
         # WILL LATER READ IN DESIGN MATRIX FROM FILE
-        design_table = [[1,3], [2, 4], [3, 5]]
+        design_table = [[1, 3], [2, 4], [3, 5]]
         self.n_design_pts = len(design_table)
         # create all design points
         self.design = []
@@ -112,21 +107,21 @@ class DataFarmingExperiment(object):
             self.oracle.factors.update(design_pt_factors)
             # create new design point and add to design
             self.design.append(DesignPoint(self.oracle))
-        
+
     def run(self, n_reps=10, crn_across_design_pts=True):
         """
         Run a fixed number of macroreplications at each design point.
-        
+
         Arguments
         ---------
         n_reps : int
             number of replications run at each design point
         crn_across_design_pts : Boolean
-            use CRN across design points?        
+            use CRN across design points?
         """
         # setup random number generators for oracle
         # use stream 0 for all runs; start with substreams 0, 1, ..., oracle.n_rngs-1
-        rng_list = [MRG32k3a(s_ss_sss_index = [0, ss, 0]) for ss in range(self.oracle.n_rngs)]
+        rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.oracle.n_rngs)]
         # all design points will share the same random number generator objects
         # simulate n_reps replications from each design point
         for design_pt in self.design:
