@@ -3,7 +3,6 @@ Summary
 -------
 Maximize the expected profit for the continuous newsvendor problem.
 """
-import numpy as np
 from base import Problem
 from oracles.cntnv import CntNV
 
@@ -49,7 +48,7 @@ class CntNVMaxProfit(Problem):
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
-        list of random number generators used to generate a random initial solution
+        list of RNGs used to generate a random initial solution
         or a random problem instance
 
     Arguments
@@ -83,7 +82,7 @@ class CntNVMaxProfit(Problem):
             "Burr_k": 20.0
             }
         super().__init__(oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults
+        # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = CntNV(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
@@ -181,7 +180,8 @@ class CntNVMaxProfit(Problem):
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
         """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+        Compute deterministic components of stochastic constraints
+        for a solution `x`.
 
         Arguments
         ---------
@@ -193,7 +193,8 @@ class CntNVMaxProfit(Problem):
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
+            vector of gradients of deterministic components of
+            stochastic constraints
         """
         det_stoch_constraints = None
         det_stoch_constraints_gradients = None
@@ -201,7 +202,8 @@ class CntNVMaxProfit(Problem):
 
     def check_deterministic_constraints(self, x):
         """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        Check if a solution `x` satisfies the problem's deterministic
+        constraints.
 
         Arguments
         ---------
@@ -217,7 +219,7 @@ class CntNVMaxProfit(Problem):
 
     def get_random_solution(self, rand_sol_rng):
         """
-        Generate a random solution, to be used for starting or restarting solvers.
+        Generate a random solution for starting or restarting solvers.
 
         Arguments
         ---------

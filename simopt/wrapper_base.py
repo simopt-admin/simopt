@@ -10,12 +10,14 @@ Experiment : class
 """
 
 import numpy as np
-from rng.mrg32k3a import MRG32k3a, bsm
-from base import Solver, Problem, Oracle, Solution
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pickle
+
+from rng.mrg32k3a import MRG32k3a
+from base import Solution
 from directory import solver_directory, problem_directory, oracle_directory
+
 
 class Experiment(object):
     """
@@ -78,32 +80,32 @@ class Experiment(object):
         """
         # initialize
         self.n_macroreps = n_macroreps
-        # create, initialize, and attach random number generators
-        # Stream 0 is reserved for taking post-replications
-        # Stream 1 is reserved for bootstrapping
-        # Stream 2 is reserved for overhead ...
-        # Substream 0: rng for random problem instance
-        rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # Stream 2, Substream 0, Subsubstream 0  # UNUSED
-        # Substream 1: rng for random initial solution x0 and restart solutions
-        rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])  # Stream 2, Substream 1, Subsubstream 0  # UNUSED
-        # Substream 2: rng for selecting random feasible solutions
-        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])  # Stream 2, Substream 2, Subsubstream 0
-        # Substream 3: rng for solver's internal randomness
-        rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])  # Stream 2, Substream 3, Subsubstream 0 # UNUSED
-
-        # run n_macroreps of the solver on the problem
-        # report the recommended solutions and corresponding intermediate budgets
-        # Streams 3,  4, ..., n_macroreps + 2 are used for the macroreplications
+        # Create, initialize, and attach random number generators
+        #     Stream 0: reserved for taking post-replications
+        #     Stream 1: reserved for bootstrapping
+        #     Stream 2: reserved for overhead ...
+        #         Substream 0: rng for random problem instance
+        #         Substream 1: rng for random initial solution x0 and
+        #                      restart solutions
+        #         Substream 2: rng for selecting random feasible solutions
+        #         Substream 3: rng for solver's internal randomness
+        #     Streams 3, 4, ..., n_macroreps + 2: reserved for
+        #                                         macroreplications
+        rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # unused
+        rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])  # unused
+        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
+        rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])  # unused
+        # Run n_macroreps of the solver on the problem.
+        # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):
-            # create, initialize, and attach random number generators for oracle
+            # Create, initialize, and attach RNGs for oracle.
             oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
             self.problem.oracle.attach_rngs(oracle_rngs)
-
-            # run the solver on the problem
+            # Run the solver on the problem.
             recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem, crn_across_solns=crn_across_solns)
-            # extract x values from recommended_solns and record
+            # Extract decision-variable vectors (x) from recommended solutions.
+            # Record recommended solutions and intermediate budgets.
             self.all_recommended_xs.append([solution.x for solution in recommended_solns])
-            # record intermediate solutions
             self.all_intermediate_budgets.append(intermediate_budgets)
 
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
@@ -121,34 +123,33 @@ class Experiment(object):
         crn_across_macroreps : bool
             use CRN for post-replications at solutions recommended on different macroreplications?
         """
-        # initialize
         self.n_postreps = n_postreps
         self.n_postreps_init_opt = n_postreps_init_opt
-        # create, initialize, and attach random number generators for oracle
-        # Stream 0 is reserved for post-replications
+        # Create, initialize, and attach RNGs for oracle.
+        # Stream 0: reserved for post-replications.
         oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
         self.problem.oracle.attach_rngs(oracle_rngs)
-        # simulate common initial solution x0
+        # Simulate common initial solution x0.
         x0 = self.problem.initial_solution
         self.initial_soln = Solution(x0, self.problem)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
         if crn_across_budget is True:
-            # reset each rng to start of its current substream
+            # Reset each rng to start of its current substream.
             for rng in self.problem.oracle.rng_list:
                 rng.reset_substream()
-        # simulate "reference" optimal solution x*
+        # Simulate "reference" optimal solution x*.
         xstar = self.problem.ref_optimal_solution
         self.ref_opt_soln = Solution(xstar, self.problem)
         self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
         if crn_across_budget is True:
-            # reset each rng to start of its current substream
+            # Reset each rng to start of its current substream.
             for rng in self.problem.oracle.rng_list:
                 rng.reset_substream()
-        # simulate intermediate solutions
+        # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
             evaluated_solns = []
             for x in self.all_recommended_xs[mrep]:
-                # treat initial solution and reference solution differently
+                # Treat initial solution and reference solution differently.
                 if x == x0:
                     evaluated_solns.append(self.initial_soln)
                 elif x == xstar:
@@ -158,41 +159,44 @@ class Experiment(object):
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
                     if crn_across_budget is True:
-                        # reset each rng to start of its current substream
+                        # Reset each rng to start of its current substream.
                         for rng in self.problem.oracle.rng_list:
                             rng.reset_substream()
-            # record sequence of reevaluated solutions
+            # Record sequence of reevaluated solutions.
             self.all_reevaluated_solns.append(evaluated_solns)
             if crn_across_macroreps is False:
-                # advance each rng to start of the substream = current substream + # of oracle RNGs
+                # Advance each rng to start of
+                #     substream = current substream + # of oracle RNGs.
                 for rng in self.problem.oracle.rng_list:
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
-            else:  # if using CRN across macroreplications ...
-                # reset each rng to start of its current substream
+            else:
+                # Reset each rng to start of its current substream.
                 for rng in self.problem.oracle.rng_list:
                     rng.reset_substream()
-        # preprocessing for subsequent call to make_plots()
-        # extract all unique budget points
+        # Preprocessing in anticipation of plotting.
+        # Extract all unique budget points.
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
         self.unique_budgets = np.unique(repeat_budgets)
         self.unique_frac_budgets = self.unique_budgets / self.problem.budget
         n_inter_budgets = len(self.unique_budgets)
-        # initialize matrix for storing all replicates of objective for each macroreplication for each budget
-        self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
-        # compute signed initial optimality gap = f(x0) - f(x*)
+        # Compute signed initial optimality gap = f(x0) - f(x*);
         initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
         ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:, 0])  # 0 <- assuming only one objective
         initial_opt_gap = initial_obj_val - ref_opt_obj_val
-        # fill matrix (CAN MAKE THIS MORE PYTHONIC)
+        # Populate matrix containing
+        #     all replicates of objective,
+        #     for each macroreplication,
+        #     for each budget.
+        self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
         for mrep in range(self.n_macroreps):
             for budget_index in range(n_inter_budgets):
                 mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
                 self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
-        # store point estimates of objective for each macroreplication for each budget
+        # Store estimated objective and convergence curve values
+        # for each macrorep for each budget.
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        # store convergence curve values for each macroreplication for each budget
         self.all_conv_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
     def make_plots(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
@@ -271,11 +275,11 @@ class Experiment(object):
         bootstrap_est_objective = np.empty((self.n_macroreps, len(self.unique_budgets)))
         bootstrap_conv_curves = np.empty((self.n_macroreps, len(self.unique_budgets)))
         # uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1
-        # subsubstream 0 is reserved for this outer-level bootstrapping
+        # subsubstream 0: reserved for this outer-level bootstrapping
         mreps = bootstrap_rng.choices(range(self.n_macroreps), k=self.n_macroreps)
         # advance random number generator subsubstream to prepare for inner-level bootstrapping
         bootstrap_rng.advance_subsubstream()
-        # subsubstream 1 is reserved for bootstrapping at initial solution x0 and reference optimal solution x*
+        # subsubstream 1: reserved for bootstrapping at initial solution x0 and reference optimal solution x*
         # bootstrap sample postreplicates at common initial solution x0
         # uniformly resample L postreps (with replacement) from 0, 1, ..., L
         postreps = bootstrap_rng.choices(range(self.n_postreps_init_opt), k=self.n_postreps_init_opt)
@@ -361,37 +365,38 @@ class Experiment(object):
         max_halfwidth : float
             maximum halfwidth of all bootstrap confidence intervals constructed
         """
-        # create random number generator for bootstrap sampling
-        # Stream 1 dedicated for bootstrapping
+        # Create random number generator for bootstrap sampling.
+        # Stream 1 dedicated for bootstrapping.
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
-        # initialize storage for bootstrap aggregate curves
         bs_aggregate_curves = np.zeros((n_bootstraps, len(self.unique_budgets)))
         for bs_index in range(n_bootstraps):
-            # generate bootstrap sample of estimated convergence curves
+            # Generate bootstrap sample of estimated convergence curves.
             bootstrap_est_objective, bootstrap_conv_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
-            # apply the functional of the bootstrap sample, e.g., mean/quantile (aggregate) convergence curve
-            if plot_type == "mean":  # mean convergence curve
+            # Apply the functional of the bootstrap sample,
+            # e.g., mean/quantile (aggregate) convergence curve.
+            if plot_type == "mean":
                 if normalize is True:
                     bs_aggregate_curves[bs_index] = np.mean(bootstrap_conv_curves, axis=0)
                 else:
                     bs_aggregate_curves[bs_index] = np.mean(bootstrap_est_objective, axis=0)
-            elif plot_type == "quantile":  # quantile convergence curve
+            elif plot_type == "quantile":
                 if normalize is True:
                     bs_aggregate_curves[bs_index] = np.quantile(bootstrap_conv_curves, q=beta, axis=0)
                 else:
                     bs_aggregate_curves[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
-        # compute bootstrapping confidence intervals via percentile method
-        # see Efron and Gong (1983) "A leisurely look at the bootstrap, the jackknife, and cross-validation"
-        if bias_correction is True:  # if bias-corrected CIs
-            # see equation (17) on page 41
+        # Compute bootstrapping confidence intervals via percentile method.
+        # See Efron and Gong (1983) "A leisurely look at the bootstrap,
+        #     the jackknife, and cross-validation."
+        if bias_correction is True:
+            # For biased-corrected CIs, see equation (17) on page 41.
             z0s = [norm.ppf(np.mean(bs_aggregate_curves[:, budget] < estimator[budget])) for budget in range(len(self.unique_budgets))]
             zconflvl = norm.ppf(conf_level)
             q_lowers = [norm.cdf(2 * z0 - zconflvl) for z0 in z0s]
             q_uppers = [norm.cdf(2 * z0 + zconflvl) for z0 in z0s]
             bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_curves[:, budget], q=q_lowers[budget]) for budget in range(len(self.unique_budgets))])
             bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_curves[:, budget], q=q_uppers[budget]) for budget in range(len(self.unique_budgets))])
-        else:  # if not bias-corrected CIs
-            # see equation (16) on page 41
+        else:
+            # For uncorrected CIs, see equation (16) on page 41.
             q_lower = (1 - conf_level) / 2
             q_upper = 1 - (1 - conf_level) / 2
             bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=q_lower, axis=0)
@@ -399,9 +404,11 @@ class Experiment(object):
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
 
-    def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs, beta):
+    def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs,
+                           beta):
         """
-        Optionally plot bootstrap confidence intervals and report max half-width.
+        Optionally plot bootstrap confidence intervals and report max
+        half-width.
 
         Arguments
         ---------
@@ -419,7 +426,7 @@ class Experiment(object):
         beta : float (optional)
             quantile for quantile aggregate convergence curve, e.g., beta quantile
         """
-        # construct bootstrap confidence intervals, plot, and print caption
+        # Construct bootstrap confidence intervals.
         bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta)
         if normalize is True:
             budgets = self.unique_frac_budgets
@@ -428,18 +435,21 @@ class Experiment(object):
         else:
             budgets = self.unique_budgets
             xloc = 0.05 * self.problem.budget
-            yloc = min(bs_CI_lower_bounds) - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds))
+            yloc = (min(bs_CI_lower_bounds)
+                    - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
         if plot_CIs is True:
-            # plot bootstrap confidence intervals
+            # Optionally plot bootstrap confidence intervals.
             plt.step(budgets, bs_CI_lower_bounds, 'b--', where='post')
             plt.step(budgets, bs_CI_upper_bounds, 'b--', where='post')
-        # print caption about max halfwidth
-        txt = "The max halfwidth of the bootstrap CIs is " + str(round(max_halfwidth, 2)) + "."
+        # Print caption about max halfwidth of bootstrap confidence intervals.
+        txt = ("The max halfwidth of the bootstrap CIs is "
+               + str(round(max_halfwidth, 2)) + ".")
         plt.text(x=xloc, y=yloc, s=txt)
 
     def record_run_results(self, file_name):
         """
-        Save wrapper_base.Experiment object (with outputs from run() method) to .pickle file.
+        Save wrapper_base.Experiment object, with outputs from run() method,
+        to .pickle file.
 
         Arguments
         ---------
@@ -451,7 +461,8 @@ class Experiment(object):
 
     def record_post_replicate_results(self, file_name):
         """
-        Save wrapper_base.Experiment object (with outputs from post_replicate() method) to .pickle file.
+        Save wrapper_base.Experiment object, with outputs from post_replicate()
+        method, to .pickle file.
 
         Arguments
         ---------
@@ -464,7 +475,8 @@ class Experiment(object):
 
 def read_run_results(file_name):
     """
-    Read in wrapper_base.Experiment object (with outputs from run() method) from .pickle file.
+    Read in wrapper_base.Experiment object, with outputs from run() method,
+    from .pickle file.
 
     Arguments
     ---------
@@ -483,7 +495,8 @@ def read_run_results(file_name):
 
 def read_post_replicate_results(file_name):
     """
-    Read in wrapper_base.Experiment object (with outputs from post_replicate() method) from .pickle file.
+    Read in wrapper_base.Experiment object, with outputs from post_replicate()
+    method, from .pickle file.
 
     Arguments
     ---------
@@ -500,7 +513,8 @@ def read_post_replicate_results(file_name):
     return experiment
 
 
-def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None, beta=None):
+def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
+                 beta=None):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -523,7 +537,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None, b
         quantile for quantile aggregate convergence curve, e.g., beta quantile
     """
     plt.figure()
-    # format axes and axis labels
+    # Format axes, axis labels, title, and tick marks
     if normalize is True:
         xlabel = "Fraction of Budget"
         ylabel = "Fraction of Initial Optimality Gap"
@@ -536,19 +550,15 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None, b
         xlim = (0, budget)
         ylim = None
         title = solver_name + " on " + problem_name + "\n" + "Unnormalized "
-    # format title
     if plot_type == "all":
         title = title + "Estimated Convergence Curves"
     elif plot_type == "mean":
         title = title + "Mean Convergence Curve"
     elif plot_type == "quantile":
         title = title + str(round(beta, 2)) + "-Quantile Convergence Curve"
-    # add axis labels
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
-    # add title
     plt.title(title, size=14)
-    # format axes and tick marks
     plt.xlim(xlim)
     if ylim is not None:
         plt.ylim(ylim)
@@ -569,7 +579,7 @@ def save_plot(plot_type, normalize):
     normalize : Boolean
         normalize convergence curves w.r.t. optimality gaps?
     """
-    # form string name for plot
+    # Form string name for plot filename.
     if plot_type == "all":
         plot_name = "all_conv_curves"
     elif plot_type == "mean":
@@ -579,7 +589,6 @@ def save_plot(plot_type, normalize):
     if normalize is False:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + plot_name + ".png"
-    # save figure to folder as .png
     plt.savefig(path_name, bbox_inches="tight")
 
 
@@ -614,17 +623,18 @@ def solve_time_of_conv_curve(conv_curve, frac_inter_budgets, solve_tol):
     frac_inter_budgets : numpy array
         fractions of budget at which the convergence curve is defined
     solve_tol : float in (0,1)
-        tolerance for a problem to be solved, relative to initial optimality gap
+        tolerance for solving a problem, relative to initial optimality gap
 
     Returns
     -------
     solve_time : float
-        time at which the normalized convergence curve first drops below solve_tol
-        i.e., the "alpha" solve time
+        time at which the normalized convergence curve first drops below
+        solve_tol, i.e., the "alpha" solve time
     """
-    # solve_time defined as infinity if the problem is not solved to within solve_tol
+    # Alpha solve time defined as infinity if the problem is not solved
+    # to within solve_tol.
     solve_time = np.inf
-    # pass over convergence curve to find first solve_tol crossing time
+    # Pass over convergence curve to find first solve_tol crossing time.
     for i in range(len(conv_curve)):
         if conv_curve[i] < solve_tol:
             solve_time = frac_inter_budgets[i]
