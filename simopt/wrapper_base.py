@@ -16,7 +16,7 @@ import pickle
 
 from rng.mrg32k3a import MRG32k3a
 from base import Solution
-from directory import solver_directory, problem_directory, oracle_directory
+from directory import solver_directory, problem_directory
 
 
 class Experiment(object):
@@ -201,7 +201,7 @@ class Experiment(object):
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
         self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
-    def make_plots(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
+    def plot_progress_curves(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
         Produce plots of the solver's performance on the problem.
 
@@ -212,7 +212,7 @@ class Experiment(object):
                 "all" : all estimated progress curves
                 "mean" : estimated mean progress curve
                 "quantile" : estimated beta quantile progress curve
-        beta : float
+        beta : float in (0,1)
             quantile to plot, e.g., beta quantile
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
@@ -253,6 +253,32 @@ class Experiment(object):
             self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(plot_type=plot_type, normalize=normalize)
 
+    def plot_solvability_curve(self, solve_tol=0.50, plot_CIs=True):
+        """
+        Plot the solvability curve for a single solver-problem pair.
+        Optionally plot bootstrap CIs.
+
+        Arguments
+        ---------
+        solve_tol : float in (0,1]
+            relative optimality gap definining when a problem is solved
+        plot_CIs : Boolean
+            plot bootstrapping confidence intervals?
+        """
+        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol)
+        # Compute solve times. Ignore quantile calculations.
+        self.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
+        # Construct full matrix showing when macroreplications are solved.
+        solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
+        # Pass over progress curve to find first solve_tol crossing time.
+        for mrep in range(self.n_macroreps):
+            for budget_index in range(len(self.unique_frac_budgets)):
+                if self.solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
+                    solve_matrix[mrep][budget_index] = 1
+        estimator = np.mean(solve_matrix, axis=0)
+        plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+        save_plot(plot_type="solvability", normalize=True)
+
     def compute_area_stats(self, compute_CIs=True):
         """
         Compute average and standard deviation of areas under progress curves.
@@ -283,9 +309,9 @@ class Experiment(object):
         ---------
         compute_CIs : Boolean
             compute bootstrap confidence invervals for quantile?
-        solve_tol : solvability threshold
+        solve_tol : float in (0,1]
             relative optimality gap definining when a problem is solved
-        beta : float
+        beta : float in (0,1)
             quantile to compute, e.g., beta quantile
         """
         self.solve_tol = solve_tol
@@ -399,7 +425,7 @@ class Experiment(object):
             confidence level for confidence intervals, i.e., 1-alpha
         bias_correction : bool
             use bias-corrected bootstrap CIs (via percentile method)?
-        beta : float
+        beta : float in (0,1)
             quantile for quantile aggregate progress curve, e.g., beta quantile
 
         Returns
@@ -482,7 +508,7 @@ class Experiment(object):
             estimated mean or quantile progress curve
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
-        beta : float (optional)
+        beta : float in (0,1) (optional)
             quantile for quantile aggregate progress curve, e.g., beta quantile
         """
         # Construct bootstrap confidence intervals.
@@ -592,7 +618,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         normalize progress curves w.r.t. optimality gaps?
     budget : int
         budget of problem, measured in function evaluations
-    beta : float (optional)
+    beta : float in (0,1) (optional)
         quantile for quantile aggregate progress curve, e.g., beta quantile
     """
     plt.figure()
@@ -624,6 +650,38 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
+def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
+    """
+    Create new figure. Add labels to plot and reformat axes.
+
+    Arguments
+    ---------
+    solver_name : string
+        name of solver
+    problem_name : string
+        name of problem
+    normalize : Boolean
+        normalize progress curves w.r.t. optimality gaps?
+    budget : int
+        budget of problem, measured in function evaluations
+    """
+    plt.figure()
+    # Format axes, axis labels, title, and tick marks
+    xlabel = "Fraction of Budget"
+    ylabel = "Fraction of Macroreplications Solved"
+    xlim = (0, 1)
+    ylim = (0, 1)
+    title = solver_name + " on " + problem_name + "\n"
+    title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
+    plt.xlabel(xlabel, size=14)
+    plt.ylabel(ylabel, size=14)
+    plt.title(title, size=14)
+    plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+
+
 def save_plot(plot_type, normalize):
     """
     Create new figure. Add labels to plot and reformat axes.
@@ -635,6 +693,7 @@ def save_plot(plot_type, normalize):
             "all" : all estimated progress curves
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
+            "solvability" : estimated solvability curve
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
     """
@@ -645,6 +704,8 @@ def save_plot(plot_type, normalize):
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
+    elif plot_type == "solvability":
+        plot_name = "solvability_curve"
     if normalize is False:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + plot_name + ".png"
@@ -681,8 +742,8 @@ def solve_time_of_prog_curve(prog_curve, frac_inter_budgets, solve_tol):
         normalized estimated progress curves for a macroreplication
     frac_inter_budgets : numpy array
         fractions of budget at which the progress curve is defined
-    solve_tol : float in (0,1)
-        tolerance for solving a problem, relative to initial optimality gap
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
 
     Returns
     -------
