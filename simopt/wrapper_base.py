@@ -256,6 +256,7 @@ class Experiment(object):
     def compute_area_stats(self, compute_CIs=True):
         """
         Compute average and standard deviation of areas under progress curves.
+        Optionally compute bootstrap confidence intervals.
 
         Arguments
         ---------
@@ -263,15 +264,36 @@ class Experiment(object):
             compute bootstrap confidence invervals for average and std dev?
         """
         # Compute areas under each estimated progress curve.
-        areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in self.all_prog_curves]
-        self.area_mean = np.mean(areas)
-        self.area_std_dev = np.std(areas, ddof=1)
+        self.areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in self.all_prog_curves]
+        self.area_mean = np.mean(self.areas)
+        self.area_std_dev = np.std(self.areas, ddof=1)
         # (Optional) Compute bootstrap CIs.
         if compute_CIs is True:
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_mean", normalize=True, estimator=[self.area_mean], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_mean_CI = [lower_bound[0], upper_bound[0]]
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
+
+    def compute_solvability_quantile(self, compute_CIs=True, solve_tol=0.5, beta=0.5):
+        """
+        Compute beta quantile of alpha-solve time.
+        Optionally compute bootstrap confidence intervals.
+
+        Arguments
+        ---------
+        compute_CIs : Boolean
+            compute bootstrap confidence invervals for quantile?
+        solve_tol : solvability threshold
+            relative optimality gap definining when a problem is solved
+        beta : float
+            quantile to compute, e.g., beta quantile
+        """
+        self.solve_tol = solve_tol
+        self.solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in self.all_prog_curves]
+        self.solve_time_quantile = np.quantile(self.solve_times, q=beta, interpolation="higher")
+        if compute_CIs is True:
+            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=[self.solve_time_quantile], beta=beta)
+            self.solve_time_quantile_CI = [lower_bound[0], upper_bound[0]]
 
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -366,6 +388,7 @@ class Experiment(object):
                 "quantile" : estimated beta quantile progress curve
                 "area_mean" : mean of area under convergence curve
                 "area_std_dev" : standard deviation of area under progress curve
+                "solve_time_quantile" : beta quantile of solve time
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
         estimator : numpy array
@@ -393,7 +416,7 @@ class Experiment(object):
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         if plot_type == "mean" or plot_type == "quantile":
             n_intervals = len(self.unique_budgets)
-        elif plot_type == "area_mean" or plot_type == "area_std_dev":
+        elif plot_type == "area_mean" or plot_type == "area_std_dev" or plot_type == "solve_time_quantile":
             n_intervals = 1
         bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
         for bs_index in range(n_bootstraps):
@@ -412,11 +435,14 @@ class Experiment(object):
                 else:
                     bs_aggregate_objects[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
             elif plot_type == "area_mean":
-                    areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
-                    bs_aggregate_objects[bs_index] = np.mean(areas)
+                areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+                bs_aggregate_objects[bs_index] = np.mean(areas)
             elif plot_type == "area_std_dev":
-                    areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
-                    bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
+                areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+                bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
+            elif plot_type == "solve_time_quantile":
+                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
+                bs_aggregate_objects[bs_index] = np.quantile(solve_times, q=beta, interpolation="higher")
         # Compute bootstrapping confidence intervals via percentile method.
         # See Efron and Gong (1983) "A leisurely look at the bootstrap,
         #     the jackknife, and cross-validation."

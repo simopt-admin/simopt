@@ -16,6 +16,7 @@ myexperiment2.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_
 myexperiment2.record_post_replicate_results(file_name="post_newsvendor")
 myexperiment3 = read_post_replicate_results(file_name="post_newsvendor")
 myexperiment3.compute_area_stats()
+myexperiment3.compute_solvability_quantile()
 # myexperiment3.make_plots(plot_type="all")
 # myexperiment3.make_plots(plot_type="mean")
 # myexperiment3.make_plots(plot_type="quantile")
