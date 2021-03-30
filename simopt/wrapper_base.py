@@ -21,7 +21,7 @@ from directory import solver_directory, problem_directory, oracle_directory
 
 class Experiment(object):
     """
-    Base class to implement wrappers for running experiments.
+    Base class for running one solver on one problem.
 
     Attributes
     ----------
@@ -29,6 +29,8 @@ class Experiment(object):
         simulation-optimization solver
     problem : base.Problem object
         simulation-optimization problem
+    n_macroreps : int > 0
+        number of macroreplications run
     all_recommended_xs : list of lists of tuples
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
@@ -39,8 +41,8 @@ class Experiment(object):
         all post-replicates from all solutions from all macroreplications
     all_est_objective : numpy array of arrays
         estimated objective values of all solutions from all macroreplications
-    all_conv_curves : numpy array of arrays
-        estimated convergence curves from all macroreplications
+    all_prog_curves : numpy array of arrays
+        estimated progress curves from all macroreplications
     initial_soln : base.Solution object
         initial solution (w/ postreplicates) used for normalization
     ref_opt_soln : base.Solution object
@@ -194,10 +196,10 @@ class Experiment(object):
                 mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
                 lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
                 self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
-        # Store estimated objective and convergence curve values
+        # Store estimated objective and progress curve values
         # for each macrorep for each budget.
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        self.all_conv_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+        self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
 
     def make_plots(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
@@ -207,13 +209,13 @@ class Experiment(object):
         ---------
         plot_type : string
             indicates which type of plot to produce
-                "all" : all estimated convergence curves
-                "mean" : estimated mean convergence curve
-                "quantile" : estimated beta quantile convergence curve
+                "all" : all estimated progress curves
+                "mean" : estimated mean progress curve
+                "quantile" : estimated beta quantile progress curve
         beta : float
             quantile to plot, e.g., beta quantile
         normalize : Boolean
-            normalize convergence curves w.r.t. optimality gaps?
+            normalize progress curves w.r.t. optimality gaps?
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         """
@@ -221,25 +223,25 @@ class Experiment(object):
         stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
         # make the plot
         if plot_type == "all":
-            # plot all estimated convergence curves
+            # plot all estimated progress curves
             if normalize is True:
                 for mrep in range(self.n_macroreps):
-                    plt.step(self.unique_frac_budgets, self.all_conv_curves[mrep], where='post')
+                    plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where='post')
             else:  # unnormalized
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
         elif plot_type == "mean":
-            # plot estimated mean convergence curve
+            # plot estimated mean progress curve
             if normalize is True:
-                estimator = np.mean(self.all_conv_curves, axis=0)
+                estimator = np.mean(self.all_prog_curves, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else:  # unnormalized
                 estimator = np.mean(self.all_est_objective, axis=0)
                 plt.step(self.unique_budgets, estimator, 'b-', where='post')
         elif plot_type == "quantile":
-            # plot estimated beta quantile convergence curve
+            # plot estimated beta quantile progress curve
             if normalize is True:
-                estimator = np.quantile(self.all_conv_curves, q=beta, axis=0)
+                estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else:  # unnormalized
                 estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
@@ -251,9 +253,29 @@ class Experiment(object):
             self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(plot_type=plot_type, normalize=normalize)
 
+    def compute_area_stats(self, compute_CIs=True):
+        """
+        Compute average and standard deviation of areas under progress curves.
+
+        Arguments
+        ---------
+        compute_CIs : Boolean
+            compute bootstrap confidence invervals for average and std dev?
+        """
+        # Compute areas under each estimated progress curve.
+        areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in self.all_prog_curves]
+        self.area_mean = np.mean(areas)
+        self.area_std_dev = np.std(areas, ddof=1)
+        # (Optional) Compute bootstrap CIs.
+        if compute_CIs is True:
+            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_mean", normalize=True, estimator=[self.area_mean], n_bootstraps=100, conf_level=0.95, bias_correction=True)
+            self.area_mean_CI = [lower_bound[0], upper_bound[0]]
+            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
+            self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
+
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
-        Generate a bootstrap sample of estimated convergence curves (normalized and unnormalized).
+        Generate a bootstrap sample of estimated progress curves (normalized and unnormalized).
 
         Arguments
         ---------
@@ -268,12 +290,12 @@ class Experiment(object):
         -------
         bootstrap_est_objective : numpy array of arrays
             bootstrapped estimated objective values of all solutions from all macroreplications
-        bootstrap_conv_curves : numpy array of arrays
-            bootstrapped estimated convergence curves from all macroreplications
+        bootstrap_prog_curves : numpy array of arrays
+            bootstrapped estimated progress curves from all macroreplications
         """
-        # initialize matrix for bootstrap estimated convergence curves
+        # initialize matrix for bootstrap estimated progress curves
         bootstrap_est_objective = np.empty((self.n_macroreps, len(self.unique_budgets)))
-        bootstrap_conv_curves = np.empty((self.n_macroreps, len(self.unique_budgets)))
+        bootstrap_prog_curves = np.empty((self.n_macroreps, len(self.unique_budgets)))
         # uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1
         # subsubstream 0: reserved for this outer-level bootstrapping
         mreps = bootstrap_rng.choices(range(self.n_macroreps), k=self.n_macroreps)
@@ -318,7 +340,7 @@ class Experiment(object):
                     # compute the mean of the resampled postreplications
                     bootstrap_est_objective[bs_mrep][budget] = np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in postreps])
                 # normalize the estimated objective function value
-                bootstrap_conv_curves[bs_mrep][budget] = (bootstrap_est_objective[bs_mrep][budget] - bs_ref_opt_obj_val) / bs_initial_opt_gap
+                bootstrap_prog_curves[bs_mrep][budget] = (bootstrap_est_objective[bs_mrep][budget] - bs_ref_opt_obj_val) / bs_initial_opt_gap
                 # reset subsubstream if using CRN across budgets
                 if crn_across_budget is True:
                     bootstrap_rng.reset_subsubstream()
@@ -330,7 +352,7 @@ class Experiment(object):
                 bootstrap_rng.reset_subsubstream()
         # advance substream of random number generator to prepare for next bootstrap sample
         bootstrap_rng.advance_substream()
-        return bootstrap_est_objective, bootstrap_conv_curves
+        return bootstrap_est_objective, bootstrap_prog_curves
 
     def bootstrap_CI(self, plot_type, normalize, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50):
         """
@@ -340,21 +362,22 @@ class Experiment(object):
         ---------
         plot_type : string
             indicates which type of plot to produce
-                "all" : all estimated convergence curves
-                "mean" : estimated mean convergence curve
-                "quantile" : estimated beta quantile convergence curve
+                "mean" : estimated mean progress curve
+                "quantile" : estimated beta quantile progress curve
+                "area_mean" : mean of area under convergence curve
+                "area_std_dev" : standard deviation of area under progress curve
         normalize : Boolean
-            normalize convergence curves w.r.t. optimality gaps?
+            normalize progress curves w.r.t. optimality gaps?
         estimator : numpy array
-            estimated mean or quantile convergence curve
+            estimated mean or quantile progress curve
         n_bootstraps : int > 0
-            number of times to generate a bootstrap sample of estimated convergence curves
+            number of times to generate a bootstrap sample of estimated progress curves
         conf_level : float in (0,1)
             confidence level for confidence intervals, i.e., 1-alpha
         bias_correction : bool
             use bias-corrected bootstrap CIs (via percentile method)?
         beta : float
-            quantile for quantile aggregate convergence curve, e.g., beta quantile
+            quantile for quantile aggregate progress curve, e.g., beta quantile
 
         Returns
         -------
@@ -368,39 +391,49 @@ class Experiment(object):
         # Create random number generator for bootstrap sampling.
         # Stream 1 dedicated for bootstrapping.
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
-        bs_aggregate_curves = np.zeros((n_bootstraps, len(self.unique_budgets)))
+        if plot_type == "mean" or plot_type == "quantile":
+            n_intervals = len(self.unique_budgets)
+        elif plot_type == "area_mean" or plot_type == "area_std_dev":
+            n_intervals = 1
+        bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
         for bs_index in range(n_bootstraps):
-            # Generate bootstrap sample of estimated convergence curves.
-            bootstrap_est_objective, bootstrap_conv_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
+            # Generate bootstrap sample of estimated progress curves.
+            bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
             # Apply the functional of the bootstrap sample,
-            # e.g., mean/quantile (aggregate) convergence curve.
+            # e.g., mean/quantile (aggregate) progress curve.
             if plot_type == "mean":
                 if normalize is True:
-                    bs_aggregate_curves[bs_index] = np.mean(bootstrap_conv_curves, axis=0)
+                    bs_aggregate_objects[bs_index] = np.mean(bootstrap_prog_curves, axis=0)
                 else:
-                    bs_aggregate_curves[bs_index] = np.mean(bootstrap_est_objective, axis=0)
+                    bs_aggregate_objects[bs_index] = np.mean(bootstrap_est_objective, axis=0)
             elif plot_type == "quantile":
                 if normalize is True:
-                    bs_aggregate_curves[bs_index] = np.quantile(bootstrap_conv_curves, q=beta, axis=0)
+                    bs_aggregate_objects[bs_index] = np.quantile(bootstrap_prog_curves, q=beta, axis=0)
                 else:
-                    bs_aggregate_curves[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
+                    bs_aggregate_objects[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
+            elif plot_type == "area_mean":
+                    areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+                    bs_aggregate_objects[bs_index] = np.mean(areas)
+            elif plot_type == "area_std_dev":
+                    areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+                    bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
         # Compute bootstrapping confidence intervals via percentile method.
         # See Efron and Gong (1983) "A leisurely look at the bootstrap,
         #     the jackknife, and cross-validation."
         if bias_correction is True:
             # For biased-corrected CIs, see equation (17) on page 41.
-            z0s = [norm.ppf(np.mean(bs_aggregate_curves[:, budget] < estimator[budget])) for budget in range(len(self.unique_budgets))]
+            z0s = [norm.ppf(np.mean(bs_aggregate_objects[:, interval_id] < estimator[interval_id])) for interval_id in range(n_intervals)]
             zconflvl = norm.ppf(conf_level)
             q_lowers = [norm.cdf(2 * z0 - zconflvl) for z0 in z0s]
             q_uppers = [norm.cdf(2 * z0 + zconflvl) for z0 in z0s]
-            bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_curves[:, budget], q=q_lowers[budget]) for budget in range(len(self.unique_budgets))])
-            bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_curves[:, budget], q=q_uppers[budget]) for budget in range(len(self.unique_budgets))])
+            bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_lowers[interval_id]) for interval_id in range(n_intervals)])
+            bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_uppers[interval_id]) for interval_id in range(n_intervals)])
         else:
             # For uncorrected CIs, see equation (16) on page 41.
             q_lower = (1 - conf_level) / 2
             q_upper = 1 - (1 - conf_level) / 2
-            bs_CI_lower_bounds = np.quantile(bs_aggregate_curves, q=q_lower, axis=0)
-            bs_CI_upper_bounds = np.quantile(bs_aggregate_curves, q=q_upper, axis=0)
+            bs_CI_lower_bounds = np.quantile(bs_aggregate_objects, q=q_lower, axis=0)
+            bs_CI_upper_bounds = np.quantile(bs_aggregate_objects, q=q_upper, axis=0)
         max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
 
@@ -414,17 +447,17 @@ class Experiment(object):
         ---------
         plot_type : string
             indicates which type of plot to produce
-                "all" : all estimated convergence curves
-                "mean" : estimated mean convergence curve
-                "quantile" : estimated beta quantile convergence curve
+                "all" : all estimated progress curves
+                "mean" : estimated mean progress curve
+                "quantile" : estimated beta quantile progress curve
         normalize : Boolean
-            normalize convergence curves w.r.t. optimality gaps?
+            normalize progress curves w.r.t. optimality gaps?
         estimator : numpy array
-            estimated mean or quantile convergence curve
+            estimated mean or quantile progress curve
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         beta : float (optional)
-            quantile for quantile aggregate convergence curve, e.g., beta quantile
+            quantile for quantile aggregate progress curve, e.g., beta quantile
         """
         # Construct bootstrap confidence intervals.
         bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta)
@@ -522,19 +555,19 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     ---------
     plot_type : string
         indicates which type of plot to produce
-            "all" : all estimated convergence curves
-            "mean" : estimated mean convergence curve
-            "quantile" : estimated beta quantile convergence curve
+            "all" : all estimated progress curves
+            "mean" : estimated mean progress curve
+            "quantile" : estimated beta quantile progress curve
     solver_name : string
         name of solver
     problem_name : string
         name of problem
     normalize : Boolean
-        normalize convergence curves w.r.t. optimality gaps?
+        normalize progress curves w.r.t. optimality gaps?
     budget : int
         budget of problem, measured in function evaluations
     beta : float (optional)
-        quantile for quantile aggregate convergence curve, e.g., beta quantile
+        quantile for quantile aggregate progress curve, e.g., beta quantile
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks
@@ -551,11 +584,11 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         ylim = None
         title = solver_name + " on " + problem_name + "\n" + "Unnormalized "
     if plot_type == "all":
-        title = title + "Estimated Convergence Curves"
+        title = title + "Estimated Progress curves"
     elif plot_type == "mean":
-        title = title + "Mean Convergence Curve"
+        title = title + "Mean Progress curve"
     elif plot_type == "quantile":
-        title = title + str(round(beta, 2)) + "-Quantile Convergence Curve"
+        title = title + str(round(beta, 2)) + "-Quantile Progress Curve"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -573,70 +606,70 @@ def save_plot(plot_type, normalize):
     ---------
     plot_type : string
         indicates which type of plot to produce
-            "all" : all estimated convergence curves
-            "mean" : estimated mean convergence curve
-            "quantile" : estimated beta quantile convergence curve
+            "all" : all estimated progress curves
+            "mean" : estimated mean progress curve
+            "quantile" : estimated beta quantile progress curve
     normalize : Boolean
-        normalize convergence curves w.r.t. optimality gaps?
+        normalize progress curves w.r.t. optimality gaps?
     """
     # Form string name for plot filename.
     if plot_type == "all":
-        plot_name = "all_conv_curves"
+        plot_name = "all_prog_curves"
     elif plot_type == "mean":
-        plot_name = "mean_conv_curve"
+        plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
-        plot_name = "quantile_conv_curve"
+        plot_name = "quantile_prog_curve"
     if normalize is False:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + plot_name + ".png"
     plt.savefig(path_name, bbox_inches="tight")
 
 
-def areas_under_conv_curve(conv_curve, frac_inter_budgets):
+def area_under_prog_curve(prog_curve, frac_inter_budgets):
     """
-    Compute the area under a normalized estimated convergence curve.
+    Compute the area under a normalized estimated progress curve.
 
     Arguments
     ---------
-    conv_curve : numpy array
-        normalized estimated convergence curves for a macroreplication
+    prog_curve : numpy array
+        normalized estimated progress curve for a macroreplication
     frac_inter_budgets : numpy array
-        fractions of budget at which the convergence curve is defined
+        fractions of budget at which the progress curve is defined
 
     Returns
     -------
     area : float
-        area under each estimated convergence curve
+        area under the estimated progress curve
     """
-    area = np.dot(conv_curve[:-1], np.diff(frac_inter_budgets))
+    area = np.dot(prog_curve[:-1], np.diff(frac_inter_budgets))
     return area
 
 
-def solve_time_of_conv_curve(conv_curve, frac_inter_budgets, solve_tol):
+def solve_time_of_prog_curve(prog_curve, frac_inter_budgets, solve_tol):
     """
-    Compute the solve time of a normalized estimated convergence curve.
+    Compute the solve time of a normalized estimated progress curve.
 
     Arguments
     ---------
-    conv_curve : numpy array
-        normalized estimated convergence curves for a macroreplication
+    prog_curve : numpy array
+        normalized estimated progress curves for a macroreplication
     frac_inter_budgets : numpy array
-        fractions of budget at which the convergence curve is defined
+        fractions of budget at which the progress curve is defined
     solve_tol : float in (0,1)
         tolerance for solving a problem, relative to initial optimality gap
 
     Returns
     -------
     solve_time : float
-        time at which the normalized convergence curve first drops below
+        time at which the normalized progress curve first drops below
         solve_tol, i.e., the "alpha" solve time
     """
     # Alpha solve time defined as infinity if the problem is not solved
     # to within solve_tol.
     solve_time = np.inf
-    # Pass over convergence curve to find first solve_tol crossing time.
-    for i in range(len(conv_curve)):
-        if conv_curve[i] < solve_tol:
+    # Pass over progress curve to find first solve_tol crossing time.
+    for i in range(len(prog_curve)):
+        if prog_curve[i] < solve_tol:
             solve_time = frac_inter_budgets[i]
             break
     return solve_time
