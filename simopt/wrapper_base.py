@@ -80,7 +80,6 @@ class Experiment(object):
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
         """
-        # initialize
         self.n_macroreps = n_macroreps
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
@@ -219,41 +218,40 @@ class Experiment(object):
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         """
-        # set up plot
+        # Set up plot.
         stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
-        # make the plot
         if plot_type == "all":
-            # plot all estimated progress curves
+            # Plot all estimated progress curves.
             if normalize is True:
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where='post')
-            else:  # unnormalized
+            else:
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
         elif plot_type == "mean":
-            # plot estimated mean progress curve
+            # Plot estimated mean progress curve.
             if normalize is True:
                 estimator = np.mean(self.all_prog_curves, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
-            else:  # unnormalized
+            else:
                 estimator = np.mean(self.all_est_objective, axis=0)
                 plt.step(self.unique_budgets, estimator, 'b-', where='post')
         elif plot_type == "quantile":
-            # plot estimated beta quantile progress curve
+            # Plot estimated beta-quantile progress curve.
             if normalize is True:
                 estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
-            else:  # unnormalized
+            else:
                 estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
                 plt.step(self.unique_budgets, estimator, 'b-', where='post')
         else:
             print("Not a valid plot type.")
         if plot_type == "mean" or plot_type == "quantile":
-            # report bootstrapping error estimation and optionally plot bootstrap CIs
+            # Report bootstrapping error estimation and optionally plot bootstrap CIs.
             self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(plot_type=plot_type, normalize=normalize)
 
-    def plot_solvability_curve(self, solve_tol=0.50, plot_CIs=True):
+    def plot_solvability_curve(self, solve_tol=0.10, plot_CIs=True):
         """
         Plot the solvability curve for a single solver-problem pair.
         Optionally plot bootstrap CIs.
@@ -268,15 +266,20 @@ class Experiment(object):
         stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol)
         # Compute solve times. Ignore quantile calculations.
         self.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
-        # Construct full matrix showing when macroreplications are solved.
+        # Construct matrix showing when macroreplications are solved.
         solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
-        # Pass over progress curve to find first solve_tol crossing time.
+        # Pass over progress curves to find first solve_tol crossing time.
         for mrep in range(self.n_macroreps):
             for budget_index in range(len(self.unique_frac_budgets)):
                 if self.solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
                     solve_matrix[mrep][budget_index] = 1
+        # Compute proportion of macroreplications "solved" by intermediate budget.
         estimator = np.mean(solve_matrix, axis=0)
+        # Plot solvability curve.
         plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+        if plot_CIs is True:
+            # Report bootstrapping error estimation and optionally plot bootstrap CIs.
+            self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs)
         save_plot(plot_type="solvability", normalize=True)
 
     def compute_area_stats(self, compute_CIs=True):
@@ -300,7 +303,7 @@ class Experiment(object):
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
 
-    def compute_solvability_quantile(self, compute_CIs=True, solve_tol=0.5, beta=0.5):
+    def compute_solvability_quantile(self, compute_CIs=True, solve_tol=0.10, beta=0.50):
         """
         Compute beta quantile of alpha-solve time.
         Optionally compute bootstrap confidence intervals.
@@ -316,7 +319,8 @@ class Experiment(object):
         """
         self.solve_tol = solve_tol
         self.solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in self.all_prog_curves]
-        self.solve_time_quantile = np.quantile(self.solve_times, q=beta, interpolation="higher")
+        self.solve_time_quantile = np.quantile(self.solve_times, q=beta)
+        # The default method for np.quantile is a *linear* interpolation.
         if compute_CIs is True:
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=[self.solve_time_quantile], beta=beta)
             self.solve_time_quantile_CI = [lower_bound[0], upper_bound[0]]
@@ -415,6 +419,7 @@ class Experiment(object):
                 "area_mean" : mean of area under convergence curve
                 "area_std_dev" : standard deviation of area under progress curve
                 "solve_time_quantile" : beta quantile of solve time
+                "solvability" : estimated solvability curve
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
         estimator : numpy array
@@ -440,7 +445,7 @@ class Experiment(object):
         # Create random number generator for bootstrap sampling.
         # Stream 1 dedicated for bootstrapping.
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
-        if plot_type == "mean" or plot_type == "quantile":
+        if plot_type == "mean" or plot_type == "quantile" or plot_type == "solvability":
             n_intervals = len(self.unique_budgets)
         elif plot_type == "area_mean" or plot_type == "area_std_dev" or plot_type == "solve_time_quantile":
             n_intervals = 1
@@ -468,7 +473,18 @@ class Experiment(object):
                 bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
             elif plot_type == "solve_time_quantile":
                 solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
-                bs_aggregate_objects[bs_index] = np.quantile(solve_times, q=beta, interpolation="higher")
+                bs_aggregate_objects[bs_index] = np.quantile(solve_times, q=beta)
+            elif plot_type == "solvability":
+                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
+                # Construct full matrix showing when macroreplications are solved.
+                solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
+                # Pass over progress curve to find first solve_tol crossing time.
+                for mrep in range(self.n_macroreps):
+                    for budget_index in range(len(self.unique_frac_budgets)):
+                        if solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
+                            solve_matrix[mrep][budget_index] = 1
+                bs_aggregate_objects[bs_index] = np.mean(solve_matrix, axis=0)
+
         # Compute bootstrapping confidence intervals via percentile method.
         # See Efron and Gong (1983) "A leisurely look at the bootstrap,
         #     the jackknife, and cross-validation."
@@ -490,7 +506,7 @@ class Experiment(object):
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
 
     def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs,
-                           beta):
+                           beta=None):
         """
         Optionally plot bootstrap confidence intervals and report max
         half-width.
@@ -502,6 +518,7 @@ class Experiment(object):
                 "all" : all estimated progress curves
                 "mean" : estimated mean progress curve
                 "quantile" : estimated beta quantile progress curve
+                "solvability" : estimated solvability curve
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
         estimator : numpy array
