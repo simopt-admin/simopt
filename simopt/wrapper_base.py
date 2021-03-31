@@ -103,9 +103,6 @@ class Experiment(object):
         # TO DO: problem_fixed_factors is not used yet
         self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
         self.problem = problem_directory[problem_name](oracle_fixed_factors=oracle_fixed_factors)
-        self.all_recommended_xs = []
-        self.all_intermediate_budgets = []
-        self.all_reevaluated_solns = []
 
     def run(self, n_macroreps, crn_across_solns):
         """
@@ -120,6 +117,8 @@ class Experiment(object):
         """
         self.n_macroreps = n_macroreps
         self.crn_across_solns = crn_across_solns
+        self.all_recommended_xs = []
+        self.all_intermediate_budgets = []
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
         #     Stream 1: reserved for bootstrapping
@@ -151,7 +150,6 @@ class Experiment(object):
         file_name = self.solver.name + "_on_" + self.problem.name
         record_experiment_results(experiment=self, file_name=file_name)
 
-
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
@@ -171,6 +169,7 @@ class Experiment(object):
         self.n_postreps_init_opt = n_postreps_init_opt
         self.crn_across_budget = crn_across_budget
         self.crn_across_macroreps = crn_across_macroreps
+        self.all_reevaluated_solns = []
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
         oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
@@ -596,6 +595,62 @@ class Experiment(object):
                + str(round(max_halfwidth, 2)) + ".")
         plt.text(x=xloc, y=yloc, s=txt)
 
+    def clear_runs(self):
+        """
+        Delete results from run() method and any downstream results.
+        """
+        attributes = ["n_macroreps",
+                      "crn_across_solns",
+                      "all_recommended_xs",
+                      "all_intermediate_budgets"]
+        for attribute in attributes:
+            try:
+                delattr(self, attribute)
+            except Exception:
+                pass
+        self.clear_postreps()
+        self.clear_stats()
+
+    def clear_postreps(self):
+        """
+        Delete results from post_replicate() method and any downstream results.
+        """
+        attributes = ["n_postreps",
+                      "n_postreps_init_opt",
+                      "crn_across_budget",
+                      "crn_across_macroreps",
+                      "all_reevaluated_solns",
+                      "all_post_replicates",
+                      "all_est_objective",
+                      "all_prog_curves",
+                      "initial_soln",
+                      "ref_opt_soln"]
+        for attribute in attributes:
+            try:
+                delattr(self, attribute)
+            except Exception:
+                pass
+        self.clear_stats()
+
+    def clear_stats(self):
+        """
+        Delete summary statistics associated with experiment.
+        """
+        attributes = ["areas",
+                      "area_mean",
+                      "area_std_dev",
+                      "area_mean_CI",
+                      "area_std_dev_CI",
+                      "solve_tol",
+                      "solve_times",
+                      "solve_time_quantile",
+                      "solve_time_quantile_CI"]
+        for attribute in attributes:
+            try:
+                delattr(self, attribute)
+            except Exception:
+                pass
+
 
 def record_experiment_results(experiment, file_name):
     """
@@ -842,7 +897,7 @@ class MetaExperiment(object):
         self.solver_names = solver_names
         self.n_solvers = len(solver_names)
         self.problem_names = problem_names
-        self.n_problems = len(problem_names)        
+        self.n_problems = len(problem_names)
         # Read in fixed solver/problem/oracle factors from .py file in the Experiments folder.
         # File should contain three dictionaries of dictionaries called
         #   - all_solver_fixed_factors
@@ -864,20 +919,20 @@ class MetaExperiment(object):
                         next_experiment = pickle.load(file)
                     # TO DO: Check if the solver/problem/oracle factors in the file match
                     # those for the MetaExperiment.
-                except:
+                except Exception:
                     # If no file exists, create new Experiment object.
                     print("No experiment file exists for " + solver_name + " on " + problem_name + ". Creating new experiment.")
                     next_experiment = Experiment(solver_name=solver_name,
-                                                problem_name=problem_name,
-                                                solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
-                                                problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
-                                                oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
+                                                 problem_name=problem_name,
+                                                 solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
+                                                 problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
+                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
                     # Save Experiment object to .pickle file.
                     file_name = solver_name + "_on_" + problem_name
                     record_experiment_results(experiment=next_experiment, file_name=file_name)
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
-    
+
     def run(self, n_macroreps=10, crn_across_solns=True):
         """
         Run n_macroreps of each solver on each problem.
@@ -895,15 +950,14 @@ class MetaExperiment(object):
                 # If the problem-solver pair has been run in this way before,
                 # run it now.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps
-                    or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
+                        or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
                     print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
-                    # TO DO: Clear run, post-replicate, and other stats first.
-                    # RIGHT NOW, run() function will just append new runs.
+                    experiment.clear_runs()
                     experiment.run(n_macroreps, crn_across_solns)
                     # Save Experiment object to .pickle file.
                     file_name = experiment.solver.name + "_on_" + experiment.problem.name
                     record_experiment_results(experiment=experiment, file_name=file_name)
-    
+
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each problem-solver pair, run postreplications at solutions
@@ -926,11 +980,11 @@ class MetaExperiment(object):
                 # If the problem-solver pair has been post-processed in this way before,
                 # post-process it now.
                 if (getattr(experiment, "n_postreps", None) != n_postreps
-                    or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
-                    or getattr(experiment, "crn_across_budget", None) != crn_across_budget
-                    or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
+                        or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
+                        or getattr(experiment, "crn_across_budget", None) != crn_across_budget
+                        or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                     print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
-                     # TO DO: Clear run, post-replicate, and other stats first.
+                    experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
                     # Save Experiment object to .pickle file.
                     file_name = experiment.solver.name + "_on_" + experiment.problem.name
