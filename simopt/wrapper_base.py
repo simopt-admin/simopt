@@ -8,8 +8,8 @@ Plus helper functions for reading/writing data and plotting.
 Listing
 -------
 Experiment : class
-read_run_results : function
-read_post_replicate_results : function
+record_experiment_results : function
+read_experiment_results : function
 stylize_plot : function
 stylize_solvability_plot : function
 save_plot : function
@@ -78,9 +78,9 @@ class Experiment(object):
 
     Arguments
     ---------
-    solver_name = string
+    solver_name : string
         name of solver
-    problem_name = string
+    problem_name : string
         name of problem
     solver_fixed_factors : dict
         dictionary of user-specified solver factors
@@ -136,6 +136,10 @@ class Experiment(object):
             # Record recommended solutions and intermediate budgets.
             self.all_recommended_xs.append([solution.x for solution in recommended_solns])
             self.all_intermediate_budgets.append(intermediate_budgets)
+        # Save Experiment object to .pickle file.
+        file_name = self.solver.name + "_on_" + self.problem.name
+        record_experiment_results(experiment=self, file_name=file_name)
+
 
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -227,6 +231,9 @@ class Experiment(object):
         # for each macrorep for each budget.
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
         self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+        # Save Experiment object to .pickle file.
+        file_name = self.solver.name + "_on_" + self.problem.name
+        record_experiment_results(experiment=self, file_name=file_name)
 
     def plot_progress_curves(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
@@ -277,7 +284,7 @@ class Experiment(object):
         if plot_type == "mean" or plot_type == "quantile":
             # Report bootstrapping error estimation and optionally plot bootstrap CIs.
             self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
-        save_plot(plot_type=plot_type, normalize=normalize)
+        save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type=plot_type, normalize=normalize)
 
     def plot_solvability_curve(self, solve_tol=0.10, plot_CIs=True):
         """
@@ -308,7 +315,7 @@ class Experiment(object):
         if plot_CIs is True:
             # Report bootstrapping error estimation and optionally plot bootstrap CIs.
             self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs)
-        save_plot(plot_type="solvability", normalize=True)
+        save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True)
 
     def compute_area_stats(self, compute_CIs=True):
         """
@@ -576,37 +583,25 @@ class Experiment(object):
                + str(round(max_halfwidth, 2)) + ".")
         plt.text(x=xloc, y=yloc, s=txt)
 
-    def record_run_results(self, file_name):
-        """
-        Save wrapper_base.Experiment object, with outputs from run() method,
-        to .pickle file.
 
-        Arguments
-        ---------
-        file_name : string
-            base name of pickle file for recording outputs
-        """
-        with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
-            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
-
-    def record_post_replicate_results(self, file_name):
-        """
-        Save wrapper_base.Experiment object, with outputs from post_replicate()
-        method, to .pickle file.
-
-        Arguments
-        ---------
-        file_name : string
-            base name of pickle file for recording outputs
-        """
-        with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
-            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
-
-
-def read_run_results(file_name):
+def record_experiment_results(experiment, file_name):
     """
-    Read in wrapper_base.Experiment object, with outputs from run() method,
-    from .pickle file.
+    Save wrapper_base.Experiment object to .pickle file.
+
+    Arguments
+    ---------
+    experiment : wrapper_base.Experiment object
+        Experiment object to pickle
+    file_name : string
+        base name of pickle file to write outputs to
+    """
+    with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
+        pickle.dump(experiment, file, pickle.HIGHEST_PROTOCOL)
+
+
+def read_experiment_results(file_name):
+    """
+    Read in wrapper_base.Experiment object from .pickle file.
 
     Arguments
     ---------
@@ -616,27 +611,7 @@ def read_run_results(file_name):
     Returns
     -------
     experiment : wrapper_base.Experiment object
-        experimental results from run() method
-    """
-    with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
-        experiment = pickle.load(file)
-    return experiment
-
-
-def read_post_replicate_results(file_name):
-    """
-    Read in wrapper_base.Experiment object, with outputs from post_replicate()
-    method, from .pickle file.
-
-    Arguments
-    ---------
-    file_name : string
-        base name of pickle file from which to read in outputs
-
-    Returns
-    -------
-    experiment : wrapper_base.Experiment object
-        experimental results from post_replicate() method
+        experiment that has been run or has been post-processed
     """
     with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
         experiment = pickle.load(file)
@@ -727,12 +702,16 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def save_plot(plot_type, normalize):
+def save_plot(solver_name, problem_name, plot_type, normalize):
     """
     Create new figure. Add labels to plot and reformat axes.
 
     Arguments
     ---------
+    solver_name : string
+        name of solver
+    problem_name : string
+        name of problem
     plot_type : string
         indicates which type of plot to produce
             "all" : all estimated progress curves
@@ -753,7 +732,7 @@ def save_plot(plot_type, normalize):
         plot_name = "solvability_curve"
     if normalize is False:
         plot_name = plot_name + "_unnorm"
-    path_name = "experiments/plots/" + plot_name + ".png"
+    path_name = "experiments/plots/" + str(solver_name) + "_on_" + str(problem_name) + "_" + plot_name + ".png"
     plt.savefig(path_name, bbox_inches="tight")
 
 
@@ -850,7 +829,7 @@ class MetaExperiment(object):
         #   - all_solver_fixed_factors
         #   - all_problem_fixed_factors
         #   - all_oracle_fixed_factors
-        fixed_factors_filename = "experiments." + fixed_factors_filename
+        fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
         all_factors = importlib.import_module(fixed_factors_filename)
         self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
         self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
@@ -860,11 +839,22 @@ class MetaExperiment(object):
         for solver_name in solver_names:
             solver_experiments = []
             for problem_name in problem_names:
-                # TO DO: First check if a pickle file for the experiment exists.
-                new_experiment = Experiment(solver_name=solver_name,
-                                            problem_name=problem_name,
-                                            solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
-                                            problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
-                                            oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
-                solver_experiments.append(new_experiment)
+                try:
+                    # If a file exists, read in Experiment object.
+                    with open("experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle", "rb") as file:
+                        next_experiment = pickle.load(file)
+                    # TO DO: Check if the solver/problem/oracle factors in the file match
+                    # those for the MetaExperiment.
+                except:
+                    # If no file exists, create new Experiment object.
+                    print("No experiment file exists for " + solver_name + " on " + problem_name + ". Creating new experiment.")
+                    next_experiment = Experiment(solver_name=solver_name,
+                                                problem_name=problem_name,
+                                                solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
+                                                problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
+                                                oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
+                    # Save Experiment object to .pickle file.
+                    file_name = solver_name + "_on_" + problem_name
+                    record_experiment_results(experiment=next_experiment, file_name=file_name)
+                solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
