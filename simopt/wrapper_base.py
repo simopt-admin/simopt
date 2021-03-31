@@ -22,6 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pickle
+import importlib
 
 from rng.mrg32k3a import MRG32k3a
 from base import Solution
@@ -74,7 +75,6 @@ class Experiment(object):
         beta quantile of solve times
     solve_time_quantile_CI : numpy array of length 2
         bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
-
 
     Arguments
     ---------
@@ -827,7 +827,7 @@ class MetaExperiment(object):
             inner key is factor name
     all_oracle_fixed_factors : dict of dict
         fixed oracle factors for each problem
-            outer key is oracle name
+            outer key is problem name
             inner key is factor name
     experiments : list of list of Experiment objects
         all problem-solver pairs
@@ -840,31 +840,31 @@ class MetaExperiment(object):
         list of problem names
     fixed_factors_filename : string
         name of .py file containing dictionaries of fixed factors
-        for problems/solvers/oracles.
+        for solvers/problems/oracles.
     """
     def __init__(self, solver_names, problem_names, fixed_factors_filename=None):
         self.solver_names = solver_names
         self.problem_names = problem_names
-        # TO DO: Read in fixed_factors from file.
-        # Read in dict of dicts called
+        # Read in fixed solver/problem/oracle factors from .py file in the Experiments folder.
+        # File should contain three dictionaries of dictionaries called
         #   - all_solver_fixed_factors
         #   - all_problem_fixed_factors
         #   - all_oracle_fixed_factors
-        self.all_solver_fixed_factors = None
-        self.all_problem_fixed_factors = None
-        self.all_oracle_fixed_factors = None
+        fixed_factors_filename = "experiments." + fixed_factors_filename
+        all_factors = importlib.import_module(fixed_factors_filename)
+        self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
+        self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
+        self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
         for solver_name in solver_names:
             solver_experiments = []
             for problem_name in problem_names:
-                # TO DO: figure out how to look up oracle name from solver name...
-                oracle_name = None
                 # TO DO: First check if a pickle file for the experiment exists.
-                new_experiment = [Experiment(solver_name=solver_name,
-                                             problem_name=problem_name,
-                                             solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
-                                             problem_fixed_factors=self.all_problem_fixed_factors[solver_name],
-                                             oracle_fixed_factors=self.all_oracle_fixed_factors[oracle_name])]
+                new_experiment = Experiment(solver_name=solver_name,
+                                            problem_name=problem_name,
+                                            solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
+                                            problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
+                                            oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
                 solver_experiments.append(new_experiment)
             self.experiments.append(solver_experiments)
