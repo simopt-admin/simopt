@@ -16,6 +16,7 @@ save_plot : function
 area_under_prog_curve : function
 solve_time_of_prog_curve : function
 MetaExperiment : class
+stylize_area_plot : function
 """
 
 import numpy as np
@@ -748,10 +749,6 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
         name of solver
     problem_name : string
         name of problem
-    normalize : Boolean
-        normalize progress curves w.r.t. optimality gaps?
-    budget : int
-        budget of problem, measured in function evaluations
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks.
@@ -765,8 +762,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
     plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.ylim(ylim)
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
@@ -786,6 +782,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize):
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
             "solvability" : estimated solvability curve
+            "area" : area scatterplot
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
     """
@@ -798,6 +795,8 @@ def save_plot(solver_name, problem_name, plot_type, normalize):
         plot_name = "quantile_prog_curve"
     elif plot_type == "solvability":
         plot_name = "solvability_curve"
+    elif plot_type == "area":
+        plot_name = "area_scatterplot"
     if normalize is False:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + str(solver_name) + "_on_" + str(problem_name) + "_" + plot_name + ".png"
@@ -989,3 +988,69 @@ class MetaExperiment(object):
                     # Save Experiment object to .pickle file.
                     file_name = experiment.solver.name + "_on_" + experiment.problem.name
                     record_experiment_results(experiment=experiment, file_name=file_name)
+
+    def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
+        """
+        Plot a scatter plot of mean and standard deviation of area under progress curves.
+        Either one plot for each solver or one plot for all solvers.
+        """
+        # Compute areas under progress curves (and summary statistics) for each
+        # problem-solver pair.
+        for solver_index in range(self.n_solvers):
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                experiment.compute_area_stats(compute_CIs=plot_CIs)
+                # Save Experiment object to .pickle file.
+                file_name = experiment.solver.name + "_on_" + experiment.problem.name
+                record_experiment_results(experiment=experiment, file_name=file_name)
+        # Produce plot(s).
+        if all_in_one is True:
+            # TO DO: Superimpose plots once we have more than one solver.
+            pass
+        else:
+            for solver_index in range(self.n_solvers):
+                # Aggregate statistics.
+                area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
+                area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
+                if plot_CIs is True:
+                    area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
+                    area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
+                # Plot scatter plot.
+                stylize_area_plot(solver_name=self.solver_names[solver_index])
+                if plot_CIs is True:
+                    xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
+                    yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
+                    plt.errorbar(x=area_means,
+                                 y=area_std_devs,
+                                 xerr=xerr,
+                                 yerr=yerr,
+                                 fmt="bo",
+                                 ecolor="red")
+                else:
+                    plt.scatter(x=area_means, y=area_std_devs, c="blue")
+                save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
+
+
+def stylize_area_plot(solver_name):
+    """
+    Create new figure for area plots. Add labels to plot and reformat axes.
+
+    Arguments
+    ---------
+    solver_name : string
+        name of solver
+    """
+    plt.figure()
+    # Format axes, axis labels, title, and tick marks.
+    xlabel = "Mean Area"
+    ylabel = "Std Dev of Area"
+    xlim = (0, 1)
+    ylim = (0, 0.5)
+    title = solver_name + "\n"
+    title = title + "Areas Under Progress Curves"
+    plt.xlabel(xlabel, size=14)
+    plt.ylabel(ylabel, size=14)
+    plt.title(title, size=14)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    plt.tick_params(axis='both', which='major', labelsize=12)

@@ -5,7 +5,8 @@ from wrapper_base import Experiment, record_experiment_results, read_experiment_
 
 mymetaexperiment = MetaExperiment(solver_names=["RNDSRCH"], problem_names=["MM1-1", "CNTNEWS-1"], fixed_factors_filename="all_factors")
 mymetaexperiment.run(n_macroreps=3, crn_across_solns=True)
-mymetaexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20, crn_across_budget=True, crn_across_macroreps=False)
+#mymetaexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20, crn_across_budget=True, crn_across_macroreps=False)
+mymetaexperiment.plot_area_scatterplot(plot_CIs=True, all_in_one=False)
 
 # # myexperiment = Experiment(solver_name="RNDSRCH", problem_name="MM1-1")
 # myexperiment = Experiment(solver_name="RNDSRCH", problem_name="CNTNEWS-1")
