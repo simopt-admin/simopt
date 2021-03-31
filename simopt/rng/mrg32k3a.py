@@ -20,7 +20,7 @@ start_fixed_s_ss_sss : method
 # code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO)
 
 import random
-from math import log
+from math import log, ceil, sqrt, exp
 import functools
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
@@ -310,6 +310,34 @@ class MRG32k3a(random.Random):
         u = self.random()
         z = bsm(u)
         return mu + sigma*z
+    
+    def poissonvariate(self, alpha):
+        """
+        Generate a poisson random variate.
+
+        Arguments
+        ---------
+        lambda : float
+            expected value of the poisson distribution from which to
+            generate
+
+        Returns
+        -------
+        float
+            a poisson random variate from the specified distribution
+        """
+        if alpha < 35:
+            n = 0
+            p = self.random()
+            threshold = exp(-alpha)
+            while p >= threshold:
+                u = self.random()
+                p = p * u
+                n = n + 1     
+        else:
+            z = self.normalvariate()
+            n = max(ceil(alpha + sqrt(alpha)*z - 0.5), 0)
+        return n
 
     def advance_stream(self):
         """
