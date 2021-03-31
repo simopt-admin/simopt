@@ -2,11 +2,20 @@
 """
 Summary
 -------
-Provide base classes for experiments.
+Provide base classes for experiments and meta experiments.
+Plus helper functions for reading/writing data and plotting.
 
 Listing
 -------
 Experiment : class
+read_run_results : function
+read_post_replicate_results : function
+stylize_plot : function
+stylize_solvability_plot : function
+save_plot : function
+area_under_prog_curve : function
+solve_time_of_prog_curve : function
+MetaExperiment : class
 """
 
 import numpy as np
@@ -47,6 +56,25 @@ class Experiment(object):
         initial solution (w/ postreplicates) used for normalization
     ref_opt_soln : base.Solution object
         reference optimal solution (w/ postreplicates) used for normalization
+    areas : list of floats
+        areas under each estimated progress curve
+    area_mean : float
+        sample mean area under estimated progress curves
+    area_std_dev : float
+        sample standard deviation of area under estimated progress curves
+    area_mean_CI : numpy array of length 2
+        bootstrap CI of the form [lower bound, upper bound] for mean area
+    area_std_dev_CI : numpy array of length 2
+        bootstrap CI of the form [lower_bound, upper_bound] for std dev of area
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    solve_times = list of floats
+        solve_tol solve times for each estimated progress curve
+    solve_time_quantile : float
+        beta quantile of solve times
+    solve_time_quantile_CI : numpy array of length 2
+        bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
+
 
     Arguments
     ---------
@@ -777,3 +805,66 @@ def solve_time_of_prog_curve(prog_curve, frac_inter_budgets, solve_tol):
             solve_time = frac_inter_budgets[i]
             break
     return solve_time
+
+
+class MetaExperiment(object):
+    """
+    Base class for running one or more solver on one or more problem.
+
+    Attributes
+    ----------
+    solver_names : list of strings
+        list of solver names
+    problem_names : list of strings
+        list of problem names
+    all_solver_fixed_factors : dict of dict
+        fixed solver factors for each solver
+            outer key is solver name
+            inner key is factor name
+    all_problem_fixed_factors : dict of dict
+        fixed problem factors for each problem
+            outer key is problem name
+            inner key is factor name
+    all_oracle_fixed_factors : dict of dict
+        fixed oracle factors for each problem
+            outer key is oracle name
+            inner key is factor name
+    experiments : list of list of Experiment objects
+        all problem-solver pairs
+
+    Arguments
+    ---------
+    solver_names : list of strings
+        list of solver names
+    problem_names : list of strings
+        list of problem names
+    fixed_factors_filename : string
+        name of .py file containing dictionaries of fixed factors
+        for problems/solvers/oracles.
+    """
+    def __init__(self, solver_names, problem_names, fixed_factors_filename=None):
+        self.solver_names = solver_names
+        self.problem_names = problem_names
+        # TO DO: Read in fixed_factors from file.
+        # Read in dict of dicts called
+        #   - all_solver_fixed_factors
+        #   - all_problem_fixed_factors
+        #   - all_oracle_fixed_factors
+        self.all_solver_fixed_factors = None
+        self.all_problem_fixed_factors = None
+        self.all_oracle_fixed_factors = None
+        # Create all problem-solver pairs (i.e., instances of Experiment class)
+        self.experiments = []
+        for solver_name in solver_names:
+            solver_experiments = []
+            for problem_name in problem_names:
+                # TO DO: figure out how to look up oracle name from solver name...
+                oracle_name = None
+                # TO DO: First check if a pickle file for the experiment exists.
+                new_experiment = [Experiment(solver_name=solver_name,
+                                             problem_name=problem_name,
+                                             solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
+                                             problem_fixed_factors=self.all_problem_fixed_factors[solver_name],
+                                             oracle_fixed_factors=self.all_oracle_fixed_factors[oracle_name])]
+                solver_experiments.append(new_experiment)
+            self.experiments.append(solver_experiments)
