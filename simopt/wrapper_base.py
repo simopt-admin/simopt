@@ -41,10 +41,20 @@ class Experiment(object):
         simulation-optimization problem
     n_macroreps : int > 0
         number of macroreplications run
+    crn_across_solns : bool
+        indicates if CRN are used when simulating different solutions
     all_recommended_xs : list of lists of tuples
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
         sequences of intermediate budgets from each macroreplication
+    n_postreps : int
+        number of postreplications to take at each recommended solution
+    n_postreps_init_opt : int
+        number of postreplications to take at initial x0 and optimal x*
+    crn_across_budget : bool
+        use CRN for post-replications at solutions recommended at different times?
+    crn_across_macroreps : bool
+        use CRN for post-replications at solutions recommended on different macroreplications?
     all_reevaluated_solns : list of Solution objects
         reevaluated solutions recommended by the solver
     all_post_replicates : list of lists of lists
@@ -109,6 +119,7 @@ class Experiment(object):
             indicates if CRN are used when simulating different solutions
         """
         self.n_macroreps = n_macroreps
+        self.crn_across_solns = crn_across_solns
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
         #     Stream 1: reserved for bootstrapping
@@ -158,6 +169,8 @@ class Experiment(object):
         """
         self.n_postreps = n_postreps
         self.n_postreps_init_opt = n_postreps_init_opt
+        self.crn_across_budget = crn_across_budget
+        self.crn_across_macroreps = crn_across_macroreps
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
         oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
@@ -794,8 +807,12 @@ class MetaExperiment(object):
     ----------
     solver_names : list of strings
         list of solver names
+    n_solvers : int > 0
+        number of solvers
     problem_names : list of strings
         list of problem names
+    n_problems : int > 0
+        number of problems
     all_solver_fixed_factors : dict of dict
         fixed solver factors for each solver
             outer key is solver name
@@ -823,7 +840,9 @@ class MetaExperiment(object):
     """
     def __init__(self, solver_names, problem_names, fixed_factors_filename=None):
         self.solver_names = solver_names
+        self.n_solvers = len(solver_names)
         self.problem_names = problem_names
+        self.n_problems = len(problem_names)        
         # Read in fixed solver/problem/oracle factors from .py file in the Experiments folder.
         # File should contain three dictionaries of dictionaries called
         #   - all_solver_fixed_factors
@@ -858,3 +877,61 @@ class MetaExperiment(object):
                     record_experiment_results(experiment=next_experiment, file_name=file_name)
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
+    
+    def run(self, n_macroreps=10, crn_across_solns=True):
+        """
+        Run n_macroreps of each solver on each problem.
+
+        Arguments
+        ---------
+        n_macroreps : int
+            number of macroreplications of the solver to run on the problem
+        crn_across_solns : bool
+            indicates if CRN are used when simulating different solutions
+        """
+        for solver_index in range(self.n_solvers):
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                # If the problem-solver pair has been run in this way before,
+                # run it now.
+                if (getattr(experiment, "n_macroreps", None) != n_macroreps
+                    or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
+                    print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
+                    # TO DO: Clear run, post-replicate, and other stats first.
+                    # RIGHT NOW, run() function will just append new runs.
+                    experiment.run(n_macroreps, crn_across_solns)
+                    # Save Experiment object to .pickle file.
+                    file_name = experiment.solver.name + "_on_" + experiment.problem.name
+                    record_experiment_results(experiment=experiment, file_name=file_name)
+    
+    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+        """
+        For each problem-solver pair, run postreplications at solutions
+        recommended by the solver on each macroreplication.
+
+        Arguments
+        ---------
+        n_postreps : int
+            number of postreplications to take at each recommended solution
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_budget : bool
+            use CRN for post-replications at solutions recommended at different times?
+        crn_across_macroreps : bool
+            use CRN for post-replications at solutions recommended on different macroreplications?
+        """
+        for solver_index in range(self.n_solvers):
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                # If the problem-solver pair has been post-processed in this way before,
+                # post-process it now.
+                if (getattr(experiment, "n_postreps", None) != n_postreps
+                    or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
+                    or getattr(experiment, "crn_across_budget", None) != crn_across_budget
+                    or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
+                    print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
+                     # TO DO: Clear run, post-replicate, and other stats first.
+                    experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
+                    # Save Experiment object to .pickle file.
+                    file_name = experiment.solver.name + "_on_" + experiment.problem.name
+                    record_experiment_results(experiment=experiment, file_name=file_name)
