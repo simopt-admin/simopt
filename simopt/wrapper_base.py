@@ -345,64 +345,64 @@ class Experiment(object):
         bootstrap_prog_curves : numpy array of arrays
             bootstrapped estimated progress curves from all macroreplications
         """
-        # initialize matrix for bootstrap estimated progress curves
+        # Initialize matrices for bootstrap estimated objective and progress curves.
         bootstrap_est_objective = np.empty((self.n_macroreps, len(self.unique_budgets)))
         bootstrap_prog_curves = np.empty((self.n_macroreps, len(self.unique_budgets)))
-        # uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1
-        # subsubstream 0: reserved for this outer-level bootstrapping
+        # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
+        # Subsubstream 0: reserved for this outer-level bootstrapping.
         mreps = bootstrap_rng.choices(range(self.n_macroreps), k=self.n_macroreps)
-        # advance random number generator subsubstream to prepare for inner-level bootstrapping
+        # Advance RNG subsubstream to prepare for inner-level bootstrapping.
         bootstrap_rng.advance_subsubstream()
-        # subsubstream 1: reserved for bootstrapping at initial solution x0 and reference optimal solution x*
-        # bootstrap sample postreplicates at common initial solution x0
-        # uniformly resample L postreps (with replacement) from 0, 1, ..., L
+        # Subsubstream 1: reserved for bootstrapping at initial solution x0 and reference optimal solution x*.
+        # Bootstrap sample postreplicates at common initial solution x0.
+        # Uniformly resample L postreps (with replacement) from 0, 1, ..., L.
         postreps = bootstrap_rng.choices(range(self.n_postreps_init_opt), k=self.n_postreps_init_opt)
-        # compute the mean of the resampled postreplications
+        # Compute the mean of the resampled postreplications.
         bs_initial_obj_val = np.mean([self.initial_soln.objectives[postrep, 0] for postrep in postreps])
-        # reset subsubstream if using CRN across budgets
-        # this means the same postreplication indices will be used for resampling at x0 and x*
+        # Reset subsubstream if using CRN across budgets.
+        # This means the same postreplication indices will be used for resampling at x0 and x*.
         if crn_across_budget is True:
             bootstrap_rng.reset_subsubstream()
-        # bootstrap sample postreplicates at reference optimal solution x*
-        # uniformly resample L postreps (with replacement) from 0, 1, ..., L
+        # Bootstrap sample postreplicates at reference optimal solution x*.
+        # Uniformly resample L postreps (with replacement) from 0, 1, ..., L.
         postreps = bootstrap_rng.choices(range(self.n_postreps_init_opt), k=self.n_postreps_init_opt)
-        # compute the mean of the resampled postreplications
+        # Compute the mean of the resampled postreplications.
         bs_ref_opt_obj_val = np.mean([self.ref_opt_soln.objectives[postrep, 0] for postrep in postreps])
-        # compute initial optimality gap
+        # Compute initial optimality gap.
         bs_initial_opt_gap = bs_initial_obj_val - bs_ref_opt_obj_val
-        # advance random number generator subsubstream to prepare for inner-level bootstrapping
-        # will now be at start of subsubstream 2
+        # Advance RNG subsubstream to prepare for inner-level bootstrapping.
+        # Will now be at start of subsubstream 2.
         bootstrap_rng.advance_subsubstream()
-        # bootstrap within each bootstrapped macroreplication
+        # Bootstrap within each bootstrapped macroreplication.
         for bs_mrep in range(self.n_macroreps):
             mrep = mreps[bs_mrep]
-            # inner-level bootstrapping over intermediate recommended solutions
+            # Inner-level bootstrapping over intermediate recommended solutions.
             for budget in range(len(self.unique_budgets)):
-                # if solution is x0
+                # If solution is x0...
                 if np.array_equal(self.initial_soln.objectives[0:self.n_postreps_init_opt, 0], self.all_post_replicates[mrep][budget]):
-                    # plug in fixed bootstrapped f(x0)
+                    # ...plug in fixed bootstrapped f(x0);
                     bootstrap_est_objective[bs_mrep][budget] = bs_initial_obj_val
-                # elif solution is x*
+                # else if solution is x*...
                 elif np.array_equal(self.ref_opt_soln.objectives[0:self.n_postreps_init_opt, 0], self.all_post_replicates[mrep][budget]):
-                    # plug in fixed bootstrapped f(x*)
+                    # ...plug in fixed bootstrapped f(x*);
                     bootstrap_est_objective[bs_mrep][budget] = bs_ref_opt_obj_val
-                else:  # else solution other than x0 or x*
-                    # uniformly resample N postreps (with replacement) from 0, 1, ..., N-1
+                else:  # else solution other than x0 or x*...
+                    # ...uniformly resample N postreps (with replacement) from 0, 1, ..., N-1 and ...
                     postreps = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
-                    # compute the mean of the resampled postreplications
+                    # ...compute the mean of the resampled postreplications.
                     bootstrap_est_objective[bs_mrep][budget] = np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in postreps])
-                # normalize the estimated objective function value
+                # Normalize the estimated objective function value.
                 bootstrap_prog_curves[bs_mrep][budget] = (bootstrap_est_objective[bs_mrep][budget] - bs_ref_opt_obj_val) / bs_initial_opt_gap
-                # reset subsubstream if using CRN across budgets
+                # Reset subsubstream if using CRN across budgets.
                 if crn_across_budget is True:
                     bootstrap_rng.reset_subsubstream()
-            # advance subsubstream if not using CRN across macroreps
+            # Advance subsubstream if not using CRN across macroreps.
             if crn_across_macroreps is False:
                 bootstrap_rng.advance_subsubstream()
-            else:  # if using CRN across macroreplications
-                # reset subsubstream
+            else:
+                # Reset subsubstream if using CRN across macroreplications.
                 bootstrap_rng.reset_subsubstream()
-        # advance substream of random number generator to prepare for next bootstrap sample
+        # Advance substream of random number generator to prepare for next bootstrap sample.
         bootstrap_rng.advance_substream()
         return bootstrap_est_objective, bootstrap_prog_curves
 
@@ -639,7 +639,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         quantile for quantile aggregate progress curve, e.g., beta quantile
     """
     plt.figure()
-    # Format axes, axis labels, title, and tick marks
+    # Format axes, axis labels, title, and tick marks.
     if normalize is True:
         xlabel = "Fraction of Budget"
         ylabel = "Fraction of Initial Optimality Gap"
@@ -683,7 +683,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
         budget of problem, measured in function evaluations
     """
     plt.figure()
-    # Format axes, axis labels, title, and tick marks
+    # Format axes, axis labels, title, and tick marks.
     xlabel = "Fraction of Budget"
     ylabel = "Fraction of Macroreplications Solved"
     xlim = (0, 1)
