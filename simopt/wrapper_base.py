@@ -367,8 +367,9 @@ class Experiment(object):
         """
         self.solve_tol = solve_tol
         self.solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in self.all_prog_curves]
-        self.solve_time_quantile = np.quantile(self.solve_times, q=beta)
+        self.solve_time_quantile = np.quantile(self.solve_times, q=beta, interpolation="higher")
         # The default method for np.quantile is a *linear* interpolation.
+        # Linear interpolation will throw error if a breakpoint is +/- infinity.
         if compute_CIs is True:
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=[self.solve_time_quantile], beta=beta)
             self.solve_time_quantile_CI = [lower_bound[0], upper_bound[0]]
@@ -1029,6 +1030,46 @@ class MetaExperiment(object):
                 else:
                     plt.scatter(x=area_means, y=area_std_devs, c="blue")
                 save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
+
+    def plot_solvability_profiles(self, solve_tol=0.1):
+        """
+        Plot the solvability profiles for each solver-problem pair.
+
+        Arguments
+        ---------
+        solve_tol : float in (0,1]
+            relative optimality gap definining when a problem is solved
+        """
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol)
+        for solver_index in range(self.n_solvers):
+            solvability_curves = []
+            all_budgets = []
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                # Compute solve times. Ignore quantile calculations.
+                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
+                # Construct matrix showing when macroreplications are solved.
+                solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
+                # Pass over progress curves to find first solve_tol crossing time.
+                for mrep in range(experiment.n_macroreps):
+                    for budget_index in range(len(experiment.unique_frac_budgets)):
+                        if experiment.solve_times[mrep] <= experiment.unique_frac_budgets[budget_index]:
+                            solve_matrix[mrep][budget_index] = 1
+                solvability_curves.append(list(np.mean(solve_matrix, axis=0)))
+                all_budgets.append(list(experiment.unique_frac_budgets))
+            # Compute the solver's solvability profile.
+            solver_unique_frac_budgets = np.unique([budget for budgets in all_budgets for budget in budgets])
+            all_solve_matrix = np.zeros((self.n_problems, len(solver_unique_frac_budgets)))
+            for problem_index in range(self.n_problems):
+                for budget_index in range(len(solver_unique_frac_budgets)):
+                    problem_budget_index = np.max(np.where(np.array(all_budgets[problem_index]) <= solver_unique_frac_budgets[budget_index]))
+                    all_solve_matrix[problem_index][budget_index] = solvability_curves[problem_index][problem_budget_index]
+            solvability_profile = np.mean(all_solve_matrix, axis=0)
+            # Plot the solver's solvability profile.
+            plt.step(solver_unique_frac_budgets, solvability_profile, 'b-', where='post')
+        plt.legend(labels=self.solver_names, loc="lower right")
+        # TO DO: Change the y-axis label produced by this helper function.
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability", normalize=True)
 
 
 def stylize_area_plot(solver_name):

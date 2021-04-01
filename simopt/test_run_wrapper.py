@@ -4,9 +4,10 @@ from base import Solver, Problem, Oracle, Solution
 from wrapper_base import Experiment, record_experiment_results, read_experiment_results, MetaExperiment
 
 mymetaexperiment = MetaExperiment(solver_names=["RNDSRCH"], problem_names=["MM1-1", "CNTNEWS-1"], fixed_factors_filename="all_factors")
-mymetaexperiment.run(n_macroreps=3, crn_across_solns=True)
-#mymetaexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20, crn_across_budget=True, crn_across_macroreps=False)
-mymetaexperiment.plot_area_scatterplot(plot_CIs=True, all_in_one=False)
+mymetaexperiment.run(n_macroreps=5, crn_across_solns=True)
+mymetaexperiment.post_replicate(n_postreps=10, n_postreps_init_opt=20, crn_across_budget=True, crn_across_macroreps=False)
+#mymetaexperiment.plot_area_scatterplot(plot_CIs=True, all_in_one=False)
+mymetaexperiment.plot_solvability_profiles(solve_tol=0.1)
 
 # # myexperiment = Experiment(solver_name="RNDSRCH", problem_name="MM1-1")
 # myexperiment = Experiment(solver_name="RNDSRCH", problem_name="CNTNEWS-1")
