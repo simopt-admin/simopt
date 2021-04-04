@@ -35,7 +35,7 @@ class facilitysize(Oracle):
     """
     def __init__(self, fixed_factors={}):
         self.n_rngs = 1
-        self.n_responses = 1
+        self.n_responses = 3
         self.specifications = {
             "mean_vec": {
                 "description": "Location parameters of the multivariate normal distribution",
@@ -89,7 +89,7 @@ class facilitysize(Oracle):
             performance measures of interest
             "stock_out_flag" = the binary variable
                  0 : all facilities satisfy the demand
-                -1 : one of the facilities did not satisfy the demand
+                 1 : one of the facilities did not satisfy the demand
             "count" = the number of facilities which cannot satisfy the demand
             "number_of_cut" = the number of toal demand which cannot be satisfied
         gradients : dict of dicts
@@ -111,18 +111,13 @@ class facilitysize(Oracle):
         for i in range(self.factors["number_of_facility"]):
             if demand[i] > self.factors["capa"][i]:
                 count = count + 1
-                stock_out_flag = -1
+                stock_out_flag = 1
                 number_of_cut += demand[i] - self.factors["capa"][i]
-        
-        #print(demand)
-        #print(self.factors["capa"])
-        
+                
         # reponse        
         responses = {'stock_out_flag': stock_out_flag,
                     'count': count,
                     'number_of_cut': number_of_cut} 
-        
-        #print(responses)
         
         # compose gradients
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
