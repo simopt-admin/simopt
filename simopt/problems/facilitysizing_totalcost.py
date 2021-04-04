@@ -158,7 +158,7 @@ class facilitysizingTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (self.oracle_default_factors["epsilon"],)
+        det_stoch_constraints = (-self.oracle_default_factors["epsilon"],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
     
