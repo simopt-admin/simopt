@@ -122,7 +122,7 @@ class rmitd(Oracle):
             sell = min(max(remainingCapacity-r[i],0),D_t)
             remainingCapacity = remainingCapacity - sell
             revenue += sell*self.factors["price"][i]
-            print(D_t)
+            #print(D_t)
             #print(revenue)
         
         #revenue -= self.factors["cost"]*b
