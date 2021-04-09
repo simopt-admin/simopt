@@ -947,7 +947,7 @@ class MetaExperiment(object):
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has been run in this way before,
+                # If the problem-solver pair has not been run in this way before,
                 # run it now.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps
                         or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
@@ -977,7 +977,7 @@ class MetaExperiment(object):
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has been post-processed in this way before,
+                # If the problem-solver pair has not been post-processed in this way before,
                 # post-process it now.
                 if (getattr(experiment, "n_postreps", None) != n_postreps
                         or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt

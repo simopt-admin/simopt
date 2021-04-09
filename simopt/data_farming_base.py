@@ -1,9 +1,12 @@
-from directory import oracle_directory
-from rng.mrg32k3a import MRG32k3a
-from copy import deepcopy
 import numpy as np
 import os
 import csv
+import pickle
+from copy import deepcopy
+
+from directory import oracle_directory
+from rng.mrg32k3a import MRG32k3a
+from wrapper_base import Experiment
 
 class DesignPoint(object):
     """
@@ -97,7 +100,7 @@ class DataFarmingExperiment(object):
         # initialize oracle object with fixed factors
         self.oracle = oracle_directory[oracle_name](fixed_factors=oracle_fixed_factors)
         if design_filename is None:
-            # create oracle factor design from .txt file of factor settings 
+            # create oracle factor design from .txt file of factor settings
             # hard-coded for a single-stack NOLHS
             command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + factor_settings_filename + ".txt > ./data_farming_experiments/" + factor_settings_filename + "_design.txt"
             os.system(command)
@@ -170,9 +173,201 @@ class DataFarmingExperiment(object):
             for designpt_index in range(self.n_design_pts):
                 designpt = self.design[designpt_index]
                 # parse list of oracle factors
-                oracle_factor_list = [designpt.oracle_factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]   
+                oracle_factor_list = [designpt.oracle_factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]
                 for mrep in range(designpt.n_reps):
                     # parse list of responses
                     response_list = [designpt.responses[response_name][mrep] for response_name in response_names]
                     print_list = [designpt_index] + oracle_factor_list + [mrep] + response_list
-                    csv_writer.writerow(print_list)  
+                    csv_writer.writerow(print_list)
+
+
+class DataFarmingMetaExperiment(object):
+    """
+    Base class for data-farming meta experiments consisting of problem-solver
+    pairs and a design of associated factors.
+
+    Attributes
+    ----------
+    design : list of DesignPoint objects
+        list of design points forming the design
+    n_design_pts : int
+        number of design points in the design
+
+    Arguments
+    ---------
+    solver_name : string
+        name of solver
+    problem_name : string
+        name of problem
+    solver_factor_settings_filename : string
+        name of .txt file containing solver factor ranges and # of digits
+    solver_factor_headers : list of strings
+        ordered list of solver factor names appearing in factor settings/design file
+    design_filename : string
+        name of .txt file containing design matrix
+    solver_fixed_factors : dict
+        dictionary of user-specified solver factors that will not be varied
+    problem_fixed_factors : dict
+        dictionary of user-specified problem factors that will not be varied
+    oracle_fixed_factors : dict
+        dictionary of user-specified oracle factors that will not be varied
+    """
+    def __init__(self, solver_name, problem_name, solver_factor_settings_filename, solver_factor_headers, design_filename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
+        # TO DO: Extend to allow a design on problem/oracle factors too.
+        # Currently supports designs on solver factors only.
+        if design_filename is None:
+            # create solver factor design from .txt file of factor settings
+            # hard-coded for a single-stack NOLHS
+            command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + solver_factor_settings_filename + ".txt > ./data_farming_experiments/" + solver_factor_settings_filename + "_design.txt"
+            os.system(command)
+            # append design to base filename
+            design_filename = solver_factor_settings_filename + "_design"
+        # read in design matrix from .txt file
+        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        # count number of design_points
+        self.n_design_pts = len(design_table)
+        # create all design points
+        self.design = []
+        design_pt_solver_factors = {}
+        for i in range(self.n_design_pts):
+            # TO DO: Fix this issue with numpy 1D and 2D arrays handled differently
+            if len(solver_factor_headers) == 1:
+                # TO DO: Resolve type-casting issues:
+                # E.g., sample_size must be an integer for RNDSRCH, but np.loadtxt will make it a float
+                design_pt_solver_factors[solver_factor_headers[0]] = int(design_table[i])
+                # parse solver factors for next design point
+                # design_pt_solver_factors[solver_factor_headers[0]] = design_table[i]
+            else:
+                for j in range(len(solver_factor_headers)):
+                    # parse solver factors for next design point
+                    design_pt_solver_factors[solver_factor_headers[j]] = design_table[i,j]
+            # merge solver fixed factors and solver factors specified for design point
+            new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
+            # In Python 3.9, will be able to use: dict1 | dict2
+            # create new design point and add to design0
+            new_design_pt = Experiment(solver_name, problem_name, new_design_pt_solver_factors, problem_fixed_factors, oracle_fixed_factors)
+            self.design.append(new_design_pt)
+
+    # Largely taken from MetaExperiment class in wrapper_base.py
+    def run(self, n_macroreps=10, crn_across_solns=True):
+        """
+        Run n_macroreps of each problem-solver design point.
+
+        Arguments
+        ---------
+        n_macroreps : int
+            number of macroreplications for each design point
+        crn_across_solns : bool
+            indicates if CRN are used when solver simulates different solutions
+        """
+        for design_pt_index in range(self.n_design_pts):
+            # If the problem-solver pair has not been run in this way before,
+            # run it now.
+            experiment = self.design[design_pt_index]
+            if (getattr(experiment, "n_macroreps", None) != n_macroreps
+                    or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
+                print("Running Design Point " + str(design_pt_index) + ".")
+                experiment.clear_runs()
+                experiment.run(n_macroreps, crn_across_solns)
+                # Save Experiment object to .pickle file.
+                file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
+                record_df_experiment_results(experiment=experiment, file_name=file_name)
+
+    # Largely taken from MetaExperiment class in wrapper_base.py
+    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+        """
+        For each design point, run postreplications at solutions
+        recommended by the solver on each macroreplication.
+
+        Arguments
+        ---------
+        n_postreps : int
+            number of postreplications to take at each recommended solution
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_budget : bool
+            use CRN for post-replications at solutions recommended at different times?
+        crn_across_macroreps : bool
+            use CRN for post-replications at solutions recommended on different macroreplications?
+        """
+        for design_pt_index in range(self.n_design_pts):
+            experiment = self.design[design_pt_index]
+            # If the problem-solver pair has not been post-processed in this way before,
+            # post-process it now.
+            if (getattr(experiment, "n_postreps", None) != n_postreps
+                    or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
+                    or getattr(experiment, "crn_across_budget", None) != crn_across_budget
+                    or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
+                print("Post-processing Design Point " + str(design_pt_index) + ".")
+                experiment.clear_postreps()
+                experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
+                # Save Experiment object to .pickle file.
+                file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
+                record_df_experiment_results(experiment=experiment, file_name=file_name)
+
+    def calculate_statistics(self, solve_tol=0.10, beta=0.50):
+        """
+        For each design point, calculate statistics from each macroreplication.
+            - area under estimated progress curve
+            - alpha-solve time
+
+        Arguments
+        ---------
+        solve_tol : float in (0,1]
+            relative optimality gap definining when a problem is solved
+        beta : float in (0,1)
+            quantile to compute, e.g., beta quantile
+        """
+        for design_pt_index in range(self.n_design_pts):
+            experiment = self.design[design_pt_index]
+            experiment.clear_stats()
+            experiment.compute_area_stats(compute_CIs=False)
+            experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=0.10, beta=0.50)
+            # Save Experiment object to .pickle file.
+            file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
+            record_df_experiment_results(experiment=experiment, file_name=file_name)
+
+    def print_to_csv(self, csv_filename="meta_raw_results.csv"):
+        """
+        Extract observed statistics from simulated design points.
+        Publish to .csv output file.
+
+        Argument
+        --------
+        csv_filename : string
+            name of .csv file to print output to
+        """
+        with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
+            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            # print headers
+            base_experiment = self.design[0]
+            solver_factor_names = list(base_experiment.solver.specifications.keys())
+            problem_factor_names = [] # list(base_experiment.problem.specifications.keys())
+            oracle_factor_names = list(base_experiment.problem.oracle.specifications.keys())
+            csv_writer.writerow(["DesignPt#"] + solver_factor_names + problem_factor_names + oracle_factor_names + ["MacroRep#"] + ["Area Under Progress Curve", "Solve Time"])
+            for designpt_index in range(self.n_design_pts):
+                experiment = self.design[designpt_index]
+                # parse lists of factors
+                solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
+                problem_factor_list = []
+                oracle_factor_list = [experiment.problem.oracle.factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]
+                for mrep in range(experiment.n_macroreps):
+                    # parse list of statistics
+                    statistics_list = [experiment.areas[mrep], experiment.solve_times[mrep]]
+                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + oracle_factor_list + [mrep] + statistics_list
+                    csv_writer.writerow(print_list)
+
+# Largely copied from record_df_experiment_results in wrapper_base.py
+def record_df_experiment_results(experiment, file_name):
+    """
+    Save wrapper_base.Experiment object to .pickle file.
+
+    Arguments
+    ---------
+    experiment : wrapper_base.Experiment object
+        Experiment object to pickle
+    file_name : string
+        base name of pickle file to write outputs to
+    """
+    with open("data_farming_experiments/outputs/" + file_name + ".pickle", "wb") as file:
+        pickle.dump(experiment, file, pickle.HIGHEST_PROTOCOL)
