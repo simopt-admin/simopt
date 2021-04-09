@@ -3,8 +3,9 @@ Summary
 -------
 Simulate a day's worth of sales for a newsvendor.
 """
-from base import Oracle
 import numpy as np
+
+from base import Oracle
 
 
 class CntNV(Oracle):
@@ -84,10 +85,9 @@ class CntNV(Oracle):
             "Burr_c": self.check_Burr_c,
             "Burr_k": self.check_Burr_k
         }
-        # set factors of the simulation oracle
+        # Set factors of the simulation oracle.
         super().__init__(fixed_factors)
 
-    # Check for simulatable factors
     def check_purchase_price(self):
         return self.factors["purchase_price"] > 0
 
@@ -107,7 +107,9 @@ class CntNV(Oracle):
         return self.factors["Burr_k"] > 0
 
     def check_simulatable_factors(self):
-        return self.factors["salvage_price"] < self.factors["purchase_price"] < self.factors["sales_price"]
+        return (self.factors["salvage_price"]
+                < self.factors["purchase_price"]
+                < self.factors["sales_price"])
 
     def replicate(self):
         """
@@ -119,23 +121,36 @@ class CntNV(Oracle):
             performance measures of interest
             "profit" = profit in this scenario
         """
-        # designate random number generator
+        # Designate random number generator for demand variability.
         demand_rng = self.rng_list[0]
-        # generate Burr Type XII random demand
-        demand = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)**(1 / self.factors["Burr_c"])
-        # calculate profit
-        profit = -1 * self.factors["purchase_price"] * self.factors["order_quantity"] + min(demand, self.factors["order_quantity"]) * self.factors["sales_price"] + max(0, self.factors["order_quantity"] - demand) * self.factors["salvage_price"]
-        # calculate gradient of profit w.r.t. order quantity
+        # Generate random demand according to Burr Type XII distribution.
+        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
+        #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
+        base = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)
+        exponent = (1 / self.factors["Burr_c"])
+        demand = base**exponent
+        # Calculate profit.
+        order_cost = (self.factors["purchase_price"]
+                      * self.factors["order_quantity"])
+        sales_revenue = (min(demand, self.factors["order_quantity"])
+                         * self.factors["sales_price"])
+        salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
+                           * self.factors["salvage_price"])
+        profit = sales_revenue + salvage_revenue - order_cost
+        # Calculate gradient of profit w.r.t. order quantity.
         if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = self.factors["sales_price"] - self.factors["purchase_price"]
+            grad_profit_order_quantity = (self.factors["sales_price"]
+                                          - self.factors["purchase_price"])
         elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = self.factors["salvage_price"] - self.factors["purchase_price"]
+            grad_profit_order_quantity = (self.factors["salvage_price"]
+                                          - self.factors["purchase_price"])
         else:
             grad_profit_order_quantity = np.nan
-        # compose responses
+        # Compose responses and gradients.
         responses = {"profit": profit}
-        # compose gradients
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {response_key:
+                     {factor_key: np.nan for factor_key in self.specifications}
+                     for response_key in responses
+                     }
         gradients["profit"]["order_quantity"] = grad_profit_order_quantity
-        # return responses and gradients
         return responses, gradients

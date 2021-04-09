@@ -42,7 +42,7 @@ class Solver(object):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
-        list of random-number generators used for the solver's internal purposes
+        list of RNGs used for the solver's internal purposes
 
     Arguments
     ---------
@@ -84,7 +84,7 @@ class Solver(object):
         recommended_solns : list of Solution objects
             list of solutions recommended throughout the budget
         intermediate_budgets : list of ints
-            list of intermediate budgets expended when changing recommended solutions
+            list of intermediate budgets when recommended solutions changes
         """
         raise NotImplementedError
 
@@ -140,7 +140,7 @@ class Solver(object):
     def prepare_sim_new_soln(self, problem, crn_across_solns):
         """
         Manipulate a problem's oracle's rngs depending on whether
-        using CRN acorss solutions.
+        using CRN across solutions.
 
         Arguments
         ---------
@@ -199,7 +199,7 @@ class Problem(object):
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
-        list of random number generators used to generate a random initial solution
+        list of RNGs used to generate a random initial solution
         or a random problem instance
     """
     def __init__(self, oracle_fixed_factors):
@@ -313,7 +313,8 @@ class Problem(object):
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
         """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+        Compute deterministic components of stochastic constraints
+        for a solution `x`.
 
         Arguments
         ---------
@@ -323,9 +324,11 @@ class Problem(object):
         Returns
         -------
         det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
+            vector of deterministic components of stochastic
+            constraints
         det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
+            vector of gradients of deterministic components of
+            stochastic constraints
         """
         det_stoch_constraints = (0,) * self.n_stochastic_constraints
         det_stoch_constraints_gradients = tuple([(0,) * self.dim for _ in range(self.n_stochastic_constraints)])
@@ -333,7 +336,8 @@ class Problem(object):
 
     def check_deterministic_constraints(self, x):
         """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        Check if a solution `x` satisfies the problem's deterministic
+        constraints.
 
         Arguments
         ---------
@@ -349,7 +353,7 @@ class Problem(object):
 
     def get_random_solution(self, rand_sol_rng):
         """
-        Generate a random solution, to be used for starting or restarting solvers.
+        Generate a random solution for starting or restarting solvers.
 
         Arguments
         ---------

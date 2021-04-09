@@ -3,7 +3,6 @@ Summary
 -------
 Minimize the mean sojourn time of an M/M/1 queue.
 """
-import numpy as np
 from base import Problem
 from oracles.mm1queue import MM1Queue
 
@@ -49,7 +48,7 @@ class MM1MinMeanSojournTime(Problem):
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
-        list of random number generators used to generate a random initial solution
+        list of RNGs used to generate a random initial solution
         or a random problem instance
 
     Arguments
@@ -80,7 +79,7 @@ class MM1MinMeanSojournTime(Problem):
             "people": 200
         }
         super().__init__(oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults
+        # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = MM1Queue(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
@@ -154,8 +153,6 @@ class MM1MinMeanSojournTime(Problem):
             vector of LHSs of stochastic constraint
         """
         stoch_constraints = (response_dict["frac_cust_wait"],)
-        # print(response_dict["frac_cust_wait"])
-        # stoch_constraints = tuple([-1.0*term for term in response_dict["frac_cust_wait"]])
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
@@ -180,7 +177,8 @@ class MM1MinMeanSojournTime(Problem):
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
         """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+        Compute deterministic components of stochastic constraints
+        for a solution `x`.
 
         Arguments
         ---------
@@ -190,9 +188,11 @@ class MM1MinMeanSojournTime(Problem):
         Returns
         -------
         det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
+            vector of deterministic components of stochastic
+            constraints
         det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
+            vector of gradients of deterministic components of
+            stochastic constraints
         """
         det_stoch_constraints = (0.5,)
         det_stoch_constraints_gradients = ((0,),)
@@ -200,7 +200,8 @@ class MM1MinMeanSojournTime(Problem):
 
     def check_deterministic_constraints(self, x):
         """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        Check if a solution `x` satisfies the problem's deterministic
+        constraints.
 
         Arguments
         ---------
@@ -216,7 +217,7 @@ class MM1MinMeanSojournTime(Problem):
 
     def get_random_solution(self, rand_sol_rng):
         """
-        Generate a random solution, to be used for starting or restarting solvers.
+        Generate a random solution for starting or restarting solvers.
 
         Arguments
         ---------
