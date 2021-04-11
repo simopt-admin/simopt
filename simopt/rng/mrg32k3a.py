@@ -311,13 +311,13 @@ class MRG32k3a(random.Random):
         z = bsm(u)
         return mu + sigma*z
     
-    def poissonvariate(self, alpha):
+    def poissonvariate(self, lmbda):
         """
         Generate a poisson random variate.
 
         Arguments
         ---------
-        lambda : float
+        lmbda : float
             expected value of the poisson distribution from which to
             generate
 
@@ -326,17 +326,17 @@ class MRG32k3a(random.Random):
         float
             a poisson random variate from the specified distribution
         """
-        if alpha < 35:
+        if lmbda < 35:
             n = 0
             p = self.random()
-            threshold = exp(-alpha)
+            threshold = exp(-lmbda)
             while p >= threshold:
                 u = self.random()
                 p = p * u
-                n = n + 1     
+                n = n + 1
         else:
             z = self.normalvariate()
-            n = max(ceil(alpha + sqrt(alpha)*z - 0.5), 0)
+            n = max(ceil(lmbda + sqrt(lmbda)*z - 0.5), 0)
         return n
 
     def advance_stream(self):

@@ -6,10 +6,11 @@ Simulate multiple periods worth of sales for a (s,S) inventory problem with cont
 from base import Oracle
 import numpy as np
 
+
 class SSCont(Oracle):
     """
     An oracle that simulates multiple periods worth of sales for a (s,S) inventory problem with continuous inventory,
-    exponential demand distribution, and poisson lead time distribution. 
+    exponential demand distribution, and poisson lead time distribution.
     Returns the average cost per period after accounting for fixed and variable order costs, order rate, stockout rate, fraction of demand
     met with inventory on hand, average amount backordered given a stockout occured, and average amount ordered given an order occured.
 
@@ -57,9 +58,9 @@ class SSCont(Oracle):
                 "datatype": float,
                 "default": 1.0
             },
-            "fixed_cost":{
+            "fixed_cost": {
                 "description": "Order fixed cost",
-                "datatype": float, 
+                "datatype": float,
                 "default": 36.0
             },
             "variable_cost": {
@@ -71,7 +72,7 @@ class SSCont(Oracle):
                 "description": "Inventory threshold for placing order",
                 "datatype": float,
                 "default": 1000.0
-            }, 
+            },
             "S": {
                 "description": "Max inventory",
                 "datatype": float,
@@ -120,15 +121,15 @@ class SSCont(Oracle):
 
     def check_s(self):
         return self.factors["s"] > 0
-    
+
     def check_S(self):
         return self.factors["S"] > 0
-    
+
     def check_n_days(self):
-        return self.factors["n_days"] >= 1 
-    
+        return self.factors["n_days"] >= 1
+
     def check_warmup(self):
-        return self.factors["warmup"] >= 0 
+        return self.factors["warmup"] >= 0
 
     def check_simulatable_factors(self):
         return self.factors["s"] < self.factors["S"]
@@ -151,13 +152,12 @@ class SSCont(Oracle):
         # designate random number generators
         demand_rng = self.rng_list[0]
         lead_rng = self.rng_list[1]
-        # generate exponential random demands and Poisson random lead times
+        # generate exponential random demands
         demands = [demand_rng.expovariate(1/self.factors["demand_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
-        leads = [lead_rng.poissonvariate(self.factors["lead_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
-       
+
         # starting inventory each period
         start_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        start_inv[0] = self.factors["s"] # what to start with?
+        start_inv[0] = self.factors["s"]  # what to start with?
         # ending inventory each period
         end_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
         # amount of product to be received for each period
@@ -168,46 +168,43 @@ class SSCont(Oracle):
         orders_placed = np.zeros(self.factors["n_days"] + self.factors["warmup"])
         # amount of product outstanding each period
         orders_outstanding = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        # cost each period
-        cost = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        # keeping track of how many orders have been made
-        num_ord = 0
-    
+
         # run simulation
         for i in range(self.factors["n_days"] + self.factors["warmup"]):
-        
+
             # calculate end of period inventory on hand and inventory position
             end_inv[i] = start_inv[i] - demands[i]
             inv_pos[i] = end_inv[i] + orders_outstanding[i]
-        
+
             # place orders, keep track of outstanding orders and when they will be received
-            orders_placed[i] = np.max(((inv_pos[i] < self.factors["s"])*(self.factors["S"]-inv_pos[i])),0)
-            if orders_placed[i]>0:
-                for j in range(i+1,leads[num_ord]+1):
-                    if j<=self.factors["n_days"] + self.factors["warmup"]:  
+            orders_placed[i] = np.max(((inv_pos[i] < self.factors["s"])*(self.factors["S"]-inv_pos[i])), 0)
+            if orders_placed[i] > 0:
+                lead = lead_rng.poissonvariate(self.factors["lead_mean"])
+                for j in range(i+1, lead+1):
+                    if j <= self.factors["n_days"] + self.factors["warmup"]:
                         orders_outstanding[j] = orders_outstanding[j] + orders_placed[i]
-                if i + leads[num_ord] + 1 < self.factors["n_days"] + self.factors["warmup"]:
-                    orders_received[i+leads[num_ord]+1] = orders_received[i+leads[num_ord]+1] + orders_placed[i]
-                num_ord = num_ord + 1
-        
+                if i + lead + 1 < self.factors["n_days"] + self.factors["warmup"]:
+                    orders_received[i+lead+1] = orders_received[i+lead+1] + orders_placed[i]
+
             # calculate starting inventory for next period
             if i < self.factors["n_days"] + self.factors["warmup"] - 1:
                 start_inv[i+1] = end_inv[i] + orders_received[i+1]
-        
+
         # calculate responses from simulation data
-        order_rate = np.mean(orders_placed[self.factors["warmup"]:]>0)
-        stockout_rate = np.mean(end_inv[self.factors["warmup"]:]<0)
-        cost_mean = np.mean(self.factors["fixed_cost"]*(orders_placed[self.factors["warmup"]:]>0) +
-                            self.factors["variable_cost"]*orders_placed[self.factors["warmup"]:] + 
-                            self.factors["holding_cost"]*end_inv[self.factors["warmup"]:]*[end_inv[self.factors["warmup"]:]>0])
+        order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
+        stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
+        cost_mean = np.mean(self.factors["fixed_cost"]*(orders_placed[self.factors["warmup"]:] > 0) +
+                            self.factors["variable_cost"]*orders_placed[self.factors["warmup"]:] +
+                            self.factors["holding_cost"]*end_inv[self.factors["warmup"]:]*[end_inv[self.factors["warmup"]:] > 0])
         on_time_rate = 1 + np.sum(end_inv[self.factors["warmup"]:]
-                               [np.where(end_inv[self.factors["warmup"]:]<0)])/np.sum(demands[self.factors["warmup"]:])
-        avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:]<0)])
-        avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:]>0)]) 
-            
+                                  [np.where(end_inv[self.factors["warmup"]:] < 0)])/np.sum(demands[self.factors["warmup"]:])
+        avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:] < 0)])
+        avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
+
         # compose responses
         responses = {"cost_mean": cost_mean, "on_time_rate": on_time_rate, "order_rate": order_rate, "stockout_rate": stockout_rate,
                      "avg_stockout": avg_stockout, "avg_order": avg_order}
-        
-        # return responses
-        return responses
+        # compose empty gradients
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+
+        return responses, gradients
