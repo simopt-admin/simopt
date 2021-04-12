@@ -1,33 +1,34 @@
 import unittest
 from rng.mrg32k3a import *
-#from mrg32k3a import MRG32k3a
-#from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
-#from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n
+# from mrg32k3a import MRG32k3a
+# from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
+# from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n
 
 A1p127 = [[2427906178, 3580155704, 949770784],
-    [226153695, 1230515664, 3580155704],
-    [1988835001,  986791581, 1230515664]
-]
+          [226153695, 1230515664, 3580155704],
+          [1988835001,  986791581, 1230515664]
+          ]
 
 A2p127 = [[1464411153,  277697599, 1610723613],
-    [32183930, 1464411153.0, 1022607788],
-    [2824425944, 32183930.0, 2093834863]
-]
+          [32183930, 1464411153.0, 1022607788],
+          [2824425944, 32183930.0, 2093834863]
+          ]
 
 A1p76 = [[82758667, 1871391091, 4127413238],
-    [3672831523, 69195019, 1871391091],
-    [3672091415, 3528743235, 69195019]
-]
+         [3672831523, 69195019, 1871391091],
+         [3672091415, 3528743235, 69195019]
+         ]
 
 A2p76 = [[1511326704, 3759209742, 1610795712],
-    [4292754251, 1511326704, 3889917532],
-    [3859662829, 4292754251, 3708466080],
-]
+         [4292754251, 1511326704, 3889917532],
+         [3859662829, 4292754251, 3708466080],
+         ]
 
 seed = (12345, 12345, 12345, 12345, 12345, 12345)
 
+
 class TestMRG32k3a(unittest.TestCase):
-    
+
     def test_A1p127(self):
         self.assertEqual(mat33_power_mod(A1p0, 2**127, mrgm1), A1p127)
 
@@ -87,13 +88,13 @@ class TestMRG32k3a(unittest.TestCase):
         rng = MRG32k3a()
         for _ in range(99):
             rng.random()
-        st1 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A1p0, 99, mrgm1), seed[0:3]),mrgm1)
-        st2 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A2p0, 99, mrgm2), seed[3:6]),mrgm2)
+        st1 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A1p0, 99, mrgm1), seed[0:3]), mrgm1)
+        st2 = mat31_mod(mat33_mat31_mult(mat33_power_mod(A2p0, 99, mrgm2), seed[3:6]), mrgm2)
         self.assertSequenceEqual(rng._current_state, st1 + st2)
 
     def test_advance_stream(self):
-        rng = MRG32k3a()
-        rng.advance_stream()        
+        rng = MRG32k3a(s_ss_sss_index=[0, 1, 1])
+        rng.advance_stream()
         rng2 = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, rng._current_state)
@@ -102,7 +103,7 @@ class TestMRG32k3a(unittest.TestCase):
         self.assertEqual(rng.s_ss_sss_index, [1, 0, 0])
 
     def test_advance_substream(self):
-        rng = MRG32k3a()
+        rng = MRG32k3a(s_ss_sss_index=[0, 0, 1])
         rng.advance_substream()
         rng2 = MRG32k3a(s_ss_sss_index=[0, 1, 0])
         self.assertEqual(rng._current_state, rng2._current_state)
@@ -113,7 +114,7 @@ class TestMRG32k3a(unittest.TestCase):
 
     def test_advance_subsubstream(self):
         rng = MRG32k3a()
-        rng.advance_subsubstream()        
+        rng.advance_subsubstream()
         rng2 = MRG32k3a(s_ss_sss_index=[0, 0, 1])
         self.assertEqual(rng._current_state, rng2._current_state)
         self.assertEqual(rng.stream_start, seed)

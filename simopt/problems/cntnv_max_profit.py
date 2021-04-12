@@ -1,13 +1,13 @@
 """
 Summary
 -------
-Minimize the mean sojourn time of an M/M/1 queue.
+Maximize the expected profit for the continuous newsvendor problem.
 """
 from base import Problem
-from oracles.mm1queue import MM1Queue
+from oracles.cntnv import CntNV
 
 
-class MM1MinMeanSojournTime(Problem):
+class CntNVMaxProfit(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -61,26 +61,29 @@ class MM1MinMeanSojournTime(Problem):
     base.Problem
     """
     def __init__(self, oracle_fixed_factors={}):
-        self.name = "MM1-1"
+        self.name = "CNTNEWS-1"
         self.dim = 1
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.minmax = (-1,)
+        self.n_stochastic_constraints = 0
+        self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.budget = 100
+        self.budget = 1000
         self.optimal_bound = 0
-        self.optimal_solution = None
-        self.initial_solution = (5,)
-        self.ref_optimal_solution = (2.75,)
+        self.optimal_solution = (0.1878,)
+        self.initial_solution = (0,)
+        self.ref_optimal_solution = (0.1878,)
         self.oracle_default_factors = {
-            "warmup": 50,
-            "people": 200
-        }
+            "purchase_price": 5.0,
+            "sales_price": 9.0,
+            "salvage_price": 1.0,
+            "Burr_c": 2.0,
+            "Burr_k": 20.0
+            }
         super().__init__(oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = MM1Queue(self.oracle_fixed_factors)
+        self.oracle = CntNV(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -97,7 +100,7 @@ class MM1MinMeanSojournTime(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "mu": vector[0]
+            "order_quantity": vector[0]
         }
         return factor_dict
 
@@ -116,7 +119,7 @@ class MM1MinMeanSojournTime(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["mu"],)
+        vector = (factor_dict["order_quantity"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -134,7 +137,7 @@ class MM1MinMeanSojournTime(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["avg_sojourn_time"],)
+        objectives = (response_dict["profit"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -152,7 +155,7 @@ class MM1MinMeanSojournTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (response_dict["frac_cust_wait"],)
+        stoch_constraints = None
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
@@ -171,8 +174,8 @@ class MM1MinMeanSojournTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0.1 * (x[0]**2),)
-        det_objectives_gradients = ((0.2 * x[0],),)
+        det_objectives = (0,)
+        det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -188,14 +191,13 @@ class MM1MinMeanSojournTime(Problem):
         Returns
         -------
         det_stoch_constraints : tuple
-            vector of deterministic components of stochastic
-            constraints
+            vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = (0.5,)
-        det_stoch_constraints_gradients = ((0,),)
+        det_stoch_constraints = None
+        det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
@@ -229,6 +231,6 @@ class MM1MinMeanSojournTime(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1/3) r.v.
-        x = (rand_sol_rng.expovariate(1 / 3),)
+        # Generate an Exponential(rate = 1) r.v.
+        x = (rand_sol_rng.expovariate(1),)
         return x

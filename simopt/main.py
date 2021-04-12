@@ -7,24 +7,24 @@ from base import Solution
 
 fixed_factors = {
     "lambda": 1.0
-    #"lambda": 1.5,
-    #"warmup": 20,
-    #"people": 50
+    # "lambda": 1.5,
+    # "warmup": 20,
+    # "people": 50
 }
 myproblem = MM1MinMeanSojournTime(fixed_factors)
-#print(myProblem.dim)
+# print(myProblem.dim)
 print(myproblem.oracle.factors)
 
 rng_list = [MRG32k3a() for _ in range(myproblem.oracle.n_rngs)]
-#print(rng_list)
+# print(rng_list)
 myproblem.oracle.attach_rngs(rng_list)
-#print(myproblem.oracle.rng_list)
+# print(myproblem.oracle.rng_list)
 
 mysoln = Solution(x=[3.0], problem=myproblem)
 print(mysoln.det_objectives)
 print(mysoln.det_objectives_gradients)
-#print(mysoln.x)
-#print(mysoln.decision_factors)
+# print(mysoln.x)
+# print(mysoln.decision_factors)
 
 myproblem.oracle.factors.update(mysoln.decision_factors)
 responses, gradients = myproblem.oracle.replicate()
@@ -35,18 +35,18 @@ print('The gradients are {}'.format(gradients))
 for rng in myproblem.oracle.rng_list:
     rng.reset_substream()
 
-#myproblem.simulate(mysoln, m=1)
-#myproblem.simulate(mysoln, m=1)
-#myproblem.simulate(mysoln, m=1)
-#print(myproblem.oracle.factors) 
+# myproblem.simulate(mysoln, m=1)
+# myproblem.simulate(mysoln, m=1)
+# myproblem.simulate(mysoln, m=1)
+# print(myproblem.oracle.factors)
 myproblem.simulate(mysoln, m=3)
-#print(myproblem.oracle.factors) 
+# print(myproblem.oracle.factors)
 
 # all_resp = [True, True]
 # is_obj = [True, False]
 
 # print('\nFor a batch of 3 replications:\n')
-#print('The responses are {}'.format(mysoln.responses))
+# print('The responses are {}'.format(mysoln.responses))
 # print('The mean responses are {}'.format(mysoln.response_mean(which=all_resp)))
 # print('The first mean response is {}'.format(mysoln.response_mean(which=is_obj)))
 # print('The variances of the responses are {}'.format(mysoln.response_var(which=all_resp)))
@@ -56,7 +56,7 @@ myproblem.simulate(mysoln, m=3)
 # print('The covariances of the responses are {}'.format(mysoln.response_cov(which=all_resp)))
 # print('The variance of the first response is (again) {}'.format(mysoln.response_cov(which=is_obj)))
 # print('')
-#print('The gradients are {}'.format(mysoln.gradients))
+# print('The gradients are {}'.format(mysoln.gradients))
 # print('The mean of the first gradient is {}'.format(mysoln.gradient_mean(which=is_obj)))
 # print('The variance of the first gradients is {}'.format(mysoln.gradient_var(which=is_obj)))
 # print('The standard error of the first gradient is {}'.format(mysoln.gradient_std_error(which=is_obj)))

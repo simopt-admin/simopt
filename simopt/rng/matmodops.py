@@ -14,6 +14,7 @@ mat33_mat33_mod
 mat33_power_mod
 """
 
+
 def mat33_mat31_mult(A, b):
     """
     Multiply a 3x3 matrix with a 3x1 matrix.
@@ -33,13 +34,14 @@ def mat33_mat31_mult(A, b):
     res = [0, 0, 0]
     r3 = range(3)
     for i in r3:
-        res[i] = sum([A[i][j]*b[j] for j in r3])
+        res[i] = sum([A[i][j] * b[j] for j in r3])
     return res
+
 
 def mat33_mat33_mult(A, B):
     """
     Multiply a 3x3 matrix with a 3x3 matrix.
-    
+
     Arguments
     ---------
     A : list of list of float
@@ -53,14 +55,15 @@ def mat33_mat33_mult(A, B):
         3x3 matrix
     """
     res = [[0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-    ]
+           [0, 0, 0],
+           [0, 0, 0]
+           ]
     r3 = range(3)
     for i in r3:
         for j in r3:
-            res[i][j] = sum([A[i][k]*B[k][j] for k in r3])
+            res[i][j] = sum([A[i][k] * B[k][j] for k in r3])
     return res
+
 
 def mat31_mod(b, m):
     """
@@ -80,11 +83,12 @@ def mat31_mod(b, m):
     """
     res = [0, 0, 0]
     for i in range(3):
-        res[i] = int(b[i] - int(b[i]/m)*m)
+        res[i] = int(b[i] - int(b[i] / m) * m)
         # if negative, add back modulus m
         if res[i] < 0:
             res[i] += m
     return res
+
 
 def mat33_mod(A, m):
     """
@@ -103,17 +107,18 @@ def mat33_mod(A, m):
         3x3 matrix
     """
     res = [[0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-    ]
+           [0, 0, 0],
+           [0, 0, 0]
+           ]
     r3 = range(3)
     for i in r3:
         for j in r3:
-            res[i][j] = int(A[i][j] - int(A[i][j]/m)*m)
+            res[i][j] = int(A[i][j] - int(A[i][j] / m) * m)
             # if negative, add back modulus m
             if res[i][j] < 0:
                 res[i][j] += m
     return res
+
 
 def mat33_mat33_mod(A, B, m):
     """
@@ -137,6 +142,7 @@ def mat33_mat33_mod(A, B, m):
     res = mat33_mod(C, m)
     return res
 
+
 def mat33_power_mod(A, j, m):
     """
     Compute moduli of a 3x3 matrix power.
@@ -157,13 +163,13 @@ def mat33_power_mod(A, j, m):
         3x3 matrix
     """
     B = [[1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1]
-    ]
+         [0, 1, 0],
+         [0, 0, 1]
+         ]
     while j > 0:
         if (j % 2 == 1):
             B = mat33_mat33_mod(A, B, m)
         A = mat33_mat33_mod(A, A, m)
-        j = int(j/2)
+        j = int(j / 2)
     res = B
     return res
