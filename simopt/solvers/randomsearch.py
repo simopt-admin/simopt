@@ -113,7 +113,4 @@ class RandomSearch(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-        # At final budget, record best solution.
-        recommended_solns.append(best_solution)
-        intermediate_budgets.append(problem.budget)
         return recommended_solns, intermediate_budgets

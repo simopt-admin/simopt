@@ -184,7 +184,7 @@ class Problem(object):
         indicates if gradient of objective function is available
     initial_solution : tuple
         default initial solution from which solvers start
-    budget : int
+    budget : int > 0
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
