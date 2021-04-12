@@ -143,6 +143,8 @@ class Experiment(object):
             self.problem.oracle.attach_rngs(oracle_rngs)
             # Run the solver on the problem.
             recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem, crn_across_solns=crn_across_solns)
+            # Trim solutions recommended after final budget
+            recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
             # Extract decision-variable vectors (x) from recommended solutions.
             # Record recommended solutions and intermediate budgets.
             self.all_recommended_xs.append([solution.x for solution in recommended_solns])
@@ -654,6 +656,33 @@ class Experiment(object):
                 pass
 
 
+def trim_solver_results(problem, recommended_solns, intermediate_budgets):
+    """
+    Trim solutions recommended by solver after problem's max budget.
+
+    Arguments
+    ---------
+    problem : base.Problem object
+        Problem object on which the solver was run
+    recommended_solutions : list of base.Solution objects
+        solutions recommended by the solver
+    intermediate_budgets : list of ints >= 0
+        intermediate budgets at which solver recommended different solutions
+    """
+    # Remove solutions corresponding to intermediate budgets exceeding max budget.
+    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.budget]
+    for invalid_idx in sorted(invalid_idxs, reverse=True): 
+        del recommended_solns[invalid_idx]
+        del intermediate_budgets[invalid_idx]
+    # If no solution is recommended at the final budget,
+    # re-recommended the latest recommended solution.
+    # Necessary for clean plotting of progress curves.
+    if intermediate_budgets[-1] < problem.budget:
+        recommended_solns.append(recommended_solns[-1])
+        intermediate_budgets.append(problem.budget)
+    return recommended_solns, intermediate_budgets
+
+
 def record_experiment_results(experiment, file_name):
     """
     Save wrapper_base.Experiment object to .pickle file.
@@ -947,7 +976,7 @@ class MetaExperiment(object):
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has been run in this way before,
+                # If the problem-solver pair has not been run in this way before,
                 # run it now.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps
                         or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
@@ -977,7 +1006,7 @@ class MetaExperiment(object):
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has been post-processed in this way before,
+                # If the problem-solver pair has not been post-processed in this way before,
                 # post-process it now.
                 if (getattr(experiment, "n_postreps", None) != n_postreps
                         or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
