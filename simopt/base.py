@@ -630,13 +630,15 @@ class Solution(object):
         Recompute summary statistics of the solution.
         """
         self.objectives_mean = np.mean(self.objectives[:self.n_reps], axis=0)
-        self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
-        self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
+        if self.n_reps > 1:
+            self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
+            self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
         self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
-        self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
-        self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+        if self.n_reps > 1:
+            self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
+            self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
         if self.stoch_constraints is not None:
             self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
             self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)

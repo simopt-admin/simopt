@@ -133,8 +133,10 @@ class Experiment(object):
         #                                         macroreplications
         rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # unused
         rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])  # unused
-        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
+        rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
+        # self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
         rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])  # unused
+        self.solver.attach_rngs([rng1, rng2, rng3])
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):

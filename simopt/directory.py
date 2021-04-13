@@ -13,6 +13,7 @@ oracle_directory : dictionary
 
 # import solvers
 from solvers.randomsearch import RandomSearch
+from solvers.simannealing import SANE
 
 # import problems
 from problems.cntnv_max_profit import CntNVMaxProfit
@@ -23,7 +24,8 @@ from oracles.cntnv import CntNV
 from oracles.mm1queue import MM1Queue
 
 solver_directory = {
-    "RNDSRCH": RandomSearch
+    "RNDSRCH": RandomSearch,
+    "SANE": SANE,
 }
 
 problem_directory = {

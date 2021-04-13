@@ -88,7 +88,7 @@ class RandomSearch(Solver):
         intermediate_budgets = []
         expended_budget = 0
         # Designate random number generator for random sampling.
-        find_next_soln_rng = self.rng_list[0]
+        find_next_soln_rng = self.rng_list[1]
         # Sequentially generate random solutions and simulate them.
         while expended_budget < problem.budget:
             if expended_budget == 0:
