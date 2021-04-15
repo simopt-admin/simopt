@@ -57,7 +57,7 @@ class SANE(Solver):
             "sampling_variance": {
                 "description": "Variance of difference in objective values",
                 "datatype": float,
-                "default": 10.0
+                "default": 100.0
             },
             "init_temp": {
                 "description": "Initial temperature",
@@ -111,13 +111,14 @@ class SANE(Solver):
         intermediate_budgets = []
         expended_budget = 0
         temperature = self.factors["init_temp"]
+        # self.rng_list[0] is unused.
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Designate random number generator for switching to new solutions.
         switch_soln_rng = self.rng_list[2]
-        # Sequentially generate random neighboring solutions,
-        # assess their quality, and switch based on estimated differences
-        # and current temperature.
+        # Sequentially generate a random neighboring solution, assess its
+        # quality, and switch based on estimated differences and current 
+        # temperature.
         while expended_budget < problem.budget:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
@@ -126,6 +127,7 @@ class SANE(Solver):
                 recommended_solns.append(current_solution)
                 intermediate_budgets.append(expended_budget)
             if temperature >= 1./np.sqrt(8.0/(np.pi*self.factors["sampling_variance"])):
+                #print("First Case")
                 # Simulate one replication of current solution.
                 # Fresh sampling, so create new solution objects.
                 # TO DO: Fix prepare_sim_new_soln to allow for resampling a visited solution.
@@ -151,10 +153,13 @@ class SANE(Solver):
                 # Switch to new solution with probability prob_switch
                 coin_flip = switch_soln_rng.random()
                 if coin_flip < prob_switch:
+                    #print("Switched")
                     recommended_solns.append(new_solution)
                     intermediate_budgets.append(expended_budget)
                     current_x = new_x
             else:
+                #print("Second Case")
+                #print(expended_budget)
                 # Create a fresh solution object for current solution
                 current_solution = Solution(current_x, problem)
                 # Identify new neighboring solution to simulate.
@@ -172,15 +177,17 @@ class SANE(Solver):
                     # self.prepare_sim_new_soln(problem, crn_across_solns)
                     problem.simulate(new_solution, m=1)
                     expended_budget += 1
-                    sample_size += sample_size
+                    sample_size += 1
                     # Estimate difference in objective value.
                     delta_hat = problem.minmax * (current_solution.objectives_mean - new_solution.objectives_mean)
                     prob_error = ss.norm.cdf(-np.abs(delta_hat)*np.sqrt(sample_size)/np.sqrt(self.factors["sampling_variance"]))
                     prob_glauber = 1.0/(1.0 + np.exp(np.abs(delta_hat)/temperature))
+                #print(expended_budget)
                 # Accept new solution.
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
                 current_x = new_x
             # Update temperature according to cooling schedule.
             temperature = self.factors["init_temp"]*self.factors["cooling_coeff"]**expended_budget
+        print("Finished.")    
         return recommended_solns, intermediate_budgets
