@@ -315,7 +315,7 @@ class Experiment(object):
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         """
-        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol)
+        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol, beta=0.2, plot_type="single")
         # Compute solve times. Ignore quantile calculations.
         self.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
         # Construct matrix showing when macroreplications are solved.
@@ -771,7 +771,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
+def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_type):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -781,15 +781,33 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
         name of solver
     problem_name : string
         name of problem
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    beta : float in (0,1)
+        quantile to compute, e.g., beta quantile
+    plot_type : string
+        type of plot
+            - "single"
+            - "average"
+            - "profile"
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks.
     xlabel = "Fraction of Budget"
-    ylabel = "Fraction of Macroreplications Solved"
     xlim = (0, 1)
-    ylim = (0, 1)
-    title = solver_name + " on " + problem_name + "\n"
-    title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
+    ylim = (0, 1.05)
+    if plot_type == "single":
+        ylabel = "Fraction of Macroreplications Solved"
+        title = solver_name + " on " + problem_name + "\n"
+        title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
+    elif plot_type == "average":
+        ylabel = "Average Solve Percentage"
+        title = "Average Solvability Profile for " + solver_name + "\n"
+        title = title + str(round(solve_tol, 2)) + "-Solvability"
+    elif plot_type == "profile":
+        ylabel = "Proportion of Problems Solved"
+        title = "Solvability Profile for " + solver_name + "\n"
+        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"    
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -1062,23 +1080,28 @@ class MetaExperiment(object):
                     plt.scatter(x=area_means, y=area_std_devs, c="blue")
                 save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
 
-    def plot_solvability_profiles(self, solve_tol=0.1):
+    def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5):
         """
         Plot the solvability profiles for each solver-problem pair.
+        Two types of plots:
+            1) average solvability curve
+            2) solvability profile
 
         Arguments
         ---------
         solve_tol : float in (0,1]
             relative optimality gap definining when a problem is solved
+        beta : float in (0,1)
+            quantile to compute, e.g., beta quantile
         """
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol)
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=None, plot_type="average")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # Compute solve times. Ignore quantile calculations.
-                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
+                # Compute solve times.
+                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol, beta=beta)
                 # Construct matrix showing when macroreplications are solved.
                 solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
                 # Pass over progress curves to find first solve_tol crossing time.
@@ -1100,7 +1123,18 @@ class MetaExperiment(object):
             plt.step(solver_unique_frac_budgets, solvability_profile, 'b-', where='post')
         plt.legend(labels=self.solver_names, loc="lower right")
         # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability", normalize=True)
+        save_plot(solver_name="SOLVERSET", problem_name="Average", plot_type="solvability", normalize=True)
+
+        # Plot solvability profiles for each solver
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=beta, plot_type="profile")
+        for solver_index in range(self.n_solvers):
+            solvability_quantiles = []
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                solvability_quantiles.append(experiment.solve_time_quantile)
+            plt.step(np.sort(solvability_quantiles + [0,1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
+        plt.legend(labels=self.solver_names, loc="lower right")
+        save_plot(solver_name="SOLVERSET", problem_name="Profile", plot_type="solvability", normalize=True)
 
 
 def stylize_area_plot(solver_name):
