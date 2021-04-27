@@ -103,7 +103,8 @@ class RandomSearch(Solver):
                 new_x = problem.get_random_solution(find_next_soln_rng)
                 new_solution = Solution(new_x, problem)
             # Manipulate RNGs, simulate new solution, and update budget.
-            self.prepare_sim_new_soln(problem, crn_across_solns)
+            self.prepare_sim_new_soln(new_solution, problem, crn_across_solns)
+            ##print(new_solution.rng_list[0].s_ss_sss_index)
             problem.simulate(new_solution, self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.

@@ -140,9 +140,10 @@ class Experiment(object):
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):
-            # Create, initialize, and attach RNGs for oracle.
-            oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
-            self.problem.oracle.attach_rngs(oracle_rngs)
+            # Create, initialize, and attach RNGs used for simulating solutions.
+            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
+            self.solver.solution_progenitor_rngs = progenitor_rngs
+            # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
             recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem, crn_across_solns=crn_across_solns)
             # Trim solutions recommended after final budget
@@ -177,24 +178,26 @@ class Experiment(object):
         self.all_reevaluated_solns = []
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
-        oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
-        self.problem.oracle.attach_rngs(oracle_rngs)
+        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
         # Simulate common initial solution x0.
         x0 = self.problem.initial_solution
         self.initial_soln = Solution(x0, self.problem)
+        self.initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
         if crn_across_budget is True:
             # Reset each rng to start of its current substream.
-            for rng in self.problem.oracle.rng_list:
+            for rng in baseline_rngs:
                 rng.reset_substream()
         # Simulate "reference" optimal solution x*.
         xstar = self.problem.ref_optimal_solution
         self.ref_opt_soln = Solution(xstar, self.problem)
+        self.ref_opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
-        if crn_across_budget is True:
-            # Reset each rng to start of its current substream.
-            for rng in self.problem.oracle.rng_list:
-                rng.reset_substream()
+        # Advance each rng to start of
+        #     substream = current substream + # of oracle RNGs.
+        for rng in baseline_rngs:
+            for _ in range(self.problem.oracle.n_rngs):
+                rng.advance_substream()
         # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
             evaluated_solns = []
@@ -206,23 +209,24 @@ class Experiment(object):
                     evaluated_solns.append(self.ref_opt_soln)
                 else:
                     fresh_soln = Solution(x, self.problem)
+                    fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
                     if crn_across_budget is True:
                         # Reset each rng to start of its current substream.
-                        for rng in self.problem.oracle.rng_list:
+                        for rng in baseline_rngs:
                             rng.reset_substream()
             # Record sequence of reevaluated solutions.
             self.all_reevaluated_solns.append(evaluated_solns)
             if crn_across_macroreps is False:
                 # Advance each rng to start of
                 #     substream = current substream + # of oracle RNGs.
-                for rng in self.problem.oracle.rng_list:
+                for rng in baseline_rngs:
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
             else:
                 # Reset each rng to start of its current substream.
-                for rng in self.problem.oracle.rng_list:
+                for rng in baseline_rngs:
                     rng.reset_substream()
         # Preprocessing in anticipation of plotting.
         # Extract all unique budget points.
@@ -673,7 +677,7 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
     invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.budget]
-    for invalid_idx in sorted(invalid_idxs, reverse=True): 
+    for invalid_idx in sorted(invalid_idxs, reverse=True):
         del recommended_solns[invalid_idx]
         del intermediate_budgets[invalid_idx]
     # If no solution is recommended at the final budget,
@@ -807,7 +811,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_ty
     elif plot_type == "profile":
         ylabel = "Proportion of Problems Solved"
         title = "Solvability Profile for " + solver_name + "\n"
-        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"    
+        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -1132,7 +1136,7 @@ class MetaExperiment(object):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 solvability_quantiles.append(experiment.solve_time_quantile)
-            plt.step(np.sort(solvability_quantiles + [0,1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
+            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
         plt.legend(labels=self.solver_names, loc="lower right")
         save_plot(solver_name="SOLVERSET", problem_name="Profile", plot_type="solvability", normalize=True)
 
