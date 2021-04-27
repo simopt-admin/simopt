@@ -22,6 +22,8 @@ start_fixed_s_ss_sss : method
 import random
 from math import log
 import functools
+from copy import deepcopy
+
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
 # constants used in mrg32k3a and in substream generation
@@ -218,6 +220,14 @@ class MRG32k3a(random.Random):
         if s_ss_sss_index is None:
             s_ss_sss_index = [0, 0, 0]
         self.start_fixed_s_ss_sss(s_ss_sss_index)
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     def seed(self, new_state):
         """

@@ -11,8 +11,8 @@ from wrapper_base import Experiment, record_experiment_results, read_experiment_
 
 # myexperiment = Experiment(solver_name="RNDSRCH", problem_name="MM1-1")
 myexperiment = Experiment(solver_name="RNDSRCH", problem_name="CNTNEWS-1")
-myexperiment.run(n_macroreps=3, crn_across_solns=True)
-myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
+myexperiment.run(n_macroreps=3, crn_across_solns=False)
+#myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 
 #myexperiment2 = read_experiment_results(file_name="RNDSRCH_on_CNTNEWS-1")
 #myexperiment2.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
