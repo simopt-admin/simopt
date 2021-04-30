@@ -18,6 +18,8 @@ class DesignPoint(object):
         oracle to simulate
     oracle_factors : dict
         oracle factor names and values
+    rng_list : list of rng.MRG32k3a objects
+        rngs for oracle to use when running replications at the solution
     n_reps : int
         number of replications run at a design point
     responses : dict
@@ -39,6 +41,20 @@ class DesignPoint(object):
         self.responses = {}
         self.gradients = {}
 
+    def attach_rngs(self, rng_list, copy=True):
+        """
+        Attach a list of random-number generators to the design point.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            list of random-number generators used to run simulation replications
+        """
+        if copy is True:
+            self.rng_list = [deepcopy(rng) for rng in rng_list]
+        else:
+            self.rng_list = rng_list
+
     def simulate(self, m=1):
         """
         Simulate m replications for the current oracle factors.
@@ -51,7 +67,7 @@ class DesignPoint(object):
         """
         for _ in range(m):
             # generate a single replication of oracle, as described by design point
-            responses, gradients = self.oracle.replicate()
+            responses, gradients = self.oracle.replicate(rng_list=self.rng_list)
             # if first replication, set up recording responses and gradients
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}
@@ -65,7 +81,7 @@ class DesignPoint(object):
             # increment counter
             self.n_reps += 1
             # advance rngs to start of next subsubstream
-            for rng in self.oracle.rng_list:
+            for rng in self.rng_list:
                 rng.advance_subsubstream()
 
 
@@ -135,26 +151,26 @@ class DataFarmingExperiment(object):
         """
         # setup random number generators for oracle
         # use stream 0 for all runs; start with substreams 0, 1, ..., oracle.n_rngs-1
-        rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.oracle.n_rngs)]
+        main_rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.oracle.n_rngs)]
         # all design points will share the same random number generator objects
         # simulate n_reps replications from each design point
         for design_pt in self.design:
             # attach random number generators
-            design_pt.oracle.attach_rngs(rng_list)
+            design_pt.attach_rngs(rng_list = main_rng_list, copy=False)
             # simulate n_reps replications from each design point
             design_pt.simulate(n_reps)
             # manage random number streams
             if crn_across_design_pts is True:
                 # reset rngs to start of current substream
-                for rng in rng_list:
+                for rng in main_rng_list:
                     rng.reset_substream()
             else:  # if not using CRN
                 # advance rngs to starts of next set of substreams
-                for rng in rng_list:
-                    for _ in range(len(rng_list)):
+                for rng in main_rng_list:
+                    for _ in range(len(main_rng_list)):
                         rng.advance_substream()
 
-    def print_to_csv(self, csv_filename="raw_results.csv"):
+    def print_to_csv(self, csv_filename="raw_results"):
         """
         Extract observed responses from simulated design points.
         Publish to .csv output file.
@@ -327,7 +343,7 @@ class DataFarmingMetaExperiment(object):
             file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
             record_df_experiment_results(experiment=experiment, file_name=file_name)
 
-    def print_to_csv(self, csv_filename="meta_raw_results.csv"):
+    def print_to_csv(self, csv_filename="meta_raw_results"):
         """
         Extract observed statistics from simulated design points.
         Publish to .csv output file.
