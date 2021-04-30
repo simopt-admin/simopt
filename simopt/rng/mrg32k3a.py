@@ -19,6 +19,7 @@ start_fixed_s_ss_sss : method
 
 # code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO)
 
+import numpy as np
 import random
 from math import log, ceil, sqrt, exp
 import functools
@@ -323,6 +324,35 @@ class MRG32k3a(random.Random):
         u = self.random()
         z = bsm(u)
         return mu + sigma*z
+
+    def mvnormalvariate(self, mean_vec, cov, factorize_flag):
+        """
+        Generate a normal random vector.
+
+        Arguments
+        ---------
+        mean_vec : array
+            location parameters of the multivariate normal distribution 
+            from which to generate
+        cov : array
+            covariance matrix of the multivariate normal distribution 
+            from which to generate
+        factorize_flag : binary
+            0 : need to calculate chol based on covariance
+            1 : do not need to calculate chol since we already have it
+        Returns
+        -------
+        float
+            a normal random multivariate from the specified distribution
+        """
+        no_cols = len(cov)  
+        if factorize_flag == 0:
+            Chol = np.linalg.cholesky(cov)
+        else:
+            Chol = cov
+    
+        observations = [self.normalvariate(0,1) for _ in range(no_cols)]  
+        return Chol.dot(observations).transpose() + mean_vec
     
     def poissonvariate(self, lmbda):
         """
