@@ -62,10 +62,7 @@ class rmitdMaxRevenue(Problem):
         self.optimal_bound = 0
         self.optimal_solution = None
         self.inital_solution = ([100, 50, 30],)
-        self.oracle_default_factors = {
-#            "cost": [1, 1, 1],
-#            "epsilon": 0.05
-        }
+        self.oracle_default_factors = {}
         super().__init__(oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults
         self.oracle = rmitd(self.oracle_fixed_factors)
