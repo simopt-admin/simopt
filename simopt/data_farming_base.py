@@ -321,7 +321,7 @@ class DataFarmingMetaExperiment(object):
                 file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
                 record_df_experiment_results(experiment=experiment, file_name=file_name)
 
-    def calculate_statistics(self, solve_tol=0.10, beta=0.50):
+    def calculate_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], beta=0.50):
         """
         For each design point, calculate statistics from each macroreplication.
             - area under estimated progress curve
@@ -329,8 +329,8 @@ class DataFarmingMetaExperiment(object):
 
         Arguments
         ---------
-        solve_tol : float in (0,1]
-            relative optimality gap definining when a problem is solved
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
         beta : float in (0,1)
             quantile to compute, e.g., beta quantile
         """
@@ -338,7 +338,8 @@ class DataFarmingMetaExperiment(object):
             experiment = self.design[design_pt_index]
             experiment.clear_stats()
             experiment.compute_area_stats(compute_CIs=False)
-            experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=0.10, beta=0.50)
+            experiment.compute_solvability(solve_tols=solve_tols)
+            experiment.compute_solvability_quantiles(beta=0.50, compute_CIs=False)
             # Save Experiment object to .pickle file.
             file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
             record_df_experiment_results(experiment=experiment, file_name=file_name)
@@ -360,7 +361,17 @@ class DataFarmingMetaExperiment(object):
             solver_factor_names = list(base_experiment.solver.specifications.keys())
             problem_factor_names = [] # list(base_experiment.problem.specifications.keys())
             oracle_factor_names = list(base_experiment.problem.oracle.specifications.keys())
-            csv_writer.writerow(["DesignPt#"] + solver_factor_names + problem_factor_names + oracle_factor_names + ["MacroRep#"] + ["Area Under Progress Curve", "Solve Time"])
+            csv_writer.writerow(["DesignPt#"]
+                                + solver_factor_names
+                                + problem_factor_names
+                                + oracle_factor_names
+                                + ["MacroRep#"]
+                                + ["Final Relative Optimality Gap"]
+                                + ["Area Under Progress Curve"]
+                                + ["0.05-Solve Time", "0.05-Solved? (Y/N)"]
+                                + ["0.10-Solve Time", "0.10-Solved? (Y/N)"]
+                                + ["0.20-Solve Time", "0.20-Solved? (Y/N)"]
+                                + ["0.50-Solve Time", "0.50-Solved? (Y/N)"])
             for designpt_index in range(self.n_design_pts):
                 experiment = self.design[designpt_index]
                 # parse lists of factors
@@ -369,7 +380,17 @@ class DataFarmingMetaExperiment(object):
                 oracle_factor_list = [experiment.problem.oracle.factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]
                 for mrep in range(experiment.n_macroreps):
                     # parse list of statistics
-                    statistics_list = [experiment.areas[mrep], experiment.solve_times[mrep]]
+                    statistics_list = [experiment.all_prog_curves[mrep][-1],
+                                       experiment.areas[mrep],
+                                       experiment.solve_times[0][mrep],
+                                       int(experiment.solve_times[0][mrep] < np.infty),
+                                       experiment.solve_times[1][mrep],
+                                       int(experiment.solve_times[1][mrep] < np.infty),
+                                       experiment.solve_times[2][mrep],
+                                       int(experiment.solve_times[2][mrep] < np.infty),
+                                       experiment.solve_times[3][mrep],
+                                       int(experiment.solve_times[3][mrep] < np.infty)
+                                       ]
                     print_list = [designpt_index] + solver_factor_list + problem_factor_list + oracle_factor_list + [mrep] + statistics_list
                     csv_writer.writerow(print_list)
 

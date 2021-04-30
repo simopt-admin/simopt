@@ -78,14 +78,15 @@ class Experiment(object):
         bootstrap CI of the form [lower bound, upper bound] for mean area
     area_std_dev_CI : numpy array of length 2
         bootstrap CI of the form [lower_bound, upper_bound] for std dev of area
-    solve_tol : float in (0,1]
-        relative optimality gap definining when a problem is solved
-    solve_times = list of floats
-        solve_tol solve times for each estimated progress curve
-    solve_time_quantile : float
-        beta quantile of solve times
-    solve_time_quantile_CI : numpy array of length 2
+    solve_tols : list of floats in (0,1]
+        relative optimality gap(s) definining when a problem is solved
+    solve_times = list of lists of floats
+        solve_tol solve times for each estimated progress curve for each solve_tol
+    solve_time_quantiles : list of floats
+        beta quantile of solve times for each solve_tole
+    solve_time_quantiles_CIs : list of numpy arrays of length 2
         bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
+        for each solve_tol
 
     Arguments
     ---------
@@ -359,28 +360,37 @@ class Experiment(object):
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
 
-    def compute_solvability_quantile(self, compute_CIs=True, solve_tol=0.10, beta=0.50):
+    def compute_solvability(self, solve_tols=[0.10]):
         """
-        Compute beta quantile of alpha-solve time.
+        Compute alpha-solve times for all macroreplications.
+        Can specify multiple values of alpha.
+
+        Arguments
+        ---------
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
+        """
+        self.solve_tols = solve_tols
+        self.solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in self.all_prog_curves] for solve_tol in solve_tols]
+
+    def compute_solvability_quantiles(self, beta=0.50, compute_CIs=True):
+        """
+        Compute beta quantile of solve times, for each solve tolerance.
         Optionally compute bootstrap confidence intervals.
 
         Arguments
         ---------
-        compute_CIs : Boolean
-            compute bootstrap confidence invervals for quantile?
-        solve_tol : float in (0,1]
-            relative optimality gap definining when a problem is solved
         beta : float in (0,1)
             quantile to compute, e.g., beta quantile
+        compute_CIs : Boolean
+            compute bootstrap confidence invervals for quantile?
         """
-        self.solve_tol = solve_tol
-        self.solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in self.all_prog_curves]
-        self.solve_time_quantile = np.quantile(self.solve_times, q=beta, interpolation="higher")
+        self.solve_time_quantiles = [np.quantile(self.solve_times[tol_index], q=beta, interpolation="higher") for tol_index in range(len(self.solve_tols))]
         # The default method for np.quantile is a *linear* interpolation.
         # Linear interpolation will throw error if a breakpoint is +/- infinity.
         if compute_CIs is True:
-            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=[self.solve_time_quantile], beta=beta)
-            self.solve_time_quantile_CI = [lower_bound[0], upper_bound[0]]
+            lower_bounds, upper_bounds, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=self.solve_time_quantiles, beta=beta)
+            self.solve_time_quantiles_CIs = [[lower_bound[tol_index], upper_bound[tol_index]] for tol_index in range(len(self.solv_tols))]
 
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -504,8 +514,10 @@ class Experiment(object):
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         if plot_type == "mean" or plot_type == "quantile" or plot_type == "solvability":
             n_intervals = len(self.unique_budgets)
-        elif plot_type == "area_mean" or plot_type == "area_std_dev" or plot_type == "solve_time_quantile":
+        elif plot_type == "area_mean" or plot_type == "area_std_dev":
             n_intervals = 1
+        elif plot_type == "solve_time_quantile":
+            n_intervals = len(self.solve_tols)
         bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
         for bs_index in range(n_bootstraps):
             # Generate bootstrap sample of estimated progress curves.
@@ -529,9 +541,10 @@ class Experiment(object):
                 areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
                 bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
             elif plot_type == "solve_time_quantile":
-                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
-                bs_aggregate_objects[bs_index] = np.quantile(solve_times, q=beta)
+                solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in solve_tols]
+                bs_aggregate_objects[bs_index] = [np.quantile(solve_times(tol_index), q=beta) for tol_index in range(len(self.solve_tols))]
             elif plot_type == "solvability":
+                ### TO DO: MODIFY TO HANDLE MULTIPLE TOLERANCES
                 solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
                 # Construct full matrix showing when macroreplications are solved.
                 solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
