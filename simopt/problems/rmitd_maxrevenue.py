@@ -137,15 +137,3 @@ class rmitdMaxRevenue(Problem):
             indicates if solution `x` satisfies the deterministic constraints.
         """
         return np.all(x > 0)
-
-    def get_random_solution(self):
-        """
-        Generate a random solution, to be used for starting or restarting solvers.
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        x = 100*np.random.rand(self.dim)
-        return x
