@@ -161,8 +161,7 @@ class facilitysizingTotalCost(Problem):
         det_stoch_constraints = (-self.oracle_default_factors["epsilon"],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
-    
-    # c*X, c     
+  
     def deterministic_objectives_and_gradients(self, x):
         """
         Compute deterministic components of objectives for a solution `x`.
