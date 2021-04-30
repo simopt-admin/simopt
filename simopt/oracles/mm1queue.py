@@ -24,8 +24,6 @@ class MM1Queue(Oracle):
         name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
-    rng_list : list of rng.MRG32k3a objects
-        list of random-number generators used to run a simulation replication
     n_responses : int
         number of responses (performance measures)
     factors : dict
@@ -100,9 +98,14 @@ class MM1Queue(Oracle):
         # return self.factors["mu"] > self.factors["lambda"]
         return True
 
-    def replicate(self):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current oracle factors.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            rngs for oracle to use when simulating a replication
 
         Returns
         -------
@@ -117,8 +120,8 @@ class MM1Queue(Oracle):
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
         # Designate separate RNGs for interarrival and serivce times.
-        arrival_rng = self.rng_list[0]
-        service_rng = self.rng_list[1]
+        arrival_rng = rng_list[0]
+        service_rng = rng_list[1]
         # Generate all interarrival and service times up front.
         arrival_times = ([arrival_rng.expovariate(self.factors["lambda"])
                          for _ in range(total)])

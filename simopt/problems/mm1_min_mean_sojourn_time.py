@@ -69,7 +69,7 @@ class MM1MinMeanSojournTime(Problem):
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.budget = 100
+        self.budget = 1000
         self.optimal_bound = 0
         self.optimal_solution = None
         self.initial_solution = (5,)
