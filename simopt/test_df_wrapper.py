@@ -1,5 +1,3 @@
-import numpy as np
-from rng.mrg32k3a import MRG32k3a
 # from oracles.mm1queue import MM1Queue
 from data_farming_base import DesignPoint, DataFarmingExperiment, DataFarmingMetaExperiment
 from csv import DictReader
@@ -14,10 +12,10 @@ myexperiment.print_to_csv(csv_filename="cntnews_data_farming_output")
 # myMetaExperiment = DataFarmingMetaExperiment(solver_name="RNDSRCH",
 #                                              problem_name="CNTNEWS-1",
 #                                              solver_factor_settings_filename="solver_factor_settings",
-#                                              solver_factor_headers=solver_factor_headers, 
+#                                              solver_factor_headers=solver_factor_headers,
 #                                              design_filename=None,
 #                                              solver_fixed_factors={},
-#                                              problem_fixed_factors={}, 
+#                                              problem_fixed_factors={},
 #                                              oracle_fixed_factors={})
 # myMetaExperiment.run(n_macroreps=2, crn_across_solns=True)
 # myMetaExperiment.post_replicate(n_postreps=50, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
