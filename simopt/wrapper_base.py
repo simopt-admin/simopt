@@ -133,16 +133,21 @@ class Experiment(object):
         #                                         macroreplications
         rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # unused
         rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])  # unused
-        self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
+        rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
+        # self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
         rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])  # unused
+        self.solver.attach_rngs([rng1, rng2, rng3])
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):
-            # Create, initialize, and attach RNGs for oracle.
-            oracle_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
-            self.problem.oracle.attach_rngs(oracle_rngs)
+            # Create, initialize, and attach RNGs used for simulating solutions.
+            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
+            self.solver.solution_progenitor_rngs = progenitor_rngs
+            # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
             recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem, crn_across_solns=crn_across_solns)
+            # Trim solutions recommended after final budget
+            recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
             # Extract decision-variable vectors (x) from recommended solutions.
             # Record recommended solutions and intermediate budgets.
             self.all_recommended_xs.append([solution.x for solution in recommended_solns])
@@ -173,24 +178,26 @@ class Experiment(object):
         self.all_reevaluated_solns = []
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
-        oracle_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
-        self.problem.oracle.attach_rngs(oracle_rngs)
+        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
         # Simulate common initial solution x0.
         x0 = self.problem.initial_solution
         self.initial_soln = Solution(x0, self.problem)
+        self.initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
         if crn_across_budget is True:
             # Reset each rng to start of its current substream.
-            for rng in self.problem.oracle.rng_list:
+            for rng in baseline_rngs:
                 rng.reset_substream()
         # Simulate "reference" optimal solution x*.
         xstar = self.problem.ref_optimal_solution
         self.ref_opt_soln = Solution(xstar, self.problem)
+        self.ref_opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
-        if crn_across_budget is True:
-            # Reset each rng to start of its current substream.
-            for rng in self.problem.oracle.rng_list:
-                rng.reset_substream()
+        # Advance each rng to start of
+        #     substream = current substream + # of oracle RNGs.
+        for rng in baseline_rngs:
+            for _ in range(self.problem.oracle.n_rngs):
+                rng.advance_substream()
         # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
             evaluated_solns = []
@@ -202,23 +209,24 @@ class Experiment(object):
                     evaluated_solns.append(self.ref_opt_soln)
                 else:
                     fresh_soln = Solution(x, self.problem)
+                    fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
                     if crn_across_budget is True:
                         # Reset each rng to start of its current substream.
-                        for rng in self.problem.oracle.rng_list:
+                        for rng in baseline_rngs:
                             rng.reset_substream()
             # Record sequence of reevaluated solutions.
             self.all_reevaluated_solns.append(evaluated_solns)
             if crn_across_macroreps is False:
                 # Advance each rng to start of
                 #     substream = current substream + # of oracle RNGs.
-                for rng in self.problem.oracle.rng_list:
+                for rng in baseline_rngs:
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
             else:
                 # Reset each rng to start of its current substream.
-                for rng in self.problem.oracle.rng_list:
+                for rng in baseline_rngs:
                     rng.reset_substream()
         # Preprocessing in anticipation of plotting.
         # Extract all unique budget points.
@@ -311,7 +319,7 @@ class Experiment(object):
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         """
-        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol)
+        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol, beta=0.2, plot_type="single")
         # Compute solve times. Ignore quantile calculations.
         self.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
         # Construct matrix showing when macroreplications are solved.
@@ -654,6 +662,33 @@ class Experiment(object):
                 pass
 
 
+def trim_solver_results(problem, recommended_solns, intermediate_budgets):
+    """
+    Trim solutions recommended by solver after problem's max budget.
+
+    Arguments
+    ---------
+    problem : base.Problem object
+        Problem object on which the solver was run
+    recommended_solutions : list of base.Solution objects
+        solutions recommended by the solver
+    intermediate_budgets : list of ints >= 0
+        intermediate budgets at which solver recommended different solutions
+    """
+    # Remove solutions corresponding to intermediate budgets exceeding max budget.
+    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.budget]
+    for invalid_idx in sorted(invalid_idxs, reverse=True):
+        del recommended_solns[invalid_idx]
+        del intermediate_budgets[invalid_idx]
+    # If no solution is recommended at the final budget,
+    # re-recommended the latest recommended solution.
+    # Necessary for clean plotting of progress curves.
+    if intermediate_budgets[-1] < problem.budget:
+        recommended_solns.append(recommended_solns[-1])
+        intermediate_budgets.append(problem.budget)
+    return recommended_solns, intermediate_budgets
+
+
 def record_experiment_results(experiment, file_name):
     """
     Save wrapper_base.Experiment object to .pickle file.
@@ -740,7 +775,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
+def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_type):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -750,15 +785,33 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol=0.50):
         name of solver
     problem_name : string
         name of problem
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    beta : float in (0,1)
+        quantile to compute, e.g., beta quantile
+    plot_type : string
+        type of plot
+            - "single"
+            - "average"
+            - "profile"
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks.
     xlabel = "Fraction of Budget"
-    ylabel = "Fraction of Macroreplications Solved"
     xlim = (0, 1)
-    ylim = (0, 1)
-    title = solver_name + " on " + problem_name + "\n"
-    title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
+    ylim = (0, 1.05)
+    if plot_type == "single":
+        ylabel = "Fraction of Macroreplications Solved"
+        title = solver_name + " on " + problem_name + "\n"
+        title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
+    elif plot_type == "average":
+        ylabel = "Average Solve Percentage"
+        title = "Average Solvability Profile for " + solver_name + "\n"
+        title = title + str(round(solve_tol, 2)) + "-Solvability"
+    elif plot_type == "profile":
+        ylabel = "Proportion of Problems Solved"
+        title = "Solvability Profile for " + solver_name + "\n"
+        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -1031,23 +1084,28 @@ class MetaExperiment(object):
                     plt.scatter(x=area_means, y=area_std_devs, c="blue")
                 save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
 
-    def plot_solvability_profiles(self, solve_tol=0.1):
+    def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5):
         """
         Plot the solvability profiles for each solver-problem pair.
+        Two types of plots:
+            1) average solvability curve
+            2) solvability profile
 
         Arguments
         ---------
         solve_tol : float in (0,1]
             relative optimality gap definining when a problem is solved
+        beta : float in (0,1)
+            quantile to compute, e.g., beta quantile
         """
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol)
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=None, plot_type="average")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # Compute solve times. Ignore quantile calculations.
-                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
+                # Compute solve times.
+                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol, beta=beta)
                 # Construct matrix showing when macroreplications are solved.
                 solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
                 # Pass over progress curves to find first solve_tol crossing time.
@@ -1069,7 +1127,18 @@ class MetaExperiment(object):
             plt.step(solver_unique_frac_budgets, solvability_profile, 'b-', where='post')
         plt.legend(labels=self.solver_names, loc="lower right")
         # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability", normalize=True)
+        save_plot(solver_name="SOLVERSET", problem_name="Average", plot_type="solvability", normalize=True)
+
+        # Plot solvability profiles for each solver
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=beta, plot_type="profile")
+        for solver_index in range(self.n_solvers):
+            solvability_quantiles = []
+            for problem_index in range(self.n_problems):
+                experiment = self.experiments[solver_index][problem_index]
+                solvability_quantiles.append(experiment.solve_time_quantile)
+            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
+        plt.legend(labels=self.solver_names, loc="lower right")
+        save_plot(solver_name="SOLVERSET", problem_name="Profile", plot_type="solvability", normalize=True)
 
 
 def stylize_area_plot(solver_name):

@@ -15,14 +15,9 @@ from base import Solution
 # }
 fixed_factors = {}
 
-myoracle = MM1Queue(fixed_factors)
-# myoracle = CntNV(fixed_factors)
+#myoracle = MM1Queue(fixed_factors)
+myoracle = CntNV(fixed_factors)
 print(myoracle.factors)
-
-rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
-# print(rng_list)
-myoracle.attach_rngs(rng_list)
-# print(myoracle.rng_list)
 
 # # Solution
 # mysoln_factors = {
@@ -50,8 +45,14 @@ print(myoracle.check_simulatable_factors())
 # print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x=(1,2))))
 # print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x='hi')))
 
+rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
+# print(rng_list)
+# mysolution.attach_rngs(rng_list)
+# print(mysolution.rng_list)
+
+
 # Test replicate()
-responses, gradients = myoracle.replicate()
+responses, gradients = myoracle.replicate(rng_list)
 print('For a single replication:')
 print('The responses are {}'.format(responses))
 print('The gradients are {}'.format(gradients))

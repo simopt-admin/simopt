@@ -20,8 +20,6 @@ class CntNV(Oracle):
         name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
-    rng_list : list of rng.MRG32k3a objects
-        list of random-number generators used to run a simulation replication
     n_responses : int
         number of responses (performance measures)
     factors : dict
@@ -111,9 +109,14 @@ class CntNV(Oracle):
                 < self.factors["purchase_price"]
                 < self.factors["sales_price"])
 
-    def replicate(self):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current oracle factors.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            rngs for oracle to use when simulating a replication
 
         Returns
         -------
@@ -122,7 +125,7 @@ class CntNV(Oracle):
             "profit" = profit in this scenario
         """
         # Designate random number generator for demand variability.
-        demand_rng = self.rng_list[0]
+        demand_rng = rng_list[0]
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
         #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.

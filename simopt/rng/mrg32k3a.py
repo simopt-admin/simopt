@@ -20,8 +20,10 @@ start_fixed_s_ss_sss : method
 # code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO)
 
 import random
-from math import log
+from math import log, ceil, sqrt, exp
 import functools
+from copy import deepcopy
+
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
 # constants used in mrg32k3a and in substream generation
@@ -219,6 +221,14 @@ class MRG32k3a(random.Random):
             s_ss_sss_index = [0, 0, 0]
         self.start_fixed_s_ss_sss(s_ss_sss_index)
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
     def seed(self, new_state):
         """
         Set the state (or seed) of the generator and update the generator state.
@@ -312,7 +322,35 @@ class MRG32k3a(random.Random):
         """
         u = self.random()
         z = bsm(u)
-        return mu + sigma * z
+        return mu + sigma*z
+    
+    def poissonvariate(self, lmbda):
+        """
+        Generate a poisson random variate.
+
+        Arguments
+        ---------
+        lmbda : float
+            expected value of the poisson distribution from which to
+            generate
+
+        Returns
+        -------
+        float
+            a poisson random variate from the specified distribution
+        """
+        if lmbda < 35:
+            n = 0
+            p = self.random()
+            threshold = exp(-lmbda)
+            while p >= threshold:
+                u = self.random()
+                p = p * u
+                n = n + 1
+        else:
+            z = self.normalvariate()
+            n = max(ceil(lmbda + sqrt(lmbda)*z - 0.5), 0)
+        return n
 
     def advance_stream(self):
         """

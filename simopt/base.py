@@ -15,8 +15,7 @@ DataFarmingExperiment : class
 """
 
 import numpy as np
-from rng.mrg32k3a import MRG32k3a
-
+from copy import deepcopy
 
 class Solver(object):
     """
@@ -43,6 +42,8 @@ class Solver(object):
         details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
+    solution_progenitor_rngs : list of rng.MRG32k3a objects
+        list of RNGs used as a baseline for simulating solutions
 
     Arguments
     ---------
@@ -59,7 +60,7 @@ class Solver(object):
 
     def attach_rngs(self, rng_list):
         """
-        Attach a list of random number generators to the solver.
+        Attach a list of random-number generators to the solver.
 
         Arguments
         ---------
@@ -137,25 +138,31 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def prepare_sim_new_soln(self, problem, crn_across_solns):
+    def prepare_sim_new_soln(self, solution, problem, crn_across_solns):
         """
-        Manipulate a problem's oracle's rngs depending on whether
-        using CRN across solutions.
+        Prime the progenitor rngs for simulation the next solution,
+        depending on whether using CRN across solutions.
 
         Arguments
         ---------
-        problem : Problem object
+        solution : base.Solution object
+            solution to simulate next
+        problem : base.Problem object
             problem being solved by the solver
+        crn_across_solns : bool
+            indicates if CRN are used when simulating different solutions
         """
         if crn_across_solns is True:  # if CRN are used ...
             # reset each rng to start of its current substream
-            for rng in problem.oracle.rng_list:
+            for rng in self.solution_progenitor_rngs:
                 rng.reset_substream()
         else:  # if CRN are not used ...
             # advance each rng to start of the substream = current substream + # of oracle RNGs
-            for rng in problem.oracle.rng_list:
+            for rng in self.solution_progenitor_rngs:
                 for _ in range(problem.oracle.n_rngs):
                     rng.advance_substream()
+        # attach primed rngs to new solution
+        solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
 
 
 class Problem(object):
@@ -184,7 +191,7 @@ class Problem(object):
         indicates if gradient of objective function is available
     initial_solution : tuple
         default initial solution from which solvers start
-    budget : int
+    budget : int > 0
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
@@ -213,7 +220,7 @@ class Problem(object):
 
     def attach_rngs(self, rng_list):
         """
-        Attach a list of random number generators to the problem.
+        Attach a list of random-number generators to the problem.
 
         Arguments
         ---------
@@ -367,17 +374,6 @@ class Problem(object):
         """
         pass
 
-    # def attach_rng(self, rng):
-    #     """
-    #     Attach random number generator to the problem.
-
-    #     Arguments
-    #     ---------
-    #     rng : rng.MRG32k3a object
-    #         random-number generator used to generate random solutions
-    #     """
-    #     self.rng = rng
-
     def simulate(self, solution, m=1):
         """
         Simulate `m` i.i.d. replications at solution `x`.
@@ -400,7 +396,7 @@ class Problem(object):
             self.oracle.factors.update(solution.decision_factors)
             for _ in range(m):
                 # generate one replication at x
-                responses, gradients = self.oracle.replicate()
+                responses, gradients = self.oracle.replicate(solution.rng_list)
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # convert responses and gradients to objectives and gradients and add
@@ -415,7 +411,7 @@ class Problem(object):
                 # increment counter
                 solution.n_reps += 1
                 # advance rngs to start of next subsubstream
-                for rng in self.oracle.rng_list:
+                for rng in solution.rng_list:
                     rng.advance_subsubstream()
             # update summary statistics
             solution.recompute_summary_statistics()
@@ -432,8 +428,6 @@ class Oracle(object):
         name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
-    rng_list : list of rng.MRG32k3a objects
-        list of random-number generators used to run a simulation replication
     n_responses : int
         number of responses (performance measures)
     factors : dict
@@ -455,17 +449,6 @@ class Oracle(object):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-
-    def attach_rngs(self, rng_list):
-        """
-        Attach a list of random number generators to the oracle.
-
-        Arguments
-        ---------
-        rng_list : list of rng.MRG32k3a objects
-            list of random-number generators used to run a simulation replication
-        """
-        self.rng_list = rng_list
 
     def check_simulatable_factor(self, factor_name):
         """
@@ -511,9 +494,14 @@ class Oracle(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def replicate(self):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current oracle factors.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            rngs for oracle to use when simulating a replication
 
         Returns
         -------
@@ -538,6 +526,8 @@ class Solution(object):
         number of decision variables describing `x`
     decision_factors : dict
         decision factor names and values
+    rng_list : list of rng.MRG32k3a objects
+        rngs for oracle to use when running replications at the solution
     n_reps : int
         number of replications run at the solution
     det_objectives : tuple
@@ -603,6 +593,20 @@ class Solution(object):
         # self.stoch_constraints_gradients_stderr = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_cov = np.full((problem.n_stochastic_constraints, problem.dim, problem.dim), np.nan)
 
+    def attach_rngs(self, rng_list, copy=True):
+        """
+        Attach a list of random-number generators to the solution.
+
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            list of random-number generators used to run simulation replications
+        """
+        if copy is True:
+            self.rng_list = [deepcopy(rng) for rng in rng_list]
+        else:
+            self.rng_list = rng_list
+
     def pad_storage(self, m):
         """
         Append zeros to numpy arrays for summary statistics.
@@ -630,13 +634,15 @@ class Solution(object):
         Recompute summary statistics of the solution.
         """
         self.objectives_mean = np.mean(self.objectives[:self.n_reps], axis=0)
-        self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
-        self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
+        if self.n_reps > 1:
+            self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
+            self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
         self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
-        self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
-        self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-        self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+        if self.n_reps > 1:
+            self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
+            self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
         if self.stoch_constraints is not None:
             self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
             self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
