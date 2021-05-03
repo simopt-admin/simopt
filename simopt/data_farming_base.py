@@ -8,6 +8,7 @@ from directory import oracle_directory
 from rng.mrg32k3a import MRG32k3a
 from wrapper_base import Experiment
 
+
 class DesignPoint(object):
     """
     Base class for design points represented as dictionaries of factors.
@@ -156,7 +157,7 @@ class DataFarmingExperiment(object):
         # simulate n_reps replications from each design point
         for design_pt in self.design:
             # attach random number generators
-            design_pt.attach_rngs(rng_list = main_rng_list, copy=False)
+            design_pt.attach_rngs(rng_list=main_rng_list, copy=False)
             # simulate n_reps replications from each design point
             design_pt.simulate(n_reps)
             # manage random number streams
@@ -256,7 +257,7 @@ class DataFarmingMetaExperiment(object):
             else:
                 for j in range(len(solver_factor_headers)):
                     # parse solver factors for next design point
-                    design_pt_solver_factors[solver_factor_headers[j]] = design_table[i,j]
+                    design_pt_solver_factors[solver_factor_headers[j]] = design_table[i, j]
             # merge solver fixed factors and solver factors specified for design point
             new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
             # In Python 3.9, will be able to use: dict1 | dict2
@@ -359,7 +360,7 @@ class DataFarmingMetaExperiment(object):
             # print headers
             base_experiment = self.design[0]
             solver_factor_names = list(base_experiment.solver.specifications.keys())
-            problem_factor_names = [] # list(base_experiment.problem.specifications.keys())
+            problem_factor_names = []  # list(base_experiment.problem.specifications.keys())
             oracle_factor_names = list(base_experiment.problem.oracle.specifications.keys())
             csv_writer.writerow(["DesignPt#"]
                                 + solver_factor_names
@@ -393,6 +394,7 @@ class DataFarmingMetaExperiment(object):
                                        ]
                     print_list = [designpt_index] + solver_factor_list + problem_factor_list + oracle_factor_list + [mrep] + statistics_list
                     csv_writer.writerow(print_list)
+
 
 # Largely copied from record_df_experiment_results in wrapper_base.py
 def record_df_experiment_results(experiment, file_name):
