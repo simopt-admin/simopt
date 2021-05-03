@@ -123,6 +123,8 @@ class CntNV(Oracle):
         responses : dict
             performance measures of interest
             "profit" = profit in this scenario
+            "stockout_qty" = amount by which demand exceeded supply
+            "stockout" = was there unmet demand? (Y/N)
         """
         # Designate random number generator for demand variability.
         demand_rng = rng_list[0]
@@ -140,6 +142,8 @@ class CntNV(Oracle):
         salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
                            * self.factors["salvage_price"])
         profit = sales_revenue + salvage_revenue - order_cost
+        stockout_qty = max(demand - self.factors["order_quantity"], 0)
+        stockout = int(stockout_qty > 0)
         # Calculate gradient of profit w.r.t. order quantity.
         if demand > self.factors["order_quantity"]:
             grad_profit_order_quantity = (self.factors["sales_price"]
@@ -150,7 +154,7 @@ class CntNV(Oracle):
         else:
             grad_profit_order_quantity = np.nan
         # Compose responses and gradients.
-        responses = {"profit": profit}
+        responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses

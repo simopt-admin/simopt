@@ -78,14 +78,15 @@ class Experiment(object):
         bootstrap CI of the form [lower bound, upper bound] for mean area
     area_std_dev_CI : numpy array of length 2
         bootstrap CI of the form [lower_bound, upper_bound] for std dev of area
-    solve_tol : float in (0,1]
-        relative optimality gap definining when a problem is solved
-    solve_times = list of floats
-        solve_tol solve times for each estimated progress curve
-    solve_time_quantile : float
-        beta quantile of solve times
-    solve_time_quantile_CI : numpy array of length 2
+    solve_tols : list of floats in (0,1]
+        relative optimality gap(s) definining when a problem is solved
+    solve_times = list of lists of floats
+        solve_tol solve times for each estimated progress curve for each solve_tol
+    solve_time_quantiles : list of floats
+        beta quantile of solve times for each solve_tole
+    solve_time_quantiles_CIs : list of numpy arrays of length 2
         bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
+        for each solve_tol
 
     Arguments
     ---------
@@ -304,39 +305,41 @@ class Experiment(object):
             print("Not a valid plot type.")
         if plot_type == "mean" or plot_type == "quantile":
             # Report bootstrapping error estimation and optionally plot bootstrap CIs.
-            self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
+            self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta, tol_index)
         save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type=plot_type, normalize=normalize)
 
-    def plot_solvability_curve(self, solve_tol=0.10, plot_CIs=True):
+    def plot_solvability_curves(self, solve_tols=[0.10], plot_CIs=True):
         """
-        Plot the solvability curve for a single solver-problem pair.
+        Plot the solvability curve(s) for a single solver-problem pair.
         Optionally plot bootstrap CIs.
 
         Arguments
         ---------
-        solve_tol : float in (0,1]
-            relative optimality gap definining when a problem is solved
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
         plot_CIs : Boolean
             plot bootstrapping confidence intervals?
         """
-        stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol, beta=0.2, plot_type="single")
-        # Compute solve times. Ignore quantile calculations.
-        self.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol)
-        # Construct matrix showing when macroreplications are solved.
-        solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
-        # Pass over progress curves to find first solve_tol crossing time.
-        for mrep in range(self.n_macroreps):
-            for budget_index in range(len(self.unique_frac_budgets)):
-                if self.solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
-                    solve_matrix[mrep][budget_index] = 1
-        # Compute proportion of macroreplications "solved" by intermediate budget.
-        estimator = np.mean(solve_matrix, axis=0)
-        # Plot solvability curve.
-        plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
-        if plot_CIs is True:
-            # Report bootstrapping error estimation and optionally plot bootstrap CIs.
-            self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs)
-        save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True)
+        # Compute solve times.
+        self.compute_solvability(solve_tols=solve_tols)
+        for tol_index in range(len(self.solve_tols)):
+            solve_tol = solve_tols[tol_index]
+            stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol, plot_type="single")
+            # Construct matrix showing when macroreplications are solved.
+            solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
+            # Pass over progress curves to find first solve_tol crossing time.
+            for mrep in range(self.n_macroreps):
+                for budget_index in range(len(self.unique_frac_budgets)):
+                    if self.solve_times[tol_index][mrep] <= self.unique_frac_budgets[budget_index]:
+                        solve_matrix[mrep][budget_index] = 1
+            # Compute proportion of macroreplications "solved" by intermediate budget.
+            estimator = np.mean(solve_matrix, axis=0)
+            # Plot solvability curve.
+            plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+            if plot_CIs is True:
+                # Report bootstrapping error estimation and optionally plot bootstrap CIs.
+                self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
+            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True, extra=solve_tol)
 
     def compute_area_stats(self, compute_CIs=True):
         """
@@ -359,28 +362,37 @@ class Experiment(object):
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
 
-    def compute_solvability_quantile(self, compute_CIs=True, solve_tol=0.10, beta=0.50):
+    def compute_solvability(self, solve_tols=[0.10]):
         """
-        Compute beta quantile of alpha-solve time.
+        Compute alpha-solve times for all macroreplications.
+        Can specify multiple values of alpha.
+
+        Arguments
+        ---------
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
+        """
+        self.solve_tols = solve_tols
+        self.solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in self.all_prog_curves] for solve_tol in solve_tols]
+
+    def compute_solvability_quantiles(self, beta=0.50, compute_CIs=True):
+        """
+        Compute beta quantile of solve times, for each solve tolerance.
         Optionally compute bootstrap confidence intervals.
 
         Arguments
         ---------
-        compute_CIs : Boolean
-            compute bootstrap confidence invervals for quantile?
-        solve_tol : float in (0,1]
-            relative optimality gap definining when a problem is solved
         beta : float in (0,1)
             quantile to compute, e.g., beta quantile
+        compute_CIs : Boolean
+            compute bootstrap confidence invervals for quantile?
         """
-        self.solve_tol = solve_tol
-        self.solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in self.all_prog_curves]
-        self.solve_time_quantile = np.quantile(self.solve_times, q=beta, interpolation="higher")
+        self.solve_time_quantiles = [np.quantile(self.solve_times[tol_index], q=beta, interpolation="higher") for tol_index in range(len(self.solve_tols))]
         # The default method for np.quantile is a *linear* interpolation.
         # Linear interpolation will throw error if a breakpoint is +/- infinity.
         if compute_CIs is True:
-            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=[self.solve_time_quantile], beta=beta)
-            self.solve_time_quantile_CI = [lower_bound[0], upper_bound[0]]
+            lower_bounds, upper_bounds, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=self.solve_time_quantiles, beta=beta)
+            self.solve_time_quantiles_CIs = [[lower_bound[tol_index], upper_bound[tol_index]] for tol_index in range(len(self.solv_tols))]
 
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -463,7 +475,7 @@ class Experiment(object):
         bootstrap_rng.advance_substream()
         return bootstrap_est_objective, bootstrap_prog_curves
 
-    def bootstrap_CI(self, plot_type, normalize, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50):
+    def bootstrap_CI(self, plot_type, normalize, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50, tol_index=0):
         """
         Construct bootstrap confidence intervals and compute max half-width.
 
@@ -489,6 +501,8 @@ class Experiment(object):
             use bias-corrected bootstrap CIs (via percentile method)?
         beta : float in (0,1)
             quantile for quantile aggregate progress curve, e.g., beta quantile
+        tol_index : int >= 0
+            index of solve tolerance
 
         Returns
         -------
@@ -504,8 +518,10 @@ class Experiment(object):
         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
         if plot_type == "mean" or plot_type == "quantile" or plot_type == "solvability":
             n_intervals = len(self.unique_budgets)
-        elif plot_type == "area_mean" or plot_type == "area_std_dev" or plot_type == "solve_time_quantile":
+        elif plot_type == "area_mean" or plot_type == "area_std_dev":
             n_intervals = 1
+        elif plot_type == "solve_time_quantile":
+            n_intervals = len(self.solve_tols)
         bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
         for bs_index in range(n_bootstraps):
             # Generate bootstrap sample of estimated progress curves.
@@ -529,10 +545,10 @@ class Experiment(object):
                 areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
                 bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
             elif plot_type == "solve_time_quantile":
-                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
-                bs_aggregate_objects[bs_index] = np.quantile(solve_times, q=beta)
+                solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in solve_tols]
+                bs_aggregate_objects[bs_index] = [np.quantile(solve_times(tol_index), q=beta) for tol_index in range(len(self.solve_tols))]
             elif plot_type == "solvability":
-                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tol) for prog_curve in bootstrap_prog_curves]
+                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tols[tol_index]) for prog_curve in bootstrap_prog_curves]
                 # Construct full matrix showing when macroreplications are solved.
                 solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
                 # Pass over progress curve to find first solve_tol crossing time.
@@ -563,7 +579,7 @@ class Experiment(object):
         return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
 
     def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs,
-                           beta=None):
+                           beta=None, tol_index=None):
         """
         Optionally plot bootstrap confidence intervals and report max
         half-width.
@@ -584,9 +600,11 @@ class Experiment(object):
             plot bootstrapping confidence intervals?
         beta : float in (0,1) (optional)
             quantile for quantile aggregate progress curve, e.g., beta quantile
+        tol_index : int >= 0
+            index of solve tolerance
         """
         # Construct bootstrap confidence intervals.
-        bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta)
+        bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta, tol_index=tol_index)
         if normalize is True:
             budgets = self.unique_frac_budgets
             xloc = 0.05
@@ -775,7 +793,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_type):
+def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, beta=0.5):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -787,13 +805,13 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_ty
         name of problem
     solve_tol : float in (0,1]
         relative optimality gap definining when a problem is solved
-    beta : float in (0,1)
-        quantile to compute, e.g., beta quantile
     plot_type : string
         type of plot
             - "single"
             - "average"
             - "profile"
+    beta : float in (0,1)
+        quantile to compute, e.g., beta quantile
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks.
@@ -820,7 +838,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, beta, plot_ty
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def save_plot(solver_name, problem_name, plot_type, normalize):
+def save_plot(solver_name, problem_name, plot_type, normalize, extra):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -839,6 +857,8 @@ def save_plot(solver_name, problem_name, plot_type, normalize):
             "area" : area scatterplot
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
+    extra : float
+        extra number specifying quantile (e.g., beta) or solve tolerance
     """
     # Form string name for plot filename.
     if plot_type == "all":
@@ -848,7 +868,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize):
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
     elif plot_type == "solvability":
-        plot_name = "solvability_curve"
+        plot_name = str(extra) + "-solvability_curve"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     if normalize is False:
