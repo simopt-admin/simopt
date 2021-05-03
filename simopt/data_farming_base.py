@@ -35,7 +35,7 @@ class DesignPoint(object):
     """
     def __init__(self, oracle):
         super().__init__()
-        # create separate copy of Oracle object for use at this design point
+        # Create separate copy of Oracle object for use at this design point.
         self.oracle = deepcopy(oracle)
         self.oracle_factors = self.oracle.factors
         self.n_reps = 0
@@ -67,21 +67,20 @@ class DesignPoint(object):
             number of macroreplications to run at the design point
         """
         for _ in range(m):
-            # generate a single replication of oracle, as described by design point
+            # Generate a single replication of oracle, as described by design point.
             responses, gradients = self.oracle.replicate(rng_list=self.rng_list)
-            # if first replication, set up recording responses and gradients
+            # If first replication, set up recording responses and gradients.
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}
                 self.gradients = {response_key: {factor_key: [] for factor_key in gradients[response_key]} for response_key in responses}
-            # append responses and gradients
+            # Append responses and gradients.
             for key in self.responses:
                 self.responses[key].append(responses[key])
             for outerkey in self.gradients:
                 for innerkey in self.gradients[outerkey]:
                     self.gradients[outerkey][innerkey].append(gradients[outerkey][innerkey])
-            # increment counter
             self.n_reps += 1
-            # advance rngs to start of next subsubstream
+            # Advance rngs to start of next subsubstream.
             for rng in self.rng_list:
                 rng.advance_subsubstream()
 
@@ -114,29 +113,29 @@ class DataFarmingExperiment(object):
         non-default values of oracle factors that will not be varied
     """
     def __init__(self, oracle_name, factor_settings_filename, factor_headers, design_filename=None, oracle_fixed_factors={}):
-        # initialize oracle object with fixed factors
+        # Initialize oracle object with fixed factors.
         self.oracle = oracle_directory[oracle_name](fixed_factors=oracle_fixed_factors)
         if design_filename is None:
-            # create oracle factor design from .txt file of factor settings
-            # hard-coded for a single-stack NOLHS
+            # Create oracle factor design from .txt file of factor settings.
+            # Hard-coded for a single-stack NOLHS.
             command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + factor_settings_filename + ".txt > ./data_farming_experiments/" + factor_settings_filename + "_design.txt"
             os.system(command)
-            # append design to base filename
+            # Append design to base filename.
             design_filename = factor_settings_filename + "_design"
-        # read in design matrix from .txt file
+        # Read in design matrix from .txt file.
         design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
-        # count number of design_points
+        # Count number of design_points.
         self.n_design_pts = len(design_table)
-        # create all design points
+        # Create all design points.
         self.design = []
         design_pt_factors = {}
         for i in range(self.n_design_pts):
             for j in range(len(factor_headers)):
-                # parse oracle factors for next design point
+                # Parse oracle factors for next design point.
                 design_pt_factors[factor_headers[j]] = design_table[i][j]
-            # update oracle factors according to next design point
+            # Update oracle factors according to next design point.
             self.oracle.factors.update(design_pt_factors)
-            # create new design point and add to design
+            # Create new design point and add to design.
             self.design.append(DesignPoint(self.oracle))
 
     def run(self, n_reps=10, crn_across_design_pts=True):
@@ -150,23 +149,23 @@ class DataFarmingExperiment(object):
         crn_across_design_pts : Boolean
             use CRN across design points?
         """
-        # setup random number generators for oracle
-        # use stream 0 for all runs; start with substreams 0, 1, ..., oracle.n_rngs-1
+        # Setup random number generators for oracle.
+        # Use stream 0 for all runs; start with substreams 0, 1, ..., oracle.n_rngs-1.
         main_rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.oracle.n_rngs)]
-        # all design points will share the same random number generator objects
-        # simulate n_reps replications from each design point
+        # All design points will share the same random number generator objects.
+        # Simulate n_reps replications from each design point.
         for design_pt in self.design:
-            # attach random number generators
+            # Attach random number generators.
             design_pt.attach_rngs(rng_list=main_rng_list, copy=False)
-            # simulate n_reps replications from each design point
+            # Simulate n_reps replications from each design point.
             design_pt.simulate(n_reps)
-            # manage random number streams
+            # Manage random number streams.
             if crn_across_design_pts is True:
-                # reset rngs to start of current substream
+                # Reset rngs to start of current substream.
                 for rng in main_rng_list:
                     rng.reset_substream()
-            else:  # if not using CRN
-                # advance rngs to starts of next set of substreams
+            else:  # If not using CRN...
+                # ...advance rngs to starts of next set of substreams.
                 for rng in main_rng_list:
                     for _ in range(len(main_rng_list)):
                         rng.advance_substream()
@@ -183,16 +182,16 @@ class DataFarmingExperiment(object):
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            # print headers
+            # Print headers.
             oracle_factor_names = list(self.oracle.specifications.keys())
             response_names = list(self.design[0].responses.keys())
             csv_writer.writerow(["DesignPt#"] + oracle_factor_names + ["MacroRep#"] + response_names)
             for designpt_index in range(self.n_design_pts):
                 designpt = self.design[designpt_index]
-                # parse list of oracle factors
+                # Parse list of oracle factors.
                 oracle_factor_list = [designpt.oracle_factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]
                 for mrep in range(designpt.n_reps):
-                    # parse list of responses
+                    # Parse list of responses.
                     response_list = [designpt.responses[response_name][mrep] for response_name in response_names]
                     print_list = [designpt_index] + oracle_factor_list + [mrep] + response_list
                     csv_writer.writerow(print_list)
@@ -233,39 +232,38 @@ class DataFarmingMetaExperiment(object):
         # TO DO: Extend to allow a design on problem/oracle factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None:
-            # create solver factor design from .txt file of factor settings
-            # hard-coded for a single-stack NOLHS
+            # Create solver factor design from .txt file of factor settings.
+            # Hard-coded for a single-stack NOLHS.
             command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + solver_factor_settings_filename + ".txt > ./data_farming_experiments/" + solver_factor_settings_filename + "_design.txt"
             os.system(command)
-            # append design to base filename
+            # Append design to base filename.
             design_filename = solver_factor_settings_filename + "_design"
-        # read in design matrix from .txt file
+        # Read in design matrix from .txt file.
         design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
-        # count number of design_points
+        # Count number of design_points.
         self.n_design_pts = len(design_table)
-        # create all design points
+        # Create all design points.
         self.design = []
         design_pt_solver_factors = {}
         for i in range(self.n_design_pts):
             # TO DO: Fix this issue with numpy 1D and 2D arrays handled differently
             if len(solver_factor_headers) == 1:
                 # TO DO: Resolve type-casting issues:
-                # E.g., sample_size must be an integer for RNDSRCH, but np.loadtxt will make it a float
-                design_pt_solver_factors[solver_factor_headers[0]] = int(design_table[i])
+                # E.g., sample_size must be an integer for RNDSRCH, but np.loadtxt will make it a float.
                 # parse solver factors for next design point
-                # design_pt_solver_factors[solver_factor_headers[0]] = design_table[i]
+                design_pt_solver_factors[solver_factor_headers[0]] = int(design_table[i])
             else:
                 for j in range(len(solver_factor_headers)):
-                    # parse solver factors for next design point
+                    # Parse solver factors for next design point.
                     design_pt_solver_factors[solver_factor_headers[j]] = design_table[i, j]
-            # merge solver fixed factors and solver factors specified for design point
+            # Merge solver fixed factors and solver factors specified for design point.
             new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
-            # In Python 3.9, will be able to use: dict1 | dict2
-            # create new design point and add to design0
+            # In Python 3.9, will be able to use: dict1 | dict2.
+            # Create new design point and add to design0.
             new_design_pt = Experiment(solver_name, problem_name, new_design_pt_solver_factors, problem_fixed_factors, oracle_fixed_factors)
             self.design.append(new_design_pt)
 
-    # Largely taken from MetaExperiment class in wrapper_base.py
+    # Largely taken from MetaExperiment class in wrapper_base.py.
     def run(self, n_macroreps=10, crn_across_solns=True):
         """
         Run n_macroreps of each problem-solver design point.
@@ -290,7 +288,7 @@ class DataFarmingMetaExperiment(object):
                 file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
                 record_df_experiment_results(experiment=experiment, file_name=file_name)
 
-    # Largely taken from MetaExperiment class in wrapper_base.py
+    # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each design point, run postreplications at solutions
@@ -357,7 +355,7 @@ class DataFarmingMetaExperiment(object):
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            # print headers
+            # Print headers.
             base_experiment = self.design[0]
             solver_factor_names = list(base_experiment.solver.specifications.keys())
             problem_factor_names = []  # list(base_experiment.problem.specifications.keys())
@@ -375,12 +373,12 @@ class DataFarmingMetaExperiment(object):
                                 + ["0.50-Solve Time", "0.50-Solved? (Y/N)"])
             for designpt_index in range(self.n_design_pts):
                 experiment = self.design[designpt_index]
-                # parse lists of factors
+                # Parse lists of factors.
                 solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
                 problem_factor_list = []
                 oracle_factor_list = [experiment.problem.oracle.factors[oracle_factor_name] for oracle_factor_name in oracle_factor_names]
                 for mrep in range(experiment.n_macroreps):
-                    # parse list of statistics
+                    # Parse list of statistics.
                     statistics_list = [experiment.all_prog_curves[mrep][-1],
                                        experiment.areas[mrep],
                                        experiment.solve_times[0][mrep],
@@ -396,7 +394,7 @@ class DataFarmingMetaExperiment(object):
                     csv_writer.writerow(print_list)
 
 
-# Largely copied from record_df_experiment_results in wrapper_base.py
+# Largely copied from record_df_experiment_results in wrapper_base.py.
 def record_df_experiment_results(experiment, file_name):
     """
     Save wrapper_base.Experiment object to .pickle file.
