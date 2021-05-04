@@ -10,7 +10,7 @@ from base import Solution
 #myproblem = MM1MinMeanSojournTime()
 myproblem = FacilitySizingTotalCost()
 
-x = [3, 3, 3]
+x = (150, 300, 250)
 mysolution = Solution(x, myproblem)
 
 # Create and attach rngs to solution

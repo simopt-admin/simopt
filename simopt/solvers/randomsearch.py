@@ -2,6 +2,7 @@
 Summary
 -------
 Randomly sample solutions from the feasible region.
+Can handle stochastic constraints.
 """
 from base import Solver, Solution
 
@@ -45,7 +46,7 @@ class RandomSearch(Solver):
     def __init__(self, fixed_factors={}):
         self.name = "RNDSRCH"
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "stochastic"
         self.variable_type = "mixed"
         self.gradient_needed = False
         self.specifications = {
@@ -108,8 +109,10 @@ class RandomSearch(Solver):
             problem.simulate(new_solution, self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.
+            # Also check for feasibility w.r.t. stochastic constraints.
             if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
                 recommended_solns.append(new_solution)

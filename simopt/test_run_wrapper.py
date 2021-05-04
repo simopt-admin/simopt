@@ -3,8 +3,8 @@ from rng.mrg32k3a import MRG32k3a
 from base import Solver, Problem, Oracle, Solution
 from wrapper_base import Experiment, record_experiment_results, read_experiment_results, MetaExperiment
 
-# mymetaexperiment = MetaExperiment(solver_names=["RNDSRCH"], problem_names=["MM1-1", "CNTNEWS-1"], fixed_factors_filename="all_factors")
-# mymetaexperiment.run(n_macroreps=5, crn_across_solns=True)
+# mymetaexperiment = MetaExperiment(solver_names=["RNDSRCH"], problem_names=["MM1-1", "CNTNEWS-1", "FACSIZE-1"], fixed_factors_filename="all_factors")
+# mymetaexperiment.run(n_macroreps=10, crn_across_solns=True)
 # mymetaexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 # mymetaexperiment.plot_area_scatterplot(plot_CIs=True, all_in_one=False)
 # mymetaexperiment.plot_solvability_profiles(solve_tol=0.1)
@@ -14,11 +14,12 @@ from wrapper_base import Experiment, record_experiment_results, read_experiment_
 # myexperiment.run(n_macroreps=5, crn_across_solns=True)
 # myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 
-myexperiment3 = read_experiment_results(file_name="RNDSRCH_on_MM1-1")
-#myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
-# #myexperiment3.compute_area_stats()
-# #myexperiment3.compute_solvability_quantile()
-myexperiment3.plot_solvability_curves(solve_tols=[0.1, 0.9])
+myexperiment3 = read_experiment_results(file_name="RNDSRCH_on_CNTNEWS-1")
+# myexperiment.post_replicate(n_postreps=20, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
+# # myexperiment3.compute_area_stats()
+myexperiment3.plot_solvability_curves(solve_tols=[0.1])
+myexperiment3.compute_solvability_quantiles(beta=0.5)
+print(myexperiment3.solve_time_quantiles)
 # myexperiment3.plot_progress_curves(plot_type="all")
 # myexperiment3.plot_progress_curves(plot_type="mean")
 # myexperiment3.plot_progress_curves(plot_type="quantile")

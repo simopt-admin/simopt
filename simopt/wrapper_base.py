@@ -305,7 +305,7 @@ class Experiment(object):
             print("Not a valid plot type.")
         if plot_type == "mean" or plot_type == "quantile":
             # Report bootstrapping error estimation and optionally plot bootstrap CIs.
-            self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta, tol_index)
+            self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
         save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type=plot_type, normalize=normalize)
 
     def plot_solvability_curves(self, solve_tols=[0.10], plot_CIs=True):
@@ -392,7 +392,7 @@ class Experiment(object):
         # Linear interpolation will throw error if a breakpoint is +/- infinity.
         if compute_CIs is True:
             lower_bounds, upper_bounds, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=self.solve_time_quantiles, beta=beta)
-            self.solve_time_quantiles_CIs = [[lower_bound[tol_index], upper_bound[tol_index]] for tol_index in range(len(self.solv_tols))]
+            self.solve_time_quantiles_CIs = [[lower_bounds[tol_index], upper_bounds[tol_index]] for tol_index in range(len(self.solve_tols))]
 
     def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -545,8 +545,8 @@ class Experiment(object):
                 areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
                 bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
             elif plot_type == "solve_time_quantile":
-                solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in solve_tols]
-                bs_aggregate_objects[bs_index] = [np.quantile(solve_times(tol_index), q=beta) for tol_index in range(len(self.solve_tols))]
+                solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in self.solve_tols]
+                bs_aggregate_objects[bs_index] = [np.quantile(solve_times[tol_index], q=beta) for tol_index in range(len(self.solve_tols))]
             elif plot_type == "solvability":
                 solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tols[tol_index]) for prog_curve in bootstrap_prog_curves]
                 # Construct full matrix showing when macroreplications are solved.
@@ -838,7 +838,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
-def save_plot(solver_name, problem_name, plot_type, normalize, extra):
+def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     """
     Create new figure. Add labels to plot and reformat axes.
 
@@ -1125,13 +1125,15 @@ class MetaExperiment(object):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 # Compute solve times.
-                experiment.compute_solvability_quantile(compute_CIs=False, solve_tol=solve_tol, beta=beta)
+                experiment.compute_solvability(solve_tols=[solve_tol])
+                experiment.compute_solvability_quantiles(beta=beta, compute_CIs=False)
                 # Construct matrix showing when macroreplications are solved.
                 solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
                 # Pass over progress curves to find first solve_tol crossing time.
                 for mrep in range(experiment.n_macroreps):
                     for budget_index in range(len(experiment.unique_frac_budgets)):
-                        if experiment.solve_times[mrep] <= experiment.unique_frac_budgets[budget_index]:
+                        # TO DO: HARD-CODED for tol_index=0
+                        if experiment.solve_times[0][mrep] <= experiment.unique_frac_budgets[budget_index]:
                             solve_matrix[mrep][budget_index] = 1
                 solvability_curves.append(list(np.mean(solve_matrix, axis=0)))
                 all_budgets.append(list(experiment.unique_frac_budgets))
@@ -1155,7 +1157,8 @@ class MetaExperiment(object):
             solvability_quantiles = []
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                solvability_quantiles.append(experiment.solve_time_quantile)
+                # TO DO: Hard-coded for first tol_index
+                solvability_quantiles.append(experiment.solve_time_quantiles[0])
             plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
         plt.legend(labels=self.solver_names, loc="lower right")
         save_plot(solver_name="SOLVERSET", problem_name="Profile", plot_type="solvability", normalize=True)

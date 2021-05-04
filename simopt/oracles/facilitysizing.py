@@ -45,12 +45,12 @@ class FacilitySize(Oracle):
             "mean_vec": {
                 "description": "Location parameters of the multivariate normal distribution",
                 "datatype": list,
-                "default": [10, 230, 221]
+                "default": [100, 100, 100]
             },
             "cov": {
                 "description": "Covariance of multivariate normal distribution.",
                 "datatype": list,
-                "default": [[2276, 1508, 813], [1508, 2206, 1349], [813, 1349, 1865]]
+                "default": [[2000, 1500, 500], [1500, 2000, 750], [500, 750, 2000]]
             },
             "capacity": {
                 "description": "Capacity.",

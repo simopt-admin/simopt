@@ -76,8 +76,8 @@ class FacilitySizingTotalCost(Problem):
         self.budget = 10000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.ref_optimal_solution = None
-        self.initial_solution = (150, 300, 250)
+        self.ref_optimal_solution = (185, 185, 185)
+        self.initial_solution = (300, 300, 300)
         self.oracle_default_factors = {}
         self.factors = {
             "costs": [1, 1, 1],
@@ -231,5 +231,5 @@ class FacilitySizingTotalCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([100*rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([300*rand_sol_rng.random() for _ in range(self.dim)])
         return x
