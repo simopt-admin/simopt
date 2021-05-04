@@ -3,12 +3,14 @@ import numpy as np
 from rng.mrg32k3a import MRG32k3a
 from problems.cntnv_max_profit import CntNVMaxProfit
 from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
+from problems.facilitysizing_totalcost import FacilitySizingTotalCost
 from base import Solution
 
 #myproblem = CntNVMaxProfit()
-myproblem = MM1MinMeanSojournTime()
+#myproblem = MM1MinMeanSojournTime()
+myproblem = FacilitySizingTotalCost()
 
-x = [4]
+x = [3, 3, 3]
 mysolution = Solution(x, myproblem)
 
 # Create and attach rngs to solution
@@ -21,4 +23,5 @@ mysolution.attach_rngs(rng_list, copy=False)
 myproblem.simulate(mysolution, m=10)
 print('For 10 replications:')
 print('The individual objective estimates are {}'.format(mysolution.objectives[:10]))
-print('The individual gradient estimates are {}'.format(mysolution.objectives_gradients[:10]))
+print('The stochastic constraint estimates are {}'.format(mysolution.stoch_constraints[:10]))
+#print('The individual gradient estimates are {}'.format(mysolution.objectives_gradients[:10]))

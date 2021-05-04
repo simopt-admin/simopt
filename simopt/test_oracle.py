@@ -3,28 +3,13 @@ import numpy as np
 from rng.mrg32k3a import MRG32k3a
 from oracles.mm1queue import MM1Queue
 from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
+from oracles.facilitysizing import FacilitySize
 from base import Solution
 
-# fixed_factors = {
-#     # dictionary of non-decision variable factors
-#     "purchase_price": 4.0,
-#     # "sales_price": 9.0,
-#     # "salvage_price": 1.0,
-#     "Burr_c": 2.0,
-#     "Burr_k": 20.0
-# }
 fixed_factors = {}
-
-#myoracle = MM1Queue(fixed_factors)
-myoracle = CntNV(fixed_factors)
+myoracle = FacilitySize(fixed_factors)
 print(myoracle.factors)
 
-# # Solution
-# mysoln_factors = {
-#     # dictionary of missing factors
-#     # "mu": 3.0,
-#     "order_quantity": 0.2
-# }
 mysoln_factors = {}
 
 # Check simulatability
