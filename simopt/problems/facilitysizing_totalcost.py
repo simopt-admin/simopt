@@ -84,7 +84,7 @@ class FacilitySizingTotalCost(Problem):
             "epsilon": 0.05
         }
         super().__init__(oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults
+        # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = FacilitySize(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
@@ -121,8 +121,7 @@ class FacilitySizingTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        print(factor_dict["capacity"])
-        vector = tuple(factor_dict["capacity"],)
+        vector = tuple(factor_dict["capacity"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):

@@ -4,10 +4,11 @@ from rng.mrg32k3a import MRG32k3a
 from oracles.mm1queue import MM1Queue
 from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
 from oracles.facilitysizing import FacilitySize
+from oracles.rmitd import RMITD
 from base import Solution
 
 fixed_factors = {}
-myoracle = FacilitySize(fixed_factors)
+myoracle = RMITD(fixed_factors)
 print(myoracle.factors)
 
 mysoln_factors = {}
@@ -30,7 +31,7 @@ print(myoracle.check_simulatable_factors())
 # print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x=(1,2))))
 # print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x='hi')))
 
-rng_list = [MRG32k3a() for _ in range(myoracle.n_rngs)]
+rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myoracle.n_rngs)]
 # print(rng_list)
 # mysolution.attach_rngs(rng_list)
 # print(mysolution.rng_list)

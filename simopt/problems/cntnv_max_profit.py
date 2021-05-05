@@ -50,6 +50,8 @@ class CntNVMaxProfit(Problem):
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
+    factors : dict
+        changeable factors of the problem
 
     Arguments
     ---------
