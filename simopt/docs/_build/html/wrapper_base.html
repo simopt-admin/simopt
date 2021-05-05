@@ -8,7 +8,6 @@
     <title>wrapper_base module &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
@@ -922,73 +921,7 @@ solve_tol, i.e., the “alpha” solve time</p>
   <ul>
 <li><a class="reference internal" href="#">wrapper_base module</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
-<li><a class="reference internal" href="#listing">Listing</a><ul>
-<li><a class="reference internal" href="#wrapper_base.Experiment">Experiment</a><ul>
-<li><a class="reference internal" href="#wrapper_base.Experiment.solver">solver</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.problem">problem</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.n_macroreps">n_macroreps</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_solns">crn_across_solns</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_recommended_xs">all_recommended_xs</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_intermediate_budgets">all_intermediate_budgets</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.n_postreps">n_postreps</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.n_postreps_init_opt">n_postreps_init_opt</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_budget">crn_across_budget</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_macroreps">crn_across_macroreps</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_reevaluated_solns">all_reevaluated_solns</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_post_replicates">all_post_replicates</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_est_objective">all_est_objective</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.all_prog_curves">all_prog_curves</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.initial_soln">initial_soln</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.ref_opt_soln">ref_opt_soln</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.areas">areas</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.area_mean">area_mean</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.area_std_dev">area_std_dev</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.area_mean_CI">area_mean_CI</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.area_std_dev_CI">area_std_dev_CI</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.solve_tols">solve_tols</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.solve_time_quantiles">solve_time_quantiles</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.solve_time_quantiles_CIs">solve_time_quantiles_CIs</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.bootstrap_CI">bootstrap_CI</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.bootstrap_sample">bootstrap_sample</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.clear_postreps">clear_postreps</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.clear_runs">clear_runs</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.clear_stats">clear_stats</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.compute_area_stats">compute_area_stats</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.compute_solvability">compute_solvability</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.compute_solvability_quantiles">compute_solvability_quantiles</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.plot_bootstrap_CIs">plot_bootstrap_CIs</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.plot_progress_curves">plot_progress_curves</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.plot_solvability_curves">plot_solvability_curves</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.post_replicate">post_replicate</a></li>
-<li><a class="reference internal" href="#wrapper_base.Experiment.run">run</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment">MetaExperiment</a><ul>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.solver_names">solver_names</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.n_solvers">n_solvers</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.problem_names">problem_names</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.n_problems">n_problems</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_solver_fixed_factors">all_solver_fixed_factors</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_problem_fixed_factors">all_problem_fixed_factors</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_oracle_fixed_factors">all_oracle_fixed_factors</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.experiments">experiments</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.plot_area_scatterplot">plot_area_scatterplot</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.plot_solvability_profiles">plot_solvability_profiles</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.post_replicate">post_replicate</a></li>
-<li><a class="reference internal" href="#wrapper_base.MetaExperiment.run">run</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#wrapper_base.area_under_prog_curve">area_under_prog_curve</a></li>
-<li><a class="reference internal" href="#wrapper_base.read_experiment_results">read_experiment_results</a></li>
-<li><a class="reference internal" href="#wrapper_base.record_experiment_results">record_experiment_results</a></li>
-<li><a class="reference internal" href="#wrapper_base.save_plot">save_plot</a></li>
-<li><a class="reference internal" href="#wrapper_base.solve_time_of_prog_curve">solve_time_of_prog_curve</a></li>
-<li><a class="reference internal" href="#wrapper_base.stylize_area_plot">stylize_area_plot</a></li>
-<li><a class="reference internal" href="#wrapper_base.stylize_plot">stylize_plot</a></li>
-<li><a class="reference internal" href="#wrapper_base.stylize_solvability_plot">stylize_solvability_plot</a></li>
-<li><a class="reference internal" href="#wrapper_base.trim_solver_results">trim_solver_results</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#listing">Listing</a></li>
 </ul>
 </li>
 </ul>

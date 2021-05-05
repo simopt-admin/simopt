@@ -34,12 +34,14 @@ release = '1.0'
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'autoapi.extension'
+    'sphinx.ext.napoleon'
 ]
 
 
-autoapi_dirs = ['..']
+autodoc_mock_imports = ['numpy',
+                        'scipy',
+                        'matplotlib'
+]
 
 napolean_numpy_docstring = True
 

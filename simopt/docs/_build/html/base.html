@@ -8,7 +8,6 @@
     <title>base module &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
@@ -1002,90 +1001,7 @@ depending on whether using CRN across solutions.</p>
   <ul>
 <li><a class="reference internal" href="#">base module</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
-<li><a class="reference internal" href="#listing">Listing</a><ul>
-<li><a class="reference internal" href="#base.Oracle">Oracle</a><ul>
-<li><a class="reference internal" href="#base.Oracle.name">name</a></li>
-<li><a class="reference internal" href="#base.Oracle.n_rngs">n_rngs</a></li>
-<li><a class="reference internal" href="#base.Oracle.n_responses">n_responses</a></li>
-<li><a class="reference internal" href="#base.Oracle.factors">factors</a></li>
-<li><a class="reference internal" href="#base.Oracle.specifications">specifications</a></li>
-<li><a class="reference internal" href="#base.Oracle.check_factor_list">check_factor_list</a></li>
-<li><a class="reference internal" href="#base.Oracle.check_factor_datatype">check_factor_datatype</a></li>
-<li><a class="reference internal" href="#base.Oracle.check_simulatable_factor">check_simulatable_factor</a></li>
-<li><a class="reference internal" href="#base.Oracle.check_simulatable_factors">check_simulatable_factors</a></li>
-<li><a class="reference internal" href="#base.Oracle.replicate">replicate</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#base.Problem">Problem</a><ul>
-<li><a class="reference internal" href="#base.Problem.name">name</a></li>
-<li><a class="reference internal" href="#base.Problem.dim">dim</a></li>
-<li><a class="reference internal" href="#base.Problem.n_objectives">n_objectives</a></li>
-<li><a class="reference internal" href="#base.Problem.n_stochastic_constraints">n_stochastic_constraints</a></li>
-<li><a class="reference internal" href="#base.Problem.minmax">minmax</a></li>
-<li><a class="reference internal" href="#base.Problem.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#base.Problem.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#base.Problem.gradient_available">gradient_available</a></li>
-<li><a class="reference internal" href="#base.Problem.initial_solution">initial_solution</a></li>
-<li><a class="reference internal" href="#base.Problem.budget">budget</a></li>
-<li><a class="reference internal" href="#base.Problem.optimal_bound">optimal_bound</a></li>
-<li><a class="reference internal" href="#base.Problem.optimal_solution">optimal_solution</a></li>
-<li><a class="reference internal" href="#base.Problem.ref_optimal_solution">ref_optimal_solution</a></li>
-<li><a class="reference internal" href="#base.Problem.oracle">oracle</a></li>
-<li><a class="reference internal" href="#base.Problem.oracle_default_factors">oracle_default_factors</a></li>
-<li><a class="reference internal" href="#base.Problem.oracle_fixed_factors">oracle_fixed_factors</a></li>
-<li><a class="reference internal" href="#base.Problem.rng_list">rng_list</a></li>
-<li><a class="reference internal" href="#base.Problem.attach_rngs">attach_rngs</a></li>
-<li><a class="reference internal" href="#base.Problem.check_deterministic_constraints">check_deterministic_constraints</a></li>
-<li><a class="reference internal" href="#base.Problem.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
-<li><a class="reference internal" href="#base.Problem.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
-<li><a class="reference internal" href="#base.Problem.factor_dict_to_vector">factor_dict_to_vector</a></li>
-<li><a class="reference internal" href="#base.Problem.get_random_solution">get_random_solution</a></li>
-<li><a class="reference internal" href="#base.Problem.response_dict_to_objectives">response_dict_to_objectives</a></li>
-<li><a class="reference internal" href="#base.Problem.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
-<li><a class="reference internal" href="#base.Problem.simulate">simulate</a></li>
-<li><a class="reference internal" href="#base.Problem.vector_to_factor_dict">vector_to_factor_dict</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#base.Solution">Solution</a><ul>
-<li><a class="reference internal" href="#base.Solution.x">x</a></li>
-<li><a class="reference internal" href="#base.Solution.dim">dim</a></li>
-<li><a class="reference internal" href="#base.Solution.decision_factors">decision_factors</a></li>
-<li><a class="reference internal" href="#base.Solution.rng_list">rng_list</a></li>
-<li><a class="reference internal" href="#base.Solution.n_reps">n_reps</a></li>
-<li><a class="reference internal" href="#base.Solution.det_objectives">det_objectives</a></li>
-<li><a class="reference internal" href="#base.Solution.det_objectives_gradients">det_objectives_gradients</a></li>
-<li><a class="reference internal" href="#base.Solution.det_stoch_constraints">det_stoch_constraints</a></li>
-<li><a class="reference internal" href="#base.Solution.det_stoch_constraints_gradients">det_stoch_constraints_gradients</a></li>
-<li><a class="reference internal" href="#base.Solution.storage_size">storage_size</a></li>
-<li><a class="reference internal" href="#base.Solution.objectives">objectives</a></li>
-<li><a class="reference internal" href="#base.Solution.objectives_gradients">objectives_gradients</a></li>
-<li><a class="reference internal" href="#base.Solution.stochastic_constraints">stochastic_constraints</a></li>
-<li><a class="reference internal" href="#base.Solution.stochastic_constraints_gradients">stochastic_constraints_gradients</a></li>
-<li><a class="reference internal" href="#base.Solution.attach_rngs">attach_rngs</a></li>
-<li><a class="reference internal" href="#base.Solution.pad_storage">pad_storage</a></li>
-<li><a class="reference internal" href="#base.Solution.recompute_summary_statistics">recompute_summary_statistics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#base.Solver">Solver</a><ul>
-<li><a class="reference internal" href="#base.Solver.name">name</a></li>
-<li><a class="reference internal" href="#base.Solver.objective_type">objective_type</a></li>
-<li><a class="reference internal" href="#base.Solver.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#base.Solver.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#base.Solver.gradient_needed">gradient_needed</a></li>
-<li><a class="reference internal" href="#base.Solver.factors">factors</a></li>
-<li><a class="reference internal" href="#base.Solver.specifications">specifications</a></li>
-<li><a class="reference internal" href="#base.Solver.rng_list">rng_list</a></li>
-<li><a class="reference internal" href="#base.Solver.solution_progenitor_rngs">solution_progenitor_rngs</a></li>
-<li><a class="reference internal" href="#base.Solver.attach_rngs">attach_rngs</a></li>
-<li><a class="reference internal" href="#base.Solver.check_factor_datatype">check_factor_datatype</a></li>
-<li><a class="reference internal" href="#base.Solver.check_solver_factor">check_solver_factor</a></li>
-<li><a class="reference internal" href="#base.Solver.check_solver_factors">check_solver_factors</a></li>
-<li><a class="reference internal" href="#base.Solver.prepare_sim_new_soln">prepare_sim_new_soln</a></li>
-<li><a class="reference internal" href="#base.Solver.solve">solve</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#listing">Listing</a></li>
 </ul>
 </li>
 </ul>

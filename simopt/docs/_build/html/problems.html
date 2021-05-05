@@ -8,7 +8,6 @@
     <title>problems package &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
@@ -1322,125 +1321,19 @@ of objectives.</p>
 <li><a class="reference internal" href="#">problems package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-problems.cntnv_max_profit">problems.cntnv_max_profit module</a><ul>
-<li><a class="reference internal" href="#summary">Summary</a><ul>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit">CntNVMaxProfit</a><ul>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.name">name</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.dim">dim</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_objectives">n_objectives</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_stochastic_constraints">n_stochastic_constraints</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.minmax">minmax</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.gradient_available">gradient_available</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.initial_solution">initial_solution</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.budget">budget</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_bound">optimal_bound</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_solution">optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.ref_optimal_solution">ref_optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle">oracle</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors">oracle_default_factors</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors">oracle_fixed_factors</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.rng_list">rng_list</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.check_deterministic_constraints">check_deterministic_constraints</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.factor_dict_to_vector">factor_dict_to_vector</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.get_random_solution">get_random_solution</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_objectives">response_dict_to_objectives</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
-<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.vector_to_factor_dict">vector_to_factor_dict</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#summary">Summary</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.facilitysizing_totalcost">problems.facilitysizing_totalcost module</a><ul>
-<li><a class="reference internal" href="#id1">Summary</a><ul>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost">facilitysizingTotalCost</a><ul>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.dim">dim</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_objectives">n_objectives</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_stochastic_constraints">n_stochastic_constraints</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.minmax">minmax</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.gradient_available">gradient_available</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.initial_solution">initial_solution</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.budget">budget</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_bound">optimal_bound</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_solution">optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.oracle">oracle</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.check_deterministic_constraints">check_deterministic_constraints</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.factor_dict_to_vector">factor_dict_to_vector</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.get_random_solution">get_random_solution</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_objectives">response_dict_to_objectives</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
-<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.vector_to_factor_dict">vector_to_factor_dict</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#id1">Summary</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.mm1_min_mean_sojourn_time">problems.mm1_min_mean_sojourn_time module</a><ul>
-<li><a class="reference internal" href="#id2">Summary</a><ul>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime">MM1MinMeanSojournTime</a><ul>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.name">name</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.dim">dim</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_objectives">n_objectives</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_stochastic_constraints">n_stochastic_constraints</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.minmax">minmax</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.gradient_available">gradient_available</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.initial_solution">initial_solution</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.budget">budget</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_bound">optimal_bound</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_solution">optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.ref_optimal_solution">ref_optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle">oracle</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors">oracle_default_factors</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors">oracle_fixed_factors</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.rng_list">rng_list</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.check_deterministic_constraints">check_deterministic_constraints</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.factor_dict_to_vector">factor_dict_to_vector</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.get_random_solution">get_random_solution</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_objectives">response_dict_to_objectives</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
-<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.vector_to_factor_dict">vector_to_factor_dict</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#id2">Summary</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.rmitd_maxrevenue">problems.rmitd_maxrevenue module</a><ul>
-<li><a class="reference internal" href="#id3">Summary</a><ul>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue">rmitdMaxRevenue</a><ul>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.dim">dim</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_objectives">n_objectives</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_stochastic_constraints">n_stochastic_constraints</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.minmax">minmax</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.constraint_type">constraint_type</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.variable_type">variable_type</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.gradient_available">gradient_available</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.initial_solution">initial_solution</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.budget">budget</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_bound">optimal_bound</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_solution">optimal_solution</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.oracle">oracle</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.check_deterministic_constraints">check_deterministic_constraints</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.factor_dict_to_vector">factor_dict_to_vector</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.response_dict_to_objectives">response_dict_to_objectives</a></li>
-<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.vector_to_factor_dict">vector_to_factor_dict</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a class="reference internal" href="#id3">Summary</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems">Module contents</a></li>
