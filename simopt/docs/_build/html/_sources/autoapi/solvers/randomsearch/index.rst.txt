@@ -1,0 +1,121 @@
+:mod:`solvers.randomsearch`
+===========================
+
+.. py:module:: solvers.randomsearch
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Randomly sample solutions from the feasible region.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   solvers.randomsearch.RandomSearch
+
+
+
+
+.. class:: RandomSearch(fixed_factors={})
+
+
+   Bases: :py:obj:`base.Solver`
+
+   A solver that randomly samples solutions from the feasible region.
+   Take a fixed number of replications at each solution.
+
+   .. attribute:: name
+
+      name of solver
+
+      :type: string
+
+   .. attribute:: objective_type
+
+
+
+      description of objective types:
+          "single" or "multi"
+
+      :type: string
+
+   .. attribute:: constraint_type
+
+
+
+      description of constraints types:
+          "unconstrained", "box", "deterministic", "stochastic"
+
+      :type: string
+
+   .. attribute:: variable_type
+
+
+
+      description of variable types:
+          "discrete", "continuous", "mixed"
+
+      :type: string
+
+   .. attribute:: gradient_needed
+
+      indicates if gradient of objective function is needed
+
+      :type: bool
+
+   .. attribute:: factors
+
+      changeable factors (i.e., parameters) of the solver
+
+      :type: dict
+
+   .. attribute:: specifications
+
+      details of each factor (for GUI, data validation, and defaults)
+
+      :type: dict
+
+   .. attribute:: rng_list
+
+      list of RNGs used for the solver's internal purposes
+
+      :type: list of rng.MRG32k3a objects
+
+   :param fixed_factors: fixed_factors of the solver
+   :type fixed_factors: dict
+
+   .. seealso:: :obj:`base.Solver`
+
+   .. method:: check_sample_size(self)
+
+
+   .. method:: check_solver_factors(self)
+
+      Determine if the joint settings of solver factors are permissible.
+
+      :returns: **is_simulatable** -- indicates if solver factors are permissible
+      :rtype: bool
+
+
+   .. method:: solve(self, problem, crn_across_solns)
+
+      Run a single macroreplication of a solver on a problem.
+
+      :param problem: simulation-optimization problem to solve
+      :type problem: Problem object
+      :param crn_across_solns: indicates if CRN are used when simulating different solutions
+      :type crn_across_solns: bool
+
+      :returns: * **recommended_solns** (*list of Solution objects*) -- list of solutions recommended throughout the budget
+                * **intermediate_budgets** (*list of ints*) -- list of intermediate budgets when recommended solutions changes
+
+
+

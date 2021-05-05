@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rng &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng</span></code></a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rng">
+<span id="rng"></span><h1><a class="reference internal" href="../../rng.html#module-rng" title="rng"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng</span></code></a><a class="headerlink" href="#module-rng" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="matmodops/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng.matmodops</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="mrg32k3a/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng.mrg32k3a</span></code></a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rng.MRG32k3a" title="rng.MRG32k3a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MRG32k3a</span></code></a></p></td>
+<td><p>Implements mrg32k3a as the generator for a random.Random object.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt id="rng.MRG32k3a">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">rng.</span></code><code class="sig-name descname"><span class="pre">MRG32k3a</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+<p>Implements mrg32k3a as the generator for a random.Random object.</p>
+<dl class="py attribute">
+<dt id="rng.MRG32k3a._current_state">
+<code class="sig-name descname"><span class="pre">_current_state</span></code><a class="headerlink" href="#rng.MRG32k3a._current_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>current state of mrg32k3a generator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="rng.MRG32k3a.ref_seed">
+<code class="sig-name descname"><span class="pre">ref_seed</span></code><a class="headerlink" href="#rng.MRG32k3a.ref_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>seed from which to start the generator
+streams/substreams/subsubstreams are referenced w.r.t. ref_seed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="rng.MRG32k3a.s_ss_sss_index">
+<code class="sig-name descname"><span class="pre">s_ss_sss_index</span></code><a class="headerlink" href="#rng.MRG32k3a.s_ss_sss_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>triplet of the indices of the current stream-substream-subsubstream</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int of length 3</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="rng.MRG32k3a.stream_start">
+<code class="sig-name descname"><span class="pre">stream_start</span></code><a class="headerlink" href="#rng.MRG32k3a.stream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current stream</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="rng.MRG32k3a.substream_start">
+<code class="sig-name descname"><span class="pre">substream_start</span></code><a class="headerlink" href="#rng.MRG32k3a.substream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current substream</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="rng.MRG32k3a.subsubstream_start">
+<code class="sig-name descname"><span class="pre">subsubstream_start</span></code><a class="headerlink" href="#rng.MRG32k3a.subsubstream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current subsubstream</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_seed</strong> (<em>tuple of int of length 6</em><em> (</em><em>optional</em><em>)</em>) – seed from which to start the generator</p></li>
+<li><p><strong>s_ss_sss_index</strong> (<em>list of int of length 3</em>) – triplet of the indices of the stream-substream-subsubstream to start at</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+</div>
+<dl class="py method">
+<dt id="rng.MRG32k3a.__deepcopy__">
+<code class="sig-name descname"><span class="pre">__deepcopy__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.__deepcopy__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.seed">
+<code class="sig-name descname"><span class="pre">seed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the state (or seed) of the generator and update the generator state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>new_state</strong> (<em>tuple of int of length 6</em>) – new state to which to advance the generator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.getstate">
+<code class="sig-name descname"><span class="pre">getstate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.getstate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the state of the generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>_current_state</strong> (<em>tuple of int of length 6</em>) – current state of the generator</p></li>
+<li><p><strong>random.Random.getstate()</strong> (<em>tuple of int</em>) – Random.getstate output</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.setstate">
+<code class="sig-name descname"><span class="pre">setstate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.setstate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the internal state of the generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>tuple</em>) – state[0] is new state for the generator
+state[1] is random.Random.getstate()</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.random">
+<code class="sig-name descname"><span class="pre">random</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a standard uniform variate and advance the generator
+state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>u</strong> – pseudo uniform random variate</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.get_current_state">
+<code class="sig-name descname"><span class="pre">get_current_state</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.get_current_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current state of the generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_current_state</strong> – current state of the generator</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>tuple of int of length 6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.normalvariate">
+<code class="sig-name descname"><span class="pre">normalvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.normalvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a normal random variate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>float</em>) – expected value of the normal distribution from which to
+generate</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – standard deviation of the normal distribution from which to
+generate</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a normal random variate from the specified distribution</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.mvnormalvariate">
+<code class="sig-name descname"><span class="pre">mvnormalvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factorize_flag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.mvnormalvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a normal random vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean_vec</strong> (<em>array</em>) – location parameters of the multivariate normal distribution
+from which to generate</p></li>
+<li><p><strong>cov</strong> (<em>array</em>) – covariance matrix of the multivariate normal distribution
+from which to generate</p></li>
+<li><p><strong>factorize_flag</strong> (<em>binary</em>) – 0 : need to calculate chol based on covariance
+1 : do not need to calculate chol since we already have it</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a normal random multivariate from the specified distribution</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.poissonvariate">
+<code class="sig-name descname"><span class="pre">poissonvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.poissonvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a poisson random variate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>lmbda</strong> (<em>float</em>) – expected value of the poisson distribution from which to
+generate</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a poisson random variate from the specified distribution</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.advance_stream">
+<code class="sig-name descname"><span class="pre">advance_stream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.advance_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advance the state of the generator to the start of the next stream.
+Streams are of length 2**141.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.advance_substream">
+<code class="sig-name descname"><span class="pre">advance_substream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.advance_substream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advance the state of the generator to the start of the next substream.
+Substreams are of length 2**94.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.advance_subsubstream">
+<code class="sig-name descname"><span class="pre">advance_subsubstream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.advance_subsubstream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advance the state of the generator to the start of the next subsubstream.
+Subsubstreams are of length 2**47.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.reset_stream">
+<code class="sig-name descname"><span class="pre">reset_stream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.reset_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the state of the generator to the start of the current stream.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.reset_substream">
+<code class="sig-name descname"><span class="pre">reset_substream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.reset_substream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the state of the generator to the start of the current substream.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.reset_subsubstream">
+<code class="sig-name descname"><span class="pre">reset_subsubstream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.reset_subsubstream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the state of the generator to the start of the current subsubstream.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rng.MRG32k3a.start_fixed_s_ss_sss">
+<code class="sig-name descname"><span class="pre">start_fixed_s_ss_sss</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_triplet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.MRG32k3a.start_fixed_s_ss_sss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the rng to the start of a specified (stream, substream, subsubstream) triplet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s_ss_sss_triplet</strong> (<em>list of int of length 3</em>) – triplet of the indices of the current stream-substream-subsubstream</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng</span></code></a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#package-contents">Package Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#rng.MRG32k3a">MRG32k3a</a><ul>
+<li><a class="reference internal" href="#rng.MRG32k3a._current_state">_current_state</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.ref_seed">ref_seed</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.s_ss_sss_index">s_ss_sss_index</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.stream_start">stream_start</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.substream_start">substream_start</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.subsubstream_start">subsubstream_start</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.__deepcopy__">__deepcopy__</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.seed">seed</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.getstate">getstate</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.setstate">setstate</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.random">random</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.get_current_state">get_current_state</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.normalvariate">normalvariate</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.mvnormalvariate">mvnormalvariate</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.poissonvariate">poissonvariate</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.advance_stream">advance_stream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.advance_substream">advance_substream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.advance_subsubstream">advance_subsubstream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.reset_stream">reset_stream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.reset_substream">reset_substream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.reset_subsubstream">reset_subsubstream</a></li>
+<li><a class="reference internal" href="#rng.MRG32k3a.start_fixed_s_ss_sss">start_fixed_s_ss_sss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/autoapi/rng/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">rng</span></code></a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

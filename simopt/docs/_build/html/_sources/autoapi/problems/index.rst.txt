@@ -1,0 +1,18 @@
+:mod:`problems`
+===============
+
+.. py:module:: problems
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   cntnv_max_profit/index.rst
+   facilitysizing_totalcost/index.rst
+   mm1_min_mean_sojourn_time/index.rst
+   rmitd_maxrevenue/index.rst
+
+

@@ -1,0 +1,205 @@
+:mod:`problems.facilitysizing_totalcost`
+========================================
+
+.. py:module:: problems.facilitysizing_totalcost
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Minimize the total cost of a facilitysize problem.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   problems.facilitysizing_totalcost.facilitysizingTotalCost
+
+
+
+
+.. class:: facilitysizingTotalCost(oracle_fixed_factors={})
+
+
+   Bases: :py:obj:`base.Problem`
+
+   Base class to implement simulation-optimization problems.
+
+   .. attribute:: dim
+
+      number of decision variables
+
+      :type: int
+
+   .. attribute:: n_objectives
+
+      number of objectives
+
+      :type: int
+
+   .. attribute:: n_stochastic_constraints
+
+      number of stochastic constraints
+
+      :type: int
+
+   .. attribute:: minmax
+
+      indicator of maximization (+1) or minimization (-1) for each objective
+
+      :type: tuple of int (+/- 1)
+
+   .. attribute:: constraint_type
+
+
+
+      description of constraints types:
+          "unconstrained", "box", "deterministic", "stochastic"
+
+      :type: string
+
+   .. attribute:: variable_type
+
+
+
+      description of variable types:
+          "discrete", "continuous", "mixed"
+
+      :type: string
+
+   .. attribute:: gradient_available
+
+      indicates if gradient of objective function is available
+
+      :type: bool
+
+   .. attribute:: initial_solution
+
+      default initial solution from which solvers start
+
+      :type: tuple
+
+   .. attribute:: budget
+
+      max number of replications (fn evals) for a solver to take
+
+      :type: int
+
+   .. attribute:: optimal_bound
+
+      bound on optimal objective function value
+
+      :type: float
+
+   .. attribute:: optimal_solution
+
+      optimal solution (if known)
+
+      :type: tuple
+
+   .. attribute:: oracle
+
+      associated simulation oracle that generates replications
+
+      :type: Oracle object
+
+   :param oracle_factors: subset of non-decision factors to pass through to the oracle
+   :type oracle_factors: dict
+
+   .. seealso:: :obj:`base.Problem`
+
+   .. method:: vector_to_factor_dict(self, vector)
+
+      Convert a vector of variables to a dictionary with factor keys
+
+      :param vector: vector of values associated with decision variables
+      :type vector: tuple
+
+      :returns: **factor_dict** -- dictionary with factor keys and associated values
+      :rtype: dictionary
+
+
+   .. method:: factor_dict_to_vector(self, factor_dict)
+
+      Convert a dictionary with factor keys to a vector
+      of variables.
+
+      :param factor_dict: dictionary with factor keys and associated values
+      :type factor_dict: dictionary
+
+      :returns: **vector** -- vector of values associated with decision variables
+      :rtype: tuple
+
+
+   .. method:: response_dict_to_objectives(self, response_dict)
+
+      Convert a dictionary with response keys to a vector
+      of objectives.
+
+      :param response_dict: dictionary with response keys and associated values
+      :type response_dict: dictionary
+
+      :returns: **objectives** -- vector of objectives
+      :rtype: tuple
+
+
+   .. method:: response_dict_to_stoch_constraints(self, response_dict)
+
+      Convert a dictionary with response keys to a vector
+      of left-hand sides of stochastic constraints: E[Y] >= 0
+
+      :param response_dict: dictionary with response keys and associated values
+      :type response_dict: dictionary
+
+      :returns: **stoch_constraints** -- vector of LHSs of stochastic constraint
+      :rtype: tuple
+
+
+   .. method:: deterministic_stochastic_constraints_and_gradients(self, x)
+
+      Compute deterministic components of stochastic constraints for a solution `x`.
+
+      :param x: vector of decision variables
+      :type x: tuple
+
+      :returns: * **det_stoch_constraints** (*tuple*) -- vector of deterministic components of stochastic constraints
+                * **det_stoch_constraints_gradients** (*tuple*) -- vector of gradients of deterministic components of stochastic constraints
+
+
+   .. method:: deterministic_objectives_and_gradients(self, x)
+
+      Compute deterministic components of objectives for a solution `x`.
+
+      :param x: vector of decision variables
+      :type x: tuple
+
+      :returns: * **det_objectives** (*tuple*) -- vector of deterministic components of objectives
+                * **det_objectives_gradients** (*tuple*) -- vector of gradients of deterministic components of objectives
+
+
+   .. method:: check_deterministic_constraints(self, x)
+
+      Check if a solution `x` satisfies the problem's deterministic constraints.
+
+      :param x: vector of decision variables
+      :type x: tuple
+
+      :returns: **satisfies** -- indicates if solution `x` satisfies the deterministic constraints.
+      :rtype: bool
+
+
+   .. method:: get_random_solution(self)
+
+      Generate a random solution, to be used for starting or restarting solvers.
+
+      :returns: **x** -- vector of decision variables
+      :rtype: tuple
+
+
+

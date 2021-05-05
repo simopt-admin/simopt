@@ -1,0 +1,37 @@
+:mod:`directory`
+================
+
+.. py:module:: directory
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Provide dictionary directories listing solvers, problems, and oracles.
+
+   Listing
+   -------
+   solver_directory : dictionary
+   problem_directory : dictionary
+   oracle_directory : dictionary
+
+
+
+Module Contents
+---------------
+
+.. data:: solver_directory
+   
+
+   
+
+.. data:: problem_directory
+   
+
+   
+
+.. data:: oracle_directory
+   
+
+   
+

@@ -1,0 +1,24 @@
+:mod:`test_solver_problem`
+==========================
+
+.. py:module:: test_solver_problem
+
+
+Module Contents
+---------------
+
+.. data:: solver_name
+   :annotation: = SANE
+
+   
+
+.. data:: problem_name
+   :annotation: = CNTNEWS-1
+
+   
+
+.. data:: myexperiment
+   
+
+   
+

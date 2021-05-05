@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>oracles.sscont &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">oracles.sscont</span></code></a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-oracles.sscont">
+<span id="oracles-sscont"></span><h1><a class="reference internal" href="../../../oracles.html#module-oracles.sscont" title="oracles.sscont"><code class="xref py py-mod docutils literal notranslate"><span class="pre">oracles.sscont</span></code></a><a class="headerlink" href="#module-oracles.sscont" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="summary">
+<p>Simulate multiple periods worth of sales for a (s,S) inventory problem with continuous inventory.</p>
+</div>
+<div class="section" id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../../oracles.html#oracles.sscont.SSCont" title="oracles.sscont.SSCont"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SSCont</span></code></a></p></td>
+<td><p>An oracle that simulates multiple periods worth of sales for a (s,S) inventory problem with continuous inventory,</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt id="oracles.sscont.SSCont">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.sscont.</span></code><code class="sig-name descname"><span class="pre">SSCont</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../../base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p>An oracle that simulates multiple periods worth of sales for a (s,S) inventory problem with continuous inventory,
+exponential demand distribution, and poisson lead time distribution.
+Returns the average cost per period after accounting for fixed and variable order costs, order rate, stockout rate, fraction of demand
+met with inventory on hand, average amount backordered given a stockout occured, and average amount ordered given an order occured.</p>
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.n_rngs">
+<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#oracles.sscont.SSCont.n_rngs" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of random-number generators used to run a simulation replication</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.rng_list">
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#oracles.sscont.SSCont.rng_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of random-number generators used to run a simulation replication</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.n_responses">
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.sscont.SSCont.n_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of responses (performance measures)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.factors">
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.sscont.SSCont.factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>changeable factors of the simulation model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.specifications">
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.sscont.SSCont.specifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>details of each factor (for GUI, data validation, and defaults)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="oracles.sscont.SSCont.check_factor_list">
+<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#oracles.sscont.SSCont.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>switch case for checking factor simulatability</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fixed_factors</strong> (<em>dict</em>) – fixed_factors of the simulation model</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../../../base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+</div>
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_demand_mean">
+<code class="sig-name descname"><span class="pre">check_demand_mean</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_demand_mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_lead_mean">
+<code class="sig-name descname"><span class="pre">check_lead_mean</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_lead_mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_holding_cost">
+<code class="sig-name descname"><span class="pre">check_holding_cost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_holding_cost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_fixed_cost">
+<code class="sig-name descname"><span class="pre">check_fixed_cost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_fixed_cost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_variable_cost">
+<code class="sig-name descname"><span class="pre">check_variable_cost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_variable_cost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_s">
+<code class="sig-name descname"><span class="pre">check_s</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_S">
+<code class="sig-name descname"><span class="pre">check_S</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_S" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_n_days">
+<code class="sig-name descname"><span class="pre">check_n_days</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_n_days" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_warmup">
+<code class="sig-name descname"><span class="pre">check_warmup</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_warmup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_simulatable_factors">
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if a simulation replication can be run with the given factors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if oracle specified by factors is simulatable</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.replicate">
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.replicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a single replication for the current oracle factors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>responses</strong> – performance measures of interest
+“cost_mean” = average cost per period
+“on_time_rate” = fraction of demand met with stock on hand in store
+“order_rate” = fraction of periods an order was made
+“stockout_rate” = fraction of periods a stockout occured
+“avg_stockout” = mean amount of product backordered given a stockout occured
+“avg_order” = mean amount of product ordered given an order occured</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">oracles.sscont</span></code></a><ul>
+<li><a class="reference internal" href="#summary">Simulate multiple periods worth of sales for a (s,S) inventory problem with continuous inventory.</a></li>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#oracles.sscont.SSCont">SSCont</a><ul>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.n_rngs">n_rngs</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_factor_list">check_factor_list</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_demand_mean">check_demand_mean</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_lead_mean">check_lead_mean</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_holding_cost">check_holding_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_fixed_cost">check_fixed_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_variable_cost">check_variable_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_s">check_s</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_S">check_S</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_n_days">check_n_days</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_warmup">check_warmup</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/autoapi/oracles/sscont/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">oracles.sscont</span></code></a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>problems package &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +36,8 @@
           <a href="oracles.html" title="oracles package"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">problems package</a></li> 
       </ul>
     </div>  
 
@@ -54,14 +56,14 @@
 <div class="section" id="summary">
 <h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
 <p>Maximize the expected profit for the continuous newsvendor problem.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit">
-<em class="property">class </em><code class="sig-prename descclassname">problems.cntnv_max_profit.</code><code class="sig-name descname">CntNVMaxProfit</code><span class="sig-paren">(</span><em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.cntnv_max_profit.</span></code><code class="sig-name descname"><span class="pre">CntNVMaxProfit</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.name">
-<code class="sig-name descname">name</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of problem</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -70,9 +72,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.dim">
-<code class="sig-name descname">dim</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -81,9 +83,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.n_objectives">
-<code class="sig-name descname">n_objectives</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_objectives</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -92,9 +94,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.n_stochastic_constraints">
-<code class="sig-name descname">n_stochastic_constraints</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_stochastic_constraints</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -103,9 +105,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.minmax">
-<code class="sig-name descname">minmax</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.minmax" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">minmax</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.minmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicator of maximization (+1) or minimization (-1) for each objective</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -114,9 +116,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.constraint_type">
-<code class="sig-name descname">constraint_type</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.constraint_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -128,9 +130,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.variable_type">
-<code class="sig-name descname">variable_type</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.variable_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -142,9 +144,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.gradient_available">
-<code class="sig-name descname">gradient_available</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.gradient_available" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">gradient_available</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.gradient_available" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is available</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -153,9 +155,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.initial_solution">
-<code class="sig-name descname">initial_solution</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.initial_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">initial_solution</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.initial_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>default initial solution from which solvers start</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -164,9 +166,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.budget">
-<code class="sig-name descname">budget</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.budget" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">budget</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>max number of replications (fn evals) for a solver to take</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -175,9 +177,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.optimal_bound">
-<code class="sig-name descname">optimal_bound</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_bound" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_bound</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_bound" title="Permalink to this definition">¶</a></dt>
 <dd><p>bound on optimal objective function value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -186,9 +188,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.optimal_solution">
-<code class="sig-name descname">optimal_solution</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_solution</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>optimal solution (if known)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -197,9 +199,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.ref_optimal_solution">
-<code class="sig-name descname">ref_optimal_solution</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.ref_optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">ref_optimal_solution</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.ref_optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>reference solution (in lieu of optimal)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -208,9 +210,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle">
-<code class="sig-name descname">oracle</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle" title="Permalink to this definition">¶</a></dt>
 <dd><p>associated simulation oracle that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -219,9 +221,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors">
-<code class="sig-name descname">oracle_default_factors</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>default values for overriding oracle-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -230,9 +232,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors">
-<code class="sig-name descname">oracle_fixed_factors</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>combination of overriden oracle-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -241,9 +243,9 @@
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.rng_list">
-<code class="sig-name descname">rng_list</code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.rng_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used to generate a random initial solution
 or a random problem instance</p>
 <dl class="field-list simple">
@@ -260,11 +262,11 @@ or a random problem instance</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.check_deterministic_constraints">
-<code class="sig-name descname">check_deterministic_constraints</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_deterministic_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a solution <cite>x</cite> satisfies the problem’s deterministic
 constraints.</p>
 <dl class="field-list simple">
@@ -280,9 +282,9 @@ constraints.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.deterministic_objectives_and_gradients">
-<code class="sig-name descname">deterministic_objectives_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_objectives_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of objectives for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -298,9 +300,9 @@ constraints.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.deterministic_stochastic_constraints_and_gradients">
-<code class="sig-name descname">deterministic_stochastic_constraints_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_stochastic_constraints_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of stochastic constraints
 for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
@@ -318,9 +320,9 @@ stochastic constraints</p></li>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.factor_dict_to_vector">
-<code class="sig-name descname">factor_dict_to_vector</code><span class="sig-paren">(</span><em class="sig-param">factor_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factor_dict_to_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with factor keys to a vector
 of variables.</p>
 <dl class="field-list simple">
@@ -336,9 +338,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.get_random_solution">
-<code class="sig-name descname">get_random_solution</code><span class="sig-paren">(</span><em class="sig-param">rand_sol_rng</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.get_random_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_random_solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rand_sol_rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.get_random_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random solution for starting or restarting solvers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -353,9 +355,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_objectives">
-<code class="sig-name descname">response_dict_to_objectives</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_objectives</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of objectives.</p>
 <dl class="field-list simple">
@@ -371,9 +373,9 @@ of objectives.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_stoch_constraints">
-<code class="sig-name descname">response_dict_to_stoch_constraints</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_stoch_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dl class="field-list simple">
@@ -389,9 +391,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit.vector_to_factor_dict">
-<code class="sig-name descname">vector_to_factor_dict</code><span class="sig-paren">(</span><em class="sig-param">vector</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">vector_to_factor_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vector of variables to a dictionary with factor keys</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -415,14 +417,14 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <div class="section" id="id1">
 <h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Minimize the total cost of a facilitysize problem.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost">
-<em class="property">class </em><code class="sig-prename descclassname">problems.facilitysizing_totalcost.</code><code class="sig-name descname">facilitysizingTotalCost</code><span class="sig-paren">(</span><em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.facilitysizing_totalcost.</span></code><code class="sig-name descname"><span class="pre">facilitysizingTotalCost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.dim">
-<code class="sig-name descname">dim</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -431,9 +433,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.n_objectives">
-<code class="sig-name descname">n_objectives</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_objectives</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -442,9 +444,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.n_stochastic_constraints">
-<code class="sig-name descname">n_stochastic_constraints</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_stochastic_constraints</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -453,9 +455,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.minmax">
-<code class="sig-name descname">minmax</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.minmax" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">minmax</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.minmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicator of maximization (+1) or minimization (-1) for each objective</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -464,9 +466,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.constraint_type">
-<code class="sig-name descname">constraint_type</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.constraint_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -478,9 +480,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.variable_type">
-<code class="sig-name descname">variable_type</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.variable_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -492,9 +494,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.gradient_available">
-<code class="sig-name descname">gradient_available</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.gradient_available" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">gradient_available</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.gradient_available" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is available</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -503,9 +505,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.initial_solution">
-<code class="sig-name descname">initial_solution</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.initial_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">initial_solution</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.initial_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>default initial solution from which solvers start</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -514,9 +516,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.budget">
-<code class="sig-name descname">budget</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.budget" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">budget</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>max number of replications (fn evals) for a solver to take</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -525,9 +527,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_bound">
-<code class="sig-name descname">optimal_bound</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_bound" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_bound</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_bound" title="Permalink to this definition">¶</a></dt>
 <dd><p>bound on optimal objective function value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -536,9 +538,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_solution">
-<code class="sig-name descname">optimal_solution</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_solution</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>optimal solution (if known)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -547,9 +549,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.oracle">
-<code class="sig-name descname">oracle</code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.oracle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.oracle" title="Permalink to this definition">¶</a></dt>
 <dd><p>associated simulation oracle that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -565,11 +567,11 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.check_deterministic_constraints">
-<code class="sig-name descname">check_deterministic_constraints</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_deterministic_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a solution <cite>x</cite> satisfies the problem’s deterministic constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -584,9 +586,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_objectives_and_gradients">
-<code class="sig-name descname">deterministic_objectives_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_objectives_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of objectives for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -602,9 +604,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_stochastic_constraints_and_gradients">
-<code class="sig-name descname">deterministic_stochastic_constraints_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_stochastic_constraints_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of stochastic constraints for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -620,9 +622,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.factor_dict_to_vector">
-<code class="sig-name descname">factor_dict_to_vector</code><span class="sig-paren">(</span><em class="sig-param">factor_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factor_dict_to_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with factor keys to a vector
 of variables.</p>
 <dl class="field-list simple">
@@ -638,9 +640,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.get_random_solution">
-<code class="sig-name descname">get_random_solution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.get_random_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_random_solution</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.get_random_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random solution, to be used for starting or restarting solvers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -652,9 +654,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_objectives">
-<code class="sig-name descname">response_dict_to_objectives</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_objectives</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of objectives.</p>
 <dl class="field-list simple">
@@ -670,9 +672,9 @@ of objectives.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_stoch_constraints">
-<code class="sig-name descname">response_dict_to_stoch_constraints</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_stoch_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dl class="field-list simple">
@@ -688,9 +690,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.facilitysizing_totalcost.facilitysizingTotalCost.vector_to_factor_dict">
-<code class="sig-name descname">vector_to_factor_dict</code><span class="sig-paren">(</span><em class="sig-param">vector</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">vector_to_factor_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vector of variables to a dictionary with factor keys</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -714,14 +716,14 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <div class="section" id="id2">
 <h3>Summary<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>Minimize the mean sojourn time of an M/M/1 queue.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime">
-<em class="property">class </em><code class="sig-prename descclassname">problems.mm1_min_mean_sojourn_time.</code><code class="sig-name descname">MM1MinMeanSojournTime</code><span class="sig-paren">(</span><em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.mm1_min_mean_sojourn_time.</span></code><code class="sig-name descname"><span class="pre">MM1MinMeanSojournTime</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.name">
-<code class="sig-name descname">name</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of problem</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -730,9 +732,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.dim">
-<code class="sig-name descname">dim</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -741,9 +743,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_objectives">
-<code class="sig-name descname">n_objectives</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_objectives</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -752,9 +754,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_stochastic_constraints">
-<code class="sig-name descname">n_stochastic_constraints</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_stochastic_constraints</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -763,9 +765,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.minmax">
-<code class="sig-name descname">minmax</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.minmax" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">minmax</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.minmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicator of maximization (+1) or minimization (-1) for each objective</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -774,9 +776,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.constraint_type">
-<code class="sig-name descname">constraint_type</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.constraint_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -788,9 +790,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.variable_type">
-<code class="sig-name descname">variable_type</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.variable_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -802,9 +804,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.gradient_available">
-<code class="sig-name descname">gradient_available</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.gradient_available" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">gradient_available</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.gradient_available" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is available</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -813,9 +815,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.initial_solution">
-<code class="sig-name descname">initial_solution</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.initial_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">initial_solution</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.initial_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>default initial solution from which solvers start</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -824,9 +826,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.budget">
-<code class="sig-name descname">budget</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.budget" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">budget</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>max number of replications (fn evals) for a solver to take</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -835,9 +837,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_bound">
-<code class="sig-name descname">optimal_bound</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_bound" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_bound</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_bound" title="Permalink to this definition">¶</a></dt>
 <dd><p>bound on optimal objective function value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -846,9 +848,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_solution">
-<code class="sig-name descname">optimal_solution</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_solution</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>optimal solution (if known)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -857,9 +859,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.ref_optimal_solution">
-<code class="sig-name descname">ref_optimal_solution</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.ref_optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">ref_optimal_solution</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.ref_optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>reference solution (in lieu of optimal)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -868,9 +870,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle">
-<code class="sig-name descname">oracle</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle" title="Permalink to this definition">¶</a></dt>
 <dd><p>associated simulation oracle that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -879,9 +881,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors">
-<code class="sig-name descname">oracle_default_factors</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>default values for overriding oracle-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -890,9 +892,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors">
-<code class="sig-name descname">oracle_fixed_factors</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>combination of overriden oracle-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -901,9 +903,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.rng_list">
-<code class="sig-name descname">rng_list</code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.rng_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used to generate a random initial solution
 or a random problem instance</p>
 <dl class="field-list simple">
@@ -920,11 +922,11 @@ or a random problem instance</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.check_deterministic_constraints">
-<code class="sig-name descname">check_deterministic_constraints</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_deterministic_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a solution <cite>x</cite> satisfies the problem’s deterministic
 constraints.</p>
 <dl class="field-list simple">
@@ -940,9 +942,9 @@ constraints.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_objectives_and_gradients">
-<code class="sig-name descname">deterministic_objectives_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_objectives_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of objectives for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -958,9 +960,9 @@ constraints.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_stochastic_constraints_and_gradients">
-<code class="sig-name descname">deterministic_stochastic_constraints_and_gradients</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">deterministic_stochastic_constraints_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of stochastic constraints
 for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
@@ -979,9 +981,9 @@ stochastic constraints</p></li>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.factor_dict_to_vector">
-<code class="sig-name descname">factor_dict_to_vector</code><span class="sig-paren">(</span><em class="sig-param">factor_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factor_dict_to_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with factor keys to a vector
 of variables.</p>
 <dl class="field-list simple">
@@ -997,9 +999,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.get_random_solution">
-<code class="sig-name descname">get_random_solution</code><span class="sig-paren">(</span><em class="sig-param">rand_sol_rng</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.get_random_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_random_solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rand_sol_rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.get_random_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random solution for starting or restarting solvers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1014,9 +1016,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_objectives">
-<code class="sig-name descname">response_dict_to_objectives</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_objectives</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of objectives.</p>
 <dl class="field-list simple">
@@ -1032,9 +1034,9 @@ of objectives.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_stoch_constraints">
-<code class="sig-name descname">response_dict_to_stoch_constraints</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_stoch_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dl class="field-list simple">
@@ -1050,9 +1052,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.vector_to_factor_dict">
-<code class="sig-name descname">vector_to_factor_dict</code><span class="sig-paren">(</span><em class="sig-param">vector</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">vector_to_factor_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vector of variables to a dictionary with factor keys</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1077,14 +1079,14 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <h3>Summary<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>Maximize the total revenue of a multi-stage revenue management
 with inter-temporal dependence problem.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue">
-<em class="property">class </em><code class="sig-prename descclassname">problems.rmitd_maxrevenue.</code><code class="sig-name descname">rmitdMaxRevenue</code><span class="sig-paren">(</span><em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.rmitd_maxrevenue.</span></code><code class="sig-name descname"><span class="pre">rmitdMaxRevenue</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.dim">
-<code class="sig-name descname">dim</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1093,9 +1095,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.n_objectives">
-<code class="sig-name descname">n_objectives</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_objectives</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1104,9 +1106,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.n_stochastic_constraints">
-<code class="sig-name descname">n_stochastic_constraints</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_stochastic_constraints</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1115,9 +1117,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.minmax">
-<code class="sig-name descname">minmax</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.minmax" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">minmax</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.minmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicator of maximization (+1) or minimization (-1) for each objective</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1126,9 +1128,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.constraint_type">
-<code class="sig-name descname">constraint_type</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.constraint_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -1140,9 +1142,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.variable_type">
-<code class="sig-name descname">variable_type</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.variable_type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -1154,9 +1156,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.gradient_available">
-<code class="sig-name descname">gradient_available</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.gradient_available" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">gradient_available</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.gradient_available" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is available</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1165,9 +1167,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.initial_solution">
-<code class="sig-name descname">initial_solution</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.initial_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">initial_solution</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.initial_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>default initial solution from which solvers start</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1176,9 +1178,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.budget">
-<code class="sig-name descname">budget</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.budget" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">budget</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>max number of replications (fn evals) for a solver to take</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1187,9 +1189,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_bound">
-<code class="sig-name descname">optimal_bound</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_bound" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_bound</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_bound" title="Permalink to this definition">¶</a></dt>
 <dd><p>bound on optimal objective function value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1198,9 +1200,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_solution">
-<code class="sig-name descname">optimal_solution</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">optimal_solution</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>optimal solution (if known)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1209,9 +1211,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.oracle">
-<code class="sig-name descname">oracle</code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.oracle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.oracle" title="Permalink to this definition">¶</a></dt>
 <dd><p>associated simulation oracle that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1227,11 +1229,11 @@ with inter-temporal dependence problem.</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.check_deterministic_constraints">
-<code class="sig-name descname">check_deterministic_constraints</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_deterministic_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a solution <cite>x</cite> satisfies the problem’s deterministic constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1246,9 +1248,9 @@ with inter-temporal dependence problem.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.factor_dict_to_vector">
-<code class="sig-name descname">factor_dict_to_vector</code><span class="sig-paren">(</span><em class="sig-param">factor_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factor_dict_to_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with factor keys to a vector
 of variables.</p>
 <dl class="field-list simple">
@@ -1264,9 +1266,9 @@ of variables.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.response_dict_to_objectives">
-<code class="sig-name descname">response_dict_to_objectives</code><span class="sig-paren">(</span><em class="sig-param">response_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">response_dict_to_objectives</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of objectives.</p>
 <dl class="field-list simple">
@@ -1282,9 +1284,9 @@ of objectives.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="problems.rmitd_maxrevenue.rmitdMaxRevenue.vector_to_factor_dict">
-<code class="sig-name descname">vector_to_factor_dict</code><span class="sig-paren">(</span><em class="sig-param">vector</em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">vector_to_factor_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vector of variables to a dictionary with factor keys</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1309,6 +1311,7 @@ of objectives.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -1319,19 +1322,125 @@ of objectives.</p>
 <li><a class="reference internal" href="#">problems package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-problems.cntnv_max_profit">problems.cntnv_max_profit module</a><ul>
-<li><a class="reference internal" href="#summary">Summary</a></li>
+<li><a class="reference internal" href="#summary">Summary</a><ul>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit">CntNVMaxProfit</a><ul>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.name">name</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.dim">dim</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_objectives">n_objectives</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.n_stochastic_constraints">n_stochastic_constraints</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.minmax">minmax</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.constraint_type">constraint_type</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.variable_type">variable_type</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.gradient_available">gradient_available</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.initial_solution">initial_solution</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.budget">budget</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_bound">optimal_bound</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.optimal_solution">optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.ref_optimal_solution">ref_optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle">oracle</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors">oracle_default_factors</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors">oracle_fixed_factors</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.check_deterministic_constraints">check_deterministic_constraints</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.factor_dict_to_vector">factor_dict_to_vector</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.get_random_solution">get_random_solution</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_objectives">response_dict_to_objectives</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
+<li><a class="reference internal" href="#problems.cntnv_max_profit.CntNVMaxProfit.vector_to_factor_dict">vector_to_factor_dict</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.facilitysizing_totalcost">problems.facilitysizing_totalcost module</a><ul>
-<li><a class="reference internal" href="#id1">Summary</a></li>
+<li><a class="reference internal" href="#id1">Summary</a><ul>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost">facilitysizingTotalCost</a><ul>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.dim">dim</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_objectives">n_objectives</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.n_stochastic_constraints">n_stochastic_constraints</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.minmax">minmax</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.constraint_type">constraint_type</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.variable_type">variable_type</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.gradient_available">gradient_available</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.initial_solution">initial_solution</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.budget">budget</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_bound">optimal_bound</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.optimal_solution">optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.oracle">oracle</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.check_deterministic_constraints">check_deterministic_constraints</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.factor_dict_to_vector">factor_dict_to_vector</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.get_random_solution">get_random_solution</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_objectives">response_dict_to_objectives</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
+<li><a class="reference internal" href="#problems.facilitysizing_totalcost.facilitysizingTotalCost.vector_to_factor_dict">vector_to_factor_dict</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.mm1_min_mean_sojourn_time">problems.mm1_min_mean_sojourn_time module</a><ul>
-<li><a class="reference internal" href="#id2">Summary</a></li>
+<li><a class="reference internal" href="#id2">Summary</a><ul>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime">MM1MinMeanSojournTime</a><ul>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.name">name</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.dim">dim</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_objectives">n_objectives</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.n_stochastic_constraints">n_stochastic_constraints</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.minmax">minmax</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.constraint_type">constraint_type</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.variable_type">variable_type</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.gradient_available">gradient_available</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.initial_solution">initial_solution</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.budget">budget</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_bound">optimal_bound</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.optimal_solution">optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.ref_optimal_solution">ref_optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle">oracle</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors">oracle_default_factors</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors">oracle_fixed_factors</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.check_deterministic_constraints">check_deterministic_constraints</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.factor_dict_to_vector">factor_dict_to_vector</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.get_random_solution">get_random_solution</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_objectives">response_dict_to_objectives</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
+<li><a class="reference internal" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.vector_to_factor_dict">vector_to_factor_dict</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems.rmitd_maxrevenue">problems.rmitd_maxrevenue module</a><ul>
-<li><a class="reference internal" href="#id3">Summary</a></li>
+<li><a class="reference internal" href="#id3">Summary</a><ul>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue">rmitdMaxRevenue</a><ul>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.dim">dim</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_objectives">n_objectives</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.n_stochastic_constraints">n_stochastic_constraints</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.minmax">minmax</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.constraint_type">constraint_type</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.variable_type">variable_type</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.gradient_available">gradient_available</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.initial_solution">initial_solution</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.budget">budget</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_bound">optimal_bound</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.optimal_solution">optimal_solution</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.oracle">oracle</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.check_deterministic_constraints">check_deterministic_constraints</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.factor_dict_to_vector">factor_dict_to_vector</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.response_dict_to_objectives">response_dict_to_objectives</a></li>
+<li><a class="reference internal" href="#problems.rmitd_maxrevenue.rmitdMaxRevenue.vector_to_factor_dict">vector_to_factor_dict</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-problems">Module contents</a></li>
@@ -1382,12 +1491,13 @@ of objectives.</p>
           <a href="oracles.html" title="oracles package"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">problems package</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>

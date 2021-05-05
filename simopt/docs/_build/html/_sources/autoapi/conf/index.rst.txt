@@ -1,0 +1,64 @@
+:mod:`conf`
+===========
+
+.. py:module:: conf
+
+
+Module Contents
+---------------
+
+.. data:: project
+   :annotation: = SimOpt
+
+   
+
+.. data:: copyright
+   :annotation: = 2021, simopt-admin
+
+   
+
+.. data:: author
+   :annotation: = simopt-admin
+
+   
+
+.. data:: release
+   :annotation: = 1.0
+
+   
+
+.. data:: extensions
+   :annotation: = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'autoapi.extension']
+
+   
+
+.. data:: autoapi_dirs
+   :annotation: = ['..']
+
+   
+
+.. data:: napolean_numpy_docstring
+   :annotation: = True
+
+   
+
+.. data:: templates_path
+   :annotation: = ['_templates']
+
+   
+
+.. data:: exclude_patterns
+   :annotation: = ['_build', 'Thumbs.db', '.DS_Store', '*test*']
+
+   
+
+.. data:: html_theme
+   :annotation: = default
+
+   
+
+.. data:: html_static_path
+   :annotation: = ['_static']
+
+   
+

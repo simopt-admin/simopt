@@ -1,0 +1,93 @@
+:mod:`oracles.rmitd`
+====================
+
+.. py:module:: oracles.rmitd
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Simulate a multi-stage revenue management with inter-temporal dependence problem
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   oracles.rmitd.rmitd
+
+
+
+
+.. class:: rmitd(fixed_factors={})
+
+
+   Bases: :py:obj:`base.Oracle`
+
+   An oracle that simulates a multi-stage revenue management with
+   inter-temporal dependence problem.
+   Returns the total revenue.
+   .. attribute:: n_rngs
+
+      number of random-number generators used to run a simulation replication
+
+      :type: int
+
+   .. attribute:: rng_list
+
+      list of random-number generators used to run a simulation replication
+
+      :type: list of rng.MRG32k3a objects
+
+   .. attribute:: n_responses
+
+      number of responses (performance measures)
+
+      :type: int
+
+   .. attribute:: factors
+
+      changeable factors of the simulation model
+
+      :type: dict
+
+   .. attribute:: specifications
+
+      details of each factor (for GUI and data validation)
+
+      :type: dict
+
+   :param fixed_factors: fixed factors of the simulation model
+   :type fixed_factors: nested dict
+
+   .. seealso:: :obj:`base.Oracle`
+
+   .. method:: check_initial_solution(self)
+
+
+   .. method:: check_r(self)
+
+
+   .. method:: check_simulatable_factors(self)
+
+      Determine if a simulation replication can be run with the given factors.
+
+      :returns: **is_simulatable** -- indicates if oracle specified by factors is simulatable
+      :rtype: bool
+
+
+   .. method:: replicate(self)
+
+      Simulate a single replication for the current oracle factors.
+
+      :returns: * **responses** (*dict*) -- performance measures of interest
+                  "revenue" = total revenue
+                * **gradients** (*dict of dicts*) -- gradient estimates for each response
+
+
+

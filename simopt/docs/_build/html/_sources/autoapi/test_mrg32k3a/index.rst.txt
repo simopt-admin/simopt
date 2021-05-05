@@ -1,0 +1,162 @@
+:mod:`test_mrg32k3a`
+====================
+
+.. py:module:: test_mrg32k3a
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   test_mrg32k3a.TestMRG32k3a
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   test_mrg32k3a.A1p127
+   test_mrg32k3a.A2p127
+   test_mrg32k3a.A1p76
+   test_mrg32k3a.A2p76
+   test_mrg32k3a.seed
+
+
+.. data:: A1p127
+   :annotation: = [[2427906178, 3580155704, 949770784], [226153695, 1230515664, 3580155704], [1988835001,...
+
+   
+
+.. data:: A2p127
+   :annotation: = [[1464411153, 277697599, 1610723613], [32183930, 1464411153.0, 1022607788], [2824425944,...
+
+   
+
+.. data:: A1p76
+   :annotation: = [[82758667, 1871391091, 4127413238], [3672831523, 69195019, 1871391091], [3672091415,...
+
+   
+
+.. data:: A2p76
+   :annotation: = [[1511326704, 3759209742, 1610795712], [4292754251, 1511326704, 3889917532], [3859662829,...
+
+   
+
+.. data:: seed
+   :annotation: = [12345, 12345, 12345, 12345, 12345, 12345]
+
+   
+
+.. class:: TestMRG32k3a(methodName='runTest')
+
+
+   Bases: :py:obj:`unittest.TestCase`
+
+   A class whose instances are single test cases.
+
+   By default, the test code itself should be placed in a method named
+   'runTest'.
+
+   If the fixture may be used for many test cases, create as
+   many test methods as are needed. When instantiating such a TestCase
+   subclass, specify in the constructor arguments the name of the test method
+   that the instance is to execute.
+
+   Test authors should subclass TestCase for their own tests. Construction
+   and deconstruction of the test's environment ('fixture') can be
+   implemented by overriding the 'setUp' and 'tearDown' methods respectively.
+
+   If it is necessary to override the __init__ method, the base class
+   __init__ method must always be called. It is important that subclasses
+   should not change the signature of their __init__ method, since instances
+   of the classes are instantiated automatically by parts of the framework
+   in order to be run.
+
+   When subclassing TestCase, you can set these attributes:
+   * failureException: determines which exception will be raised when
+       the instance's assertion methods fail; test methods raising this
+       exception will be deemed to have 'failed' rather than 'errored'.
+   * longMessage: determines whether long messages (including repr of
+       objects used in assert methods) will be printed on failure in *addition*
+       to any explicit message passed.
+   * maxDiff: sets the maximum length of a diff in failure messages
+       by assert methods using difflib. It is looked up as an instance
+       attribute so can be configured by individual tests if required.
+
+   .. method:: test_A1p127(self)
+
+
+   .. method:: test_A2p127(self)
+
+
+   .. method:: test_A1p76(self)
+
+
+   .. method:: test_A2p76(self)
+
+
+   .. method:: test_A1p47(self)
+
+
+   .. method:: test_A2p47(self)
+
+
+   .. method:: test_A1p94(self)
+
+
+   .. method:: test_A2p94(self)
+
+
+   .. method:: test_A1p141(self)
+
+
+   .. method:: test_A2p141(self)
+
+
+   .. method:: test_get_current_state(self)
+
+
+   .. method:: test_first_state(self)
+
+
+   .. method:: test_second_state(self)
+
+
+   .. method:: test_third_state(self)
+
+
+   .. method:: test_hundreth_state(self)
+
+
+   .. method:: test_advance_stream(self)
+
+
+   .. method:: test_advance_substream(self)
+
+
+   .. method:: test_advance_subsubstream(self)
+
+
+   .. method:: test_reset_stream(self)
+
+
+   .. method:: test_reset_substream(self)
+
+
+   .. method:: test_reset_subsubstream(self)
+
+
+   .. method:: test_init_fixed_s_ss_sss(self)
+
+
+   .. method:: test_jump_fixed_s_ss_sss(self)
+
+
+

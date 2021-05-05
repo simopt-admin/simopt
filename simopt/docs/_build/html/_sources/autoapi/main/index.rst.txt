@@ -1,0 +1,29 @@
+:mod:`main`
+===========
+
+.. py:module:: main
+
+
+Module Contents
+---------------
+
+.. data:: fixed_factors
+   
+
+   
+
+.. data:: myproblem
+   
+
+   
+
+.. data:: rng_list
+   
+
+   
+
+.. data:: mysoln
+   
+
+   
+

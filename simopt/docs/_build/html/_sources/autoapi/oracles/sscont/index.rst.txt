@@ -1,0 +1,127 @@
+:mod:`oracles.sscont`
+=====================
+
+.. py:module:: oracles.sscont
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Simulate multiple periods worth of sales for a (s,S) inventory problem with continuous inventory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   oracles.sscont.SSCont
+
+
+
+
+.. class:: SSCont(fixed_factors={})
+
+
+   Bases: :py:obj:`base.Oracle`
+
+   An oracle that simulates multiple periods worth of sales for a (s,S) inventory problem with continuous inventory,
+   exponential demand distribution, and poisson lead time distribution.
+   Returns the average cost per period after accounting for fixed and variable order costs, order rate, stockout rate, fraction of demand
+   met with inventory on hand, average amount backordered given a stockout occured, and average amount ordered given an order occured.
+
+   .. attribute:: n_rngs
+
+      number of random-number generators used to run a simulation replication
+
+      :type: int
+
+   .. attribute:: rng_list
+
+      list of random-number generators used to run a simulation replication
+
+      :type: list of rng.MRG32k3a objects
+
+   .. attribute:: n_responses
+
+      number of responses (performance measures)
+
+      :type: int
+
+   .. attribute:: factors
+
+      changeable factors of the simulation model
+
+      :type: dict
+
+   .. attribute:: specifications
+
+      details of each factor (for GUI, data validation, and defaults)
+
+      :type: dict
+
+   .. attribute:: check_factor_list
+
+      switch case for checking factor simulatability
+
+      :type: dict
+
+   :param fixed_factors: fixed_factors of the simulation model
+   :type fixed_factors: dict
+
+   .. seealso:: :obj:`base.Oracle`
+
+   .. method:: check_demand_mean(self)
+
+
+   .. method:: check_lead_mean(self)
+
+
+   .. method:: check_holding_cost(self)
+
+
+   .. method:: check_fixed_cost(self)
+
+
+   .. method:: check_variable_cost(self)
+
+
+   .. method:: check_s(self)
+
+
+   .. method:: check_S(self)
+
+
+   .. method:: check_n_days(self)
+
+
+   .. method:: check_warmup(self)
+
+
+   .. method:: check_simulatable_factors(self)
+
+      Determine if a simulation replication can be run with the given factors.
+
+      :returns: **is_simulatable** -- indicates if oracle specified by factors is simulatable
+      :rtype: bool
+
+
+   .. method:: replicate(self)
+
+      Simulate a single replication for the current oracle factors.
+
+      :returns: **responses** -- performance measures of interest
+                "cost_mean" = average cost per period
+                "on_time_rate" = fraction of demand met with stock on hand in store
+                "order_rate" = fraction of periods an order was made
+                "stockout_rate" = fraction of periods a stockout occured
+                "avg_stockout" = mean amount of product backordered given a stockout occured
+                "avg_order" = mean amount of product ordered given an order occured
+      :rtype: dict
+
+
+

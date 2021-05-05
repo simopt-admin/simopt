@@ -1,0 +1,29 @@
+:mod:`test_oracle`
+==================
+
+.. py:module:: test_oracle
+
+
+Module Contents
+---------------
+
+.. data:: fixed_factors
+   
+
+   
+
+.. data:: myoracle
+   
+
+   
+
+.. data:: mysoln_factors
+   
+
+   
+
+.. data:: rng_list
+   
+
+   
+

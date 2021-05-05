@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>oracles package &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +36,8 @@
           <a href="main.html" title="main module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">oracles package</a></li> 
       </ul>
     </div>  
 
@@ -54,16 +56,16 @@
 <div class="section" id="summary">
 <h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
 <p>Simulate a day’s worth of sales for a newsvendor.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="oracles.cntnv.CntNV">
-<em class="property">class </em><code class="sig-prename descclassname">oracles.cntnv.</code><code class="sig-name descname">CntNV</code><span class="sig-paren">(</span><em class="sig-param">fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.cntnv.</span></code><code class="sig-name descname"><span class="pre">CntNV</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates a day’s worth of sales for a newsvendor
 with a Burr Type XII demand distribution. Returns the profit, after
 accounting for order costs and salvage.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.name">
-<code class="sig-name descname">name</code><a class="headerlink" href="#oracles.cntnv.CntNV.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of oracle</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -72,9 +74,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.n_rngs">
-<code class="sig-name descname">n_rngs</code><a class="headerlink" href="#oracles.cntnv.CntNV.n_rngs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.n_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -83,9 +85,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.n_responses">
-<code class="sig-name descname">n_responses</code><a class="headerlink" href="#oracles.cntnv.CntNV.n_responses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -94,9 +96,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.factors">
-<code class="sig-name descname">factors</code><a class="headerlink" href="#oracles.cntnv.CntNV.factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -105,9 +107,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.specifications">
-<code class="sig-name descname">specifications</code><a class="headerlink" href="#oracles.cntnv.CntNV.specifications" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -116,9 +118,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.cntnv.CntNV.check_factor_list">
-<code class="sig-name descname">check_factor_list</code><a class="headerlink" href="#oracles.cntnv.CntNV.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#oracles.cntnv.CntNV.check_factor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>switch case for checking factor simulatability</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -134,41 +136,41 @@ accounting for order costs and salvage.</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_Burr_c">
-<code class="sig-name descname">check_Burr_c</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_Burr_c" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_Burr_c</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_Burr_c" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_Burr_k">
-<code class="sig-name descname">check_Burr_k</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_Burr_k" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_Burr_k</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_Burr_k" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_order_quantity">
-<code class="sig-name descname">check_order_quantity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_order_quantity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_order_quantity</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_order_quantity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_purchase_price">
-<code class="sig-name descname">check_purchase_price</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_purchase_price" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_purchase_price</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_purchase_price" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_sales_price">
-<code class="sig-name descname">check_sales_price</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_sales_price" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_sales_price</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_sales_price" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_salvage_price">
-<code class="sig-name descname">check_salvage_price</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_salvage_price" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_salvage_price</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_salvage_price" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.check_simulatable_factors">
-<code class="sig-name descname">check_simulatable_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -180,9 +182,9 @@ accounting for order costs and salvage.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.cntnv.CntNV.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param">rng_list</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.cntnv.CntNV.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current oracle factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -209,9 +211,9 @@ accounting for order costs and salvage.</p>
 <div class="section" id="id1">
 <h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Simulate a facilitysize problem.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="oracles.facilitysizing.facilitysize">
-<em class="property">class </em><code class="sig-prename descclassname">oracles.facilitysizing.</code><code class="sig-name descname">facilitysize</code><span class="sig-paren">(</span><em class="sig-param">fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.facilitysizing.</span></code><code class="sig-name descname"><span class="pre">facilitysize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates a facilitysize problem with a
 multi-variate normal distribution.
@@ -225,9 +227,9 @@ Returns the probability of violating demand in each scenario.
 </dd>
 </dl>
 </div></blockquote>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.facilitysizing.facilitysize.rng_list">
-<code class="sig-name descname">rng_list</code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.rng_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -236,9 +238,9 @@ Returns the probability of violating demand in each scenario.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.facilitysizing.facilitysize.n_responses">
-<code class="sig-name descname">n_responses</code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.n_responses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -247,9 +249,9 @@ Returns the probability of violating demand in each scenario.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.facilitysizing.facilitysize.factors">
-<code class="sig-name descname">factors</code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -258,9 +260,9 @@ Returns the probability of violating demand in each scenario.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.facilitysizing.facilitysize.specifications">
-<code class="sig-name descname">specifications</code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.specifications" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.facilitysizing.facilitysize.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI and data validation)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -276,26 +278,26 @@ Returns the probability of violating demand in each scenario.
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.facilitysizing.facilitysize.check_capa">
-<code class="sig-name descname">check_capa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_capa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_capa</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_capa" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.facilitysizing.facilitysize.check_mean_vec">
-<code class="sig-name descname">check_mean_vec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_mean_vec" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_mean_vec</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_mean_vec" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.facilitysizing.facilitysize.check_number_of_facility">
-<code class="sig-name descname">check_number_of_facility</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_number_of_facility" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_number_of_facility</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_number_of_facility" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.facilitysizing.facilitysize.check_simulatable_factors">
-<code class="sig-name descname">check_simulatable_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -307,9 +309,9 @@ Returns the probability of violating demand in each scenario.
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.facilitysizing.facilitysize.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.facilitysizing.facilitysize.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current oracle factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -339,9 +341,9 @@ Returns the probability of violating demand in each scenario.
 <div class="section" id="id2">
 <h3>Summary<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>Simulate a M/M/1 queue.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="oracles.mm1queue.MM1Queue">
-<em class="property">class </em><code class="sig-prename descclassname">oracles.mm1queue.</code><code class="sig-name descname">MM1Queue</code><span class="sig-paren">(</span><em class="sig-param">fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.mm1queue.</span></code><code class="sig-name descname"><span class="pre">MM1Queue</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates an M/M/1 queue with an Exponential(lambda)
 interarrival time distribution and an Exponential(x) service time
@@ -354,9 +356,9 @@ distribution. Returns</p>
 </ul>
 </div></blockquote>
 <p>for customers after a warmup period.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.name">
-<code class="sig-name descname">name</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of oracle</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -365,9 +367,9 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.n_rngs">
-<code class="sig-name descname">n_rngs</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.n_rngs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.n_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -376,9 +378,9 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.n_responses">
-<code class="sig-name descname">n_responses</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.n_responses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -387,9 +389,9 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.factors">
-<code class="sig-name descname">factors</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -398,9 +400,9 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.specifications">
-<code class="sig-name descname">specifications</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.specifications" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -409,9 +411,9 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.mm1queue.MM1Queue.check_factor_list">
-<code class="sig-name descname">check_factor_list</code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_factor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>switch case for checking factor simulatability</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -427,26 +429,26 @@ distribution. Returns</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.check_lambda">
-<code class="sig-name descname">check_lambda</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_lambda" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_lambda</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_lambda" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.check_mu">
-<code class="sig-name descname">check_mu</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_mu" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_mu</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_mu" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.check_people">
-<code class="sig-name descname">check_people</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_people" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_people</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_people" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.check_simulatable_factors">
-<code class="sig-name descname">check_simulatable_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -458,14 +460,14 @@ distribution. Returns</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.check_warmup">
-<code class="sig-name descname">check_warmup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_warmup" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_warmup</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.check_warmup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.mm1queue.MM1Queue.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param">rng_list</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.mm1queue.MM1Queue.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current oracle factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -493,9 +495,9 @@ distribution. Returns</p>
 <div class="section" id="id3">
 <h3>Summary<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>Simulate a multi-stage revenue management with inter-temporal dependence problem</p>
-<dl class="class">
+<dl class="py class">
 <dt id="oracles.rmitd.rmitd">
-<em class="property">class </em><code class="sig-prename descclassname">oracles.rmitd.</code><code class="sig-name descname">rmitd</code><span class="sig-paren">(</span><em class="sig-param">fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.rmitd.</span></code><code class="sig-name descname"><span class="pre">rmitd</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates a multi-stage revenue management with
 inter-temporal dependence problem.
@@ -509,9 +511,9 @@ Returns the total revenue.
 </dd>
 </dl>
 </div></blockquote>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.rmitd.rmitd.rng_list">
-<code class="sig-name descname">rng_list</code><a class="headerlink" href="#oracles.rmitd.rmitd.rng_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#oracles.rmitd.rmitd.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -520,9 +522,9 @@ Returns the total revenue.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.rmitd.rmitd.n_responses">
-<code class="sig-name descname">n_responses</code><a class="headerlink" href="#oracles.rmitd.rmitd.n_responses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.rmitd.rmitd.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -531,9 +533,9 @@ Returns the total revenue.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.rmitd.rmitd.factors">
-<code class="sig-name descname">factors</code><a class="headerlink" href="#oracles.rmitd.rmitd.factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.rmitd.rmitd.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -542,9 +544,9 @@ Returns the total revenue.
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.rmitd.rmitd.specifications">
-<code class="sig-name descname">specifications</code><a class="headerlink" href="#oracles.rmitd.rmitd.specifications" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.rmitd.rmitd.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI and data validation)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -560,21 +562,21 @@ Returns the total revenue.
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.rmitd.rmitd.check_initial_solution">
-<code class="sig-name descname">check_initial_solution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_initial_solution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_initial_solution</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_initial_solution" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.rmitd.rmitd.check_r">
-<code class="sig-name descname">check_r</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_r" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_r</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_r" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.rmitd.rmitd.check_simulatable_factors">
-<code class="sig-name descname">check_simulatable_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -586,9 +588,9 @@ Returns the total revenue.
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.rmitd.rmitd.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.rmitd.rmitd.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current oracle factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -611,17 +613,17 @@ Returns the total revenue.
 <div class="section" id="id4">
 <h3>Summary<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <p>Simulate multiple periods worth of sales for a (s,S) inventory problem with continuous inventory.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="oracles.sscont.SSCont">
-<em class="property">class </em><code class="sig-prename descclassname">oracles.sscont.</code><code class="sig-name descname">SSCont</code><span class="sig-paren">(</span><em class="sig-param">fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">oracles.sscont.</span></code><code class="sig-name descname"><span class="pre">SSCont</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates multiple periods worth of sales for a (s,S) inventory problem with continuous inventory,
 exponential demand distribution, and poisson lead time distribution.
 Returns the average cost per period after accounting for fixed and variable order costs, order rate, stockout rate, fraction of demand
 met with inventory on hand, average amount backordered given a stockout occured, and average amount ordered given an order occured.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.n_rngs">
-<code class="sig-name descname">n_rngs</code><a class="headerlink" href="#oracles.sscont.SSCont.n_rngs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#oracles.sscont.SSCont.n_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -630,9 +632,9 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.rng_list">
-<code class="sig-name descname">rng_list</code><a class="headerlink" href="#oracles.sscont.SSCont.rng_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#oracles.sscont.SSCont.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -641,9 +643,9 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.n_responses">
-<code class="sig-name descname">n_responses</code><a class="headerlink" href="#oracles.sscont.SSCont.n_responses" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#oracles.sscont.SSCont.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -652,9 +654,9 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.factors">
-<code class="sig-name descname">factors</code><a class="headerlink" href="#oracles.sscont.SSCont.factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#oracles.sscont.SSCont.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -663,9 +665,9 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.specifications">
-<code class="sig-name descname">specifications</code><a class="headerlink" href="#oracles.sscont.SSCont.specifications" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#oracles.sscont.SSCont.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -674,9 +676,9 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="oracles.sscont.SSCont.check_factor_list">
-<code class="sig-name descname">check_factor_list</code><a class="headerlink" href="#oracles.sscont.SSCont.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#oracles.sscont.SSCont.check_factor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>switch case for checking factor simulatability</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -692,46 +694,46 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
+<p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_S">
-<code class="sig-name descname">check_S</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_S" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_S</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_S" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_demand_mean">
-<code class="sig-name descname">check_demand_mean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_demand_mean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_demand_mean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_demand_mean" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_fixed_cost">
-<code class="sig-name descname">check_fixed_cost</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_fixed_cost" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_fixed_cost</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_fixed_cost" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_holding_cost">
-<code class="sig-name descname">check_holding_cost</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_holding_cost" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_holding_cost</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_holding_cost" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_lead_mean">
-<code class="sig-name descname">check_lead_mean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_lead_mean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_lead_mean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_lead_mean" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_n_days">
-<code class="sig-name descname">check_n_days</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_n_days" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_n_days</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_n_days" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_s">
-<code class="sig-name descname">check_s</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_s" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_s</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_s" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_simulatable_factors">
-<code class="sig-name descname">check_simulatable_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -743,19 +745,19 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_variable_cost">
-<code class="sig-name descname">check_variable_cost</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_variable_cost" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_variable_cost</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_variable_cost" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.check_warmup">
-<code class="sig-name descname">check_warmup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_warmup" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">check_warmup</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_warmup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="oracles.sscont.SSCont.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current oracle factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -783,6 +785,7 @@ met with inventory on hand, average amount backordered given a stockout occured,
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -793,23 +796,108 @@ met with inventory on hand, average amount backordered given a stockout occured,
 <li><a class="reference internal" href="#">oracles package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-oracles.cntnv">oracles.cntnv module</a><ul>
-<li><a class="reference internal" href="#summary">Summary</a></li>
+<li><a class="reference internal" href="#summary">Summary</a><ul>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV">CntNV</a><ul>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.name">name</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.n_rngs">n_rngs</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_factor_list">check_factor_list</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_Burr_c">check_Burr_c</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_Burr_k">check_Burr_k</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_order_quantity">check_order_quantity</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_purchase_price">check_purchase_price</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_sales_price">check_sales_price</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_salvage_price">check_salvage_price</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.cntnv.CntNV.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-oracles.facilitysizing">oracles.facilitysizing module</a><ul>
-<li><a class="reference internal" href="#id1">Summary</a></li>
+<li><a class="reference internal" href="#id1">Summary</a><ul>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize">facilitysize</a><ul>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.check_capa">check_capa</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.check_mean_vec">check_mean_vec</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.check_number_of_facility">check_number_of_facility</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.facilitysizing.facilitysize.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-oracles.mm1queue">oracles.mm1queue module</a><ul>
-<li><a class="reference internal" href="#id2">Summary</a></li>
+<li><a class="reference internal" href="#id2">Summary</a><ul>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue">MM1Queue</a><ul>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.name">name</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.n_rngs">n_rngs</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_factor_list">check_factor_list</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_lambda">check_lambda</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_mu">check_mu</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_people">check_people</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.check_warmup">check_warmup</a></li>
+<li><a class="reference internal" href="#oracles.mm1queue.MM1Queue.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-oracles.rmitd">oracles.rmitd module</a><ul>
-<li><a class="reference internal" href="#id3">Summary</a></li>
+<li><a class="reference internal" href="#id3">Summary</a><ul>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd">rmitd</a><ul>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.check_initial_solution">check_initial_solution</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.check_r">check_r</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.rmitd.rmitd.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-oracles.sscont">oracles.sscont module</a><ul>
-<li><a class="reference internal" href="#id4">Summary</a></li>
+<li><a class="reference internal" href="#id4">Summary</a><ul>
+<li><a class="reference internal" href="#oracles.sscont.SSCont">SSCont</a><ul>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.n_rngs">n_rngs</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.rng_list">rng_list</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.n_responses">n_responses</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.factors">factors</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.specifications">specifications</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_factor_list">check_factor_list</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_S">check_S</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_demand_mean">check_demand_mean</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_fixed_cost">check_fixed_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_holding_cost">check_holding_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_lead_mean">check_lead_mean</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_n_days">check_n_days</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_s">check_s</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_simulatable_factors">check_simulatable_factors</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_variable_cost">check_variable_cost</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.check_warmup">check_warmup</a></li>
+<li><a class="reference internal" href="#oracles.sscont.SSCont.replicate">replicate</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-oracles">Module contents</a></li>
@@ -860,12 +948,13 @@ met with inventory on hand, average amount backordered given a stockout occured,
           <a href="main.html" title="main module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">oracles package</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>

@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simopt &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,7 +35,8 @@
         <li class="right" >
           <a href="index.html" title="Welcome to SimOpt’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simopt</a></li> 
       </ul>
     </div>  
 
@@ -49,10 +51,124 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="base.html">base module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="base.html#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="base.html#listing">Listing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base.html#listing">Listing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="base.html#base.Oracle">Oracle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.name">name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.n_rngs">n_rngs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.n_responses">n_responses</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.factors">factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.specifications">specifications</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.check_factor_list">check_factor_list</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.check_factor_datatype">check_factor_datatype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.check_simulatable_factor">check_simulatable_factor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.check_simulatable_factors">check_simulatable_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Oracle.replicate">replicate</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="data_farming_base.html">data_farming_base module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="base.html#base.Problem">Problem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.name">name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.dim">dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.n_objectives">n_objectives</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.n_stochastic_constraints">n_stochastic_constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.minmax">minmax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.constraint_type">constraint_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.variable_type">variable_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.gradient_available">gradient_available</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.initial_solution">initial_solution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.budget">budget</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.optimal_bound">optimal_bound</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.optimal_solution">optimal_solution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.ref_optimal_solution">ref_optimal_solution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.oracle">oracle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.oracle_default_factors">oracle_default_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.oracle_fixed_factors">oracle_fixed_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.rng_list">rng_list</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.attach_rngs">attach_rngs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.check_deterministic_constraints">check_deterministic_constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.deterministic_objectives_and_gradients">deterministic_objectives_and_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.deterministic_stochastic_constraints_and_gradients">deterministic_stochastic_constraints_and_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.factor_dict_to_vector">factor_dict_to_vector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.get_random_solution">get_random_solution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.response_dict_to_objectives">response_dict_to_objectives</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.response_dict_to_stoch_constraints">response_dict_to_stoch_constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.simulate">simulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Problem.vector_to_factor_dict">vector_to_factor_dict</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="base.html#base.Solution">Solution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.x">x</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.dim">dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.decision_factors">decision_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.rng_list">rng_list</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.n_reps">n_reps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.det_objectives">det_objectives</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.det_objectives_gradients">det_objectives_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.det_stoch_constraints">det_stoch_constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.det_stoch_constraints_gradients">det_stoch_constraints_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.storage_size">storage_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.objectives">objectives</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.objectives_gradients">objectives_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.stochastic_constraints">stochastic_constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.stochastic_constraints_gradients">stochastic_constraints_gradients</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.attach_rngs">attach_rngs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.pad_storage">pad_storage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solution.recompute_summary_statistics">recompute_summary_statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="base.html#base.Solver">Solver</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.name">name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.objective_type">objective_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.constraint_type">constraint_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.variable_type">variable_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.gradient_needed">gradient_needed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.factors">factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.specifications">specifications</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.rng_list">rng_list</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.solution_progenitor_rngs">solution_progenitor_rngs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.attach_rngs">attach_rngs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.check_factor_datatype">check_factor_datatype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.check_solver_factor">check_solver_factor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.check_solver_factors">check_solver_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.prepare_sim_new_soln">prepare_sim_new_soln</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html#base.Solver.solve">solve</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_farming_base.html">data_farming_base module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment">DataFarmingExperiment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment.oracle">oracle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment.design">design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment.n_design_pts">n_design_pts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment.print_to_csv">print_to_csv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingExperiment.run">run</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment">DataFarmingMetaExperiment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.design">design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.n_design_pts">n_design_pts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.calculate_statistics">calculate_statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.post_replicate">post_replicate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.print_to_csv">print_to_csv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DataFarmingMetaExperiment.run">run</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint">DesignPoint</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.oracle">oracle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.oracle_factors">oracle_factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.rng_list">rng_list</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.n_reps">n_reps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.responses">responses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.gradients">gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.attach_rngs">attach_rngs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_farming_base.html#data_farming_base.DesignPoint.simulate">simulate</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_farming_base.html#data_farming_base.record_df_experiment_results">record_df_experiment_results</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="directory.html">directory module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="directory.html#summary">Summary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="directory.html#listing">Listing</a></li>
@@ -62,23 +178,38 @@
 <li class="toctree-l1"><a class="reference internal" href="oracles.html">oracles package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles.cntnv">oracles.cntnv module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oracles.html#summary">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="oracles.html#oracles.cntnv.CntNV">CntNV</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles.facilitysizing">oracles.facilitysizing module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#id1">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oracles.html#id1">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="oracles.html#oracles.facilitysizing.facilitysize">facilitysize</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles.mm1queue">oracles.mm1queue module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#id2">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oracles.html#id2">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="oracles.html#oracles.mm1queue.MM1Queue">MM1Queue</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles.rmitd">oracles.rmitd module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#id3">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oracles.html#id3">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="oracles.html#oracles.rmitd.rmitd">rmitd</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles.sscont">oracles.sscont module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#id4">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oracles.html#id4">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="oracles.html#oracles.sscont.SSCont">SSCont</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="oracles.html#module-oracles">Module contents</a></li>
@@ -87,19 +218,31 @@
 <li class="toctree-l1"><a class="reference internal" href="problems.html">problems package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#module-problems.cntnv_max_profit">problems.cntnv_max_profit module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="problems.html#summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="problems.html#summary">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="problems.html#problems.cntnv_max_profit.CntNVMaxProfit">CntNVMaxProfit</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#module-problems.facilitysizing_totalcost">problems.facilitysizing_totalcost module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="problems.html#id1">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="problems.html#id1">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="problems.html#problems.facilitysizing_totalcost.facilitysizingTotalCost">facilitysizingTotalCost</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#module-problems.mm1_min_mean_sojourn_time">problems.mm1_min_mean_sojourn_time module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="problems.html#id2">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="problems.html#id2">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="problems.html#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime">MM1MinMeanSojournTime</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#module-problems.rmitd_maxrevenue">problems.rmitd_maxrevenue module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="problems.html#id3">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="problems.html#id3">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="problems.html#problems.rmitd_maxrevenue.rmitdMaxRevenue">rmitdMaxRevenue</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html#module-problems">Module contents</a></li>
@@ -109,12 +252,25 @@
 <li class="toctree-l2"><a class="reference internal" href="rng.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rng.html#module-rng.matmodops">rng.matmodops module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="rng.html#summary">Summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rng.html#listing">Listing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rng.html#listing">Listing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat31_mod">mat31_mod</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat33_mat31_mult">mat33_mat31_mult</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat33_mat33_mod">mat33_mat33_mod</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat33_mat33_mult">mat33_mat33_mult</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat33_mod">mat33_mod</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.matmodops.mat33_power_mod">mat33_power_mod</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rng.html#module-rng.mrg32k3a">rng.mrg32k3a module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="rng.html#id1">Summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rng.html#id2">Listing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rng.html#id2">Listing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.mrg32k3a.MRG32k3a">MRG32k3a</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.mrg32k3a.bsm">bsm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rng.html#rng.mrg32k3a.mrg32k3a">mrg32k3a</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rng.html#module-rng">Module contents</a></li>
@@ -123,11 +279,17 @@
 <li class="toctree-l1"><a class="reference internal" href="solvers.html">solvers package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="solvers.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="solvers.html#module-solvers.randomsearch">solvers.randomsearch module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="solvers.html#summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solvers.html#summary">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="solvers.html#solvers.randomsearch.RandomSearch">RandomSearch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="solvers.html#module-solvers.simannealing">solvers.simannealing module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="solvers.html#id1">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solvers.html#id1">Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="solvers.html#solvers.simannealing.SANE">SANE</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="solvers.html#module-solvers">Module contents</a></li>
@@ -135,7 +297,73 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="wrapper_base.html">wrapper_base module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="wrapper_base.html#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="wrapper_base.html#listing">Listing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wrapper_base.html#listing">Listing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment">Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.solver">solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.problem">problem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.n_macroreps">n_macroreps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.crn_across_solns">crn_across_solns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_recommended_xs">all_recommended_xs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_intermediate_budgets">all_intermediate_budgets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.n_postreps">n_postreps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.n_postreps_init_opt">n_postreps_init_opt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.crn_across_budget">crn_across_budget</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.crn_across_macroreps">crn_across_macroreps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_reevaluated_solns">all_reevaluated_solns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_post_replicates">all_post_replicates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_est_objective">all_est_objective</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.all_prog_curves">all_prog_curves</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.initial_soln">initial_soln</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.ref_opt_soln">ref_opt_soln</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.areas">areas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.area_mean">area_mean</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.area_std_dev">area_std_dev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.area_mean_CI">area_mean_CI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.area_std_dev_CI">area_std_dev_CI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.solve_tols">solve_tols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.solve_time_quantiles">solve_time_quantiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.solve_time_quantiles_CIs">solve_time_quantiles_CIs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.bootstrap_CI">bootstrap_CI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.bootstrap_sample">bootstrap_sample</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.clear_postreps">clear_postreps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.clear_runs">clear_runs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.clear_stats">clear_stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.compute_area_stats">compute_area_stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.compute_solvability">compute_solvability</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.compute_solvability_quantiles">compute_solvability_quantiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.plot_bootstrap_CIs">plot_bootstrap_CIs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.plot_progress_curves">plot_progress_curves</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.plot_solvability_curves">plot_solvability_curves</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.post_replicate">post_replicate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.Experiment.run">run</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment">MetaExperiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.solver_names">solver_names</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.n_solvers">n_solvers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.problem_names">problem_names</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.n_problems">n_problems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.all_solver_fixed_factors">all_solver_fixed_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.all_problem_fixed_factors">all_problem_fixed_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.all_oracle_fixed_factors">all_oracle_fixed_factors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.experiments">experiments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.plot_area_scatterplot">plot_area_scatterplot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.plot_solvability_profiles">plot_solvability_profiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.post_replicate">post_replicate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="wrapper_base.html#wrapper_base.MetaExperiment.run">run</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.area_under_prog_curve">area_under_prog_curve</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.read_experiment_results">read_experiment_results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.record_experiment_results">record_experiment_results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.save_plot">save_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.solve_time_of_prog_curve">solve_time_of_prog_curve</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.stylize_area_plot">stylize_area_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.stylize_plot">stylize_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.stylize_solvability_plot">stylize_solvability_plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wrapper_base.html#wrapper_base.trim_solver_results">trim_solver_results</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -143,6 +371,7 @@
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -190,12 +419,13 @@
         <li class="right" >
           <a href="index.html" title="Welcome to SimOpt’s documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simopt</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>

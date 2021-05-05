@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>wrapper_base module &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -31,7 +32,8 @@
           <a href="solvers.html" title="solvers package"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">wrapper_base module</a></li> 
       </ul>
     </div>  
 
@@ -59,14 +61,14 @@ area_under_prog_curve : function
 solve_time_of_prog_curve : function
 MetaExperiment : class
 stylize_area_plot : function</p>
-<dl class="class">
+<dl class="py class">
 <dt id="wrapper_base.Experiment">
-<em class="property">class </em><code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">Experiment</code><span class="sig-paren">(</span><em class="sig-param">solver_name</em>, <em class="sig-param">problem_name</em>, <em class="sig-param">solver_fixed_factors={}</em>, <em class="sig-param">problem_fixed_factors={}</em>, <em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">Experiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for running one solver on one problem.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.solver">
-<code class="sig-name descname">solver</code><a class="headerlink" href="#wrapper_base.Experiment.solver" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">solver</span></code><a class="headerlink" href="#wrapper_base.Experiment.solver" title="Permalink to this definition">¶</a></dt>
 <dd><p>simulation-optimization solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -75,9 +77,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.problem">
-<code class="sig-name descname">problem</code><a class="headerlink" href="#wrapper_base.Experiment.problem" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">problem</span></code><a class="headerlink" href="#wrapper_base.Experiment.problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>simulation-optimization problem</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -86,9 +88,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.n_macroreps">
-<code class="sig-name descname">n_macroreps</code><a class="headerlink" href="#wrapper_base.Experiment.n_macroreps" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_macroreps</span></code><a class="headerlink" href="#wrapper_base.Experiment.n_macroreps" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of macroreplications run</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -97,9 +99,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.crn_across_solns">
-<code class="sig-name descname">crn_across_solns</code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_solns" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">crn_across_solns</span></code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_solns" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if CRN are used when simulating different solutions</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -108,9 +110,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_recommended_xs">
-<code class="sig-name descname">all_recommended_xs</code><a class="headerlink" href="#wrapper_base.Experiment.all_recommended_xs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_recommended_xs</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_recommended_xs" title="Permalink to this definition">¶</a></dt>
 <dd><p>sequences of recommended solutions from each macroreplication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -119,9 +121,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_intermediate_budgets">
-<code class="sig-name descname">all_intermediate_budgets</code><a class="headerlink" href="#wrapper_base.Experiment.all_intermediate_budgets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_intermediate_budgets</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_intermediate_budgets" title="Permalink to this definition">¶</a></dt>
 <dd><p>sequences of intermediate budgets from each macroreplication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -130,9 +132,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.n_postreps">
-<code class="sig-name descname">n_postreps</code><a class="headerlink" href="#wrapper_base.Experiment.n_postreps" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_postreps</span></code><a class="headerlink" href="#wrapper_base.Experiment.n_postreps" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of postreplications to take at each recommended solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -141,9 +143,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.n_postreps_init_opt">
-<code class="sig-name descname">n_postreps_init_opt</code><a class="headerlink" href="#wrapper_base.Experiment.n_postreps_init_opt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_postreps_init_opt</span></code><a class="headerlink" href="#wrapper_base.Experiment.n_postreps_init_opt" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of postreplications to take at initial x0 and optimal x*</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -152,9 +154,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.crn_across_budget">
-<code class="sig-name descname">crn_across_budget</code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_budget" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">crn_across_budget</span></code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>use CRN for post-replications at solutions recommended at different times?</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -163,9 +165,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.crn_across_macroreps">
-<code class="sig-name descname">crn_across_macroreps</code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_macroreps" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">crn_across_macroreps</span></code><a class="headerlink" href="#wrapper_base.Experiment.crn_across_macroreps" title="Permalink to this definition">¶</a></dt>
 <dd><p>use CRN for post-replications at solutions recommended on different macroreplications?</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -174,9 +176,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_reevaluated_solns">
-<code class="sig-name descname">all_reevaluated_solns</code><a class="headerlink" href="#wrapper_base.Experiment.all_reevaluated_solns" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_reevaluated_solns</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_reevaluated_solns" title="Permalink to this definition">¶</a></dt>
 <dd><p>reevaluated solutions recommended by the solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -185,9 +187,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_post_replicates">
-<code class="sig-name descname">all_post_replicates</code><a class="headerlink" href="#wrapper_base.Experiment.all_post_replicates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_post_replicates</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_post_replicates" title="Permalink to this definition">¶</a></dt>
 <dd><p>all post-replicates from all solutions from all macroreplications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -196,9 +198,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_est_objective">
-<code class="sig-name descname">all_est_objective</code><a class="headerlink" href="#wrapper_base.Experiment.all_est_objective" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_est_objective</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_est_objective" title="Permalink to this definition">¶</a></dt>
 <dd><p>estimated objective values of all solutions from all macroreplications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -207,9 +209,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.all_prog_curves">
-<code class="sig-name descname">all_prog_curves</code><a class="headerlink" href="#wrapper_base.Experiment.all_prog_curves" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_prog_curves</span></code><a class="headerlink" href="#wrapper_base.Experiment.all_prog_curves" title="Permalink to this definition">¶</a></dt>
 <dd><p>estimated progress curves from all macroreplications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -218,9 +220,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.initial_soln">
-<code class="sig-name descname">initial_soln</code><a class="headerlink" href="#wrapper_base.Experiment.initial_soln" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">initial_soln</span></code><a class="headerlink" href="#wrapper_base.Experiment.initial_soln" title="Permalink to this definition">¶</a></dt>
 <dd><p>initial solution (w/ postreplicates) used for normalization</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -229,9 +231,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.ref_opt_soln">
-<code class="sig-name descname">ref_opt_soln</code><a class="headerlink" href="#wrapper_base.Experiment.ref_opt_soln" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">ref_opt_soln</span></code><a class="headerlink" href="#wrapper_base.Experiment.ref_opt_soln" title="Permalink to this definition">¶</a></dt>
 <dd><p>reference optimal solution (w/ postreplicates) used for normalization</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -240,9 +242,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.areas">
-<code class="sig-name descname">areas</code><a class="headerlink" href="#wrapper_base.Experiment.areas" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">areas</span></code><a class="headerlink" href="#wrapper_base.Experiment.areas" title="Permalink to this definition">¶</a></dt>
 <dd><p>areas under each estimated progress curve</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -251,9 +253,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.area_mean">
-<code class="sig-name descname">area_mean</code><a class="headerlink" href="#wrapper_base.Experiment.area_mean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">area_mean</span></code><a class="headerlink" href="#wrapper_base.Experiment.area_mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>sample mean area under estimated progress curves</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -262,9 +264,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.area_std_dev">
-<code class="sig-name descname">area_std_dev</code><a class="headerlink" href="#wrapper_base.Experiment.area_std_dev" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">area_std_dev</span></code><a class="headerlink" href="#wrapper_base.Experiment.area_std_dev" title="Permalink to this definition">¶</a></dt>
 <dd><p>sample standard deviation of area under estimated progress curves</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -273,9 +275,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.area_mean_CI">
-<code class="sig-name descname">area_mean_CI</code><a class="headerlink" href="#wrapper_base.Experiment.area_mean_CI" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">area_mean_CI</span></code><a class="headerlink" href="#wrapper_base.Experiment.area_mean_CI" title="Permalink to this definition">¶</a></dt>
 <dd><p>bootstrap CI of the form [lower bound, upper bound] for mean area</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -284,9 +286,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.area_std_dev_CI">
-<code class="sig-name descname">area_std_dev_CI</code><a class="headerlink" href="#wrapper_base.Experiment.area_std_dev_CI" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">area_std_dev_CI</span></code><a class="headerlink" href="#wrapper_base.Experiment.area_std_dev_CI" title="Permalink to this definition">¶</a></dt>
 <dd><p>bootstrap CI of the form [lower_bound, upper_bound] for std dev of area</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -295,9 +297,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.solve_tols">
-<code class="sig-name descname">solve_tols</code><a class="headerlink" href="#wrapper_base.Experiment.solve_tols" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">solve_tols</span></code><a class="headerlink" href="#wrapper_base.Experiment.solve_tols" title="Permalink to this definition">¶</a></dt>
 <dd><p>relative optimality gap(s) definining when a problem is solved</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -306,15 +308,15 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt>
-<code class="sig-name descname">solve_times = list of lists of floats</code></dt>
+<code class="sig-name descname"><span class="pre">solve_times</span> <span class="pre">=</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">lists</span> <span class="pre">of</span> <span class="pre">floats</span></code></dt>
 <dd><p>solve_tol solve times for each estimated progress curve for each solve_tol</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.solve_time_quantiles">
-<code class="sig-name descname">solve_time_quantiles</code><a class="headerlink" href="#wrapper_base.Experiment.solve_time_quantiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">solve_time_quantiles</span></code><a class="headerlink" href="#wrapper_base.Experiment.solve_time_quantiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>beta quantile of solve times for each solve_tole</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -323,9 +325,9 @@ stylize_area_plot : function</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.Experiment.solve_time_quantiles_CIs">
-<code class="sig-name descname">solve_time_quantiles_CIs</code><a class="headerlink" href="#wrapper_base.Experiment.solve_time_quantiles_CIs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">solve_time_quantiles_CIs</span></code><a class="headerlink" href="#wrapper_base.Experiment.solve_time_quantiles_CIs" title="Permalink to this definition">¶</a></dt>
 <dd><p>bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
 for each solve_tol</p>
 <dl class="field-list simple">
@@ -346,9 +348,9 @@ for each solve_tol</p>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.bootstrap_CI">
-<code class="sig-name descname">bootstrap_CI</code><span class="sig-paren">(</span><em class="sig-param">plot_type</em>, <em class="sig-param">normalize</em>, <em class="sig-param">estimator</em>, <em class="sig-param">n_bootstraps=100</em>, <em class="sig-param">conf_level=0.95</em>, <em class="sig-param">bias_correction=True</em>, <em class="sig-param">beta=0.5</em>, <em class="sig-param">tol_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.bootstrap_CI" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">bootstrap_CI</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bootstraps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.bootstrap_CI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct bootstrap confidence intervals and compute max half-width.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -383,9 +385,9 @@ for each solve_tol</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.bootstrap_sample">
-<code class="sig-name descname">bootstrap_sample</code><span class="sig-paren">(</span><em class="sig-param">bootstrap_rng</em>, <em class="sig-param">crn_across_budget=True</em>, <em class="sig-param">crn_across_macroreps=False</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.bootstrap_sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">bootstrap_sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bootstrap_rng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_budget</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_macroreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.bootstrap_sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a bootstrap sample of estimated progress curves (normalized and unnormalized).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -405,27 +407,27 @@ for each solve_tol</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.clear_postreps">
-<code class="sig-name descname">clear_postreps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_postreps" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">clear_postreps</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_postreps" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete results from post_replicate() method and any downstream results.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.clear_runs">
-<code class="sig-name descname">clear_runs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_runs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">clear_runs</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_runs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete results from run() method and any downstream results.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.clear_stats">
-<code class="sig-name descname">clear_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">clear_stats</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.clear_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete summary statistics associated with experiment.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.compute_area_stats">
-<code class="sig-name descname">compute_area_stats</code><span class="sig-paren">(</span><em class="sig-param">compute_CIs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_area_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">compute_area_stats</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_CIs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_area_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute average and standard deviation of areas under progress curves.
 Optionally compute bootstrap confidence intervals.</p>
 <dl class="field-list simple">
@@ -435,9 +437,9 @@ Optionally compute bootstrap confidence intervals.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.compute_solvability">
-<code class="sig-name descname">compute_solvability</code><span class="sig-paren">(</span><em class="sig-param">solve_tols=[0.1]</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_solvability" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">compute_solvability</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_tols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.1]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_solvability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute alpha-solve times for all macroreplications.
 Can specify multiple values of alpha.</p>
 <dl class="field-list simple">
@@ -447,9 +449,9 @@ Can specify multiple values of alpha.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.compute_solvability_quantiles">
-<code class="sig-name descname">compute_solvability_quantiles</code><span class="sig-paren">(</span><em class="sig-param">beta=0.5</em>, <em class="sig-param">compute_CIs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_solvability_quantiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">compute_solvability_quantiles</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_CIs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.compute_solvability_quantiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute beta quantile of solve times, for each solve tolerance.
 Optionally compute bootstrap confidence intervals.</p>
 <dl class="field-list simple">
@@ -462,9 +464,9 @@ Optionally compute bootstrap confidence intervals.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.plot_bootstrap_CIs">
-<code class="sig-name descname">plot_bootstrap_CIs</code><span class="sig-paren">(</span><em class="sig-param">plot_type</em>, <em class="sig-param">normalize</em>, <em class="sig-param">estimator</em>, <em class="sig-param">plot_CIs</em>, <em class="sig-param">beta=None</em>, <em class="sig-param">tol_index=None</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_bootstrap_CIs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_bootstrap_CIs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_CIs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_bootstrap_CIs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optionally plot bootstrap confidence intervals and report max
 half-width.</p>
 <dl class="field-list simple">
@@ -488,9 +490,9 @@ half-width.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.plot_progress_curves">
-<code class="sig-name descname">plot_progress_curves</code><span class="sig-paren">(</span><em class="sig-param">plot_type</em>, <em class="sig-param">beta=0.5</em>, <em class="sig-param">normalize=True</em>, <em class="sig-param">plot_CIs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_progress_curves" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_progress_curves</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_CIs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_progress_curves" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produce plots of the solver’s performance on the problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -510,9 +512,9 @@ half-width.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.plot_solvability_curves">
-<code class="sig-name descname">plot_solvability_curves</code><span class="sig-paren">(</span><em class="sig-param">solve_tols=[0.1], plot_CIs=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_solvability_curves" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_solvability_curves</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_tols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.1]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_CIs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.plot_solvability_curves" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the solvability curve(s) for a single solver-problem pair.
 Optionally plot bootstrap CIs.</p>
 <dl class="field-list simple">
@@ -525,9 +527,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.post_replicate">
-<code class="sig-name descname">post_replicate</code><span class="sig-paren">(</span><em class="sig-param">n_postreps</em>, <em class="sig-param">n_postreps_init_opt</em>, <em class="sig-param">crn_across_budget=True</em>, <em class="sig-param">crn_across_macroreps=False</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.post_replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">post_replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_postreps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_postreps_init_opt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_budget</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_macroreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.post_replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run postreplications at solutions recommended by the solver.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -541,9 +543,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.Experiment.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">n_macroreps</em>, <em class="sig-param">crn_across_solns</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.run" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_macroreps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run n_macroreps of the solver on the problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -557,14 +559,14 @@ Optionally plot bootstrap CIs.</p>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="wrapper_base.MetaExperiment">
-<em class="property">class </em><code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">MetaExperiment</code><span class="sig-paren">(</span><em class="sig-param">solver_names</em>, <em class="sig-param">problem_names</em>, <em class="sig-param">fixed_factors_filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">MetaExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_factors_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for running one or more solver on one or more problem.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.solver_names">
-<code class="sig-name descname">solver_names</code><a class="headerlink" href="#wrapper_base.MetaExperiment.solver_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">solver_names</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.solver_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of solver names</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -573,9 +575,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.n_solvers">
-<code class="sig-name descname">n_solvers</code><a class="headerlink" href="#wrapper_base.MetaExperiment.n_solvers" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_solvers</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.n_solvers" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of solvers</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -584,9 +586,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.problem_names">
-<code class="sig-name descname">problem_names</code><a class="headerlink" href="#wrapper_base.MetaExperiment.problem_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">problem_names</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.problem_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of problem names</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -595,9 +597,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.n_problems">
-<code class="sig-name descname">n_problems</code><a class="headerlink" href="#wrapper_base.MetaExperiment.n_problems" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">n_problems</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.n_problems" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of problems</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -606,9 +608,9 @@ Optionally plot bootstrap CIs.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.all_solver_fixed_factors">
-<code class="sig-name descname">all_solver_fixed_factors</code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_solver_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_solver_fixed_factors</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_solver_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>fixed solver factors for each solver</dt><dd><p>outer key is solver name
 inner key is factor name</p>
@@ -621,9 +623,9 @@ inner key is factor name</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.all_problem_fixed_factors">
-<code class="sig-name descname">all_problem_fixed_factors</code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_problem_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_problem_fixed_factors</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_problem_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>fixed problem factors for each problem</dt><dd><p>outer key is problem name
 inner key is factor name</p>
@@ -636,9 +638,9 @@ inner key is factor name</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.all_oracle_fixed_factors">
-<code class="sig-name descname">all_oracle_fixed_factors</code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">all_oracle_fixed_factors</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>fixed oracle factors for each problem</dt><dd><p>outer key is problem name
 inner key is factor name</p>
@@ -651,9 +653,9 @@ inner key is factor name</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="wrapper_base.MetaExperiment.experiments">
-<code class="sig-name descname">experiments</code><a class="headerlink" href="#wrapper_base.MetaExperiment.experiments" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">experiments</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.experiments" title="Permalink to this definition">¶</a></dt>
 <dd><p>all problem-solver pairs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -672,16 +674,16 @@ for solvers/problems/oracles.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.MetaExperiment.plot_area_scatterplot">
-<code class="sig-name descname">plot_area_scatterplot</code><span class="sig-paren">(</span><em class="sig-param">plot_CIs=True</em>, <em class="sig-param">all_in_one=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.plot_area_scatterplot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_area_scatterplot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_CIs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_in_one</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.plot_area_scatterplot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a scatter plot of mean and standard deviation of area under progress curves.
 Either one plot for each solver or one plot for all solvers.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.MetaExperiment.plot_solvability_profiles">
-<code class="sig-name descname">plot_solvability_profiles</code><span class="sig-paren">(</span><em class="sig-param">solve_tol=0.1</em>, <em class="sig-param">beta=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.plot_solvability_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_solvability_profiles</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.plot_solvability_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the solvability profiles for each solver-problem pair.
 Two types of plots:</p>
 <blockquote>
@@ -700,9 +702,9 @@ Two types of plots:</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.MetaExperiment.post_replicate">
-<code class="sig-name descname">post_replicate</code><span class="sig-paren">(</span><em class="sig-param">n_postreps</em>, <em class="sig-param">n_postreps_init_opt</em>, <em class="sig-param">crn_across_budget=True</em>, <em class="sig-param">crn_across_macroreps=False</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.post_replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">post_replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_postreps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_postreps_init_opt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_budget</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_macroreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.post_replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>For each problem-solver pair, run postreplications at solutions
 recommended by the solver on each macroreplication.</p>
 <dl class="field-list simple">
@@ -717,9 +719,9 @@ recommended by the solver on each macroreplication.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="wrapper_base.MetaExperiment.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">n_macroreps=10</em>, <em class="sig-param">crn_across_solns=True</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.run" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_macroreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.MetaExperiment.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run n_macroreps of each solver on each problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -733,9 +735,9 @@ recommended by the solver on each macroreplication.</p>
 
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.area_under_prog_curve">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">area_under_prog_curve</code><span class="sig-paren">(</span><em class="sig-param">prog_curve</em>, <em class="sig-param">frac_inter_budgets</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.area_under_prog_curve" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">area_under_prog_curve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prog_curve</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_inter_budgets</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.area_under_prog_curve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the area under a normalized estimated progress curve.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -753,9 +755,9 @@ recommended by the solver on each macroreplication.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.read_experiment_results">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">read_experiment_results</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.read_experiment_results" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">read_experiment_results</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.read_experiment_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read in wrapper_base.Experiment object from .pickle file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -770,9 +772,9 @@ recommended by the solver on each macroreplication.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.record_experiment_results">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">record_experiment_results</code><span class="sig-paren">(</span><em class="sig-param">experiment</em>, <em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.record_experiment_results" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">record_experiment_results</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.record_experiment_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save wrapper_base.Experiment object to .pickle file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -784,9 +786,9 @@ recommended by the solver on each macroreplication.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.save_plot">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">save_plot</code><span class="sig-paren">(</span><em class="sig-param">solver_name</em>, <em class="sig-param">problem_name</em>, <em class="sig-param">plot_type</em>, <em class="sig-param">normalize</em>, <em class="sig-param">extra</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.save_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">save_plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.save_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new figure. Add labels to plot and reformat axes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -809,9 +811,9 @@ recommended by the solver on each macroreplication.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.solve_time_of_prog_curve">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">solve_time_of_prog_curve</code><span class="sig-paren">(</span><em class="sig-param">prog_curve</em>, <em class="sig-param">frac_inter_budgets</em>, <em class="sig-param">solve_tol</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.solve_time_of_prog_curve" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">solve_time_of_prog_curve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prog_curve</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_inter_budgets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solve_tol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.solve_time_of_prog_curve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the solve time of a normalized estimated progress curve.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -831,9 +833,9 @@ solve_tol, i.e., the “alpha” solve time</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.stylize_area_plot">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">stylize_area_plot</code><span class="sig-paren">(</span><em class="sig-param">solver_name</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_area_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">stylize_area_plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_area_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new figure for area plots. Add labels to plot and reformat axes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -842,9 +844,9 @@ solve_tol, i.e., the “alpha” solve time</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.stylize_plot">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">stylize_plot</code><span class="sig-paren">(</span><em class="sig-param">plot_type</em>, <em class="sig-param">solver_name</em>, <em class="sig-param">problem_name</em>, <em class="sig-param">normalize</em>, <em class="sig-param">budget=None</em>, <em class="sig-param">beta=None</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">stylize_plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new figure. Add labels to plot and reformat axes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -866,9 +868,9 @@ solve_tol, i.e., the “alpha” solve time</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.stylize_solvability_plot">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">stylize_solvability_plot</code><span class="sig-paren">(</span><em class="sig-param">solver_name</em>, <em class="sig-param">problem_name</em>, <em class="sig-param">solve_tol</em>, <em class="sig-param">plot_type</em>, <em class="sig-param">beta=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_solvability_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">stylize_solvability_plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solve_tol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.stylize_solvability_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new figure. Add labels to plot and reformat axes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -891,9 +893,9 @@ solve_tol, i.e., the “alpha” solve time</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="wrapper_base.trim_solver_results">
-<code class="sig-prename descclassname">wrapper_base.</code><code class="sig-name descname">trim_solver_results</code><span class="sig-paren">(</span><em class="sig-param">problem</em>, <em class="sig-param">recommended_solns</em>, <em class="sig-param">intermediate_budgets</em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.trim_solver_results" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">trim_solver_results</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recommended_solns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_budgets</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.trim_solver_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trim solutions recommended by solver after problem’s max budget.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -910,6 +912,7 @@ solve_tol, i.e., the “alpha” solve time</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -919,7 +922,73 @@ solve_tol, i.e., the “alpha” solve time</p>
   <ul>
 <li><a class="reference internal" href="#">wrapper_base module</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
-<li><a class="reference internal" href="#listing">Listing</a></li>
+<li><a class="reference internal" href="#listing">Listing</a><ul>
+<li><a class="reference internal" href="#wrapper_base.Experiment">Experiment</a><ul>
+<li><a class="reference internal" href="#wrapper_base.Experiment.solver">solver</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.problem">problem</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.n_macroreps">n_macroreps</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_solns">crn_across_solns</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_recommended_xs">all_recommended_xs</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_intermediate_budgets">all_intermediate_budgets</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.n_postreps">n_postreps</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.n_postreps_init_opt">n_postreps_init_opt</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_budget">crn_across_budget</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.crn_across_macroreps">crn_across_macroreps</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_reevaluated_solns">all_reevaluated_solns</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_post_replicates">all_post_replicates</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_est_objective">all_est_objective</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.all_prog_curves">all_prog_curves</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.initial_soln">initial_soln</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.ref_opt_soln">ref_opt_soln</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.areas">areas</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.area_mean">area_mean</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.area_std_dev">area_std_dev</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.area_mean_CI">area_mean_CI</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.area_std_dev_CI">area_std_dev_CI</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.solve_tols">solve_tols</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.solve_time_quantiles">solve_time_quantiles</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.solve_time_quantiles_CIs">solve_time_quantiles_CIs</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.bootstrap_CI">bootstrap_CI</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.bootstrap_sample">bootstrap_sample</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.clear_postreps">clear_postreps</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.clear_runs">clear_runs</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.clear_stats">clear_stats</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.compute_area_stats">compute_area_stats</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.compute_solvability">compute_solvability</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.compute_solvability_quantiles">compute_solvability_quantiles</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.plot_bootstrap_CIs">plot_bootstrap_CIs</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.plot_progress_curves">plot_progress_curves</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.plot_solvability_curves">plot_solvability_curves</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.post_replicate">post_replicate</a></li>
+<li><a class="reference internal" href="#wrapper_base.Experiment.run">run</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment">MetaExperiment</a><ul>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.solver_names">solver_names</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.n_solvers">n_solvers</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.problem_names">problem_names</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.n_problems">n_problems</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_solver_fixed_factors">all_solver_fixed_factors</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_problem_fixed_factors">all_problem_fixed_factors</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.all_oracle_fixed_factors">all_oracle_fixed_factors</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.experiments">experiments</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.plot_area_scatterplot">plot_area_scatterplot</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.plot_solvability_profiles">plot_solvability_profiles</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.post_replicate">post_replicate</a></li>
+<li><a class="reference internal" href="#wrapper_base.MetaExperiment.run">run</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wrapper_base.area_under_prog_curve">area_under_prog_curve</a></li>
+<li><a class="reference internal" href="#wrapper_base.read_experiment_results">read_experiment_results</a></li>
+<li><a class="reference internal" href="#wrapper_base.record_experiment_results">record_experiment_results</a></li>
+<li><a class="reference internal" href="#wrapper_base.save_plot">save_plot</a></li>
+<li><a class="reference internal" href="#wrapper_base.solve_time_of_prog_curve">solve_time_of_prog_curve</a></li>
+<li><a class="reference internal" href="#wrapper_base.stylize_area_plot">stylize_area_plot</a></li>
+<li><a class="reference internal" href="#wrapper_base.stylize_plot">stylize_plot</a></li>
+<li><a class="reference internal" href="#wrapper_base.stylize_solvability_plot">stylize_solvability_plot</a></li>
+<li><a class="reference internal" href="#wrapper_base.trim_solver_results">trim_solver_results</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -961,12 +1030,13 @@ solve_tol, i.e., the “alpha” solve time</p>
           <a href="solvers.html" title="solvers package"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">wrapper_base module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>

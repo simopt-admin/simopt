@@ -1,0 +1,29 @@
+API Reference
+=============
+
+This page contains auto-generated API reference documentation [#f1]_.
+
+.. toctree::
+   :titlesonly:
+
+   /autoapi/base/index
+   /autoapi/data_farming_base/index
+   /autoapi/directory/index
+   /autoapi/main/index
+   /autoapi/test_df_wrapper/index
+   /autoapi/test_matmodops/index
+   /autoapi/test_mrg32k3a/index
+   /autoapi/test_oracle/index
+   /autoapi/test_problem/index
+   /autoapi/test_run_wrapper/index
+   /autoapi/test_solver_problem/index
+   /autoapi/wrapper_base/index
+   /autoapi/conf/index
+   /autoapi/all_factors/index
+   /autoapi/oracles/index
+   /autoapi/problems/index
+   /autoapi/rng/index
+   /autoapi/solvers/index
+   /autoapi/unittests/index
+
+.. [#f1] Created with `sphinx-autoapi <https://github.com/readthedocs/sphinx-autoapi>`_

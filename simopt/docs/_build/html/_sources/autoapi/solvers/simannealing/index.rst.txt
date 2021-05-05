@@ -1,0 +1,129 @@
+:mod:`solvers.simannealing`
+===========================
+
+.. py:module:: solvers.simannealing
+
+.. autoapi-nested-parse::
+
+   Summary
+   -------
+   Simulated Annealing in Noisy Environments (SANE).
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   solvers.simannealing.SANE
+
+
+
+
+.. class:: SANE(fixed_factors={})
+
+
+   Bases: :py:obj:`base.Solver`
+
+   Simulated Annealing in Noisy Environments (SANE)
+   "Simulated Annealing in the Presence of Noise"
+   Jurgen Branke, Stephan Meisel and Christian Schmidt
+   Journal of Heuristics (2008) 14: 627--654.
+
+   .. attribute:: name
+
+      name of solver
+
+      :type: string
+
+   .. attribute:: objective_type
+
+
+
+      description of objective types:
+          "single" or "multi"
+
+      :type: string
+
+   .. attribute:: constraint_type
+
+
+
+      description of constraints types:
+          "unconstrained", "box", "deterministic", "stochastic"
+
+      :type: string
+
+   .. attribute:: variable_type
+
+
+
+      description of variable types:
+          "discrete", "continuous", "mixed"
+
+      :type: string
+
+   .. attribute:: gradient_needed
+
+      indicates if gradient of objective function is needed
+
+      :type: bool
+
+   .. attribute:: factors
+
+      changeable factors (i.e., parameters) of the solver
+
+      :type: dict
+
+   .. attribute:: specifications
+
+      details of each factor (for GUI, data validation, and defaults)
+
+      :type: dict
+
+   .. attribute:: rng_list
+
+      list of RNGs used for the solver's internal purposes
+
+      :type: list of rng.MRG32k3a objects
+
+   :param fixed_factors: fixed_factors of the solver
+   :type fixed_factors: dict
+
+   .. seealso:: :obj:`base.Solver`
+
+   .. method:: check_sampling_variance(self)
+
+
+   .. method:: check_init_temp(self)
+
+
+   .. method:: check_cooling_coeff(self)
+
+
+   .. method:: check_solver_factors(self)
+
+      Determine if the joint settings of solver factors are permissible.
+
+      :returns: **is_simulatable** -- indicates if solver factors are permissible
+      :rtype: bool
+
+
+   .. method:: solve(self, problem, crn_across_solns)
+
+      Run a single macroreplication of a solver on a problem.
+
+      :param problem: simulation-optimization problem to solve
+      :type problem: Problem object
+      :param crn_across_solns: indicates if CRN are used when simulating different solutions
+      :type crn_across_solns: bool
+
+      :returns: * **recommended_solns** (*list of Solution objects*) -- list of solutions recommended throughout the budget
+                * **intermediate_budgets** (*list of ints*) -- list of intermediate budgets when recommended solutions changes
+
+
+
