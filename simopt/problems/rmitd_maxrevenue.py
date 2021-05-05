@@ -4,8 +4,6 @@ Summary
 Maximize the total revenue of a multi-stage revenue management
 with inter-temporal dependence problem.
 """
-import numpy as np
-
 from base import Problem
 from oracles.rmitd import RMITD
 
@@ -73,7 +71,7 @@ class RMITDMaxRevenue(Problem):
         self.budget = 10000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.ref_optimal_solution = None
+        self.ref_optimal_solution = (90, 50, 0)
         self.initial_solution = (100, 50, 30)
         self.oracle_default_factors = {}
         super().__init__(oracle_fixed_factors)
@@ -150,4 +148,25 @@ class RMITDMaxRevenue(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)
+        return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
+
+    def get_random_solution(self, rand_sol_rng):
+        """
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : rng.MRG32k3a object
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+        # Generate random solution using acceptable/rejection.
+        while True:
+            x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
+            if self.check_deterministic_constraints(x) is True:
+                break
+        return x

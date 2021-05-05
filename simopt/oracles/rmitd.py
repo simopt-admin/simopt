@@ -83,11 +83,6 @@ class RMITD(Oracle):
                 "datatype": list,
                 "default": [50, 30]
             }
-            # "b_r": {
-            #     "description": "Vector of reservations for each period, in order [b r_2 r_3 ... r_T]",
-            #     "datatype": int,
-            #     "default": [100, 50, 30]
-            # }
         }
         self.check_factor_list = {
             "time_horizon": self.check_time_horizon,
@@ -134,13 +129,13 @@ class RMITD(Oracle):
             return False
         elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
             return False
-        # Check that reservation levels are less than initial inventory.
-        elif self.factors["initial_inventory"] < max(self.factors["reservation_qtys"]):
+        # Check that first reservation level is less than initial inventory.
+        elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
             return False
         # Check for non-increasing reservation levels.
         elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
             return False
-        # Check that gamma_shape*gamma_scale = 1:
+        # Check that gamma_shape*gamma_scale = 1.
         elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
             return False
         else:
@@ -169,10 +164,11 @@ class RMITD(Oracle):
         Y_rng = rng_list[1]
         # Generate X and Y (to use for computing demand).
         # random.gammavariate takes two inputs: alpha and beta.
-        #     alpha = k = gamma_shape     and     beta = 1/theta = 1/gamma_scale
+        #     alpha = k = gamma_shape
+        #     beta = 1/theta = 1/gamma_scale
         X = X_rng.gammavariate(alpha=self.factors["gamma_shape"], beta=1./self.factors["gamma_scale"])
         Y = [Y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])]
-        # Track inventory over time horizon
+        # Track inventory over time horizon.
         remaining_inventory = self.factors["initial_inventory"]
         # Append "no reservations" for decision-making in final period.
         reservations = self.factors["reservation_qtys"]
@@ -185,7 +181,7 @@ class RMITD(Oracle):
             remaining_inventory = remaining_inventory - sell
             revenue += sell*self.factors["prices"][period]
         revenue -= self.factors["cost"]*self.factors["initial_inventory"]
-        # Compose responses and gradients
+        # Compose responses and gradients.
         responses = {"revenue": revenue}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
