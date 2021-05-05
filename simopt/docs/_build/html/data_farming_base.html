@@ -1,0 +1,406 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>data_farming_base module &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="directory module" href="directory.html" />
+    <link rel="prev" title="base module" href="base.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="directory.html" title="directory module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="base.html" title="base module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-data_farming_base">
+<span id="data-farming-base-module"></span><h1>data_farming_base module<a class="headerlink" href="#module-data_farming_base" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="data_farming_base.DataFarmingExperiment">
+<em class="property">class </em><code class="sig-prename descclassname">data_farming_base.</code><code class="sig-name descname">DataFarmingExperiment</code><span class="sig-paren">(</span><em class="sig-param">oracle_name</em>, <em class="sig-param">factor_settings_filename</em>, <em class="sig-param">factor_headers</em>, <em class="sig-param">design_filename=None</em>, <em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for data-farming experiments consisting of an oracle
+and design of associated factors.</p>
+<dl class="attribute">
+<dt id="data_farming_base.DataFarmingExperiment.oracle">
+<code class="sig-name descname">oracle</code><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.oracle" title="Permalink to this definition">¶</a></dt>
+<dd><p>oracle on which the experiment is run</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Oracle object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DataFarmingExperiment.design">
+<code class="sig-name descname">design</code><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.design" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of design points forming the design</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of DesignPoint objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DataFarmingExperiment.n_design_pts">
+<code class="sig-name descname">n_design_pts</code><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.n_design_pts" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of design points in the design</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>oracle_name</strong> (<em>string</em>) – name of oracle on which the experiment is run</p></li>
+<li><p><strong>factor_settings_filename</strong> (<em>string</em>) – name of .txt file containing factor ranges and # of digits</p></li>
+<li><p><strong>factor_headers</strong> (<em>list of strings</em>) – ordered list of factor names appearing in factor settings/design file</p></li>
+<li><p><strong>design_filename</strong> (<em>string</em>) – name of .txt file containing design matrix</p></li>
+<li><p><strong>oracle_fixed_factors</strong> (<em>dictionary</em>) – non-default values of oracle factors that will not be varied</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="data_farming_base.DataFarmingExperiment.print_to_csv">
+<code class="sig-name descname">print_to_csv</code><span class="sig-paren">(</span><em class="sig-param">csv_filename='raw_results'</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.print_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract observed responses from simulated design points.
+Publish to .csv output file.</p>
+<dl class="simple">
+<dt>csv_filename<span class="classifier">string</span></dt><dd><p>name of .csv file to print output to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="data_farming_base.DataFarmingExperiment.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">n_reps=10</em>, <em class="sig-param">crn_across_design_pts=True</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a fixed number of macroreplications at each design point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_reps</strong> (<em>int</em>) – number of replications run at each design point</p></li>
+<li><p><strong>crn_across_design_pts</strong> (<em>Boolean</em>) – use CRN across design points?</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="data_farming_base.DataFarmingMetaExperiment">
+<em class="property">class </em><code class="sig-prename descclassname">data_farming_base.</code><code class="sig-name descname">DataFarmingMetaExperiment</code><span class="sig-paren">(</span><em class="sig-param">solver_name</em>, <em class="sig-param">problem_name</em>, <em class="sig-param">solver_factor_settings_filename</em>, <em class="sig-param">solver_factor_headers</em>, <em class="sig-param">design_filename=None</em>, <em class="sig-param">solver_fixed_factors={}</em>, <em class="sig-param">problem_fixed_factors={}</em>, <em class="sig-param">oracle_fixed_factors={}</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for data-farming meta experiments consisting of problem-solver
+pairs and a design of associated factors.</p>
+<dl class="attribute">
+<dt id="data_farming_base.DataFarmingMetaExperiment.design">
+<code class="sig-name descname">design</code><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.design" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of design points forming the design</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of DesignPoint objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DataFarmingMetaExperiment.n_design_pts">
+<code class="sig-name descname">n_design_pts</code><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.n_design_pts" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of design points in the design</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver_name</strong> (<em>string</em>) – name of solver</p></li>
+<li><p><strong>problem_name</strong> (<em>string</em>) – name of problem</p></li>
+<li><p><strong>solver_factor_settings_filename</strong> (<em>string</em>) – name of .txt file containing solver factor ranges and # of digits</p></li>
+<li><p><strong>solver_factor_headers</strong> (<em>list of strings</em>) – ordered list of solver factor names appearing in factor settings/design file</p></li>
+<li><p><strong>design_filename</strong> (<em>string</em>) – name of .txt file containing design matrix</p></li>
+<li><p><strong>solver_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified solver factors that will not be varied</p></li>
+<li><p><strong>problem_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified problem factors that will not be varied</p></li>
+<li><p><strong>oracle_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified oracle factors that will not be varied</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="data_farming_base.DataFarmingMetaExperiment.calculate_statistics">
+<code class="sig-name descname">calculate_statistics</code><span class="sig-paren">(</span><em class="sig-param">solve_tols=[0.05, 0.1, 0.2, 0.5], beta=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.calculate_statistics" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>For each design point, calculate statistics from each macroreplication.</dt><dd><ul class="simple">
+<li><p>area under estimated progress curve</p></li>
+<li><p>alpha-solve time</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solve_tols</strong> (<em>list of floats in</em><em> (</em><em>0</em><em>,</em><em>1</em><em>]</em>) – relative optimality gap(s) definining when a problem is solved</p></li>
+<li><p><strong>beta</strong> (<em>float in</em><em> (</em><em>0</em><em>,</em><em>1</em><em>)</em>) – quantile to compute, e.g., beta quantile</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="data_farming_base.DataFarmingMetaExperiment.post_replicate">
+<code class="sig-name descname">post_replicate</code><span class="sig-paren">(</span><em class="sig-param">n_postreps</em>, <em class="sig-param">n_postreps_init_opt</em>, <em class="sig-param">crn_across_budget=True</em>, <em class="sig-param">crn_across_macroreps=False</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.post_replicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each design point, run postreplications at solutions
+recommended by the solver on each macroreplication.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_postreps</strong> (<em>int</em>) – number of postreplications to take at each recommended solution</p></li>
+<li><p><strong>n_postreps_init_opt</strong> (<em>int</em>) – number of postreplications to take at initial x0 and optimal x*</p></li>
+<li><p><strong>crn_across_budget</strong> (<em>bool</em>) – use CRN for post-replications at solutions recommended at different times?</p></li>
+<li><p><strong>crn_across_macroreps</strong> (<em>bool</em>) – use CRN for post-replications at solutions recommended on different macroreplications?</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="data_farming_base.DataFarmingMetaExperiment.print_to_csv">
+<code class="sig-name descname">print_to_csv</code><span class="sig-paren">(</span><em class="sig-param">csv_filename='meta_raw_results'</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.print_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract observed statistics from simulated design points.
+Publish to .csv output file.</p>
+<dl class="simple">
+<dt>csv_filename<span class="classifier">string</span></dt><dd><p>name of .csv file to print output to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="data_farming_base.DataFarmingMetaExperiment.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">n_macroreps=10</em>, <em class="sig-param">crn_across_solns=True</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run n_macroreps of each problem-solver design point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_macroreps</strong> (<em>int</em>) – number of macroreplications for each design point</p></li>
+<li><p><strong>crn_across_solns</strong> (<em>bool</em>) – indicates if CRN are used when solver simulates different solutions</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="data_farming_base.DesignPoint">
+<em class="property">class </em><code class="sig-prename descclassname">data_farming_base.</code><code class="sig-name descname">DesignPoint</code><span class="sig-paren">(</span><em class="sig-param">oracle</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for design points represented as dictionaries of factors.</p>
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.oracle">
+<code class="sig-name descname">oracle</code><a class="headerlink" href="#data_farming_base.DesignPoint.oracle" title="Permalink to this definition">¶</a></dt>
+<dd><p>oracle to simulate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Oracle object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.oracle_factors">
+<code class="sig-name descname">oracle_factors</code><a class="headerlink" href="#data_farming_base.DesignPoint.oracle_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>oracle factor names and values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.rng_list">
+<code class="sig-name descname">rng_list</code><a class="headerlink" href="#data_farming_base.DesignPoint.rng_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>rngs for oracle to use when running replications at the solution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.n_reps">
+<code class="sig-name descname">n_reps</code><a class="headerlink" href="#data_farming_base.DesignPoint.n_reps" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of replications run at a design point</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.responses">
+<code class="sig-name descname">responses</code><a class="headerlink" href="#data_farming_base.DesignPoint.responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>responses observed from replications</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="data_farming_base.DesignPoint.gradients">
+<code class="sig-name descname">gradients</code><a class="headerlink" href="#data_farming_base.DesignPoint.gradients" title="Permalink to this definition">¶</a></dt>
+<dd><p>gradients of responses (w.r.t. oracle factors) observed from replications</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict of dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>oracle</strong> (<em>Oracle object</em>) – oracle with factors oracle_factors</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="data_farming_base.DesignPoint.attach_rngs">
+<code class="sig-name descname">attach_rngs</code><span class="sig-paren">(</span><em class="sig-param">rng_list</em>, <em class="sig-param">copy=True</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint.attach_rngs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attach a list of random-number generators to the design point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – list of random-number generators used to run simulation replications</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="data_farming_base.DesignPoint.simulate">
+<code class="sig-name descname">simulate</code><span class="sig-paren">(</span><em class="sig-param">m=1</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint.simulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate m replications for the current oracle factors.
+Append results to the responses and gradients dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>m</strong> (<em>int &gt; 0</em>) – number of macroreplications to run at the design point</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="data_farming_base.record_df_experiment_results">
+<code class="sig-prename descclassname">data_farming_base.</code><code class="sig-name descname">record_df_experiment_results</code><span class="sig-paren">(</span><em class="sig-param">experiment</em>, <em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.record_df_experiment_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save wrapper_base.Experiment object to .pickle file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>experiment</strong> (<em>wrapper_base.Experiment object</em>) – Experiment object to pickle</p></li>
+<li><p><strong>file_name</strong> (<em>string</em>) – base name of pickle file to write outputs to</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="base.html"
+                        title="previous chapter">base module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="directory.html"
+                        title="next chapter">directory module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/data_farming_base.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="directory.html" title="directory module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="base.html" title="base module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.0.
+    </div>
+  </body>
+</html>
