@@ -44,7 +44,6 @@ oracles.sscont module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

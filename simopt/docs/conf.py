@@ -1,3 +1,13 @@
+# If you have added/deleted files/modules, you will need to run the following sphinx commands from simopt/simopt/docs and push to github
+# for those changes to be reflected on readthedocs
+
+# sphinx-apidoc -o . .. -f     # pushing after running this should be enough for readthedocs to be able to generate documentation
+# make clean                   # this command and the next one are for building the html locally
+# make html
+
+
+
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -35,7 +45,6 @@ release = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    #'sphinx.ext.pngmath'
 ]
 
 

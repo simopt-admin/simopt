@@ -1,11 +1,7 @@
 """
 Summary
 -------
-<<<<<<< HEAD
-Minimize the expected long run cost for the (s,S) inventory problem by optimizing values of s and S.
-=======
 Minimize the expected total cost for (s, S) inventory system.
->>>>>>> cb2d9473e4b9acbcadbbacabfdd7b2943f58a066
 """
 from base import Problem
 from oracles.sscont import SSCont
@@ -54,11 +50,8 @@ class SSContMinCost(Problem):
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
-<<<<<<< HEAD
-=======
     factors : dict
         changeable factors of the problem
->>>>>>> cb2d9473e4b9acbcadbbacabfdd7b2943f58a066
 
     Arguments
     ---------

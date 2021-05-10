@@ -19,5 +19,5 @@ simopt
    test_problem
    test_run_wrapper
    test_solver_problem
-   unittests
+   tests
    wrapper_base

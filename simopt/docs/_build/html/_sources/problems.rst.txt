@@ -36,6 +36,13 @@ problems.rmitd\_maxrevenue module
    :undoc-members:
    :show-inheritance:
 
+problems.sscont\_min\_cost module
+---------------------------------
+
+.. automodule:: problems.sscont_min_cost
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
