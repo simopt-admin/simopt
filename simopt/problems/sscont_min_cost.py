@@ -52,17 +52,21 @@ class SSContMinCost(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "SSCONT-1"
         self.dim = 2
         self.n_objectives = 1
@@ -77,7 +81,9 @@ class SSContMinCost(Problem):
         self.initial_solution = (100, 100)
         self.ref_optimal_solution = (7, 50)
         self.oracle_default_factors = {}
-        super().__init__(oracle_fixed_factors)
+        self.factors = fixed_factors
+        self.specifications = {}
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = SSCont(self.oracle_fixed_factors)
 

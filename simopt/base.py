@@ -207,8 +207,25 @@ class Problem(object):
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
+    factors : dict
+        changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+    
+    Arguments
+    ---------
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
     """
-    def __init__(self, oracle_fixed_factors):
+    def __init__(self, fixed_factors, oracle_fixed_factors):
+        # set factors of the problem
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
         # set subset of factors of the simulation oracle
         # fill in missing oracle factors with problem-level default values
         for key in self.oracle_default_factors:

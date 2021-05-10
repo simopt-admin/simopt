@@ -52,17 +52,21 @@ class MM1MinMeanSojournTime(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "MM1-1"
         self.dim = 1
         self.n_objectives = 1
@@ -80,7 +84,9 @@ class MM1MinMeanSojournTime(Problem):
             "warmup": 50,
             "people": 200
         }
-        super().__init__(oracle_fixed_factors)
+        self.factors = fixed_factors
+        self.specifications = {}
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = MM1Queue(self.oracle_fixed_factors)
 

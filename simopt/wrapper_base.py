@@ -102,9 +102,8 @@ class Experiment(object):
         dictionary of user-specified oracle factors
     """
     def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
-        # TO DO: problem_fixed_factors is not used yet
         self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
-        self.problem = problem_directory[problem_name](oracle_fixed_factors=oracle_fixed_factors)
+        self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
 
     def run(self, n_macroreps, crn_across_solns):
         """

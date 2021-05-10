@@ -54,17 +54,21 @@ class FacilitySizingMaxService(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "FACSIZE-2"
         self.dim = 3
         self.n_objectives = 1
@@ -79,11 +83,20 @@ class FacilitySizingMaxService(Problem):
         self.ref_optimal_solution = (175, 179, 143)
         self.initial_solution = (100, 100, 100)
         self.oracle_default_factors = {}
-        self.factors = {
-            "costs": [1, 1, 1],
-            "install_budget": 500.0
+        self.factors = fixed_factors
+        self.specifications = {
+            "installation_costs": {
+                "description": "Cost to install a unit of capacity at each facility.",
+                "datatype": tuple,
+                "default": (1, 1, 1)
+            },
+            "installation_budget": {
+                "description": "Total budget for installation costs.",
+                "datatype": float,
+                "default": 500.0
+            }
         }
-        super().__init__(oracle_fixed_factors)
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = FacilitySize(self.oracle_fixed_factors)
 
@@ -214,7 +227,7 @@ class FacilitySizingMaxService(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.dot(self.factors["costs"], x) <= self.factors["install_budget"])
+        return (np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -233,7 +246,7 @@ class FacilitySizingMaxService(Problem):
         # Generate random solution using acceptable/rejection.
         # TO DO: More efficiently sample uniformly from the simplex.
         while True:
-            x = tuple([self.factors["install_budget"]*rand_sol_rng.random() for _ in range(self.dim)])
+            x = tuple([self.factors["installation_budget"]*rand_sol_rng.random() for _ in range(self.dim)])
             if self.check_deterministic_constraints(x):
                 break
         return x
