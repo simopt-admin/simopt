@@ -1,7 +1,11 @@
 """
 Summary
 -------
+<<<<<<< HEAD
 Minimize the expected long run cost for the (s,S) inventory problem by optimizing values of s and S.
+=======
+Minimize the expected total cost for (s, S) inventory system.
+>>>>>>> cb2d9473e4b9acbcadbbacabfdd7b2943f58a066
 """
 from base import Problem
 from oracles.sscont import SSCont
@@ -50,6 +54,11 @@ class SSContMinCost(Problem):
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
+<<<<<<< HEAD
+=======
+    factors : dict
+        changeable factors of the problem
+>>>>>>> cb2d9473e4b9acbcadbbacabfdd7b2943f58a066
 
     Arguments
     ---------
@@ -61,19 +70,19 @@ class SSContMinCost(Problem):
     base.Problem
     """
     def __init__(self, oracle_fixed_factors={}):
-        self.name = "SSCont-1"
+        self.name = "SSCONT-1"
         self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = True
-        self.budget = 100
-        #self.optimal_bound = 0
-        #self.optimal_solution = (0.1878,)
-        self.initial_solution = (1000,2000)
-        #self.ref_optimal_solution = (0.1878,)
+        self.gradient_available = False
+        self.budget = 1000
+        self.optimal_bound = 0
+        self.optimal_solution = None
+        self.initial_solution = (100, 100)
+        self.ref_optimal_solution = (7, 50)
         self.oracle_default_factors = {}
         super().__init__(oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
@@ -95,7 +104,7 @@ class SSContMinCost(Problem):
         """
         factor_dict = {
             "s": vector[0],
-            "S": vector[1]
+            "S": vector[0] + vector[1]
         }
         return factor_dict
 
@@ -114,7 +123,7 @@ class SSContMinCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["s"],factor_dict["S"])
+        vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -132,7 +141,7 @@ class SSContMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["cost_mean"],)
+        objectives = (response_dict["avg_order_costs"] + response_dict["avg_holding_costs"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -210,8 +219,8 @@ class SSContMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x[1] > x[0] and x[0] > 0
-
+        return (x[0] >= 0 and x[1] >= 0)
+    
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.
@@ -226,8 +235,5 @@ class SSContMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1) r.v.
-        s = rand_sol_rng.expovariate(1)
-        S = s + rand_sol_rng.expovariate(1)
-        x = (s, S)
+        x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
         return x

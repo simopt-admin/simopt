@@ -1,18 +1,22 @@
 """
 Summary
 -------
-Minimize the total cost of a facilitysize problem.
+Minimize the (deterministic) total cost of installing capacity at
+facilities subject to a chance constraint on stockout probability.
 """
 import numpy as np
 from base import Problem
-from oracles.facilitysizing import facilitysize
+from oracles.facilitysizing import FacilitySize
 
-class facilitysizingTotalCost(Problem):
+
+class FacilitySizingTotalCost(Problem):
     """
     Base class to implement simulation-optimization problems.
 
     Attributes
     ----------
+    name : string
+        name of problem
     dim : int
         number of decision variables
     n_objectives : int
@@ -22,7 +26,7 @@ class facilitysizingTotalCost(Problem):
     minmax : tuple of int (+/- 1)
         indicator of maximization (+1) or minimization (-1) for each objective
     constraint_type : string
-        description of constraints types: 
+        description of constraints types:
             "unconstrained", "box", "deterministic", "stochastic"
     variable_type : string
         description of variable types:
@@ -37,8 +41,19 @@ class facilitysizingTotalCost(Problem):
         bound on optimal objective function value
     optimal_solution : tuple
         optimal solution (if known)
+    ref_optimal_solution : tuple
+        reference solution (in lieu of optimal)
     oracle : Oracle object
         associated simulation oracle that generates replications
+    oracle_default_factors : dict
+        default values for overriding oracle-level default factors
+    oracle_fixed_factors : dict
+        combination of overriden oracle-level factors and defaults
+    rng_list : list of rng.MRG32k3a objects
+        list of RNGs used to generate a random initial solution
+        or a random problem instance
+    factors : dict
+        changeable factors of the problem
 
     Arguments
     ---------
@@ -50,25 +65,28 @@ class facilitysizingTotalCost(Problem):
     base.Problem
     """
     def __init__(self, oracle_fixed_factors={}):
-        self.minmax = (-1,)
+        self.name = "FACSIZE-1"
         self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
+        self.minmax = (-1,)
         self.constraint_type = "stochastic"
-        self.variable_type = "discrete"
+        self.variable_type = "continuous"
         self.gradient_available = False
         self.budget = 10000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.inital_solution = ([150, 300, 250],)
-        self.oracle_default_factors = {
-            "cost": [1, 1, 1],
+        self.ref_optimal_solution = (185, 185, 185)
+        self.initial_solution = (300, 300, 300)
+        self.oracle_default_factors = {}
+        self.factors = {
+            "costs": [1, 1, 1],
             "epsilon": 0.05
         }
         super().__init__(oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults
-        self.oracle = facilitysize(self.oracle_fixed_factors)
-    
+        # Instantiate oracle with fixed factors and over-riden defaults.
+        self.oracle = FacilitySize(self.oracle_fixed_factors)
+
     def vector_to_factor_dict(self, vector):
         """
         Convert a vector of variables to a dictionary with factor keys
@@ -84,7 +102,7 @@ class facilitysizingTotalCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "capa": vector[:]
+            "capacity": vector[:]
         }
         return factor_dict
 
@@ -103,9 +121,9 @@ class facilitysizingTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["capa"],)
+        vector = tuple(factor_dict["capacity"])
         return vector
-    
+
     def response_dict_to_objectives(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -123,7 +141,7 @@ class facilitysizingTotalCost(Problem):
         """
         objectives = (0,)
         return objectives
-    
+
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -139,9 +157,9 @@ class facilitysizingTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (response_dict["stock_out_flag"],)
+        stoch_constraints = (-response_dict["stockout_flag"],)
         return stoch_constraints
-    
+
     def deterministic_stochastic_constraints_and_gradients(self, x):
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
@@ -158,10 +176,10 @@ class facilitysizingTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (-self.oracle_default_factors["epsilon"],)
+        det_stoch_constraints = (self.factors["epsilon"],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
-  
+
     def deterministic_objectives_and_gradients(self, x):
         """
         Compute deterministic components of objectives for a solution `x`.
@@ -178,10 +196,10 @@ class facilitysizingTotalCost(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.dot(self.oracle_default_factors["cost"],x),)
-        det_objectives_gradients = ((self.oracle_default_factors["cost"],),)
+        det_objectives = (np.dot(self.factors["costs"], x),)
+        det_objectives_gradients = ((self.factors["costs"],),)
         return det_objectives, det_objectives_gradients
-    
+
     def check_deterministic_constraints(self, x):
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
@@ -198,14 +216,19 @@ class facilitysizingTotalCost(Problem):
         """
         return np.all(x > 0)
 
-    def get_random_solution(self):
+    def get_random_solution(self, rand_sol_rng):
         """
-        Generate a random solution, to be used for starting or restarting solvers.
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : rng.MRG32k3a object
+            random-number generator used to sample a new random solution
 
         Returns
         -------
         x : tuple
             vector of decision variables
         """
-        x = 100*np.random.rand(self.dim)
+        x = tuple([300*rand_sol_rng.random() for _ in range(self.dim)])
         return x

@@ -325,35 +325,34 @@ class MRG32k3a(random.Random):
         z = bsm(u)
         return mu + sigma*z
 
-    def mvnormalvariate(self, mean_vec, cov, factorize_flag):
+    def mvnormalvariate(self, mean_vec, cov, factorized=True):
         """
         Generate a normal random vector.
 
         Arguments
         ---------
         mean_vec : array
-            location parameters of the multivariate normal distribution 
+            location parameters of the multivariate normal distribution
             from which to generate
         cov : array
-            covariance matrix of the multivariate normal distribution 
+            covariance matrix of the multivariate normal distribution
             from which to generate
-        factorize_flag : binary
-            0 : need to calculate chol based on covariance
-            1 : do not need to calculate chol since we already have it
+        factorized : Bool
+            False : need to calculate chol based on covariance
+            True : do not need to calculate chol since we already have it
         Returns
         -------
-        float
+        list of float
             a normal random multivariate from the specified distribution
         """
-        no_cols = len(cov)  
-        if factorize_flag == 0:
+        n_cols = len(cov)
+        if factorized is False:
             Chol = np.linalg.cholesky(cov)
         else:
             Chol = cov
-    
-        observations = [self.normalvariate(0,1) for _ in range(no_cols)]  
+        observations = [self.normalvariate(0, 1) for _ in range(n_cols)]
         return Chol.dot(observations).transpose() + mean_vec
-    
+
     def poissonvariate(self, lmbda):
         """
         Generate a poisson random variate.
