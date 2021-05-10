@@ -5,10 +5,11 @@ from oracles.mm1queue import MM1Queue
 from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
 from oracles.facilitysizing import FacilitySize
 from oracles.rmitd import RMITD
+from oracles.sscont import SSCont
 from base import Solution
 
 fixed_factors = {}
-myoracle = RMITD(fixed_factors)
+myoracle = SSCont(fixed_factors)
 print(myoracle.factors)
 
 mysoln_factors = {}
