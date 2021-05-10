@@ -142,6 +142,11 @@ class SSCont(Oracle):
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current oracle factors.
+        
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            rngs for oracle to use when simulating a replication
 
         Arguments
         ---------

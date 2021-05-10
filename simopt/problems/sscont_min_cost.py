@@ -213,7 +213,7 @@ class SSContMinCost(Problem):
             indicates if solution `x` satisfies the deterministic constraints.
         """
         return (x[0] >= 0 and x[1] >= 0)
-
+    
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.
