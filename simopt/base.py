@@ -151,7 +151,7 @@ class Solver(object):
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
         """
-        if crn_across_solns is True:  # if CRN are used ...
+        if crn_across_solns:  # if CRN are used ...
             # reset each rng to start of its current substream
             for rng in self.solution_progenitor_rngs:
                 rng.reset_substream()
@@ -602,7 +602,7 @@ class Solution(object):
         rng_list : list of rng.MRG32k3a objects
             list of random-number generators used to run simulation replications
         """
-        if copy is True:
+        if copy:
             self.rng_list = [deepcopy(rng) for rng in rng_list]
         else:
             self.rng_list = rng_list

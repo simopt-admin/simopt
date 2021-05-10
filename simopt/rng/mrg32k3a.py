@@ -346,7 +346,7 @@ class MRG32k3a(random.Random):
             a normal random multivariate from the specified distribution
         """
         n_cols = len(cov)
-        if factorized is False:
+        if not factorized:
             Chol = np.linalg.cholesky(cov)
         else:
             Chol = cov

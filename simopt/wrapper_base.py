@@ -185,7 +185,7 @@ class Experiment(object):
         self.initial_soln = Solution(x0, self.problem)
         self.initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
-        if crn_across_budget is True:
+        if crn_across_budget:
             # Reset each rng to start of its current substream.
             for rng in baseline_rngs:
                 rng.reset_substream()
@@ -213,13 +213,13 @@ class Experiment(object):
                     fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
                     self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                     evaluated_solns.append(fresh_soln)
-                    if crn_across_budget is True:
+                    if crn_across_budget:
                         # Reset each rng to start of its current substream.
                         for rng in baseline_rngs:
                             rng.reset_substream()
             # Record sequence of reevaluated solutions.
             self.all_reevaluated_solns.append(evaluated_solns)
-            if crn_across_macroreps is False:
+            if not crn_across_macroreps:
                 # Advance each rng to start of
                 #     substream = current substream + # of oracle RNGs.
                 for rng in baseline_rngs:
@@ -279,7 +279,7 @@ class Experiment(object):
         stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
         if plot_type == "all":
             # Plot all estimated progress curves.
-            if normalize is True:
+            if normalize:
                 for mrep in range(self.n_macroreps):
                     plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where='post')
             else:
@@ -287,7 +287,7 @@ class Experiment(object):
                     plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
         elif plot_type == "mean":
             # Plot estimated mean progress curve.
-            if normalize is True:
+            if normalize:
                 estimator = np.mean(self.all_prog_curves, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else:
@@ -295,7 +295,7 @@ class Experiment(object):
                 plt.step(self.unique_budgets, estimator, 'b-', where='post')
         elif plot_type == "quantile":
             # Plot estimated beta-quantile progress curve.
-            if normalize is True:
+            if normalize:
                 estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
             else:
@@ -336,7 +336,7 @@ class Experiment(object):
             estimator = np.mean(solve_matrix, axis=0)
             # Plot solvability curve.
             plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
-            if plot_CIs is True:
+            if plot_CIs:
                 # Report bootstrapping error estimation and optionally plot bootstrap CIs.
                 self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
             save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True, extra=solve_tol)
@@ -356,7 +356,7 @@ class Experiment(object):
         self.area_mean = np.mean(self.areas)
         self.area_std_dev = np.std(self.areas, ddof=1)
         # (Optional) Compute bootstrap CIs.
-        if compute_CIs is True:
+        if compute_CIs:
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_mean", normalize=True, estimator=[self.area_mean], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_mean_CI = [lower_bound[0], upper_bound[0]]
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
@@ -390,7 +390,7 @@ class Experiment(object):
         self.solve_time_quantiles = [np.quantile(self.solve_times[tol_index], q=beta, interpolation="higher") for tol_index in range(len(self.solve_tols))]
         # The default method for np.quantile is a *linear* interpolation.
         # Linear interpolation will throw error if a breakpoint is +/- infinity.
-        if compute_CIs is True:
+        if compute_CIs:
             lower_bounds, upper_bounds, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=self.solve_time_quantiles, beta=beta)
             self.solve_time_quantiles_CIs = [[lower_bounds[tol_index], upper_bounds[tol_index]] for tol_index in range(len(self.solve_tols))]
 
@@ -430,7 +430,7 @@ class Experiment(object):
         bs_initial_obj_val = np.mean([self.initial_soln.objectives[postrep, 0] for postrep in postreps])
         # Reset subsubstream if using CRN across budgets.
         # This means the same postreplication indices will be used for resampling at x0 and x*.
-        if crn_across_budget is True:
+        if crn_across_budget:
             bootstrap_rng.reset_subsubstream()
         # Bootstrap sample postreplicates at reference optimal solution x*.
         # Uniformly resample L postreps (with replacement) from 0, 1, ..., L.
@@ -463,10 +463,10 @@ class Experiment(object):
                 # Normalize the estimated objective function value.
                 bootstrap_prog_curves[bs_mrep][budget] = (bootstrap_est_objective[bs_mrep][budget] - bs_ref_opt_obj_val) / bs_initial_opt_gap
                 # Reset subsubstream if using CRN across budgets.
-                if crn_across_budget is True:
+                if crn_across_budget:
                     bootstrap_rng.reset_subsubstream()
             # Advance subsubstream if not using CRN across macroreps.
-            if crn_across_macroreps is False:
+            if not crn_across_macroreps:
                 bootstrap_rng.advance_subsubstream()
             else:
                 # Reset subsubstream if using CRN across macroreplications.
@@ -529,12 +529,12 @@ class Experiment(object):
             # Apply the functional of the bootstrap sample,
             # e.g., mean/quantile (aggregate) progress curve.
             if plot_type == "mean":
-                if normalize is True:
+                if normalize:
                     bs_aggregate_objects[bs_index] = np.mean(bootstrap_prog_curves, axis=0)
                 else:
                     bs_aggregate_objects[bs_index] = np.mean(bootstrap_est_objective, axis=0)
             elif plot_type == "quantile":
-                if normalize is True:
+                if normalize:
                     bs_aggregate_objects[bs_index] = np.quantile(bootstrap_prog_curves, q=beta, axis=0)
                 else:
                     bs_aggregate_objects[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
@@ -561,7 +561,7 @@ class Experiment(object):
         # Compute bootstrapping confidence intervals via percentile method.
         # See Efron and Gong (1983) "A leisurely look at the bootstrap,
         #     the jackknife, and cross-validation."
-        if bias_correction is True:
+        if bias_correction:
             # For biased-corrected CIs, see equation (17) on page 41.
             z0s = [norm.ppf(np.mean(bs_aggregate_objects[:, interval_id] < estimator[interval_id])) for interval_id in range(n_intervals)]
             zconflvl = norm.ppf(conf_level)
@@ -605,7 +605,7 @@ class Experiment(object):
         """
         # Construct bootstrap confidence intervals.
         bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta, tol_index=tol_index)
-        if normalize is True:
+        if normalize:
             budgets = self.unique_frac_budgets
             xloc = 0.05
             yloc = -0.35
@@ -614,7 +614,7 @@ class Experiment(object):
             xloc = 0.05 * self.problem.budget
             yloc = (min(bs_CI_lower_bounds)
                     - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
-        if plot_CIs is True:
+        if plot_CIs:
             # Optionally plot bootstrap confidence intervals.
             plt.step(budgets, bs_CI_lower_bounds, 'b--', where='post')
             plt.step(budgets, bs_CI_upper_bounds, 'b--', where='post')
@@ -766,13 +766,13 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     """
     plt.figure()
     # Format axes, axis labels, title, and tick marks.
-    if normalize is True:
+    if normalize:
         xlabel = "Fraction of Budget"
         ylabel = "Fraction of Initial Optimality Gap"
         xlim = (0, 1)
         ylim = (-0.1, 1.1)
         title = solver_name + " on " + problem_name + "\n"
-    elif normalize is False:
+    elif not normalize:
         xlabel = "Budget"
         ylabel = "Objective Function Value"
         xlim = (0, budget)
@@ -871,7 +871,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = str(extra) + "-solvability_curve"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
-    if normalize is False:
+    if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + str(solver_name) + "_on_" + str(problem_name) + "_" + plot_name + ".png"
     plt.savefig(path_name, bbox_inches="tight")
@@ -1078,7 +1078,7 @@ class MetaExperiment(object):
                 file_name = experiment.solver.name + "_on_" + experiment.problem.name
                 record_experiment_results(experiment=experiment, file_name=file_name)
         # Produce plot(s).
-        if all_in_one is True:
+        if all_in_one:
             # TO DO: Superimpose plots once we have more than one solver.
             pass
         else:
@@ -1086,12 +1086,12 @@ class MetaExperiment(object):
                 # Aggregate statistics.
                 area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
                 area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
-                if plot_CIs is True:
+                if plot_CIs:
                     area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
                     area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
                 # Plot scatter plot.
                 stylize_area_plot(solver_name=self.solver_names[solver_index])
-                if plot_CIs is True:
+                if plot_CIs:
                     xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
                     yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
                     plt.errorbar(x=area_means,

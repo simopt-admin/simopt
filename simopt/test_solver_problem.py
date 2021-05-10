@@ -1,8 +1,8 @@
 from wrapper_base import Experiment, read_experiment_results
 
 solver_name = "RNDSRCH" # random search solver
-problem_name = "SSCONT-1" # mm1 queueing problem
-myexperiment = Experiment(solver_name, problem_name, solver_fixed_factors={"sample_size": 50})
+problem_name = "FACSIZE-2" # mm1 queueing problem
+myexperiment = Experiment(solver_name, problem_name, solver_fixed_factors={"sample_size": 10})
 myexperiment.run(n_macroreps=10, crn_across_solns=True)
 print("Here")
 myexperiment = read_experiment_results(solver_name + "_on_" + problem_name)

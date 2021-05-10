@@ -167,6 +167,6 @@ class RMITDMaxRevenue(Problem):
         # Generate random solution using acceptable/rejection.
         while True:
             x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x) is True:
+            if self.check_deterministic_constraints(x):
                 break
         return x
