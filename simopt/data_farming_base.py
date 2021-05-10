@@ -51,7 +51,7 @@ class DesignPoint(object):
         rng_list : list of rng.MRG32k3a objects
             list of random-number generators used to run simulation replications
         """
-        if copy is True:
+        if copy:
             self.rng_list = [deepcopy(rng) for rng in rng_list]
         else:
             self.rng_list = rng_list
@@ -160,7 +160,7 @@ class DataFarmingExperiment(object):
             # Simulate n_reps replications from each design point.
             design_pt.simulate(n_reps)
             # Manage random number streams.
-            if crn_across_design_pts is True:
+            if crn_across_design_pts:
                 # Reset rngs to start of current substream.
                 for rng in main_rng_list:
                     rng.reset_substream()
