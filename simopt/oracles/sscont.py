@@ -45,7 +45,7 @@ class SSCont(Oracle):
     def __init__(self, fixed_factors={}):
         self.name = "SSCONT"
         self.n_rngs = 2
-        self.n_responses = 6
+        self.n_responses = 7
         self.factors = fixed_factors
         self.specifications = {
             "demand_mean": {
@@ -86,12 +86,12 @@ class SSCont(Oracle):
             "n_days": {
                 "description": "Number of periods to simulate.",
                 "datatype": int,
-                "default": 10000
+                "default": 100
             },
             "warmup": {
                 "description": "Number of periods as warmup before collecting statistics.",
                 "datatype": int,
-                "default": 50
+                "default": 20
             }
         }
         self.check_factor_list = {
@@ -152,7 +152,8 @@ class SSCont(Oracle):
         -------
         responses : dict
             performance measures of interest
-            "cost_mean" = average cost per period
+            "avg_order_costs" = average order costs per period
+            "avg_holding_costs" = average holding costs per period
             "on_time_rate" = fraction of demand met with stock on hand in store
             "order_rate" = fraction of periods an order was made
             "stockout_rate" = fraction of periods a stockout occured
@@ -197,15 +198,27 @@ class SSCont(Oracle):
         # Calculate responses from simulation data.
         order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
         stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
-        cost_mean = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
-                            self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:] +
-                            self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
+        avg_order_costs = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
+                            self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
+        avg_holding_costs = np.mean(self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
         on_time_rate = 1 + np.sum(end_inv[self.factors["warmup"]:]
                                   [np.where(end_inv[self.factors["warmup"]:] < 0)])/np.sum(demands[self.factors["warmup"]:])
-        avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:] < 0)])
-        avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
+        if np.array(np.where(end_inv[self.factors["warmup"]:] < 0)).size == 0:
+            avg_stockout = 0
+        else:
+            avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:] < 0)])
+        if np.array(np.where(orders_placed[self.factors["warmup"]:] > 0)).size == 0:
+            avg_order = 0
+        else:
+            avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
         # Compose responses and gradients.
-        responses = {"cost_mean": cost_mean, "on_time_rate": on_time_rate, "order_rate": order_rate, "stockout_rate": stockout_rate,
-                     "avg_stockout": avg_stockout, "avg_order": avg_order}
+        responses = {"avg_order_costs": avg_order_costs,
+                     "avg_holding_costs": avg_holding_costs, 
+                     "on_time_rate": on_time_rate,
+                     "order_rate": order_rate,
+                     "stockout_rate": stockout_rate,
+                     "avg_stockout": avg_stockout,
+                     "avg_order": avg_order
+                     }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
