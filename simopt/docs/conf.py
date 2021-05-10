@@ -34,7 +34,8 @@ release = '1.0'
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    #'sphinx.ext.pngmath'
 ]
 
 
@@ -60,6 +61,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '*test*', '*main*']
 # a list of builtin themes.
 #
 html_theme = 'default'
+
+
+latex_engine = 'xelatex'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

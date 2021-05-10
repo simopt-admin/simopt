@@ -134,9 +134,14 @@ class SSCont(Oracle):
     def check_simulatable_factors(self):
         return self.factors["s"] < self.factors["S"]
 
-    def replicate(self):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current oracle factors.
+        
+        Arguments
+        ---------
+        rng_list : list of rng.MRG32k3a objects
+            rngs for oracle to use when simulating a replication
 
         Returns
         -------
@@ -150,8 +155,8 @@ class SSCont(Oracle):
             "avg_order" = mean amount of product ordered given an order occured
         """
         # designate random number generators
-        demand_rng = self.rng_list[0]
-        lead_rng = self.rng_list[1]
+        demand_rng = rng_list[0]
+        lead_rng = rng_list[1]
         # generate exponential random demands
         demands = [demand_rng.expovariate(1/self.factors["demand_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
 

@@ -42,8 +42,13 @@
             
   <div class="section" id="welcome-to-simopt-s-documentation">
 <h1>Welcome to SimOpt’s documentation!<a class="headerlink" href="#welcome-to-simopt-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>The purpose of the SimOpt testbed is to encourage development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.</p>
+<p>For the purposes of this site, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.</p>
+<p>The paper  <a class="reference external" href="https://www.informs-sim.org/wsc06papers/028.pdf">Pasupathy and Henderson (2006)</a> explains the original motivation for the testbed, and the follow-up paper <a class="reference external" href="https://www.informs-sim.org/wsc11papers/363.pdf">Pasupathy and Henderson (2011)</a> describes an earlier interface for MATLAB implementations of problems and solvers. The paper <a class="reference external" href="https://www.informs-sim.org/wsc17papers/includes/files/179.pdf">Dong et al. (2017)</a>  conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance. The recent Winter Simulation Conference paper <a class="reference external" href="https://www.informs-sim.org/wsc19papers/374.pdf">Eckman et al. (2019)</a> describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.</p>
+<p>The <a class="reference external" href="oracles.html">Oracle Library</a> contains the simulation logic to simulate a variety of systems. The <a class="reference external" href="problems.html">Problem Library</a> builds upon the Oracle Library and contains a variety of SO test problems. The <a class="reference external" href="solvers.html">Solver Library</a> provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  <a class="reference external" href="instructions.html">here</a>.</p>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">simopt</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="base.html">base module</a><ul>
@@ -101,12 +106,19 @@
 </div>
 </div>
 <div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</div>
+<div class="section" id="acknowledgments">
+<h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h2>
+<p>An earlier website for <a class="reference external" href="http://www.simopt.org">SimOpt</a> was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
+Recent work on the development of SimOpt has been supported by the National Science Foundation under grant nos. DGE-1650441, CMMI-1537394, CMMI-1254298, CMMI-1536895, IIS-1247696, and TRIPODS+X DMS-1839346, by the Air Force Office of Scientific Research under grant nos. FA9550-12-1-0200, FA9550-15-1-0038, and FA9550-16-1-0046, and by the Army Research Office under grant no. W911NF-17-1-0094.
+Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation (NSF).</p>
+</div>
 </div>
 
 
@@ -118,8 +130,12 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to SimOpt’s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to SimOpt’s documentation!</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#acknowledgments">Acknowledgments</a></li>
+</ul>
+</li>
 </ul>
 
   <h4>Next topic</h4>
