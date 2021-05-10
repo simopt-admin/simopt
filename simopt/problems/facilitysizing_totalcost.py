@@ -72,7 +72,7 @@ class FacilitySizingTotalCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.budget = 10000
         self.optimal_bound = 0
         self.optimal_solution = None

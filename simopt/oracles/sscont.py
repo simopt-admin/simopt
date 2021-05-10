@@ -199,7 +199,7 @@ class SSCont(Oracle):
         order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
         stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
         avg_order_costs = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
-                            self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
+                                  self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
         avg_holding_costs = np.mean(self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
         on_time_rate = 1 + np.sum(end_inv[self.factors["warmup"]:]
                                   [np.where(end_inv[self.factors["warmup"]:] < 0)])/np.sum(demands[self.factors["warmup"]:])
@@ -213,7 +213,7 @@ class SSCont(Oracle):
             avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
         # Compose responses and gradients.
         responses = {"avg_order_costs": avg_order_costs,
-                     "avg_holding_costs": avg_holding_costs, 
+                     "avg_holding_costs": avg_holding_costs,
                      "on_time_rate": on_time_rate,
                      "order_rate": order_rate,
                      "stockout_rate": stockout_rate,

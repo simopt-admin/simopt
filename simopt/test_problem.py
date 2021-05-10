@@ -4,14 +4,15 @@ from rng.mrg32k3a import MRG32k3a
 from problems.cntnv_max_profit import CntNVMaxProfit
 from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
 from problems.facilitysizing_totalcost import FacilitySizingTotalCost
+from problems.facilitysizing_max_service import FacilitySizingMaxService
 from problems.rmitd_maxrevenue import RMITDMaxRevenue
 from problems.sscont_min_cost import SSContMinCost
 from base import Solution
 
 
-myproblem = SSContMinCost()
+myproblem = FacilitySizingMaxService()
 
-x = (7, 50)
+x = (200, 200, 200)
 mysolution = Solution(x, myproblem)
 
 # Create and attach rngs to solution
@@ -21,9 +22,10 @@ mysolution.attach_rngs(rng_list, copy=False)
 # print(mysolution.rng_list)
 
 # Test simulate()
-myproblem.simulate(mysolution, m=100)
-print('For 10 replications:')
-#print('The individual objective estimates are {}'.format(mysolution.objectives[:10]))
+n_reps = 100
+myproblem.simulate(mysolution, m=n_reps)
+print('For ' + str(n_reps) + ' replications:')
+#print('The individual objective estimates are {}'.format(mysolution.objectives[:n_reps]))
 print('The mean objective is {}'.format(mysolution.objectives_mean))
-#print('The stochastic constraint estimates are {}'.format(mysolution.stoch_constraints[:10]))
-#print('The individual gradient estimates are {}'.format(mysolution.objectives_gradients[:10]))
+#print('The stochastic constraint estimates are {}'.format(mysolution.stoch_constraints[:n_reps]))
+#print('The individual gradient estimates are {}'.format(mysolution.objectives_gradients[:n_reps]))

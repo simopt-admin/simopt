@@ -19,6 +19,7 @@ from solvers.simannealing import SANE
 from problems.cntnv_max_profit import CntNVMaxProfit
 from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
 from problems.facilitysizing_totalcost import FacilitySizingTotalCost
+from problems.facilitysizing_max_service import FacilitySizingMaxService
 from problems.rmitd_maxrevenue import RMITDMaxRevenue
 from problems.sscont_min_cost import SSContMinCost
 
@@ -38,6 +39,7 @@ problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
     "MM1-1": MM1MinMeanSojournTime,
     "FACSIZE-1": FacilitySizingTotalCost,
+    "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost
 }
