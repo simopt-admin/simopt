@@ -137,32 +137,35 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def prepare_sim_new_soln(self, solution, problem, crn_across_solns):
+    def create_new_solution(self, x, problem, crn_across_solns):
         """
-        Prime the progenitor rngs for simulation the next solution,
-        depending on whether using CRN across solutions.
+        Create a new solution object with attached rngs primed
+        to simulate replications.
 
         Arguments
         ---------
-        solution : base.Solution object
-            solution to simulate next
+        x : tuple
+            vector of decision variables
         problem : base.Problem object
             problem being solved by the solver
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
+        
+        Returns
+        -------
+        new_solution : base.Solution object
+            new solution
         """
-        if crn_across_solns:  # if CRN are used ...
-            # reset each rng to start of its current substream
-            for rng in self.solution_progenitor_rngs:
-                rng.reset_substream()
-        else:  # if CRN are not used ...
-            # advance each rng to start of the substream = current substream + # of oracle RNGs
+        # Create new solution with attached rngs
+        new_solution = Solution(x, problem)
+        new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+        # Manipulate progenitor rngs to prepare for next new solution
+        if not crn_across_solns: # If CRN are not used ...
+            # ...advance each rng to start of the substream = current substream + # of oracle RNGs.
             for rng in self.solution_progenitor_rngs:
                 for _ in range(problem.oracle.n_rngs):
                     rng.advance_substream()
-        # attach primed rngs to new solution
-        solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-
+        return new_solution
 
 class Problem(object):
     """

@@ -95,17 +95,15 @@ class RandomSearch(Solver):
             if expended_budget == 0:
                 # Start at initial solution and record as best.
                 new_x = problem.initial_solution
-                new_solution = Solution(new_x, problem)
+                new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
                 # Identify new solution to simulate.
                 new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = Solution(new_x, problem)
-            # Manipulate RNGs, simulate new solution, and update budget.
-            self.prepare_sim_new_soln(new_solution, problem, crn_across_solns)
-            # print([new_solution.rng_list[0].s_ss_sss_index, new_solution.rng_list[1].s_ss_sss_index])
+                new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
+            # Simulate new solution and update budget.
             problem.simulate(new_solution, self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.
