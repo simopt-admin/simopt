@@ -50,7 +50,7 @@
 <dl class="py class">
 <dt id="data_farming_base.DataFarmingExperiment">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for data-farming experiments consisting of an oracle
 and design of associated factors.</p>
 <dl class="py attribute">
@@ -81,7 +81,7 @@ and design of associated factors.</p>
 <dd><p>number of design points in the design</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -115,7 +115,7 @@ Publish to .csv output file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_reps</strong> (<em>int</em>) – number of replications run at each design point</p></li>
+<li><p><strong>n_reps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of replications run at each design point</p></li>
 <li><p><strong>crn_across_design_pts</strong> (<em>Boolean</em>) – use CRN across design points?</p></li>
 </ul>
 </dd>
@@ -127,7 +127,7 @@ Publish to .csv output file.</p>
 <dl class="py class">
 <dt id="data_farming_base.DataFarmingMetaExperiment">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingMetaExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for data-farming meta experiments consisting of problem-solver
 pairs and a design of associated factors.</p>
 <dl class="py attribute">
@@ -147,7 +147,7 @@ pairs and a design of associated factors.</p>
 <dd><p>number of design points in the design</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -160,9 +160,9 @@ pairs and a design of associated factors.</p>
 <li><p><strong>solver_factor_settings_filename</strong> (<em>string</em>) – name of .txt file containing solver factor ranges and # of digits</p></li>
 <li><p><strong>solver_factor_headers</strong> (<em>list of strings</em>) – ordered list of solver factor names appearing in factor settings/design file</p></li>
 <li><p><strong>design_filename</strong> (<em>string</em>) – name of .txt file containing design matrix</p></li>
-<li><p><strong>solver_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified solver factors that will not be varied</p></li>
-<li><p><strong>problem_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified problem factors that will not be varied</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified oracle factors that will not be varied</p></li>
+<li><p><strong>solver_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified solver factors that will not be varied</p></li>
+<li><p><strong>problem_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors that will not be varied</p></li>
+<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified oracle factors that will not be varied</p></li>
 </ul>
 </dd>
 </dl>
@@ -194,10 +194,10 @@ recommended by the solver on each macroreplication.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_postreps</strong> (<em>int</em>) – number of postreplications to take at each recommended solution</p></li>
-<li><p><strong>n_postreps_init_opt</strong> (<em>int</em>) – number of postreplications to take at initial x0 and optimal x*</p></li>
-<li><p><strong>crn_across_budget</strong> (<em>bool</em>) – use CRN for post-replications at solutions recommended at different times?</p></li>
-<li><p><strong>crn_across_macroreps</strong> (<em>bool</em>) – use CRN for post-replications at solutions recommended on different macroreplications?</p></li>
+<li><p><strong>n_postreps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of postreplications to take at each recommended solution</p></li>
+<li><p><strong>n_postreps_init_opt</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of postreplications to take at initial x0 and optimal x*</p></li>
+<li><p><strong>crn_across_budget</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – use CRN for post-replications at solutions recommended at different times?</p></li>
+<li><p><strong>crn_across_macroreps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – use CRN for post-replications at solutions recommended on different macroreplications?</p></li>
 </ul>
 </dd>
 </dl>
@@ -221,8 +221,8 @@ Publish to .csv output file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_macroreps</strong> (<em>int</em>) – number of macroreplications for each design point</p></li>
-<li><p><strong>crn_across_solns</strong> (<em>bool</em>) – indicates if CRN are used when solver simulates different solutions</p></li>
+<li><p><strong>n_macroreps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of macroreplications for each design point</p></li>
+<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when solver simulates different solutions</p></li>
 </ul>
 </dd>
 </dl>
@@ -233,7 +233,7 @@ Publish to .csv output file.</p>
 <dl class="py class">
 <dt id="data_farming_base.DesignPoint">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DesignPoint</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for design points represented as dictionaries of factors.</p>
 <dl class="py attribute">
 <dt id="data_farming_base.DesignPoint.oracle">
@@ -252,7 +252,7 @@ Publish to .csv output file.</p>
 <dd><p>oracle factor names and values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -274,7 +274,7 @@ Publish to .csv output file.</p>
 <dd><p>number of replications run at a design point</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -285,7 +285,7 @@ Publish to .csv output file.</p>
 <dd><p>responses observed from replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
 </dd>
 </dl>
 </dd></dl>

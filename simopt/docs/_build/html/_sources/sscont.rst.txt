@@ -11,8 +11,8 @@ replenishment orders are received at the beginning of the period. Note that, sin
 end of the day, an order with lead time :math:`l` placed in period :math:`n` will arrive at the beginning of period :math:`n + l + 1`.
 
 A per unit holding cost :math:`h` is charged for inventory on-hand; furthermore, there is a fixed order cost :math:`f`
-and a variable, per unit, cost :math:`c`. Our goal is to find :math:`s` and :math:`S` in order to minimize the :math:`\mathbb{E}[\text{Total cost per period}]` such that the stockout rate :math:`δ`, the fraction of demand not supplied from stock on-hand, is at most
-:math:`10%`. To further clarify the order of events and the calculation of costs, a 5-day example in which :math:`s = 1000`
+and a variable, per unit, cost :math:`c`. Our goal is to find :math:`s` and :math:`S` in order to minimize the :math:`\mathbb{E}[\text{Total cost per period}]` such that the stockout rate :math:`\delta`, the fraction of demand not supplied from stock on-hand, is at most
+:math:`10\%`. To further clarify the order of events and the calculation of costs, a 5-day example in which :math:`s = 1000`
 and :math:`S = 1500`, the initial inventory on hand is :math:`1000` and there are no outstanding orders is provided below.
 
 *Recommended Parameter Settings:* Take :math:`\mu = 100`, :math:`\theta = 6`, :math:`h = 1`, :math:`f = 36` and :math:`c = 2`.

@@ -45,7 +45,10 @@ release = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx'
 ]
+
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 
 autodoc_mock_imports = ['numpy',
