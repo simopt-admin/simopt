@@ -7,7 +7,6 @@ with continuous inventory.
 from base import Oracle
 import numpy as np
 
-
 class SSCont(Oracle):
     """
     An oracle that simulates multiple periods' worth of sales for a (s,S)
@@ -20,7 +19,7 @@ class SSCont(Oracle):
 
     Attributes
     ----------
-    name : string
+    name : str
         name of oracle
     n_rngs : int
         number of random-number generators used to run a simulation replication
@@ -145,25 +144,28 @@ class SSCont(Oracle):
         
         Arguments
         ---------
-        rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
-
-        Arguments
-        ---------
-        rng_list : list of rng.MRG32k3a objects
+        rng_list : [list]  [rng.mrg32k3a.MRG32k3a] 
             rngs for oracle to use when simulating a replication
 
         Returns
         -------
         responses : dict
             performance measures of interest
-            "avg_order_costs" = average order costs per period
-            "avg_holding_costs" = average holding costs per period
-            "on_time_rate" = fraction of demand met with stock on hand in store
-            "order_rate" = fraction of periods an order was made
-            "stockout_rate" = fraction of periods a stockout occured
-            "avg_stockout" = mean amount of product backordered given a stockout occured
-            "avg_order" = mean amount of product ordered given an order occured
+            
+            ``avg_order_costs``
+                average order costs per period
+            ``avg_holding_costs``
+                average holding costs per period
+            ``on_time_rate``
+                fraction of demand met with stock on hand in store
+            ``order_rate``
+                fraction of periods an order was made
+            ``stockout_rate``
+                fraction of periods a stockout occured
+            ``avg_stockout``
+                mean amount of product backordered given a stockout occured
+            ``avg_order``
+                mean amount of product ordered given an order occured
         """
         # Designate random number generators.
         demand_rng = rng_list[0]

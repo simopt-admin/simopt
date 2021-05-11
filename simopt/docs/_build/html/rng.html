@@ -72,7 +72,7 @@ mat33_power_mod</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>b</strong> (<em>list of float</em>) – 3x1 matrix</p></li>
-<li><p><strong>m</strong> (<em>float</em>) – modulus</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -113,7 +113,7 @@ mat33_power_mod</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
 <li><p><strong>B</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>m</strong> (<em>float</em>) – modulus</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -153,7 +153,7 @@ mat33_power_mod</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>A</strong> (<em>list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>m</strong> (<em>float</em>) – modulus</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -174,8 +174,8 @@ Use divide-and-conquer algorithm described in L’Ecuyer (1990).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>j</strong> (<em>int</em>) – exponent</p></li>
-<li><p><strong>m</strong> (<em>float</em>) – modulus</p></li>
+<li><p><strong>j</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – exponent</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -209,7 +209,7 @@ start_fixed_s_ss_sss : method</p>
 <dl class="py class">
 <dt id="rng.mrg32k3a.MRG32k3a">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></code><code class="sig-name descname"><span class="pre">MRG32k3a</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 <p>Implements mrg32k3a as the generator for a random.Random object.</p>
 <dl class="py attribute">
 <dt id="rng.mrg32k3a.MRG32k3a._current_state">
@@ -288,7 +288,7 @@ streams/substreams/subsubstreams are referenced w.r.t. ref_seed</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 <dl class="py method">
 <dt id="rng.mrg32k3a.MRG32k3a.advance_stream">
@@ -340,7 +340,7 @@ Subsubstreams are of length 2**47.</p>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 </dd></dl>
 
@@ -375,9 +375,9 @@ True : do not need to calculate chol since we already have it</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mu</strong> (<em>float</em>) – expected value of the normal distribution from which to
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – expected value of the normal distribution from which to
 generate</p></li>
-<li><p><strong>sigma</strong> (<em>float</em>) – standard deviation of the normal distribution from which to
+<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – standard deviation of the normal distribution from which to
 generate</p></li>
 </ul>
 </dd>
@@ -385,7 +385,7 @@ generate</p></li>
 <dd class="field-even"><p>a normal random variate from the specified distribution</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -396,14 +396,14 @@ generate</p></li>
 <dd><p>Generate a poisson random variate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>lmbda</strong> (<em>float</em>) – expected value of the poisson distribution from which to
+<dd class="field-odd"><p><strong>lmbda</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – expected value of the poisson distribution from which to
 generate</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a poisson random variate from the specified distribution</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -418,7 +418,7 @@ state.</p>
 <dd class="field-odd"><p><strong>u</strong> – pseudo uniform random variate</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>float</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -458,13 +458,13 @@ state.</p>
 <dd><p>Set the internal state of the generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>state</strong> (<em>tuple</em>) – state[0] is new state for the generator
+<dd class="field-odd"><p><strong>state</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – state[0] is new state for the generator
 state[1] is random.Random.getstate()</p>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 </dd></dl>
 
@@ -488,13 +488,13 @@ state[1] is random.Random.getstate()</p>
 the Beasley-Springer-Moro algorithm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>u</strong> (<em>float</em>) – probability value for the desired quantile (between 0 and 1)</p>
+<dd class="field-odd"><p><strong>u</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – probability value for the desired quantile (between 0 and 1)</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>z</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
