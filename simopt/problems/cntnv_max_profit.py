@@ -66,7 +66,7 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "CNTNEWS-1"
         self.dim = 1
         self.n_objectives = 1

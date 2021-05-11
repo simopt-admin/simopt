@@ -4,7 +4,7 @@ Summary
 Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 """
-from base import Solver, Solution
+from base import Solver
 
 
 class RandomSearch(Solver):
