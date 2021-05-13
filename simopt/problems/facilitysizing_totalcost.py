@@ -39,10 +39,8 @@ class FacilitySizingTotalCost(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -54,17 +52,21 @@ class FacilitySizingTotalCost(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "FACSIZE-1"
         self.dim = 3
         self.n_objectives = 1
@@ -75,15 +77,23 @@ class FacilitySizingTotalCost(Problem):
         self.gradient_available = True
         self.budget = 10000
         self.optimal_bound = 0
-        self.optimal_solution = None
-        self.ref_optimal_solution = (185, 185, 185)
+        self.ref_optimal_solution = None  # (185, 185, 185)
         self.initial_solution = (300, 300, 300)
         self.oracle_default_factors = {}
-        self.factors = {
-            "costs": [1, 1, 1],
-            "epsilon": 0.05
+        self.factors = fixed_factors
+        self.specifications = {
+            "installation_costs": {
+                "description": "Cost to install a unit of capacity at each facility.",
+                "datatype": tuple,
+                "default": (1, 1, 1)
+            },
+            "epsilon": {
+                "description": "Maximum allowed probability of stocking out.",
+                "datatype": float,
+                "default": 0.05
+            }
         }
-        super().__init__(oracle_fixed_factors)
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = FacilitySize(self.oracle_fixed_factors)
 
@@ -196,8 +206,8 @@ class FacilitySizingTotalCost(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.dot(self.factors["costs"], x),)
-        det_objectives_gradients = ((self.factors["costs"],),)
+        det_objectives = (np.dot(self.factors["installation_costs"], x),)
+        det_objectives_gradients = ((self.factors["installation_costs"],),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):

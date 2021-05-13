@@ -16,6 +16,9 @@ import numpy as np
 from copy import deepcopy
 
 
+from rng.mrg32k3a import MRG32k3a
+
+
 class Solver(object):
     """
     Base class to implement simulation-optimization solvers.
@@ -137,31 +140,51 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def prepare_sim_new_soln(self, solution, problem, crn_across_solns):
+    def create_new_solution(self, x, problem, crn_across_solns):
         """
-        Prime the progenitor rngs for simulation the next solution,
-        depending on whether using CRN across solutions.
+        Create a new solution object with attached rngs primed
+        to simulate replications.
 
         Arguments
         ---------
-        solution : base.Solution object
-            solution to simulate next
+        x : tuple
+            vector of decision variables
         problem : base.Problem object
             problem being solved by the solver
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
+
+        Returns
+        -------
+        new_solution : base.Solution object
+            new solution
         """
-        if crn_across_solns:  # if CRN are used ...
-            # reset each rng to start of its current substream
-            for rng in self.solution_progenitor_rngs:
-                rng.reset_substream()
-        else:  # if CRN are not used ...
-            # advance each rng to start of the substream = current substream + # of oracle RNGs
+        # Create new solution with attached rngs.
+        new_solution = Solution(x, problem)
+        new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+        # Manipulate progenitor rngs to prepare for next new solution.
+        if not crn_across_solns:  # If CRN are not used ...
+            # ...advance each rng to start of the substream = current substream + # of oracle RNGs.
             for rng in self.solution_progenitor_rngs:
                 for _ in range(problem.oracle.n_rngs):
                     rng.advance_substream()
-        # attach primed rngs to new solution
-        solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+        return new_solution
+
+    def rebase(self, n_reps):
+        """
+        Rebase the progenitor rngs to start at a later subsubstream index.
+
+        Arguments
+        ---------
+        n_reps : int >= 0
+            substream index to skip to
+        """
+        new_rngs = []
+        for rng in self.solution_progenitor_rngs:
+            stream_index = rng.s_ss_sss_index[0]
+            substream_index = rng.s_ss_sss_index[1]
+            new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps]))
+        self.solution_progenitor_rngs = new_rngs
 
 
 class Problem(object):
@@ -207,8 +230,25 @@ class Problem(object):
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
+    factors : dict
+        changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+
+    Arguments
+    ---------
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
     """
-    def __init__(self, oracle_fixed_factors):
+    def __init__(self, fixed_factors, oracle_fixed_factors):
+        # set factors of the problem
+        # fill in missing factors with default values
+        self.factors = fixed_factors
+        for key in self.specifications:
+            if key not in fixed_factors:
+                self.factors[key] = self.specifications[key]["default"]
         # set subset of factors of the simulation oracle
         # fill in missing oracle factors with problem-level default values
         for key in self.oracle_default_factors:
@@ -402,12 +442,12 @@ class Problem(object):
                 # convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
-                #solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
                     # convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints
                     solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
-                    #solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
+                    # solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
                 # increment counter
                 solution.n_reps += 1
                 # advance rngs to start of next subsubstream
@@ -415,6 +455,23 @@ class Problem(object):
                     rng.advance_subsubstream()
             # update summary statistics
             solution.recompute_summary_statistics()
+
+    def simulate_up_to(self, solutions, n_reps):
+        """
+        Simulate a set of solutions up to a given number of replications.
+
+        Arguments
+        ---------
+        solutions : set
+            a set of base.Solution objects
+        n_reps : int > 0
+            common number of replications to simulate each solution up to
+        """
+        for solution in solutions:
+            # If more replications needed, take them.
+            if solution.n_reps < n_reps:
+                n_reps_to_take = n_reps - solution.n_reps
+                self.simulate(solution=solution, m=n_reps_to_take)
 
 
 class Oracle(object):
@@ -640,16 +697,16 @@ class Solution(object):
             self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
         # TEMPORARILY COMMENT OUT GRADIENTS
         # self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
-        #if self.n_reps > 1:
-            #self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
-            #self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            #self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+        # if self.n_reps > 1:
+            # self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
+            # self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            # self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
         if self.stoch_constraints is not None:
             self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
             self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
             self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
             self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
-            #self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
-            #self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
-            #self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            #self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
+            # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
+            # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
+            # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+            # self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])

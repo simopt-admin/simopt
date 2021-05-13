@@ -37,10 +37,8 @@ class MM1MinMeanSojournTime(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -52,17 +50,21 @@ class MM1MinMeanSojournTime(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "MM1-1"
         self.dim = 1
         self.n_objectives = 1
@@ -73,14 +75,15 @@ class MM1MinMeanSojournTime(Problem):
         self.gradient_available = True
         self.budget = 1000
         self.optimal_bound = 0
-        self.optimal_solution = None
+        self.ref_optimal_solution = None  # (2.75,)
         self.initial_solution = (5,)
-        self.ref_optimal_solution = (2.75,)
         self.oracle_default_factors = {
             "warmup": 50,
             "people": 200
         }
-        super().__init__(oracle_fixed_factors)
+        self.factors = fixed_factors
+        self.specifications = {}
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = MM1Queue(self.oracle_fixed_factors)
 

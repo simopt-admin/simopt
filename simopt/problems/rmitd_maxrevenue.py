@@ -38,10 +38,8 @@ class RMITDMaxRevenue(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     rng_list : list of rng.MRG32k3a objects
@@ -49,17 +47,21 @@ class RMITDMaxRevenue(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
-    oracle_factors : dict
-        subset of non-decision factors to pass through to the oracle
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    oracle_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the oracle
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, oracle_fixed_factors={}):
+    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
         self.name = "RMITD-1"
         self.dim = 3
         self.n_objectives = 1
@@ -70,11 +72,12 @@ class RMITDMaxRevenue(Problem):
         self.gradient_available = False
         self.budget = 10000
         self.optimal_bound = 0
-        self.optimal_solution = None
-        self.ref_optimal_solution = (90, 50, 0)
+        self.ref_optimal_solution = None  # (90, 50, 0)
         self.initial_solution = (100, 50, 30)
         self.oracle_default_factors = {}
-        super().__init__(oracle_fixed_factors)
+        self.factors = fixed_factors
+        self.specifications = {}
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = RMITD(self.oracle_fixed_factors)
 
