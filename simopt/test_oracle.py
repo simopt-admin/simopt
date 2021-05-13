@@ -8,7 +8,7 @@ from oracles.rmitd import RMITD
 from oracles.sscont import SSCont
 from base import Solution
 
-fixed_factors = {"s": 7, "S": 57}
+fixed_factors = {"s": 1000, "S": 2000}
 myoracle = SSCont(fixed_factors)
 print(myoracle.factors)
 

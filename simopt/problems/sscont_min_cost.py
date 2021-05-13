@@ -74,7 +74,7 @@ class SSContMinCost(Problem):
         self.budget = 1000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.initial_solution = (100, 100)
+        self.initial_solution = (1000, 2000)
         self.ref_optimal_solution = (7, 50)
         self.oracle_default_factors = {}
         super().__init__(oracle_fixed_factors)
@@ -134,7 +134,7 @@ class SSContMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["avg_order_costs"] + response_dict["avg_holding_costs"],)
+        objectives = (response_dict["avg_backorder_costs"] + response_dict["avg_order_costs"] + response_dict["avg_holding_costs"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
