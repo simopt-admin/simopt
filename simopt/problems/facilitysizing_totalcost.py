@@ -39,10 +39,8 @@ class FacilitySizingTotalCost(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -79,8 +77,7 @@ class FacilitySizingTotalCost(Problem):
         self.gradient_available = True
         self.budget = 10000
         self.optimal_bound = 0
-        self.optimal_solution = None
-        self.ref_optimal_solution = (185, 185, 185)
+        self.ref_optimal_solution = None  # (185, 185, 185)
         self.initial_solution = (300, 300, 300)
         self.oracle_default_factors = {}
         self.factors = fixed_factors

@@ -37,10 +37,8 @@ class SSContMinCost(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solutionu of optimal)
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -77,9 +75,8 @@ class SSContMinCost(Problem):
         self.gradient_available = False
         self.budget = 1000
         self.optimal_bound = 0
-        self.optimal_solution = None
         self.initial_solution = (100, 100)
-        self.ref_optimal_solution = (7, 50)
+        self.ref_optimal_solution = None  # (7, 50)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {}

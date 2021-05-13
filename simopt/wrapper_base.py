@@ -21,9 +21,12 @@ stylize_area_plot : function
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.defchararray import endswith
 from scipy.stats import norm
 import pickle
 import importlib
+from copy import deepcopy
+
 
 from rng.mrg32k3a import MRG32k3a
 from base import Solution
@@ -179,20 +182,10 @@ class Experiment(object):
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
         baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
-        # Simulate common initial solution x0.
-        x0 = self.problem.initial_solution
-        self.initial_soln = Solution(x0, self.problem)
-        self.initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-        self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
-        if crn_across_budget:
-            # Reset each rng to start of its current substream.
-            for rng in baseline_rngs:
-                rng.reset_substream()
-        # Simulate "reference" optimal solution x*.
-        xstar = self.problem.ref_optimal_solution
-        self.ref_opt_soln = Solution(xstar, self.problem)
-        self.ref_opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-        self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
+        # Copy rngs to use for later simulating intial solution x0 and
+        # reference optimal solution x*.
+        copied_baseline_rngs = [deepcopy(rng) for rng in baseline_rngs]
+        # Skip over first set of substreams dedicated for sampling x0 and x*.
         # Advance each rng to start of
         #     substream = current substream + # of oracle RNGs.
         for rng in baseline_rngs:
@@ -202,32 +195,61 @@ class Experiment(object):
         for mrep in range(self.n_macroreps):
             evaluated_solns = []
             for x in self.all_recommended_xs[mrep]:
-                # Treat initial solution and reference solution differently.
-                if x == x0:
-                    evaluated_solns.append(self.initial_soln)
-                elif x == xstar:
-                    evaluated_solns.append(self.ref_opt_soln)
-                else:
-                    fresh_soln = Solution(x, self.problem)
-                    fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-                    self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
-                    evaluated_solns.append(fresh_soln)
-                    if crn_across_budget:
-                        # Reset each rng to start of its current substream.
-                        for rng in baseline_rngs:
-                            rng.reset_substream()
+                fresh_soln = Solution(x, self.problem)
+                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+                self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
+                evaluated_solns.append(fresh_soln)
+                if crn_across_budget:
+                    # Reset each rng to start of its current substream.
+                    for rng in baseline_rngs:
+                        rng.reset_substream()
             # Record sequence of reevaluated solutions.
             self.all_reevaluated_solns.append(evaluated_solns)
-            if not crn_across_macroreps:
+            if crn_across_macroreps:
+                # Reset each rng to start of its current substream.
+                for rng in baseline_rngs:
+                    rng.reset_substream()
+            else:
                 # Advance each rng to start of
                 #     substream = current substream + # of oracle RNGs.
                 for rng in baseline_rngs:
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
-            else:
-                # Reset each rng to start of its current substream.
-                for rng in baseline_rngs:
-                    rng.reset_substream()
+        # Simulate common initial solution x0.
+        x0 = self.problem.initial_solution
+        self.initial_soln = Solution(x0, self.problem)
+        self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+        self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
+        if crn_across_budget:
+            # Reset each rng to start of its current substream.
+            for rng in copied_baseline_rngs:
+                rng.reset_substream()
+        # Determine reference optimal solution x*.
+        if self.problem.ref_optimal_solution is not None:
+            xstar = self.problem.ref_optimal_solution
+        else:  # Look up estimated best solution recommended over all macroreplications.
+            # TO DO: Simplify this block of code.
+            # TO DO: Handle duplicate argmaxs.
+            # TO DO: Currently 0 <- assuming only one objective. Generalize.
+            best_est_objectives = np.zeros(self.n_macroreps)
+            for mrep in range(self.n_macroreps):
+                est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[mrep]])
+                best_est_objectives[mrep] = np.max(self.problem.minmax[0]*est_objectives)
+            best_mrep = np.argmax(self.problem.minmax[0]*best_est_objectives)
+            best_mrep_est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[best_mrep]])
+            best_soln_index = np.argmax(self.problem.minmax[0]*best_mrep_est_objectives)
+            xstar = self.all_reevaluated_solns[best_mrep][best_soln_index].x
+        # Simulate reference optimal solution x*.
+        self.ref_opt_soln = Solution(xstar, self.problem)
+        self.ref_opt_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+        self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
+        # Replace recommended solutions corresponding to x0 and x* with resimulated versions.
+        for mrep in range(self.n_macroreps):
+            for soln_index in range(len(self.all_reevaluated_solns[mrep])):
+                if self.all_reevaluated_solns[mrep][soln_index].x == x0:
+                    self.all_reevaluated_solns[mrep][soln_index] = self.initial_soln
+                elif self.all_reevaluated_solns[mrep][soln_index].x == xstar:
+                    self.all_reevaluated_solns[mrep][soln_index] = self.ref_opt_soln
         # Preprocessing in anticipation of plotting.
         # Extract all unique budget points.
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]

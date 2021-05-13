@@ -38,10 +38,8 @@ class RMITDMaxRevenue(Problem):
         max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
-    optimal_solution : tuple
-        optimal solution (if known)
     ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        reference optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     rng_list : list of rng.MRG32k3a objects
@@ -74,8 +72,7 @@ class RMITDMaxRevenue(Problem):
         self.gradient_available = False
         self.budget = 10000
         self.optimal_bound = 0
-        self.optimal_solution = None
-        self.ref_optimal_solution = (90, 50, 0)
+        self.ref_optimal_solution = None  # (90, 50, 0)
         self.initial_solution = (100, 50, 30)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
