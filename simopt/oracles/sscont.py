@@ -41,6 +41,8 @@ class SSCont(Oracle):
             Mean of exponentially distributed demand in each period
         ``lead_mean``
             Mean of Poisson distributed order lead time
+        ``backorder_cost``
+            Cost per unit of demand not met with in-stock inventory
         ``holding_cost``
             Holding cost per unit per period
         ``fixed_cost``
