@@ -11,8 +11,7 @@ class SSCont(Oracle):
     """
     An oracle that simulates multiple periods' worth of sales for a (s,S)
     inventory problem with continuous inventory, exponentially distributed
-    demand, and poisson distributed lead time. Returns the average cost per
-    period after accounting for fixed and variable order costs, order rate,
+    demand, and poisson distributed lead time. Returns the various types of average costs per period, order rate,
     stockout rate, fraction of demand met with inventory on hand, average
     amount backordered given a stockout occured, and average amount ordered
     given an order occured.
@@ -38,25 +37,25 @@ class SSCont(Oracle):
         fixed_factors of the simulation model
         
         ``demand_mean``
-            Mean of exponentially distributed demand in each period
+            Mean of exponentially distributed demand in each period (`flt`)
         ``lead_mean``
-            Mean of Poisson distributed order lead time
+            Mean of Poisson distributed order lead time (`flt`)
         ``backorder_cost``
-            Cost per unit of demand not met with in-stock inventory
+            Cost per unit of demand not met with in-stock inventory (`flt`)
         ``holding_cost``
-            Holding cost per unit per period
+            Holding cost per unit per period (`flt`)
         ``fixed_cost``
-            Order fixed cost
+            Order fixed cost (`flt`)
         ``variable_cost``
-            Order variable cost per unit
+            Order variable cost per unit (`flt`)
         ``s``
-            Inventory threshold for placing order
+            Inventory position threshold for placing order (`flt`)
         ``S``
-            Max inventory
+            Max inventory position (`flt`)
         ``n_days``
-            Number of periods to simulate
+            Number of periods to simulate (`int`)
         ``warmup``
-            Number of periods as warmup before collecting statistics
+            Number of periods as warmup before collecting statistics (`int`)
     See also
     --------
     base.Oracle
