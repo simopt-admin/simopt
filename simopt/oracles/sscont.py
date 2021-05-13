@@ -36,7 +36,25 @@ class SSCont(Oracle):
     ---------
     fixed_factors : dict
         fixed_factors of the simulation model
-
+        
+        ``demand_mean``
+            Mean of exponentially distributed demand in each period
+        ``lead_mean``
+            Mean of Poisson distributed order lead time
+        ``holding_cost``
+            Holding cost per unit per period
+        ``fixed_cost``
+            Order fixed cost
+        ``variable_cost``
+            Order variable cost per unit
+        ``s``
+            Inventory threshold for placing order
+        ``S``
+            Max inventory
+        ``n_days``
+            Number of periods to simulate
+        ``warmup``
+            Number of periods as warmup before collecting statistics
     See also
     --------
     base.Oracle
@@ -56,6 +74,11 @@ class SSCont(Oracle):
                 "description": "Mean of Poisson distributed order lead time.",
                 "datatype": float,
                 "default": 6.0
+            },
+            "backorder_cost": {
+                "description": "Cost per unit of demand not met with in-stock inventory.",
+                "datatype": float,
+                "default": 4.0
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
@@ -96,6 +119,7 @@ class SSCont(Oracle):
         self.check_factor_list = {
             "demand_mean": self.check_demand_mean,
             "lead_mean": self.check_lead_mean,
+            "backorder_cost": self.check_backorder_cost,
             "holding_cost": self.check_holding_cost,
             "fixed_cost": self.check_fixed_cost,
             "variable_cost": self.check_variable_cost,
@@ -113,6 +137,9 @@ class SSCont(Oracle):
 
     def check_lead_mean(self):
         return self.factors["lead_mean"] > 0
+
+    def check_backorder_cost(self):
+        return self.factors["backorder_cost"] > 0
 
     def check_holding_cost(self):
         return self.factors["holding_cost"] > 0
@@ -152,6 +179,8 @@ class SSCont(Oracle):
         responses : dict
             performance measures of interest
             
+            ``avg_backorder_costs``
+                average backorder costs per period
             ``avg_order_costs``
                 average order costs per period
             ``avg_holding_costs``
@@ -194,8 +223,8 @@ class SSCont(Oracle):
             orders_placed[day] = np.max(((inv_pos[day] < self.factors["s"]) * (self.factors["S"] - inv_pos[day])), 0)
             if orders_placed[day] > 0:
                 lead = lead_rng.poissonvariate(self.factors["lead_mean"])
-                for future_day in range(day + 1, lead + 1):
-                    if future_day <= self.factors["n_days"] + self.factors["warmup"]:
+                for future_day in range(day + 1, day + lead + 1):
+                    if future_day < self.factors["n_days"] + self.factors["warmup"]:
                         orders_outstanding[future_day] = orders_outstanding[future_day] + orders_placed[day]
                 if day + lead + 1 < self.factors["n_days"] + self.factors["warmup"]:
                     orders_received[day + lead + 1] = orders_received[day + lead + 1] + orders_placed[day]
@@ -208,8 +237,9 @@ class SSCont(Oracle):
         avg_order_costs = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
                                   self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
         avg_holding_costs = np.mean(self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
-        on_time_rate = 1 + np.sum(end_inv[self.factors["warmup"]:]
-                                  [np.where(end_inv[self.factors["warmup"]:] < 0)])/np.sum(demands[self.factors["warmup"]:])
+        on_time_rate = 1 - np.sum(np.min(np.vstack((demands[self.factors["warmup"]:], demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:])), axis=0)
+                              *((demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:]) > 0))/np.sum(demands[self.factors["warmup"]:])
+        avg_backorder_costs = self.factors["backorder_cost"]*(1 - on_time_rate)*np.sum(demands[self.factors["warmup"]:])/float(self.factors["n_days"])
         if np.array(np.where(end_inv[self.factors["warmup"]:] < 0)).size == 0:
             avg_stockout = 0
         else:
@@ -219,7 +249,8 @@ class SSCont(Oracle):
         else:
             avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
         # Compose responses and gradients.
-        responses = {"avg_order_costs": avg_order_costs,
+        responses = {"avg_backorder_costs": avg_backorder_costs,
+                     "avg_order_costs": avg_order_costs,
                      "avg_holding_costs": avg_holding_costs,
                      "on_time_rate": on_time_rate,
                      "order_rate": order_rate,
