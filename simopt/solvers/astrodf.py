@@ -93,12 +93,10 @@ class ASTRODF(Solver):
             
             # make the interpolation set
             Y = self.interpolation_points(x_k,delta,lin_quad,problem)
-            #print(Y)
             
             for i in range(2*d+1):
             #for i in range(Y):
-                # Needed Adaptive Sampling
-                # new_solution = Solution(Y[i], problem)                   
+                # Needed Adaptive Sampling               
                 new_solution = self.create_new_solution(Y[i][0], problem, crn_across_solns)
                 problem.simulate(new_solution, self.factors["sample_size"])
                 expended_budget += self.factors["sample_size"]
@@ -106,9 +104,6 @@ class ASTRODF(Solver):
                 
             # make the model and get the model parameters
             q,grad,Hessian = self.coefficient(Y,fval,lin_quad,problem)
-            #print(q)
-            #print(grad)
-            #print(Hessian)
                        
             # check the condition and break
             if delta_k <= mu*norm(grad):
@@ -164,7 +159,7 @@ class ASTRODF(Solver):
         intermediate_budgets = []
         expended_budget = 0
         delta_max = 100
-        delta = delta_max*0.1        
+        delta = delta_max
         
         # default values
         eta_1 = 0.10            #threshhold for decent success
@@ -186,7 +181,6 @@ class ASTRODF(Solver):
         while expended_budget < problem.budget:
             k += 1
             fval,Y,q,grad,Hessian,delta_k = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget, crn_across_solns)
-            fval[0]
             
             # Cauchy reduction
             if np.matmul(np.matmul(grad,Hessian),grad) <= 0:
@@ -195,8 +189,8 @@ class ASTRODF(Solver):
                 tau = min(1, norm(grad)**3/(delta*np.matmul(np.matmul(grad,Hessian),grad)))
 
             grad = np.reshape(grad, (1, problem.dim))[0]            
-            candidate_x = new_x - tau*delta*grad/norm(grad)             
-            candidate_solution = self.create_new_solution(candidate_x, problem, crn_across_solns)
+            candidate_x = new_x - tau*delta*grad/norm(grad)     
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem, crn_across_solns)
             
             #adaptive sampling needed
             problem.simulate(candidate_solution, self.factors["sample_size"])
@@ -204,15 +198,24 @@ class ASTRODF(Solver):
             
             #calculate success ratio            
             fval_tilde = candidate_solution.objectives_mean
-            rho = (fval[1] - fval_tilde)/(self.local_model_evaluate(np.zeros(problem.dim),q) - self.local_model_evaluate(candidate_x-new_x,q));
+            #print(1)
+            #print(fval[0])
+            #print(2)
+            #print(fval_tilde)
+            #print(self.local_model_evaluate(new_x,q))
+            #print(self.local_model_evaluate(candidate_x,q))
+            rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(new_x,q) - self.local_model_evaluate(candidate_x,q));
+            #rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(np.zeros(problem.dim),q) - self.local_model_evaluate(candidate_x-new_x,q));
 
             if rho >= eta_2: #very successful
                 new_x = candidate_x
+                print(new_x)
                 delta_k = min(gamma_1*delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
                 intermediate_budgets.append(expended_budget)
             elif rho >= eta_1: #successful
                 new_x = candidate_x
+                print(new_x)
                 delta_k = min(delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
                 intermediate_budgets.append(expended_budget)
