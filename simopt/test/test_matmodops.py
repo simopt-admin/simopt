@@ -1,8 +1,7 @@
 import unittest
-import sys
-import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
+
 from rng.matmodops import *
+
 
 A = [[1, 2, 3],
      [4, 5, 6],

@@ -1,12 +1,7 @@
 import unittest
-import sys
-import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 from rng.mrg32k3a import *
-# from mrg32k3a import MRG32k3a
-# from mrg32k3a import A1p0, A2p0, A1p47, A2p47, A1p94, A2p94, A1p141, A2p141
-# from mrg32k3a import mrgnorm, mrgm1, mrgm2, mrga12, mrga13n, mrga21, mrga23n
+
 
 A1p127 = [[2427906178, 3580155704, 949770784],
           [226153695, 1230515664, 3580155704],

@@ -24,8 +24,9 @@ mysolution.attach_rngs(rng_list, copy=False)
 # print(mysolution.rng_list)
 
 # Test simulate()
-myproblem.simulate(mysolution, m=100)
-print('For 10 replications:')
+n_reps = 20
+myproblem.simulate(mysolution, m=n_reps)
+print('For ' + str(n_reps) + ' replications:')
 #print('The individual objective estimates are {}'.format(mysolution.objectives[:10]))
 print('The mean objective is {}'.format(mysolution.objectives_mean))
 #print('The stochastic constraint estimates are {}'.format(mysolution.stoch_constraints[:10]))
