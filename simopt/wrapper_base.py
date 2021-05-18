@@ -47,6 +47,8 @@ class Experiment(object):
         number of macroreplications run
     crn_across_solns : bool
         indicates if CRN are used when simulating different solutions
+    file_name_path : str
+        path of .pickle file for saving wrapper_base.Experiment object
     all_recommended_xs : list of lists of tuples
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
@@ -103,10 +105,16 @@ class Experiment(object):
         dictionary of user-specified problem factors
     oracle_fixed_factors : dict
         dictionary of user-specified oracle factors
+    file_name_path : str
+        path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
         self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
         self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        if file_name_path is None:
+            self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
+        else:
+            self.file_name_path = file_name_path
 
     def run(self, n_macroreps, crn_across_solns):
         """
@@ -156,8 +164,7 @@ class Experiment(object):
             self.all_recommended_xs.append([solution.x for solution in recommended_solns])
             self.all_intermediate_budgets.append(intermediate_budgets)
         # Save Experiment object to .pickle file.
-        file_name = self.solver.name + "_on_" + self.problem.name
-        record_experiment_results(experiment=self, file_name=file_name)
+        self.record_experiment_results()
 
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -275,8 +282,7 @@ class Experiment(object):
         self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
         self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
-        file_name = self.solver.name + "_on_" + self.problem.name
-        record_experiment_results(experiment=self, file_name=file_name)
+        self.record_experiment_results()
 
     def plot_progress_curves(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
@@ -700,6 +706,12 @@ class Experiment(object):
             except Exception:
                 pass
 
+    def record_experiment_results(self):
+        """
+        Save wrapper_base.Experiment object to .pickle file.
+        """
+        with open(self.file_name_path, "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
 def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """
@@ -726,21 +738,6 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
         recommended_solns.append(recommended_solns[-1])
         intermediate_budgets.append(problem.budget)
     return recommended_solns, intermediate_budgets
-
-
-def record_experiment_results(experiment, file_name):
-    """
-    Save wrapper_base.Experiment object to .pickle file.
-
-    Arguments
-    ---------
-    experiment : wrapper_base.Experiment object
-        Experiment object to pickle
-    file_name : string
-        base name of pickle file to write outputs to
-    """
-    with open("experiments/outputs/" + file_name + ".pickle", "wb") as file:
-        pickle.dump(experiment, file, pickle.HIGHEST_PROTOCOL)
 
 
 def read_experiment_results(file_name):
@@ -1021,9 +1018,7 @@ class MetaExperiment(object):
                                                  solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
                                                  problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
                                                  oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
-                    # Save Experiment object to .pickle file.
-                    file_name = solver_name + "_on_" + problem_name
-                    record_experiment_results(experiment=next_experiment, file_name=file_name)
+                    # next_experiment.record_experiment_results()
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
 
@@ -1042,16 +1037,13 @@ class MetaExperiment(object):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 # If the problem-solver pair has not been run in this way before,
-                # run it now.
+                # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps
                         or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
                     print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_runs()
                     experiment.run(n_macroreps, crn_across_solns)
-                    # Save Experiment object to .pickle file.
-                    file_name = experiment.solver.name + "_on_" + experiment.problem.name
-                    record_experiment_results(experiment=experiment, file_name=file_name)
-
+                    
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each problem-solver pair, run postreplications at solutions
@@ -1080,10 +1072,7 @@ class MetaExperiment(object):
                     print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
-                    # Save Experiment object to .pickle file.
-                    file_name = experiment.solver.name + "_on_" + experiment.problem.name
-                    record_experiment_results(experiment=experiment, file_name=file_name)
-
+                    
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
         Plot a scatter plot of mean and standard deviation of area under progress curves.
@@ -1095,9 +1084,7 @@ class MetaExperiment(object):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 experiment.compute_area_stats(compute_CIs=plot_CIs)
-                # Save Experiment object to .pickle file.
-                file_name = experiment.solver.name + "_on_" + experiment.problem.name
-                record_experiment_results(experiment=experiment, file_name=file_name)
+                experiment.record_experiment_results()
         # Produce plot(s).
         if all_in_one:
             # TO DO: Superimpose plots once we have more than one solver.

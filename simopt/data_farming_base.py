@@ -204,7 +204,7 @@ class DataFarmingMetaExperiment(object):
 
     Attributes
     ----------
-    design : list of DesignPoint objects
+    design : list of Experiment objects
         list of design points forming the design
     n_design_pts : int
         number of design points in the design
@@ -228,7 +228,7 @@ class DataFarmingMetaExperiment(object):
     oracle_fixed_factors : dict
         dictionary of user-specified oracle factors that will not be varied
     """
-    def __init__(self, solver_name, problem_name, solver_factor_settings_filename, solver_factor_headers, design_filename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, solver_name, problem_name, solver_factor_headers, solver_factor_settings_filename=None, design_filename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}):
         # TO DO: Extend to allow a design on problem/oracle factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None:
@@ -260,7 +260,8 @@ class DataFarmingMetaExperiment(object):
             new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
             # In Python 3.9, will be able to use: dict1 | dict2.
             # Create new design point and add to design0.
-            new_design_pt = Experiment(solver_name, problem_name, new_design_pt_solver_factors, problem_fixed_factors, oracle_fixed_factors)
+            file_name_path = "data_farming_experiments/outputs/" + solver_name + "_on_" + problem_name + "_designpt_" + str(i) + ".pickle"
+            new_design_pt = Experiment(solver_name, problem_name, new_design_pt_solver_factors, problem_fixed_factors, oracle_fixed_factors, file_name_path=file_name_path)
             self.design.append(new_design_pt)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
@@ -284,9 +285,6 @@ class DataFarmingMetaExperiment(object):
                 print("Running Design Point " + str(design_pt_index) + ".")
                 experiment.clear_runs()
                 experiment.run(n_macroreps, crn_across_solns)
-                # Save Experiment object to .pickle file.
-                file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
-                record_df_experiment_results(experiment=experiment, file_name=file_name)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
@@ -316,9 +314,6 @@ class DataFarmingMetaExperiment(object):
                 print("Post-processing Design Point " + str(design_pt_index) + ".")
                 experiment.clear_postreps()
                 experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
-                # Save Experiment object to .pickle file.
-                file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
-                record_df_experiment_results(experiment=experiment, file_name=file_name)
 
     def calculate_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], beta=0.50):
         """
@@ -339,9 +334,7 @@ class DataFarmingMetaExperiment(object):
             experiment.compute_area_stats(compute_CIs=False)
             experiment.compute_solvability(solve_tols=solve_tols)
             experiment.compute_solvability_quantiles(beta=0.50, compute_CIs=False)
-            # Save Experiment object to .pickle file.
-            file_name = experiment.solver.name + "_on_" + experiment.problem.name + "_designpt_" + str(design_pt_index)
-            record_df_experiment_results(experiment=experiment, file_name=file_name)
+            experiment.record_experiment_results()
 
     def print_to_csv(self, csv_filename="meta_raw_results"):
         """
@@ -392,19 +385,3 @@ class DataFarmingMetaExperiment(object):
                                        ]
                     print_list = [designpt_index] + solver_factor_list + problem_factor_list + oracle_factor_list + [mrep] + statistics_list
                     csv_writer.writerow(print_list)
-
-
-# Largely copied from record_df_experiment_results in wrapper_base.py.
-def record_df_experiment_results(experiment, file_name):
-    """
-    Save wrapper_base.Experiment object to .pickle file.
-
-    Arguments
-    ---------
-    experiment : wrapper_base.Experiment object
-        Experiment object to pickle
-    file_name : string
-        base name of pickle file to write outputs to
-    """
-    with open("data_farming_experiments/outputs/" + file_name + ".pickle", "wb") as file:
-        pickle.dump(experiment, file, pickle.HIGHEST_PROTOCOL)
