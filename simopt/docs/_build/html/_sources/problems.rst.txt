@@ -12,6 +12,14 @@ problems.cntnv\_max\_profit module
    :undoc-members:
    :show-inheritance:
 
+problems.facilitysizing\_max\_service module
+--------------------------------------------
+
+.. automodule:: problems.facilitysizing_max_service
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 problems.facilitysizing\_totalcost module
 -----------------------------------------
 
