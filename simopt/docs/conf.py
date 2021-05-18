@@ -83,3 +83,10 @@ latex_engine = 'xelatex'
 
 #html_static_path = ['_static']
 html_static_path = []
+
+
+
+
+
+from sphinx.ext.apidoc import main
+main(["-o",  os.path.abspath('.'), os.path.abspath('..'), "-f"])

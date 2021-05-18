@@ -9,11 +9,11 @@ from oracles.sscont import SSCont
 
 class SSContMinCost(Problem):
     """
-    Base class to implement simulation-optimization problems.
+    Class to make (s,S) inventory simulation-optimization problems.
 
     Attributes
     ----------
-    name : string
+    name : str
         name of problem
     dim : int
         number of decision variables
@@ -23,10 +23,10 @@ class SSContMinCost(Problem):
         number of stochastic constraints
     minmax : tuple of int (+/- 1)
         indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
+    constraint_type : str
         description of constraints types:
             "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
+    variable_type : str
         description of variable types:
             "discrete", "continuous", "mixed"
     gradient_available : bool
@@ -38,14 +38,14 @@ class SSContMinCost(Problem):
     optimal_bound : float
         bound on optimal objective function value
     ref_optimal_solution : tuple
-        reference optimal solutionu of optimal)
-    oracle : Oracle object
+        reference optimal solution
+    oracle : base.Oracle
         associated simulation oracle that generates replications
     oracle_default_factors : dict
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
-    rng_list : list of rng.MRG32k3a objects
+    rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
@@ -96,7 +96,7 @@ class SSContMinCost(Problem):
 
         Returns
         -------
-        factor_dict : dictionary
+        factor_dict : dict
             dictionary with factor keys and associated values
         """
         factor_dict = {
@@ -112,7 +112,7 @@ class SSContMinCost(Problem):
 
         Arguments
         ---------
-        factor_dict : dictionary
+        factor_dict : dict
             dictionary with factor keys and associated values
 
         Returns
@@ -130,7 +130,7 @@ class SSContMinCost(Problem):
 
         Arguments
         ---------
-        response_dict : dictionary
+        response_dict : dict
             dictionary with response keys and associated values
 
         Returns
@@ -148,7 +148,7 @@ class SSContMinCost(Problem):
 
         Arguments
         ---------
-        response_dict : dictionary
+        response_dict : dict
             dictionary with response keys and associated values
 
         Returns
@@ -224,7 +224,7 @@ class SSContMinCost(Problem):
 
         Arguments
         ---------
-        rand_sol_rng : rng.MRG32k3a object
+        rand_sol_rng : rng.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
         Returns

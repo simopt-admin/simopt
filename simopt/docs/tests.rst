@@ -60,6 +60,14 @@ tests.test\_solver\_problem module
    :undoc-members:
    :show-inheritance:
 
+tests.test\_sscont\_oracle module
+---------------------------------
+
+.. automodule:: tests.test_sscont_oracle
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
