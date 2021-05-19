@@ -1,10 +1,4 @@
 import unittest
-import sys
-import os.path as o
-import numpy as np
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
-
-
 from rng.mrg32k3a import MRG32k3a
 from oracles.sscont import SSCont
 
