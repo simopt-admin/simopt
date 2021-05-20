@@ -100,17 +100,22 @@ class ASTRODF(Solver):
                 new_solution = self.create_new_solution(Y[i][0], problem, crn_across_solns)
                 problem.simulate(new_solution, self.factors["sample_size"])
                 expended_budget += self.factors["sample_size"]
+                #fval.append(-1*problem.minmax[0]*new_solution.objectives_mean)
+                #print(-1*problem.minmax[0]*new_solution.objectives_mean)
+                #print(new_solution.objectives_mean)
                 fval.append(new_solution.objectives_mean)
-                
+            
+            
+            Z = self.interpolation_points(np.array(x_k)-np.array(x_k),delta,lin_quad,problem)
             # make the model and get the model parameters
-            q,grad,Hessian = self.coefficient(Y,fval,lin_quad,problem)
+            q,grad,Hessian = self.coefficient(Z,fval,lin_quad,problem)
                        
             # check the condition and break
             if delta_k <= mu*norm(grad):
                 break
         
         delta_k = min(max(beta*norm(grad), delta_k),delta)
-        return fval,Y,q,grad,Hessian,delta_k
+        return fval,Y,q,grad,Hessian,delta_k,expended_budget
     
     def coefficient(self,Y,fval,lin_quad,problem):
         M = []
@@ -158,7 +163,7 @@ class ASTRODF(Solver):
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
-        delta_max = 100
+        delta_max = 50
         delta = delta_max
         
         # default values
@@ -180,7 +185,8 @@ class ASTRODF(Solver):
         
         while expended_budget < problem.budget:
             k += 1
-            fval,Y,q,grad,Hessian,delta_k = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget, crn_across_solns)
+            #print(k)
+            fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget, crn_across_solns)
             
             # Cauchy reduction
             if np.matmul(np.matmul(grad,Hessian),grad) <= 0:
@@ -197,25 +203,28 @@ class ASTRODF(Solver):
             expended_budget += self.factors["sample_size"]
             
             #calculate success ratio            
-            fval_tilde = candidate_solution.objectives_mean
+            fval_tilde = -1*problem.minmax[0]*candidate_solution.objectives_mean
+            #fval_tilde = candidate_solution.objectives_mean
             #print(1)
             #print(fval[0])
             #print(2)
             #print(fval_tilde)
             #print(self.local_model_evaluate(new_x,q))
             #print(self.local_model_evaluate(candidate_x,q))
-            rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(new_x,q) - self.local_model_evaluate(candidate_x,q));
-            #rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(np.zeros(problem.dim),q) - self.local_model_evaluate(candidate_x-new_x,q));
+            #rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(new_x,q) - self.local_model_evaluate(candidate_x,q));
+            rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(np.zeros(problem.dim),q) - self.local_model_evaluate(candidate_x-new_x,q));
 
             if rho >= eta_2: #very successful
                 new_x = candidate_x
-                print(new_x)
+                #print(new_x)
+                #print(grad)
                 delta_k = min(gamma_1*delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
                 intermediate_budgets.append(expended_budget)
             elif rho >= eta_1: #successful
                 new_x = candidate_x
-                print(new_x)
+                #print(new_x)
+                #print(grad)
                 delta_k = min(delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
                 intermediate_budgets.append(expended_budget)
