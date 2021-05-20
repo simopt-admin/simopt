@@ -8,6 +8,7 @@ from base import Solver, Solution
 from numpy.linalg import inv
 from numpy.linalg import norm
 import numpy as np
+import math
 
 class ASTRODF(Solver):
     """
@@ -80,6 +81,14 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k)**2)
         return np.matmul(X,q)
     
+    def samplesize(self,k,sig,delta):
+        alpha_k = 1
+        lambda_k = 10*math.log(k,10)**1.5
+        kappa = 10**2
+        S_k = math.floor(max(5,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
+        #S_k = math.floor(max(lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
+        return S_k
+    
     def model_construction(self,x_k,delta,k,lin_quad,problem,expended_budget, crn_across_solns):        
         w = 0.9 
         mu = 100
@@ -94,17 +103,23 @@ class ASTRODF(Solver):
             # make the interpolation set
             Y = self.interpolation_points(x_k,delta,lin_quad,problem)
             
-            for i in range(2*d+1):
-            #for i in range(Y):
-                # Needed Adaptive Sampling               
+            for i in range(2*d+1):              
                 new_solution = self.create_new_solution(Y[i][0], problem, crn_across_solns)
-                problem.simulate(new_solution, self.factors["sample_size"])
-                expended_budget += self.factors["sample_size"]
-                #fval.append(-1*problem.minmax[0]*new_solution.objectives_mean)
-                #print(-1*problem.minmax[0]*new_solution.objectives_mean)
-                #print(new_solution.objectives_mean)
-                fval.append(new_solution.objectives_mean)
-            
+                
+                # need to check there is existing result
+                problem.simulate(new_solution, 1)
+                expended_budget += 1
+                sample_size = 1
+                
+                # Adaptive sampling
+                while True:
+                    problem.simulate(new_solution, 1)
+                    expended_budget += 1
+                    sample_size += 1
+                    sig = new_solution.objectives_var
+                    if sample_size >= self.samplesize(k,sig,delta_k):
+                        break
+                fval.append(-1*problem.minmax[0]*new_solution.objectives_mean)            
             
             Z = self.interpolation_points(np.array(x_k)-np.array(x_k),delta,lin_quad,problem)
             # make the model and get the model parameters
@@ -126,7 +141,7 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i])**2)   
         
         q = np.matmul(inv(M),fval)
-        Hessian = np.diag(q[4:8])
+        Hessian = np.diag(q[d+1:2*d+1])
         return q, q[1:d+1], Hessian
             
     def interpolation_points(self,x_k,delta,lin_quad,problem):
@@ -139,8 +154,6 @@ class ASTRODF(Solver):
                 Y.append(plus)
                 Y.append(minus)
         return Y
-    
-
     
     def solve(self, problem, crn_across_solns):
         """
@@ -163,7 +176,7 @@ class ASTRODF(Solver):
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
-        delta_max = 50
+        delta_max = 1
         delta = delta_max
         
         # default values
@@ -173,13 +186,10 @@ class ASTRODF(Solver):
         gamma_2 = 1/gamma_1     #unsuccessful step radius decrease
         lin_quad = 2            #quadratic or linear
         k = 0                   #iteration number
-        
-        # Designate random number generator for random sampling.
-        # find_next_soln_rng = self.rng_list[1] // I think we dont need random number generator within ASTRO-DF
 
         # Start with the initial solution
         new_x = problem.initial_solution
-        new_solution = Solution(new_x, problem)
+        new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         
@@ -187,7 +197,7 @@ class ASTRODF(Solver):
             k += 1
             #print(k)
             fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget, crn_across_solns)
-            
+
             # Cauchy reduction
             if np.matmul(np.matmul(grad,Hessian),grad) <= 0:
                 tau = 1
@@ -196,24 +206,31 @@ class ASTRODF(Solver):
 
             grad = np.reshape(grad, (1, problem.dim))[0]            
             candidate_x = new_x - tau*delta*grad/norm(grad)     
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem, crn_across_solns)
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem, crn_across_solns)     
+            problem.simulate(candidate_solution, 1)
+            expended_budget += 1
+            sample_size = 1
             
-            #adaptive sampling needed
-            problem.simulate(candidate_solution, self.factors["sample_size"])
-            expended_budget += self.factors["sample_size"]
+            # Adaptive sampling
+            while True:
+                problem.simulate(candidate_solution, 1)
+                expended_budget += 1
+                sample_size += 1
+                sig = candidate_solution.objectives_var
+                if sample_size >= self.samplesize(k,sig,delta_k):
+                    break
             
-            #calculate success ratio            
+            # calculate success ratio            
             fval_tilde = -1*problem.minmax[0]*candidate_solution.objectives_mean
-            #fval_tilde = candidate_solution.objectives_mean
-            #print(1)
-            #print(fval[0])
-            #print(2)
-            #print(fval_tilde)
-            #print(self.local_model_evaluate(new_x,q))
-            #print(self.local_model_evaluate(candidate_x,q))
-            #rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(new_x,q) - self.local_model_evaluate(candidate_x,q));
+            
+            # replace the candidate x if the interpolation set has lower objective function value
+            if min(fval) < fval_tilde:
+                minpos = fval.index(min(fval)) 
+                fval_tilde = min(fval)
+                candidate_x = Y[minpos][0]
+                
             rho = (fval[0] - fval_tilde)/(self.local_model_evaluate(np.zeros(problem.dim),q) - self.local_model_evaluate(candidate_x-new_x,q));
-
+ 
             if rho >= eta_2: #very successful
                 new_x = candidate_x
                 #print(new_x)
