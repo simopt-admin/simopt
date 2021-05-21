@@ -686,8 +686,7 @@ with continuous inventory.</p>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Oracle" title="base.Oracle"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Oracle</span></code></a></p>
 <p>An oracle that simulates multiple periods’ worth of sales for a (s,S)
 inventory problem with continuous inventory, exponentially distributed
-demand, and poisson distributed lead time. Returns the average cost per
-period after accounting for fixed and variable order costs, order rate,
+demand, and poisson distributed lead time. Returns the various types of average costs per period, order rate,
 stockout rate, fraction of demand met with inventory on hand, average
 amount backordered given a stockout occured, and average amount ordered
 given an order occured.</p>
@@ -759,7 +758,30 @@ given an order occured.</p>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – fixed_factors of the simulation model</p>
+<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – <p>fixed_factors of the simulation model</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">demand_mean</span></code></dt><dd><p>Mean of exponentially distributed demand in each period (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lead_mean</span></code></dt><dd><p>Mean of Poisson distributed order lead time (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">backorder_cost</span></code></dt><dd><p>Cost per unit of demand not met with in-stock inventory (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">holding_cost</span></code></dt><dd><p>Holding cost per unit per period (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fixed_cost</span></code></dt><dd><p>Order fixed cost (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">variable_cost</span></code></dt><dd><p>Order variable cost per unit (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">s</span></code></dt><dd><p>Inventory position threshold for placing order (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">S</span></code></dt><dd><p>Max inventory position (<cite>flt</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">n_days</span></code></dt><dd><p>Number of periods to simulate (<cite>int</cite>)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">warmup</span></code></dt><dd><p>Number of periods as warmup before collecting statistics (<cite>int</cite>)</p>
+</dd>
+</dl>
+</p>
 </dd>
 </dl>
 <div class="admonition seealso">
@@ -769,6 +791,11 @@ given an order occured.</p>
 <dl class="py method">
 <dt id="oracles.sscont.SSCont.check_S">
 <code class="sig-name descname"><span class="pre">check_S</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_S" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="oracles.sscont.SSCont.check_backorder_cost">
+<code class="sig-name descname"><span class="pre">check_backorder_cost</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#oracles.sscont.SSCont.check_backorder_cost" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -836,6 +863,8 @@ given an order occured.</p>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><p><strong>responses</strong> – performance measures of interest</p>
 <dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">avg_backorder_costs</span></code></dt><dd><p>average backorder costs per period</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">avg_order_costs</span></code></dt><dd><p>average order costs per period</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">avg_holding_costs</span></code></dt><dd><p>average holding costs per period</p>

@@ -201,7 +201,7 @@ simulation-optimization problems.</p>
 
 <dl class="py class">
 <dt id="base.Problem">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Problem</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Problem</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -398,6 +398,36 @@ or a random problem instance</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="base.Problem.factors">
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.Problem.factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>changeable factors of the problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="base.Problem.specifications">
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.Problem.specifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>details of each factor (for GUI, data validation, and defaults)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
+<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="base.Problem.attach_rngs">
 <code class="sig-name descname"><span class="pre">attach_rngs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.attach_rngs" title="Permalink to this definition">¶</a></dt>
@@ -547,6 +577,20 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>solution</strong> (<em>Solution object</em>) – solution to evalaute</p></li>
 <li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of replications to simulate at <cite>x</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="base.Problem.simulate_up_to">
+<code class="sig-name descname"><span class="pre">simulate_up_to</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solutions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.simulate_up_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a set of solutions up to a given number of replications.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solutions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.9)"><em>set</em></a>) – a set of base.Solution objects</p></li>
+<li><p><strong>n_reps</strong> (<em>int &gt; 0</em>) – common number of replications to simulate each solution up to</p></li>
 </ul>
 </dd>
 </dl>
@@ -947,17 +991,34 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.prepare_sim_new_soln">
-<code class="sig-name descname"><span class="pre">prepare_sim_new_soln</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.prepare_sim_new_soln" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prime the progenitor rngs for simulation the next solution,
-depending on whether using CRN across solutions.</p>
+<dt id="base.Solver.create_new_solution">
+<code class="sig-name descname"><span class="pre">create_new_solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.create_new_solution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new solution object with attached rngs primed
+to simulate replications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>solution</strong> (<em>base.Solution object</em>) – solution to simulate next</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p></li>
 <li><p><strong>problem</strong> (<em>base.Problem object</em>) – problem being solved by the solver</p></li>
 <li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>new_solution</strong> – new solution</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>base.Solution object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="base.Solver.rebase">
+<code class="sig-name descname"><span class="pre">rebase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.rebase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebase the progenitor rngs to start at a later subsubstream index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n_reps</strong> (<em>int &gt;= 0</em>) – substream index to skip to</p>
 </dd>
 </dl>
 </dd></dl>

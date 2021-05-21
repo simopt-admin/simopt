@@ -1,3 +1,7 @@
+# Documentation link
+
+https://simopt.readthedocs.io/en/latest/index.html
+
 # Base classes and functions
 
 The `base` module includes base classes for solvers, problems, oracles and solutions.
