@@ -50,6 +50,11 @@ class RandomSearch(Solver):
         self.variable_type = "mixed"
         self.gradient_needed = False
         self.specifications = {
+            "crn_across_solns": {
+                "description": "Use CRN across solutions?",
+                "datatype": bool,
+                "default": True
+            },
             "sample_size": {
                 "description": "Sample size per solution",
                 "datatype": int,
@@ -57,9 +62,13 @@ class RandomSearch(Solver):
             }
         }
         self.check_factor_list = {
-            "sample_size": self.check_sample_size,
+            "crn_across_solns": self.check_crn_across_soln,
+            "sample_size": self.check_sample_size
         }
         super().__init__(fixed_factors)
+
+    def check_crn_across_soln(self):
+        pass
 
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
@@ -67,7 +76,7 @@ class RandomSearch(Solver):
     def check_solver_factors(self):
         pass
 
-    def solve(self, problem, crn_across_solns):
+    def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -95,14 +104,14 @@ class RandomSearch(Solver):
             if expended_budget == 0:
                 # Start at initial solution and record as best.
                 new_x = problem.initial_solution
-                new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
+                new_solution = self.create_new_solution(new_x, problem)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
                 # Identify new solution to simulate.
                 new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
+                new_solution = self.create_new_solution(new_x, problem)
             # Simulate new solution and update budget.
             problem.simulate(new_solution, self.factors["sample_size"])
             expended_budget += self.factors["sample_size"]

@@ -46,8 +46,6 @@ class Experiment(object):
         simulation-optimization problem
     n_macroreps : int > 0
         number of macroreplications run
-    crn_across_solns : bool
-        indicates if CRN are used when simulating different solutions
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     all_recommended_xs : list of lists of tuples
@@ -117,7 +115,7 @@ class Experiment(object):
         else:
             self.file_name_path = file_name_path
 
-    def run(self, n_macroreps, crn_across_solns):
+    def run(self, n_macroreps):
         """
         Run n_macroreps of the solver on the problem.
 
@@ -125,11 +123,8 @@ class Experiment(object):
         ---------
         n_macroreps : int
             number of macroreplications of the solver to run on the problem
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
         """
         self.n_macroreps = n_macroreps
-        self.crn_across_solns = crn_across_solns
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
         # Create, initialize, and attach random number generators
@@ -158,7 +153,7 @@ class Experiment(object):
             self.solver.solution_progenitor_rngs = progenitor_rngs
             # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
-            recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem, crn_across_solns=crn_across_solns)
+            recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
             # Trim solutions recommended after final budget
             recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
             # Extract decision-variable vectors (x) from recommended solutions.
@@ -657,7 +652,6 @@ class Experiment(object):
         Delete results from run() method and any downstream results.
         """
         attributes = ["n_macroreps",
-                      "crn_across_solns",
                       "all_recommended_xs",
                       "all_intermediate_budgets"]
         for attribute in attributes:
@@ -1082,7 +1076,7 @@ class MetaExperiment(object):
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
 
-    def run(self, n_macroreps=10, crn_across_solns=True):
+    def run(self, n_macroreps=10):
         """
         Run n_macroreps of each solver on each problem.
 
@@ -1090,19 +1084,16 @@ class MetaExperiment(object):
         ---------
         n_macroreps : int
             number of macroreplications of the solver to run on the problem
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
         """
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
-                if (getattr(experiment, "n_macroreps", None) != n_macroreps
-                        or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
+                if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                     print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_runs()
-                    experiment.run(n_macroreps, crn_across_solns)
+                    experiment.run(n_macroreps)
 
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """

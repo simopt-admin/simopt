@@ -11,6 +11,7 @@ problem_directory : dictionary
 oracle_directory : dictionary
 """
 # import solvers
+from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.simannealing import SANE
 # import oracles and problems
@@ -21,6 +22,7 @@ from oracles.rmitd import RMITD, RMITDMaxRevenue
 from oracles.sscont import SSCont, SSContMinCost
 # directory dictionaries
 solver_directory = {
+    "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
     "SANE": SANE,
 }

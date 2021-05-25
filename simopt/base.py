@@ -71,7 +71,7 @@ class Solver(object):
         """
         self.rng_list = rng_list
 
-    def solve(self, problem, crn_across_solns):
+    def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -79,8 +79,6 @@ class Solver(object):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------
@@ -140,7 +138,7 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def create_new_solution(self, x, problem, crn_across_solns):
+    def create_new_solution(self, x, problem):
         """
         Create a new solution object with attached rngs primed
         to simulate replications.
@@ -150,9 +148,7 @@ class Solver(object):
         x : tuple
             vector of decision variables
         problem : base.Problem object
-            problem being solved by the solver
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
+            problem being solved by the solvers
 
         Returns
         -------
@@ -163,7 +159,7 @@ class Solver(object):
         new_solution = Solution(x, problem)
         new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
         # Manipulate progenitor rngs to prepare for next new solution.
-        if not crn_across_solns:  # If CRN are not used ...
+        if not self.factors["crn_across_solns"]:  # If CRN are not used ...
             # ...advance each rng to start of the substream = current substream + # of oracle RNGs.
             for rng in self.solution_progenitor_rngs:
                 for _ in range(problem.oracle.n_rngs):

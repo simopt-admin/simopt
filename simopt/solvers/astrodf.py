@@ -53,6 +53,11 @@ class ASTRODF(Solver):
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
+            "crn_across_solns": {
+                "description": "Use CRN across solutions?",
+                "datatype": bool,
+                "default": True
+            },
             "sample_size": {
                 "description": "Sample size per solution",
                 "datatype": int,
@@ -60,9 +65,13 @@ class ASTRODF(Solver):
             }
         }
         self.check_factor_list = {
-            "sample_size": self.check_sample_size,
+            "crn_across_solns": self.check_crn_across_soln,
+            "sample_size": self.check_sample_size
         }
         super().__init__(fixed_factors)
+
+    def check_crn_across_soln(self):
+        pass
 
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
@@ -89,7 +98,7 @@ class ASTRODF(Solver):
         #S_k = math.floor(max(lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
         return S_k
     
-    def model_construction(self,x_k,delta,k,lin_quad,problem,expended_budget, crn_across_solns):        
+    def model_construction(self,x_k,delta,k,lin_quad,problem,expended_budget):        
         w = 0.9 
         mu = 100
         beta = 50
@@ -104,7 +113,7 @@ class ASTRODF(Solver):
             Y = self.interpolation_points(x_k,delta,lin_quad,problem)
             
             for i in range(2*d+1):              
-                new_solution = self.create_new_solution(Y[i][0], problem, crn_across_solns)
+                new_solution = self.create_new_solution(Y[i][0], problem)
                 
                 # need to check there is existing result
                 problem.simulate(new_solution, 1)
@@ -155,7 +164,7 @@ class ASTRODF(Solver):
                 Y.append(minus)
         return Y
     
-    def solve(self, problem, crn_across_solns):
+    def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -163,8 +172,6 @@ class ASTRODF(Solver):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------
@@ -189,14 +196,14 @@ class ASTRODF(Solver):
 
         # Start with the initial solution
         new_x = problem.initial_solution
-        new_solution = self.create_new_solution(new_x, problem, crn_across_solns)
+        new_solution = self.create_new_solution(new_x, problem)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         
         while expended_budget < problem.budget:
             k += 1
             #print(k)
-            fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget, crn_across_solns)
+            fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget)
 
             # Cauchy reduction
             if np.matmul(np.matmul(grad,Hessian),grad) <= 0:
@@ -206,7 +213,7 @@ class ASTRODF(Solver):
 
             grad = np.reshape(grad, (1, problem.dim))[0]            
             candidate_x = new_x - tau*delta*grad/norm(grad)     
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem, crn_across_solns)
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
             
             #adaptive sampling needed        
             problem.simulate(candidate_solution, 1)

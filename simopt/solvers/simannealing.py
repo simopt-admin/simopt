@@ -54,6 +54,11 @@ class SANE(Solver):
         self.variable_type = "mixed"
         self.gradient_needed = False
         self.specifications = {
+            "crn_across_solns": {
+                "description": "Use CRN across solutions?",
+                "datatype": bool,
+                "default": True
+            },
             "sampling_variance": {
                 "description": "Variance of difference in objective values",
                 "datatype": float,
@@ -71,11 +76,15 @@ class SANE(Solver):
             }
         }
         self.check_factor_list = {
+            "crn_across_solns": self.check_crn_across_soln,
             "sampling_variance": self.check_sampling_variance,
             "init_temp": self.check_init_temp,
             "cooling_coeff": self.check_cooling_coeff
         }
         super().__init__(fixed_factors)
+
+    def check_crn_across_soln(self):
+        pass
 
     def check_sampling_variance(self):
         return self.factors["sample_variance"] > 0
@@ -89,7 +98,7 @@ class SANE(Solver):
     def check_solver_factors(self):
         pass
 
-    def solve(self, problem, crn_across_solns):
+    def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -97,8 +106,6 @@ class SANE(Solver):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------
@@ -119,28 +126,25 @@ class SANE(Solver):
         # Sequentially generate a random neighboring solution, assess its
         # quality, and switch based on estimated differences and current 
         # temperature.
+        # TO DO: Double-check how RNGs are to be used to simulate solutions.
         while expended_budget < problem.budget:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
                 current_x = problem.initial_solution
-                current_solution = Solution(current_x, problem)
+                current_solution = self.create_new_solution(current_x, problem)
                 recommended_solns.append(current_solution)
                 intermediate_budgets.append(expended_budget)
             if temperature >= 1./np.sqrt(8.0/(np.pi*self.factors["sampling_variance"])):
                 #print("First Case")
                 # Simulate one replication of current solution.
                 # Fresh sampling, so create new solution objects.
-                # TO DO: Fix prepare_sim_new_soln to allow for resampling a visited solution.
-                # Sync up new streams ...
-                # self.prepare_sim_new_soln(problem, crn_across_solns)
-                current_solution = Solution(current_x, problem)
+                current_solution = self.create_new_solution(current_x, problem)
                 problem.simulate(current_solution, m=1)
                 expended_budget += 1
                 # Simulate one replication at new neighboring solution
                 # Fresh sampling, so create new solution objects.
-                # self.prepare_sim_new_soln(problem, crn_across_solns)
                 new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = Solution(new_x, problem)
+                new_solution = self.create_new_solution(new_x, problem)
                 problem.simulate(new_solution, m=1)
                 expended_budget += 1
                 # Follow Ceperley and Dewing acceptance condition.
@@ -161,20 +165,18 @@ class SANE(Solver):
                 #print("Second Case")
                 #print(expended_budget)
                 # Create a fresh solution object for current solution
-                current_solution = Solution(current_x, problem)
+                current_solution = self.create_new_solution(current_x, problem)
                 # Identify new neighboring solution to simulate.
                 # TO DO: generalize to neighborhood of current solution.
                 new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = Solution(new_x, problem)
+                new_solution = self.create_new_solution(new_x, problem)
                 # Do sequential sampling until error probability matches Glauber probability
                 prob_error = 1
                 prob_glauber = 0
                 sample_size = 0
                 while prob_error > prob_glauber:
-                    # self.prepare_sim_new_soln(problem, crn_across_solns)
                     problem.simulate(current_solution, m=1)
                     expended_budget += 1
-                    # self.prepare_sim_new_soln(problem, crn_across_solns)
                     problem.simulate(new_solution, m=1)
                     expended_budget += 1
                     sample_size += 1
@@ -189,5 +191,4 @@ class SANE(Solver):
                 current_x = new_x
             # Update temperature according to cooling schedule.
             temperature = self.factors["init_temp"]*self.factors["cooling_coeff"]**expended_budget
-        print("Finished.")    
         return recommended_solns, intermediate_budgets
