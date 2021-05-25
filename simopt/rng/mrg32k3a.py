@@ -7,7 +7,7 @@ with stream/substream/subsubstream support.
 
 Listing
 -------
-MRG323k3a : class
+MRG32k3a : class
 advance_stream : method
 advance_substream : method
 advance_subsubstream : method
@@ -17,24 +17,21 @@ reset_subsubstream : method
 start_fixed_s_ss_sss : method
 """
 
-# code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO)
+# Code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO).
 
 import numpy as np
 import random
 from math import log, ceil, sqrt, exp
-import functools
 from copy import deepcopy
 
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
-# constants used in mrg32k3a and in substream generation
-# all from:
+# Constants used in mrg32k3a and in substream generation.
 # P. L'Ecuyer, ``Good Parameter Sets for Combined Multiple Recursive Random Number Generators'',
 # Operations Research, 47, 1 (1999), 159--164.
-#
 # P. L'Ecuyer, R. Simard, E. J. Chen, and W. D. Kelton,
 # ``An Objected-Oriented Random-Number Package with Many Long Streams and Substreams'',
-# Operations Research, 50, 6 (2002), 1073--1075
+# Operations Research, 50, 6 (2002), 1073--1075.
 
 mrgnorm = 2.328306549295727688e-10
 mrgm1 = 4294967087
@@ -54,56 +51,56 @@ A2p0 = [[0, 1, 0],
         [-mrga23n, 0, mrga21]
         ]
 
-# A1p47 = mat33_power_mod(A1p0, 2**47, mrgm1)
+# A1p47 = mat33_power_mod(A1p0, 2**47, mrgm1).
 A1p47 = [[1362557480, 3230022138, 4278720212],
          [3427386258, 3848976950, 3230022138],
          [2109817045, 2441486578, 3848976950]
          ]
 
-# A2p47 = mat33_power_mod(A2p0, 2**47, mrgm2)
+# A2p47 = mat33_power_mod(A2p0, 2**47, mrgm2).
 A2p47 = [[2920112852, 1965329198, 1177141043],
          [2135250851, 2920112852, 969184056],
          [296035385, 2135250851, 4267827987]
          ]
 
-# A1p94 = mat33_power_mod(A1p0, 2**94, mrgm1)
+# A1p94 = mat33_power_mod(A1p0, 2**94, mrgm1).
 A1p94 = [[2873769531, 2081104178, 596284397],
          [4153800443, 1261269623, 2081104178],
          [3967600061, 1830023157, 1261269623]
          ]
 
-# A2p94 = mat33_power_mod(A2p0, 2**94, mrgm2)
+# A2p94 = mat33_power_mod(A2p0, 2**94, mrgm2).
 A2p94 = [[1347291439, 2050427676, 736113023],
          [4102191254, 1347291439, 878627148],
          [1293500383, 4102191254, 745646810]
          ]
 
-# A1p141 = mat33_power_mod(A1p0, 2**141, mrgm1)
+# A1p141 = mat33_power_mod(A1p0, 2**141, mrgm1).
 A1p141 = [[3230096243, 2131723358, 3262178024],
           [2882890127, 4088518247, 2131723358],
           [3991553306, 1282224087, 4088518247]
           ]
 
-# A2p141 = mat33_power_mod(A2p0, 2**141, mrgm2)
+# A2p141 = mat33_power_mod(A2p0, 2**141, mrgm2).
 A2p141 = [[2196438580, 805386227, 4266375092],
           [4124675351, 2196438580, 2527961345],
           [94452540, 4124675351, 2825656399]
           ]
 
-# constants used in Beasley-Springer-Moro algorithm for approximating
-# the inverse cdf of the standard normal distribution
+# Constants used in Beasley-Springer-Moro algorithm for approximating
+# the inverse cdf of the standard normal distribution.
 bsma = [2.50662823884, -18.61500062529, 41.39119773534, -25.44106049637]
 bsmb = [-8.47351093090, 23.08336743743, -21.06224101826, 3.13082909833]
 bsmc = [0.3374754822726147, 0.9761690190917186, 0.1607979714918209, 0.0276438810333863, 0.0038405729373609, 0.0003951896511919, 0.0000321767881768, 0.0000002888167364, 0.0000003960315187]
 
 
-# this is adapted to pure Python from the P. L'Ecuyer code referenced above
+# Adapted to pure Python from the P. L'Ecuyer code referenced above.
 def mrg32k3a(state):
     """
     Generate a random number between 0 and 1 from a given state.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     state : tuple of int of length 6
         current state of the generator
 
@@ -114,19 +111,19 @@ def mrg32k3a(state):
     u : float
         pseudo uniform random variate
     """
-    # Component 1
+    # Component 1.
     p1 = mrga12 * state[1] - mrga13n * state[0]
     k1 = int(p1 / mrgm1)
     p1 -= k1 * mrgm1
     if p1 < 0.0:
         p1 += mrgm1
-    # Component 2
+    # Component 2.
     p2 = mrga21 * state[5] - mrga23n * state[3]
     k2 = int(p2 / mrgm2)
     p2 -= k2 * mrgm2
     if p2 < 0.0:
         p2 += mrgm2
-    # Combination
+    # Combination.
     if p1 <= p2:
         u = (p1 - p2 + mrgm1) * mrgnorm
     else:
@@ -151,7 +148,7 @@ def bsm(u):
     """
     y = u - 0.5
     if abs(y) < 0.42:
-        # approximate from the center (Beasly-Springer 1977)
+        # Approximate from the center (Beasly-Springer 1977).
         r = pow(y, 2)
         r2 = pow(r, 2)
         r3 = pow(r, 3)
@@ -160,7 +157,7 @@ def bsm(u):
         bsum = sum([1, bsmb[0] * r, bsmb[1] * r2, bsmb[2] * r3, bsmb[3] * r4])
         z = y * (asum / bsum)
     else:
-        # approximate from the tails (Moro 1995)
+        # Approximate from the tails (Moro 1995).
         if y < 0.0:
             signum = -1
             r = u
@@ -387,22 +384,22 @@ class MRG32k3a(random.Random):
         Streams are of length 2**141.
         """
         state = self.stream_start
-        # split the state into 2 components of length 3
+        # Split the state into 2 components of length 3.
         st1 = state[0:3]
         st2 = state[3:6]
-        # efficiently advance state -> A*s % m for both state parts
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(A1p141, st1)
         nst2m = mat33_mat31_mult(A2p141, st2)
         nst1 = mat31_mod(nst1m, mrgm1)
         nst2 = mat31_mod(nst2m, mrgm2)
         nstate = tuple(nst1 + nst2)
         self.seed(nstate)
-        # increment the stream index
+        # Increment the stream index.
         self.s_ss_sss_index[0] += 1
-        # reset index for substream and subsubstream
+        # Reset index for substream and subsubstream.
         self.s_ss_sss_index[1] = 0
         self.s_ss_sss_index[2] = 0
-        # update state referencing
+        # Update state referencing.
         self.stream_start = nstate
         self.substream_start = nstate
         self.subsubstream_start = nstate
@@ -413,21 +410,21 @@ class MRG32k3a(random.Random):
         Substreams are of length 2**94.
         """
         state = self.substream_start
-        # split the state into 2 components of length 3
+        # Split the state into 2 components of length 3.
         st1 = state[0:3]
         st2 = state[3:6]
-        # efficiently advance state -> A*s % m for both state parts
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(A1p94, st1)
         nst2m = mat33_mat31_mult(A2p94, st2)
         nst1 = mat31_mod(nst1m, mrgm1)
         nst2 = mat31_mod(nst2m, mrgm2)
         nstate = tuple(nst1 + nst2)
         self.seed(nstate)
-        # increment the substream index
+        # Increment the substream index.
         self.s_ss_sss_index[1] += 1
-        # reset index for subsubstream
+        # Reset index for subsubstream.
         self.s_ss_sss_index[2] = 0
-        # update state referencing
+        # Update state referencing.
         self.substream_start = nstate
         self.subsubstream_start = nstate
 
@@ -437,19 +434,19 @@ class MRG32k3a(random.Random):
         Subsubstreams are of length 2**47.
         """
         state = self.subsubstream_start
-        # split the state into 2 components of length 3
+        # Split the state into 2 components of length 3.
         st1 = state[0:3]
         st2 = state[3:6]
-        # efficiently advance state -> A*s % m for both state parts
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(A1p47, st1)
         nst2m = mat33_mat31_mult(A2p47, st2)
         nst1 = mat31_mod(nst1m, mrgm1)
         nst2 = mat31_mod(nst2m, mrgm2)
         nstate = tuple(nst1 + nst2)
         self.seed(nstate)
-        # increment the subsubstream index
+        # Increment the subsubstream index.
         self.s_ss_sss_index[2] += 1
-        # update state referencing
+        # Update state referencing.
         self.subsubstream_start = nstate
 
     def reset_stream(self):
@@ -458,10 +455,10 @@ class MRG32k3a(random.Random):
         """
         nstate = self.stream_start
         self.seed(nstate)
-        # update state referencing
+        # Update state referencing.
         self.substream_start = nstate
         self.subsubstream_start = nstate
-        # reset index for substream and subsubstream
+        # Reset index for substream and subsubstream.
         self.s_ss_sss_index[1] = 0
         self.s_ss_sss_index[2] = 0
 
@@ -471,9 +468,9 @@ class MRG32k3a(random.Random):
         """
         nstate = self.substream_start
         self.seed(nstate)
-        # update state referencing
+        # Update state referencing.
         self.subsubstream_start = nstate
-        # reset index for subsubstream
+        # Reset index for subsubstream.
         self.s_ss_sss_index[2] = 0
 
     def reset_subsubstream(self):
@@ -493,25 +490,25 @@ class MRG32k3a(random.Random):
             triplet of the indices of the current stream-substream-subsubstream
         """
         state = self.ref_seed
-        # split the reference seed into 2 components of length 3
+        # Split the reference seed into 2 components of length 3.
         st1 = state[0:3]
         st2 = state[3:6]
-        # advance to start of specified stream
-        # efficiently advance state -> A*s % m for both state parts
+        # Advance to start of specified stream.
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(mat33_power_mod(A1p141, s_ss_sss_triplet[0], mrgm1), st1)
         nst2m = mat33_mat31_mult(mat33_power_mod(A2p141, s_ss_sss_triplet[0], mrgm2), st2)
         st1 = mat31_mod(nst1m, mrgm1)
         st2 = mat31_mod(nst2m, mrgm2)
         self.stream_start = tuple(st1 + st2)
-        # advance to start of specified substream
-        # efficiently advance state -> A*s % m for both state parts
+        # Advance to start of specified substream.
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(mat33_power_mod(A1p94, s_ss_sss_triplet[1], mrgm1), st1)
         nst2m = mat33_mat31_mult(mat33_power_mod(A2p94, s_ss_sss_triplet[1], mrgm2), st2)
         st1 = mat31_mod(nst1m, mrgm1)
         st2 = mat31_mod(nst2m, mrgm2)
         self.substream_start = tuple(st1 + st2)
-        # advance to start of specified subsubstream
-        # efficiently advance state -> A*s % m for both state parts
+        # Advance to start of specified subsubstream.
+        # Efficiently advance state -> A*s % m for both state parts.
         nst1m = mat33_mat31_mult(mat33_power_mod(A1p47, s_ss_sss_triplet[2], mrgm1), st1)
         nst2m = mat33_mat31_mult(mat33_power_mod(A2p47, s_ss_sss_triplet[2], mrgm2), st2)
         st1 = mat31_mod(nst1m, mrgm1)
@@ -519,5 +516,5 @@ class MRG32k3a(random.Random):
         self.subsubstream_start = tuple(st1 + st2)
         nstate = tuple(st1 + st2)
         self.seed(nstate)
-        # update index referencing
+        # Update index referencing.
         self.s_ss_sss_index = s_ss_sss_triplet
