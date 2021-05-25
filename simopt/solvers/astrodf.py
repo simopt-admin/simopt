@@ -119,11 +119,7 @@ class ASTRODF(Solver):
                     sig = new_solution.objectives_var
                     if sample_size >= self.samplesize(k,sig,delta_k):
                         break
-                fval.append(-1*problem.minmax[0]*new_solution.objectives_mean)
-                #print(-1*problem.minmax[0]*new_solution.objectives_mean)
-                #print(new_solution.objectives_mean)
-                #fval.append(new_solution.objectives_mean)
-            
+                fval.append(-1*problem.minmax[0]*new_solution.objectives_mean)            
             
             Z = self.interpolation_points(np.array(x_k)-np.array(x_k),delta,lin_quad,problem)
             # make the model and get the model parameters
