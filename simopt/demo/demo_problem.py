@@ -4,11 +4,11 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 from rng.mrg32k3a import MRG32k3a
-from problems.cntnv_max_profit import CntNVMaxProfit
-from problems.mm1_min_mean_sojourn_time import MM1MinMeanSojournTime
-from problems.facilitysizing_totalcost import FacilitySizingTotalCost
-from problems.rmitd_maxrevenue import RMITDMaxRevenue
-from problems.sscont_min_cost import SSContMinCost
+# from oracles.cntnv import CntNVMaxProfit
+# from oracles.mm1queue import MM1MinMeanSojournTime
+# from oracles.facilitysizing import FacilitySizingTotalCost
+# from oracles.rmitd import RMITDMaxRevenue
+from oracles.sscont import SSContMinCost
 from base import Solution
 
 
