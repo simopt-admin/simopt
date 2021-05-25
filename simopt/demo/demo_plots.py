@@ -4,15 +4,10 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 # os.chdir('../')
 
-# from oracles.mm1queue import MM1Queue
+from wrapper_base import read_experiment_results
 from data_farming_base import DesignPoint, DataFarmingExperiment, DataFarmingMetaExperiment
 from csv import DictReader
 
-
-# factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quantity"]
-# myexperiment = DataFarmingExperiment(oracle_name="CNTNEWS", factor_settings_filename="oracle_factor_settings", factor_headers=factor_headers, design_filename=None, oracle_fixed_factors={})
-# myexperiment.run(n_reps=10, crn_across_design_pts=False)
-# myexperiment.print_to_csv(csv_filename="cntnews_data_farming_output")
 
 solver_factor_headers = ["sample_size"]
 myMetaExperiment = DataFarmingMetaExperiment(solver_name="RNDSRCH",
@@ -25,6 +20,13 @@ myMetaExperiment = DataFarmingMetaExperiment(solver_name="RNDSRCH",
                                              oracle_fixed_factors={})
 myMetaExperiment.run(n_macroreps=20, crn_across_solns=True)
 myMetaExperiment.post_replicate(n_postreps=100, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
+
+file_name_path = "data_farming_experiments/outputs/" + "RNDSRCH_on_CNTNEWS-1_designpt_0" + ".pickle"
+myexperiment = read_experiment_results(file_name_path=file_name_path)
+myexperiment.plot_progress_curves(plot_type="all")
+
+
+
 # myMetaExperiment.calculate_statistics() # solve_tols=[0.10], beta=0.50)
 # myMetaExperiment.print_to_csv(csv_filename="meta_raw_results")
 

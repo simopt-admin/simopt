@@ -8,15 +8,16 @@ Plus helper functions for reading/writing data and plotting.
 Listing
 -------
 Experiment : class
-record_experiment_results : function
 read_experiment_results : function
 stylize_plot : function
 stylize_solvability_plot : function
+stylize_difference_plot : function
+stylize_area_plot : function
 save_plot : function
 area_under_prog_curve : function
 solve_time_of_prog_curve : function
 MetaExperiment : class
-stylize_area_plot : function
+compute_difference_solvability_profile : function
 """
 
 import numpy as np
@@ -151,6 +152,7 @@ class Experiment(object):
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):
+            print("Running macroreplication " + str(mrep + 1) + " of " + str(self.n_macroreps) + ".")
             # Create, initialize, and attach RNGs used for simulating solutions.
             progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
             self.solver.solution_progenitor_rngs = progenitor_rngs
@@ -713,6 +715,7 @@ class Experiment(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
+
 def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """
     Trim solutions recommended by solver after problem's max budget.
@@ -740,21 +743,21 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     return recommended_solns, intermediate_budgets
 
 
-def read_experiment_results(file_name):
+def read_experiment_results(file_name_path):
     """
     Read in wrapper_base.Experiment object from .pickle file.
 
     Arguments
     ---------
-    file_name : string
-        base name of pickle file from which to read in outputs
+    file_name_path : string
+        path of .pickle file for reading wrapper_base.Experiment object
 
     Returns
     -------
     experiment : wrapper_base.Experiment object
         experiment that has been run or has been post-processed
     """
-    with open("experiments/outputs/" + file_name + ".pickle", "rb") as file:
+    with open(file_name_path, "rb") as file:
         experiment = pickle.load(file)
     return experiment
 
@@ -797,9 +800,9 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         ylim = None
         title = solver_name + " on " + problem_name + "\n" + "Unnormalized "
     if plot_type == "all":
-        title = title + "Estimated Progress curves"
+        title = title + "Estimated Progress Curves"
     elif plot_type == "mean":
-        title = title + "Mean Progress curve"
+        title = title + "Mean Progress Curve"
     elif plot_type == "quantile":
         title = title + str(round(beta, 2)) + "-Quantile Progress Curve"
     plt.xlabel(xlabel, size=14)
@@ -856,6 +859,54 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     plt.tick_params(axis='both', which='major', labelsize=12)
 
 
+def stylize_difference_plot(solve_tol):
+    """
+    Create new figure. Add labels to plot and reformat axes.
+
+    Parameters
+    ----------
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    """
+    plt.figure()
+    # Format axes, axis labels, title, and tick marks.
+    xlabel = "Fraction of Budget"
+    xlim = (0, 1)
+    ylabel = "Difference in Fraction of Macroreplications Solved"
+    title = "SOLVERSET" + " on " + "PROBLEMSET" + "\n"
+    title = title + "Difference of " + str(round(solve_tol, 2)) + "-Solvability Curves"
+    plt.xlabel(xlabel, size=14)
+    plt.ylabel(ylabel, size=14)
+    plt.title(title, size=14)
+    plt.xlim(xlim)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+
+
+def stylize_area_plot(solver_name):
+    """
+    Create new figure for area plots. Add labels to plot and reformat axes.
+
+    Arguments
+    ---------
+    solver_name : string
+        name of solver
+    """
+    plt.figure()
+    # Format axes, axis labels, title, and tick marks.
+    xlabel = "Mean Area"
+    ylabel = "Std Dev of Area"
+    xlim = (0, 1)
+    ylim = (0, 0.5)
+    title = solver_name + "\n"
+    title = title + "Areas Under Progress Curves"
+    plt.xlabel(xlabel, size=14)
+    plt.ylabel(ylabel, size=14)
+    plt.title(title, size=14)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+
+
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     """
     Create new figure. Add labels to plot and reformat axes.
@@ -872,7 +923,10 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
             "solvability" : estimated solvability curve
+            "average_solvability" : average solvability profiles
+            "solvability_profile" : solvability profiles
             "area" : area scatterplot
+            "difference" : difference profile
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
     extra : float
@@ -887,8 +941,14 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "quantile_prog_curve"
     elif plot_type == "solvability":
         plot_name = str(extra) + "-solvability_curve"
+    elif plot_type == "average_solvability":
+        plot_name = "average_solvability_profile"
+    elif plot_type == "solvability_profile":
+        plot_name = "solvability_profile"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
+    elif plot_type == "difference":
+        plot_name = "difference_profile"
     if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = "experiments/plots/" + str(solver_name) + "_on_" + str(problem_name) + "_" + plot_name + ".png"
@@ -1043,7 +1103,7 @@ class MetaExperiment(object):
                     print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_runs()
                     experiment.run(n_macroreps, crn_across_solns)
-                    
+
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each problem-solver pair, run postreplications at solutions
@@ -1072,7 +1132,7 @@ class MetaExperiment(object):
                     print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
-                    
+
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
         Plot a scatter plot of mean and standard deviation of area under progress curves.
@@ -1087,37 +1147,40 @@ class MetaExperiment(object):
                 experiment.record_experiment_results()
         # Produce plot(s).
         if all_in_one:
-            # TO DO: Superimpose plots once we have more than one solver.
-            pass
-        else:
-            for solver_index in range(self.n_solvers):
-                # Aggregate statistics.
-                area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
-                area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
-                if plot_CIs:
-                    area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
-                    area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
-                # Plot scatter plot.
+            stylize_area_plot(solver_name="SOLVERSET")
+        for solver_index in range(self.n_solvers):
+            if not all_in_one:
                 stylize_area_plot(solver_name=self.solver_names[solver_index])
-                if plot_CIs:
-                    xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
-                    yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
-                    plt.errorbar(x=area_means,
-                                 y=area_std_devs,
-                                 xerr=xerr,
-                                 yerr=yerr,
-                                 fmt="bo",
-                                 ecolor="red")
-                else:
-                    plt.scatter(x=area_means, y=area_std_devs, c="blue")
+            # Aggregate statistics.
+            area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
+            area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
+            if plot_CIs:
+                area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
+                area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
+            # Plot scatter plot.
+            if plot_CIs:
+                xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
+                yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
+                plt.errorbar(x=area_means,
+                             y=area_std_devs,
+                             xerr=xerr,
+                             yerr=yerr
+                             )
+            else:
+                plt.scatter(x=area_means, y=area_std_devs)
+            if not all_in_one:
                 save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
+        if all_in_one:
+            plt.legend(labels=self.solver_names, loc="upper right")
+            save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="area", normalize=True)
 
-    def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5):
+    def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5, ref_solver=None):
         """
-        Plot the solvability profiles for each solver-problem pair.
-        Two types of plots:
+        Plot the solvability profiles for each solver on a set of problems.
+        Three types of plots:
             1) average solvability curve
             2) solvability profile
+            3) difference solvability profile
 
         Arguments
         ---------
@@ -1125,8 +1188,12 @@ class MetaExperiment(object):
             relative optimality gap definining when a problem is solved
         beta : float in (0,1)
             quantile to compute, e.g., beta quantile
+        ref_solver : str
+            name of solver used as benchmark for difference profiles
         """
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=None, plot_type="average")
+        all_solver_unique_frac_budgets = []
+        all_solvability_profiles = []
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="average")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
@@ -1154,44 +1221,61 @@ class MetaExperiment(object):
                     all_solve_matrix[problem_index][budget_index] = solvability_curves[problem_index][problem_budget_index]
             solvability_profile = np.mean(all_solve_matrix, axis=0)
             # Plot the solver's solvability profile.
-            plt.step(solver_unique_frac_budgets, solvability_profile, 'b-', where='post')
+            plt.step(solver_unique_frac_budgets, solvability_profile, where='post')
+            # Append results.
+            all_solver_unique_frac_budgets.append(solver_unique_frac_budgets)
+            all_solvability_profiles.append(solvability_profile)
         plt.legend(labels=self.solver_names, loc="lower right")
         # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="Average", plot_type="solvability", normalize=True)
-
-        # Plot solvability profiles for each solver
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name=None, solve_tol=solve_tol, beta=beta, plot_type="profile")
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="average_solvability", normalize=True)
+        # Plot solvability profiles for each solver.
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="profile")
         for solver_index in range(self.n_solvers):
             solvability_quantiles = []
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 # TO DO: Hard-coded for first tol_index
                 solvability_quantiles.append(experiment.solve_time_quantiles[0])
-            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), 'b-', where='post')
-        plt.legend(labels=self.solver_names, loc="lower right")
-        save_plot(solver_name="SOLVERSET", problem_name="Profile", plot_type="solvability", normalize=True)
+            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where='post')
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability_profile", normalize=True)
+        # Plot difference solvability profiles. (Optional)
+        if ref_solver is not None:
+            stylize_difference_plot(solve_tol=solve_tol)
+            non_ref_solvers = [solver_name for solver_name in self.solver_names if solver_name != ref_solver]
+            ref_solver_index = self.solver_names.index(ref_solver)
+            for solver_index in range(self.n_solvers):
+                solver_name = self.solver_names[solver_index]
+                if solver_name is not ref_solver:
+                    diff_budgets, diff_solvability_profile = compute_difference_solvability_profile(budgets_1=all_solver_unique_frac_budgets[solver_index],
+                                                                                                    solv_profile_1=all_solvability_profiles[solver_index],
+                                                                                                    budgets_2=all_solver_unique_frac_budgets[ref_solver_index],
+                                                                                                    solv_profile_2=all_solvability_profiles[ref_solver_index]
+                                                                                                    )
+                    plt.step(diff_budgets, diff_solvability_profile, where='post')
+            plt.plot([0, 1], [0, 0], color='black', linestyle='dashed')
+            plt.legend(labels=[non_ref_solver + " - " + ref_solver for non_ref_solver in non_ref_solvers], loc="upper right")
+            save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="difference", normalize=True)
 
 
-def stylize_area_plot(solver_name):
+def compute_difference_solvability_profile(budgets_1, solv_profile_1, budgets_2, solv_profile_2):
     """
-    Create new figure for area plots. Add labels to plot and reformat axes.
+    Calculate the difference of two solvability profiles (Solver 1 - Solver 2).
 
-    Arguments
-    ---------
-    solver_name : string
-        name of solver
+    Parameters
+    ----------
+    budgets_1 : list of floats
+        list of intermediate budgets for Solver 1
+    solv_profile_1 : list of floats
+        solvability profile of Solver 1
+    budgets_2 : list of floats
+        list of intermediate budgets for Solver 2
+    solv_profile_2 : list of floats
+        solvability profile of Solver 2
     """
-    plt.figure()
-    # Format axes, axis labels, title, and tick marks.
-    xlabel = "Mean Area"
-    ylabel = "Std Dev of Area"
-    xlim = (0, 1)
-    ylim = (0, 0.5)
-    title = solver_name + "\n"
-    title = title + "Areas Under Progress Curves"
-    plt.xlabel(xlabel, size=14)
-    plt.ylabel(ylabel, size=14)
-    plt.title(title, size=14)
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    diff_budgets = np.unique(list(budgets_1) + list(budgets_2))
+    diff_solvability_profile = []
+    for budget in diff_budgets:
+        solv_profile_1_index = np.max(np.where(budgets_1 <= budget))
+        solv_profile_2_index = np.max(np.where(budgets_2 <= budget))
+        diff_solvability_profile.append(solv_profile_1[solv_profile_1_index] - solv_profile_2[solv_profile_2_index])
+    return(diff_budgets, diff_solvability_profile)

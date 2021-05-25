@@ -76,7 +76,7 @@ class SSContMinCost(Problem):
         self.budget = 1000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.initial_solution = (1000, 2000)
+        self.initial_solution = (600, 600)
         self.ref_optimal_solution = None
         self.oracle_default_factors = {}
         self.factors = fixed_factors
