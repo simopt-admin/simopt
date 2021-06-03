@@ -83,9 +83,6 @@ class SANE(Solver):
         }
         super().__init__(fixed_factors)
 
-    def check_crn_across_soln(self):
-        pass
-
     def check_sampling_variance(self):
         return self.factors["sample_variance"] > 0
 
@@ -94,9 +91,6 @@ class SANE(Solver):
 
     def check_cooling_coeff(self):
         return 0 < self.factors["cooling_coeff"] < 1
-
-    def check_solver_factors(self):
-        pass
 
     def solve(self, problem):
         """
@@ -127,10 +121,10 @@ class SANE(Solver):
         # quality, and switch based on estimated differences and current 
         # temperature.
         # TO DO: Double-check how RNGs are to be used to simulate solutions.
-        while expended_budget < problem.budget:
+        while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
-                current_x = problem.initial_solution
+                current_x = problem.factors["initial_solution"]
                 current_solution = self.create_new_solution(current_x, problem)
                 recommended_solns.append(current_solution)
                 intermediate_budgets.append(expended_budget)

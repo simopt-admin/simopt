@@ -220,7 +220,7 @@ class Experiment(object):
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
         # Simulate common initial solution x0.
-        x0 = self.problem.initial_solution
+        x0 = self.problem.factors["initial_solution"]
         self.initial_soln = Solution(x0, self.problem)
         self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
@@ -258,7 +258,7 @@ class Experiment(object):
         # Extract all unique budget points.
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
         self.unique_budgets = np.unique(repeat_budgets)
-        self.unique_frac_budgets = self.unique_budgets / self.problem.budget
+        self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
         n_inter_budgets = len(self.unique_budgets)
         # Compute signed initial optimality gap = f(x0) - f(x*);
         initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
@@ -300,7 +300,7 @@ class Experiment(object):
             plot bootstrapping confidence intervals?
         """
         # Set up plot.
-        stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
+        stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.factors["budget"], beta=beta)
         if plot_type == "all":
             # Plot all estimated progress curves.
             if normalize:
@@ -635,7 +635,7 @@ class Experiment(object):
             yloc = -0.35
         else:
             budgets = self.unique_budgets
-            xloc = 0.05 * self.problem.budget
+            xloc = 0.05 * self.problem.factors["budget"]
             yloc = (min(bs_CI_lower_bounds)
                     - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
         if plot_CIs:
@@ -724,16 +724,16 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
         intermediate budgets at which solver recommended different solutions
     """
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
-    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.budget]
+    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.factors["budget"]]
     for invalid_idx in sorted(invalid_idxs, reverse=True):
         del recommended_solns[invalid_idx]
         del intermediate_budgets[invalid_idx]
     # If no solution is recommended at the final budget,
     # re-recommended the latest recommended solution.
     # Necessary for clean plotting of progress curves.
-    if intermediate_budgets[-1] < problem.budget:
+    if intermediate_budgets[-1] < problem.factors["budget"]:
         recommended_solns.append(recommended_solns[-1])
-        intermediate_budgets.append(problem.budget)
+        intermediate_budgets.append(problem.factors["budget"])
     return recommended_solns, intermediate_budgets
 
 

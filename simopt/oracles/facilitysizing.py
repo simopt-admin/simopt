@@ -181,10 +181,6 @@ class FacilitySizingTotalCost(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    initial_solution : tuple
-        default initial solution from which solvers start
-    budget : int
-        max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     ref_optimal_solution : tuple
@@ -200,6 +196,10 @@ class FacilitySizingTotalCost(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+            initial_solution : tuple
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -223,13 +223,21 @@ class FacilitySizingTotalCost(Problem):
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.budget = 10000
         self.optimal_bound = 0
         self.ref_optimal_solution = None  # (185, 185, 185)
-        self.initial_solution = (300, 300, 300)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
+            "initial_solution": {
+                "description": "Initial solution from which solvers start.",
+                "datatype": tuple,
+                "default": (300, 300, 300)
+            },
+            "budget": {
+                "description": "Max # of replications for a solver to take.",
+                "datatype": int,
+                "default": 10000
+            },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
@@ -241,9 +249,26 @@ class FacilitySizingTotalCost(Problem):
                 "default": 0.05
             }
         }
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+            "installation_costs": self.check_installation_costs,
+            "epsilon": self.check_epsilon
+        }
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = FacilitySize(self.oracle_fixed_factors)
+
+    def check_installation_costs(self):
+        if len(self.factors["installation_costs"]) != self.oracle.factors["n_fac"]:
+            return False
+        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
+            return False
+        else:
+            return True
+
+    def check_epsilon(self):
+        return 0 <= self.factors["epsilon"] <= 1
 
     def vector_to_factor_dict(self, vector):
         """
@@ -424,10 +449,6 @@ class FacilitySizingMaxService(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    initial_solution : tuple
-        default initial solution from which solvers start
-    budget : int
-        max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     ref_optimal_solution : tuple
@@ -443,6 +464,10 @@ class FacilitySizingMaxService(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+            initial_solution : tuple
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -466,13 +491,21 @@ class FacilitySizingMaxService(Problem):
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
         self.gradient_available = False
-        self.budget = 10000
         self.optimal_bound = 0
         self.ref_optimal_solution = None  # (175, 179, 143)
-        self.initial_solution = (100, 100, 100)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
+            "initial_solution": {
+                "description": "Initial solution from which solvers start.",
+                "datatype": tuple,
+                "default": (100, 100, 100)
+            },
+            "budget": {
+                "description": "Max # of replications for a solver to take.",
+                "datatype": int,
+                "default": 10000
+            },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
@@ -484,9 +517,26 @@ class FacilitySizingMaxService(Problem):
                 "default": 500.0
             }
         }
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+            "installation_costs": self.check_installation_costs,
+            "installation_budget": self.check_installation_budget
+        }
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = FacilitySize(self.oracle_fixed_factors)
+
+    def check_installation_costs(self):
+        if len(self.factors["installation_costs"]) != self.oracle.factors["n_fac"]:
+            return False
+        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
+            return False
+        else:
+            return True
+
+    def check_installation_budget(self):
+        return self.factors["installation_budget"] > 0
 
     def vector_to_factor_dict(self, vector):
         """

@@ -70,14 +70,8 @@ class ASTRODF(Solver):
         }
         super().__init__(fixed_factors)
 
-    def check_crn_across_soln(self):
-        pass
-
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
-
-    def check_solver_factors(self):
-        pass
     
     def standard_basis(self, size, index):
         arr = np.zeros(size)
@@ -195,12 +189,12 @@ class ASTRODF(Solver):
         k = 0                   #iteration number
 
         # Start with the initial solution
-        new_x = problem.initial_solution
+        new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         
-        while expended_budget < problem.budget:
+        while expended_budget < problem.factors["budget"]:
             k += 1
             #print(k)
             fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget)
