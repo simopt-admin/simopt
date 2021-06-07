@@ -58,12 +58,12 @@ def get_selected():
 
     # Problem NOT selected, but Solution selected
     elif problemVar.get() == "----" and solutionVar.get() != "----":
-        message = "You have not selected a Problem Type!"
+        message = "You have not selected a Problem!"
         createError(message)
 
     # Problem selected, but Solution NOT selected
     elif problemVar.get() != "----" and solutionVar.get() == "----":
-        message = "You have not selected a Solution Type!"
+        message = "You have not selected a Solver!"
         createError(message)
     
     # Macro Replications not numeric or negative
@@ -142,7 +142,7 @@ problemMenu = tk.OptionMenu(window, problemVar, *problemList)
 problemMenu.grid(row=1, column=0, sticky='s')
 
 solutionLabel = tk.Label(master=window, # window label is used in
-                        text = "Please select the type of Solution:*",
+                        text = "Please select the type of Solver:*",
                         font = "Calibri 11 bold")
 solutionLabel.grid(row=2, column=0)
 
