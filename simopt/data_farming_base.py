@@ -265,7 +265,7 @@ class DataFarmingMetaExperiment(object):
             self.design.append(new_design_pt)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def run(self, n_macroreps=10, crn_across_solns=True):
+    def run(self, n_macroreps=10):
         """
         Run n_macroreps of each problem-solver design point.
 
@@ -273,18 +273,15 @@ class DataFarmingMetaExperiment(object):
         ---------
         n_macroreps : int
             number of macroreplications for each design point
-        crn_across_solns : bool
-            indicates if CRN are used when solver simulates different solutions
         """
         for design_pt_index in range(self.n_design_pts):
             # If the problem-solver pair has not been run in this way before,
             # run it now.
             experiment = self.design[design_pt_index]
-            if (getattr(experiment, "n_macroreps", None) != n_macroreps
-                    or getattr(experiment, "crn_across_solns", None) != crn_across_solns):
+            if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                 print("Running Design Point " + str(design_pt_index) + ".")
                 experiment.clear_runs()
-                experiment.run(n_macroreps, crn_across_solns)
+                experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):

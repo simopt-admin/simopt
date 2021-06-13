@@ -313,18 +313,18 @@ class Experiment(object):
             # Plot estimated mean progress curve.
             if normalize:
                 estimator = np.mean(self.all_prog_curves, axis=0)
-                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_frac_budgets, estimator, where='post')
             else:
                 estimator = np.mean(self.all_est_objective, axis=0)
-                plt.step(self.unique_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_budgets, estimator, where='post')
         elif plot_type == "quantile":
             # Plot estimated beta-quantile progress curve.
             if normalize:
                 estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
-                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_frac_budgets, estimator, where='post')
             else:
                 estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
-                plt.step(self.unique_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_budgets, estimator, where='post')
         else:
             print("Not a valid plot type.")
         if plot_type == "mean" or plot_type == "quantile":
@@ -1123,6 +1123,46 @@ class MetaExperiment(object):
                     print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
+
+    def plot_progress_curves(self, plot_type, beta=0.50, normalize=True):
+        """
+        Produce plots of the solvers' aggregated performances on each problem.
+
+        Arguments
+        ---------
+        plot_type : string
+            indicates which type of plot to produce
+                "mean" : estimated mean progress curve
+                "quantile" : estimated beta quantile progress curve
+        beta : float in (0,1)
+            quantile to plot, e.g., beta quantile
+        normalize : Boolean
+            normalize progress curves w.r.t. optimality gaps?
+        """
+        for problem_index in range(self.n_problems):
+            stylize_plot(plot_type=plot_type, solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], normalize=normalize, budget=self.experiments[0][problem_index].problem.factors["budget"], beta=beta)
+            for solver_index in range(self.n_solvers):
+                experiment = self.experiments[solver_index][problem_index]
+                if plot_type == "mean":
+                    # Plot estimated mean progress curve.
+                    if normalize:
+                        estimator = np.mean(experiment.all_prog_curves, axis=0)
+                        plt.step(experiment.unique_frac_budgets, estimator, where='post')
+                    else:
+                        estimator = np.mean(experiment.all_est_objective, axis=0)
+                        plt.step(experiment.unique_budgets, estimator, where='post')
+                elif plot_type == "quantile":
+                    # Plot estimated beta-quantile progress curve.
+                    if normalize:
+                        estimator = np.quantile(experiment.all_prog_curves, q=beta, axis=0)
+                        plt.step(experiment.unique_frac_budgets, estimator, where='post')
+                    else:
+                        estimator = np.quantile(experiment.all_est_objective, q=beta, axis=0)
+                        plt.step(experiment.unique_budgets, estimator, where='post')
+                else:
+                    print("Not a valid plot type.")
+            plt.legend(labels=self.solver_names, loc="upper right")
+            save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
 
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
