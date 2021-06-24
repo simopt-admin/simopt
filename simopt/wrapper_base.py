@@ -363,7 +363,7 @@ class Experiment(object):
             if plot_CIs:
                 # Report bootstrapping error estimation and optionally plot bootstrap CIs.
                 self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
-            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True, extra=solve_tol)
+            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="cdf solve times", normalize=True, extra=solve_tol)
 
     def compute_area_stats(self, compute_CIs=True):
         """
@@ -823,7 +823,7 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     plot_type : string
         type of plot
             - "single"
-            - "mean"
+            - "cdf"
             - "quantile"
     beta : float in (0,1)
         quantile to compute, e.g., beta quantile
@@ -836,15 +836,15 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     if plot_type == "single":
         ylabel = "Fraction of Macroreplications Solved"
         title = solver_name + " on " + problem_name + "\n"
-        title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
-    elif plot_type == "mean":
-        ylabel = "Average Solve Percentage"
-        title = "Mean-Solvability Profile for " + solver_name + "\n"
-        title = title + str(round(solve_tol, 2)) + "-Solvability"
+        title = title + "CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
+    elif plot_type == "cdf":
+        ylabel = "Mean Solve Percentage"
+        title = "CDF Solvability Profile for " + solver_name + "\n"
+        title = title + "Profile of CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
     elif plot_type == "quantile":
         ylabel = "Proportion of Problems Solved"
-        title = "Quantile-Solvability Profile for " + solver_name + "\n"
-        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"
+        title = "Quantile Solvability Profile for " + solver_name + "\n"
+        title = title + "Profile of " + str(round(beta, 2)) + "-Quantiles of " + str(round(solve_tol, 2)) + "-Solve Times"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -916,15 +916,15 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
             "all" : all estimated progress curves
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
-            "solvability" : estimated solvability curve
-            "average_solvability" : average solvability profiles
-            "solvability_profile" : solvability profiles
+            "cdf solve times" : cdf of solve times
+            "cdf solvability" : cdf solvability profile
+            "quantile solvability" : quantile solvability profile
             "area" : area scatterplot
             "difference" : difference profile
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
-    extra : float
-        extra number specifying quantile (e.g., beta) or solve tolerance
+    extra : float (or list of floats)
+        extra number(s) specifying quantile (e.g., beta) and/or solve tolerance
     """
     # Form string name for plot filename.
     if plot_type == "all":
@@ -933,12 +933,12 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
-    elif plot_type == "solvability":
-        plot_name = str(extra) + "-solvability_curve"
-    elif plot_type == "average_solvability":
-        plot_name = "average_solvability_profile"
-    elif plot_type == "solvability_profile":
-        plot_name = "solvability_profile"
+    elif plot_type == "cdf solve times":
+        plot_name = "cdf_" + str(extra) + "_solve_times"
+    elif plot_type == "cdf solvability":
+        plot_name = "profile_cdf_" + str(extra) + "_solve_times"
+    elif plot_type == "quantile solvability":
+        plot_name = "profile_" + str(extra[1]) + "_quantile_" + str(extra[0]) + "_solve_times"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     elif plot_type == "difference":
@@ -1197,7 +1197,7 @@ class MetaExperiment(object):
                     # Plot solvability curve.
                     plt.step(experiment.unique_frac_budgets, estimator, where='post')
                 plt.legend(labels=self.solver_names, loc="lower right")
-                save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="solvability", normalize=True, extra=solve_tol)
+                save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="cdf solve times", normalize=True, extra=solve_tol)
 
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
@@ -1244,8 +1244,8 @@ class MetaExperiment(object):
         """
         Plot the solvability profiles for each solver on a set of problems.
         Three types of plots:
-            1) average solvability curve
-            2) solvability profile
+            1) cdf solvability profile
+            2) quantile solvability profile
             3) difference solvability profile
 
         Arguments
@@ -1259,7 +1259,7 @@ class MetaExperiment(object):
         """
         all_solver_unique_frac_budgets = []
         all_solvability_profiles = []
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="mean")
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="cdf")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
@@ -1293,7 +1293,7 @@ class MetaExperiment(object):
             all_solvability_profiles.append(solvability_profile)
         plt.legend(labels=self.solver_names, loc="lower right")
         # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="average_solvability", normalize=True)
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="cdf solvability", normalize=True, extra=solve_tol)
         # Plot solvability profiles for each solver.
         stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
         for solver_index in range(self.n_solvers):
@@ -1303,7 +1303,7 @@ class MetaExperiment(object):
                 # TO DO: Hard-coded for first tol_index
                 solvability_quantiles.append(experiment.solve_time_quantiles[0])
             plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where='post')
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability_profile", normalize=True)
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="quantile solvability", normalize=True, extra=[solve_tol, beta])
         # Plot difference solvability profiles. (Optional)
         if ref_solver is not None:
             stylize_difference_plot(solve_tol=solve_tol)
