@@ -823,8 +823,8 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     plot_type : string
         type of plot
             - "single"
-            - "average"
-            - "profile"
+            - "mean"
+            - "quantile"
     beta : float in (0,1)
         quantile to compute, e.g., beta quantile
     """
@@ -837,13 +837,13 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
         ylabel = "Fraction of Macroreplications Solved"
         title = solver_name + " on " + problem_name + "\n"
         title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
-    elif plot_type == "average":
+    elif plot_type == "mean":
         ylabel = "Average Solve Percentage"
-        title = "Average Solvability Profile for " + solver_name + "\n"
+        title = "Mean-Solvability Profile for " + solver_name + "\n"
         title = title + str(round(solve_tol, 2)) + "-Solvability"
-    elif plot_type == "profile":
+    elif plot_type == "quantile":
         ylabel = "Proportion of Problems Solved"
-        title = "Solvability Profile for " + solver_name + "\n"
+        title = "Quantile-Solvability Profile for " + solver_name + "\n"
         title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
@@ -1259,7 +1259,7 @@ class MetaExperiment(object):
         """
         all_solver_unique_frac_budgets = []
         all_solvability_profiles = []
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="average")
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="mean")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
@@ -1295,7 +1295,7 @@ class MetaExperiment(object):
         # TO DO: Change the y-axis label produced by this helper function.
         save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="average_solvability", normalize=True)
         # Plot solvability profiles for each solver.
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="profile")
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
         for solver_index in range(self.n_solvers):
             solvability_quantiles = []
             for problem_index in range(self.n_problems):
