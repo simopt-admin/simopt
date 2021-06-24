@@ -359,7 +359,7 @@ class Experiment(object):
             # Compute proportion of macroreplications "solved" by intermediate budget.
             estimator = np.mean(solve_matrix, axis=0)
             # Plot solvability curve.
-            plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+            plt.step(self.unique_frac_budgets, estimator, where='post')
             if plot_CIs:
                 # Report bootstrapping error estimation and optionally plot bootstrap CIs.
                 self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
@@ -1163,6 +1163,41 @@ class MetaExperiment(object):
                     print("Not a valid plot type.")
             plt.legend(labels=self.solver_names, loc="upper right")
             save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
+
+    def plot_solvability_curves(self, solve_tols=[0.10]):
+        """
+        Produce the solvability curve (cdf of the solve times) for solvers
+        on each problem.
+
+        Arguments
+        ---------
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
+        """
+        for problem_index in range(self.n_problems):
+            # Compute solve times for each solver at each tolerance
+            for solver_index in range(self.n_solvers):
+                experiment = self.experiments[solver_index][problem_index]
+                experiment.compute_solvability(solve_tols=solve_tols)
+            # For each tolerance, plot solvability curves for each solver
+            for tol_index in range(len(solve_tols)):
+                solve_tol = solve_tols[tol_index]
+                stylize_solvability_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], solve_tol=solve_tol, plot_type="single")
+                for solver_index in range(self.n_solvers):
+                    experiment = self.experiments[solver_index][problem_index]
+                    # Construct matrix showing when macroreplications are solved.
+                    solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
+                    # Pass over progress curves to find first solve_tol crossing time.
+                    for mrep in range(experiment.n_macroreps):
+                        for budget_index in range(len(experiment.unique_frac_budgets)):
+                            if experiment.solve_times[tol_index][mrep] <= experiment.unique_frac_budgets[budget_index]:
+                                solve_matrix[mrep][budget_index] = 1
+                    # Compute proportion of macroreplications "solved" by intermediate budget.
+                    estimator = np.mean(solve_matrix, axis=0)
+                    # Plot solvability curve.
+                    plt.step(experiment.unique_frac_budgets, estimator, where='post')
+                plt.legend(labels=self.solver_names, loc="lower right")
+                save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="solvability", normalize=True, extra=solve_tol)
 
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
