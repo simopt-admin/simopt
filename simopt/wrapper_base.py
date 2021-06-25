@@ -7,6 +7,10 @@ Plus helper functions for reading/writing data and plotting.
 
 Listing
 -------
+Curve : class
+mean_of_curves : function
+quantile_of_curves : function
+difference_of_curves : function
 Experiment : class
 read_experiment_results : function
 stylize_plot : function
@@ -32,6 +36,184 @@ from copy import deepcopy
 from rng.mrg32k3a import MRG32k3a
 from base import Solution
 from directory import solver_directory, problem_directory
+
+
+class Curve(object):
+    """
+    Base class for all curves.
+
+    Attributes
+    ----------
+    x_vals : list of floats
+        values of horizontal components
+    y_vals : list of floats
+        values of vertical components
+    n_points : int
+        number of values in x- and y- vectors
+
+    Parameters
+    ----------
+    x_vals : list of floats
+        values of horizontal components
+    y_vals : list of floats
+        values of vertical components
+    """
+    def __init__(self, x_vals, y_vals):
+        if len(x_vals) != len(y_vals):
+            print("Vectors of x- and y- values must be of same length.")
+        self.x_vals = x_vals
+        self.y_vals = y_vals
+        self.n_points = len(x_vals)
+
+    def lookup(self, x):
+        """
+        Lookup the y-value of the curve at an intermediate x-value.
+
+        Parameters
+        ----------
+        x : float
+            x-value at which to lookup the y-value
+
+        Returns
+        -------
+        y : float
+            y-value corresponding to x
+        """
+        if x < self.x_vals[0]:
+            y = np.nan
+        else:
+            idx = np.max(np.where(np.array(self.x_vals) <= x))
+            y = self.y_vals[idx]
+        return y
+
+    def compute_crossing_time(self, threshold):
+        """
+        Compute the first time at which a curve drops below a given threshold.
+
+        Parameters
+        ----------
+        threshold : float
+            value for which to find first crossing time
+
+        Returns
+        -------
+        crossing_time : float
+            first time at which a curve drops below threshold
+        """
+        # Crossing time is defined as infinity if the curve does not drop
+        # below threshold.
+        crossing_time = np.inf
+        # Pass over curve to find first crossing time.
+        for i in range(self.n_points):
+            if self.y_vals[i] < threshold:
+                crossing_time = self.x_vals[i]
+                break
+        return crossing_time
+
+    def compute_area_under_curve(self):
+        """
+        Compute the area under a curve.
+
+        Returns
+        -------
+        area : float
+            area under the curve
+        """
+        area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
+        return area
+
+    def plot(self, color_str="C0", curve_type="regular"):
+        """
+        Plot a curve.
+
+        Parameters
+        ----------
+        color_str : str
+            string indicating line color, e.g., "C0", "C1", etc.
+
+        Returns
+        -------
+        handle : list of matplotlib.lines.Line2D objects
+            curve handle, to use when creating legends
+        """
+        if curve_type == "regular":
+            linestyle = "-"
+            linewidth = 2
+        elif curve_type == "conf_bound":
+            linestyle = "--"
+            linewidth = 1
+        handle = plt.step(self.x_vals,
+                          self.y_vals,
+                          color=color_str,
+                          linestyle=linestyle,
+                          linewidth=linewidth,
+                          where="post"
+                          )
+        return handle
+
+
+def mean_of_curves(curves):
+    """
+    Compute pointwise (w.r.t. x values) mean of curves.
+    Starting and ending x values must coincide for all curves.
+
+    Parameters
+    ----------
+    curves : list of wrapper_base.Curve objects
+        collection of curves to aggregate
+
+    Returns
+    -------
+    mean_curve : wrapper_base.Curve object
+        mean curve
+    """
+    unique_x_vals = np.unique([x_val for curve in curves for x_val in curve.x_vals])
+    mean_y_vals = [np.mean([curve.lookup(x_val) for curve in curves]) for x_val in unique_x_vals]
+    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
+    return mean_curve
+
+
+def quantile_of_curves(curves, beta):
+    """
+    Compute pointwise (w.r.t. x values) quantile of curves.
+    Starting and ending x values must coincide for all curves.
+
+    Parameters
+    ----------
+    curves : list of wrapper_base.Curve objects
+        collection of curves to aggregate
+    beta : float
+        quantile level
+
+    Returns
+    -------
+    quantile_curve : wrapper_base.Curve object
+        quantile curve
+    """
+    unique_x_vals = np.unique([x_val for curve in curves for x_val in curve.x_vals])
+    quantile_y_vals = [np.quantile([curve.lookup(x_val) for curve in curves], q=beta) for x_val in unique_x_vals]
+    quantile_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=quantile_y_vals)
+    return quantile_curve
+
+
+def difference_of_curves(curve1, curve2):
+    """
+    Compute the difference of two curves (Curve 1 - Curve2).
+
+    Parameters
+    ----------
+    curve1, curve2 : wrapper_base.Curve objects
+        curves to take the difference of
+
+    Returns
+    -------
+    difference_curve : wrapper_base.Curve object
+        difference of curves
+    """
+    unique_x_vals = np.unique(curve1.x_vals + curve2.x_vals)
+    difference_y_vals = [(curve1.lookup(x_val) - curve2.lookup(x_val)) for x_val in unique_x_vals]
+    difference_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=difference_y_vals)
+    return difference_curve
 
 
 class Experiment(object):
