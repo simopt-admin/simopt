@@ -36,6 +36,8 @@ class RandomSearch(Solver):
 
     Arguments
     ---------
+    name : str
+        user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
@@ -43,8 +45,8 @@ class RandomSearch(Solver):
     --------
     base.Solver
     """
-    def __init__(self, fixed_factors={}):
-        self.name = "RNDSRCH"
+    def __init__(self, name="RNDSRCH", fixed_factors={}):
+        self.name = name
         self.objective_type = "single"
         self.constraint_type = "stochastic"
         self.variable_type = "mixed"

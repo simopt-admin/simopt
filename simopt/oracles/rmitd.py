@@ -239,6 +239,8 @@ class RMITDMaxRevenue(Problem):
 
     Arguments
     ---------
+    name : str
+        user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed_factors : dict
@@ -248,8 +250,8 @@ class RMITDMaxRevenue(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "RMITD-1"
+    def __init__(self, name="RMITD-1", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

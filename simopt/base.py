@@ -53,8 +53,8 @@ class Solver(object):
         dictionary of user-specified solver factors
     """
     def __init__(self, fixed_factors):
-        # set factors of the solver
-        # fill in missing factors with default values
+        # Set factors of the solver.
+        # Fill in missing factors with default values.
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
@@ -242,14 +242,14 @@ class Problem(object):
         subset of user-specified non-decision factors to pass through to the oracle
     """
     def __init__(self, fixed_factors, oracle_fixed_factors):
-        # set factors of the problem
-        # fill in missing factors with default values
+        # Set factors of the problem.
+        # Fill in missing factors with default values.
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        # set subset of factors of the simulation oracle
-        # fill in missing oracle factors with problem-level default values
+        # Set subset of factors of the simulation oracle.
+        # Fill in missing oracle factors with problem-level default values.
         for key in self.oracle_default_factors:
             if key not in oracle_fixed_factors:
                 oracle_fixed_factors[key] = self.oracle_default_factors[key]

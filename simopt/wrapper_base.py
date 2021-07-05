@@ -237,7 +237,8 @@ class Experiment(object):
     n_postreps : int
         number of postreplications to take at each recommended solution
     n_postreps_init_opt : int
-        number of postreplications to take at initial x0 and optimal x*
+        number of postreplications to take at initial solution (x0) and
+        optimal solution (x*)
     crn_across_budget : bool
         use CRN for post-replications at solutions recommended at different times?
     crn_across_macroreps : bool
@@ -276,10 +277,14 @@ class Experiment(object):
 
     Arguments
     ---------
-    solver_name : string
+    solver_name : str
         name of solver
-    problem_name : string
+    problem_name : str
         name of problem
+    solver_rename : str
+        user-specified name for solver
+    problem_rename : str
+        user-specified name for problem
     solver_fixed_factors : dict
         dictionary of user-specified solver factors
     problem_fixed_factors : dict
@@ -289,9 +294,9 @@ class Experiment(object):
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
-        self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
-        self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+    def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
+        self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+        self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
         if file_name_path is None:
             self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
         else:
