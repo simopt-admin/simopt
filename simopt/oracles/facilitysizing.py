@@ -205,6 +205,8 @@ class FacilitySizingTotalCost(Problem):
 
     Arguments
     ---------
+    name : str
+        user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed factors : dict
@@ -214,8 +216,8 @@ class FacilitySizingTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "FACSIZE-1"
+    def __init__(self, name="FACSIZE-1", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
@@ -473,6 +475,8 @@ class FacilitySizingMaxService(Problem):
 
     Arguments
     ---------
+    name : str
+        user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed factors : dict
@@ -482,8 +486,8 @@ class FacilitySizingMaxService(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "FACSIZE-2"
+    def __init__(self, name="FACSIZE-2", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

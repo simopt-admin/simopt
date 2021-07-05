@@ -218,6 +218,8 @@ class CntNVMaxProfit(Problem):
 
     Arguments
     ---------
+    name : str
+        user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed factors : dict
@@ -227,8 +229,8 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "CNTNEWS-1"
+    def __init__(self, name="CNTNEWS-1", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -262,7 +264,7 @@ class CntNVMaxProfit(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
+        super().__init__(name, fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = CntNV(self.oracle_fixed_factors)
 

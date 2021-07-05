@@ -39,6 +39,8 @@ class ASTRODF(Solver):
 
     Arguments
     ---------
+    name : str
+        user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
@@ -46,8 +48,8 @@ class ASTRODF(Solver):
     --------
     base.Solver
     """
-    def __init__(self, fixed_factors={}):
-        self.name = "ASTRODF"
+    def __init__(self, name="ASTRODF", fixed_factors={}):
+        self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
