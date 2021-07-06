@@ -67,7 +67,7 @@ class ASTRODF(Solver):
             }
         }
         self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_soln,
+            "crn_across_solns": self.check_crn_across_solns,
             "sample_size": self.check_sample_size
         }
         super().__init__(fixed_factors)

@@ -12,7 +12,9 @@ mean_of_curves : function
 quantile_of_curves : function
 difference_of_curves : function
 Experiment : class
+trim_solver_results : function
 read_experiment_results : function
+post_normalize : function
 stylize_plot : function
 stylize_solvability_plot : function
 stylize_difference_plot : function
@@ -242,11 +244,24 @@ class Experiment(object):
         use CRN for post-replications at solutions recommended on different macroreplications?
     all_post_replicates : list of lists of lists
         all post-replicates from all solutions from all macroreplications
-    all_est_objective : numpy array of arrays
+    all_est_objectives : numpy array of arrays
         estimated objective values of all solutions from all macroreplications
     n_postreps_init_opt : int
         number of postreplications to take at initial solution (x0) and
         optimal solution (x*)
+    x0 : tuple
+        initial solution (x0)
+    x0_postreps : list
+        post-replicates at x0
+    xstar : tuple
+        proxy for optimal solution (x*)
+    xstar_postreps : list
+        post-replicates at x*
+    objective_curves : list of wrapper_base.Curve objects
+        curves of estimated objective function values,
+        one for each macroreplication
+    progress_curves : list of wrapper_base.Curve objects
+        progress curves, one for each macroreplication    
     all_prog_curves : numpy array of arrays
         estimated progress curves from all macroreplications
     initial_soln : base.Solution object
@@ -386,7 +401,7 @@ class Experiment(object):
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
                 self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
                 # Store results
-                self.all_post_replicates[mrep][budget_index] = list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0])  # 0 <- assuming only one objective                 
+                self.all_post_replicates[mrep][budget_index] = list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0])  # 0 <- assuming only one objective
                 if crn_across_budget:
                     # Reset each rng to start of its current substream.
                     for rng in baseline_rngs:
@@ -402,190 +417,128 @@ class Experiment(object):
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
         # Store estimated objective for each macrorep for each budget.
-        self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
-        
-        # # Simulate common initial solution x0.
-        # x0 = self.problem.factors["initial_solution"]
-        # self.initial_soln = Solution(x0, self.problem)
-        # self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
-        # self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
-        # if crn_across_budget:
-        #     # Reset each rng to start of its current substream.
-        #     for rng in copied_baseline_rngs:
-        #         rng.reset_substream()
-        # # Determine reference optimal solution x*.
-        # if self.problem.ref_optimal_solution is not None:
-        #     xstar = self.problem.ref_optimal_solution
-        # else:  # Look up estimated best solution recommended over all macroreplications.
-        #     # TO DO: Simplify this block of code.
-        #     # TO DO: Handle duplicate argmaxs.
-        #     # TO DO: Currently 0 <- assuming only one objective. Generalize.
-        #     best_est_objectives = np.zeros(self.n_macroreps)
-        #     for mrep in range(self.n_macroreps):
-        #         est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[mrep]])
-        #         best_est_objectives[mrep] = np.max(self.problem.minmax[0]*est_objectives)
-        #     best_mrep = np.argmax(self.problem.minmax[0]*best_est_objectives)
-        #     best_mrep_est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[best_mrep]])
-        #     best_soln_index = np.argmax(self.problem.minmax[0]*best_mrep_est_objectives)
-        #     xstar = self.all_reevaluated_solns[best_mrep][best_soln_index].x
-        # # Simulate reference optimal solution x*.
-        # self.ref_opt_soln = Solution(xstar, self.problem)
-        # self.ref_opt_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
-        # self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
-        # # Replace recommended solutions corresponding to x0 and x* with resimulated versions.
-        # for mrep in range(self.n_macroreps):
-        #     for soln_index in range(len(self.all_reevaluated_solns[mrep])):
-        #         if self.all_reevaluated_solns[mrep][soln_index].x == x0:
-        #             self.all_reevaluated_solns[mrep][soln_index] = self.initial_soln
-        #         elif self.all_reevaluated_solns[mrep][soln_index].x == xstar:
-        #             self.all_reevaluated_solns[mrep][soln_index] = self.ref_opt_soln
-        # # Preprocessing in anticipation of plotting.
-        # # Extract all unique budget points.
-        # repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
-        # self.unique_budgets = np.unique(repeat_budgets)
-        # self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
-        # n_inter_budgets = len(self.unique_budgets)
-        # # Compute signed initial optimality gap = f(x0) - f(x*);
-        # initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
-        # ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:, 0])  # 0 <- assuming only one objective
-        # initial_opt_gap = initial_obj_val - ref_opt_obj_val
-        # # Populate matrix containing
-        # #     all replicates of objective,
-        # #     for each macroreplication,
-        # #     for each budget.
-        # self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
-        # for mrep in range(self.n_macroreps):
-        #     for budget_index in range(n_inter_budgets):
-        #         mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
-        #         lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
-        #         self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
-        # # Store estimated objective and progress curve values
-        # # for each macrorep for each budget.
-        # self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        # self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        # # Save Experiment object to .pickle file.
-        # self.record_experiment_results()
 
-    def post_replicate_old(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
-        """
-        Run postreplications at solutions recommended by the solver.
+    # def post_replicate_old(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+    #     """
+    #     Run postreplications at solutions recommended by the solver.
 
-        Arguments
-        ---------
-        n_postreps : int
-            number of postreplications to take at each recommended solution
-        n_postreps_init_opt : int
-            number of postreplications to take at initial x0 and optimal x*
-        crn_across_budget : bool
-            use CRN for post-replications at solutions recommended at different times?
-        crn_across_macroreps : bool
-            use CRN for post-replications at solutions recommended on different macroreplications?
-        """
-        self.n_postreps = n_postreps
-        self.n_postreps_init_opt = n_postreps_init_opt
-        self.crn_across_budget = crn_across_budget
-        self.crn_across_macroreps = crn_across_macroreps
-        self.all_reevaluated_solns = []
-        # Create, initialize, and attach RNGs for oracle.
-        # Stream 0: reserved for post-replications.
-        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
-        # Copy rngs to use for later simulating intial solution x0 and
-        # reference optimal solution x*.
-        copied_baseline_rngs = [deepcopy(rng) for rng in baseline_rngs]
-        # Skip over first set of substreams dedicated for sampling x0 and x*.
-        # Advance each rng to start of
-        #     substream = current substream + # of oracle RNGs.
-        for rng in baseline_rngs:
-            for _ in range(self.problem.oracle.n_rngs):
-                rng.advance_substream()
-        # Simulate intermediate recommended solutions.
-        for mrep in range(self.n_macroreps):
-            evaluated_solns = []
-            for x in self.all_recommended_xs[mrep]:
-                fresh_soln = Solution(x, self.problem)
-                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-                self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
-                evaluated_solns.append(fresh_soln)
-                if crn_across_budget:
-                    # Reset each rng to start of its current substream.
-                    for rng in baseline_rngs:
-                        rng.reset_substream()
-            # Record sequence of reevaluated solutions.
-            self.all_reevaluated_solns.append(evaluated_solns)
-            if crn_across_macroreps:
-                # Reset each rng to start of its current substream.
-                for rng in baseline_rngs:
-                    rng.reset_substream()
-            else:
-                # Advance each rng to start of
-                #     substream = current substream + # of oracle RNGs.
-                for rng in baseline_rngs:
-                    for _ in range(self.problem.oracle.n_rngs):
-                        rng.advance_substream()
-        # Simulate common initial solution x0.
-        x0 = self.problem.factors["initial_solution"]
-        self.initial_soln = Solution(x0, self.problem)
-        self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
-        self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
-        if crn_across_budget:
-            # Reset each rng to start of its current substream.
-            for rng in copied_baseline_rngs:
-                rng.reset_substream()
-        # Determine reference optimal solution x*.
-        if self.problem.ref_optimal_solution is not None:
-            xstar = self.problem.ref_optimal_solution
-        else:  # Look up estimated best solution recommended over all macroreplications.
-            # TO DO: Simplify this block of code.
-            # TO DO: Handle duplicate argmaxs.
-            # TO DO: Currently 0 <- assuming only one objective. Generalize.
-            best_est_objectives = np.zeros(self.n_macroreps)
-            for mrep in range(self.n_macroreps):
-                est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[mrep]])
-                best_est_objectives[mrep] = np.max(self.problem.minmax[0]*est_objectives)
-            best_mrep = np.argmax(self.problem.minmax[0]*best_est_objectives)
-            best_mrep_est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[best_mrep]])
-            best_soln_index = np.argmax(self.problem.minmax[0]*best_mrep_est_objectives)
-            xstar = self.all_reevaluated_solns[best_mrep][best_soln_index].x
-        # Simulate reference optimal solution x*.
-        self.ref_opt_soln = Solution(xstar, self.problem)
-        self.ref_opt_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
-        self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
-        # Replace recommended solutions corresponding to x0 and x* with resimulated versions.
-        for mrep in range(self.n_macroreps):
-            for soln_index in range(len(self.all_reevaluated_solns[mrep])):
-                if self.all_reevaluated_solns[mrep][soln_index].x == x0:
-                    self.all_reevaluated_solns[mrep][soln_index] = self.initial_soln
-                elif self.all_reevaluated_solns[mrep][soln_index].x == xstar:
-                    self.all_reevaluated_solns[mrep][soln_index] = self.ref_opt_soln
-        # Preprocessing in anticipation of plotting.
-        # Extract all unique budget points.
-        repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
-        self.unique_budgets = np.unique(repeat_budgets)
-        self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
-        n_inter_budgets = len(self.unique_budgets)
-        # Compute signed initial optimality gap = f(x0) - f(x*);
-        initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
-        ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:, 0])  # 0 <- assuming only one objective
-        initial_opt_gap = initial_obj_val - ref_opt_obj_val
-        # Populate matrix containing
-        #     all replicates of objective,
-        #     for each macroreplication,
-        #     for each budget.
-        self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
-        for mrep in range(self.n_macroreps):
-            for budget_index in range(n_inter_budgets):
-                mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
-                lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
-                self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
-        # Store estimated objective and progress curve values
-        # for each macrorep for each budget.
-        self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
-        # Save Experiment object to .pickle file.
-        self.record_experiment_results()
+    #     Arguments
+    #     ---------
+    #     n_postreps : int
+    #         number of postreplications to take at each recommended solution
+    #     n_postreps_init_opt : int
+    #         number of postreplications to take at initial x0 and optimal x*
+    #     crn_across_budget : bool
+    #         use CRN for post-replications at solutions recommended at different times?
+    #     crn_across_macroreps : bool
+    #         use CRN for post-replications at solutions recommended on different macroreplications?
+    #     """
+    #     self.n_postreps = n_postreps
+    #     self.n_postreps_init_opt = n_postreps_init_opt
+    #     self.crn_across_budget = crn_across_budget
+    #     self.crn_across_macroreps = crn_across_macroreps
+    #     self.all_reevaluated_solns = []
+    #     # Create, initialize, and attach RNGs for oracle.
+    #     # Stream 0: reserved for post-replications.
+    #     baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
+    #     # Copy rngs to use for later simulating intial solution x0 and
+    #     # reference optimal solution x*.
+    #     copied_baseline_rngs = [deepcopy(rng) for rng in baseline_rngs]
+    #     # Skip over first set of substreams dedicated for sampling x0 and x*.
+    #     # Advance each rng to start of
+    #     #     substream = current substream + # of oracle RNGs.
+    #     for rng in baseline_rngs:
+    #         for _ in range(self.problem.oracle.n_rngs):
+    #             rng.advance_substream()
+    #     # Simulate intermediate recommended solutions.
+    #     for mrep in range(self.n_macroreps):
+    #         evaluated_solns = []
+    #         for x in self.all_recommended_xs[mrep]:
+    #             fresh_soln = Solution(x, self.problem)
+    #             fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+    #             self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
+    #             evaluated_solns.append(fresh_soln)
+    #             if crn_across_budget:
+    #                 # Reset each rng to start of its current substream.
+    #                 for rng in baseline_rngs:
+    #                     rng.reset_substream()
+    #         # Record sequence of reevaluated solutions.
+    #         self.all_reevaluated_solns.append(evaluated_solns)
+    #         if crn_across_macroreps:
+    #             # Reset each rng to start of its current substream.
+    #             for rng in baseline_rngs:
+    #                 rng.reset_substream()
+    #         else:
+    #             # Advance each rng to start of
+    #             #     substream = current substream + # of oracle RNGs.
+    #             for rng in baseline_rngs:
+    #                 for _ in range(self.problem.oracle.n_rngs):
+    #                     rng.advance_substream()
+    #     # Simulate common initial solution x0.
+    #     x0 = self.problem.factors["initial_solution"]
+    #     self.initial_soln = Solution(x0, self.problem)
+    #     self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+    #     self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
+    #     if crn_across_budget:
+    #         # Reset each rng to start of its current substream.
+    #         for rng in copied_baseline_rngs:
+    #             rng.reset_substream()
+    #     # Determine reference optimal solution x*.
+    #     if self.problem.ref_optimal_solution is not None:
+    #         xstar = self.problem.ref_optimal_solution
+    #     else:  # Look up estimated best solution recommended over all macroreplications.
+    #         # TO DO: Simplify this block of code.
+    #         # TO DO: Handle duplicate argmaxs.
+    #         # TO DO: Currently 0 <- assuming only one objective. Generalize.
+    #         best_est_objectives = np.zeros(self.n_macroreps)
+    #         for mrep in range(self.n_macroreps):
+    #             est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[mrep]])
+    #             best_est_objectives[mrep] = np.max(self.problem.minmax[0]*est_objectives)
+    #         best_mrep = np.argmax(self.problem.minmax[0]*best_est_objectives)
+    #         best_mrep_est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[best_mrep]])
+    #         best_soln_index = np.argmax(self.problem.minmax[0]*best_mrep_est_objectives)
+    #         xstar = self.all_reevaluated_solns[best_mrep][best_soln_index].x
+    #     # Simulate reference optimal solution x*.
+    #     self.ref_opt_soln = Solution(xstar, self.problem)
+    #     self.ref_opt_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+    #     self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
+    #     # Replace recommended solutions corresponding to x0 and x* with resimulated versions.
+    #     for mrep in range(self.n_macroreps):
+    #         for soln_index in range(len(self.all_reevaluated_solns[mrep])):
+    #             if self.all_reevaluated_solns[mrep][soln_index].x == x0:
+    #                 self.all_reevaluated_solns[mrep][soln_index] = self.initial_soln
+    #             elif self.all_reevaluated_solns[mrep][soln_index].x == xstar:
+    #                 self.all_reevaluated_solns[mrep][soln_index] = self.ref_opt_soln
+    #     # Preprocessing in anticipation of plotting.
+    #     # Extract all unique budget points.
+    #     repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
+    #     self.unique_budgets = np.unique(repeat_budgets)
+    #     self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
+    #     n_inter_budgets = len(self.unique_budgets)
+    #     # Compute signed initial optimality gap = f(x0) - f(x*);
+    #     initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
+    #     ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:, 0])  # 0 <- assuming only one objective
+    #     initial_opt_gap = initial_obj_val - ref_opt_obj_val
+    #     # Populate matrix containing
+    #     #     all replicates of objective,
+    #     #     for each macroreplication,
+    #     #     for each budget.
+    #     self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
+    #     for mrep in range(self.n_macroreps):
+    #         for budget_index in range(n_inter_budgets):
+    #             mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
+    #             lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
+    #             self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
+    #     # Store estimated objective and progress curve values
+    #     # for each macrorep for each budget.
+    #     self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+    #     self.all_prog_curves = [[(self.all_est_objectives[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+    #     # Save Experiment object to .pickle file.
+    #     self.record_experiment_results()
 
     def plot_progress_curves(self, plot_type, beta=0.50, normalize=True, plot_CIs=True):
         """
@@ -614,14 +567,14 @@ class Experiment(object):
                     plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where="post")
             else:
                 for mrep in range(self.n_macroreps):
-                    plt.step(self.unique_budgets, self.all_est_objective[mrep], where="post")
+                    plt.step(self.unique_budgets, self.all_est_objectives[mrep], where="post")
         elif plot_type == "mean":
             # Plot estimated mean progress curve.
             if normalize:
                 estimator = np.mean(self.all_prog_curves, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, where="post")
             else:
-                estimator = np.mean(self.all_est_objective, axis=0)
+                estimator = np.mean(self.all_est_objectives, axis=0)
                 plt.step(self.unique_budgets, estimator, where="post")
         elif plot_type == "quantile":
             # Plot estimated beta-quantile progress curve.
@@ -629,7 +582,7 @@ class Experiment(object):
                 estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
                 plt.step(self.unique_frac_budgets, estimator, where="post")
             else:
-                estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
+                estimator = np.quantile(self.all_est_objectives, q=beta, axis=0)
                 plt.step(self.unique_budgets, estimator, where="post")
         else:
             print("Not a valid plot type.")
@@ -977,7 +930,7 @@ class Experiment(object):
                       "crn_across_macroreps",
                       "all_reevaluated_solns",
                       "all_post_replicates",
-                      "all_est_objective",
+                      "all_est_objectives",
                       "all_prog_curves",
                       "initial_soln",
                       "ref_opt_soln"]
@@ -1034,8 +987,8 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
         del recommended_solns[invalid_idx]
         del intermediate_budgets[invalid_idx]
     # If no solution is recommended at the final budget,
-    # re-recommended the latest recommended solution.
-    # Necessary for clean plotting of progress curves.
+    # re-recommend the latest recommended solution.
+    # (Necessary for clean plotting of progress curves.)
     if intermediate_budgets[-1] < problem.factors["budget"]:
         recommended_solns.append(recommended_solns[-1])
         intermediate_budgets.append(problem.factors["budget"])
@@ -1059,6 +1012,147 @@ def read_experiment_results(file_name_path):
     with open(file_name_path, "rb") as file:
         experiment = pickle.load(file)
     return experiment
+
+
+def post_normalize(experiments, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False, initial_val=None, proxy_opt_val=None, proxy_opt_x=None):
+    """
+    Construct (normalized) progress curves for a collection of experiments
+    on a given problem.
+
+    Parameters
+    ----------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on a common problem
+    n_postreps_init_opt : int
+        number of postreplications to take at initial x0 and optimal x*
+    crn_across_budget : bool
+        use CRN for post-replications at solutions recommended at different times?
+    crn_across_macroreps : bool
+        use CRN for post-replications at solutions recommended on different macroreplications?
+    initial_val : float
+        known objective function value of initial solution
+    proxy_opt_x : tuple
+        proxy for optimal solution
+    proxy_opt_val : float
+        proxy for or bound on optimal objective function value
+    """
+    # Check that all experiments have the same problem and same experimental
+    # setup.
+    ref_experiment = experiments[0]
+    for experiment in experiments:
+        # Check if problems are the same.
+        # TO DO: Oracle objects will not match (exclude from comparison).
+        if experiment.problem.__dict__ != ref_experiment.problem.__dict__:
+            print("At least two experiments have different problem instances.")
+        # CHECK IF NUMBER OF MACRO-REPLICATIONS ARE THE SAME?
+        # Check if experiment has been post-replicated and with common number of postreps.
+        if getattr(experiment, "n_postreps", None) is None:
+            print("The experiment of " + experiment.solver_name + " on " + experiment.problem_name + " has not been post-replicated.")
+        elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
+            print("At least two experiments have different numbers of post-replications.")
+        # Check if past and present use of CRN agree.
+        if (experiment.crn_across_budget != crn_across_budget) or (experiment.crn_across_macroreps != crn_across_macroreps):
+            print("Pass use of CRN for post-replications does not agree with current use.")
+    # Take post-replications at common x0.
+    # Create, initialize, and attach RNGs for oracle.
+        # Stream 0: reserved for post-replications.
+    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.oracle.n_rngs)]
+    x0 = ref_experiment.problem.factors["initial_solution"]
+    if initial_val is not None:
+        x0_postreps = [initial_val]*n_postreps_init_opt
+    else:
+        initial_soln = Solution(x0, ref_experiment.problem)
+        initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+        ref_experiment.problem.simulate(solution=initial_soln, m=n_postreps_init_opt)
+        x0_postreps = list(initial_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
+    if crn_across_budget:
+        # Reset each rng to start of its current substream.
+        for rng in baseline_rngs:
+            rng.reset_substream()
+    # Determine (proxy for) optimal solution and/or (proxy for) its
+    # objective function value. If deterministic (proxy for) f(x*),
+    # create duplicate post-replicates to facilitate later bootstrapping.
+    # If f(x*) is known...
+    if ref_experiment.problem.optimal_value is not None:
+        xstar = None
+        xstar_postreps = [ref_experiment.problem.optimal_value]*n_postreps_init_opt
+    # ...else if x* is known...
+    elif ref_experiment.problem.optimal_solution is not None:
+        xstar = ref_experiment.problem.optimal_solution
+        # Take post-replications at xstar
+        opt_soln = Solution(xstar, ref_experiment.problem)
+        opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+        ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
+        xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
+    #...else if proxy for f(x*) is specified...
+    elif proxy_opt_val is not None:
+        xstar = None
+        xstar_postreps = [proxy_opt_val]*n_postreps_init_opt
+    #...else if proxy for x* is specified...
+    elif proxy_opt_x is not None:
+        xstar = proxy_opt_x
+        # Take post-replications at xstar
+        opt_soln = Solution(xstar, ref_experiment.problem)
+        opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+        ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
+        xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
+    #...else determine x* empirically as estimated best solution
+    # found by any solver on any macroreplication.
+    else:
+        # TO DO: Simplify this block of code.
+        best_est_objectives = np.zeros(len(experiments))
+        for experiment_idx in range(len(experiments)):
+            experiment = experiments[experiment_idx]
+            exp_best_est_objectives = np.zeros(experiment.n_macroreps)
+            for mrep in range(experiment.n_macroreps):
+                exp_best_est_objectives[mrep] = np.max(experiment.problem.minmax[0]*np.array(experiment.all_est_objectives[mrep]))
+            best_est_objectives[experiment_idx] = np.max(exp_best_est_objectives)
+        best_experiment_idx = np.argmax(best_est_objectives)
+        best_experiment = experiments[best_experiment_idx]
+        best_exp_best_est_objectives = np.zeros(experiment.n_macroreps)
+        for mrep in range(best_experiment.n_macroreps):
+            best_exp_best_est_objectives[mrep] = np.max(best_experiment.problem.minmax[0]*np.array(best_experiment.all_est_objectives[mrep]))
+        best_mrep = np.argmax(best_exp_best_est_objectives)
+        best_budget_idx = np.argmax(best_experiment.all_est_objectives[best_mrep])
+        xstar = best_experiment.all_recommended_xs[best_mrep][best_budget_idx]
+        # Take post-replications at x*.
+        opt_soln = Solution(xstar, ref_experiment.problem)
+        opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+        ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
+        xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
+    # print(xstar)
+    # print(xstar_postreps)
+    # Compute signed initial optimality gap = f(x0) - f(x*).
+    initial_obj_val = np.mean(x0_postreps)
+    opt_obj_val = np.mean(xstar_postreps)
+    initial_opt_gap = initial_obj_val - opt_obj_val
+    # Store x0 and x* info and compute progress curves for each Experiment.
+    for experiment in experiments:
+        # DOUBLE-CHECK FOR SHALLOW COPY ISSUES.
+        experiment.x0 = x0
+        experiment.x0_postreps = x0_postreps
+        experiment.xstar = xstar
+        experiment.xstar_postreps = xstar_postreps
+        # Construct objective and progress curves.
+        experiment.objective_curves = []
+        experiment.progress_curves = []
+        for mrep in range(experiment.n_macroreps):
+            est_objectives = []
+            # Substitute estimates at x0 and x* (based on N postreplicates)
+            # with new estimates (based on L postreplicates).
+            for budget in range(len(experiment.all_intermediate_budgets[mrep])):
+                if experiment.all_recommended_xs[mrep][budget] == x0:
+                    est_objectives.append(np.mean(x0_postreps))
+                elif experiment.all_recommended_xs[mrep][budget] == xstar:
+                    est_objectives.append(np.mean(xstar_postreps))
+                else:
+                    est_objectives.append(experiment.all_est_objectives[mrep][budget])
+            experiment.objective_curves.append(Curve(x_vals=experiment.all_intermediate_budgets[mrep], y_vals=est_objectives))
+            # Normalize by initial optimality gap.
+            norm_est_objectives = [(est_objective - opt_obj_val)/initial_opt_gap for est_objective in est_objectives]
+            experiment.progress_curves.append(Curve(x_vals=experiment.all_intermediate_budgets[mrep], y_vals=norm_est_objectives))
+        # Save Experiment object to .pickle file.
+        experiment.record_experiment_results()
 
 
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
@@ -1454,7 +1548,7 @@ class MetaExperiment(object):
                         estimator = np.mean(experiment.all_prog_curves, axis=0)
                         plt.step(experiment.unique_frac_budgets, estimator, where="post")
                     else:
-                        estimator = np.mean(experiment.all_est_objective, axis=0)
+                        estimator = np.mean(experiment.all_est_objectives, axis=0)
                         plt.step(experiment.unique_budgets, estimator, where="post")
                 elif plot_type == "quantile":
                     # Plot estimated beta-quantile progress curve.
@@ -1462,7 +1556,7 @@ class MetaExperiment(object):
                         estimator = np.quantile(experiment.all_prog_curves, q=beta, axis=0)
                         plt.step(experiment.unique_frac_budgets, estimator, where="post")
                     else:
-                        estimator = np.quantile(experiment.all_est_objective, q=beta, axis=0)
+                        estimator = np.quantile(experiment.all_est_objectives, q=beta, axis=0)
                         plt.step(experiment.unique_budgets, estimator, where="post")
                 else:
                     print("Not a valid plot type.")

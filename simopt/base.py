@@ -210,12 +210,10 @@ class Problem(object):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_bound : float
-        bound on optimal objective function value
+    optimal_value : float
+        optimal objective function value
     optimal_solution : tuple
-        optimal solution (if known)
-    ref_optimal_solution : tuple
-        reference solution (in lieu of optimal)
+        optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
