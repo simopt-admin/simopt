@@ -236,19 +236,17 @@ class Experiment(object):
         sequences of intermediate budgets from each macroreplication
     n_postreps : int
         number of postreplications to take at each recommended solution
-    n_postreps_init_opt : int
-        number of postreplications to take at initial solution (x0) and
-        optimal solution (x*)
     crn_across_budget : bool
         use CRN for post-replications at solutions recommended at different times?
     crn_across_macroreps : bool
         use CRN for post-replications at solutions recommended on different macroreplications?
-    all_reevaluated_solns : list of Solution objects
-        reevaluated solutions recommended by the solver
     all_post_replicates : list of lists of lists
         all post-replicates from all solutions from all macroreplications
     all_est_objective : numpy array of arrays
         estimated objective values of all solutions from all macroreplications
+    n_postreps_init_opt : int
+        number of postreplications to take at initial solution (x0) and
+        optimal solution (x*)
     all_prog_curves : numpy array of arrays
         estimated progress curves from all macroreplications
     initial_soln : base.Solution object
@@ -295,8 +293,14 @@ class Experiment(object):
         path of .pickle file for saving wrapper_base.Experiment object
     """
     def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
-        self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
-        self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        if solver_rename is None:
+            self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
+        else:
+            self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+        if problem_rename is None:
+            self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        else:
+            self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
         if file_name_path is None:
             self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
         else:
@@ -328,7 +332,6 @@ class Experiment(object):
         rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # unused
         rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])  # unused
         rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
-        # self.solver.attach_rngs([MRG32k3a(s_ss_sss_index=[2, 2, 0])])
         rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])  # unused
         self.solver.attach_rngs([rng1, rng2, rng3])
         # Run n_macroreps of the solver on the problem.
@@ -350,7 +353,123 @@ class Experiment(object):
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
-    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
+        """
+        Run postreplications at solutions recommended by the solver.
+
+        Arguments
+        ---------
+        n_postreps : int
+            number of postreplications to take at each recommended solution
+        crn_across_budget : bool
+            use CRN for post-replications at solutions recommended at different times?
+        crn_across_macroreps : bool
+            use CRN for post-replications at solutions recommended on different macroreplications?
+        """
+        self.n_postreps = n_postreps
+        self.crn_across_budget = crn_across_budget
+        self.crn_across_macroreps = crn_across_macroreps        
+        # Create, initialize, and attach RNGs for oracle.
+        # Stream 0: reserved for post-replications.
+        # Skip over first set of substreams dedicated for sampling x0 and x*.
+        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.oracle.n_rngs + rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
+        # Initialize matrix containing
+        #     all postreplicates of objective,
+        #     for each macroreplication,
+        #     for each budget.
+        self.all_post_replicates = [[[] for _ in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        # Simulate intermediate recommended solutions.
+        for mrep in range(self.n_macroreps):
+            for budget_index in range(len(self.all_intermediate_budgets[mrep])):
+                x = self.all_recommended_xs[mrep][budget_index]
+                fresh_soln = Solution(x, self.problem)
+                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+                self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
+                # Store results
+                self.all_post_replicates[mrep][budget_index] = list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0])  # 0 <- assuming only one objective                 
+                if crn_across_budget:
+                    # Reset each rng to start of its current substream.
+                    for rng in baseline_rngs:
+                        rng.reset_substream()
+            if crn_across_macroreps:
+                # Reset each rng to start of its current substream.
+                for rng in baseline_rngs:
+                    rng.reset_substream()
+            else:
+                # Advance each rng to start of
+                #     substream = current substream + # of oracle RNGs.
+                for rng in baseline_rngs:
+                    for _ in range(self.problem.oracle.n_rngs):
+                        rng.advance_substream()
+        # Store estimated objective for each macrorep for each budget.
+        self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        # Save Experiment object to .pickle file.
+        self.record_experiment_results()
+
+        
+        # # Simulate common initial solution x0.
+        # x0 = self.problem.factors["initial_solution"]
+        # self.initial_soln = Solution(x0, self.problem)
+        # self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+        # self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
+        # if crn_across_budget:
+        #     # Reset each rng to start of its current substream.
+        #     for rng in copied_baseline_rngs:
+        #         rng.reset_substream()
+        # # Determine reference optimal solution x*.
+        # if self.problem.ref_optimal_solution is not None:
+        #     xstar = self.problem.ref_optimal_solution
+        # else:  # Look up estimated best solution recommended over all macroreplications.
+        #     # TO DO: Simplify this block of code.
+        #     # TO DO: Handle duplicate argmaxs.
+        #     # TO DO: Currently 0 <- assuming only one objective. Generalize.
+        #     best_est_objectives = np.zeros(self.n_macroreps)
+        #     for mrep in range(self.n_macroreps):
+        #         est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[mrep]])
+        #         best_est_objectives[mrep] = np.max(self.problem.minmax[0]*est_objectives)
+        #     best_mrep = np.argmax(self.problem.minmax[0]*best_est_objectives)
+        #     best_mrep_est_objectives = np.array([np.mean(rec_soln.objectives[:self.n_postreps][:, 0]) for rec_soln in self.all_reevaluated_solns[best_mrep]])
+        #     best_soln_index = np.argmax(self.problem.minmax[0]*best_mrep_est_objectives)
+        #     xstar = self.all_reevaluated_solns[best_mrep][best_soln_index].x
+        # # Simulate reference optimal solution x*.
+        # self.ref_opt_soln = Solution(xstar, self.problem)
+        # self.ref_opt_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
+        # self.problem.simulate(solution=self.ref_opt_soln, m=self.n_postreps_init_opt)
+        # # Replace recommended solutions corresponding to x0 and x* with resimulated versions.
+        # for mrep in range(self.n_macroreps):
+        #     for soln_index in range(len(self.all_reevaluated_solns[mrep])):
+        #         if self.all_reevaluated_solns[mrep][soln_index].x == x0:
+        #             self.all_reevaluated_solns[mrep][soln_index] = self.initial_soln
+        #         elif self.all_reevaluated_solns[mrep][soln_index].x == xstar:
+        #             self.all_reevaluated_solns[mrep][soln_index] = self.ref_opt_soln
+        # # Preprocessing in anticipation of plotting.
+        # # Extract all unique budget points.
+        # repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
+        # self.unique_budgets = np.unique(repeat_budgets)
+        # self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
+        # n_inter_budgets = len(self.unique_budgets)
+        # # Compute signed initial optimality gap = f(x0) - f(x*);
+        # initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
+        # ref_opt_obj_val = np.mean(self.ref_opt_soln.objectives[:self.ref_opt_soln.n_reps][:, 0])  # 0 <- assuming only one objective
+        # initial_opt_gap = initial_obj_val - ref_opt_obj_val
+        # # Populate matrix containing
+        # #     all replicates of objective,
+        # #     for each macroreplication,
+        # #     for each budget.
+        # self.all_post_replicates = [[[] for _ in range(n_inter_budgets)] for _ in range(self.n_macroreps)]
+        # for mrep in range(self.n_macroreps):
+        #     for budget_index in range(n_inter_budgets):
+        #         mrep_budget_index = np.max(np.where(np.array(self.all_intermediate_budgets[mrep]) <= self.unique_budgets[budget_index]))
+        #         lookup_solution = self.all_reevaluated_solns[mrep][mrep_budget_index]
+        #         self.all_post_replicates[mrep][budget_index] = list(lookup_solution.objectives[:lookup_solution.n_reps][:, 0])  # 0 <- assuming only one objective
+        # # Store estimated objective and progress curve values
+        # # for each macrorep for each budget.
+        # self.all_est_objective = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+        # self.all_prog_curves = [[(self.all_est_objective[mrep][budget_index] - ref_opt_obj_val) / initial_opt_gap for budget_index in range(n_inter_budgets)] for mrep in range(self.n_macroreps)]
+        # # Save Experiment object to .pickle file.
+        # self.record_experiment_results()
+
+    def post_replicate_old(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
 
