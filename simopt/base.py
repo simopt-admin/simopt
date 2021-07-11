@@ -60,6 +60,30 @@ class Solver(object):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
+    def __eq__(self, other):
+        """
+        Check if two solvers are equivalent.
+
+        Arguments
+        ---------
+        other : base.Solver object
+            other Solver object to compare to self
+
+        Returns
+        -------
+        bool
+            Are the two solvers equivalent?
+        """
+        if type(self) == type(other):
+            if self.factors == other.factors:
+                return True
+            else:
+                print("Solver factors do not match.")
+                return False
+        else:
+            print("Solver types do not match.")
+            return False
+
     def attach_rngs(self, rng_list):
         """
         Attach a list of random-number generators to the solver.
@@ -253,6 +277,34 @@ class Problem(object):
                 oracle_fixed_factors[key] = self.oracle_default_factors[key]
         self.oracle_fixed_factors = oracle_fixed_factors
         # super().__init__()
+
+    def __eq__(self, other):
+        """
+        Check if two problems are equivalent.
+
+        Arguments
+        ---------
+        other : base.Problem object
+            other Problem object to compare to self
+
+        Returns
+        -------
+        bool
+            Are the two problems equivalent?
+        """
+        if type(self) == type(other):
+            if self.factors == other.factors:
+                if self.oracle == other.oracle:
+                    return True
+                else:
+                    print("Problem oracles do not match.")
+                    return False
+            else:
+                print("Problem factors do not match.")
+                return False
+        else:
+            print("Problem types do not match.")
+            return False
 
     def check_initial_solution(self):
         return self.check_deterministic_constraints(x=self.factors["initial_solution"])
@@ -558,6 +610,30 @@ class Oracle(object):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
+
+    def __eq__(self, other):
+        """
+        Check if two oracles are equivalent.
+
+        Arguments
+        ---------
+        other : base.Oracle object
+            other Oracle object to compare to self
+
+        Returns
+        -------
+        bool
+            Are the two oracles equivalent?
+        """
+        if type(self) == type(other):
+            if self.factors == other.factors:
+                return True
+            else:
+                print("Oracle factors do not match.")
+                return False
+        else:
+            print("Oracle types do not match.")
+            return False
 
     def check_simulatable_factor(self, factor_name):
         """

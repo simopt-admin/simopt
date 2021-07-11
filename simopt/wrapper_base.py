@@ -263,7 +263,7 @@ class Experiment(object):
         curves of estimated objective function values,
         one for each macroreplication
     progress_curves : list of wrapper_base.Curve objects
-        progress curves, one for each macroreplication    
+        progress curves, one for each macroreplication
     all_prog_curves : numpy array of arrays
         estimated progress curves from all macroreplications
     initial_soln : base.Solution object
@@ -385,7 +385,7 @@ class Experiment(object):
         """
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
-        self.crn_across_macroreps = crn_across_macroreps        
+        self.crn_across_macroreps = crn_across_macroreps   
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
         # Skip over first set of substreams dedicated for sampling x0 and x*.
@@ -422,7 +422,6 @@ class Experiment(object):
         self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
-
 
     # def post_replicate_old(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
     #     """
@@ -1041,8 +1040,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     ref_experiment = experiments[0]
     for experiment in experiments:
         # Check if problems are the same.
-        # TO DO: Oracle objects will not match (exclude from comparison).
-        if experiment.problem.__dict__ != ref_experiment.problem.__dict__:
+        if experiment.problem != ref_experiment.problem:
             print("At least two experiments have different problem instances.")
         # Check if experiments have common number of macroreps.
         if experiment.n_macroreps != ref_experiment.n_macroreps:
