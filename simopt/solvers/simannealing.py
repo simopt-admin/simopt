@@ -78,7 +78,7 @@ class SANE(Solver):
             }
         }
         self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_soln,
+            "crn_across_solns": self.check_crn_across_solns,
             "sampling_variance": self.check_sampling_variance,
             "init_temp": self.check_init_temp,
             "cooling_coeff": self.check_cooling_coeff

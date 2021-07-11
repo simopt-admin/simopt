@@ -113,12 +113,47 @@ class Experiment(object):
         path of .pickle file for saving wrapper_base.Experiment object
     """
     def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
-        self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
-        self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        if solver_rename is None:
+            self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
+        else:
+            self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+        if problem_rename is None:
+            self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        else:
+            self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
         if file_name_path is None:
             self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
         else:
             self.file_name_path = file_name_path
+
+    def check_compatibility(self):
+        """
+        Check whether the experiment's solver and problem are compatible.
+
+        Returns
+        -------
+        error_str : str
+            error message in the event problem and solver are incompatible
+        """
+        error_str = ""
+        # Check number of objectives.
+        if self.solver.objective_type == "single" and self.problem.n_objectives > 1:
+            error_str += "Solver cannot solve a multi-objective problem.\n"
+        elif self.solver.objective_type == "multi" and self.problem.n_objectives == 1:
+            error_str += "Multi-objective solver being run on a single-objective problem.\n"
+        # Check constraint types.
+        constraint_types = ["unconstrained", "box", "deterministic", "stochastic"]
+        if constraint_types.index(self.solver.constraint_type) < constraint_types.index(self.problem.constraint_type):
+            error_str += "Solver can handle upto " + self.solver.constraint_type + " constraints, but problem has " + self.problem.constraint_type + " constraints.\n"
+        # Check variable types.
+        if self.solver.variable_type == "discrete" and self.problem.variable_type != "discrete":
+            error_str += "Solver is for discrete variables but problem variables are " + self.problem.variable_type + ".\n"
+        elif self.solver.variable_type == "continuous" and self.problem.variable_type != "continuous":
+            error_str += "Solver is for continuous variables but problem variables are " + self.problem.variable_type + ".\n"
+        # Check for existence of gradient estimates.
+        if self.solver.gradient_needed and not self.problem.gradient_available:
+            error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
+        return error_str
 
     def run(self, n_macroreps):
         """
