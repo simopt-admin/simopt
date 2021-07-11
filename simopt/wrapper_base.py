@@ -249,6 +249,8 @@ class Experiment(object):
     n_postreps_init_opt : int
         number of postreplications to take at initial solution (x0) and
         optimal solution (x*)
+    crn_across_init_opt : bool
+        use CRN for post-replications at solutions x0 and x*?
     x0 : tuple
         initial solution (x0)
     x0_postreps : list
@@ -1014,10 +1016,10 @@ def read_experiment_results(file_name_path):
     return experiment
 
 
-def post_normalize(experiments, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False, initial_val=None, proxy_opt_val=None, proxy_opt_x=None):
+def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None):
     """
-    Construct (normalized) progress curves for a collection of experiments
-    on a given problem.
+    Construct objective curves and (normalized) progress curves
+    for a collection of experiments on a given problem.
 
     Parameters
     ----------
@@ -1025,78 +1027,76 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_budget=True, crn
         experiments of different solvers on a common problem
     n_postreps_init_opt : int
         number of postreplications to take at initial x0 and optimal x*
-    crn_across_budget : bool
-        use CRN for post-replications at solutions recommended at different times?
-    crn_across_macroreps : bool
-        use CRN for post-replications at solutions recommended on different macroreplications?
-    initial_val : float
+    crn_across_init_opt : bool
+        use CRN for post-replications at solutions x0 and x*?
+    proxy_init_val : float
         known objective function value of initial solution
-    proxy_opt_x : tuple
-        proxy for optimal solution
     proxy_opt_val : float
         proxy for or bound on optimal objective function value
+    proxy_opt_x : tuple
+        proxy for optimal solution
     """
-    # Check that all experiments have the same problem and same experimental
-    # setup.
+    # Check that all experiments have the same problem and same
+    # post-experimental setup.
     ref_experiment = experiments[0]
     for experiment in experiments:
         # Check if problems are the same.
         # TO DO: Oracle objects will not match (exclude from comparison).
         if experiment.problem.__dict__ != ref_experiment.problem.__dict__:
             print("At least two experiments have different problem instances.")
-        # CHECK IF NUMBER OF MACRO-REPLICATIONS ARE THE SAME?
+        # Check if experiments have common number of macroreps.
+        if experiment.n_macroreps != ref_experiment.n_macroreps:
+            print("At least two experiments have different numbers of macro-replications.")
         # Check if experiment has been post-replicated and with common number of postreps.
         if getattr(experiment, "n_postreps", None) is None:
             print("The experiment of " + experiment.solver_name + " on " + experiment.problem_name + " has not been post-replicated.")
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
-        # Check if past and present use of CRN agree.
-        if (experiment.crn_across_budget != crn_across_budget) or (experiment.crn_across_macroreps != crn_across_macroreps):
-            print("Pass use of CRN for post-replications does not agree with current use.")
+            print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
     baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.oracle.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
-    if initial_val is not None:
-        x0_postreps = [initial_val]*n_postreps_init_opt
+    if proxy_init_val is not None:
+        x0_postreps = [proxy_init_val]*n_postreps_init_opt
     else:
         initial_soln = Solution(x0, ref_experiment.problem)
         initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(solution=initial_soln, m=n_postreps_init_opt)
         x0_postreps = list(initial_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
-    if crn_across_budget:
+    if crn_across_init_opt:
         # Reset each rng to start of its current substream.
         for rng in baseline_rngs:
             rng.reset_substream()
     # Determine (proxy for) optimal solution and/or (proxy for) its
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
-    # If f(x*) is known...
-    if ref_experiment.problem.optimal_value is not None:
+    # If proxy for f(x*) is specified...
+    if proxy_opt_val is not None:
+        xstar = None
+        xstar_postreps = [proxy_opt_val]*n_postreps_init_opt
+    # ...else if proxy for x* is specified...
+    elif proxy_opt_x is not None:
+        xstar = proxy_opt_x
+        # Take post-replications at xstar.
+        opt_soln = Solution(xstar, ref_experiment.problem)
+        opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+        ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
+        xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
+    # ...else if f(x*) is known...
+    elif ref_experiment.problem.optimal_value is not None:
         xstar = None
         xstar_postreps = [ref_experiment.problem.optimal_value]*n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
         xstar = ref_experiment.problem.optimal_solution
-        # Take post-replications at xstar
+        # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
         opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
         xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
-    #...else if proxy for f(x*) is specified...
-    elif proxy_opt_val is not None:
-        xstar = None
-        xstar_postreps = [proxy_opt_val]*n_postreps_init_opt
-    #...else if proxy for x* is specified...
-    elif proxy_opt_x is not None:
-        xstar = proxy_opt_x
-        # Take post-replications at xstar
-        opt_soln = Solution(xstar, ref_experiment.problem)
-        opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-        ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
-        xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
-    #...else determine x* empirically as estimated best solution
+    # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
         # TO DO: Simplify this block of code.
@@ -1120,8 +1120,6 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_budget=True, crn
         opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(solution=opt_soln, m=n_postreps_init_opt)
         xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
-    # print(xstar)
-    # print(xstar_postreps)
     # Compute signed initial optimality gap = f(x0) - f(x*).
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
