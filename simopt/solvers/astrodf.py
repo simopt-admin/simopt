@@ -39,6 +39,8 @@ class ASTRODF(Solver):
 
     Arguments
     ---------
+    name : str
+        user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
@@ -46,8 +48,8 @@ class ASTRODF(Solver):
     --------
     base.Solver
     """
-    def __init__(self, fixed_factors={}):
-        self.name = "ASTRODF"
+    def __init__(self, name="ASTRODF", fixed_factors={}):
+        self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
@@ -65,19 +67,13 @@ class ASTRODF(Solver):
             }
         }
         self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_soln,
+            "crn_across_solns": self.check_crn_across_solns,
             "sample_size": self.check_sample_size
         }
         super().__init__(fixed_factors)
 
-    def check_crn_across_soln(self):
-        pass
-
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
-
-    def check_solver_factors(self):
-        pass
     
     def standard_basis(self, size, index):
         arr = np.zeros(size)
@@ -195,12 +191,12 @@ class ASTRODF(Solver):
         k = 0                   #iteration number
 
         # Start with the initial solution
-        new_x = problem.initial_solution
+        new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         
-        while expended_budget < problem.budget:
+        while expended_budget < problem.factors["budget"]:
             k += 1
             #print(k)
             fval,Y,q,grad,Hessian,delta_k,expended_budget = self.model_construction(new_x,delta,k,lin_quad,problem,expended_budget)

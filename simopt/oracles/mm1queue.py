@@ -218,10 +218,6 @@ class MM1MinMeanSojournTime(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    initial_solution : tuple
-        default initial solution from which solvers start
-    budget : int
-        max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     ref_optimal_solution : tuple
@@ -242,6 +238,8 @@ class MM1MinMeanSojournTime(Problem):
 
     Arguments
     ---------
+    name : str
+        user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed_factors : dict
@@ -251,8 +249,8 @@ class MM1MinMeanSojournTime(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "MM1-1"
+    def __init__(self, name="MM1-1", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
@@ -260,16 +258,29 @@ class MM1MinMeanSojournTime(Problem):
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.budget = 1000
         self.optimal_bound = 0
         self.ref_optimal_solution = None  # (2.75,)
-        self.initial_solution = (5,)
         self.oracle_default_factors = {
             "warmup": 50,
             "people": 200
         }
         self.factors = fixed_factors
-        self.specifications = {}
+        self.specifications = {
+            "initial_solution": {
+                "description": "Initial solution from which solvers start.",
+                "datatype": tuple,
+                "default": (5,)
+            },
+            "budget": {
+                "description": "Max # of replications for a solver to take.",
+                "datatype": int,
+                "default": 1000
+            }
+        }
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget
+        }
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = MM1Queue(self.oracle_fixed_factors)

@@ -53,8 +53,8 @@ class Solver(object):
         dictionary of user-specified solver factors
     """
     def __init__(self, fixed_factors):
-        # set factors of the solver
-        # fill in missing factors with default values
+        # Set factors of the solver.
+        # Fill in missing factors with default values.
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
@@ -88,6 +88,9 @@ class Solver(object):
             list of intermediate budgets when recommended solutions changes
         """
         raise NotImplementedError
+
+    def check_crn_across_solns(self):
+        return True
 
     def check_solver_factor(self, factor_name):
         """
@@ -207,10 +210,6 @@ class Problem(object):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    initial_solution : tuple
-        default initial solution from which solvers start
-    budget : int > 0
-        max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     optimal_solution : tuple
@@ -228,6 +227,10 @@ class Problem(object):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+            initial_solution : tuple
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -239,19 +242,74 @@ class Problem(object):
         subset of user-specified non-decision factors to pass through to the oracle
     """
     def __init__(self, fixed_factors, oracle_fixed_factors):
-        # set factors of the problem
-        # fill in missing factors with default values
+        # Set factors of the problem.
+        # Fill in missing factors with default values.
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        # set subset of factors of the simulation oracle
-        # fill in missing oracle factors with problem-level default values
+        # Set subset of factors of the simulation oracle.
+        # Fill in missing oracle factors with problem-level default values.
         for key in self.oracle_default_factors:
             if key not in oracle_fixed_factors:
                 oracle_fixed_factors[key] = self.oracle_default_factors[key]
         self.oracle_fixed_factors = oracle_fixed_factors
         # super().__init__()
+
+    def check_initial_solution(self):
+        return self.check_deterministic_constraints(x=self.factors["initial_solution"])
+
+    def check_budget(self):
+        return self.factors["budget"] > 0
+
+    def check_problem_factor(self, factor_name):
+        """
+        Determine if the setting of a problem factor is permissible.
+
+        Arguments
+        ---------
+        factor_name : string
+            name of factor for dictionary lookup (i.e., key)
+
+        Returns
+        -------
+        is_permissible : bool
+            indicates if problem factor is permissible
+        """
+        is_permissible = True
+        is_permissible *= self.check_factor_datatype(factor_name)
+        is_permissible *= self.check_factor_list[factor_name]()
+        return is_permissible
+        # raise NotImplementedError
+
+    def check_problem_factors(self):
+        """
+        Determine if the joint settings of problem factors are permissible.
+
+        Returns
+        -------
+        is_simulatable : bool
+            indicates if problem factors are permissible
+        """
+        return True
+        # raise NotImplementedError
+
+    def check_factor_datatype(self, factor_name):
+        """
+        Determine if a factor's data type matches its specification.
+
+        Arguments
+        ---------
+        factor_name : string
+            string corresponding to name of factor to check
+
+        Returns
+        -------
+        is_right_type : bool
+            indicates if factor is of specified data type
+        """
+        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        return is_right_type
 
     def attach_rngs(self, rng_list):
         """

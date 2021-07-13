@@ -13,10 +13,10 @@ class SSCont(Oracle):
     """
     An oracle that simulates multiple periods' worth of sales for a (s,S)
     inventory problem with continuous inventory, exponentially distributed
-    demand, and poisson distributed lead time. Returns the various types of average costs per period, order rate,
-    stockout rate, fraction of demand met with inventory on hand, average
-    amount backordered given a stockout occured, and average amount ordered
-    given an order occured.
+    demand, and poisson distributed lead time. Returns the various types of
+    average costs per period, order rate, stockout rate, fraction of demand
+    met with inventory on hand, average amount backordered given a stockout
+    occured, and average amount ordered given an order occured.
 
     Attributes
     ----------
@@ -296,10 +296,6 @@ class SSContMinCost(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    initial_solution : tuple
-        default initial solution from which solvers start
-    budget : int
-        max number of replications (fn evals) for a solver to take
     optimal_bound : float
         bound on optimal objective function value
     ref_optimal_solution : tuple
@@ -315,11 +311,17 @@ class SSContMinCost(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
+            initial_solution : tuple
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
     Arguments
     ---------
+    name : str
+        user-specified name of problem
     fixed_factors : dict
         dictionary of user-specified problem factors
     oracle_fixed factors : dict
@@ -329,8 +331,8 @@ class SSContMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, fixed_factors={}, oracle_fixed_factors={}):
-        self.name = "SSCONT-1"
+    def __init__(self, name="SSCONT-1", fixed_factors={}, oracle_fixed_factors={}):
+        self.name = name
         self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -338,14 +340,27 @@ class SSContMinCost(Problem):
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = False
-        self.budget = 1000
         self.optimal_bound = 0
         self.optimal_solution = None
-        self.initial_solution = (600, 600)
         self.ref_optimal_solution = None
         self.oracle_default_factors = {}
         self.factors = fixed_factors
-        self.specifications = {}
+        self.specifications = {
+            "initial_solution": {
+                "description": "Initial solution from which solvers start.",
+                "datatype": tuple,
+                "default": (600, 600)
+            },
+            "budget": {
+                "description": "Max # of replications for a solver to take.",
+                "datatype": int,
+                "default": 1000
+            }
+        }
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget
+        }
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = SSCont(self.oracle_fixed_factors)

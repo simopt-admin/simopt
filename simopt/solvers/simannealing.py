@@ -40,6 +40,8 @@ class SANE(Solver):
 
     Arguments
     ---------
+    name : str
+        user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
@@ -47,8 +49,8 @@ class SANE(Solver):
     --------
     base.Solver
     """
-    def __init__(self, fixed_factors={}):
-        self.name = "SANE"
+    def __init__(self, name="SANE", fixed_factors={}):
+        self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
         self.variable_type = "mixed"
@@ -76,15 +78,12 @@ class SANE(Solver):
             }
         }
         self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_soln,
+            "crn_across_solns": self.check_crn_across_solns,
             "sampling_variance": self.check_sampling_variance,
             "init_temp": self.check_init_temp,
             "cooling_coeff": self.check_cooling_coeff
         }
         super().__init__(fixed_factors)
-
-    def check_crn_across_soln(self):
-        pass
 
     def check_sampling_variance(self):
         return self.factors["sample_variance"] > 0
@@ -94,9 +93,6 @@ class SANE(Solver):
 
     def check_cooling_coeff(self):
         return 0 < self.factors["cooling_coeff"] < 1
-
-    def check_solver_factors(self):
-        pass
 
     def solve(self, problem):
         """
@@ -127,10 +123,10 @@ class SANE(Solver):
         # quality, and switch based on estimated differences and current 
         # temperature.
         # TO DO: Double-check how RNGs are to be used to simulate solutions.
-        while expended_budget < problem.budget:
+        while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
-                current_x = problem.initial_solution
+                current_x = problem.factors["initial_solution"]
                 current_solution = self.create_new_solution(current_x, problem)
                 recommended_solns.append(current_solution)
                 intermediate_budgets.append(expended_budget)

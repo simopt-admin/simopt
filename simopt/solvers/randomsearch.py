@@ -36,6 +36,8 @@ class RandomSearch(Solver):
 
     Arguments
     ---------
+    name : str
+        user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
@@ -43,8 +45,8 @@ class RandomSearch(Solver):
     --------
     base.Solver
     """
-    def __init__(self, fixed_factors={}):
-        self.name = "RNDSRCH"
+    def __init__(self, name="RNDSRCH", fixed_factors={}):
+        self.name = name
         self.objective_type = "single"
         self.constraint_type = "stochastic"
         self.variable_type = "mixed"
@@ -62,19 +64,13 @@ class RandomSearch(Solver):
             }
         }
         self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_soln,
+            "crn_across_solns": self.check_crn_across_solns,
             "sample_size": self.check_sample_size
         }
         super().__init__(fixed_factors)
 
-    def check_crn_across_soln(self):
-        pass
-
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
-
-    def check_solver_factors(self):
-        pass
 
     def solve(self, problem):
         """
@@ -100,10 +96,10 @@ class RandomSearch(Solver):
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Sequentially generate random solutions and simulate them.
-        while expended_budget < problem.budget:
+        while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
-                new_x = problem.initial_solution
+                new_x = problem.factors["initial_solution"]
                 new_solution = self.create_new_solution(new_x, problem)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)

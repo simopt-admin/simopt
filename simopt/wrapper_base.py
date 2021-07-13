@@ -55,7 +55,8 @@ class Experiment(object):
     n_postreps : int
         number of postreplications to take at each recommended solution
     n_postreps_init_opt : int
-        number of postreplications to take at initial x0 and optimal x*
+        number of postreplications to take at initial solution (x0) and
+        optimal solution (x*)
     crn_across_budget : bool
         use CRN for post-replications at solutions recommended at different times?
     crn_across_macroreps : bool
@@ -94,10 +95,14 @@ class Experiment(object):
 
     Arguments
     ---------
-    solver_name : string
+    solver_name : str
         name of solver
-    problem_name : string
+    problem_name : str
         name of problem
+    solver_rename : str
+        user-specified name for solver
+    problem_rename : str
+        user-specified name for problem
     solver_fixed_factors : dict
         dictionary of user-specified solver factors
     problem_fixed_factors : dict
@@ -107,13 +112,48 @@ class Experiment(object):
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name, problem_name, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
-        self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
-        self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+    def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
+        if solver_rename is None:
+            self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
+        else:
+            self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+        if problem_rename is None:
+            self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+        else:
+            self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
         if file_name_path is None:
             self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
         else:
             self.file_name_path = file_name_path
+
+    def check_compatibility(self):
+        """
+        Check whether the experiment's solver and problem are compatible.
+
+        Returns
+        -------
+        error_str : str
+            error message in the event problem and solver are incompatible
+        """
+        error_str = ""
+        # Check number of objectives.
+        if self.solver.objective_type == "single" and self.problem.n_objectives > 1:
+            error_str += "Solver cannot solve a multi-objective problem.\n"
+        elif self.solver.objective_type == "multi" and self.problem.n_objectives == 1:
+            error_str += "Multi-objective solver being run on a single-objective problem.\n"
+        # Check constraint types.
+        constraint_types = ["unconstrained", "box", "deterministic", "stochastic"]
+        if constraint_types.index(self.solver.constraint_type) < constraint_types.index(self.problem.constraint_type):
+            error_str += "Solver can handle upto " + self.solver.constraint_type + " constraints, but problem has " + self.problem.constraint_type + " constraints.\n"
+        # Check variable types.
+        if self.solver.variable_type == "discrete" and self.problem.variable_type != "discrete":
+            error_str += "Solver is for discrete variables but problem variables are " + self.problem.variable_type + ".\n"
+        elif self.solver.variable_type == "continuous" and self.problem.variable_type != "continuous":
+            error_str += "Solver is for continuous variables but problem variables are " + self.problem.variable_type + ".\n"
+        # Check for existence of gradient estimates.
+        if self.solver.gradient_needed and not self.problem.gradient_available:
+            error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
+        return error_str
 
     def run(self, n_macroreps):
         """
@@ -220,7 +260,7 @@ class Experiment(object):
                     for _ in range(self.problem.oracle.n_rngs):
                         rng.advance_substream()
         # Simulate common initial solution x0.
-        x0 = self.problem.initial_solution
+        x0 = self.problem.factors["initial_solution"]
         self.initial_soln = Solution(x0, self.problem)
         self.initial_soln.attach_rngs(rng_list=copied_baseline_rngs, copy=False)
         self.problem.simulate(solution=self.initial_soln, m=self.n_postreps_init_opt)
@@ -258,7 +298,7 @@ class Experiment(object):
         # Extract all unique budget points.
         repeat_budgets = [budget for budget_list in self.all_intermediate_budgets for budget in budget_list]
         self.unique_budgets = np.unique(repeat_budgets)
-        self.unique_frac_budgets = self.unique_budgets / self.problem.budget
+        self.unique_frac_budgets = self.unique_budgets / self.problem.factors["budget"]
         n_inter_budgets = len(self.unique_budgets)
         # Compute signed initial optimality gap = f(x0) - f(x*);
         initial_obj_val = np.mean(self.initial_soln.objectives[:self.initial_soln.n_reps][:, 0])  # 0 <- assuming only one objective
@@ -300,31 +340,31 @@ class Experiment(object):
             plot bootstrapping confidence intervals?
         """
         # Set up plot.
-        stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.budget, beta=beta)
+        stylize_plot(plot_type=plot_type, solver_name=self.solver.name, problem_name=self.problem.name, normalize=normalize, budget=self.problem.factors["budget"], beta=beta)
         if plot_type == "all":
             # Plot all estimated progress curves.
             if normalize:
                 for mrep in range(self.n_macroreps):
-                    plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where='post')
+                    plt.step(self.unique_frac_budgets, self.all_prog_curves[mrep], where="post")
             else:
                 for mrep in range(self.n_macroreps):
-                    plt.step(self.unique_budgets, self.all_est_objective[mrep], where='post')
+                    plt.step(self.unique_budgets, self.all_est_objective[mrep], where="post")
         elif plot_type == "mean":
             # Plot estimated mean progress curve.
             if normalize:
                 estimator = np.mean(self.all_prog_curves, axis=0)
-                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_frac_budgets, estimator, where="post")
             else:
                 estimator = np.mean(self.all_est_objective, axis=0)
-                plt.step(self.unique_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_budgets, estimator, where="post")
         elif plot_type == "quantile":
             # Plot estimated beta-quantile progress curve.
             if normalize:
                 estimator = np.quantile(self.all_prog_curves, q=beta, axis=0)
-                plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_frac_budgets, estimator, where="post")
             else:
                 estimator = np.quantile(self.all_est_objective, q=beta, axis=0)
-                plt.step(self.unique_budgets, estimator, 'b-', where='post')
+                plt.step(self.unique_budgets, estimator, where="post")
         else:
             print("Not a valid plot type.")
         if plot_type == "mean" or plot_type == "quantile":
@@ -359,11 +399,11 @@ class Experiment(object):
             # Compute proportion of macroreplications "solved" by intermediate budget.
             estimator = np.mean(solve_matrix, axis=0)
             # Plot solvability curve.
-            plt.step(self.unique_frac_budgets, estimator, 'b-', where='post')
+            plt.step(self.unique_frac_budgets, estimator, where="post")
             if plot_CIs:
                 # Report bootstrapping error estimation and optionally plot bootstrap CIs.
                 self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
-            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="solvability", normalize=True, extra=solve_tol)
+            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="cdf solve times", normalize=True, extra=solve_tol)
 
     def compute_area_stats(self, compute_CIs=True):
         """
@@ -612,7 +652,6 @@ class Experiment(object):
         ---------
         plot_type : string
             indicates which type of plot to produce
-                "all" : all estimated progress curves
                 "mean" : estimated mean progress curve
                 "quantile" : estimated beta quantile progress curve
                 "solvability" : estimated solvability curve
@@ -635,13 +674,13 @@ class Experiment(object):
             yloc = -0.35
         else:
             budgets = self.unique_budgets
-            xloc = 0.05 * self.problem.budget
+            xloc = 0.05 * self.problem.factors["budget"]
             yloc = (min(bs_CI_lower_bounds)
                     - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
         if plot_CIs:
             # Optionally plot bootstrap confidence intervals.
-            plt.step(budgets, bs_CI_lower_bounds, 'b--', where='post')
-            plt.step(budgets, bs_CI_upper_bounds, 'b--', where='post')
+            plt.step(budgets, bs_CI_lower_bounds, color="C0", linestyle="--", linewidth=1, where="post")
+            plt.step(budgets, bs_CI_upper_bounds, color="C0", linestyle="--", linewidth=1, where="post")
         # Print caption about max halfwidth of bootstrap confidence intervals.
         txt = ("The max halfwidth of the bootstrap CIs is "
                + str(round(max_halfwidth, 2)) + ".")
@@ -724,16 +763,16 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
         intermediate budgets at which solver recommended different solutions
     """
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
-    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.budget]
+    invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.factors["budget"]]
     for invalid_idx in sorted(invalid_idxs, reverse=True):
         del recommended_solns[invalid_idx]
         del intermediate_budgets[invalid_idx]
     # If no solution is recommended at the final budget,
     # re-recommended the latest recommended solution.
     # Necessary for clean plotting of progress curves.
-    if intermediate_budgets[-1] < problem.budget:
+    if intermediate_budgets[-1] < problem.factors["budget"]:
         recommended_solns.append(recommended_solns[-1])
-        intermediate_budgets.append(problem.budget)
+        intermediate_budgets.append(problem.factors["budget"])
     return recommended_solns, intermediate_budgets
 
 
@@ -805,7 +844,7 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
     plt.xlim(xlim)
     if ylim is not None:
         plt.ylim(ylim)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.tick_params(axis="both", which="major", labelsize=12)
 
 
 def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, beta=0.5):
@@ -823,8 +862,8 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     plot_type : string
         type of plot
             - "single"
-            - "average"
-            - "profile"
+            - "cdf"
+            - "quantile"
     beta : float in (0,1)
         quantile to compute, e.g., beta quantile
     """
@@ -836,21 +875,21 @@ def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, be
     if plot_type == "single":
         ylabel = "Fraction of Macroreplications Solved"
         title = solver_name + " on " + problem_name + "\n"
-        title = title + str(round(solve_tol, 2)) + "-Solvability Curve"
-    elif plot_type == "average":
-        ylabel = "Average Solve Percentage"
-        title = "Average Solvability Profile for " + solver_name + "\n"
-        title = title + str(round(solve_tol, 2)) + "-Solvability"
-    elif plot_type == "profile":
+        title = title + "CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
+    elif plot_type == "cdf":
+        ylabel = "Mean Solve Percentage"
+        title = "CDF Solvability Profile for " + solver_name + "\n"
+        title = title + "Profile of CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
+    elif plot_type == "quantile":
         ylabel = "Proportion of Problems Solved"
-        title = "Solvability Profile for " + solver_name + "\n"
-        title = title + str(round(beta, 2)) + "-Quantiles with " + str(round(solve_tol, 2)) + "-Solvability"
+        title = "Quantile Solvability Profile for " + solver_name + "\n"
+        title = title + "Profile of " + str(round(beta, 2)) + "-Quantiles of " + str(round(solve_tol, 2)) + "-Solve Times"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
     plt.xlim(xlim)
     plt.ylim(ylim)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.tick_params(axis="both", which="major", labelsize=12)
 
 
 def stylize_difference_plot(solve_tol):
@@ -873,7 +912,7 @@ def stylize_difference_plot(solve_tol):
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
     plt.xlim(xlim)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.tick_params(axis="both", which="major", labelsize=12)
 
 
 def stylize_area_plot(solver_name):
@@ -898,7 +937,7 @@ def stylize_area_plot(solver_name):
     plt.title(title, size=14)
     plt.xlim(xlim)
     plt.ylim(ylim)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.tick_params(axis="both", which="major", labelsize=12)
 
 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
@@ -916,15 +955,15 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
             "all" : all estimated progress curves
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
-            "solvability" : estimated solvability curve
-            "average_solvability" : average solvability profiles
-            "solvability_profile" : solvability profiles
+            "cdf solve times" : cdf of solve times
+            "cdf solvability" : cdf solvability profile
+            "quantile solvability" : quantile solvability profile
             "area" : area scatterplot
             "difference" : difference profile
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
-    extra : float
-        extra number specifying quantile (e.g., beta) or solve tolerance
+    extra : float (or list of floats)
+        extra number(s) specifying quantile (e.g., beta) and/or solve tolerance
     """
     # Form string name for plot filename.
     if plot_type == "all":
@@ -933,12 +972,12 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
-    elif plot_type == "solvability":
-        plot_name = str(extra) + "-solvability_curve"
-    elif plot_type == "average_solvability":
-        plot_name = "average_solvability_profile"
-    elif plot_type == "solvability_profile":
-        plot_name = "solvability_profile"
+    elif plot_type == "cdf solve times":
+        plot_name = "cdf_" + str(extra) + "_solve_times"
+    elif plot_type == "cdf solvability":
+        plot_name = "profile_cdf_" + str(extra) + "_solve_times"
+    elif plot_type == "quantile solvability":
+        plot_name = "profile_" + str(extra[1]) + "_quantile_" + str(extra[0]) + "_solve_times"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     elif plot_type == "difference":
@@ -1124,6 +1163,81 @@ class MetaExperiment(object):
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
 
+    def plot_progress_curves(self, plot_type, beta=0.50, normalize=True):
+        """
+        Produce plots of the solvers' aggregated performances on each problem.
+
+        Arguments
+        ---------
+        plot_type : string
+            indicates which type of plot to produce
+                "mean" : estimated mean progress curve
+                "quantile" : estimated beta quantile progress curve
+        beta : float in (0,1)
+            quantile to plot, e.g., beta quantile
+        normalize : Boolean
+            normalize progress curves w.r.t. optimality gaps?
+        """
+        for problem_index in range(self.n_problems):
+            stylize_plot(plot_type=plot_type, solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], normalize=normalize, budget=self.experiments[0][problem_index].problem.factors["budget"], beta=beta)
+            for solver_index in range(self.n_solvers):
+                experiment = self.experiments[solver_index][problem_index]
+                if plot_type == "mean":
+                    # Plot estimated mean progress curve.
+                    if normalize:
+                        estimator = np.mean(experiment.all_prog_curves, axis=0)
+                        plt.step(experiment.unique_frac_budgets, estimator, where="post")
+                    else:
+                        estimator = np.mean(experiment.all_est_objective, axis=0)
+                        plt.step(experiment.unique_budgets, estimator, where="post")
+                elif plot_type == "quantile":
+                    # Plot estimated beta-quantile progress curve.
+                    if normalize:
+                        estimator = np.quantile(experiment.all_prog_curves, q=beta, axis=0)
+                        plt.step(experiment.unique_frac_budgets, estimator, where="post")
+                    else:
+                        estimator = np.quantile(experiment.all_est_objective, q=beta, axis=0)
+                        plt.step(experiment.unique_budgets, estimator, where="post")
+                else:
+                    print("Not a valid plot type.")
+            plt.legend(labels=self.solver_names, loc="upper right")
+            save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
+
+    def plot_solvability_curves(self, solve_tols=[0.10]):
+        """
+        Produce the solvability curve (cdf of the solve times) for solvers
+        on each problem.
+
+        Arguments
+        ---------
+        solve_tols : list of floats in (0,1]
+            relative optimality gap(s) definining when a problem is solved
+        """
+        for problem_index in range(self.n_problems):
+            # Compute solve times for each solver at each tolerance
+            for solver_index in range(self.n_solvers):
+                experiment = self.experiments[solver_index][problem_index]
+                experiment.compute_solvability(solve_tols=solve_tols)
+            # For each tolerance, plot solvability curves for each solver
+            for tol_index in range(len(solve_tols)):
+                solve_tol = solve_tols[tol_index]
+                stylize_solvability_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], solve_tol=solve_tol, plot_type="single")
+                for solver_index in range(self.n_solvers):
+                    experiment = self.experiments[solver_index][problem_index]
+                    # Construct matrix showing when macroreplications are solved.
+                    solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
+                    # Pass over progress curves to find first solve_tol crossing time.
+                    for mrep in range(experiment.n_macroreps):
+                        for budget_index in range(len(experiment.unique_frac_budgets)):
+                            if experiment.solve_times[tol_index][mrep] <= experiment.unique_frac_budgets[budget_index]:
+                                solve_matrix[mrep][budget_index] = 1
+                    # Compute proportion of macroreplications "solved" by intermediate budget.
+                    estimator = np.mean(solve_matrix, axis=0)
+                    # Plot solvability curve.
+                    plt.step(experiment.unique_frac_budgets, estimator, where="post")
+                plt.legend(labels=self.solver_names, loc="lower right")
+                save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="cdf solve times", normalize=True, extra=solve_tol)
+
     def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
         """
         Plot a scatter plot of mean and standard deviation of area under progress curves.
@@ -1169,8 +1283,8 @@ class MetaExperiment(object):
         """
         Plot the solvability profiles for each solver on a set of problems.
         Three types of plots:
-            1) average solvability curve
-            2) solvability profile
+            1) cdf solvability profile
+            2) quantile solvability profile
             3) difference solvability profile
 
         Arguments
@@ -1184,7 +1298,7 @@ class MetaExperiment(object):
         """
         all_solver_unique_frac_budgets = []
         all_solvability_profiles = []
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="average")
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="cdf")
         for solver_index in range(self.n_solvers):
             solvability_curves = []
             all_budgets = []
@@ -1212,23 +1326,23 @@ class MetaExperiment(object):
                     all_solve_matrix[problem_index][budget_index] = solvability_curves[problem_index][problem_budget_index]
             solvability_profile = np.mean(all_solve_matrix, axis=0)
             # Plot the solver's solvability profile.
-            plt.step(solver_unique_frac_budgets, solvability_profile, where='post')
+            plt.step(solver_unique_frac_budgets, solvability_profile, where="post")
             # Append results.
             all_solver_unique_frac_budgets.append(solver_unique_frac_budgets)
             all_solvability_profiles.append(solvability_profile)
         plt.legend(labels=self.solver_names, loc="lower right")
         # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="average_solvability", normalize=True)
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="cdf solvability", normalize=True, extra=solve_tol)
         # Plot solvability profiles for each solver.
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="profile")
+        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
         for solver_index in range(self.n_solvers):
             solvability_quantiles = []
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
                 # TO DO: Hard-coded for first tol_index
                 solvability_quantiles.append(experiment.solve_time_quantiles[0])
-            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where='post')
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="solvability_profile", normalize=True)
+            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where="post")
+        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="quantile solvability", normalize=True, extra=[solve_tol, beta])
         # Plot difference solvability profiles. (Optional)
         if ref_solver is not None:
             stylize_difference_plot(solve_tol=solve_tol)
@@ -1242,8 +1356,8 @@ class MetaExperiment(object):
                                                                                                     budgets_2=all_solver_unique_frac_budgets[ref_solver_index],
                                                                                                     solv_profile_2=all_solvability_profiles[ref_solver_index]
                                                                                                     )
-                    plt.step(diff_budgets, diff_solvability_profile, where='post')
-            plt.plot([0, 1], [0, 0], color='black', linestyle='dashed')
+                    plt.step(diff_budgets, diff_solvability_profile, where="post")
+            plt.plot([0, 1], [0, 0], color="black", linestyle="--")
             plt.legend(labels=[non_ref_solver + " - " + ref_solver for non_ref_solver in non_ref_solvers], loc="upper right")
             save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="difference", normalize=True)
 
