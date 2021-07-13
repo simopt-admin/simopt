@@ -13,31 +13,25 @@ window = tk.Tk()
 
 def get_selected():
     # Problem selected, Solution selected, and Macro Replications valid
-    if problemVar.get() != "----" and solutionVar.get() != "----" and macroEntry.get().isnumeric() != False:
+    if problemVar.get() != "----" and solverVar.get() != "----" and macroEntry.get().isnumeric() != False:
         # creates blank list to store selections
         selected = []
         # grabs problemVar (whatever is selected our of OptionMenu)
         selected.append(problemVar.get())
-        # grabs solutionVar (" ")
-        selected.append(solutionVar.get())
+        # grabs solverVar (" ")
+        selected.append(solverVar.get())
         # grabs number of macro replications
         selected.append(macroEntry.get())
 
         # complete experiment with given arguments
-        solver_name = solutionVar.get()
+        solver_name = solverVar.get()
         problem_name = problemVar.get()
         # solver_fixed_factors = dictionary
 
-        myexperiment = Experiment(solver_name, problem_name, solver_fixed_factors={"sample_size": 50})
-        myexperiment.run(n_macroreps= int(macroEntry.get()))
-        # myexperiment.post_replicate(n_postreps=200, n_postreps_init_opt=200, crn_across_budget=True, crn_across_macroreps=False)
-        # myexperiment.plot_progress_curves(plot_type="all", normalize=False)
-        # myexperiment.plot_progress_curves(plot_type="mean", normalize=True)
-
         # resets problemVar to default value
         problemVar.set("----")
-        # resets solutionVar
-        solutionVar.set("----")
+        # resets solverVar
+        solverVar.set("----")
 
         # Macro Replications is a positive integer
         if int(macroEntry.get()) != 0:
@@ -53,16 +47,27 @@ def get_selected():
 
         # prints selected (list) in console/terminal
         print(selected)
+
+        myexperiment = Experiment(solver_name, problem_name, solver_fixed_factors={"sample_size": 50})
+        myexperiment.run(n_macroreps= int(macroEntry.get()))
+        # myexperiment.post_replicate(n_postreps=200, n_postreps_init_opt=200, crn_across_budget=True, crn_across_macroreps=False)
+        # myexperiment.plot_progress_curves(plot_type="all", normalize=False)
+        # myexperiment.plot_progress_curves(plot_type="mean", normalize=True)
+
+        postProcessingWindow()
+
+
+
         # returns for future use
         return selected 
 
     # Problem NOT selected, but Solution selected
-    elif problemVar.get() == "----" and solutionVar.get() != "----":
+    elif problemVar.get() == "----" and solverVar.get() != "----":
         message = "You have not selected a Problem!"
         createError(message)
 
     # Problem selected, but Solution NOT selected
-    elif problemVar.get() != "----" and solutionVar.get() == "----":
+    elif problemVar.get() != "----" and solverVar.get() == "----":
         message = "You have not selected a Solver!"
         createError(message)
     
@@ -75,8 +80,8 @@ def get_selected():
     else:
         # resets problemVar to default value
         problemVar.set("----")
-        # resets solutionVar
-        solutionVar.set("----")
+        # resets solverVar
+        solverVar.set("----")
         # prints to console/terminal
         message = "You have not selected all required fields, check for '*' near input boxes."
         createError(message)
@@ -100,16 +105,103 @@ def createError(str):
     # required
     errorWindow.mainloop()
 
-def createPlot():
-    # initialize created plot window
-    plotWindow = tk.Tk()
+def postProcessingWindow():
+    postProcessing = tk.Tk()
 
-    # title of window
-    plotWindow.title("Something")
-    # starting size of window
-    plotWindow.geometry("1450x500")
-    # required
-    plotWindow.mainloop()
+    # this will change spacing vertically
+    postProcessing.rowconfigure([0, 1, 2, 3, 4, 5],
+                    minsize = 100,
+                    weight = 1)
+
+    # this will change spacing horizontally
+    postProcessing.columnconfigure([0, 1, 2, 3, 4, 5],
+                            minsize = 400,
+                            weight = 1)
+
+    # n_postreps : int
+    n_postrepsLabel = tk.Label(master = postProcessing,
+                            text = "Number of postreplications to take at each recommended solution",
+                            font = "Calibri 11 bold",
+                            wraplength = "250")
+    n_postrepsLabel.grid(row=1, column=0)
+
+    n_postrepsVar = tk.StringVar(postProcessing)
+    n_postrepsEntry = tk.Entry(master=postProcessing, textvariable = n_postrepsVar, justify = tk.LEFT, width = 12)
+    n_postrepsEntry.insert(index=tk.END, string="8")
+    n_postrepsEntry.grid(row=1, column=0, sticky='e')
+
+    # n_postreps_init_opt : int
+    n_postreps_init_optLabel = tk.Label(master = postProcessing,
+                                text = "Number of postreplications to take at initial x\u2070 and optimal x\u002A",
+                                font = "Calibri 11 bold",
+                                wraplength = "200")
+    n_postreps_init_optLabel.grid(row=2, column=0)
+
+    n_postreps_init_optVar = tk.StringVar(postProcessing)
+    n_postreps_init_optEntry = tk.Entry(master=postProcessing, textvariable = n_postreps_init_optVar, justify = tk.LEFT, width = 12)
+    n_postreps_init_optEntry.insert(index=tk.END, string="6")
+    n_postreps_init_optEntry.grid(row=2, column=0, sticky='e')
+
+    # crn_across_budget : boolean
+    crn_across_budgetLabel = tk.Label(master = postProcessing,
+                                    text = "Use CRN for post-replications at solutions recommended at different times?",
+                                    font = "Calibri 11 bold",
+                                    wraplength = "300")
+    crn_across_budgetLabel.grid(row=1, column=1)
+
+    crn_across_budgetList = ["True", "False"]
+    # stays the same, has to change into a special type of variable via tkinter function
+    crn_across_budgetVar = tk.StringVar(postProcessing)
+    # sets the default OptionMenu selection
+    crn_across_budgetVar.set("----")
+    # creates drop down menu, for tkinter, it is called "OptionMenu"
+    crn_across_budgetMenu = tk.OptionMenu(postProcessing, crn_across_budgetVar, *crn_across_budgetList)
+    crn_across_budgetMenu.grid(row=1, column=1, sticky='e')
+
+    # crn_across_macroreps : boolean
+    crn_across_macrorepsLabel = tk.Label(master = postProcessing,
+                                        text = "Use CRN for post-replications at solutions recommended on different macroreplications?",
+                                        font = "Calibri 11 bold",
+                                        wraplength = "250")
+    crn_across_macrorepsLabel.grid(row=2, column=1)
+
+    crn_across_macrorepsList = ["True", "False"]
+    # stays the same, has to change into a special type of variable via tkinter function
+    crn_across_macrorepsVar = tk.StringVar(postProcessing)
+    # sets the default OptionMenu selection
+    crn_across_macrorepsVar.set("----")
+    # creates drop down menu, for tkinter, it is called "OptionMenu"
+    crn_across_macrorepsMenu = tk.OptionMenu(postProcessing, crn_across_macrorepsVar, *crn_across_macrorepsList)
+    crn_across_macrorepsMenu.grid(row=2, column=1, sticky='e')
+
+    postProcessingRunLabel = tk.Label(master=postProcessing, # window label is used for
+                        text = "When ready, press the 'Run' button below:",
+                        font = "Calibri 11 bold")
+    postProcessingRunLabel.grid(row=3, column=1)
+
+    postProcessingRunButton = tk.Button(master=postProcessing, # window button is used in
+                        # aesthetic of button and specific formatting options
+                        text = "Run", 
+                        width = 15, # width of button
+                        bd = 5, # boarder size
+                        command = test) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
+    postProcessingRunButton.grid(row=3, column=1, sticky='s')
+
+
+
+    # postProcessing's title
+    postProcessing.title("Post Processing Information")
+    # starting size of the postProcessing
+    postProcessing.geometry("1450x500")
+    # must be included, allows postProcessing to show
+    postProcessing.mainloop()
+
+
+def test():
+    print("postProcessing is connected")
+
+    postProcessingList = []
+    print(postProcessingList)
 
 # this will change spacing vertically
 window.rowconfigure([0, 1, 2, 3, 4, 5],
@@ -141,20 +233,20 @@ problemMenu = tk.OptionMenu(window, problemVar, *problemList)
 # stick = 's' means it sticks to the south end of the alloted grid space
 problemMenu.grid(row=1, column=0, sticky='s')
 
-solutionLabel = tk.Label(master=window, # window label is used in
+solverLabel = tk.Label(master=window, # window label is used in
                         text = "Please select the type of Solver:*",
                         font = "Calibri 11 bold")
-solutionLabel.grid(row=2, column=0)
+solverLabel.grid(row=2, column=0)
 
 # from experiments.inputs.all_factors.py:
-solutionList = solver_directory
+solverList = solver_directory
 # stays the same, has to change into a special type of variable via tkinter function
-solutionVar = tk.StringVar(window)
+solverVar = tk.StringVar(window)
 # sets the default OptionMenu selection
-solutionVar.set("----")
+solverVar.set("----")
 # creates drop down menu, for tkinter, it is called "OptionMenu"
-solutionMenu = tk.OptionMenu(window, solutionVar, *solutionList)
-solutionMenu.grid(row=2, column=0, sticky='s')
+solverMenu = tk.OptionMenu(window, solverVar, *solverList)
+solverMenu.grid(row=2, column=0, sticky='s')
 
 runButton = tk.Button(master=window, # window button is used in
                     # aesthetic of button and specific formatting options
@@ -185,5 +277,3 @@ window.title("SimOpt Application")
 window.geometry("1450x500")
 # must be included, allows window to show
 window.mainloop()
-
-
