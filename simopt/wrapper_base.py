@@ -144,13 +144,13 @@ class Curve(object):
         elif curve_type == "conf_bound":
             linestyle = "--"
             linewidth = 1
-        handle = plt.step(self.x_vals,
-                          self.y_vals,
-                          color=color_str,
-                          linestyle=linestyle,
-                          linewidth=linewidth,
-                          where="post"
-                          )
+        handle, = plt.step(self.x_vals,
+                           self.y_vals,
+                           color=color_str,
+                           linestyle=linestyle,
+                           linewidth=linewidth,
+                           where="post"
+                           )
         return handle
 
 
@@ -385,7 +385,7 @@ class Experiment(object):
         """
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
-        self.crn_across_macroreps = crn_across_macroreps   
+        self.crn_across_macroreps = crn_across_macroreps
         # Create, initialize, and attach RNGs for oracle.
         # Stream 0: reserved for post-replications.
         # Skip over first set of substreams dedicated for sampling x0 and x*.
@@ -1146,9 +1146,134 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             experiment.objective_curves.append(Curve(x_vals=experiment.all_intermediate_budgets[mrep], y_vals=est_objectives))
             # Normalize by initial optimality gap.
             norm_est_objectives = [(est_objective - opt_obj_val)/initial_opt_gap for est_objective in est_objectives]
-            experiment.progress_curves.append(Curve(x_vals=experiment.all_intermediate_budgets[mrep], y_vals=norm_est_objectives))
+            frac_intermediate_budgets = [budget/experiment.problem.factors["budget"] for budget in experiment.all_intermediate_budgets[mrep]]
+            experiment.progress_curves.append(Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives))
         # Save Experiment object to .pickle file.
         experiment.record_experiment_results()
+
+
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot_CIs=True, all_in_one=True):
+    """
+    Plot individual or aggregate progress curves for one or more solvers
+    on a single problem.
+
+    Arguments
+    ---------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on a common problem
+    plot_type : string
+        indicates which type of plot to produce
+            "all" : all estimated progress curves
+            "mean" : estimated mean progress curve
+            "quantile" : estimated beta quantile progress curve
+    beta : float in (0,1)
+        quantile to plot, e.g., beta quantile
+    normalize : bool
+        normalize progress curves w.r.t. optimality gaps?
+    plot_CIs : bool
+        plot bootstrapping confidence intervals?
+    all_in_one : bool
+        plot curves together or separately
+    """
+    # Check if problems are the same with the same x0 and x*.
+    ref_experiment = experiments[0]
+    for experiment in experiments:
+        # Check if problems are the same.
+        if experiment.problem != ref_experiment.problem:
+            print("At least two experiments have different problem instances.")
+        if experiment.x0 != ref_experiment.x0:
+            print("At least two experiments have different starting solutions.")
+        if experiment.xstar != ref_experiment.xstar:
+            print("At least two experiments have different optimal solutions.")
+    # Set up plot.
+    n_experiments = len(experiments)
+    if all_in_one:
+        ref_experiment = experiments[0]
+        stylize_plot(plot_type=plot_type,
+                     solver_name="SOLVER SET",
+                     problem_name=ref_experiment.problem.name,
+                     normalize=normalize,
+                     budget=ref_experiment.problem.factors["budget"],
+                     beta=beta
+                     )
+        solver_curve_handles = []
+        for exp_idx in range(n_experiments):
+            experiment = experiments[exp_idx]
+            color_str = "C" + str(exp_idx)
+            if plot_type == "all":
+                # Plot all estimated progress curves.
+                if normalize:
+                    handle = experiment.progress_curves[0].plot(color_str=color_str)
+                    for curve in experiment.progress_curves[1:]:
+                        curve.plot(color_str=color_str)
+                else:
+                    handle = experiment.objective_curves[0].plot(color_str=color_str)
+                    for curve in experiment.objective_curves[1:]:
+                        curve.plot(color_str=color_str)
+            elif plot_type == "mean":
+                # Plot estimated mean progress curve.
+                if normalize:
+                    estimator = mean_of_curves(experiment.progress_curves)
+                else:
+                    estimator = mean_of_curves(experiment.objective_curves)
+                handle = estimator.plot(color_str=color_str)
+            elif plot_type == "quantile":
+                # Plot estimated beta-quantile progress curve.
+                if normalize:
+                    estimator = quantile_of_curves(experiment.progress_curves, beta)
+                else:
+                    estimator = quantile_of_curves(experiment.objective_curves, beta)
+                handle = estimator.plot(color_str=color_str)
+            else:
+                print("Not a valid plot type.")
+            solver_curve_handles.append(handle)
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        save_plot(solver_name="SOLVER SET",
+                  problem_name=ref_experiment.problem.name,
+                  plot_type=plot_type,
+                  normalize=normalize
+                  )
+    else:  # Plot separately
+        for experiment in experiments:
+            stylize_plot(plot_type=plot_type,
+                         solver_name=experiment.solver.name,
+                         problem_name=experiment.problem.name,
+                         normalize=normalize,
+                         budget=experiment.problem.factors["budget"],
+                         beta=beta
+                         )
+            if plot_type == "all":
+                # Plot all estimated progress curves.
+                if normalize:
+                    for curve in experiment.progress_curves:
+                        curve.plot()
+                else:
+                    for curve in experiment.objective_curves:
+                        curve.plot()
+            elif plot_type == "mean":
+                # Plot estimated mean progress curve.
+                if normalize:
+                    estimator = mean_of_curves(experiment.progress_curves)
+                else:
+                    estimator = mean_of_curves(experiment.objective_curves)
+                estimator.plot()
+            elif plot_type == "quantile":
+                # Plot estimated beta-quantile progress curve.
+                if normalize:
+                    estimator = quantile_of_curves(experiment.progress_curves, beta)
+                else:
+                    estimator = quantile_of_curves(experiment.objective_curves, beta)
+                estimator.plot()
+            else:
+                print("Not a valid plot type.")
+            save_plot(solver_name=experiment.solver.name,
+                      problem_name=experiment.problem.name,
+                      plot_type=plot_type,
+                      normalize=normalize
+                      )
+        # if plot_type == "mean" or plot_type == "quantile":
+        #     # Report bootstrapping error estimation and optionally plot bootstrap CIs.
+        #     self.plot_bootstrap_CIs(plot_type, normalize, estimator, plot_CIs, beta)
 
 
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
