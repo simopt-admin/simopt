@@ -264,7 +264,7 @@ class CntNVMaxProfit(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(name, fixed_factors, oracle_fixed_factors)
+        super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
         self.oracle = CntNV(self.oracle_fixed_factors)
 
