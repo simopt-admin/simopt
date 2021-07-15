@@ -202,7 +202,7 @@ def quantile_of_curves(curves, beta):
 
 def difference_of_curves(curve1, curve2):
     """
-    Compute the difference of two curves (Curve 1 - Curve2).
+    Compute the difference of two curves (Curve 1 - Curve 2).
 
     Parameters
     ----------
@@ -218,6 +218,25 @@ def difference_of_curves(curve1, curve2):
     difference_y_vals = [(curve1.lookup(x_val) - curve2.lookup(x_val)) for x_val in unique_x_vals]
     difference_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=difference_y_vals)
     return difference_curve
+
+
+def max_difference_of_curves(curve1, curve2):
+    """
+    Compute the maximum difference of two curves (Curve 1 - Curve 2)
+
+    Parameters
+    ----------
+    curve1, curve2 : wrapper_base.Curve objects
+        curves to take the difference of
+
+    Returns
+    -------
+    max_diff : float
+        maximum difference of curves
+    """
+    difference_curve = difference_of_curves(curve1, curve2)
+    max_diff = max(difference_curve.y_vals)
+    return max_diff
 
 
 class Experiment(object):
@@ -754,8 +773,8 @@ class Experiment(object):
                 bootstrap_rng.advance_subsubstream()
             # Record objective or progress curve.
             if normalize:
-                frac_intermediate_budgets = [budget/self.problem.factors["budget"] for budget in self.all_intermediate_budgets[mrep]]
-                norm_est_objectives = [(est_objective - bs_optimal_obj_val)/bs_initial_opt_gap for est_objective in est_objectives]
+                frac_intermediate_budgets = [budget / self.problem.factors["budget"] for budget in self.all_intermediate_budgets[mrep]]
+                norm_est_objectives = [(est_objective - bs_optimal_obj_val) / bs_initial_opt_gap for est_objective in est_objectives]
                 new_progress_curve = Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives)
                 bootstrap_curves.append(new_progress_curve)
             else:
@@ -844,152 +863,152 @@ class Experiment(object):
     #     bootstrap_rng.advance_substream()
     #     return bootstrap_est_objective, bootstrap_prog_curves
 
-    def bootstrap_CI(self, plot_type, normalize, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50, tol_index=0):
-        """
-        Construct bootstrap confidence intervals and compute max half-width.
+    # def bootstrap_CI(self, plot_type, normalize, estimator, n_bootstraps=100, conf_level=0.95, bias_correction=True, beta=0.50, tol_index=0):
+    #     """
+    #     Construct bootstrap confidence intervals and compute max half-width.
 
-        Arguments
-        ---------
-        plot_type : string
-            indicates which type of plot to produce
-                "mean" : estimated mean progress curve
-                "quantile" : estimated beta quantile progress curve
-                "area_mean" : mean of area under convergence curve
-                "area_std_dev" : standard deviation of area under progress curve
-                "solve_time_quantile" : beta quantile of solve time
-                "solvability" : estimated solvability curve
-        normalize : Boolean
-            normalize progress curves w.r.t. optimality gaps?
-        estimator : numpy array
-            estimated mean or quantile progress curve
-        n_bootstraps : int > 0
-            number of times to generate a bootstrap sample of estimated progress curves
-        conf_level : float in (0,1)
-            confidence level for confidence intervals, i.e., 1-alpha
-        bias_correction : bool
-            use bias-corrected bootstrap CIs (via percentile method)?
-        beta : float in (0,1)
-            quantile for quantile aggregate progress curve, e.g., beta quantile
-        tol_index : int >= 0
-            index of solve tolerance
+    #     Arguments
+    #     ---------
+    #     plot_type : string
+    #         indicates which type of plot to produce
+    #             "mean" : estimated mean progress curve
+    #             "quantile" : estimated beta quantile progress curve
+    #             "area_mean" : mean of area under convergence curve
+    #             "area_std_dev" : standard deviation of area under progress curve
+    #             "solve_time_quantile" : beta quantile of solve time
+    #             "solvability" : estimated solvability curve
+    #     normalize : Boolean
+    #         normalize progress curves w.r.t. optimality gaps?
+    #     estimator : numpy array
+    #         estimated mean or quantile progress curve
+    #     n_bootstraps : int > 0
+    #         number of times to generate a bootstrap sample of estimated progress curves
+    #     conf_level : float in (0,1)
+    #         confidence level for confidence intervals, i.e., 1-alpha
+    #     bias_correction : bool
+    #         use bias-corrected bootstrap CIs (via percentile method)?
+    #     beta : float in (0,1)
+    #         quantile for quantile aggregate progress curve, e.g., beta quantile
+    #     tol_index : int >= 0
+    #         index of solve tolerance
 
-        Returns
-        -------
-        bs_CI_lower_bounds : numpy array
-            lower bounds of bootstrap CIs at all budgets
-        bs_CI_upper_bounds : numpy array
-            upper bounds of bootstrap CIs at all budgets
-        max_halfwidth : float
-            maximum halfwidth of all bootstrap confidence intervals constructed
-        """
-        # Create random number generator for bootstrap sampling.
-        # Stream 1 dedicated for bootstrapping.
-        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
-        if plot_type == "mean" or plot_type == "quantile" or plot_type == "solvability":
-            n_intervals = len(self.unique_budgets)
-        elif plot_type == "area_mean" or plot_type == "area_std_dev":
-            n_intervals = 1
-        elif plot_type == "solve_time_quantile":
-            n_intervals = len(self.solve_tols)
-        bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
-        for bs_index in range(n_bootstraps):
-            # Generate bootstrap sample of estimated progress curves.
-            bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
-            # Apply the functional of the bootstrap sample,
-            # e.g., mean/quantile (aggregate) progress curve.
-            if plot_type == "mean":
-                if normalize:
-                    bs_aggregate_objects[bs_index] = np.mean(bootstrap_prog_curves, axis=0)
-                else:
-                    bs_aggregate_objects[bs_index] = np.mean(bootstrap_est_objective, axis=0)
-            elif plot_type == "quantile":
-                if normalize:
-                    bs_aggregate_objects[bs_index] = np.quantile(bootstrap_prog_curves, q=beta, axis=0)
-                else:
-                    bs_aggregate_objects[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
-            elif plot_type == "area_mean":
-                areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
-                bs_aggregate_objects[bs_index] = np.mean(areas)
-            elif plot_type == "area_std_dev":
-                areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
-                bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
-            elif plot_type == "solve_time_quantile":
-                solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in self.solve_tols]
-                bs_aggregate_objects[bs_index] = [np.quantile(solve_times[tol_index], q=beta) for tol_index in range(len(self.solve_tols))]
-            elif plot_type == "solvability":
-                solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tols[tol_index]) for prog_curve in bootstrap_prog_curves]
-                # Construct full matrix showing when macroreplications are solved.
-                solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
-                # Pass over progress curve to find first solve_tol crossing time.
-                for mrep in range(self.n_macroreps):
-                    for budget_index in range(len(self.unique_frac_budgets)):
-                        if solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
-                            solve_matrix[mrep][budget_index] = 1
-                bs_aggregate_objects[bs_index] = np.mean(solve_matrix, axis=0)
+    #     Returns
+    #     -------
+    #     bs_CI_lower_bounds : numpy array
+    #         lower bounds of bootstrap CIs at all budgets
+    #     bs_CI_upper_bounds : numpy array
+    #         upper bounds of bootstrap CIs at all budgets
+    #     max_halfwidth : float
+    #         maximum halfwidth of all bootstrap confidence intervals constructed
+    #     """
+    #     # Create random number generator for bootstrap sampling.
+    #     # Stream 1 dedicated for bootstrapping.
+    #     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+    #     if plot_type == "mean" or plot_type == "quantile" or plot_type == "solvability":
+    #         n_intervals = len(self.unique_budgets)
+    #     elif plot_type == "area_mean" or plot_type == "area_std_dev":
+    #         n_intervals = 1
+    #     elif plot_type == "solve_time_quantile":
+    #         n_intervals = len(self.solve_tols)
+    #     bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
+    #     for bs_index in range(n_bootstraps):
+    #         # Generate bootstrap sample of estimated progress curves.
+    #         bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
+    #         # Apply the functional of the bootstrap sample,
+    #         # e.g., mean/quantile (aggregate) progress curve.
+    #         if plot_type == "mean":
+    #             if normalize:
+    #                 bs_aggregate_objects[bs_index] = np.mean(bootstrap_prog_curves, axis=0)
+    #             else:
+    #                 bs_aggregate_objects[bs_index] = np.mean(bootstrap_est_objective, axis=0)
+    #         elif plot_type == "quantile":
+    #             if normalize:
+    #                 bs_aggregate_objects[bs_index] = np.quantile(bootstrap_prog_curves, q=beta, axis=0)
+    #             else:
+    #                 bs_aggregate_objects[bs_index] = np.quantile(bootstrap_est_objective, q=beta, axis=0)
+    #         elif plot_type == "area_mean":
+    #             areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+    #             bs_aggregate_objects[bs_index] = np.mean(areas)
+    #         elif plot_type == "area_std_dev":
+    #             areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in bootstrap_prog_curves]
+    #             bs_aggregate_objects[bs_index] = np.std(areas, ddof=1)
+    #         elif plot_type == "solve_time_quantile":
+    #             solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in bootstrap_prog_curves] for solve_tol in self.solve_tols]
+    #             bs_aggregate_objects[bs_index] = [np.quantile(solve_times[tol_index], q=beta) for tol_index in range(len(self.solve_tols))]
+    #         elif plot_type == "solvability":
+    #             solve_times = [solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, self.solve_tols[tol_index]) for prog_curve in bootstrap_prog_curves]
+    #             # Construct full matrix showing when macroreplications are solved.
+    #             solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
+    #             # Pass over progress curve to find first solve_tol crossing time.
+    #             for mrep in range(self.n_macroreps):
+    #                 for budget_index in range(len(self.unique_frac_budgets)):
+    #                     if solve_times[mrep] <= self.unique_frac_budgets[budget_index]:
+    #                         solve_matrix[mrep][budget_index] = 1
+    #             bs_aggregate_objects[bs_index] = np.mean(solve_matrix, axis=0)
 
-        # Compute bootstrapping confidence intervals via percentile method.
-        # See Efron and Gong (1983) "A leisurely look at the bootstrap,
-        #     the jackknife, and cross-validation."
-        if bias_correction:
-            # For biased-corrected CIs, see equation (17) on page 41.
-            z0s = [norm.ppf(np.mean(bs_aggregate_objects[:, interval_id] < estimator[interval_id])) for interval_id in range(n_intervals)]
-            zconflvl = norm.ppf(conf_level)
-            q_lowers = [norm.cdf(2 * z0 - zconflvl) for z0 in z0s]
-            q_uppers = [norm.cdf(2 * z0 + zconflvl) for z0 in z0s]
-            bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_lowers[interval_id]) for interval_id in range(n_intervals)])
-            bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_uppers[interval_id]) for interval_id in range(n_intervals)])
-        else:
-            # For uncorrected CIs, see equation (16) on page 41.
-            q_lower = (1 - conf_level) / 2
-            q_upper = 1 - (1 - conf_level) / 2
-            bs_CI_lower_bounds = np.quantile(bs_aggregate_objects, q=q_lower, axis=0)
-            bs_CI_upper_bounds = np.quantile(bs_aggregate_objects, q=q_upper, axis=0)
-        max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
-        return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
+    #     # Compute bootstrapping confidence intervals via percentile method.
+    #     # See Efron and Gong (1983) "A leisurely look at the bootstrap,
+    #     #     the jackknife, and cross-validation."
+    #     if bias_correction:
+    #         # For biased-corrected CIs, see equation (17) on page 41.
+    #         z0s = [norm.ppf(np.mean(bs_aggregate_objects[:, interval_id] < estimator[interval_id])) for interval_id in range(n_intervals)]
+    #         zconflvl = norm.ppf(conf_level)
+    #         q_lowers = [norm.cdf(2 * z0 - zconflvl) for z0 in z0s]
+    #         q_uppers = [norm.cdf(2 * z0 + zconflvl) for z0 in z0s]
+    #         bs_CI_lower_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_lowers[interval_id]) for interval_id in range(n_intervals)])
+    #         bs_CI_upper_bounds = np.array([np.quantile(bs_aggregate_objects[:, interval_id], q=q_uppers[interval_id]) for interval_id in range(n_intervals)])
+    #     else:
+    #         # For uncorrected CIs, see equation (16) on page 41.
+    #         q_lower = (1 - conf_level) / 2
+    #         q_upper = 1 - (1 - conf_level) / 2
+    #         bs_CI_lower_bounds = np.quantile(bs_aggregate_objects, q=q_lower, axis=0)
+    #         bs_CI_upper_bounds = np.quantile(bs_aggregate_objects, q=q_upper, axis=0)
+    #     max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
+    #     return bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth
 
-    def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs,
-                           beta=None, tol_index=None):
-        """
-        Optionally plot bootstrap confidence intervals and report max
-        half-width.
+    # def plot_bootstrap_CIs(self, plot_type, normalize, estimator, plot_CIs,
+    #                        beta=None, tol_index=None):
+    #     """
+    #     Optionally plot bootstrap confidence intervals and report max
+    #     half-width.
 
-        Arguments
-        ---------
-        plot_type : string
-            indicates which type of plot to produce
-                "mean" : estimated mean progress curve
-                "quantile" : estimated beta quantile progress curve
-                "solvability" : estimated solvability curve
-        normalize : Boolean
-            normalize progress curves w.r.t. optimality gaps?
-        estimator : numpy array
-            estimated mean or quantile progress curve
-        plot_CIs : Boolean
-            plot bootstrapping confidence intervals?
-        beta : float in (0,1) (optional)
-            quantile for quantile aggregate progress curve, e.g., beta quantile
-        tol_index : int >= 0
-            index of solve tolerance
-        """
-        # Construct bootstrap confidence intervals.
-        bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta, tol_index=tol_index)
-        if normalize:
-            budgets = self.unique_frac_budgets
-            xloc = 0.05
-            yloc = -0.35
-        else:
-            budgets = self.unique_budgets
-            xloc = 0.05 * self.problem.factors["budget"]
-            yloc = (min(bs_CI_lower_bounds)
-                    - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
-        if plot_CIs:
-            # Optionally plot bootstrap confidence intervals.
-            plt.step(budgets, bs_CI_lower_bounds, color="C0", linestyle="--", linewidth=1, where="post")
-            plt.step(budgets, bs_CI_upper_bounds, color="C0", linestyle="--", linewidth=1, where="post")
-        # Print caption about max halfwidth of bootstrap confidence intervals.
-        txt = ("The max halfwidth of the bootstrap CIs is "
-               + str(round(max_halfwidth, 2)) + ".")
-        plt.text(x=xloc, y=yloc, s=txt)
+    #     Arguments
+    #     ---------
+    #     plot_type : string
+    #         indicates which type of plot to produce
+    #             "mean" : estimated mean progress curve
+    #             "quantile" : estimated beta quantile progress curve
+    #             "solvability" : estimated solvability curve
+    #     normalize : Boolean
+    #         normalize progress curves w.r.t. optimality gaps?
+    #     estimator : numpy array
+    #         estimated mean or quantile progress curve
+    #     plot_CIs : Boolean
+    #         plot bootstrapping confidence intervals?
+    #     beta : float in (0,1) (optional)
+    #         quantile for quantile aggregate progress curve, e.g., beta quantile
+    #     tol_index : int >= 0
+    #         index of solve tolerance
+    #     """
+    #     # Construct bootstrap confidence intervals.
+    #     bs_CI_lower_bounds, bs_CI_upper_bounds, max_halfwidth = self.bootstrap_CI(plot_type=plot_type, normalize=normalize, estimator=estimator, beta=beta, tol_index=tol_index)
+    #     if normalize:
+    #         budgets = self.unique_frac_budgets
+    #         xloc = 0.05
+    #         yloc = -0.35
+    #     else:
+    #         budgets = self.unique_budgets
+    #         xloc = 0.05 * self.problem.factors["budget"]
+    #         yloc = (min(bs_CI_lower_bounds)
+    #                 - 0.25 * (max(bs_CI_upper_bounds) - min(bs_CI_lower_bounds)))
+    #     if plot_CIs:
+    #         # Optionally plot bootstrap confidence intervals.
+    #         plt.step(budgets, bs_CI_lower_bounds, color="C0", linestyle="--", linewidth=1, where="post")
+    #         plt.step(budgets, bs_CI_upper_bounds, color="C0", linestyle="--", linewidth=1, where="post")
+    #     # Print caption about max halfwidth of bootstrap confidence intervals.
+    #     txt = ("The max halfwidth of the bootstrap CIs is "
+    #            + str(round(max_halfwidth, 2)) + ".")
+    #     plt.text(x=xloc, y=yloc, s=txt)
 
     def clear_runs(self):
         """
@@ -1142,7 +1161,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.oracle.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
-        x0_postreps = [proxy_init_val]*n_postreps_init_opt
+        x0_postreps = [proxy_init_val] * n_postreps_init_opt
     else:
         initial_soln = Solution(x0, ref_experiment.problem)
         initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
@@ -1158,7 +1177,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # If proxy for f(x*) is specified...
     if proxy_opt_val is not None:
         xstar = None
-        xstar_postreps = [proxy_opt_val]*n_postreps_init_opt
+        xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
         xstar = proxy_opt_x
@@ -1170,7 +1189,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
         xstar = None
-        xstar_postreps = [ref_experiment.problem.optimal_value]*n_postreps_init_opt
+        xstar_postreps = [ref_experiment.problem.optimal_value] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
         xstar = ref_experiment.problem.optimal_solution
@@ -1188,13 +1207,13 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             experiment = experiments[experiment_idx]
             exp_best_est_objectives = np.zeros(experiment.n_macroreps)
             for mrep in range(experiment.n_macroreps):
-                exp_best_est_objectives[mrep] = np.max(experiment.problem.minmax[0]*np.array(experiment.all_est_objectives[mrep]))
+                exp_best_est_objectives[mrep] = np.max(experiment.problem.minmax[0] * np.array(experiment.all_est_objectives[mrep]))
             best_est_objectives[experiment_idx] = np.max(exp_best_est_objectives)
         best_experiment_idx = np.argmax(best_est_objectives)
         best_experiment = experiments[best_experiment_idx]
         best_exp_best_est_objectives = np.zeros(experiment.n_macroreps)
         for mrep in range(best_experiment.n_macroreps):
-            best_exp_best_est_objectives[mrep] = np.max(best_experiment.problem.minmax[0]*np.array(best_experiment.all_est_objectives[mrep]))
+            best_exp_best_est_objectives[mrep] = np.max(best_experiment.problem.minmax[0] * np.array(best_experiment.all_est_objectives[mrep]))
         best_mrep = np.argmax(best_exp_best_est_objectives)
         best_budget_idx = np.argmax(best_experiment.all_est_objectives[best_mrep])
         xstar = best_experiment.all_recommended_xs[best_mrep][best_budget_idx]
@@ -1232,8 +1251,8 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
                     est_objectives.append(experiment.all_est_objectives[mrep][budget])
             experiment.objective_curves.append(Curve(x_vals=experiment.all_intermediate_budgets[mrep], y_vals=est_objectives))
             # Normalize by initial optimality gap.
-            norm_est_objectives = [(est_objective - opt_obj_val)/initial_opt_gap for est_objective in est_objectives]
-            frac_intermediate_budgets = [budget/experiment.problem.factors["budget"] for budget in experiment.all_intermediate_budgets[mrep]]
+            norm_est_objectives = [(est_objective - opt_obj_val) / initial_opt_gap for est_objective in est_objectives]
+            frac_intermediate_budgets = [budget / experiment.problem.factors["budget"] for budget in experiment.all_intermediate_budgets[mrep]]
             experiment.progress_curves.append(Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives))
         # Save Experiment object to .pickle file.
         experiment.record_experiment_results()
@@ -1275,7 +1294,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
 
 # def bootstrap_sample(n_bootstraps, normalize):
 #     """
-    
 #     Parameters
 #     ----------
 #     n_bootstraps : int > 0
@@ -1286,7 +1304,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
 #     # TO DO: Try to remove normalize from the code
 #     # TO DO: Move much of the first part to a separate function that has the for loop.
 #     # Possibly the bootstrap_sample function that's not in the Experiment class.
-    
 #     # Create random number generator for bootstrap sampling.
 #     # Stream 1 dedicated for bootstrapping.
 #     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
@@ -1296,12 +1313,10 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
 #         bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
 #         # Apply the functional of the bootstrap sample,
 #         # e.g., mean/quantile (aggregate) progress curve.
-
-
 # max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
 
-    
-def bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
+
+def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
     """
     Construct a bootstrap confidence interval for an estimator.
 
@@ -1341,6 +1356,55 @@ def bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_es
     bs_CI_lower_bound = np.quantile(observations, q=q_lower)
     bs_CI_upper_bound = np.quantile(observations, q=q_upper)
     return bs_CI_lower_bound, bs_CI_upper_bound
+
+
+def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
+    """
+    Plot bootstrap confidence intervals and (optionally) report max
+    half-width.
+
+    Parameters
+    ----------
+    bs_CI_lower_bounds, bs_CI_upper_bounds : wrapper_base.Curve objects
+        lower and upper bounds of bootstrap CIs, as curves
+    color_str : str
+        string indicating line color, e.g., "C0", "C1", etc.
+    """
+    # Plot bootstrap confidence intervals.
+    bs_CI_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
+    bs_CI_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
+
+
+def report_max_halfwidth(curve_pairs, normalize):
+    """
+    Compute and print caption for max halfwidth of one or more bootstrap CI curves
+
+    Parameters
+    ----------
+    curve_pairs : list of list of wrapper_base.Curve objects
+        list of paired bootstrap CI curves
+    normalize : bool
+        normalize progress curves w.r.t. optimality gaps?
+    """
+    # Compute max halfwidth of bootstrap confidence intervals.
+    min_lower_bound = np.inf
+    max_upper_bound = -np.inf
+    max_halfwidths = []
+    for curve_pair in curve_pairs:
+        min_lower_bound = min(min_lower_bound, min(curve_pair[0].y_vals))
+        max_upper_bound = max(max_upper_bound, max(curve_pair[1].y_vals))
+        max_halfwidths.append(0.5 * max_difference_of_curves(curve_pair[1], curve_pair[0]))
+    max_halfwidth = max(max_halfwidths)
+    # Print caption about max halfwidth.
+    if normalize:
+        xloc = 0.05
+        yloc = -0.35
+    else:
+        # xloc = 0.05 * budget of the problem
+        xloc = 0.05 * curve_pairs[0][0].x_vals[-1]
+        yloc = min_lower_bound - 0.25 * (max_upper_bound - min_lower_bound)
+    txt = f"The max halfwidth of the bootstrap CIs is {round(max_halfwidth, 2)}."
+    plt.text(x=xloc, y=yloc, s=txt)
 
 
 def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot_CIs=True, all_in_one=True):
