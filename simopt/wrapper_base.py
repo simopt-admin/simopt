@@ -380,7 +380,7 @@ class Experiment(object):
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
         for mrep in range(self.n_macroreps):
-            print("Running macroreplication " + str(mrep + 1) + " of " + str(self.n_macroreps) + ".")
+            print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             # Create, initialize, and attach RNGs used for simulating solutions.
             progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
             self.solver.solution_progenitor_rngs = progenitor_rngs
@@ -1301,7 +1301,8 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
     """
     Parameters
     ----------
-    experiments : 
+    experiments : list of list of wrapper_base.Experiment objects
+        experiments of different solvers and/or problems
     n_bootstraps : int > 0
         number of times to generate a bootstrap sample of estimated progress curves
     plot_type : string
@@ -1334,12 +1335,12 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
     # Stream 1 dedicated for bootstrapping.
     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
     # Obtain n_bootstrap replications.
-    bootstrap_replications = [] * n_bootstraps
+    bootstrap_replications = []
     for bs_index in range(n_bootstraps):
         # Generate bootstrap sample of estimated objective/progress curves.
         bootstrap_curves = bootstrap_sample_all(experiments, bootstrap_rng=bootstrap_rng, normalize=normalize)
         # Apply the functional of the bootstrap sample.
-        bootstrap_replications[bs_index] = functional_of_curves(bootstrap_curves, plot_type, beta=beta, solve_tol=solve_tol)
+        bootstrap_replications.append(functional_of_curves(bootstrap_curves, plot_type, beta=beta, solve_tol=solve_tol))
     # Distinguish cases where functional returns a scalar vs a curve.
     if plot_type in {"area_mean", "area_std_dev", "solve_time_quantile"}:
         # Functional returns a scalar.
@@ -1352,7 +1353,12 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
         bs_CI_ubs = []
         for budget in unique_budgets:
             bootstrap_subreplications = [curve.lookup(x=budget) for curve in bootstrap_replications]
-            bs_CI_lower_bound, bs_CI_upper_bound = compute_bootstrap_CI(bootstrap_subreplications, conf_level=0.95, bias_correction=True, overall_estimator=estimator)
+            sub_estimator = estimator.lookup(x=budget)
+            bs_CI_lower_bound, bs_CI_upper_bound = compute_bootstrap_CI(bootstrap_subreplications,
+                                                                        conf_level=0.95,
+                                                                        bias_correction=True,
+                                                                        overall_estimator=sub_estimator
+                                                                        )
             bs_CI_lbs.append(bs_CI_lower_bound)
             bs_CI_ubs.append(bs_CI_upper_bound)
         bs_CI_lower_bounds = Curve(x_vals=unique_budgets, y_vals=bs_CI_lbs)
@@ -1397,7 +1403,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
         functional = mean_of_curves(bootstrap_curves[0][0])
     elif plot_type == "quantile":
         # Single experiment --> returns a curve.
-        functional = quantile_of_curves(bootstrap_curves[0][0], q=beta)
+        functional = quantile_of_curves(bootstrap_curves[0][0], beta=beta)
     elif plot_type == "area_mean":
         # Single experiment --> returns a scalar.
         functional = np.mean([curve.compute_area_under_curve for curve in bootstrap_curves[0][0]])
@@ -1516,7 +1522,7 @@ def report_max_halfwidth(curve_pairs, normalize):
     plt.text(x=xloc, y=yloc, s=txt)
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot_CIs=True, all_in_one=True):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, plot_CIs=True, print_max_hw=True):
     """
     Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
@@ -1534,10 +1540,12 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot
         quantile to plot, e.g., beta quantile
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
-    plot_CIs : bool
-        plot bootstrapping confidence intervals?
     all_in_one : bool
         plot curves together or separately
+    plot_CIs : bool
+        plot bootstrapping confidence intervals?
+    print_max_hw : bool
+        print caption with max half-width
     """
     # Check if problems are the same with the same x0 and x*.
     ref_experiment = experiments[0]
@@ -1561,6 +1569,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot
                      beta=beta
                      )
         solver_curve_handles = []
+        if print_max_hw:
+            curve_pairs = []
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
@@ -1591,7 +1601,21 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot
             else:
                 print("Not a valid plot type.")
             solver_curve_handles.append(handle)
+            if plot_CIs:
+                # Note: "experiments" needs to be a list of list of Experiments.
+                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
+                                                                     n_bootstraps=100,
+                                                                     plot_type=plot_type,
+                                                                     beta=beta,
+                                                                     estimator=estimator,
+                                                                     normalize=normalize
+                                                                     )
+                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                if print_max_hw:
+                    curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        if print_max_hw:
+            report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize)
         save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type=plot_type,
@@ -1630,21 +1654,26 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot
                 estimator.plot()
             else:
                 print("Not a valid plot type.")
-            save_plot(solver_name=experiment.solver.name,
-                      problem_name=experiment.problem.name,
-                      plot_type=plot_type,
-                      normalize=normalize
-                      )
             if plot_CIs:
-                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=experiments,
+                # Note: "experiments" needs to be a list of list of Experiments.
+                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=100,
                                                                      plot_type=plot_type,
                                                                      beta=beta,
                                                                      estimator=estimator,
                                                                      normalize=normalize
                                                                      )
+                # print(bs_CI_lb_curve.y_vals)
+                # print(bs_CI_ub_curve.y_vals)
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
-                
+                if print_max_hw:
+                    report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=normalize)
+            save_plot(solver_name=experiment.solver.name,
+                      problem_name=experiment.problem.name,
+                      plot_type=plot_type,
+                      normalize=normalize
+                      )
+
 
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
                  beta=None):
