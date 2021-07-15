@@ -762,6 +762,7 @@ class Experiment(object):
                 new_objective_curve = Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=est_objectives)
                 bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
+
     # def bootstrap_sample(self, bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False):
     #     """
     #     Generate a bootstrap sample of estimated progress curves (normalized and unnormalized).
@@ -1238,9 +1239,10 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         experiment.record_experiment_results()
 
 
-def bootstrap_sample(experiments, bootstrap_rng, normalize=True):
+def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
     """
-    Generate a bootstrap sample of estimated progress curves (normalized and unnormalized).
+    Generate bootstrap samples of estimated progress curves (normalized
+    and unnormalized) from a set of experiments.
 
     Arguments
     ---------
@@ -1269,6 +1271,76 @@ def bootstrap_sample(experiments, bootstrap_rng, normalize=True):
     # Advance substream of random number generator to prepare for next bootstrap sample.
     bootstrap_rng.advance_substream()
     return bootstrap_curves
+
+
+# def bootstrap_sample(n_bootstraps, normalize):
+#     """
+    
+#     Parameters
+#     ----------
+#     n_bootstraps : int > 0
+#         number of times to generate a bootstrap sample of estimated progress curves
+#     normalize : bool
+#         normalize progress curves w.r.t. optimality gaps?
+#     """
+#     # TO DO: Try to remove normalize from the code
+#     # TO DO: Move much of the first part to a separate function that has the for loop.
+#     # Possibly the bootstrap_sample function that's not in the Experiment class.
+    
+#     # Create random number generator for bootstrap sampling.
+#     # Stream 1 dedicated for bootstrapping.
+#     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+#     bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
+#     for bs_index in range(n_bootstraps):
+#         # Generate bootstrap sample of estimated progress curves.
+#         bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
+#         # Apply the functional of the bootstrap sample,
+#         # e.g., mean/quantile (aggregate) progress curve.
+
+
+# max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
+
+    
+def bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
+    """
+    Construct a bootstrap confidence interval for an estimator.
+
+    Parameters
+    ----------
+    observations : list
+        estimators from all bootstrap instances
+    conf_level : float in (0,1)
+        confidence level for confidence intervals, i.e., 1-gamma
+    bias_correction : bool
+        use bias-corrected bootstrap CIs (via percentile method)?
+    overall estimator : float
+        estimator to compute bootstrap confidence interval of
+        (required for bias corrected CI)
+
+    Returns
+    -------
+    bs_CI_lower_bound : float
+        lower bound of bootstrap CI
+    bs_CI_upper_bound : float
+        upper bound of bootstrap CI
+    """
+    # Compute bootstrapping confidence interval via percentile method.
+    # See Efron (1981) "Nonparameteric Standard Errors and Confidence Intervals."
+    if bias_correction:
+        if overall_estimator is None:
+            print("Estimator required to compute bias-corrected CIs.")
+        # For biased-corrected CIs, see equation (4.4) on page 146.
+        z0 = norm.ppf(np.mean(observations < overall_estimator))
+        zconflvl = norm.ppf(conf_level)
+        q_lower = norm.cdf(2 * z0 - zconflvl)
+        q_upper = norm.cdf(2 * z0 + zconflvl)
+    else:
+        # For uncorrected CIs, see equation (4.3) on page 146.
+        q_lower = (1 - conf_level) / 2
+        q_upper = 1 - (1 - conf_level) / 2
+    bs_CI_lower_bound = np.quantile(observations, q=q_lower)
+    bs_CI_upper_bound = np.quantile(observations, q=q_upper)
+    return bs_CI_lower_bound, bs_CI_upper_bound
 
 
 def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot_CIs=True, all_in_one=True):
