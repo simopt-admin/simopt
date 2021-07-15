@@ -205,6 +205,30 @@ def quantile_of_curves(curves, beta):
     return quantile_curve
 
 
+def cdf_of_curves_crossing_times(curves, threshold):
+    """
+    Compute the cdf of crossing times of curves.
+
+    Parameters
+    ----------
+    curves : list of wrapper_base.Curve objects
+        collection of curves to aggregate
+    threshold : float
+        value for which to find first crossing time
+
+    Returns
+    -------
+    cdf_curve : wrapper_base.Curve object
+        cdf of crossing times
+    """
+    n_curves = len(curves)
+    crossing_times = [curve.compute_crossing_time(threshold) for curve in curves]
+    unique_x_vals = [0] + list(np.unique([crossing_time for crossing_time in crossing_times if crossing_time < np.inf])) + [1]
+    cdf_y_vals = [sum(crossing_time <= x_val for crossing_time in crossing_times) / n_curves for x_val in unique_x_vals]
+    cdf_curve = Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
+    return cdf_curve
+
+
 def difference_of_curves(curve1, curve2):
     """
     Compute the difference of two curves (Curve 1 - Curve 2).
@@ -449,38 +473,6 @@ class Experiment(object):
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
-    def plot_solvability_curves(self, solve_tols=[0.10], plot_CIs=True):
-        """
-        Plot the solvability curve(s) for a single solver-problem pair.
-        Optionally plot bootstrap CIs.
-
-        Arguments
-        ---------
-        solve_tols : list of floats in (0,1]
-            relative optimality gap(s) definining when a problem is solved
-        plot_CIs : Boolean
-            plot bootstrapping confidence intervals?
-        """
-        # Compute solve times.
-        self.compute_solvability(solve_tols=solve_tols)
-        for tol_index in range(len(self.solve_tols)):
-            solve_tol = solve_tols[tol_index]
-            stylize_solvability_plot(solver_name=self.solver.name, problem_name=self.problem.name, solve_tol=solve_tol, plot_type="single")
-            # Construct matrix showing when macroreplications are solved.
-            solve_matrix = np.zeros((self.n_macroreps, len(self.unique_frac_budgets)))
-            # Pass over progress curves to find first solve_tol crossing time.
-            for mrep in range(self.n_macroreps):
-                for budget_index in range(len(self.unique_frac_budgets)):
-                    if self.solve_times[tol_index][mrep] <= self.unique_frac_budgets[budget_index]:
-                        solve_matrix[mrep][budget_index] = 1
-            # Compute proportion of macroreplications "solved" by intermediate budget.
-            estimator = np.mean(solve_matrix, axis=0)
-            # Plot solvability curve.
-            plt.step(self.unique_frac_budgets, estimator, where="post")
-            if plot_CIs:
-                # Report bootstrapping error estimation and optionally plot bootstrap CIs.
-                self.plot_bootstrap_CIs(plot_type="solvability", normalize=True, estimator=estimator, plot_CIs=plot_CIs, tol_index=tol_index)
-            save_plot(solver_name=self.solver.name, problem_name=self.problem.name, plot_type="cdf solve times", normalize=True, extra=solve_tol)
 
     def compute_area_stats(self, compute_CIs=True):
         """
@@ -503,18 +495,18 @@ class Experiment(object):
             lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
             self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
 
-    def compute_solvability(self, solve_tols=[0.10]):
-        """
-        Compute alpha-solve times for all macroreplications.
-        Can specify multiple values of alpha.
+    # def compute_solvability(self, solve_tols=[0.10]):
+    #     """
+    #     Compute alpha-solve times for all macroreplications.
+    #     Can specify multiple values of alpha.
 
-        Arguments
-        ---------
-        solve_tols : list of floats in (0,1]
-            relative optimality gap(s) definining when a problem is solved
-        """
-        self.solve_tols = solve_tols
-        self.solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in self.all_prog_curves] for solve_tol in solve_tols]
+    #     Arguments
+    #     ---------
+    #     solve_tols : list of floats in (0,1]
+    #         relative optimality gap(s) definining when a problem is solved
+    #     """
+    #     self.solve_tols = solve_tols
+    #     self.solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in self.all_prog_curves] for solve_tol in solve_tols]
 
     def compute_solvability_quantiles(self, beta=0.50, compute_CIs=True):
         """
@@ -1015,9 +1007,9 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
     elif plot_type == "solve_time_quantile":
         # Single experiment --> returns a scalar
         functional = np.quantile([curve.compute_crossing_time(threshold=solve_tol) for curve in bootstrap_curves[0][0]], q=beta)
-    elif plot_type == "solver_time_cdf":
+    elif plot_type == "solve_time_cdf":
         # Single experiment --> returns a curve.
-        functional = None  # Placeholder.
+        functional = cdf_of_curves_crossing_times(bootstrap_curves[0][0], threshold=solve_tol)
     elif plot_type == "cdf_solvability":
         # One solver, multiple problems --> returns a curve.
         functional = None  # Placeholder.
@@ -1064,7 +1056,7 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
         if overall_estimator is None:
             print("Estimator required to compute bias-corrected CIs.")
         # For biased-corrected CIs, see equation (4.4) on page 146.
-        z0 = norm.ppf(np.mean(observations < overall_estimator))
+        z0 = norm.ppf(np.mean([obs < overall_estimator for obs in observations]))
         zconflvl = norm.ppf(conf_level)
         q_lower = norm.cdf(2 * z0 - zconflvl)
         q_upper = norm.cdf(2 * z0 + zconflvl)
@@ -1124,13 +1116,32 @@ def report_max_halfwidth(curve_pairs, normalize):
     plt.text(x=xloc, y=yloc, s=txt)
 
 
+def check_common_problem_and_reference(experiments):
+    """
+    Check if a collection of experiments have the same problem, x0, and x*.
+
+    Parameters
+    ----------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on a common problem
+    """
+    ref_experiment = experiments[0]
+    for experiment in experiments:
+        if experiment.problem != ref_experiment.problem:
+            print("At least two experiments have different problem instances.")
+        if experiment.x0 != ref_experiment.x0:
+            print("At least two experiments have different starting solutions.")
+        if experiment.xstar != ref_experiment.xstar:
+            print("At least two experiments have different optimal solutions.")
+
+
 def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, plot_CIs=True, print_max_hw=True):
     """
     Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     experiments : list of wrapper_base.Experiment objects
         experiments of different solvers on a common problem
     plot_type : string
@@ -1150,15 +1161,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         print caption with max half-width
     """
     # Check if problems are the same with the same x0 and x*.
-    ref_experiment = experiments[0]
-    for experiment in experiments:
-        # Check if problems are the same.
-        if experiment.problem != ref_experiment.problem:
-            print("At least two experiments have different problem instances.")
-        if experiment.x0 != ref_experiment.x0:
-            print("At least two experiments have different starting solutions.")
-        if experiment.xstar != ref_experiment.xstar:
-            print("At least two experiments have different optimal solutions.")
+    check_common_problem_and_reference(experiments)
     # Set up plot.
     n_experiments = len(experiments)
     if all_in_one:
@@ -1223,7 +1226,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                   plot_type=plot_type,
                   normalize=normalize
                   )
-    else:  # Plot separately
+    else:  # Plot separately.
         for experiment in experiments:
             stylize_plot(plot_type=plot_type,
                          solver_name=experiment.solver.name,
@@ -1275,6 +1278,95 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                       )
 
 
+def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True):
+    """
+    Plot the solvability cdf for one or more solvers on a single problem.
+
+    Arguments
+    ---------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on a common problem
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    all_in_one : bool
+        plot curves together or separately
+    plot_CIs : bool
+        plot bootstrapping confidence intervals?
+    print_max_hw : bool
+        print caption with max half-width
+    """
+    # Check if problems are the same with the same x0 and x*.
+    check_common_problem_and_reference(experiments)
+    # Set up plot.
+    n_experiments = len(experiments)
+    if all_in_one:
+        ref_experiment = experiments[0]
+        stylize_solvability_plot(solver_name="SOLVER SET",
+                                 problem_name=ref_experiment.problem.name,
+                                 solve_tol=solve_tol,
+                                 plot_type="single"
+                                 )
+        solver_curve_handles = []
+        if print_max_hw:
+            curve_pairs = []
+        for exp_idx in range(n_experiments):
+            experiment = experiments[exp_idx]
+            color_str = "C" + str(exp_idx)
+            # Plot cdf of solve times.
+            estimator = cdf_of_curves_crossing_times(experiment.progress_curves, threshold=solve_tol)
+            handle = estimator.plot(color_str=color_str)
+            solver_curve_handles.append(handle)
+            if plot_CIs:
+                # Note: "experiments" needs to be a list of list of Experiments.
+                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
+                                                                     n_bootstraps=100,
+                                                                     plot_type="solve_time_cdf",
+                                                                     solve_tol=solve_tol,
+                                                                     estimator=estimator,
+                                                                     normalize=True
+                                                                     )
+                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                if print_max_hw:
+                    curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        if print_max_hw:
+            report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
+        save_plot(solver_name="SOLVER SET",
+                  problem_name=ref_experiment.problem.name,
+                  plot_type="solve_time_cdf",
+                  normalize=True,
+                  extra=solve_tol
+                  )
+    else:  # Plot separately.
+        for experiment in experiments:
+            stylize_solvability_plot(solver_name=experiment.solver.name,
+                                     problem_name=experiment.problem.name,
+                                     solve_tol=solve_tol,
+                                     plot_type="single"
+                                     )
+            estimator = cdf_of_curves_crossing_times(experiment.progress_curves, threshold=solve_tol)
+            estimator.plot()
+            if plot_CIs:
+                # Note: "experiments" needs to be a list of list of Experiments.
+                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
+                                                                     n_bootstraps=100,
+                                                                     plot_type="solve_time_cdf",
+                                                                     solve_tol=solve_tol,
+                                                                     estimator=estimator,
+                                                                     normalize=True
+                                                                     )
+                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                if print_max_hw:
+                    report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True)
+            save_plot(solver_name=experiment.solver.name,
+                      problem_name=experiment.problem.name,
+                      plot_type="solve_time_cdf",
+                      normalize=True,
+                      extra=solve_tol
+                      )
+
+
+# TO DO: Merge all stylize plot functions
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
                  beta=None):
     """
@@ -1435,11 +1527,12 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
             "all" : all estimated progress curves
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
-            "cdf solve times" : cdf of solve times
-            "cdf solvability" : cdf solvability profile
-            "quantile solvability" : quantile solvability profile
+            "solve_time_cdf" : cdf of solve time
+            "cdf_solvability" : cdf solvability profile
+            "quantile_solvability" : quantile solvability profile
+            "diff_cdf_solvability" : difference of cdf solvability profiles
+            "diff_quantile_solvability" : difference of quantile solvability profiles
             "area" : area scatterplot
-            "difference" : difference profile
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
     extra : float (or list of floats)
@@ -1452,16 +1545,18 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
-    elif plot_type == "cdf solve times":
+    elif plot_type == "solve_time_cdf":
         plot_name = f"cdf_{extra}_solve_times"
-    elif plot_type == "cdf solvability":
+    elif plot_type == "cdf_solvability":
         plot_name = f"profile_cdf_{extra}_solve_times"
-    elif plot_type == "quantile solvability":
+    elif plot_type == "quantile_solvability":
         plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
+    elif plot_type == "diff_cdf_solvability":
+        plot_name = "diff_cdf_solvability_profile"
+    elif plot_type == "diff_quantile_solvability":
+        plot_name = "diff_quantile_solvability_profile"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
-    elif plot_type == "difference":
-        plot_name = "difference_profile"
     if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
