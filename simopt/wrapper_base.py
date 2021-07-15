@@ -345,7 +345,7 @@ class Experiment(object):
         else:
             self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
         if file_name_path is None:
-            self.file_name_path = "./experiments/outputs/" + self.solver.name + "_on_" + self.problem.name + ".pickle"
+            self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
             self.file_name_path = file_name_path
 
@@ -1156,7 +1156,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             print("At least two experiments have different numbers of macro-replications.")
         # Check if experiment has been post-replicated and with common number of postreps.
         if getattr(experiment, "n_postreps", None) is None:
-            print("The experiment of " + experiment.solver_name + " on " + experiment.problem_name + " has not been post-replicated.")
+            print(f"The experiment of {experiment.solver_name} on {experiment.problem_name} has not been post-replicated.")
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
@@ -1705,19 +1705,19 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         ylabel = "Fraction of Initial Optimality Gap"
         xlim = (0, 1)
         ylim = (-0.1, 1.1)
-        title = solver_name + " on " + problem_name + "\n"
+        title = f"{solver_name} on {problem_name}\n"
     elif not normalize:
         xlabel = "Budget"
         ylabel = "Objective Function Value"
         xlim = (0, budget)
         ylim = None
-        title = solver_name + " on " + problem_name + "\n" + "Unnormalized "
+        title = f"{solver_name} on {problem_name} \n Unnormalized "
     if plot_type == "all":
         title = title + "Estimated Progress Curves"
     elif plot_type == "mean":
         title = title + "Mean Progress Curve"
     elif plot_type == "quantile":
-        title = title + str(round(beta, 2)) + "-Quantile Progress Curve"
+        title = title + f"{round(beta, 2)}-Quantile Progress Curve"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -1786,8 +1786,8 @@ def stylize_difference_plot(solve_tol):
     xlabel = "Fraction of Budget"
     xlim = (0, 1)
     ylabel = "Difference in Fraction of Macroreplications Solved"
-    title = "SOLVERSET" + " on " + "PROBLEMSET" + "\n"
-    title = title + "Difference of " + str(round(solve_tol, 2)) + "-Solvability Curves"
+    title = "SOLVERSET on PROBLEMSET\n"
+    title = title + f"Difference of {round(solve_tol, 2)}-Solvability Curves"
     plt.xlabel(xlabel, size=14)
     plt.ylabel(ylabel, size=14)
     plt.title(title, size=14)
@@ -1853,18 +1853,18 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     elif plot_type == "quantile":
         plot_name = "quantile_prog_curve"
     elif plot_type == "cdf solve times":
-        plot_name = "cdf_" + str(extra) + "_solve_times"
+        plot_name = f"cdf_{extra}_solve_times"
     elif plot_type == "cdf solvability":
-        plot_name = "profile_cdf_" + str(extra) + "_solve_times"
+        plot_name = f"profile_cdf_{extra}_solve_times"
     elif plot_type == "quantile solvability":
-        plot_name = "profile_" + str(extra[1]) + "_quantile_" + str(extra[0]) + "_solve_times"
+        plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     elif plot_type == "difference":
         plot_name = "difference_profile"
     if not normalize:
         plot_name = plot_name + "_unnorm"
-    path_name = "experiments/plots/" + str(solver_name) + "_on_" + str(problem_name) + "_" + plot_name + ".png"
+    path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
     plt.savefig(path_name, bbox_inches="tight")
 
 
@@ -1979,13 +1979,13 @@ class MetaExperiment(object):
             for problem_name in problem_names:
                 try:
                     # If a file exists, read in Experiment object.
-                    with open("experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle", "rb") as file:
+                    with open(f"experiments/outputs/{solver_name}_on_{problem_name}.pickle", "rb") as file:
                         next_experiment = pickle.load(file)
                     # TO DO: Check if the solver/problem/oracle factors in the file match
                     # those for the MetaExperiment.
                 except Exception:
                     # If no file exists, create new Experiment object.
-                    print("No experiment file exists for " + solver_name + " on " + problem_name + ". Creating new experiment.")
+                    print(f"No experiment file exists for {solver_name} on {problem_name}. Creating new experiment.")
                     next_experiment = Experiment(solver_name=solver_name,
                                                  problem_name=problem_name,
                                                  solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
@@ -2010,7 +2010,7 @@ class MetaExperiment(object):
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps):
-                    print("Running " + experiment.solver.name + " on " + experiment.problem.name + ".")
+                    print(f"Running {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_runs()
                     experiment.run(n_macroreps)
 
@@ -2039,7 +2039,7 @@ class MetaExperiment(object):
                         or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
                         or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                         or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
-                    print("Post-processing " + experiment.solver.name + " on " + experiment.problem.name + ".")
+                    print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
 
