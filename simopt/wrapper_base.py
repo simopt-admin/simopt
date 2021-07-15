@@ -15,7 +15,12 @@ Experiment : class
 trim_solver_results : function
 read_experiment_results : function
 post_normalize : function
-bootstrap_sample : function
+bootstrap_sample_all : function
+bootstrap_procedure : function
+functional_of_curves : function
+compute_bootstrap_CI : function
+plot_bootstrap_CIs : function
+report_max_halfwidth : function
 plot_progress_curves : function
 stylize_plot : function
 stylize_solvability_plot : function
@@ -873,7 +878,7 @@ class Experiment(object):
     #         indicates which type of plot to produce
     #             "mean" : estimated mean progress curve
     #             "quantile" : estimated beta quantile progress curve
-    #             "area_mean" : mean of area under convergence curve
+    #             "area_mean" : mean of area under progress curve
     #             "area_std_dev" : standard deviation of area under progress curve
     #             "solve_time_quantile" : beta quantile of solve time
     #             "solvability" : estimated solvability curve
@@ -1292,28 +1297,134 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
     return bootstrap_curves
 
 
-# def bootstrap_sample(n_bootstraps, normalize):
-#     """
-#     Parameters
-#     ----------
-#     n_bootstraps : int > 0
-#         number of times to generate a bootstrap sample of estimated progress curves
-#     normalize : bool
-#         normalize progress curves w.r.t. optimality gaps?
-#     """
-#     # TO DO: Try to remove normalize from the code
-#     # TO DO: Move much of the first part to a separate function that has the for loop.
-#     # Possibly the bootstrap_sample function that's not in the Experiment class.
-#     # Create random number generator for bootstrap sampling.
-#     # Stream 1 dedicated for bootstrapping.
-#     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
-#     bs_aggregate_objects = np.zeros((n_bootstraps, n_intervals))
-#     for bs_index in range(n_bootstraps):
-#         # Generate bootstrap sample of estimated progress curves.
-#         bootstrap_est_objective, bootstrap_prog_curves = self.bootstrap_sample(bootstrap_rng=bootstrap_rng, crn_across_budget=True, crn_across_macroreps=False)
-#         # Apply the functional of the bootstrap sample,
-#         # e.g., mean/quantile (aggregate) progress curve.
-# max_halfwidth = np.max((bs_CI_upper_bounds - bs_CI_lower_bounds) / 2)
+def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_tol=None, estimator=None, normalize=True):
+    """
+    Parameters
+    ----------
+    experiments : 
+    n_bootstraps : int > 0
+        number of times to generate a bootstrap sample of estimated progress curves
+    plot_type : string
+        indicates which type of plot to produce
+            "mean" : estimated mean progress curve
+            "quantile" : estimated beta quantile progress curve
+            "area_mean" : mean of area under progress curve
+            "area_std_dev" : standard deviation of area under progress curve
+            "solve_time_quantile" : beta quantile of solve time
+            "solve_time_cdf" : cdf of solve time
+            "cdf_solvability" : cdf solvability profile
+            "quantile_solvability" : quantile solvability profile
+            "diff_cdf_solvability" : difference of cdf solvability profiles
+            "diff_quantile_solvability" : difference of quantile solvability profiles
+    beta : float in (0,1)
+        quantile to plot, e.g., beta quantile
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    estimator : float or wrapper_base.Curve object
+        main estimator, e.g., mean convergence curve from an experiment
+    normalize : bool
+        normalize progress curves w.r.t. optimality gaps?
+
+    Returns
+    -------
+    bs_CI_lower_bounds, bs_CI_upper_bounds = floats or wrapper_base.Curve objects
+        lower and upper bound(s) of bootstrap CI(s), as floats or curves
+    """
+    # Create random number generator for bootstrap sampling.
+    # Stream 1 dedicated for bootstrapping.
+    bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+    # Obtain n_bootstrap replications.
+    bootstrap_replications = [] * n_bootstraps
+    for bs_index in range(n_bootstraps):
+        # Generate bootstrap sample of estimated objective/progress curves.
+        bootstrap_curves = bootstrap_sample_all(experiments, bootstrap_rng=bootstrap_rng, normalize=normalize)
+        # Apply the functional of the bootstrap sample.
+        bootstrap_replications[bs_index] = functional_of_curves(bootstrap_curves, plot_type, beta=beta, solve_tol=solve_tol)
+    # Distinguish cases where functional returns a scalar vs a curve.
+    if plot_type in {"area_mean", "area_std_dev", "solve_time_quantile"}:
+        # Functional returns a scalar.
+        bs_CI_lower_bounds, bs_CI_upper_bounds = compute_bootstrap_CI(bootstrap_replications, conf_level=0.95, bias_correction=True, overall_estimator=estimator)
+    elif plot_type in {"mean", "quantile", "solve_time_cdf", "cdf_solvability", "quantile_solvability", "diff_cdf_solvability", "diff_quantile_solvability"}:
+        # Functional returns a curve.
+        # TO DO: USE LOOKUP CAPABILITIES OF CURVE CLASS AT UNIQUE BUDGETS
+        unique_budgets = list(np.unique([budget for curve in bootstrap_replications for budget in curve.x_vals]))
+        bs_CI_lbs = []
+        bs_CI_ubs = []
+        for budget in unique_budgets:
+            bootstrap_subreplications = [curve.lookup(x=budget) for curve in bootstrap_replications]
+            bs_CI_lower_bound, bs_CI_upper_bound = compute_bootstrap_CI(bootstrap_subreplications, conf_level=0.95, bias_correction=True, overall_estimator=estimator)
+            bs_CI_lbs.append(bs_CI_lower_bound)
+            bs_CI_ubs.append(bs_CI_upper_bound)
+        bs_CI_lower_bounds = Curve(x_vals=unique_budgets, y_vals=bs_CI_lbs)
+        bs_CI_upper_bounds = Curve(x_vals=unique_budgets, y_vals=bs_CI_ubs)
+    return bs_CI_lower_bounds, bs_CI_upper_bounds
+
+
+def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
+    """
+    Compute a functional of the bootstrapped objective/progress curves.
+
+    Parameters
+    ----------
+    bootstrap_curves : list of list of list of wrapper_base.Curve objects
+        bootstrapped estimated objective curves or estimated progress curves
+        of all solutions from all macroreplications
+    plot_type : string
+        indicates which type of plot to produce
+            "mean" : estimated mean progress curve
+            "quantile" : estimated beta quantile progress curve
+            "area_mean" : mean of area under progress curve
+            "area_std_dev" : standard deviation of area under progress curve
+            "solve_time_quantile" : beta quantile of solve time
+            "solve_time_cdf" : cdf of solve time
+            "cdf_solvability" : cdf solvability profile
+            "quantile_solvability" : quantile solvability profile
+            "diff_cdf_solvability" : difference of cdf solvability profiles
+            "diff_quantile_solvability" : difference of quantile solvability profiles
+    beta : float in (0,1)
+        quantile to plot, e.g., beta quantile
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+
+    Returns
+    -------
+    functional : list
+        functional of bootstrapped curves, e.g, mean progress curves,
+        mean area under progress curve, quantile of crossing time, etc.
+    """
+    if plot_type == "mean":
+        # Single experiment --> returns a curve.
+        functional = mean_of_curves(bootstrap_curves[0][0])
+    elif plot_type == "quantile":
+        # Single experiment --> returns a curve.
+        functional = quantile_of_curves(bootstrap_curves[0][0], q=beta)
+    elif plot_type == "area_mean":
+        # Single experiment --> returns a scalar.
+        functional = np.mean([curve.compute_area_under_curve for curve in bootstrap_curves[0][0]])
+    elif plot_type == "area_std_dev":
+        # Single experiment --> returns a scalar.
+        functional = np.std([curve.compute_area_under_curve for curve in bootstrap_curves[0][0]], ddof=1)
+    elif plot_type == "solve_time_quantile":
+        # Single experiment --> returns a scalar
+        functional = np.quantile([curve.compute_crossing_time(threshold=solve_tol) for curve in bootstrap_curves[0][0]], q=beta)
+    elif plot_type == "solver_time_cdf":
+        # Single experiment --> returns a curve.
+        functional = None  # Placeholder.
+    elif plot_type == "cdf_solvability":
+        # One solver, multiple problems --> returns a curve.
+        functional = None  # Placeholder.
+    elif plot_type == "quantile_solvability":
+        # One solver, multiple problems --> returns a curve.
+        functional = None  # Placeholder.
+    elif plot_type == "diff_cdf_solvability":
+        # Two solvers, multiple problems --> returns a curve.
+        functional = None  # Placeholder.
+    elif plot_type == "diff_quantile_solvability":
+        # Two solvers, multiple problems --> returns a curve.
+        functional = None  # Placeholder.
+    else:
+        print("Not a valid plot type.")
+    return functional
 
 
 def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
@@ -1360,8 +1471,7 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
 
 def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
     """
-    Plot bootstrap confidence intervals and (optionally) report max
-    half-width.
+    Plot bootstrap confidence intervals.
 
     Parameters
     ----------
@@ -1370,7 +1480,6 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
     color_str : str
         string indicating line color, e.g., "C0", "C1", etc.
     """
-    # Plot bootstrap confidence intervals.
     bs_CI_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
     bs_CI_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
 
@@ -1526,10 +1635,16 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, plot
                       plot_type=plot_type,
                       normalize=normalize
                       )
-        # if plot_type == "mean" or plot_type == "quantile":
-        #     # Report bootstrapping error estimation and optionally plot bootstrap CIs.
-        #     plot_bootstrap_CIs(experiments, plot_type, normalize, estimator, plot_CIs, beta)
-
+            if plot_CIs:
+                bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=experiments,
+                                                                     n_bootstraps=100,
+                                                                     plot_type=plot_type,
+                                                                     beta=beta,
+                                                                     estimator=estimator,
+                                                                     normalize=normalize
+                                                                     )
+                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                
 
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
                  beta=None):
