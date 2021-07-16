@@ -1337,7 +1337,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     Either one plot for each solver or one plot for all solvers.
 
     Parameters
-    ---------
+    ----------
     experiments : list of list of wrapper_base.Experiment objects
         experiments used to produce plots
     all_in_one : bool
@@ -1445,6 +1445,116 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                       plot_type="area_scatterplot",
                       normalize=True
                       )
+
+
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+    """
+    Plot the (difference of) solvability profiles for each solver on a set of problems.
+
+    Parameters
+    ----------
+    experiments : list of list of wrapper_base.Experiment objects
+        experiments used to produce plots
+    plot_type : string
+        indicates which type of plot to produce
+            "cdf_solvability" : cdf-solvability profile
+            "quantile_solvability" : quantile-solvability profile
+            "diff_cdf_solvability" : difference of cdf-solvability profiles
+            "diff_quantile_solvability" : difference of quantile-solvability profiles
+    all_in_one : bool
+        plot curves together or separately
+    plot_CIs : bool
+        plot bootstrapping confidence intervals?
+    print_max_hw : bool
+        print caption with max half-width
+    solve_tol : float in (0,1]
+        relative optimality gap definining when a problem is solved
+    beta : float in (0,1)
+        quantile to compute, e.g., beta quantile
+    ref_solver : str
+        name of solver used as benchmark for difference profiles
+    """
+    # Set up plot.
+    n_solvers = len(experiments)
+    n_problems = len(experiments[0])
+    if all_in_one:
+        if plot_type == "cdf_solvability":
+            stylize_solvability_plot(solver_name="SOLVER SET", problem_name="PROBLEM SET", solve_tol=solve_tol, beta=None, plot_type="cdf")
+        elif plot_type == "quantile_solvability":
+            stylize_solvability_plot(solver_name="SOLVER SET", problem_name="PROBLEM SET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
+        elif plot_type == "diff_cdf_solvability":
+            stylize_difference_plot(solve_tol=solve_tol)
+        elif plot_type == "diff_quantile_solvability":
+            # TO DO: Pass in beta when plotting differences of quantile-solvability profiles.
+            stylize_difference_plot(solve_tol=solve_tol)
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
+        solver_curves = []
+        solver_curve_handles = []
+        for solver_idx in range(n_solvers):
+            solver_sub_curves = []
+            color_str = "C" + str(solver_idx)
+            # For each problem compute the cdf or quantile of solve times.
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
+                    sub_curve = cdf_of_curves_crossing_times(curves=experiment.progress_curves, threshold=solve_tol)
+                if plot_type in {"quantile_solvability", "diff_quantile_solvability"}:
+                    solve_time_quantile = np.quantile([curve.compute_crossing_time(threshold=solve_tol) for curve in experiment.progress_curves], q=beta)
+                    if solve_time_quantile == np.inf:
+                        sub_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
+                    else:
+                        sub_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+                solver_sub_curves.append(sub_curve)
+            # Plot solvability profile for the solver.
+            # Exploit the fact that each solvability profile is an average of more basic curves.
+            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curves.append(solver_curve)
+            if plot_type in {"cdf_solvability", "quantile_solvability"}:
+                handle = solver_curve.plot(color_str=color_str)
+                solver_curve_handles.append(handle)
+        if plot_type == "cdf_solvability":
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            save_plot(solver_name="SOLVER SET",
+                      problem_name="PROBLEM SET",
+                      plot_type=plot_type,
+                      normalize=True,
+                      extra=solve_tol
+                      )
+        elif plot_type == "quantile_solvability":
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            save_plot(solver_name="SOLVER SET",
+                      problem_name="PROBLEM SET",
+                      plot_type=plot_type,
+                      normalize=True,
+                      extra=[solve_tol, beta]
+                      )
+        elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+            non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
+            ref_solver_idx = solver_names.index(ref_solver)
+            for solver_idx in range(n_solvers):
+                if solver_idx is not ref_solver_idx:
+                    diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
+                    color_str = "C" + str(solver_idx)
+                    handle = diff_solver_curve.plot(color_str=color_str)
+                    solver_curve_handles.append(handle)
+            offset_labels = [f"{non_ref_solver} -  {ref_solver}" for non_ref_solver in non_ref_solvers]
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
+            if plot_type == "diff_cdf_solvability":
+                save_plot(solver_name="SOLVER SET",
+                          problem_name="PROBLEM SET",
+                          plot_type=plot_type,
+                          normalize=True,
+                          extra=solve_tol
+                          )
+            elif plot_type == "diff_quantile_solvability":
+                save_plot(solver_name="SOLVER SET",
+                          problem_name="PROBLEM SET",
+                          plot_type=plot_type,
+                          normalize=True,
+                          extra=[solve_tol, beta]
+                          )
+    else:
+        pass
 
 
 # TO DO: Merge all stylize plot functions
@@ -1769,45 +1879,45 @@ class MetaExperiment(object):
                     experiment.clear_postreps()
                     experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
 
-    def plot_progress_curves(self, plot_type, beta=0.50, normalize=True):
-        """
-        Produce plots of the solvers' aggregated performances on each problem.
+    # def plot_progress_curves(self, plot_type, beta=0.50, normalize=True):
+    #     """
+    #     Produce plots of the solvers' aggregated performances on each problem.
 
-        Arguments
-        ---------
-        plot_type : string
-            indicates which type of plot to produce
-                "mean" : estimated mean progress curve
-                "quantile" : estimated beta quantile progress curve
-        beta : float in (0,1)
-            quantile to plot, e.g., beta quantile
-        normalize : Boolean
-            normalize progress curves w.r.t. optimality gaps?
-        """
-        for problem_index in range(self.n_problems):
-            stylize_plot(plot_type=plot_type, solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], normalize=normalize, budget=self.experiments[0][problem_index].problem.factors["budget"], beta=beta)
-            for solver_index in range(self.n_solvers):
-                experiment = self.experiments[solver_index][problem_index]
-                if plot_type == "mean":
-                    # Plot estimated mean progress curve.
-                    if normalize:
-                        estimator = np.mean(experiment.all_prog_curves, axis=0)
-                        plt.step(experiment.unique_frac_budgets, estimator, where="post")
-                    else:
-                        estimator = np.mean(experiment.all_est_objectives, axis=0)
-                        plt.step(experiment.unique_budgets, estimator, where="post")
-                elif plot_type == "quantile":
-                    # Plot estimated beta-quantile progress curve.
-                    if normalize:
-                        estimator = np.quantile(experiment.all_prog_curves, q=beta, axis=0)
-                        plt.step(experiment.unique_frac_budgets, estimator, where="post")
-                    else:
-                        estimator = np.quantile(experiment.all_est_objectives, q=beta, axis=0)
-                        plt.step(experiment.unique_budgets, estimator, where="post")
-                else:
-                    print("Not a valid plot type.")
-            plt.legend(labels=self.solver_names, loc="upper right")
-            save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
+    #     Arguments
+    #     ---------
+    #     plot_type : string
+    #         indicates which type of plot to produce
+    #             "mean" : estimated mean progress curve
+    #             "quantile" : estimated beta quantile progress curve
+    #     beta : float in (0,1)
+    #         quantile to plot, e.g., beta quantile
+    #     normalize : Boolean
+    #         normalize progress curves w.r.t. optimality gaps?
+    #     """
+    #     for problem_index in range(self.n_problems):
+    #         stylize_plot(plot_type=plot_type, solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], normalize=normalize, budget=self.experiments[0][problem_index].problem.factors["budget"], beta=beta)
+    #         for solver_index in range(self.n_solvers):
+    #             experiment = self.experiments[solver_index][problem_index]
+    #             if plot_type == "mean":
+    #                 # Plot estimated mean progress curve.
+    #                 if normalize:
+    #                     estimator = np.mean(experiment.all_prog_curves, axis=0)
+    #                     plt.step(experiment.unique_frac_budgets, estimator, where="post")
+    #                 else:
+    #                     estimator = np.mean(experiment.all_est_objectives, axis=0)
+    #                     plt.step(experiment.unique_budgets, estimator, where="post")
+    #             elif plot_type == "quantile":
+    #                 # Plot estimated beta-quantile progress curve.
+    #                 if normalize:
+    #                     estimator = np.quantile(experiment.all_prog_curves, q=beta, axis=0)
+    #                     plt.step(experiment.unique_frac_budgets, estimator, where="post")
+    #                 else:
+    #                     estimator = np.quantile(experiment.all_est_objectives, q=beta, axis=0)
+    #                     plt.step(experiment.unique_budgets, estimator, where="post")
+    #             else:
+    #                 print("Not a valid plot type.")
+    #         plt.legend(labels=self.solver_names, loc="upper right")
+    #         save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
 
     # def plot_solvability_curves(self, solve_tols=[0.10]):
     #     """
@@ -1885,108 +1995,108 @@ class MetaExperiment(object):
     #         plt.legend(labels=self.solver_names, loc="upper right")
     #         save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="area", normalize=True)
 
-    def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5, ref_solver=None):
-        """
-        Plot the solvability profiles for each solver on a set of problems.
-        Three types of plots:
-            1) cdf solvability profile
-            2) quantile solvability profile
-            3) difference solvability profile
+#     def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5, ref_solver=None):
+#         """
+#         Plot the solvability profiles for each solver on a set of problems.
+#         Three types of plots:
+#             1) cdf solvability profile
+#             2) quantile solvability profile
+#             3) difference solvability profile
 
-        Arguments
-        ---------
-        solve_tol : float in (0,1]
-            relative optimality gap definining when a problem is solved
-        beta : float in (0,1)
-            quantile to compute, e.g., beta quantile
-        ref_solver : str
-            name of solver used as benchmark for difference profiles
-        """
-        all_solver_unique_frac_budgets = []
-        all_solvability_profiles = []
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="cdf")
-        for solver_index in range(self.n_solvers):
-            solvability_curves = []
-            all_budgets = []
-            for problem_index in range(self.n_problems):
-                experiment = self.experiments[solver_index][problem_index]
-                # Compute solve times.
-                experiment.compute_solvability(solve_tols=[solve_tol])
-                experiment.compute_solvability_quantiles(beta=beta, compute_CIs=False)
-                # Construct matrix showing when macroreplications are solved.
-                solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
-                # Pass over progress curves to find first solve_tol crossing time.
-                for mrep in range(experiment.n_macroreps):
-                    for budget_index in range(len(experiment.unique_frac_budgets)):
-                        # TO DO: HARD-CODED for tol_index=0
-                        if experiment.solve_times[0][mrep] <= experiment.unique_frac_budgets[budget_index]:
-                            solve_matrix[mrep][budget_index] = 1
-                solvability_curves.append(list(np.mean(solve_matrix, axis=0)))
-                all_budgets.append(list(experiment.unique_frac_budgets))
-            # Compute the solver's solvability profile.
-            solver_unique_frac_budgets = np.unique([budget for budgets in all_budgets for budget in budgets])
-            all_solve_matrix = np.zeros((self.n_problems, len(solver_unique_frac_budgets)))
-            for problem_index in range(self.n_problems):
-                for budget_index in range(len(solver_unique_frac_budgets)):
-                    problem_budget_index = np.max(np.where(np.array(all_budgets[problem_index]) <= solver_unique_frac_budgets[budget_index]))
-                    all_solve_matrix[problem_index][budget_index] = solvability_curves[problem_index][problem_budget_index]
-            solvability_profile = np.mean(all_solve_matrix, axis=0)
-            # Plot the solver's solvability profile.
-            plt.step(solver_unique_frac_budgets, solvability_profile, where="post")
-            # Append results.
-            all_solver_unique_frac_budgets.append(solver_unique_frac_budgets)
-            all_solvability_profiles.append(solvability_profile)
-        plt.legend(labels=self.solver_names, loc="lower right")
-        # TO DO: Change the y-axis label produced by this helper function.
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="cdf solvability", normalize=True, extra=solve_tol)
-        # Plot solvability profiles for each solver.
-        stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
-        for solver_index in range(self.n_solvers):
-            solvability_quantiles = []
-            for problem_index in range(self.n_problems):
-                experiment = self.experiments[solver_index][problem_index]
-                # TO DO: Hard-coded for first tol_index
-                solvability_quantiles.append(experiment.solve_time_quantiles[0])
-            plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where="post")
-        save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="quantile solvability", normalize=True, extra=[solve_tol, beta])
-        # Plot difference solvability profiles. (Optional)
-        if ref_solver is not None:
-            stylize_difference_plot(solve_tol=solve_tol)
-            non_ref_solvers = [solver_name for solver_name in self.solver_names if solver_name != ref_solver]
-            ref_solver_index = self.solver_names.index(ref_solver)
-            for solver_index in range(self.n_solvers):
-                solver_name = self.solver_names[solver_index]
-                if solver_name is not ref_solver:
-                    diff_budgets, diff_solvability_profile = compute_difference_solvability_profile(budgets_1=all_solver_unique_frac_budgets[solver_index],
-                                                                                                    solv_profile_1=all_solvability_profiles[solver_index],
-                                                                                                    budgets_2=all_solver_unique_frac_budgets[ref_solver_index],
-                                                                                                    solv_profile_2=all_solvability_profiles[ref_solver_index]
-                                                                                                    )
-                    plt.step(diff_budgets, diff_solvability_profile, where="post")
-            plt.plot([0, 1], [0, 0], color="black", linestyle="--")
-            plt.legend(labels=[non_ref_solver + " - " + ref_solver for non_ref_solver in non_ref_solvers], loc="upper right")
-            save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="difference", normalize=True)
+#         Arguments
+#         ---------
+#         solve_tol : float in (0,1]
+#             relative optimality gap definining when a problem is solved
+#         beta : float in (0,1)
+#             quantile to compute, e.g., beta quantile
+#         ref_solver : str
+#             name of solver used as benchmark for difference profiles
+#         """
+#         all_solver_unique_frac_budgets = []
+#         all_solvability_profiles = []
+#         stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=None, plot_type="cdf")
+#         for solver_index in range(self.n_solvers):
+#             solvability_curves = []
+#             all_budgets = []
+#             for problem_index in range(self.n_problems):
+#                 experiment = self.experiments[solver_index][problem_index]
+#                 # Compute solve times.
+#                 experiment.compute_solvability(solve_tols=[solve_tol])
+#                 experiment.compute_solvability_quantiles(beta=beta, compute_CIs=False)
+#                 # Construct matrix showing when macroreplications are solved.
+#                 solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
+#                 # Pass over progress curves to find first solve_tol crossing time.
+#                 for mrep in range(experiment.n_macroreps):
+#                     for budget_index in range(len(experiment.unique_frac_budgets)):
+#                         # TO DO: HARD-CODED for tol_index=0
+#                         if experiment.solve_times[0][mrep] <= experiment.unique_frac_budgets[budget_index]:
+#                             solve_matrix[mrep][budget_index] = 1
+#                 solvability_curves.append(list(np.mean(solve_matrix, axis=0)))
+#                 all_budgets.append(list(experiment.unique_frac_budgets))
+#             # Compute the solver's solvability profile.
+#             solver_unique_frac_budgets = np.unique([budget for budgets in all_budgets for budget in budgets])
+#             all_solve_matrix = np.zeros((self.n_problems, len(solver_unique_frac_budgets)))
+#             for problem_index in range(self.n_problems):
+#                 for budget_index in range(len(solver_unique_frac_budgets)):
+#                     problem_budget_index = np.max(np.where(np.array(all_budgets[problem_index]) <= solver_unique_frac_budgets[budget_index]))
+#                     all_solve_matrix[problem_index][budget_index] = solvability_curves[problem_index][problem_budget_index]
+#             solvability_profile = np.mean(all_solve_matrix, axis=0)
+#             # Plot the solver's solvability profile.
+#             plt.step(solver_unique_frac_budgets, solvability_profile, where="post")
+#             # Append results.
+#             all_solver_unique_frac_budgets.append(solver_unique_frac_budgets)
+#             all_solvability_profiles.append(solvability_profile)
+#         plt.legend(labels=self.solver_names, loc="lower right")
+#         # TO DO: Change the y-axis label produced by this helper function.
+#         save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="cdf solvability", normalize=True, extra=solve_tol)
+#         # Plot solvability profiles for each solver.
+#         stylize_solvability_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
+#         for solver_index in range(self.n_solvers):
+#             solvability_quantiles = []
+#             for problem_index in range(self.n_problems):
+#                 experiment = self.experiments[solver_index][problem_index]
+#                 # TO DO: Hard-coded for first tol_index
+#                 solvability_quantiles.append(experiment.solve_time_quantiles[0])
+#             plt.step(np.sort(solvability_quantiles + [0, 1]), np.append(np.linspace(start=0, stop=1, num=self.n_problems + 1), [1]), where="post")
+#         save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="quantile solvability", normalize=True, extra=[solve_tol, beta])
+#         # Plot difference solvability profiles. (Optional)
+#         if ref_solver is not None:
+#             stylize_difference_plot(solve_tol=solve_tol)
+#             non_ref_solvers = [solver_name for solver_name in self.solver_names if solver_name != ref_solver]
+#             ref_solver_index = self.solver_names.index(ref_solver)
+#             for solver_index in range(self.n_solvers):
+#                 solver_name = self.solver_names[solver_index]
+#                 if solver_name is not ref_solver:
+#                     diff_budgets, diff_solvability_profile = compute_difference_solvability_profile(budgets_1=all_solver_unique_frac_budgets[solver_index],
+#                                                                                                     solv_profile_1=all_solvability_profiles[solver_index],
+#                                                                                                     budgets_2=all_solver_unique_frac_budgets[ref_solver_index],
+#                                                                                                     solv_profile_2=all_solvability_profiles[ref_solver_index]
+#                                                                                                     )
+#                     plt.step(diff_budgets, diff_solvability_profile, where="post")
+#             plt.plot([0, 1], [0, 0], color="black", linestyle="--")
+#             plt.legend(labels=[non_ref_solver + " - " + ref_solver for non_ref_solver in non_ref_solvers], loc="upper right")
+#             save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="difference", normalize=True)
 
 
-def compute_difference_solvability_profile(budgets_1, solv_profile_1, budgets_2, solv_profile_2):
-    """
-    Calculate the difference of two solvability profiles (Solver 1 - Solver 2).
+# def compute_difference_solvability_profile(budgets_1, solv_profile_1, budgets_2, solv_profile_2):
+#     """
+#     Calculate the difference of two solvability profiles (Solver 1 - Solver 2).
 
-    Parameters
-    ----------
-    budgets_1 : list of floats
-        list of intermediate budgets for Solver 1
-    solv_profile_1 : list of floats
-        solvability profile of Solver 1
-    budgets_2 : list of floats
-        list of intermediate budgets for Solver 2
-    solv_profile_2 : list of floats
-        solvability profile of Solver 2
-    """
-    diff_budgets = np.unique(list(budgets_1) + list(budgets_2))
-    diff_solvability_profile = []
-    for budget in diff_budgets:
-        solv_profile_1_index = np.max(np.where(budgets_1 <= budget))
-        solv_profile_2_index = np.max(np.where(budgets_2 <= budget))
-        diff_solvability_profile.append(solv_profile_1[solv_profile_1_index] - solv_profile_2[solv_profile_2_index])
-    return(diff_budgets, diff_solvability_profile)
+#     Parameters
+#     ----------
+#     budgets_1 : list of floats
+#         list of intermediate budgets for Solver 1
+#     solv_profile_1 : list of floats
+#         solvability profile of Solver 1
+#     budgets_2 : list of floats
+#         list of intermediate budgets for Solver 2
+#     solv_profile_2 : list of floats
+#         solvability profile of Solver 2
+#     """
+#     diff_budgets = np.unique(list(budgets_1) + list(budgets_2))
+#     diff_solvability_profile = []
+#     for budget in diff_budgets:
+#         solv_profile_1_index = np.max(np.where(budgets_1 <= budget))
+#         solv_profile_2_index = np.max(np.where(budgets_2 <= budget))
+#         diff_solvability_profile.append(solv_profile_1[solv_profile_1_index] - solv_profile_2[solv_profile_2_index])
+#     return(diff_budgets, diff_solvability_profile)
