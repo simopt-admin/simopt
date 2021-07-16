@@ -229,6 +229,32 @@ def cdf_of_curves_crossing_times(curves, threshold):
     return cdf_curve
 
 
+def quantile_cross_jump(curves, threshold, beta):
+    """
+    Compute a simple curve with a jump at the quantile of the crossing times.
+
+    Parameters
+    ----------
+    curves : list of wrapper_base.Curve objects
+        collection of curves to aggregate
+    threshold : float
+        value for which to find first crossing time
+    beta : float
+        quantile level
+
+    Returns
+    -------
+    jump_curve : wrapper_base.Curve object
+        piecewise-constant curve with a jump at the quantile crossing time (if finite)
+    """
+    solve_time_quantile = np.quantile([curve.compute_crossing_time(threshold=threshold) for curve in curves], q=beta)
+    if solve_time_quantile == np.inf:
+        jump_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
+    else:
+        jump_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+    return jump_curve
+
+
 def difference_of_curves(curve1, curve2):
     """
     Compute the difference of two curves (Curve 1 - Curve 2).
@@ -952,16 +978,20 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
         functional = cdf_of_curves_crossing_times(bootstrap_curves[0][0], threshold=solve_tol)
     elif plot_type == "cdf_solvability":
         # One solver, multiple problems --> returns a curve.
-        functional = None  # Placeholder.
+        functional = mean_of_curves([cdf_of_curves_crossing_times(curves=progress_curves, threshold=solve_tol) for progress_curves in bootstrap_curves[0]])
     elif plot_type == "quantile_solvability":
         # One solver, multiple problems --> returns a curve.
-        functional = None  # Placeholder.
+        functional = mean_of_curves([quantile_cross_jump(curves=progress_curves, threshold=solve_tol, beta=beta) for progress_curves in bootstrap_curves[0]])
     elif plot_type == "diff_cdf_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        functional = None  # Placeholder.
+        solvability_profile_1 = mean_of_curves([cdf_of_curves_crossing_times(curves=progress_curves, threshold=solve_tol) for progress_curves in bootstrap_curves[0]])
+        solvability_profile_2 = mean_of_curves([cdf_of_curves_crossing_times(curves=progress_curves, threshold=solve_tol) for progress_curves in bootstrap_curves[1]])
+        functional = difference_of_curves(solvability_profile_1, solvability_profile_2)
     elif plot_type == "diff_quantile_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        functional = None  # Placeholder.
+        solvability_profile_1 = mean_of_curves([quantile_cross_jump(curves=progress_curves, threshold=solve_tol, beta=beta) for progress_curves in bootstrap_curves[0]])
+        solvability_profile_2 = mean_of_curves([quantile_cross_jump(curves=progress_curves, threshold=solve_tol, beta=beta) for progress_curves in bootstrap_curves[1]])
+        functional = difference_of_curves(solvability_profile_1, solvability_profile_2)
     else:
         print("Not a valid plot type.")
     return functional
@@ -1422,7 +1452,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                       )
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
     """
     Plot the (difference of) solvability profiles for each solver on a set of problems.
 
@@ -1474,11 +1504,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
                     sub_curve = cdf_of_curves_crossing_times(curves=experiment.progress_curves, threshold=solve_tol)
                 if plot_type in {"quantile_solvability", "diff_quantile_solvability"}:
-                    solve_time_quantile = np.quantile([curve.compute_crossing_time(threshold=solve_tol) for curve in experiment.progress_curves], q=beta)
-                    if solve_time_quantile == np.inf:
-                        sub_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
-                    else:
-                        sub_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+                    sub_curve = quantile_cross_jump(curves=experiment.progress_curves, threshold=solve_tol, beta=beta)
                 solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
@@ -1487,6 +1513,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 handle = solver_curve.plot(color_str=color_str)
                 solver_curve_handles.append(handle)
+                if plot_CIs:
+                    # Note: "experiments" needs to be a list of list of Experiments.
+                    bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
+                                                                         n_bootstraps=100,
+                                                                         plot_type=plot_type,
+                                                                         solve_tol=solve_tol,
+                                                                         beta=beta,
+                                                                         estimator=solver_curve,
+                                                                         normalize=True
+                                                                         )
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+
         if plot_type == "cdf_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
             save_plot(solver_name="SOLVER SET",
@@ -1512,7 +1550,19 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=
                     color_str = "C" + str(solver_idx)
                     handle = diff_solver_curve.plot(color_str=color_str)
                     solver_curve_handles.append(handle)
-            offset_labels = [f"{non_ref_solver} -  {ref_solver}" for non_ref_solver in non_ref_solvers]
+                    if plot_CIs:
+                        # Note: "experiments" needs to be a list of list of Experiments.
+                        bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
+                                                                             n_bootstraps=100,
+                                                                             plot_type=plot_type,
+                                                                             solve_tol=solve_tol,
+                                                                             beta=beta,
+                                                                             estimator=diff_solver_curve,
+                                                                             normalize=True
+                                                                             )
+                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+
+            offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
             plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
             if plot_type == "diff_cdf_solvability":
                 save_plot(solver_name="SOLVER SET",
@@ -1529,7 +1579,91 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIS=
                           extra=[solve_tol, beta]
                           )
     else:
-        pass
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
+        solver_curves = []
+        for solver_idx in range(n_solvers):
+            solver_sub_curves = []
+            # For each problem compute the cdf or quantile of solve times.
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
+                    sub_curve = cdf_of_curves_crossing_times(curves=experiment.progress_curves, threshold=solve_tol)
+                if plot_type in {"quantile_solvability", "diff_quantile_solvability"}:
+                    sub_curve = quantile_cross_jump(curves=experiment.progress_curves, threshold=solve_tol, beta=beta)
+                solver_sub_curves.append(sub_curve)
+            # Plot solvability profile for the solver.
+            # Exploit the fact that each solvability profile is an average of more basic curves.
+            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curves.append(solver_curve)
+            if plot_type in {"cdf_solvability", "quantile_solvability"}:
+                # Set up plot.
+                if plot_type == "cdf_solvability":
+                    stylize_solvability_plot(solver_name=experiments[solver_idx][0].solver.name, problem_name="PROBLEM SET", solve_tol=solve_tol, beta=None, plot_type="cdf")
+                elif plot_type == "quantile_solvability":
+                    stylize_solvability_plot(solver_name=experiments[solver_idx][0].solver.name, problem_name="PROBLEM SET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
+                handle = solver_curve.plot()
+                if plot_CIs:
+                    # Note: "experiments" needs to be a list of list of Experiments.
+                    bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
+                                                                         n_bootstraps=100,
+                                                                         plot_type=plot_type,
+                                                                         solve_tol=solve_tol,
+                                                                         beta=beta,
+                                                                         estimator=solver_curve,
+                                                                         normalize=True
+                                                                         )
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                if plot_type == "cdf_solvability":
+                    save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                              problem_name="PROBLEM SET",
+                              plot_type=plot_type,
+                              normalize=True,
+                              extra=solve_tol
+                              )
+                elif plot_type == "quantile_solvability":
+                    save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                              problem_name="PROBLEM SET",
+                              plot_type=plot_type,
+                              normalize=True,
+                              extra=[solve_tol, beta]
+                              )
+        if plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+            non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
+            ref_solver_idx = solver_names.index(ref_solver)
+            for solver_idx in range(n_solvers):
+                if solver_idx is not ref_solver_idx:
+                    if plot_type == "diff_cdf_solvability":
+                        stylize_difference_plot(solve_tol=solve_tol)
+                    elif plot_type == "diff_quantile_solvability":
+                        # TO DO: Pass in beta when plotting differences of quantile-solvability profiles.
+                        stylize_difference_plot(solve_tol=solve_tol)
+                    diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
+                    handle = diff_solver_curve.plot()
+                    if plot_CIs:
+                        # Note: "experiments" needs to be a list of list of Experiments.
+                        bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
+                                                                             n_bootstraps=100,
+                                                                             plot_type=plot_type,
+                                                                             solve_tol=solve_tol,
+                                                                             beta=beta,
+                                                                             estimator=diff_solver_curve,
+                                                                             normalize=True
+                                                                             )
+                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                    if plot_type == "diff_cdf_solvability":
+                        save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                                  problem_name="PROBLEM SET",
+                                  plot_type=plot_type,
+                                  normalize=True,
+                                  extra=solve_tol
+                                  )
+                    elif plot_type == "diff_quantile_solvability":
+                        save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                                  problem_name="PROBLEM SET",
+                                  plot_type=plot_type,
+                                  normalize=True,
+                                  extra=[solve_tol, beta]
+                                  )
 
 
 # TO DO: Merge all stylize plot functions

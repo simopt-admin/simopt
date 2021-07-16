@@ -51,8 +51,8 @@ exp6 = read_experiment_results("experiments/outputs/rndsrch30_on_cnt7.pickle")
 #plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=True, plot_CIs=True)
 #plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=False, plot_CIs=False)
 
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="cdf_solvability", all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1)
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="quantile_solvability", all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1, beta=0.5)
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_cdf_solvability", all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1, ref_solver="rndsrch10")
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_quantile_solvability", all_in_one=True, plot_CIS=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver="rndsrch10")
+plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="cdf_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1)
+plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="quantile_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5)
+#plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_cdf_solvability", all_in_one=False, plot_CIs=True, print_max_hw=True, solve_tol=0.1, ref_solver="rndsrch10")
+#plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_quantile_solvability", all_in_one=False, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver="rndsrch10")
 
