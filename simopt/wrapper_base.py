@@ -314,31 +314,31 @@ class Experiment(object):
         one for each macroreplication
     progress_curves : list of wrapper_base.Curve objects
         progress curves, one for each macroreplication
-    all_prog_curves : numpy array of arrays
-        estimated progress curves from all macroreplications
-    initial_soln : base.Solution object
-        initial solution (w/ postreplicates) used for normalization
-    ref_opt_soln : base.Solution object
-        reference optimal solution (w/ postreplicates) used for normalization
-    areas : list of floats
-        areas under each estimated progress curve
-    area_mean : float
-        sample mean area under estimated progress curves
-    area_std_dev : float
-        sample standard deviation of area under estimated progress curves
-    area_mean_CI : numpy array of length 2
-        bootstrap CI of the form [lower bound, upper bound] for mean area
-    area_std_dev_CI : numpy array of length 2
-        bootstrap CI of the form [lower_bound, upper_bound] for std dev of area
-    solve_tols : list of floats in (0,1]
-        relative optimality gap(s) definining when a problem is solved
-    solve_times = list of lists of floats
-        solve_tol solve times for each estimated progress curve for each solve_tol
-    solve_time_quantiles : list of floats
-        beta quantile of solve times for each solve_tole
-    solve_time_quantiles_CIs : list of numpy arrays of length 2
-        bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
-        for each solve_tol
+    # all_prog_curves : numpy array of arrays
+    #     estimated progress curves from all macroreplications
+    # initial_soln : base.Solution object
+    #     initial solution (w/ postreplicates) used for normalization
+    # ref_opt_soln : base.Solution object
+    #     reference optimal solution (w/ postreplicates) used for normalization
+    # areas : list of floats
+    #     areas under each estimated progress curve
+    # area_mean : float
+    #     sample mean area under estimated progress curves
+    # area_std_dev : float
+    #     sample standard deviation of area under estimated progress curves
+    # area_mean_CI : numpy array of length 2
+    #     bootstrap CI of the form [lower bound, upper bound] for mean area
+    # area_std_dev_CI : numpy array of length 2
+    #     bootstrap CI of the form [lower_bound, upper_bound] for std dev of area
+    # solve_tols : list of floats in (0,1]
+    #     relative optimality gap(s) definining when a problem is solved
+    # solve_times = list of lists of floats
+    #     solve_tol solve times for each estimated progress curve for each solve_tol
+    # solve_time_quantiles : list of floats
+    #     beta quantile of solve times for each solve_tole
+    # solve_time_quantiles_CIs : list of numpy arrays of length 2
+    #     bootstrap CI of the form [lower bound, upper bound] for quantile of solve time
+    #     for each solve_tol
 
     Arguments
     ---------
@@ -472,41 +472,6 @@ class Experiment(object):
         self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
-
-
-    def compute_area_stats(self, compute_CIs=True):
-        """
-        Compute average and standard deviation of areas under progress curves.
-        Optionally compute bootstrap confidence intervals.
-
-        Arguments
-        ---------
-        compute_CIs : Boolean
-            compute bootstrap confidence invervals for average and std dev?
-        """
-        # Compute areas under each estimated progress curve.
-        self.areas = [area_under_prog_curve(prog_curve, self.unique_frac_budgets) for prog_curve in self.all_prog_curves]
-        self.area_mean = np.mean(self.areas)
-        self.area_std_dev = np.std(self.areas, ddof=1)
-        # (Optional) Compute bootstrap CIs.
-        if compute_CIs:
-            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_mean", normalize=True, estimator=[self.area_mean], n_bootstraps=100, conf_level=0.95, bias_correction=True)
-            self.area_mean_CI = [lower_bound[0], upper_bound[0]]
-            lower_bound, upper_bound, _ = self.bootstrap_CI(plot_type="area_std_dev", normalize=True, estimator=[self.area_std_dev], n_bootstraps=100, conf_level=0.95, bias_correction=True)
-            self.area_std_dev_CI = [lower_bound[0], upper_bound[0]]
-
-    # def compute_solvability(self, solve_tols=[0.10]):
-    #     """
-    #     Compute alpha-solve times for all macroreplications.
-    #     Can specify multiple values of alpha.
-
-    #     Arguments
-    #     ---------
-    #     solve_tols : list of floats in (0,1]
-    #         relative optimality gap(s) definining when a problem is solved
-    #     """
-    #     self.solve_tols = solve_tols
-    #     self.solve_times = [[solve_time_of_prog_curve(prog_curve, self.unique_frac_budgets, solve_tol) for prog_curve in self.all_prog_curves] for solve_tol in solve_tols]
 
     def compute_solvability_quantiles(self, beta=0.50, compute_CIs=True):
         """
@@ -1000,10 +965,10 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
         functional = quantile_of_curves(bootstrap_curves[0][0], beta=beta)
     elif plot_type == "area_mean":
         # Single experiment --> returns a scalar.
-        functional = np.mean([curve.compute_area_under_curve for curve in bootstrap_curves[0][0]])
+        functional = np.mean([curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]])
     elif plot_type == "area_std_dev":
         # Single experiment --> returns a scalar.
-        functional = np.std([curve.compute_area_under_curve for curve in bootstrap_curves[0][0]], ddof=1)
+        functional = np.std([curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]], ddof=1)
     elif plot_type == "solve_time_quantile":
         # Single experiment --> returns a scalar
         functional = np.quantile([curve.compute_crossing_time(threshold=solve_tol) for curve in bootstrap_curves[0][0]], q=beta)
@@ -1366,6 +1331,122 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                       )
 
 
+def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True):
+    """
+    Plot a scatter plot of mean and standard deviation of area under progress curves.
+    Either one plot for each solver or one plot for all solvers.
+
+    Parameters
+    ---------
+    experiments : list of list of wrapper_base.Experiment objects
+        experiments used to produce plots
+    all_in_one : bool
+        plot curves together or separately
+    plot_CIs : bool
+        plot bootstrapping confidence intervals?
+    print_max_hw : bool
+        print caption with max half-width
+    """
+    # Set up plot.
+    n_solvers = len(experiments)
+    n_problems = len(experiments[0])
+    if all_in_one:
+        stylize_area_plot("SOLVER SET")
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
+        solver_curve_handles = []
+        # TO DO: Build up capability to print max half-width.
+        if print_max_hw:
+            curve_pairs = []
+        for solver_idx in range(n_solvers):
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                color_str = "C" + str(solver_idx)
+                # Plot mean and standard deviation of area under progress curve.
+                areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
+                mean_estimator = np.mean(areas)
+                std_dev_estimator = np.std(areas, ddof=1)
+                if plot_CIs:
+                    # Note: "experiments" needs to be a list of list of Experiments.
+                    mean_bs_CI_lb, mean_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
+                                                                       n_bootstraps=100,
+                                                                       plot_type="area_mean",
+                                                                       estimator=mean_estimator,
+                                                                       normalize=True
+                                                                       )
+                    std_dev_bs_CI_lb, std_dev_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
+                                                                             n_bootstraps=100,
+                                                                             plot_type="area_std_dev",
+                                                                             estimator=std_dev_estimator,
+                                                                             normalize=True
+                                                                             )
+                    # if print_max_hw:
+                    #     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
+                    x_err = [[mean_estimator - mean_bs_CI_lb], [mean_bs_CI_ub - mean_estimator]]
+                    y_err = [[std_dev_estimator - std_dev_bs_CI_lb], [std_dev_bs_CI_ub - std_dev_estimator]]
+                    handle = plt.errorbar(x=mean_estimator,
+                                          y=std_dev_estimator,
+                                          xerr=x_err,
+                                          yerr=y_err,
+                                          color=color_str,
+                                          marker="o",
+                                          elinewidth=1
+                                          )
+                else:
+                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker="o")
+            solver_curve_handles.append(handle)
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        save_plot(solver_name="SOLVER SET",
+                  problem_name="PROBLEM SET",
+                  plot_type="area_scatterplot",
+                  normalize=True
+                  )
+    else:
+        for solver_idx in range(n_solvers):
+            ref_experiment = experiments[solver_idx][0]
+            stylize_area_plot(ref_experiment.solver.name)
+            if print_max_hw:
+                curve_pairs = []
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                # Plot mean and standard deviation of area under progress curve.
+                areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
+                mean_estimator = np.mean(areas)
+                std_dev_estimator = np.std(areas, ddof=1)
+                if plot_CIs:
+                    # Note: "experiments" needs to be a list of list of Experiments.
+                    mean_bs_CI_lb, mean_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
+                                                                       n_bootstraps=100,
+                                                                       plot_type="area_mean",
+                                                                       estimator=mean_estimator,
+                                                                       normalize=True
+                                                                       )
+                    std_dev_bs_CI_lb, std_dev_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
+                                                                             n_bootstraps=100,
+                                                                             plot_type="area_std_dev",
+                                                                             estimator=std_dev_estimator,
+                                                                             normalize=True
+                                                                             )
+                    # if print_max_hw:
+                    #     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
+                    x_err = [[mean_estimator - mean_bs_CI_lb], [mean_bs_CI_ub - mean_estimator]]
+                    y_err = [[std_dev_estimator - std_dev_bs_CI_lb], [std_dev_bs_CI_ub - std_dev_estimator]]
+                    handle = plt.errorbar(x=mean_estimator,
+                                          y=std_dev_estimator,
+                                          xerr=x_err,
+                                          yerr=y_err,
+                                          marker="o",
+                                          color="C0",
+                                          elinewidth=1
+                                          )
+                else:
+                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
+            save_plot(solver_name=experiment.solver.name,
+                      problem_name="PROBLEM SET",
+                      plot_type="area_scatterplot",
+                      normalize=True
+                      )
+
+
 # TO DO: Merge all stylize plot functions
 def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
                  beta=None):
@@ -1559,58 +1640,8 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "area_scatterplot"
     if not normalize:
         plot_name = plot_name + "_unnorm"
-    path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
+    path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_type}.png"
     plt.savefig(path_name, bbox_inches="tight")
-
-
-def area_under_prog_curve(prog_curve, frac_inter_budgets):
-    """
-    Compute the area under a normalized estimated progress curve.
-
-    Arguments
-    ---------
-    prog_curve : numpy array
-        normalized estimated progress curve for a macroreplication
-    frac_inter_budgets : numpy array
-        fractions of budget at which the progress curve is defined
-
-    Returns
-    -------
-    area : float
-        area under the estimated progress curve
-    """
-    area = np.dot(prog_curve[:-1], np.diff(frac_inter_budgets))
-    return area
-
-
-def solve_time_of_prog_curve(prog_curve, frac_inter_budgets, solve_tol):
-    """
-    Compute the solve time of a normalized estimated progress curve.
-
-    Arguments
-    ---------
-    prog_curve : numpy array
-        normalized estimated progress curves for a macroreplication
-    frac_inter_budgets : numpy array
-        fractions of budget at which the progress curve is defined
-    solve_tol : float in (0,1]
-        relative optimality gap definining when a problem is solved
-
-    Returns
-    -------
-    solve_time : float
-        time at which the normalized progress curve first drops below
-        solve_tol, i.e., the "alpha" solve time
-    """
-    # Alpha solve time defined as infinity if the problem is not solved
-    # to within solve_tol.
-    solve_time = np.inf
-    # Pass over progress curve to find first solve_tol crossing time.
-    for i in range(len(prog_curve)):
-        if prog_curve[i] < solve_tol:
-            solve_time = frac_inter_budgets[i]
-            break
-    return solve_time
 
 
 class MetaExperiment(object):
@@ -1778,81 +1809,81 @@ class MetaExperiment(object):
             plt.legend(labels=self.solver_names, loc="upper right")
             save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type=plot_type, normalize=normalize)
 
-    def plot_solvability_curves(self, solve_tols=[0.10]):
-        """
-        Produce the solvability curve (cdf of the solve times) for solvers
-        on each problem.
+    # def plot_solvability_curves(self, solve_tols=[0.10]):
+    #     """
+    #     Produce the solvability curve (cdf of the solve times) for solvers
+    #     on each problem.
 
-        Arguments
-        ---------
-        solve_tols : list of floats in (0,1]
-            relative optimality gap(s) definining when a problem is solved
-        """
-        for problem_index in range(self.n_problems):
-            # Compute solve times for each solver at each tolerance
-            for solver_index in range(self.n_solvers):
-                experiment = self.experiments[solver_index][problem_index]
-                experiment.compute_solvability(solve_tols=solve_tols)
-            # For each tolerance, plot solvability curves for each solver
-            for tol_index in range(len(solve_tols)):
-                solve_tol = solve_tols[tol_index]
-                stylize_solvability_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], solve_tol=solve_tol, plot_type="single")
-                for solver_index in range(self.n_solvers):
-                    experiment = self.experiments[solver_index][problem_index]
-                    # Construct matrix showing when macroreplications are solved.
-                    solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
-                    # Pass over progress curves to find first solve_tol crossing time.
-                    for mrep in range(experiment.n_macroreps):
-                        for budget_index in range(len(experiment.unique_frac_budgets)):
-                            if experiment.solve_times[tol_index][mrep] <= experiment.unique_frac_budgets[budget_index]:
-                                solve_matrix[mrep][budget_index] = 1
-                    # Compute proportion of macroreplications "solved" by intermediate budget.
-                    estimator = np.mean(solve_matrix, axis=0)
-                    # Plot solvability curve.
-                    plt.step(experiment.unique_frac_budgets, estimator, where="post")
-                plt.legend(labels=self.solver_names, loc="lower right")
-                save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="cdf solve times", normalize=True, extra=solve_tol)
+    #     Arguments
+    #     ---------
+    #     solve_tols : list of floats in (0,1]
+    #         relative optimality gap(s) definining when a problem is solved
+    #     """
+    #     for problem_index in range(self.n_problems):
+    #         # Compute solve times for each solver at each tolerance
+    #         for solver_index in range(self.n_solvers):
+    #             experiment = self.experiments[solver_index][problem_index]
+    #             experiment.compute_solvability(solve_tols=solve_tols)
+    #         # For each tolerance, plot solvability curves for each solver
+    #         for tol_index in range(len(solve_tols)):
+    #             solve_tol = solve_tols[tol_index]
+    #             stylize_solvability_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], solve_tol=solve_tol, plot_type="single")
+    #             for solver_index in range(self.n_solvers):
+    #                 experiment = self.experiments[solver_index][problem_index]
+    #                 # Construct matrix showing when macroreplications are solved.
+    #                 solve_matrix = np.zeros((experiment.n_macroreps, len(experiment.unique_frac_budgets)))
+    #                 # Pass over progress curves to find first solve_tol crossing time.
+    #                 for mrep in range(experiment.n_macroreps):
+    #                     for budget_index in range(len(experiment.unique_frac_budgets)):
+    #                         if experiment.solve_times[tol_index][mrep] <= experiment.unique_frac_budgets[budget_index]:
+    #                             solve_matrix[mrep][budget_index] = 1
+    #                 # Compute proportion of macroreplications "solved" by intermediate budget.
+    #                 estimator = np.mean(solve_matrix, axis=0)
+    #                 # Plot solvability curve.
+    #                 plt.step(experiment.unique_frac_budgets, estimator, where="post")
+    #             plt.legend(labels=self.solver_names, loc="lower right")
+    #             save_plot(solver_name="SOLVERSET", problem_name=self.problem_names[problem_index], plot_type="cdf solve times", normalize=True, extra=solve_tol)
 
-    def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
-        """
-        Plot a scatter plot of mean and standard deviation of area under progress curves.
-        Either one plot for each solver or one plot for all solvers.
-        """
-        # Compute areas under progress curves (and summary statistics) for each
-        # problem-solver pair.
-        for solver_index in range(self.n_solvers):
-            for problem_index in range(self.n_problems):
-                experiment = self.experiments[solver_index][problem_index]
-                experiment.compute_area_stats(compute_CIs=plot_CIs)
-                experiment.record_experiment_results()
-        # Produce plot(s).
-        if all_in_one:
-            stylize_area_plot(solver_name="SOLVERSET")
-        for solver_index in range(self.n_solvers):
-            if not all_in_one:
-                stylize_area_plot(solver_name=self.solver_names[solver_index])
-            # Aggregate statistics.
-            area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
-            area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
-            if plot_CIs:
-                area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
-                area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
-            # Plot scatter plot.
-            if plot_CIs:
-                xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
-                yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
-                plt.errorbar(x=area_means,
-                             y=area_std_devs,
-                             xerr=xerr,
-                             yerr=yerr
-                             )
-            else:
-                plt.scatter(x=area_means, y=area_std_devs)
-            if not all_in_one:
-                save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
-        if all_in_one:
-            plt.legend(labels=self.solver_names, loc="upper right")
-            save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="area", normalize=True)
+    # def plot_area_scatterplot(self, plot_CIs=True, all_in_one=True):
+    #     """
+    #     Plot a scatter plot of mean and standard deviation of area under progress curves.
+    #     Either one plot for each solver or one plot for all solvers.
+    #     """
+    #     # Compute areas under progress curves (and summary statistics) for each
+    #     # problem-solver pair.
+    #     for solver_index in range(self.n_solvers):
+    #         for problem_index in range(self.n_problems):
+    #             experiment = self.experiments[solver_index][problem_index]
+    #             experiment.compute_area_stats(compute_CIs=plot_CIs)
+    #             experiment.record_experiment_results()
+    #     # Produce plot(s).
+    #     if all_in_one:
+    #         stylize_area_plot(solver_name="SOLVERSET")
+    #     for solver_index in range(self.n_solvers):
+    #         if not all_in_one:
+    #             stylize_area_plot(solver_name=self.solver_names[solver_index])
+    #         # Aggregate statistics.
+    #         area_means = [self.experiments[solver_index][problem_index].area_mean for problem_index in range(self.n_problems)]
+    #         area_std_devs = [self.experiments[solver_index][problem_index].area_std_dev for problem_index in range(self.n_problems)]
+    #         if plot_CIs:
+    #             area_means_CIs = [self.experiments[solver_index][problem_index].area_mean_CI for problem_index in range(self.n_problems)]
+    #             area_std_devs_CIs = [self.experiments[solver_index][problem_index].area_std_dev_CI for problem_index in range(self.n_problems)]
+    #         # Plot scatter plot.
+    #         if plot_CIs:
+    #             xerr = [np.array(area_means) - np.array(area_means_CIs)[:, 0], np.array(area_means_CIs)[:, 1] - np.array(area_means)]
+    #             yerr = [np.array(area_std_devs) - np.array(area_std_devs_CIs)[:, 0], np.array(area_std_devs_CIs)[:, 1] - np.array(area_std_devs)]
+    #             plt.errorbar(x=area_means,
+    #                          y=area_std_devs,
+    #                          xerr=xerr,
+    #                          yerr=yerr
+    #                          )
+    #         else:
+    #             plt.scatter(x=area_means, y=area_std_devs)
+    #         if not all_in_one:
+    #             save_plot(solver_name=self.solver_names[solver_index], problem_name="PROBLEMSET", plot_type="area", normalize=True)
+    #     if all_in_one:
+    #         plt.legend(labels=self.solver_names, loc="upper right")
+    #         save_plot(solver_name="SOLVERSET", problem_name="PROBLEMSET", plot_type="area", normalize=True)
 
     def plot_solvability_profiles(self, solve_tol=0.1, beta=0.5, ref_solver=None):
         """
