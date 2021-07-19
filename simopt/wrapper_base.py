@@ -10,7 +10,10 @@ Listing
 Curve : class
 mean_of_curves : function
 quantile_of_curves : function
+cdf_of_curves_crossing_times : function
+quantile_cross_jump : function
 difference_of_curves : function
+max_difference_of_curves : function
 Experiment : class
 trim_solver_results : function
 read_experiment_results : function
@@ -22,15 +25,12 @@ compute_bootstrap_CI : function
 plot_bootstrap_CIs : function
 report_max_halfwidth : function
 plot_progress_curves : function
-stylize_plot : function
-stylize_solvability_plot : function
-stylize_difference_plot : function
-stylize_area_plot : function
+plot_solvability_cdfs : function
+plot_area_scatterplots : function
+plot_solvability_profiles : function
+setup_plot : function
 save_plot : function
-area_under_prog_curve : function
-solve_time_of_prog_curve : function
 MetaExperiment : class
-compute_difference_solvability_profile : function
 """
 
 import numpy as np
@@ -473,25 +473,6 @@ class Experiment(object):
         self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
-
-    def compute_solvability_quantiles(self, beta=0.50, compute_CIs=True):
-        """
-        Compute beta quantile of solve times, for each solve tolerance.
-        Optionally compute bootstrap confidence intervals.
-
-        Arguments
-        ---------
-        beta : float in (0,1)
-            quantile to compute, e.g., beta quantile
-        compute_CIs : Boolean
-            compute bootstrap confidence invervals for quantile?
-        """
-        self.solve_time_quantiles = [np.quantile(self.solve_times[tol_index], q=beta, interpolation="higher") for tol_index in range(len(self.solve_tols))]
-        # The default method for np.quantile is a *linear* interpolation.
-        # Linear interpolation will throw error if a breakpoint is +/- infinity.
-        if compute_CIs:
-            lower_bounds, upper_bounds, _ = self.bootstrap_CI(plot_type="solve_time_quantile", normalize=True, estimator=self.solve_time_quantiles, beta=beta)
-            self.solve_time_quantiles_CIs = [[lower_bounds[tol_index], upper_bounds[tol_index]] for tol_index in range(len(self.solve_tols))]
 
     def bootstrap_sample(self, bootstrap_rng, normalize=True):
         """
@@ -1136,13 +1117,13 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     n_experiments = len(experiments)
     if all_in_one:
         ref_experiment = experiments[0]
-        stylize_plot(plot_type=plot_type,
-                     solver_name="SOLVER SET",
-                     problem_name=ref_experiment.problem.name,
-                     normalize=normalize,
-                     budget=ref_experiment.problem.factors["budget"],
-                     beta=beta
-                     )
+        setup_plot(plot_type=plot_type,
+                   solver_name="SOLVER SET",
+                   problem_name=ref_experiment.problem.name,
+                   normalize=normalize,
+                   budget=ref_experiment.problem.factors["budget"],
+                   beta=beta
+                   )
         solver_curve_handles = []
         if print_max_hw:
             curve_pairs = []
@@ -1176,7 +1157,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             else:
                 print("Not a valid plot type.")
             solver_curve_handles.append(handle)
-            if plot_CIs:
+            if plot_CIs and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=100,
@@ -1189,7 +1170,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
-        if print_max_hw:
+        if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize)
         save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
@@ -1198,13 +1179,13 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                   )
     else:  # Plot separately.
         for experiment in experiments:
-            stylize_plot(plot_type=plot_type,
-                         solver_name=experiment.solver.name,
-                         problem_name=experiment.problem.name,
-                         normalize=normalize,
-                         budget=experiment.problem.factors["budget"],
-                         beta=beta
-                         )
+            setup_plot(plot_type=plot_type,
+                       solver_name=experiment.solver.name,
+                       problem_name=experiment.problem.name,
+                       normalize=normalize,
+                       budget=experiment.problem.factors["budget"],
+                       beta=beta
+                       )
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
@@ -1229,7 +1210,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 estimator.plot()
             else:
                 print("Not a valid plot type.")
-            if plot_CIs:
+            if plot_CIs and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=100,
@@ -1271,11 +1252,11 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
     n_experiments = len(experiments)
     if all_in_one:
         ref_experiment = experiments[0]
-        stylize_solvability_plot(solver_name="SOLVER SET",
-                                 problem_name=ref_experiment.problem.name,
-                                 solve_tol=solve_tol,
-                                 plot_type="single"
-                                 )
+        setup_plot(plot_type="solve_time_cdf",
+                   solver_name="SOLVER SET",
+                   problem_name=ref_experiment.problem.name,
+                   solve_tol=solve_tol
+                   )
         solver_curve_handles = []
         if print_max_hw:
             curve_pairs = []
@@ -1298,7 +1279,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
         save_plot(solver_name="SOLVER SET",
@@ -1309,11 +1290,11 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                   )
     else:  # Plot separately.
         for experiment in experiments:
-            stylize_solvability_plot(solver_name=experiment.solver.name,
-                                     problem_name=experiment.problem.name,
-                                     solve_tol=solve_tol,
-                                     plot_type="single"
-                                     )
+            setup_plot(plot_type="solve_time_cdf",
+                       solver_name=experiment.solver.name,
+                       problem_name=experiment.problem.name,
+                       solve_tol=solve_tol
+                       )
             estimator = cdf_of_curves_crossing_times(experiment.progress_curves, threshold=solve_tol)
             estimator.plot()
             if plot_CIs:
@@ -1356,7 +1337,10 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     if all_in_one:
-        stylize_area_plot("SOLVER SET")
+        setup_plot(plot_type="area",
+                   solver_name="SOLVER SET",
+                   problem_name="PROBLEM SET"
+                   )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
         # TO DO: Build up capability to print max half-width.
@@ -1408,7 +1392,10 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     else:
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
-            stylize_area_plot(ref_experiment.solver.name)
+            setup_plot(plot_type="area",
+                       solver_name=ref_experiment.solver.name,
+                       problem_name="PROBLEM SET"
+                       )
             if print_max_hw:
                 curve_pairs = []
             for problem_idx in range(n_problems):
@@ -1484,14 +1471,31 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
     n_problems = len(experiments[0])
     if all_in_one:
         if plot_type == "cdf_solvability":
-            stylize_solvability_plot(solver_name="SOLVER SET", problem_name="PROBLEM SET", solve_tol=solve_tol, beta=None, plot_type="cdf")
+            setup_plot(plot_type=plot_type,
+                       solver_name="SOLVER SET",
+                       problem_name="PROBLEM SET",
+                       solve_tol=solve_tol
+                       )
         elif plot_type == "quantile_solvability":
-            stylize_solvability_plot(solver_name="SOLVER SET", problem_name="PROBLEM SET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
+            setup_plot(plot_type=plot_type,
+                       solver_name="SOLVER SET",
+                       problem_name="PROBLEM SET",
+                       beta=beta,
+                       solve_tol=solve_tol
+                       )
         elif plot_type == "diff_cdf_solvability":
-            stylize_difference_plot(solve_tol=solve_tol)
+            setup_plot(plot_type=plot_type,
+                       solver_name="SOLVER SET",
+                       problem_name="PROBLEM SET",
+                       solve_tol=solve_tol
+                       )
         elif plot_type == "diff_quantile_solvability":
-            # TO DO: Pass in beta when plotting differences of quantile-solvability profiles.
-            stylize_difference_plot(solve_tol=solve_tol)
+            setup_plot(plot_type=plot_type,
+                       solver_name="SOLVER SET",
+                       problem_name="PROBLEM SET",
+                       beta=beta,
+                       solve_tol=solve_tol
+                       )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         solver_curve_handles = []
@@ -1598,9 +1602,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 # Set up plot.
                 if plot_type == "cdf_solvability":
-                    stylize_solvability_plot(solver_name=experiments[solver_idx][0].solver.name, problem_name="PROBLEM SET", solve_tol=solve_tol, beta=None, plot_type="cdf")
+                    setup_plot(plot_type=plot_type,
+                               solver_name=experiments[solver_idx][0].solver.name,
+                               problem_name="PROBLEM SET",
+                               solve_tol=solve_tol
+                               )
                 elif plot_type == "quantile_solvability":
-                    stylize_solvability_plot(solver_name=experiments[solver_idx][0].solver.name, problem_name="PROBLEM SET", solve_tol=solve_tol, beta=beta, plot_type="quantile")
+                    setup_plot(plot_type=plot_type,
+                               solver_name=experiments[solver_idx][0].solver.name,
+                               problem_name="PROBLEM SET",
+                               beta=beta,
+                               solve_tol=solve_tol
+                               )
                 handle = solver_curve.plot()
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
@@ -1633,10 +1646,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
                     if plot_type == "diff_cdf_solvability":
-                        stylize_difference_plot(solve_tol=solve_tol)
+                        setup_plot(plot_type=plot_type,
+                                   solver_name=experiments[solver_idx][0].solver.name,
+                                   problem_name="PROBLEM SET",
+                                   solve_tol=solve_tol
+                                   )
                     elif plot_type == "diff_quantile_solvability":
-                        # TO DO: Pass in beta when plotting differences of quantile-solvability profiles.
-                        stylize_difference_plot(solve_tol=solve_tol)
+                        setup_plot(plot_type=plot_type,
+                                   solver_name=experiments[solver_idx][0].solver.name,
+                                   problem_name="PROBLEM SET",
+                                   beta=beta,
+                                   solve_tol=solve_tol
+                                   )
                     diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
                     handle = diff_solver_curve.plot()
                     if plot_CIs:
@@ -1666,19 +1687,23 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                   )
 
 
-# TO DO: Merge all stylize plot functions
-def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
-                 beta=None):
+def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
     """
     Create new figure. Add labels to plot and reformat axes.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     plot_type : string
         indicates which type of plot to produce
             "all" : all estimated progress curves
             "mean" : estimated mean progress curve
             "quantile" : estimated beta quantile progress curve
+            "solve_time_cdf" : cdf of solve time
+            "cdf_solvability" : cdf solvability profile
+            "quantile_solvability" : quantile solvability profile
+            "diff_cdf_solvability" : difference of cdf solvability profiles
+            "diff_quantile_solvability" : difference of quantile solvability profiles
+            "area" : area scatterplot
     solver_name : string
         name of solver
     problem_name : string
@@ -1687,129 +1712,65 @@ def stylize_plot(plot_type, solver_name, problem_name, normalize, budget=None,
         normalize progress curves w.r.t. optimality gaps?
     budget : int
         budget of problem, measured in function evaluations
-    beta : float in (0,1) (optional)
-        quantile for quantile aggregate progress curve, e.g., beta quantile
-    """
-    plt.figure()
-    # Format axes, axis labels, title, and tick marks.
-    if normalize:
-        xlabel = "Fraction of Budget"
-        ylabel = "Fraction of Initial Optimality Gap"
-        xlim = (0, 1)
-        ylim = (-0.1, 1.1)
-        title = f"{solver_name} on {problem_name}\n"
-    elif not normalize:
-        xlabel = "Budget"
-        ylabel = "Objective Function Value"
-        xlim = (0, budget)
-        ylim = None
-        title = f"{solver_name} on {problem_name} \n Unnormalized "
-    if plot_type == "all":
-        title = title + "Estimated Progress Curves"
-    elif plot_type == "mean":
-        title = title + "Mean Progress Curve"
-    elif plot_type == "quantile":
-        title = title + f"{round(beta, 2)}-Quantile Progress Curve"
-    plt.xlabel(xlabel, size=14)
-    plt.ylabel(ylabel, size=14)
-    plt.title(title, size=14)
-    plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
-    plt.tick_params(axis="both", which="major", labelsize=12)
-
-
-def stylize_solvability_plot(solver_name, problem_name, solve_tol, plot_type, beta=0.5):
-    """
-    Create new figure. Add labels to plot and reformat axes.
-
-    Arguments
-    ---------
-    solver_name : string
-        name of solver
-    problem_name : string
-        name of problem
-    solve_tol : float in (0,1]
-        relative optimality gap definining when a problem is solved
-    plot_type : string
-        type of plot
-            - "single"
-            - "cdf"
-            - "quantile"
     beta : float in (0,1)
         quantile to compute, e.g., beta quantile
-    """
-    plt.figure()
-    # Format axes, axis labels, title, and tick marks.
-    xlabel = "Fraction of Budget"
-    xlim = (0, 1)
-    ylim = (0, 1.05)
-    if plot_type == "single":
-        ylabel = "Fraction of Macroreplications Solved"
-        title = solver_name + " on " + problem_name + "\n"
-        title = title + "CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
-    elif plot_type == "cdf":
-        ylabel = "Mean Solve Percentage"
-        title = "CDF Solvability Profile for " + solver_name + "\n"
-        title = title + "Profile of CDF of " + str(round(solve_tol, 2)) + "-Solve Times"
-    elif plot_type == "quantile":
-        ylabel = "Proportion of Problems Solved"
-        title = "Quantile Solvability Profile for " + solver_name + "\n"
-        title = title + "Profile of " + str(round(beta, 2)) + "-Quantiles of " + str(round(solve_tol, 2)) + "-Solve Times"
-    plt.xlabel(xlabel, size=14)
-    plt.ylabel(ylabel, size=14)
-    plt.title(title, size=14)
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    plt.tick_params(axis="both", which="major", labelsize=12)
-
-
-def stylize_difference_plot(solve_tol):
-    """
-    Create new figure. Add labels to plot and reformat axes.
-
-    Parameters
-    ----------
     solve_tol : float in (0,1]
         relative optimality gap definining when a problem is solved
     """
     plt.figure()
-    # Format axes, axis labels, title, and tick marks.
-    xlabel = "Fraction of Budget"
-    xlim = (0, 1)
-    ylabel = "Difference in Fraction of Macroreplications Solved"
-    title = "SOLVERSET on PROBLEMSET\n"
-    title = title + f"Difference of {round(solve_tol, 2)}-Solvability Curves"
-    plt.xlabel(xlabel, size=14)
-    plt.ylabel(ylabel, size=14)
-    plt.title(title, size=14)
-    plt.xlim(xlim)
+    # Set up axes and axis labels.
+    if normalize:
+        plt.xlabel("Fraction of Budget", size=14)
+        plt.ylabel("Fraction of Initial Optimality Gap", size=14)
+        plt.xlim((0, 1))
+        plt.ylim((-0.1, 1.1))
+    else:
+        plt.xlabel("Budget", size=14)
+        plt.ylabel("Objective Function Value", size=14)
+        plt.xlim((0, budget))
     plt.tick_params(axis="both", which="major", labelsize=12)
-
-
-def stylize_area_plot(solver_name):
-    """
-    Create new figure for area plots. Add labels to plot and reformat axes.
-
-    Arguments
-    ---------
-    solver_name : string
-        name of solver
-    """
-    plt.figure()
-    # Format axes, axis labels, title, and tick marks.
-    xlabel = "Mean Area"
-    ylabel = "Std Dev of Area"
-    xlim = (0, 1)
-    ylim = (0, 0.5)
-    title = solver_name + "\n"
-    title = title + "Areas Under Progress Curves"
-    plt.xlabel(xlabel, size=14)
-    plt.ylabel(ylabel, size=14)
+    # Specify title (plus alternative y-axis label and alternative axes).
+    if plot_type == "all":
+        if normalize:
+            title = f"{solver_name} on {problem_name}\nProgress Curves"
+        else:
+            title = f"{solver_name} on {problem_name}\nObjective Curves"
+    elif plot_type == "mean":
+        if normalize:
+            title = f"{solver_name} on {problem_name}\nMean Progress Curve"
+        else:
+            title = f"{solver_name} on {problem_name}\nMean Objective Curve"
+    elif plot_type == "quantile":
+        if normalize:
+            title = f"{solver_name} on {problem_name}\n{round(beta, 2)}-Quantile Progress Curve"
+        else:
+            title = f"{solver_name} on {problem_name}\n{round(beta, 2)}-Quantile Objective Curve"
+    elif plot_type == "solve_time_cdf":
+        plt.ylabel("Fraction of Macroreplications Solved", size=14)
+        title = f"{solver_name} on {problem_name}\nCDF of {round(solve_tol, 2)}-Solve Times"
+    elif plot_type == "cdf_solvability":
+        plt.ylabel("Mean Solve Percentage", size=14)
+        title = f"CDF-Solvability Profile for {solver_name}\nProfile of CDFs of {round(solve_tol, 2)}-Solve Times"
+    elif plot_type == "quantile_solvability":
+        plt.ylabel("Proportion of Problems Solved", size=14)
+        title = f"Quantile Solvability Profile for {solver_name}\nProfile of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
+    elif plot_type == "diff_cdf_solvability":
+        plt.ylabel("Difference in Mean Solve Percentage", size=14)
+        title = f"Difference of CDF-Solvability Profile for {solver_name}\nDifference of Profiles of CDFs of {round(solve_tol, 2)}-Solve Times"
+        plt.plot([0, 1], [0, 0], color="black", linestyle="--")
+        plt.ylim((-1, 1))
+    elif plot_type == "diff_quantile_solvability":
+        plt.ylabel("Difference in Proportion of Problems Solved", size=14)
+        title = f"Difference of Quantile Solvability Profile for {solver_name}\nDifference of Profiles of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
+        plt.plot([0, 1], [0, 0], color="black", linestyle="--")
+        plt.ylim((-1, 1))
+    elif plot_type == "area":
+        plt.xlabel("Mean Area", size=14)
+        plt.ylabel("Std Dev of Area")
+        plt.xlim((0, 1))
+        plt.ylim((0, 0.5))
+        title = f"{solver_name}\nAreas Under Progress Curves"
     plt.title(title, size=14)
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    plt.tick_params(axis="both", which="major", labelsize=12)
 
 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):

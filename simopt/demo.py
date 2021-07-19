@@ -31,15 +31,6 @@ from rng.mrg32k3a import MRG32k3a
 #bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
 #bootstrap_curves = bootstrap_sample([[exp1, exp2]], bootstrap_rng)
 
-#plot_progress_curves([exp1, exp2], plot_type="all", all_in_one=False)
-#plot_progress_curves([exp1, exp2], plot_type="mean", all_in_one=False)
-#plot_progress_curves([exp1, exp2], plot_type="quantile", beta=0.9, all_in_one=False)
-#plot_progress_curves([exp1, exp2], plot_type="mean", normalize=False, all_in_one=False)
-#plot_progress_curves([exp1, exp2], plot_type="mean", normalize=True, all_in_one=True, print_max_hw=True)
-#plot_progress_curves([exp1, exp2], plot_type="quantile", beta=0.9, normalize=True, all_in_one=True, print_max_hw=True)
-
-#plot_solvability_cdfs([exp1, exp2], solve_tol=0.2, all_in_one=True, plot_CIs=True, print_max_hw=True)
-#plot_solvability_cdfs([exp1, exp2], solve_tol=0.2, all_in_one=False, plot_CIs=True, print_max_hw=True)
 
 exp1 = read_experiment_results("experiments/outputs/rndsrch10_on_cnt5.pickle")
 exp2 = read_experiment_results("experiments/outputs/rndsrch20_on_cnt5.pickle")
@@ -48,11 +39,20 @@ exp4 = read_experiment_results("experiments/outputs/rndsrch20_on_cnt7.pickle")
 exp5 = read_experiment_results("experiments/outputs/rndsrch30_on_cnt5.pickle")
 exp6 = read_experiment_results("experiments/outputs/rndsrch30_on_cnt7.pickle")
 
-#plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=True, plot_CIs=True)
-#plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=False, plot_CIs=False)
+plot_progress_curves([exp1, exp2], plot_type="all", all_in_one=False)
+plot_progress_curves([exp1, exp2], plot_type="mean", all_in_one=False)
+plot_progress_curves([exp1, exp2], plot_type="quantile", beta=0.9, all_in_one=False)
+# plot_progress_curves([exp1, exp2], plot_type="all", normalize=False, all_in_one=True)
+# plot_progress_curves([exp1, exp2], plot_type="mean", normalize=False, all_in_one=True, print_max_hw=True)
+# plot_progress_curves([exp1, exp2], plot_type="quantile", beta=0.9, normalize=True, all_in_one=True, print_max_hw=True)
 
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="cdf_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1)
-plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="quantile_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5)
-#plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_cdf_solvability", all_in_one=False, plot_CIs=True, print_max_hw=True, solve_tol=0.1, ref_solver="rndsrch10")
-#plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_quantile_solvability", all_in_one=False, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver="rndsrch10")
+# plot_solvability_cdfs([exp1, exp2], solve_tol=0.2, all_in_one=True, plot_CIs=True, print_max_hw=True)
+# plot_solvability_cdfs([exp1, exp2], solve_tol=0.2, all_in_one=False, plot_CIs=True, print_max_hw=True)
 
+# plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=True, plot_CIs=True)
+# plot_area_scatterplots([[exp1, exp3], [exp2, exp4]], all_in_one=False, plot_CIs=False)
+
+# plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="cdf_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1)
+# plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="quantile_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5)
+plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_cdf_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, ref_solver="rndsrch10")
+plot_solvability_profiles([[exp1, exp3], [exp2, exp4], [exp5, exp6]], plot_type="diff_quantile_solvability", all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver="rndsrch10")
