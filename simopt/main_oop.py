@@ -1,12 +1,55 @@
 import tkinter as tk
-from tkinter import ttk, Scrollbar
+from tkinter import ttk, Scrollbar, filedialog
 
 from directory import problem_directory
 from directory import solver_directory
 from directory import oracle_directory
 from wrapper_base import Experiment, MetaExperiment
 
-class Experiment_Window:
+class Experiment_Window(tk.Tk):
+    """
+    Main window of the GUI
+
+    Attributes
+    ----------
+    self.frame : Tkinter frame that contains the GUI widgets
+    self.experiment_master_list : 2D array list that contains queue of experiment object arguments
+    self.widget_list : Current method to clear, view/edit, and run individual experiments
+        * this functionality is currently not enabled, possible contraint of the GUI framework
+    self.experiment_object_list : List that contains matching experiment objects to every sublist from self.experiment_master_list
+    self.problem_var : Variable that contains selected problem (use .get() method to obtain value for)
+    self.solver_var : Variable that contains selected solver (use .get() method to obtain value for)
+    self.maco_var : Variable that contains inputted number of macroreplications (use .get() method to obtain value for)
+
+    Functions
+    ---------
+    show_problem_factors(self, *args) : displays additional information on problem and oracle factors
+            connected to : self.problem_menu <- ttk.OptionMenu
+    show_solver_factors(self, *args) : displays additional information on solver factors
+            connected to : self.solver_menu <- ttk.OptionMenu
+    run_single_function(self, *args) : completes single-object experiment and invokes Post_Processing_Window class
+            connected to : self.run_button <- ttk.Button
+    crossdesign_function(self) : invokes Cross_Design_Window class
+            connected to : self.crossdesign_button <- ttk.Button
+    clearRow_function(self) : ~not functional~ meant to clear a single row of the experiment queue
+            connected to : self.clear_button_added <- ttk.Button, within self.add_function
+    clear_queue(self) : clears entire experiment queue and resets all lists containing experiment data
+            connected to : self.clear_queue_button <- ttk.Button
+    add_function(self) : adds function to experiment queue
+            connected to : self.add_button <- ttk.Button
+    confirm_problem_factors(self) : used within run_single_function, stores all problem factors in a dictionary
+            return : problem_factors_return | type = list | contains = [problem factor dictionary, None or problem rename]
+    confirm_oracle_factors(self) : used within run_single_function, stores all oracle factors in a dictionary
+            return : oracle_factors_return | type = list | contains = [oracle factor dictionary]
+    confirm_solver_factors(self) : used within run_single_function, stores all solver factors in a dictionary
+            return : solver_factors_return | type = list | contains = [solver factor dictionary, None or solver rename]
+    onFrameConfigure_queue(self, event) : creates scrollbar for the queue notebook
+    onFrameConfigure_factor_problem(self, event) : creates scrollbar for the problem factors notebook
+    onFrameConfigure_factor_solver(self, event) : creates scrollbar for the solver factors notebook
+    onFrameConfigure_factor_oracle(self, event) : creates scrollbar for the oracle factor notebook
+    test_function(self, *args) : placeholder function to make sure buttons, OptionMenus, etc are connected properly
+    """
+
     def __init__(self, master):
         self.master = master
 
@@ -557,7 +600,7 @@ class Experiment_Window:
             # grabs macro_entry
             self.selected.append(int(self.macro_entry.get()))
             # grabs problem factors & problem rename
-            problem_factors = self.confirm_solver_factors()
+            problem_factors = self.confirm_problem_factors()
             self.selected.append(problem_factors)
             # grabs oracle factors
             oracle_factors = self.confirm_oracle_factors()
@@ -606,17 +649,22 @@ class Experiment_Window:
                 self.problem_name = self.selected[0]
 
                 self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
-                self.experiment_object_list.append(self.my_experiment)
-                #self.my_experiment.run(n_macroreps=self.macro_reps)
+                compatibility_result = self.my_experiment.check_compatibility()
+                if compatibility_result == "":
+                    self.experiment_object_list.append(self.my_experiment)
+                    #self.my_experiment.run(n_macroreps=self.macro_reps)
 
-                # calls postprocessing window
-                self.postrep_window = tk.Tk()
-                self.postrep_window.geometry("1500x1000")
-                self.postrep_window.title("Post Processing Page")
-                self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected)
+                    # calls postprocessing window
+                    self.postrep_window = tk.Tk()
+                    self.postrep_window.geometry("1500x1000")
+                    self.postrep_window.title("Post Processing Page")
+                    self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected)
 
-                # prints selected (list) in console/terminal
-                # print("it works", self.selected)
+                    # prints selected (list) in console/terminal
+                    # print("it works", self.selected)
+                else:
+                    tk.messagebox.showerror(title="Error Window", message=compatibility_result)
+                    self.selected.clear()
 
                 print(self.selected)
                 return self.selected
@@ -849,7 +897,7 @@ class Experiment_Window:
         
         self.problem_factors_return.insert(0, self.problem_factors_dictionary)
         # print(self.problem_factors_dictionary)
-        print(self.problem_factors_return)
+        print("self.problem_factors_return", self.problem_factors_return)
         return self.problem_factors_return
 
     def confirm_oracle_factors(self):
@@ -906,6 +954,18 @@ class Experiment_Window:
         print("test function connected")
 
 class Post_Processing_Window():
+    """
+    Post Processing Page of the GUI
+
+    Arguments
+    ----------
+    master : tk.Tk
+        Tkinter window created from Experiment_Window.run_single_function
+    myexperiment : object(Experiment)
+        Experiment object created in Experiment_Window.run_single_function
+    experiment_list : list
+        List of experiment object arguments
+    """
     def __init__(self, master, myexperiment, experiment_list):
 
         self.master = master
@@ -914,9 +974,9 @@ class Post_Processing_Window():
 
         self.frame = tk.Frame(self.master)
 
-        # self.title = ttk.Label(master = self.master,
-        #                         text = "Welcome to the Post-Processing Page",
-        #                         font = "Calibri 15 bold")
+        self.title = ttk.Label(master = self.master,
+                                text = "Welcome to the Post-Processing Page",
+                                font = "Calibri 15 bold")
 
         self.n_postreps_label = ttk.Label(master = self.master,
                                     text = "Number of postreplications to take at each recommended solution:",
@@ -962,18 +1022,42 @@ class Post_Processing_Window():
         # creates drop down menu, for tkinter, it is called "OptionMenu"
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "Options", *self.crn_across_macroreps_list)
 
-        # self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
-        #                 text = "When ready, press the 'Run' button below:",
-        #                 font = "Calibri 11 bold",
-        #                 wraplength = "250")
+        self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
+                        text = "Finish Post-Replication of Experiment",
+                        font = "Calibri 11 bold",
+                        wraplength = "250")
 
-        # self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
-        #                 # aesthetic of button and specific formatting options
-        #                 text = "Run", 
-        #                 width = 15, # width of button
-        #                 command = self.post_processing_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
+        self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
+                        # aesthetic of button and specific formatting options
+                        text = "Run", 
+                        width = 15, # width of button
+                        command = self.post_processing_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
 
-        # self.title.place(x=15, y=15)
+        self.pickle_file_select_label = ttk.Label(master=self.master,
+                                                text = "Select a pickle file to access: ",
+                                                font = "Calibri 11 bold",
+                                                wraplength = "250")
+
+        self.pickle_file_select_button = ttk.Button(master=self.master,
+                                                    text = "Browse Files",
+                                                    width = 15,
+                                                    command = self.select_pickle_file_fuction)
+
+        self.pickle_file_load_button = ttk.Button(master=self.master,
+                                                text = "Load File",
+                                                width = 15,
+                                                command = self.test_function)
+
+        self.pickle_file_pathname_label = ttk.Label(master=self.master,
+                                                    text = "File Selected:",
+                                                    font = "Calibri 11 bold")
+
+        self.pickle_file_pathname_show = ttk.Label(master=self.master,
+                                                    text = "No file selected",
+                                                    font = "Calibri 11 italic",
+                                                    foreground = "red")
+
+        self.title.place(x=15, y=15)
 
         self.n_postreps_label.place(x=0, y=95)
         self.n_postreps_entry.place(x=255, y=95)
@@ -987,8 +1071,14 @@ class Post_Processing_Window():
         self.crn_across_macroreps_label.place(x=0, y=350)
         self.crn_across_macroreps_menu.place(x=255, y=375)
 
-        # self.post_processing_run_label.place(x=0, y=435)
-        # self.post_processing_run_button.place(x=255, y=435)
+        self.post_processing_run_label.place(x=0, y=435)
+        self.post_processing_run_button.place(x=255, y=435)
+
+        self.pickle_file_select_label.place(x=0, y=520)
+        self.pickle_file_select_button.place(x=190, y=520)
+        self.pickle_file_load_button.place(x=300, y=520)
+        self.pickle_file_pathname_label.place(x=0, y=555)
+        self.pickle_file_pathname_show.place(x=100, y=555)
 
         self.frame.pack(side="top", fill="both", expand=True)
 
@@ -1071,6 +1161,24 @@ class Post_Processing_Window():
             self.crn_across_budget_var.set("True")
 
             self.crn_across_macroreps_var.set("False")
+
+    def select_pickle_file_fuction(self, *args):
+        filename = filedialog.askopenfilename(parent = self.master,
+                                            initialdir = "./",
+                                            title = "Select a Pickle File",
+                                            filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
+                                                         ,("Python files", "*.py")
+                                                         ,("All files", "*.*") ))
+        if filename != "":
+            self.pickle_file_pathname_show["text"] = filename
+            self.pickle_file_pathname_show["foreground"] = "blue"
+            self.pickle_file_pathname_show.place(x=100, y=555)
+        else:
+            message = "You attempted to select a file but failed, please try again if necessary"
+            tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
+
+    def test_function(self, *args):
+        print("connection enabled")
 
 class Cross_Design_Window():
     def __init__(self, master):
@@ -1169,21 +1277,6 @@ class Cross_Design_Window():
     def test_function(self, *args):
         print("test function connected")
 
-# def create_error(str):
-#     # Will be completely replaced soon (see this url: https://docs.python.org/3/library/tkinter.messagebox.html)
-
-#     # initialize error window
-#     errorWindow = tk.Tk()
-
-#     errorLabel = ttk.Label(master = errorWindow,
-#                         # aesthetics of window
-#                         text = str,
-#                         foreground= "red",
-#                         font = "Calibri 11 bold",
-#                         wraplength = "600")
-#     # not used below, but since there is not grid, must use here
-#     errorLabel.pack()
-
 def main(): 
     root = tk.Tk()
     root.title("SimOpt Application")
@@ -1195,5 +1288,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
 
 
