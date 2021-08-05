@@ -577,15 +577,10 @@ class Experiment(object):
         Delete results from post_replicate() method and any downstream results.
         """
         attributes = ["n_postreps",
-                      "n_postreps_init_opt",
                       "crn_across_budget",
                       "crn_across_macroreps",
-                      "all_reevaluated_solns",
                       "all_post_replicates",
-                      "all_est_objectives",
-                      "all_prog_curves",
-                      "initial_soln",
-                      "ref_opt_soln"]
+                      "all_est_objectives"]
         for attribute in attributes:
             try:
                 delattr(self, attribute)
@@ -593,19 +588,19 @@ class Experiment(object):
                 pass
         self.clear_stats()
 
-    def clear_stats(self):
+    def clear_postnorm(self):
         """
-        Delete summary statistics associated with experiment.
+        Delete results from post_normalize() associated with experiment.
         """
-        attributes = ["areas",
-                      "area_mean",
-                      "area_std_dev",
-                      "area_mean_CI",
-                      "area_std_dev_CI",
-                      "solve_tol",
-                      "solve_times",
-                      "solve_time_quantile",
-                      "solve_time_quantile_CI"]
+        attributes = ["n_postreps_init_opt",
+                      "crn_across_init_opt",
+                      "x0",
+                      "x0_postreps",
+                      "xstar",
+                      "xstar_postreps",
+                      "objective_curves",
+                      "progress_curves"
+                      ]
         for attribute in attributes:
             try:
                 delattr(self, attribute)
@@ -818,6 +813,7 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
         random number generator to use for bootstrapping
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
+
     Returns
     -------
     bootstrap_curves : list of list of list of wrapper_base.Curve objects
