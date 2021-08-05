@@ -762,7 +762,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         for mrep in range(best_experiment.n_macroreps):
             best_exp_best_est_objectives[mrep] = np.max(best_experiment.problem.minmax[0] * np.array(best_experiment.all_est_objectives[mrep]))
         best_mrep = np.argmax(best_exp_best_est_objectives)
-        best_budget_idx = np.argmax(best_experiment.all_est_objectives[best_mrep])
+        best_budget_idx = np.argmax(experiment.problem.minmax[0] * np.array(best_experiment.all_est_objectives[best_mrep]))
         xstar = best_experiment.all_recommended_xs[best_mrep][best_budget_idx]
         # Take post-replications at x*.
         opt_soln = Solution(xstar, ref_experiment.problem)
