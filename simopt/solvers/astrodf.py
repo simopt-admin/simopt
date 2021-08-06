@@ -62,10 +62,10 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 500
             },
-            "delta_candidate": {
-                "description": "initial radius candidates for parameter tuning",
-                "datatype": list,
-                "default": [2, 100, 350]
+            "tau": {
+                "description": "shirink ratio for delta_candidate",
+                "datatype": float,
+                "default": 0.5
             },
             "eta_1": {
                 "description": "threshhold for decent success",
@@ -332,7 +332,9 @@ class ASTRODF(Solver):
         intermediate_budgets = []
         expended_budget = 0
         delta_max = self.factors["delta_max"]
-        delta_candidate = self.factors["delta_candidate"]
+        tau = self.factors["tau"]
+        delta_candidate = [tau*delta_max, delta_max, delta_max/tau]
+        print(delta_candidate)
         
         # default values
         eta_1 = self.factors["eta_1"]            
