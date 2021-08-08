@@ -66,7 +66,7 @@ class ASTRODF(Solver):
             "delta_max": {
                 "description": "maximum value of the radius",
                 "datatype": float,
-                "default": 500
+                "default": 200
             },
             "tau": {
                 "description": "shirink ratio for delta_candidate",
