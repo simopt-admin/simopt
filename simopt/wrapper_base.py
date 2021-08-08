@@ -131,6 +131,22 @@ class Curve(object):
         area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
         return area
 
+    def curve_to_mesh(self, mesh):
+        """
+        Create a curve defined at equally spaced x values.
+
+        Parameters
+        ----------
+        mesh : list of floats
+            list of uniformly spaced x values
+        Returns
+        -------
+        mesh_curve : wrapper_base.Curve object
+            curve with equally spaced x values
+        """
+        mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
+        return mesh_curve
+
     def plot(self, color_str="C0", curve_type="regular"):
         """
         Plot a curve.
@@ -476,7 +492,8 @@ class Experiment(object):
 
     def bootstrap_sample(self, bootstrap_rng, normalize=True):
         """
-        Generate a bootstrap sample of estimated progress curves (normalized and unnormalized).
+        Generate a bootstrap sample of estimated objective curves or estimated
+        progress curves.
 
         Parameters
         ----------
@@ -488,8 +505,8 @@ class Experiment(object):
         Returns
         -------
         bootstrap_curves : list of wrapper_base.Curve objects
-            bootstrapped estimated objective curves or estimated progress curves
-            of all solutions from all bootstrapped macroreplications
+            bootstrapped estimated objective curves or estimated progress
+            curves of all solutions from all bootstrapped macroreplications
         """
         bootstrap_curves = []
         # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
@@ -505,7 +522,7 @@ class Experiment(object):
         bs_initial_obj_val = np.mean([self.x0_postreps[postrep] for postrep in bs_postrep_idxs])
         # Reset subsubstream if using CRN across budgets.
         # This means the same postreplication indices will be used for resampling at x0 and x*.
-        if self.crn_across_budget:
+        if self.crn_across_init_opt:
             bootstrap_rng.reset_subsubstream()
         # Bootstrap sample postreplicates at reference optimal solution x*.
         # Uniformly resample L postreps (with replacement) from 0, 1, ..., L.
@@ -518,43 +535,74 @@ class Experiment(object):
         # Will now be at start of subsubstream 2.
         bootstrap_rng.advance_subsubstream()
         # Bootstrap within each bootstrapped macroreplication.
-        for idx in range(self.n_macroreps):
-            mrep = bs_mrep_idxs[idx]
-            # Inner-level bootstrapping over intermediate recommended solutions.
-            est_objectives = []
-            for budget in range(len(self.all_intermediate_budgets[mrep])):
-                # If solution is x0...
-                if self.all_recommended_xs[mrep][budget] == self.x0:
-                    est_objectives.append(bs_initial_obj_val)
-                # ...else if solution is x*...
-                elif self.all_recommended_xs[mrep][budget] == self.xstar:
-                    est_objectives.append(bs_optimal_obj_val)
-                # ... else solution other than x0 or x*.
+        # Option 1: Simpler (default) CRN scheme, which makes for faster code.
+        if self.crn_across_budget and not self.crn_across_macroreps:
+            for idx in range(self.n_macroreps):
+                mrep = bs_mrep_idxs[idx]
+                # Inner-level bootstrapping over intermediate recommended solutions.
+                est_objectives = []
+                # Same postreplication indices for all intermediate budgets on
+                # a given macroreplciation.
+                bs_postrep_idxs = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+                for budget in range(len(self.all_intermediate_budgets[mrep])):
+                    # If solution is x0...
+                    if self.all_recommended_xs[mrep][budget] == self.x0:
+                        est_objectives.append(bs_initial_obj_val)
+                    # ...else if solution is x*...
+                    elif self.all_recommended_xs[mrep][budget] == self.xstar:
+                        est_objectives.append(bs_optimal_obj_val)
+                    # ... else solution other than x0 or x*.
+                    else:
+                        # Compute the mean of the resampled postreplications.
+                        est_objectives.append(np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in bs_postrep_idxs]))
+                # Record objective or progress curve.
+                if normalize:
+                    frac_intermediate_budgets = [budget / self.problem.factors["budget"] for budget in self.all_intermediate_budgets[mrep]]
+                    norm_est_objectives = [(est_objective - bs_optimal_obj_val) / bs_initial_opt_gap for est_objective in est_objectives]
+                    new_progress_curve = Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives)
+                    bootstrap_curves.append(new_progress_curve)
                 else:
-                    # Uniformly resample N postreps (with replacement) from 0, 1, ..., N-1.
-                    bs_postrep_idxs = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
-                    # Compute the mean of the resampled postreplications.
-                    est_objectives.append(np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in bs_postrep_idxs]))
-                    # Reset subsubstream if using CRN across budgets.
-                    if self.crn_across_budget:
-                        bootstrap_rng.reset_subsubstream()
-            # If using CRN across macroreplications...
-            if self.crn_across_macroreps:
-                # ...reset subsubstreams...
-                bootstrap_rng.reset_subsubstream()
-            # ...else if not using CRN across macrorep...
-            else:
-                # ...advance subsubstream.
-                bootstrap_rng.advance_subsubstream()
-            # Record objective or progress curve.
-            if normalize:
-                frac_intermediate_budgets = [budget / self.problem.factors["budget"] for budget in self.all_intermediate_budgets[mrep]]
-                norm_est_objectives = [(est_objective - bs_optimal_obj_val) / bs_initial_opt_gap for est_objective in est_objectives]
-                new_progress_curve = Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives)
-                bootstrap_curves.append(new_progress_curve)
-            else:
-                new_objective_curve = Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=est_objectives)
-                bootstrap_curves.append(new_objective_curve)
+                    new_objective_curve = Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=est_objectives)
+                    bootstrap_curves.append(new_objective_curve)
+        # Option 2: Non-default CRN behavior.
+        else:
+            for idx in range(self.n_macroreps):
+                mrep = bs_mrep_idxs[idx]
+                # Inner-level bootstrapping over intermediate recommended solutions.
+                est_objectives = []
+                for budget in range(len(self.all_intermediate_budgets[mrep])):
+                    # If solution is x0...
+                    if self.all_recommended_xs[mrep][budget] == self.x0:
+                        est_objectives.append(bs_initial_obj_val)
+                    # ...else if solution is x*...
+                    elif self.all_recommended_xs[mrep][budget] == self.xstar:
+                        est_objectives.append(bs_optimal_obj_val)
+                    # ... else solution other than x0 or x*.
+                    else:
+                        # Uniformly resample N postreps (with replacement) from 0, 1, ..., N-1.
+                        bs_postrep_idxs = bootstrap_rng.choices(range(self.n_postreps), k=self.n_postreps)
+                        # Compute the mean of the resampled postreplications.
+                        est_objectives.append(np.mean([self.all_post_replicates[mrep][budget][postrep] for postrep in bs_postrep_idxs]))
+                        # Reset subsubstream if using CRN across budgets.
+                        if self.crn_across_budget:
+                            bootstrap_rng.reset_subsubstream()
+                # If using CRN across macroreplications...
+                if self.crn_across_macroreps:
+                    # ...reset subsubstreams...
+                    bootstrap_rng.reset_subsubstream()
+                # ...else if not using CRN across macrorep...
+                else:
+                    # ...advance subsubstream.
+                    bootstrap_rng.advance_subsubstream()
+                # Record objective or progress curve.
+                if normalize:
+                    frac_intermediate_budgets = [budget / self.problem.factors["budget"] for budget in self.all_intermediate_budgets[mrep]]
+                    norm_est_objectives = [(est_objective - bs_optimal_obj_val) / bs_initial_opt_gap for est_objective in est_objectives]
+                    new_progress_curve = Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives)
+                    bootstrap_curves.append(new_progress_curve)
+                else:
+                    new_objective_curve = Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=est_objectives)
+                    bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
     def clear_runs(self):

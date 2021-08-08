@@ -117,7 +117,7 @@ plot_progress_curves([experiments[0][0]], plot_type="all", all_in_one=False)
 plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
                      plot_type="mean",
                      all_in_one=True,
-                     plot_CIs=False,
+                     plot_CIs=True,
                      print_max_hw=False
                      )
 
@@ -126,7 +126,7 @@ plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in r
                      plot_type="quantile",
                      beta=0.9,
                      all_in_one=True,
-                     plot_CIs=False,
+                     plot_CIs=True,
                      print_max_hw=False
                      )
 
@@ -134,7 +134,7 @@ plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in r
 plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
                       solve_tol=0.1,
                       all_in_one=True,
-                      plot_CIs=False,
+                      plot_CIs=True,
                       print_max_hw=False
                       )
 
@@ -149,7 +149,7 @@ plot_area_scatterplots(experiments=experiments,
 plot_solvability_profiles(experiments=experiments,
                           plot_type="cdf_solvability",
                           all_in_one=True,
-                          plot_CIs=False,
+                          plot_CIs=True,
                           print_max_hw=False,
                           solve_tol=0.1
                           )
@@ -158,7 +158,7 @@ plot_solvability_profiles(experiments=experiments,
 plot_solvability_profiles(experiments=experiments,
                           plot_type="quantile_solvability",
                           all_in_one=True,
-                          plot_CIs=False,
+                          plot_CIs=True,
                           print_max_hw=False,
                           solve_tol=0.1,
                           beta=0.5
@@ -169,7 +169,7 @@ plot_solvability_profiles(experiments=experiments,
 plot_solvability_profiles(experiments=experiments,
                           plot_type="diff_cdf_solvability",
                           all_in_one=True,
-                          plot_CIs=False,
+                          plot_CIs=True,
                           print_max_hw=False,
                           solve_tol=0.1,
                           ref_solver="RNDSRCH_ss=100"
@@ -180,7 +180,7 @@ plot_solvability_profiles(experiments=experiments,
 plot_solvability_profiles(experiments=experiments,
                           plot_type="diff_quantile_solvability",
                           all_in_one=True,
-                          plot_CIs=False,
+                          plot_CIs=True,
                           print_max_hw=False,
                           solve_tol=0.1,
                           beta=0.5,
