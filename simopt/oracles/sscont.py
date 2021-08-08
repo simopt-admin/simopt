@@ -339,6 +339,8 @@ class SSContMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
+        self.lowerbound = 0
+        self.upperbound = np.inf
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
