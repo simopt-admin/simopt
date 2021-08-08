@@ -139,6 +139,7 @@ class Curve(object):
         ----------
         mesh : list of floats
             list of uniformly spaced x values
+
         Returns
         -------
         mesh_curve : wrapper_base.Curve object
@@ -146,6 +147,20 @@ class Curve(object):
         """
         mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
         return mesh_curve
+
+    def curve_to_full_curve(self):
+        """
+        Create a curve with duplicate x- and y-values to indicate steps.
+
+        Returns
+        -------
+        full_curve : wrapper_base.Curve object
+            curve with duplicate x- and y-values
+        """
+        duplicate_x_vals = [x for x in self.x_vals for _ in (0, 1)]
+        duplicate_y_vals = [y for y in self.y_vals for _ in (0, 1)]
+        full_curve = Curve(x_vals=duplicate_x_vals[1:], y_vals=duplicate_y_vals[:-1])
+        return full_curve
 
     def plot(self, color_str="C0", curve_type="regular"):
         """
@@ -1077,6 +1092,14 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
     """
     bs_CI_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
     bs_CI_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
+    # Shade space between curves.
+    # Convert to full curves to get piecewise-constant shaded areas.
+    plt.fill_between(x=bs_CI_lower_bounds.curve_to_full_curve().x_vals,
+                     y1=bs_CI_lower_bounds.curve_to_full_curve().y_vals,
+                     y2=bs_CI_upper_bounds.curve_to_full_curve().y_vals,
+                     color=color_str,
+                     alpha=0.2
+                     )
 
 
 def report_max_halfwidth(curve_pairs, normalize):
