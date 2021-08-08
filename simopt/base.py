@@ -294,11 +294,14 @@ class Problem(object):
         """
         if type(self) == type(other):
             if self.factors == other.factors:
-                if self.oracle == other.oracle:
-                    return True
-                else:
-                    print("Problem oracles do not match.")
-                    return False
+                # Check if non-decision-variable factors of oracles are the same.
+                # TO DO: Want the complement of the statement below...
+                # if self.factor_dict_to_vector(self.oracle.factors) == other.factor_dict_to_vector(other.oracle.factors):
+                #     return True
+                # else:
+                #     print("Problem oracles do not match.")
+                #     return False
+                return True
             else:
                 print("Problem factors do not match.")
                 return False
