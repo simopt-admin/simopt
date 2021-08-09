@@ -296,10 +296,10 @@ class SSContMinCost(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_bound : float
-        bound on optimal objective function value
-    ref_optimal_solution : tuple
-        reference optimal solution
+    optimal_value : float
+        optimal objective function value
+    optimal_solution : tuple
+        optimal solution
     oracle : base.Oracle
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -339,10 +339,11 @@ class SSContMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
+        self.lowerbound = 0
+        self.upperbound = np.inf
         self.gradient_available = False
-        self.optimal_bound = 0
+        self.optimal_value = None
         self.optimal_solution = None
-        self.ref_optimal_solution = None
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {

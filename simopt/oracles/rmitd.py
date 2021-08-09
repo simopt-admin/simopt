@@ -219,10 +219,10 @@ class RMITDMaxRevenue(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_bound : float
-        bound on optimal objective function value
-    ref_optimal_solution : tuple
-        reference optimal solution
+    optimal_value : float
+        optimal objective function value
+    optimal_solution : tuple
+        optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     rng_list : list of rng.MRG32k3a objects
@@ -259,8 +259,8 @@ class RMITDMaxRevenue(Problem):
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
         self.gradient_available = False
-        self.optimal_bound = 0
-        self.ref_optimal_solution = None  # (90, 50, 0)
+        self.optimal_value = None
+        self.optimal_solution = None  # (90, 50, 0)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {

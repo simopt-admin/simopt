@@ -194,10 +194,10 @@ class CntNVMaxProfit(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_bound : float
-        bound on optimal objective function value
-    ref_optimal_solution : tuple
-        reference optimal solution
+    optimal_value : float
+        optimal objective function value
+    optimal_solution : tuple
+        optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
     oracle_default_factors : dict
@@ -238,8 +238,8 @@ class CntNVMaxProfit(Problem):
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.optimal_bound = 0
-        self.ref_optimal_solution = (0.1878,)
+        self.optimal_value = None
+        self.optimal_solution = (0.1878,)
         self.oracle_default_factors = {
             "purchase_price": 5.0,
             "sales_price": 9.0,
