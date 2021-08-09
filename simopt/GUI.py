@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, Scrollbar, filedialog
+from timeit import timeit
+from functools import partial
 
 from directory import problem_directory
 from directory import solver_directory
 from directory import oracle_directory
 from wrapper_base import Experiment, MetaExperiment
+import pickle
 
 class Experiment_Window(tk.Tk):
     """
@@ -118,6 +121,32 @@ class Experiment_Window(tk.Tk):
                                             width = 25,
                                             command = self.crossdesign_function)
 
+        self.pickle_file_select_label = ttk.Label(master=self.master,
+                                                text = "Select a pickle file to access: ",
+                                                font = "Calibri 11 bold",
+                                                wraplength = "250")
+
+        self.pickle_file_select_button = ttk.Button(master=self.master,
+                                                    text = "Browse Files",
+                                                    width = 15,
+                                                    command = self.select_pickle_file_fuction)
+
+        self.pickle_file_load_button = ttk.Button(master=self.master,
+                                                text = "Load File",
+                                                width = 15,
+                                                command = self.load_pickle_file_function)
+
+        self.pickle_file_pathname_label = ttk.Label(master=self.master,
+                                                    text = "File Selected:",
+                                                    font = "Calibri 11 bold")
+
+        self.pickle_file_pathname_show = ttk.Label(master=self.master,
+                                                    text = "No file selected",
+                                                    font = "Calibri 11 italic",
+                                                    foreground = "red",
+                                                    wraplength = "500")
+
+
         self.queue_label_frame = ttk.Labelframe(master=self.master, text="Experiment")
 
         self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
@@ -147,7 +176,7 @@ class Experiment_Window(tk.Tk):
 
         self.tab_one.grid_rowconfigure(0)
 
-        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "Actions", ""]
+        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "", "", ""]
 
         for heading in self.heading_list:
             self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -223,6 +252,13 @@ class Experiment_Window(tk.Tk):
         self.run_button.place(x=5, y=285)
         self.crossdesign_button.place(x=115, y=285)
         self.add_button.place(x=5, y=325)
+
+        self.pickle_file_select_label.place(x=850, y=375)
+        self.pickle_file_select_button.place(x=1040, y=375)
+        self.pickle_file_load_button.place(x=1150, y=375)
+        self.pickle_file_pathname_label.place(x=850, y=400)
+        self.pickle_file_pathname_show.place(x=950, y=400)
+
         #self.add_button.grid(row=4, column=0, pady=25)
 
         #self.run_button.grid(row=4, column=0, sticky='s')
@@ -233,7 +269,7 @@ class Experiment_Window(tk.Tk):
         # self.pathname_entry.grid(row=3, column=1, sticky='s')
         # self.pathname_button.grid(row=3, column=1)
 
-        self.queue_label_frame.place(x=0, y=375, height=400, width=650)
+        self.queue_label_frame.place(x=0, y=375, height=400, width=800)
 
         self.frame.pack(fill='both')
 
@@ -241,6 +277,7 @@ class Experiment_Window(tk.Tk):
         # print("Got the problem: ", self.problem_var.get())
 
         self.problem_factors_list = []
+        self.problem_factors_types = []
 
         self.factor_label_frame_problem = ttk.Labelframe(master=self.master, text="Problem Factors")
 
@@ -311,7 +348,13 @@ class Experiment_Window(tk.Tk):
                 self.int_float_description_problem.grid(row=count_factors_problem, column=0, sticky='nsew')
                 self.int_float_entry_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
 
+                datatype = self.problem_object().specifications[factor_type].get("datatype")
+                # self.int_float_var_problem = datatype(self.int_float_var_problem)
+                # print(datatype)
+                # print("datatype of var ", type(self.int_float_var_problem))
+
                 self.problem_factors_list.append(self.int_float_var_problem)
+                self.problem_factors_types.append(datatype)
 
                 count_factors_problem += 1
 
@@ -336,7 +379,11 @@ class Experiment_Window(tk.Tk):
                 self.boolean_menu_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
                 # self.boolean_datatype_problem.grid(row=count_factors, column=2, sticky='nsew')
 
+                datatype = self.problem_object().specifications[factor_type].get("datatype")
+                print(datatype)
+
                 self.problem_factors_list.append(self.boolean_var_problem)
+                self.problem_factors_types.append(datatype)
 
                 count_factors_problem += 1
 
@@ -354,6 +401,7 @@ class Experiment_Window(tk.Tk):
         self.save_entry_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
 
         self.problem_factors_list.append(self.save_var_problem)
+        self.problem_factors_types.append(str)
 
         # print(self.problem_factors_list)
         self.factor_label_frame_problem.place(x=400, y=70, height=150, width=475)
@@ -589,7 +637,6 @@ class Experiment_Window(tk.Tk):
         self.factor_label_frame_solver.place(x=400, y=220, height=150, width=475)
 
     def run_single_function(self):
-
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
             # creates blank list to store selections
             self.selected = []
@@ -648,11 +695,21 @@ class Experiment_Window(tk.Tk):
                 self.solver_name = self.selected[1]
                 self.problem_name = self.selected[0]
 
-                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
+                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name) #, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
                 compatibility_result = self.my_experiment.check_compatibility()
                 if compatibility_result == "":
                     self.experiment_object_list.append(self.my_experiment)
-                    #self.my_experiment.run(n_macroreps=self.macro_reps)
+
+                    tk.messagebox.showinfo(title="Runtime", message="Analyzing...")
+                    runtime = timeit(lambda: self.my_experiment.run(n_macroreps=1), number=1)
+                    tk.messagebox.showinfo(title="Runtime", message=f"This function will take {runtime*int(self.macro_reps)} seconds to complete.")
+                    runtime_label = ttk.Label(master=self.master,
+                                            text = f"This function will take {runtime} seconds to complete.",
+                                            font = "Calibri 11 bold",
+                                            foreground = "green")
+                    runtime_label.place(x=500, y=800)
+
+                    self.my_experiment.run(n_macroreps=self.macro_reps)
 
                     # calls postprocessing window
                     self.postrep_window = tk.Tk()
@@ -719,23 +776,25 @@ class Experiment_Window(tk.Tk):
         self.crossdesign_window.title("Cross-Design Experiment")
         self.app = Cross_Design_Window(self.crossdesign_window)
 
-    def clearRow_function(self):
-        self.row = self.viewEdit_button_added["text"]
-        print(self.viewEdit_button_added["text"])
-        self.row = self.row.split(". ")
-        self.row = int(self.row[1])
-        self.index_list = self.row - 1
+    def clearRow_function(self, integer):
+        print("this is the integer passed in by the lambda function", integer)
+        # self.row = self.clear_button_added["text"]
+        # print(self.clear_button_added["text"])
+        # self.row = self.row.split(". ")
+        # self.row = int(self.row[1])
+        # self.index_list = self.row - 1
         
-        print("row=",self.row)
-        print("index=",self.index_list)
-        print(self.experiment_master_list[self.index_list])
-        print(self.widget_list[self.index_list])
-        print(self.experiment_object_list[self.index_list])
+        # print("row=",self.row)
+        # print("index=",self.index_list)
+        # print(self.experiment_master_list[self.index_list])
+        # print(self.widget_list[self.index_list])
+        # print(self.experiment_object_list[self.index_list])
 
     def clear_queue(self):
 
-        for widget in self.widget_list:
-             widget.grid_remove()
+        for row in self.widget_list:
+            for widget in row:
+                widget.grid_remove()
 
         self.experiment_master_list.clear()
         self.experiment_object_list.clear()
@@ -806,7 +865,7 @@ class Experiment_Window(tk.Tk):
 
                     self.run_button_added = ttk.Button(master=self.tab_one,
                                                       text="Run Exp. " + str(count),
-                                                      command=self.test_function)
+                                                      command= partial(self.run_row_function, count))
                     self.run_button_added.grid(row=count, column=3, sticky='nsew', padx=5, pady=3)
 
                     self.viewEdit_button_added = ttk.Button(master=self.tab_one,
@@ -816,10 +875,16 @@ class Experiment_Window(tk.Tk):
 
                     self.clear_button_added = ttk.Button(master=self.tab_one,
                                                       text="Clear Exp. " + str(count),
-                                                      command=self.clearRow_function)
+                                                      command= partial(self.clearRow_function, count))
                     self.clear_button_added.grid(row=count, column=5, sticky='nsew', padx=5, pady=3)
 
-                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added]
+                    self.postprocess_button_added = ttk.Button(master=self.tab_one,
+                                                      text="Post Process Function",
+                                                      command= self.test_function,
+                                                      state = "disabled")
+                    self.postprocess_button_added.grid(row=count, column=6, sticky='nsew', padx=5, pady=3)
+
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
                     self.widget_list.append(self.widget_row)
 
                     count += 1
@@ -882,12 +947,17 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_dictionary = dict()
 
         keys = list(self.problem_object().specifications.keys())
+        print("keys ->", keys)
+        print("self.problem_factors_types -> ", self.problem_factors_types)
 
         for problem_factor in self.problem_factors_list:
             index = self.problem_factors_list.index(problem_factor)
             #print(problem_factor.get())
             if index < len(keys):
-                self.problem_factors_dictionary[keys[index]] = problem_factor.get()
+                print(self.problem_factors_types[index])
+                datatype = self.problem_factors_types[index]
+                self.problem_factors_dictionary[keys[index]] = datatype(problem_factor.get())
+                print("datatype of factor -> ", type(datatype(problem_factor.get())))
             if index == len(keys):
                 if problem_factor.get() == self.problem_var.get():
                     self.problem_factors_return.append(None)
@@ -951,7 +1021,65 @@ class Experiment_Window(tk.Tk):
         self.factor_canvas_oracle.configure(scrollregion=self.factor_canvas_oracle.bbox("all"))
 
     def test_function(self, *args):
+
         print("test function connected")
+
+    def select_pickle_file_fuction(self, *args):
+        filename = filedialog.askopenfilename(parent = self.master,
+                                            initialdir = "./",
+                                            title = "Select a Pickle File",
+                                            filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
+                                                         ,("Python files", "*.py")
+                                                         ,("All files", "*.*") ))
+        if filename != "":
+            # filename_short_list = filename.split("/")
+            # filename_short = filename_short_list[len(filename_short_list)-1]
+            self.pickle_file_pathname_show["text"] = filename
+            self.pickle_file_pathname_show["foreground"] = "blue"
+            self.pickle_file_pathname_show.place(x=950, y=400)
+        else:
+            message = "You attempted to select a file but failed, please try again if necessary"
+            tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
+ 
+    def load_pickle_file_function(self):
+        filename = self.pickle_file_pathname_show["text"]
+        acceptable_types = ["pickle", "pck", "pcl", "pkl", "db"]
+
+        if filename != "No file selected":
+            filetype = filename.split(".")
+            filetype = filetype[len(filetype)-1]
+            if filetype in acceptable_types:
+                experiment_pathname = filename[filename.index("experiments/outputs/"):]
+                print(experiment_pathname)
+                print(type(experiment_pathname))
+                with open(experiment_pathname) as file:
+                    experiment = pickle.load(file)
+                    print(experiment)
+            else:
+                message = f"You have loaded a file, but {filetype} files are not acceptable!\nPlease try again."
+                tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
+        else:
+            message = "You are attempting to load a file, but haven't selected one yet.\nPlease select a file first."
+            tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
+
+    def run_row_function(self, integer):
+        print(integer)
+        row = integer - 1
+        print(row)
+        row_of_widgets = self.widget_list[row]
+
+        post_processing_button = row_of_widgets[6]
+        post_processing_button["state"] = "normal"
+        print(post_processing_button["text"], post_processing_button["state"])
+        post_processing_button.grid(row=integer, column=6, sticky='nsew', padx=5, pady=3)
+
+        run_button = row_of_widgets[3]
+        run_button["state"] = "disabled"
+        print(run_button["text"], run_button["state"])
+        run_button.grid(row=integer, column=3, sticky='nsew', padx=5, pady=3)
+
+        widget_row = [row_of_widgets[0], row_of_widgets[1], row_of_widgets[2], run_button, row_of_widgets[4], row_of_widgets[5], post_processing_button]
+        self.widget_list[row] = widget_row
 
 class Post_Processing_Window():
     """
@@ -1234,29 +1362,62 @@ class Cross_Design_Window():
         if problem_cnt < solver_cnt:
             solver_cnt += 1
             print("problem < solver")
+            self.crossdesign_macro_label = ttk.Label(master=self.master,
+                                                    text = "Number of Macro Replications:",
+                                                    font = "Calibri 11 bold")
+            self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
+
+            self.crossdesign_macro_var = tk.StringVar(self.master)
+            self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT)
+            self.crossdesign_macro_entry.insert(index=tk.END, string="10")
+            self.crossdesign_macro_entry.place(x=15, y=105+(25*solver_cnt))
+
             self.crossdesign_button = ttk.Button(master=self.master,
                                             text = "Confirm Cross-Design Experiment",
                                             width = 30,
                                             command = self.confirm_cross_design_function)
-            self.crossdesign_button.place(x=15, y=85+(25*solver_cnt))
+            self.crossdesign_button.place(x=15, y=135+(25*solver_cnt))
 
         if problem_cnt > solver_cnt:
             problem_cnt += 1
             print("problem > solver")
+
+            self.crossdesign_macro_label = ttk.Label(master=self.master,
+                                                    text = "Number of Macro Replications:",
+                                                    font = "Calibri 11 bold")
+            self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
+
+            self.crossdesign_macro_var = tk.StringVar(self.master)
+            self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT)
+            self.crossdesign_macro_entry.insert(index=tk.END, string="10")
+            
+            self.crossdesign_macro_entry.place(x=15, y=105+(25*problem_cnt))
+
             self.crossdesign_button = ttk.Button(master=self.master,
                                             text = "Confirm Cross-Design Experiment",
                                             width = 30,
                                             command = self.confirm_cross_design_function)
-            self.crossdesign_button.place(x=15, y=85+(25*problem_cnt))
+            self.crossdesign_button.place(x=15, y=135+(25*problem_cnt))
 
         if problem_cnt == solver_cnt:
             problem_cnt += 1
             print("problem == solver")
+
+            self.crossdesign_macro_label = ttk.Label(master=self.master,
+                                                    text = "Number of Macro Replications:",
+                                                    font = "Calibri 11 bold")
+            self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
+
+            self.crossdesign_macro_var = tk.StringVar(self.master)
+            self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT)
+            self.crossdesign_macro_entry.insert(index=tk.END, string="10")
+            self.crossdesign_macro_entry.place(x=15, y=105+(25*problem_cnt))
+
             self.crossdesign_button = ttk.Button(master=self.master,
                                             text = "Confirm Cross-Design Experiment",
                                             width = 30,
                                             command = self.confirm_cross_design_function)
-            self.crossdesign_button.place(x=15, y=85+(25*problem_cnt))
+            self.crossdesign_button.place(x=15, y=135+(25*problem_cnt))
 
     def confirm_cross_design_function(self):
         problem_list = []
@@ -1272,7 +1433,11 @@ class Cross_Design_Window():
                 print(self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)] + " was selected (solver)")
                 solver_list.append(solver_directory[self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)]])
         
+        macro_reps = self.crossdesign_macro_var.get()
+
         self.crossdesign_MetaExperiment = MetaExperiment(solver_names=solver_list, problem_names=problem_list, fixed_factors_filename="all_factors")
+
+        return self.crossdesign_MetaExperiment
 
     def test_function(self, *args):
         print("test function connected")
