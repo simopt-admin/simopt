@@ -238,7 +238,7 @@ class MRG32k3a(random.Random):
         """
         assert(len(new_state) == 6)
         self._current_state = new_state
-        super().seed(new_state)
+        #super().seed(new_state)
 
     def getstate(self):
         """
