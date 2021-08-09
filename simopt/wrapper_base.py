@@ -633,7 +633,6 @@ class Experiment(object):
             except Exception:
                 pass
         self.clear_postreps()
-        self.clear_stats()
 
     def clear_postreps(self):
         """
@@ -649,7 +648,7 @@ class Experiment(object):
                 delattr(self, attribute)
             except Exception:
                 pass
-        self.clear_stats()
+        self.clear_postnorm()
 
     def clear_postnorm(self):
         """
@@ -1926,15 +1925,25 @@ class MetaExperiment(object):
         list of solver names
     problem_names : list of strings
         list of problem names
+    solver_renames : list of strings
+        user-specified names for solvers
+    problem_renames : list of strings
+        user-specified names for problems
     fixed_factors_filename : string
         name of .py file containing dictionaries of fixed factors
         for solvers/problems/oracles.
     """
-    def __init__(self, solver_names, problem_names, fixed_factors_filename=None):
-        self.solver_names = solver_names
+    def __init__(self, solver_names, problem_names, solver_renames=None, problem_renames=None, fixed_factors_filename=None):
         self.n_solvers = len(solver_names)
-        self.problem_names = problem_names
         self.n_problems = len(problem_names)
+        if solver_renames is None:
+            self.solver_names = solver_names
+        else:
+            self.solver_names = solver_renames
+        if problem_renames is None:
+            self.problem_names = problem_names
+        else:
+            self.problem_names = problem_renames
         # Read in fixed solver/problem/oracle factors from .py file in the Experiments folder.
         # File should contain three dictionaries of dictionaries called
         #   - all_solver_fixed_factors
@@ -1947,28 +1956,29 @@ class MetaExperiment(object):
         self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
-        for solver_name in solver_names:
+        for solver_idx in range(self.n_solvers):
             solver_experiments = []
-            for problem_name in problem_names:
+            for problem_idx in range(self.n_problems):
                 try:
                     # If a file exists, read in Experiment object.
-                    with open(f"experiments/outputs/{solver_name}_on_{problem_name}.pickle", "rb") as file:
+                    with open(f"experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
                         next_experiment = pickle.load(file)
                     # TO DO: Check if the solver/problem/oracle factors in the file match
                     # those for the MetaExperiment.
                 except Exception:
                     # If no file exists, create new Experiment object.
-                    print(f"No experiment file exists for {solver_name} on {problem_name}. Creating new experiment.")
-                    next_experiment = Experiment(solver_name=solver_name,
-                                                 problem_name=problem_name,
-                                                 solver_fixed_factors=self.all_solver_fixed_factors[solver_name],
-                                                 problem_fixed_factors=self.all_problem_fixed_factors[problem_name],
-                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[problem_name])
-                    # next_experiment.record_experiment_results()
+                    print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
+                    next_experiment = Experiment(solver_name=solver_names[solver_idx],
+                                                 problem_name=problem_names[problem_idx],
+                                                 solver_rename=self.solver_names[solver_idx],
+                                                 problem_rename=self.problem_names[problem_idx],
+                                                 solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                 problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]])
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
 
-    def run(self, n_macroreps=10):
+    def run(self, n_macroreps):
         """
         Run n_macroreps of each solver on each problem.
 
@@ -1977,17 +1987,17 @@ class MetaExperiment(object):
         n_macroreps : int
             number of macroreplications of the solver to run on the problem
         """
-        for solver_index in range(self.n_solvers):
-            for problem_index in range(self.n_problems):
-                experiment = self.experiments[solver_index][problem_index]
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                experiment = self.experiments[solver_idx][problem_idx]
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps):
-                    print(f"Running {experiment.solver.name} on {experiment.problem.name}.")
+                    print(f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_runs()
                     experiment.run(n_macroreps)
 
-    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each problem-solver pair, run postreplications at solutions
         recommended by the solver on each macroreplication.
@@ -1996,8 +2006,6 @@ class MetaExperiment(object):
         ---------
         n_postreps : int
             number of postreplications to take at each recommended solution
-        n_postreps_init_opt : int
-            number of postreplications to take at initial x0 and optimal x*
         crn_across_budget : bool
             use CRN for post-replications at solutions recommended at different times?
         crn_across_macroreps : bool
@@ -2006,12 +2014,11 @@ class MetaExperiment(object):
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has not been post-processed in this way before,
+                # If the problem-solver pair has not been post-replicated in this way before,
                 # post-process it now.
                 if (getattr(experiment, "n_postreps", None) != n_postreps
-                        or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
                         or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                         or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_postreps()
-                    experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
+                    experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
