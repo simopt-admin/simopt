@@ -4,11 +4,9 @@ from rng.mrg32k3a import MRG32k3a
 # 3 versions of random search
 rs_sample_sizes = [10, 50, 100]
 
-# Problem ranges: 6*6 = 36 problem instances
-# demand_means = [25.0, 50.0, 100.0, 200.0, 400.0, 800.0]
-# lead_means = [1.0, 3.0, 6.0, 9.0, 12.0, 15.0]
-demand_means = [25.0]
-lead_means = [1.0]
+# Problem ranges: 5*5 = 25 problem instances
+demand_means = [25.0, 50.0, 100.0, 200.0, 400.0] #, 800.0]
+lead_means = [1.0, 3.0, 6.0, 9.0, 12.0] #, 15.0]
 
 # default values
 # "demand_mean": 100.0
@@ -23,51 +21,51 @@ lead_means = [1.0]
 # # Loop over problems.
 # for dm in demand_means:
 #     for lm in lead_means:
-        # oracle_fixed_factors = {"demand_mean": dm,
-        #                         "lead_mean": lm
-        #                         }
-        # # Budget = 1000 for (s,S) inventory problem.
-        # # RS w/ sample size 100 will get through only 10 iterations.
-        # problem_fixed_factors = {"budget": 1000}
-        # problem_rename = f"SSCONT-1_dm={dm}_lm={lm}_fc={fc}_bc={bc}"
-        # # Temporarily store experiments on the same problem for post-normalization.
-        # experiments_same_problem = []
-        # # Loop over solvers.
-        # for rs_ss in rs_sample_sizes:
-        #     solver_fixed_factors = {"sample_size": rs_ss}
-        #     solver_rename = f"RNDSRCH_ss={rs_ss}"
-        #     # Create experiment.
-        #     new_experiment = Experiment(solver_name="RNDSRCH",
-        #                                 problem_name="SSCONT-1",
-        #                                 solver_rename=solver_rename,
-        #                                 problem_rename=problem_rename,
-        #                                 solver_fixed_factors=solver_fixed_factors,
-        #                                 problem_fixed_factors=problem_fixed_factors,
-        #                                 oracle_fixed_factors=oracle_fixed_factors
-        #                                 )
-        #     # Run experiment with M = 50.
-        #     new_experiment.run(n_macroreps=50)
-        #     # Post replicate experiment with N = 100.
-        #     new_experiment.post_replicate(n_postreps=100)
-        #     experiments_same_problem.append(new_experiment)
+#         oracle_fixed_factors = {"demand_mean": dm,
+#                                 "lead_mean": lm
+#                                 }
+#         # Budget = 1000 for (s,S) inventory problem.
+#         # RS w/ sample size 100 will get through only 10 iterations.
+#         problem_fixed_factors = {"budget": 1000}
+#         problem_rename = f"SSCONT-1_dm={dm}_lm={lm}"
+#         # Temporarily store experiments on the same problem for post-normalization.
+#         experiments_same_problem = []
+#         # Loop over solvers.
+#         for rs_ss in rs_sample_sizes:
+#             solver_fixed_factors = {"sample_size": rs_ss}
+#             solver_rename = f"RNDSRCH_ss={rs_ss}"
+#             # Create experiment.
+#             new_experiment = Experiment(solver_name="RNDSRCH",
+#                                         problem_name="SSCONT-1",
+#                                         solver_rename=solver_rename,
+#                                         problem_rename=problem_rename,
+#                                         solver_fixed_factors=solver_fixed_factors,
+#                                         problem_fixed_factors=problem_fixed_factors,
+#                                         oracle_fixed_factors=oracle_fixed_factors
+#                                         )
+#             # Run experiment with M = 50.
+#             new_experiment.run(n_macroreps=10)
+#             # Post replicate experiment with N = 100.
+#             new_experiment.post_replicate(n_postreps=100)
+#             experiments_same_problem.append(new_experiment)
 
-        # # # Run ASTRO-DF. (COMMENTED OUT)
-        # # new_experiment = Experiment(solver_name="ASTRO-DF",
-        # #                             problem_name="SSCONT-1",
-        # #                             solver_rename=solver_rename,
-        # #                             problem_rename=problem_rename,
-        # #                             problem_fixed_factors=problem_fixed_factors,
-        # #                             oracle_fixed_factors=oracle_fixed_factors
-        # #                             )
-        # # # Run experiment with M = 50.
-        # # new_experiment.run(n_macroreps=50)
-        # # # Post replicate experiment with N = 100.
-        # # new_experiment.post_replicate(n_postreps=100)
-        # # experiments_same_problem.append[new_experiment]
+#         # # Run ASTRO-DF. (COMMENTED OUT)
+#         # new_experiment = Experiment(solver_name="ASTRO-DF",
+#         #                             problem_name="SSCONT-1",
+#         #                             solver_rename=solver_rename,
+#         #                             problem_rename=problem_rename,
+#         #                             problem_fixed_factors=problem_fixed_factors,
+#         #                             oracle_fixed_factors=oracle_fixed_factors
+#         #                             )
+#         # # Run experiment with M = 50.
+#         # new_experiment.run(n_macroreps=50)
+#         # # Post replicate experiment with N = 100.
+#         # new_experiment.post_replicate(n_postreps=100)
+#         # experiments_same_problem.append[new_experiment]
 
-        # # Post-normalize experiments with L = 200.
-        # # Provide NO proxies for f(x0), f(x*), or f(x).
-        # post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
+#         # Post-normalize experiments with L = 200.
+#         # Provide NO proxies for f(x0), f(x*), or f(x).
+#         post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
 
 # STOPPING POINT.
 # If experiments have been run, comment out the First Section.
