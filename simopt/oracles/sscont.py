@@ -294,6 +294,10 @@ class SSContMinCost(Problem):
     variable_type : str
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -339,8 +343,8 @@ class SSContMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lowerbound = 0
-        self.upperbound = np.inf
+        self.lower_bounds = (0, 0)
+        self.upper_bounds = (np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None

@@ -179,6 +179,10 @@ class FacilitySizingTotalCost(Problem):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -224,6 +228,8 @@ class FacilitySizingTotalCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
+        self.lower_bounds = (0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (185, 185, 185)
@@ -449,6 +455,10 @@ class FacilitySizingMaxService(Problem):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -494,6 +504,8 @@ class FacilitySizingMaxService(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
+        self.lower_bounds = (0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None  # (175, 179, 143)

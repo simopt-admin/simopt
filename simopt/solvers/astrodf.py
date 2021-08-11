@@ -227,11 +227,11 @@ class ASTRODF(Solver):
 
             if sum(x_k) != 0:
                 # block constraints
-                if minus[0][i] < problem.lowerbound:
-                    minus[0][i] = problem.lowerbound + epsilon
+                if minus[0][i] < problem.lower_bounds[i]:
+                    minus[0][i] = problem.lower_bounds[i] + epsilon
                     # Y[0][i] = (minus[0][i]+plus[0][i])/2
-                if plus[0][i] > problem.upperbound:
-                    plus[0][i] = problem.upperbound - epsilon
+                if plus[0][i] > problem.upper_bounds[i]:
+                    plus[0][i] = problem.upper_bounds[i] - epsilon
                     # Y[0][i] = (minus[0][i]+plus[0][i])/2
 
             Y.append(plus)
@@ -393,8 +393,10 @@ class ASTRODF(Solver):
             candidate_x = new_x - tau * delta * grad / norm(grad)
 
             for i in range(problem.dim):
-                if candidate_x[i] < problem.lowerbound:
-                    candidate_x[i] = problem.lowerbound + 0.01
+                if candidate_x[i] < problem.lower_bounds[i]:
+                    candidate_x[i] = problem.lower_bounds[i] + 0.01
+                elif candidate_x[i] > problem.upper_bounds[i]:
+                    candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
