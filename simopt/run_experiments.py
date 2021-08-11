@@ -29,46 +29,47 @@ lead_means = [1.0, 3.0, 6.0, 9.0, 12.0] #, 15.0]
 #         problem_fixed_factors = {"budget": 1000}
 #         problem_rename = f"SSCONT-1_dm={dm}_lm={lm}"
 #         # Temporarily store experiments on the same problem for post-normalization.
-#         experiments_same_problem = []
+#         # experiments_same_problem = []
 #         # Loop over solvers.
-#         for rs_ss in rs_sample_sizes:
-#             solver_fixed_factors = {"sample_size": rs_ss}
-#             solver_rename = f"RNDSRCH_ss={rs_ss}"
-#             # Create experiment.
-#             new_experiment = Experiment(solver_name="RNDSRCH",
-#                                         problem_name="SSCONT-1",
-#                                         solver_rename=solver_rename,
-#                                         problem_rename=problem_rename,
-#                                         solver_fixed_factors=solver_fixed_factors,
-#                                         problem_fixed_factors=problem_fixed_factors,
-#                                         oracle_fixed_factors=oracle_fixed_factors
-#                                         )
-#             # Run experiment with M = 50.
-#             new_experiment.run(n_macroreps=10)
-#             # Post replicate experiment with N = 100.
-#             new_experiment.post_replicate(n_postreps=100)
-#             experiments_same_problem.append(new_experiment)
+#         # for rs_ss in rs_sample_sizes:
+#         #     solver_fixed_factors = {"sample_size": rs_ss}
+#         #     solver_rename = f"RNDSRCH_ss={rs_ss}"
+#         #     # Create experiment.
+#         #     new_experiment = Experiment(solver_name="RNDSRCH",
+#         #                                 problem_name="SSCONT-1",
+#         #                                 solver_rename=solver_rename,
+#         #                                 problem_rename=problem_rename,
+#         #                                 solver_fixed_factors=solver_fixed_factors,
+#         #                                 problem_fixed_factors=problem_fixed_factors,
+#         #                                 oracle_fixed_factors=oracle_fixed_factors
+#         #                                 )
+#         #     # Run experiment with M = 50.
+#         #     new_experiment.run(n_macroreps=10)
+#         #     # Post replicate experiment with N = 100.
+#         #     new_experiment.post_replicate(n_postreps=100)
+#         #     experiments_same_problem.append(new_experiment)
 
-#         # # Run ASTRO-DF. (COMMENTED OUT)
-#         # new_experiment = Experiment(solver_name="ASTRO-DF",
-#         #                             problem_name="SSCONT-1",
-#         #                             solver_rename=solver_rename,
-#         #                             problem_rename=problem_rename,
-#         #                             problem_fixed_factors=problem_fixed_factors,
-#         #                             oracle_fixed_factors=oracle_fixed_factors
-#         #                             )
-#         # # Run experiment with M = 50.
-#         # new_experiment.run(n_macroreps=50)
-#         # # Post replicate experiment with N = 100.
-#         # new_experiment.post_replicate(n_postreps=100)
+#         # Run ASTRO-DF. (COMMENTED OUT)
+#         solver_fixed_factors = {"delta_max": 200.0}
+#         new_experiment = Experiment(solver_name="ASTRODF",
+#                                     problem_name="SSCONT-1",
+#                                     problem_rename=problem_rename,
+#                                     solver_fixed_factors=solver_fixed_factors,
+#                                     problem_fixed_factors=problem_fixed_factors,
+#                                     oracle_fixed_factors=oracle_fixed_factors
+#                                     )
+#         # Run experiment with M = 10.
+#         new_experiment.run(n_macroreps=10)
+#         # Post replicate experiment with N = 100.
+#         new_experiment.post_replicate(n_postreps=100)
 #         # experiments_same_problem.append[new_experiment]
 
-#         # Post-normalize experiments with L = 200.
-#         # Provide NO proxies for f(x0), f(x*), or f(x).
-#         post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
+# #         # Post-normalize experiments with L = 200.
+# #         # Provide NO proxies for f(x0), f(x*), or f(x).
+# #         post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
 
-# STOPPING POINT.
-# If experiments have been run, comment out the First Section.
+# # STOPPING POINT.
+# # If experiments have been run, comment out the First Section.
 
 # Second Section: Plotting.
 
@@ -91,14 +92,33 @@ for rs_ss in rs_sample_sizes:
             new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
             experiments_same_solver.append(new_experiment)
     experiments.append(experiments_same_solver)
+# Load ASTRO-DF results
+solver_rename = f"ASTRODF"
+experiments_same_solver = []
+for dm in demand_means:
+    for lm in lead_means:
+        problem_rename = f"SSCONT-1_dm={dm}_lm={lm}"
+        file_name = f"{solver_rename}_on_{problem_rename}"
+        # Load experiment.
+        new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+        experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
+
 
 # Plotting
+n_solvers = len(experiments)
+n_problems = len(experiments[0])
 
-# Change if running ASTRO-DF too.
-n_solvers = 3
+# # Post-normalize to incorporate ASTRO-DF results
+# for problem_idx in range(n_problems):
+#     experiments_same_problem = [experiments[solver_idx][problem_idx] for solver_idx in range(n_solvers)]
+#     post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
 
 # All progress curves for one experiment.
 plot_progress_curves([experiments[0][0]], plot_type="all", all_in_one=False)
+
+# # All progress curves for one experiment. ASTRO-DF.
+# plot_progress_curves([experiments[3][0]], plot_type="all", all_in_one=False)
 
 # Mean progress curves from all solvers on one problem.
 plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
@@ -159,7 +179,7 @@ plot_solvability_profiles(experiments=experiments,
                           plot_CIs=True,
                           print_max_hw=False,
                           solve_tol=0.1,
-                          ref_solver="RNDSRCH_ss=100"
+                          ref_solver="ASTRODF"
                           )
 
 # Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
@@ -171,5 +191,5 @@ plot_solvability_profiles(experiments=experiments,
                           print_max_hw=False,
                           solve_tol=0.1,
                           beta=0.5,
-                          ref_solver="RNDSRCH_ss=100"
+                          ref_solver="ASTRODF"
                           )
