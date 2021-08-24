@@ -860,7 +860,7 @@ class Experiment_Window(tk.Tk):
             new_text = " ".join(split_text)
             # print("new_text = ", new_text)
             clear_button_added["text"] = new_text
-            clear_button_added["command"] = partial(self.test_function, row_index+1)   
+            clear_button_added["command"] = partial(self.clearRow_function, row_index+1)   
 
             row_of_widgets[5] = clear_button_added
 
