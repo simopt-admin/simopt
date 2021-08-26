@@ -276,6 +276,9 @@ class Experiment_Window(tk.Tk):
 
     def show_problem_factors(self, *args):
         # print("Got the problem: ", self.problem_var.get())
+        if args and len(args) == 2:
+            print("ARGS: ", args[1])
+        print("arg length:", len(args))
 
         self.problem_factors_list = []
         self.problem_factors_types = []
@@ -326,7 +329,7 @@ class Experiment_Window(tk.Tk):
         self.problem_object = problem_directory[self.problem_var.get()]
 
         count_factors_problem = 1
-        for factor_type in self.problem_object().specifications:
+        for num, factor_type in enumerate(self.problem_object().specifications, start=0):
             # print("size of dictionary", len(self.problem_object().specifications[factor_type]))
             # print("first", factor_type)
             # print("second", self.problem_object().specifications[factor_type].get("description"))
@@ -336,15 +339,16 @@ class Experiment_Window(tk.Tk):
             self.dictionary_size_problem = len(self.problem_object().specifications[factor_type])
 
             if self.problem_object().specifications[factor_type].get("datatype") != bool:
-
-                # print("yes?")
                 self.int_float_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(self.problem_object().specifications[factor_type].get("description")),
                                                     font = "Calibri 11 bold")
 
                 self.int_float_var_problem = tk.StringVar(self.factor_tab_one_problem)
                 self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT)
-                self.int_float_entry_problem.insert(index=tk.END, string=str(self.problem_object().specifications[factor_type].get("default")))
+                if args and len(args) == 2 and args[0] == True:
+                    self.int_float_entry_problem.insert(index=tk.END, string=str(args[1][3][0][factor_type]))
+                else:
+                    self.int_float_entry_problem.insert(index=tk.END, string=str(self.problem_object().specifications[factor_type].get("default")))
 
                 self.int_float_description_problem.grid(row=count_factors_problem, column=0, sticky='nsew')
                 self.int_float_entry_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
@@ -360,13 +364,12 @@ class Experiment_Window(tk.Tk):
 
                 self.problem_factors_list.append(self.int_float_var_problem)
                 
-
                 count_factors_problem += 1
 
 
             if self.problem_object().specifications[factor_type].get("datatype") == bool:
 
-                # print("yes!")
+                print("yes!")
                 self.boolean_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(self.problem_object().specifications[factor_type].get("description")),
                                                     font = "Calibri 11 bold")
@@ -598,7 +601,11 @@ class Experiment_Window(tk.Tk):
 
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
                 self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT)
-                self.int_float_entry.insert(index=tk.END, string=str(self.solver_object().specifications[factor_type].get("default")))
+                if args and len(args) == 2 and args[0] == True:
+
+                    self.int_float_entry.insert(index=tk.END, string=str(args[1][5][0][factor_type]))
+                else:
+                    self.int_float_entry.insert(index=tk.END, string=str(self.solver_object().specifications[factor_type].get("default")))
 
                 # self.int_float_datatype = tk.Label(master=self.factor_tab_one,
                 #                                     text = str(self.solver_object().specifications[factor_type].get("datatype")),
@@ -620,7 +627,7 @@ class Experiment_Window(tk.Tk):
 
 
             if self.solver_object().specifications[factor_type].get("datatype") == bool:
-
+                
                 self.boolean_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(self.solver_object().specifications[factor_type].get("description")),
                                                     font = "Calibri 11 bold")
@@ -628,11 +635,13 @@ class Experiment_Window(tk.Tk):
                 self.boolean_list = ["True", "False"]
                 self.boolean_var = tk.StringVar(self.factor_tab_one_solver)
 
-                self.boolean_menu = ttk.OptionMenu(self.factor_tab_one_solver, self.boolean_var, str(self.solver_object().specifications[factor_type].get("default")), *self.boolean_list)
+               # self.boolean_menu = ttk.OptionMenu(self.factor_tab_one_solver, self.boolean_var, str(self.solver_object().specifications[factor_type].get("default")), *self.boolean_list)
+                
+                if args and len(args) == 2 and args[0] == True:    
+                    self.boolean_menu = ttk.OptionMenu(self.factor_tab_one_solver, self.boolean_var, str(args[1][5][0][factor_type]), *self.boolean_list)
+                else:
+                    self.boolean_menu = ttk.OptionMenu(self.factor_tab_one_solver, self.boolean_var, str(self.solver_object().specifications[factor_type].get("default")), *self.boolean_list)
 
-                # self.boolean_datatype = tk.Label(master=self.factor_tab_one,
-                #                                     text = str(self.solver_object().specifications[factor_type].get("datatype")),
-                #                                     font = "Calibri 11 bold")
 
                 self.boolean_description.grid(row=count_factors_solver, column=0, sticky='nsew')
                 self.boolean_menu.grid(row=count_factors_solver, column=1, sticky='nsew')
@@ -662,7 +671,6 @@ class Experiment_Window(tk.Tk):
 
         self.solver_factors_types.append(str)
 
-        # print(self.solver_factors_list)
         self.factor_label_frame_solver.place(x=400, y=220, height=150, width=475)
 
     def run_single_function(self):
@@ -724,7 +732,7 @@ class Experiment_Window(tk.Tk):
                 self.solver_name = self.selected[1]
                 self.problem_name = self.selected[0]
 
-                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
+                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name) #, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
                 compatibility_result = self.my_experiment.check_compatibility()
                 if compatibility_result == "":
                     self.experiment_object_list.append(self.my_experiment)
@@ -884,19 +892,19 @@ class Experiment_Window(tk.Tk):
         print(F"This was the row selected {row_index}")
 
         current_experiment = self.experiment_object_list[row_index-1]
-        print(current_experiment)
+        # print(current_experiment)
         current_experiment_arguments = self.experiment_master_list[row_index-1]
-        print(current_experiment_arguments)
+        # print(current_experiment_arguments)
 
         self.problem_var.set(current_experiment_arguments[0])
         self.solver_var.set(current_experiment_arguments[1])
         self.macro_var.set(current_experiment_arguments[2])
-        self.show_problem_factors()
-        self.show_solver_factors()
+        self.show_problem_factors(True, current_experiment_arguments)
+        self.show_solver_factors(True, current_experiment_arguments)
 
         viewEdit_button_added = self.widget_list[row_index-1][4]
         viewEdit_button_added["text"] = "Save Changes"
-        viewEdit_button_added["command"] = partial(self.test_function, row_index)
+        viewEdit_button_added["command"] = partial(self.save_edit_function, row_index)
         viewEdit_button_added.grid(row= (row_index), column=4, sticky='nsew', padx=5, pady=3)
 
     def clear_queue(self):
@@ -913,8 +921,14 @@ class Experiment_Window(tk.Tk):
         self.experiment_object_list.clear()
         self.widget_list.clear()
 
-    def add_function(self):
+    def add_function(self, *args):
+        if len(args) == 1:
+            place = args[0] - 1
+        else:
+            place = len(self.experiment_object_list)
         
+        print("place ", place)
+            
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
             # creates blank list to store selections
             self.selected = []
@@ -956,22 +970,15 @@ class Experiment_Window(tk.Tk):
 
                 # complete experiment with given arguments
                 self.solver_dictionary_rename = self.selected[5]
-                print("solver combined", self.solver_dictionary_rename)
                 self.solver_rename = self.solver_dictionary_rename[1]
                 self.solver_factors = self.solver_dictionary_rename[0]
-                print("solver rename", self.solver_rename)
-                print("solver factors", self.solver_factors)
 
                 self.oracle_factors = self.selected[4]
                 self.oracle_factors = self.oracle_factors[0]
-                print("oracle factors", self.oracle_factors)
 
                 self.problem_dictionary_rename = self.selected[3]
-                print("problem combined", self.problem_dictionary_rename)
                 self.problem_rename = self.problem_dictionary_rename[1]
                 self.problem_factors = self.problem_dictionary_rename[0]
-                print("problem rename", self.problem_rename)
-                print("problem factors", self.problem_factors)
 
                 self.macro_reps = self.selected[2]
                 self.solver_name = self.selected[1]
@@ -982,7 +989,9 @@ class Experiment_Window(tk.Tk):
                 if compatibility_result == "":
                     self.experiment_object_list.append(self.my_experiment)
                     self.experiment_master_list.append(self.selected)
-
+                    #this option list doesnt autoupdate - not sure why but this will force it to update
+                    self.experiment_master_list[len( self.experiment_master_list) - 1][5][0]['crn_across_solns'] = self.boolean_var.get()
+                    
                     self.rows = 5
                     
                     self.problem_added = tk.Label(master=self.tab_one,
@@ -1032,6 +1041,7 @@ class Experiment_Window(tk.Tk):
                     # print(self.experiment_master_list)
                     # print(self.widget_list)
                     # print(self.experiment_object_list)
+
                 
                 else:
                     tk.messagebox.showerror(title="Error Window", message=compatibility_result)
@@ -1100,6 +1110,7 @@ class Experiment_Window(tk.Tk):
             if index < len(keys):
                 print(self.problem_factors_types[index])
                 datatype = self.problem_factors_types[index]
+                # if the data type is tuple update data
                 self.problem_factors_dictionary[keys[index]] = datatype(problem_factor.get())
                 print("datatype of factor -> ", type(datatype(problem_factor.get())))
             if index == len(keys):
@@ -1179,8 +1190,26 @@ class Experiment_Window(tk.Tk):
         self.factor_canvas_oracle.configure(scrollregion=self.factor_canvas_oracle.bbox("all"))
 
     def test_function(self, integer):
+        print(self.boolean_var.get())
+        
+        row_index = integer
+        self.experiment_master_list[row_index-1]
+        self.experiment_master_list[row_index-1][5][0]['crn_across_solns'] = self.boolean_var.get()
+        current_experiment_arguments = self.experiment_master_list[row_index-1][5]
+        print(current_experiment_arguments)
         integer = integer
         print(F"test function connected to the number {integer}")
+    
+    def save_edit_function(self, integer):
+        print("save edit")
+        
+        row_index = integer
+        self.experiment_master_list[row_index-1]
+        self.experiment_master_list[row_index-1][5][0]['crn_across_solns'] = self.boolean_var.get()
+
+        self.clearRow_function(row_index)
+        self.add_function(row_index)
+        
 
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
@@ -1221,6 +1250,7 @@ class Experiment_Window(tk.Tk):
             tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
 
     def run_row_function(self, integer):
+        # stringtuple[1:-1].split(separator=",")
         print(F"This is the value passed into the function: {integer}")
         row_index = integer - 1
         print(F"This is the index that it would be associated with for self.experiment_object_list: {row_index}")
