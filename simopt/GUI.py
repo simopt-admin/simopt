@@ -54,6 +54,14 @@ class Experiment_Window(tk.Tk):
     """
 
     def __init__(self, master):
+
+        
+        pickle_file = "simopt/experiments/outputs/RNDSRCH_ss=10_on_SSCONT-1_dm=50.0_lm=3.0_fc=20.0_bc=1.0.pickle"
+        infile = open(pickle_file,'rb')
+        new_dict = pickle.load(infile)
+        infile.close()  
+        print((new_dict))
+
         self.master = master
 
         self.frame = tk.Frame(self.master)
@@ -275,10 +283,10 @@ class Experiment_Window(tk.Tk):
         self.frame.pack(fill='both')
 
     def show_problem_factors(self, *args):
-        # print("Got the problem: ", self.problem_var.get())
-        if args and len(args) == 2:
-            print("ARGS: ", args[1])
-        print("arg length:", len(args))
+        print("Got the problem: ", self.problem_var.get())
+        # if args and len(args) == 2:
+        #     print("ARGS: ", args[1])
+        # print("arg length:", len(args))
 
         self.problem_factors_list = []
         self.problem_factors_types = []
@@ -330,11 +338,6 @@ class Experiment_Window(tk.Tk):
 
         count_factors_problem = 1
         for num, factor_type in enumerate(self.problem_object().specifications, start=0):
-            # print("size of dictionary", len(self.problem_object().specifications[factor_type]))
-            # print("first", factor_type)
-            # print("second", self.problem_object().specifications[factor_type].get("description"))
-            # print("third", self.problem_object().specifications[factor_type].get("datatype"))    
-            # print("fourth", self.problem_object().specifications[factor_type].get("default"))   
 
             self.dictionary_size_problem = len(self.problem_object().specifications[factor_type])
 
@@ -411,7 +414,6 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_list.append(self.save_var_problem)
         self.problem_factors_types.append(str)
 
-        # print(self.problem_factors_list)
         self.factor_label_frame_problem.place(x=400, y=70, height=150, width=475)
 
         # Switching from Problems to Oracles
@@ -486,7 +488,11 @@ class Experiment_Window(tk.Tk):
 
                 self.int_float_var_oracle = tk.StringVar(self.factor_tab_one_oracle)
                 self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = "50")
-                self.int_float_entry_oracle.insert(index=tk.END, string=str(self.oracle_object().specifications[factor_type].get("default")))
+                
+                if args and len(args) == 2 and args[0] == True:
+                    self.int_float_entry_oracle.insert(index=tk.END, string=str(args[1][4][0][factor_type]))
+                else:
+                    self.int_float_entry_oracle.insert(index=tk.END, string=str(self.oracle_object().specifications[factor_type].get("default")))
 
                 self.int_float_description_oracle.grid(row=count_factors_oracle, column=0, sticky='nsew')
                 self.int_float_entry_oracle.grid(row=count_factors_oracle, column=1, sticky='nsew')
@@ -533,7 +539,7 @@ class Experiment_Window(tk.Tk):
         self.factor_label_frame_oracle.place(x=900, y=70, height=300, width=600)
 
     def show_solver_factors(self, *args):
-        # print("Got the solver: ", self.solver_var.get())
+        print("Got the solver: ", self.solver_var.get())
 
         self.solver_factors_list = []
         self.solver_factors_types = []
@@ -808,37 +814,32 @@ class Experiment_Window(tk.Tk):
         self.app = Cross_Design_Window(self.crossdesign_window)
 
     def clearRow_function(self, integer):
-        print("this is the integer passed in by the lambda function", integer)
+        # print("this is the integer passed in by the lambda function", integer)
         
         for widget in self.widget_list[integer-1]:
             widget.grid_remove()
 
-        print(F"Size of self.experiment_master_list BEFORE running is { len(self.experiment_master_list) }")
-        print(F"Size of self.experiment_object_list BEFORE running is { len(self.experiment_object_list) }")
-        print(F"Size of self.wiedget_list BEFORE running is { len(self.widget_list) }")
+        # print(F"Size of self.experiment_master_list BEFORE running is { len(self.experiment_master_list) }")
+        # print(F"Size of self.experiment_object_list BEFORE running is { len(self.experiment_object_list) }")
+        # print(F"Size of self.wiedget_list BEFORE running is { len(self.widget_list) }")
 
         self.experiment_master_list.pop(integer-1)      
         self.experiment_object_list.pop(integer-1)
         self.widget_list.pop(integer-1)
 
-        print(F"Size of self.experiment_master_list AFTER running is { len(self.experiment_master_list) }")
-        print(F"Size of self.experiment_object_list AFTER running is { len(self.experiment_object_list) }")
-        print(F"Size of self.wiedget_list AFTER running is { len(self.widget_list) }")
+        # print(F"Size of self.experiment_master_list AFTER running is { len(self.experiment_master_list) }")
+        # print(F"Size of self.experiment_object_list AFTER running is { len(self.experiment_object_list) }")
+        # print(F"Size of self.wiedget_list AFTER running is { len(self.widget_list) }")
 
 
         for row_of_widgets in self.widget_list:
             row_index = self.widget_list.index(row_of_widgets)
-            print("row_index = ", row_index)
 
             run_button_added = row_of_widgets[3]
             text_on_run = run_button_added["text"]
-            # print(text_on_run)
-            # print("BEFORE: ", text_on_run.split(" "))
             split_text = text_on_run.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            # print("AFTER: ", split_text)
             new_text = " ".join(split_text)
-            # print("new_text = ", new_text)
             run_button_added["text"] = new_text
             run_button_added["command"] = partial(self.run_row_function, row_index+1)
 
@@ -846,13 +847,9 @@ class Experiment_Window(tk.Tk):
 
             viewEdit_button_added = row_of_widgets[4]
             text_on_viewEdit = viewEdit_button_added["text"]
-            # print(text_on_viewEdit)
-            # print("BEFORE: ", text_on_viewEdit.split(" "))
             split_text = text_on_viewEdit.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            # print("AFTER: ", split_text)
             new_text = " ".join(split_text)
-            # print("new_text = ", new_text)
             viewEdit_button_added["text"] = new_text
             viewEdit_button_added["command"] = partial(self.viewEdit_function, row_index+1)
 
@@ -860,13 +857,9 @@ class Experiment_Window(tk.Tk):
 
             clear_button_added = row_of_widgets[5]
             text_on_clear = clear_button_added["text"]
-            # print(text_on_clear)
-            # print("BEFORE: ", text_on_clear.split(" "))
             split_text = text_on_clear.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            # print("AFTER: ", split_text)
             new_text = " ".join(split_text)
-            # print("new_text = ", new_text)
             clear_button_added["text"] = new_text
             clear_button_added["command"] = partial(self.clearRow_function, row_index+1)   
 
@@ -886,6 +879,11 @@ class Experiment_Window(tk.Tk):
             row_of_widgets[6].grid(row= (row_index+1), column=6, sticky='nsew', padx=5, pady=3)
 
         self.count_experiment_queue = len(self.widget_list) + 1
+        
+        # resets problem_var to default value
+        self.problem_var.set("Problem")
+        # resets solver_var to default value
+        self.solver_var.set("Solver")
 
     def viewEdit_function(self, integer):
         row_index = integer
@@ -923,7 +921,7 @@ class Experiment_Window(tk.Tk):
 
     def add_function(self, *args):
         if len(args) == 1:
-            place = args[0] - 1
+            place = args[0] - 1 
         else:
             place = len(self.experiment_object_list)
         
@@ -987,8 +985,8 @@ class Experiment_Window(tk.Tk):
                 self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
                 compatibility_result = self.my_experiment.check_compatibility()
                 if compatibility_result == "":
-                    self.experiment_object_list.append(self.my_experiment)
-                    self.experiment_master_list.append(self.selected)
+                    self.experiment_object_list.insert(place,self.my_experiment)
+                    self.experiment_master_list.insert(place,self.selected)
                     #this option list doesnt autoupdate - not sure why but this will force it to update
                     self.experiment_master_list[len( self.experiment_master_list) - 1][5][0]['crn_across_solns'] = self.boolean_var.get()
                     
@@ -1034,7 +1032,7 @@ class Experiment_Window(tk.Tk):
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
                     self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
-                    self.widget_list.append(self.widget_row)
+                    self.widget_list.insert(place,self.widget_row)
 
                     self.count_experiment_queue += 1
 
@@ -1057,7 +1055,7 @@ class Experiment_Window(tk.Tk):
                 tk.messagebox.showerror(title="Error Window", message=message)
 
             # prints selected (list) in console/terminal
-            #print("it works", self.selected)
+            print("it works", self.experiment_master_list)
 
             return self.experiment_master_list
 
@@ -1101,18 +1099,18 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_dictionary = dict()
 
         keys = list(self.problem_object().specifications.keys())
-        print("keys ->", keys)
-        print("self.problem_factors_types -> ", self.problem_factors_types)
+        #print("keys ->", keys)
+        #print("self.problem_factors_types -> ", self.problem_factors_types)
 
         for problem_factor in self.problem_factors_list:
             index = self.problem_factors_list.index(problem_factor)
             #print(problem_factor.get())
             if index < len(keys):
-                print(self.problem_factors_types[index])
+                #print(self.problem_factors_types[index])
                 datatype = self.problem_factors_types[index]
                 # if the data type is tuple update data
                 self.problem_factors_dictionary[keys[index]] = datatype(problem_factor.get())
-                print("datatype of factor -> ", type(datatype(problem_factor.get())))
+                #print("datatype of factor -> ", type(datatype(problem_factor.get())))
             if index == len(keys):
                 if problem_factor.get() == self.problem_var.get():
                     self.problem_factors_return.append(None)
@@ -1122,7 +1120,7 @@ class Experiment_Window(tk.Tk):
         
         self.problem_factors_return.insert(0, self.problem_factors_dictionary)
         # print(self.problem_factors_dictionary)
-        print("self.problem_factors_return", self.problem_factors_return)
+        # print("self.problem_factors_return", self.problem_factors_return)
         return self.problem_factors_return
 
     def confirm_oracle_factors(self):
@@ -1130,8 +1128,8 @@ class Experiment_Window(tk.Tk):
         self.oracle_factors_dictionary = dict()
 
         keys = list(self.oracle_object().specifications.keys())
-        print("keys ->", keys)
-        print("self.oracle_factors_types -> ", self.oracle_factors_types)
+        #print("keys ->", keys)
+        #print("self.oracle_factors_types -> ", self.oracle_factors_types)
 
         keys = list(self.oracle_object().specifications.keys())
 
@@ -1139,14 +1137,13 @@ class Experiment_Window(tk.Tk):
             index = self.oracle_factors_list.index(oracle_factor)
             self.oracle_factors_dictionary[keys[index]] = oracle_factor.get()
 
-            print(self.oracle_factors_types[index])
+            #print(self.oracle_factors_types[index])
             datatype = self.oracle_factors_types[index]
             self.oracle_factors_dictionary[keys[index]] = datatype(oracle_factor.get())
-            print("datatype of factor -> ", type(datatype(oracle_factor.get())))
+            #print("datatype of factor -> ", type(datatype(oracle_factor.get())))
         
         self.oracle_factors_return.append(self.oracle_factors_dictionary)
         # print(self.oracle_factors_dictionary)
-        print("self.oracle_factors_return ", self.oracle_factors_return)
         return self.oracle_factors_return
 
     def confirm_solver_factors(self):
@@ -1154,17 +1151,17 @@ class Experiment_Window(tk.Tk):
         self.solver_factors_dictionary = dict()
 
         keys = list(self.solver_object().specifications.keys())
-        print("keys ->", keys)
-        print("self.solver_factors_types -> ", self.solver_factors_types)
+        #print("keys ->", keys)
+        #print("self.solver_factors_types -> ", self.solver_factors_types)
 
         for solver_factor in self.solver_factors_list:
             index = self.solver_factors_list.index(solver_factor)
             #print(solver_factor.get())
             if index < len(keys):
-                print(self.solver_factors_types[index])
+                #print(self.solver_factors_types[index])
                 datatype = self.solver_factors_types[index]
                 self.solver_factors_dictionary[keys[index]] = datatype(solver_factor.get())
-                print("datatype of factor -> ", type(datatype(solver_factor.get())))
+                #print("datatype of factor -> ", type(datatype(solver_factor.get())))
             if index == len(keys):
                 if solver_factor.get() == self.solver_var.get():
                     self.solver_factors_return.append(None)
@@ -1173,8 +1170,6 @@ class Experiment_Window(tk.Tk):
                     # self.solver_factors_dictionary["rename"] = solver_factor.get()
         
         self.solver_factors_return.insert(0, self.solver_factors_dictionary)
-        # print(self.solver_factors_dictionary)
-        print("self.solver_factors_return", self.solver_factors_return)
         return self.solver_factors_return
 
     def onFrameConfigure_queue(self, event):
@@ -1207,17 +1202,23 @@ class Experiment_Window(tk.Tk):
         self.experiment_master_list[row_index-1]
         self.experiment_master_list[row_index-1][5][0]['crn_across_solns'] = self.boolean_var.get()
 
-        self.clearRow_function(row_index)
-        self.add_function(row_index)
         
+        self.add_function(row_index)
+        self.clearRow_function(row_index + 1)
 
+        print("destroy")
+        self.factor_label_frame_problem.destroy()
+        self.factor_label_frame_oracle.destroy()
+        self.factor_label_frame_solver.destroy()
+
+        
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
                                             initialdir = "./",
                                             title = "Select a Pickle File",
-                                            filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
-                                                         ,("Python files", "*.py")
-                                                         ,("All files", "*.*") ))
+                                            # filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
+                                            #              ,("Python files", "*.py"),("All files", "*.*") )
+                                                           )
         if filename != "":
             # filename_short_list = filename.split("/")
             # filename_short = filename_short_list[len(filename_short_list)-1]
