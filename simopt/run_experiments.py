@@ -62,7 +62,7 @@ lead_means = [1.0, 3.0, 6.0, 9.0, 12.0] #, 15.0]
 #         new_experiment.run(n_macroreps=10)
 #         # Post replicate experiment with N = 100.
 #         new_experiment.post_replicate(n_postreps=100)
-#         # experiments_same_problem.append[new_experiment]
+#         # experiments_same_problem.append(new_experiment)
 
 # #         # Post-normalize experiments with L = 200.
 # #         # Provide NO proxies for f(x0), f(x*), or f(x).
