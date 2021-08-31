@@ -208,6 +208,7 @@ def mean_of_curves(curves):
         mean curve
     """
     unique_x_vals = np.unique([x_val for curve in curves for x_val in curve.x_vals])
+    print(unique_x_vals)
     mean_y_vals = [np.mean([curve.lookup(x_val) for curve in curves]) for x_val in unique_x_vals]
     mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
     return mean_curve
