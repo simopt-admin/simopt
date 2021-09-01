@@ -1436,6 +1436,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     if all_in_one:
+        marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="area",
                    solver_name="SOLVER SET",
                    problem_name="PROBLEM SET"
@@ -1449,8 +1450,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 color_str = "C" + str(solver_idx)
-                # TO DO: ADD MARKER STYLES
-                # marker_str = 
+                marker_str = marker_list[solver_idx%len(marker_list)]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
                 areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = np.mean(areas)
@@ -1478,11 +1478,11 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                                           xerr=x_err,
                                           yerr=y_err,
                                           color=color_str,
-                                          marker="o",
+                                          marker=marker_str,
                                           elinewidth=1
                                           )
                 else:
-                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker="o")
+                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
         save_plot(solver_name="SOLVER SET",

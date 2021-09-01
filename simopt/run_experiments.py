@@ -125,6 +125,12 @@ n_problems = len(experiments[0])
 # plot_progress_curves([experiments[0][0], experiments[3][0]], plot_type="all", all_in_one=True)
 
 # # All progress curves for one experiment.
+# plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+
+# # All progress curves for one experiment.
+# plot_progress_curves([experiments[solver_idx][22] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+
+# # All progress curves for one experiment.
 # plot_progress_curves([experiments[0][22], experiments[3][22]], plot_type="all", all_in_one=True)
 
 # # Mean progress curves from all solvers on one problem.
@@ -204,25 +210,25 @@ n_problems = len(experiments[0])
 #                           beta=0.5
 #                           )
 
-# Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
-# Reference solver = ASTRO-DF.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="diff_cdf_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          ref_solver="ASTRO-DF"
-                          )
+# # Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
+# # Reference solver = ASTRO-DF.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="diff_cdf_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           ref_solver="ASTRO-DF"
+#                           )
 
-# Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
-# Reference solver = ASTRO-DF.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="diff_quantile_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          beta=0.5,
-                          ref_solver="ASTRO-DF"
-                          )
+# # Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
+# # Reference solver = ASTRO-DF.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="diff_quantile_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           beta=0.5,
+#                           ref_solver="ASTRO-DF"
+#                           )
