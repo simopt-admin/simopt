@@ -208,7 +208,6 @@ def mean_of_curves(curves):
         mean curve
     """
     unique_x_vals = np.unique([x_val for curve in curves for x_val in curve.x_vals])
-    print(unique_x_vals)
     mean_y_vals = [np.mean([curve.lookup(x_val) for curve in curves]) for x_val in unique_x_vals]
     mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
     return mean_curve
@@ -280,7 +279,11 @@ def quantile_cross_jump(curves, threshold, beta):
         piecewise-constant curve with a jump at the quantile crossing time (if finite)
     """
     solve_time_quantile = np.quantile([curve.compute_crossing_time(threshold=threshold) for curve in curves], q=beta)
-    if solve_time_quantile == np.inf:
+    # Note: np.quantile will evaluate to np.nan if forced to interpolate
+    # between a finite and infinite value. These are rare cases. Since
+    # crossing times must be non-negative, the quantile should be mapped
+    # to positive infinity.
+    if solve_time_quantile == np.inf or np.isnan(solve_time_quantile):
         jump_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
     else:
         jump_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
@@ -1611,6 +1614,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
             solver_curve = mean_of_curves(solver_sub_curves)
+            # CAUTION: Using mean above requires an equal number of macro-replications per problem.
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 handle = solver_curve.plot(color_str=color_str)

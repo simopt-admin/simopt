@@ -185,24 +185,24 @@ n_problems = len(experiments[0])
 #                        print_max_hw=False
 #                        )
 
-# Plot cdf 0.1-solvability profiles of all solvers on all problems.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="cdf_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1
-                          )
+# # Plot cdf 0.1-solvability profiles of all solvers on all problems.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="cdf_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1
+#                           )
 
-# Plot 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="quantile_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          beta=0.5
-                          )
+# # Plot 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="quantile_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           beta=0.5
+#                           )
 
 # Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
 # Reference solver = ASTRO-DF.
