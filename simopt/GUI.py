@@ -8,6 +8,8 @@ from directory import solver_directory
 from directory import oracle_directory
 from wrapper_base import Experiment, MetaExperiment
 import pickle
+from tkinter import messagebox
+import ast
 
 class Experiment_Window(tk.Tk):
     """
@@ -54,13 +56,6 @@ class Experiment_Window(tk.Tk):
     """
 
     def __init__(self, master):
-
-        
-        pickle_file = "simopt/experiments/outputs/RNDSRCH_ss=10_on_SSCONT-1_dm=50.0_lm=3.0_fc=20.0_bc=1.0.pickle"
-        infile = open(pickle_file,'rb')
-        new_dict = pickle.load(infile)
-        infile.close()  
-        print((new_dict))
 
         self.master = master
 
@@ -335,6 +330,7 @@ class Experiment_Window(tk.Tk):
         # self.problem_factor_confirm_button.place(x=80, y=115)
 
         self.problem_object = problem_directory[self.problem_var.get()]
+        print("problem var = ", self.problem_object)
 
         count_factors_problem = 1
         for num, factor_type in enumerate(self.problem_object().specifications, start=0):
@@ -399,6 +395,10 @@ class Experiment_Window(tk.Tk):
                 count_factors_problem += 1
 
         count_factors_problem += 1
+        if args and len(args) == 2 and args[0] == True:
+            oldname = args[1][3][1]
+        else:
+            oldname = self.problem_var.get()
 
         self.save_label_problem = tk.Label(master=self.factor_tab_one_problem,
                                             text = "Save Problem As",
@@ -406,7 +406,7 @@ class Experiment_Window(tk.Tk):
 
         self.save_var_problem = tk.StringVar(self.factor_tab_one_problem)
         self.save_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.save_var_problem, justify = tk.LEFT)
-        self.save_entry_problem.insert(index=tk.END, string=self.problem_var.get())
+        self.save_entry_problem.insert(index=tk.END, string=oldname)
 
         self.save_label_problem.grid(row=count_factors_problem, column=0, sticky='nsew')
         self.save_entry_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
@@ -665,10 +665,13 @@ class Experiment_Window(tk.Tk):
         self.save_label_solver = tk.Label(master=self.factor_tab_one_solver,
                                             text = "Save Solver As",
                                             font = "Calibri 11 bold")
-
+        if args and len(args) == 2 and args[0] == True:
+            oldname = args[1][5][1]
+        else:
+            oldname = self.solver_var.get()
         self.save_var_solver = tk.StringVar(self.factor_tab_one_solver)
         self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT)
-        self.save_entry_solver.insert(index=tk.END, string=self.solver_var.get())
+        self.save_entry_solver.insert(index=tk.END, string=oldname)
 
         self.save_label_solver.grid(row=count_factors_solver, column=0, sticky='nsew')
         self.save_entry_solver.grid(row=count_factors_solver, column=1, sticky='nsew')
@@ -890,9 +893,9 @@ class Experiment_Window(tk.Tk):
         print(F"This was the row selected {row_index}")
 
         current_experiment = self.experiment_object_list[row_index-1]
-        # print(current_experiment)
+        #print(current_experiment)
         current_experiment_arguments = self.experiment_master_list[row_index-1]
-        # print(current_experiment_arguments)
+        print(current_experiment_arguments)
 
         self.problem_var.set(current_experiment_arguments[0])
         self.solver_var.set(current_experiment_arguments[1])
@@ -906,10 +909,13 @@ class Experiment_Window(tk.Tk):
         viewEdit_button_added.grid(row= (row_index), column=4, sticky='nsew', padx=5, pady=3)
 
     def clear_queue(self):
-
-        for row in self.widget_list:
-            for widget in row:
-                widget.grid_remove()
+        
+        # for row in self.widget_list:
+        #     for widget in row:
+        #         widget.grid_remove()
+        for row in range(len(self.widget_list),0,-1):
+            print(row)
+            self.clearRow_function(row)
 
         print(F"Size of self.experiment_master_list BEFORE running is { len(self.experiment_master_list) }")
         print(F"Size of self.experiment_object_list BEFORE running is { len(self.experiment_object_list) }")
@@ -920,14 +926,13 @@ class Experiment_Window(tk.Tk):
         self.widget_list.clear()
 
     def add_function(self, *args):
-        if len(args) == 1:
+
+        if len(args) == 1 and isinstance(args[0], int) :
             place = args[0] - 1 
         else:
             place = len(self.experiment_object_list)
-        
-        print("place ", place)
-            
-        if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
+                    
+        if (self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False):
             # creates blank list to store selections
             self.selected = []
             # grabs problem_var (whatever is selected our of OptionMenu)
@@ -970,6 +975,7 @@ class Experiment_Window(tk.Tk):
                 self.solver_dictionary_rename = self.selected[5]
                 self.solver_rename = self.solver_dictionary_rename[1]
                 self.solver_factors = self.solver_dictionary_rename[0]
+                print("add name ",self.selected[3][1] )
 
                 self.oracle_factors = self.selected[4]
                 self.oracle_factors = self.oracle_factors[0]
@@ -981,25 +987,28 @@ class Experiment_Window(tk.Tk):
                 self.macro_reps = self.selected[2]
                 self.solver_name = self.selected[1]
                 self.problem_name = self.selected[0]
-
+                
                 self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
+                self.my_experiment.n_macroreps = self.selected[2]
+
                 compatibility_result = self.my_experiment.check_compatibility()
+                
                 if compatibility_result == "":
                     self.experiment_object_list.insert(place,self.my_experiment)
                     self.experiment_master_list.insert(place,self.selected)
                     #this option list doesnt autoupdate - not sure why but this will force it to update
-                    self.experiment_master_list[len( self.experiment_master_list) - 1][5][0]['crn_across_solns'] = self.boolean_var.get()
+                    self.experiment_master_list[place][5][0]['crn_across_solns'] = self.boolean_var.get()
                     
                     self.rows = 5
                     
                     self.problem_added = tk.Label(master=self.tab_one,
-                                                    text=self.selected[0],
+                                                    text=self.selected[3][1],
                                                     font = "Calibri 10",
                                                     justify="center")
                     self.problem_added.grid(row=self.count_experiment_queue, column=0, sticky='nsew', padx=5, pady=3)
 
                     self.solver_added = tk.Label(master=self.tab_one,
-                                                    text=self.selected[1],
+                                                    text=self.selected[5][1],
                                                     font = "Calibri 10",
                                                     justify="center")
                     self.solver_added.grid(row=self.count_experiment_queue, column=1, sticky='nsew', padx=5, pady=3)
@@ -1036,11 +1045,6 @@ class Experiment_Window(tk.Tk):
 
                     self.count_experiment_queue += 1
 
-                    # print(self.experiment_master_list)
-                    # print(self.widget_list)
-                    # print(self.experiment_object_list)
-
-                
                 else:
                     tk.messagebox.showerror(title="Error Window", message=compatibility_result)
                     self.selected.clear()
@@ -1103,6 +1107,7 @@ class Experiment_Window(tk.Tk):
         #print("self.problem_factors_types -> ", self.problem_factors_types)
 
         for problem_factor in self.problem_factors_list:
+            print(problem_factor.get() + " " + str(type(problem_factor.get())))
             index = self.problem_factors_list.index(problem_factor)
             #print(problem_factor.get())
             if index < len(keys):
@@ -1113,7 +1118,9 @@ class Experiment_Window(tk.Tk):
                 #print("datatype of factor -> ", type(datatype(problem_factor.get())))
             if index == len(keys):
                 if problem_factor.get() == self.problem_var.get():
-                    self.problem_factors_return.append(None)
+                    # self.problem_object().specifications[factor_type].get("default")
+                    #self.problem_factors_return.append(None)
+                    self.problem_factors_return.append(problem_factor.get())
                 else:
                     self.problem_factors_return.append(problem_factor.get())
                     # self.problem_factors_dictionary["rename"] = problem_factor.get()
@@ -1136,10 +1143,19 @@ class Experiment_Window(tk.Tk):
         for oracle_factor in self.oracle_factors_list:
             index = self.oracle_factors_list.index(oracle_factor)
             self.oracle_factors_dictionary[keys[index]] = oracle_factor.get()
-
             #print(self.oracle_factors_types[index])
+            
             datatype = self.oracle_factors_types[index]
-            self.oracle_factors_dictionary[keys[index]] = datatype(oracle_factor.get())
+            print("is instance of ", str(datatype))
+            if (str(datatype) == "<class 'list'>"):
+                print("HERE")
+                newList = ast.literal_eval(oracle_factor.get())
+                
+                self.oracle_factors_dictionary[keys[index]] = newList
+                print(str(self.oracle_factors_dictionary[keys[index]]))
+            else:
+                self.oracle_factors_dictionary[keys[index]] = datatype(oracle_factor.get())
+            #print(str(datatype(oracle_factor.get())) + " " + str(datatype))
             #print("datatype of factor -> ", type(datatype(oracle_factor.get())))
         
         self.oracle_factors_return.append(self.oracle_factors_dictionary)
@@ -1164,7 +1180,8 @@ class Experiment_Window(tk.Tk):
                 #print("datatype of factor -> ", type(datatype(solver_factor.get())))
             if index == len(keys):
                 if solver_factor.get() == self.solver_var.get():
-                    self.solver_factors_return.append(None)
+                    #self.solver_factors_return.append(None)
+                    self.solver_factors_return.append(solver_factor.get())
                 else:
                     self.solver_factors_return.append(solver_factor.get())
                     # self.solver_factors_dictionary["rename"] = solver_factor.get()
@@ -1210,8 +1227,7 @@ class Experiment_Window(tk.Tk):
         self.factor_label_frame_problem.destroy()
         self.factor_label_frame_oracle.destroy()
         self.factor_label_frame_solver.destroy()
-
-        
+     
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
                                             initialdir = "./",
@@ -1238,11 +1254,80 @@ class Experiment_Window(tk.Tk):
             filetype = filetype[len(filetype)-1]
             if filetype in acceptable_types:
                 experiment_pathname = filename[filename.index("experiments/outputs/"):]
-                print(experiment_pathname)
-                print(type(experiment_pathname))
-                with open(experiment_pathname) as file:
-                    experiment = pickle.load(file)
-                    print(experiment)
+                # print(experiment_pathname)
+                # print(type(experiment_pathname))
+                # with open(experiment_pathname) as file:
+                #     experiment = pickle.load(file)
+                #     print(experiment)
+                pickle_file = experiment_pathname
+                infile = open(pickle_file,'rb')
+                new_dict = pickle.load(infile)
+                infile.close() 
+                
+                self.my_experiment = new_dict
+                compatibility_result = self.my_experiment.check_compatibility()
+                place = len(self.experiment_object_list)
+
+                if compatibility_result == "":
+                    self.experiment_object_list.insert(place,self.my_experiment)
+                    print(self.experiment_object_list)
+
+                    # filler in master list so that placement stays correct
+                    self.experiment_master_list.insert(place,None)
+                    
+                    self.rows = 5
+                    self.problem_added = tk.Label(master=self.tab_one,
+                                                    text=self.my_experiment.problem.name,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+                    self.problem_added.grid(row=self.count_experiment_queue, column=0, sticky='nsew', padx=5, pady=3)
+
+                    self.solver_added = tk.Label(master=self.tab_one,
+                                                    text=self.my_experiment.solver.name,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+                    self.solver_added.grid(row=self.count_experiment_queue, column=1, sticky='nsew', padx=5, pady=3)
+
+                    self.macros_added = tk.Label(master=self.tab_one,
+                                                    text=self.my_experiment.n_macroreps,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+                    self.macros_added.grid(row=self.count_experiment_queue, column=2, sticky='nsew', padx=5, pady=3)
+
+                    self.run_button_added = ttk.Button(master=self.tab_one,
+                                                        text="Run Exp. " + str(self.count_experiment_queue),
+                                                        command= partial(self.run_row_function, self.count_experiment_queue))
+                    self.run_button_added.grid(row=self.count_experiment_queue, column=3, sticky='nsew', padx=5, pady=3)
+
+                    self.viewEdit_button_added = ttk.Button(master=self.tab_one,
+                                                        text="View / Edit Exp. " + str(self.count_experiment_queue),
+                                                        command= partial(self.viewEdit_function, self.count_experiment_queue))
+                    self.viewEdit_button_added.grid(row=self.count_experiment_queue, column=4, sticky='nsew', padx=5, pady=3)
+
+                    self.clear_button_added = ttk.Button(master=self.tab_one,
+                                                        text="Clear Exp. " + str(self.count_experiment_queue),
+                                                        command= partial(self.clearRow_function, self.count_experiment_queue))
+                    self.clear_button_added.grid(row=self.count_experiment_queue, column=5, sticky='nsew', padx=5, pady=3)
+
+                    self.postprocess_button_added = ttk.Button(master=self.tab_one,
+                                                        text="Post Process Function",
+                                                        command= self.test_function,
+                                                        state = "disabled")
+                    self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
+
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
+                    self.widget_list.insert(place,self.widget_row)
+
+                    row_of_widgets = self.widget_list[len(self.widget_list) - 1]
+                    run_button = row_of_widgets[3]
+                    run_button["state"] = "disabled"
+                    run_button = row_of_widgets[4]
+                    run_button["state"] = "disabled"
+                    run_button = row_of_widgets[6]
+                    run_button["state"] = "normal"
+
+                    self.count_experiment_queue += 1
+
             else:
                 message = f"You have loaded a file, but {filetype} files are not acceptable!\nPlease try again."
                 tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
@@ -1279,12 +1364,13 @@ class Experiment_Window(tk.Tk):
 
         tk.messagebox.showinfo(title="Status Update", message="Function will now begin running")
 
-        # self.my_experiment.run(n_macroreps=self.macro_reps)
+        self.my_experiment.run(n_macroreps=self.macro_reps)
 
         # calls postprocessing window
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("1500x1000")
         self.postrep_window.title("Post Processing Page")
+        print("my exp ", self.my_experiment)
         self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected)
 
 class Post_Processing_Window():
@@ -1304,6 +1390,7 @@ class Post_Processing_Window():
 
         self.master = master
         self.my_experiment = myexperiment
+        print("my exp post pro ", experiment_list)
         self.selected = experiment_list
 
         self.frame = tk.Frame(self.master)
@@ -1380,7 +1467,7 @@ class Post_Processing_Window():
         self.pickle_file_load_button = ttk.Button(master=self.master,
                                                 text = "Load File",
                                                 width = 15,
-                                                command = self.test_function)
+                                                command = self.test_function2)
 
         self.pickle_file_pathname_label = ttk.Label(master=self.master,
                                                     text = "File Selected:",
@@ -1417,7 +1504,7 @@ class Post_Processing_Window():
         self.frame.pack(side="top", fill="both", expand=True)
 
     def post_processing_run_function(self):
-        self.experiment_list = [self.problem, self.solver, self.macro_reps]
+        self.experiment_list = [self.selected[3], self.selected[4], self.selected[2]]
 
         if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
             self.experiment_list.append(int(self.n_postreps_entry.get()))
@@ -1453,7 +1540,8 @@ class Post_Processing_Window():
             self.crn_across_budget = self.experiment_list[5] # boolean
             self.crn_across_macroreps = self.experiment_list[6] # boolean
 
-            self.my_experiment.post_replicate(n_postreps=self.n_postreps, n_postreps_init_opt=self.n_postreps_init_opt, crn_across_budget=self.crn_across_budget, crn_across_macroreps=self.crn_across_macroreps)
+            # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
+            self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
             # print("post-replicate ran successfully")
 
             # print(self.experiment_list)
@@ -1500,9 +1588,10 @@ class Post_Processing_Window():
         filename = filedialog.askopenfilename(parent = self.master,
                                             initialdir = "./",
                                             title = "Select a Pickle File",
-                                            filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
-                                                         ,("Python files", "*.py")
-                                                         ,("All files", "*.*") ))
+                                            # filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
+                                            #              ,("Python files", "*.py")
+                                            #              ,("All files", "*.*") )
+                                                         )
         if filename != "":
             self.pickle_file_pathname_show["text"] = filename
             self.pickle_file_pathname_show["foreground"] = "blue"
@@ -1511,7 +1600,7 @@ class Post_Processing_Window():
             message = "You attempted to select a file but failed, please try again if necessary"
             tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
 
-    def test_function(self, *args):
+    def test_function2(self, *args):
         print("connection enabled")
 
 class Cross_Design_Window():
