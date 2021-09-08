@@ -1923,6 +1923,10 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_type}.png"
+    # Reformat path_name to be suitable as a string literal.
+    path_name = path_name.replace("\\", "")
+    path_name = path_name.replace("$", "")
+    path_name = path_name.replace(" ", "_")
     plt.savefig(path_name, bbox_inches="tight")
 
 

@@ -91,8 +91,8 @@ for rs_ss in rs_sample_sizes:
             # Load experiment.
             new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
             # Rename problem and solver to produce nicer plot labels.
-            new_experiment.solver.name = f"Random Search w/ s={rs_ss}"
-            new_experiment.problem.name = f"SSCONT-1 with mu_D={round(dm)} and mu_L={round(lm)}"
+            new_experiment.solver.name = f"Random Search {rs_ss}"
+            new_experiment.problem.name = fr"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
             experiments_same_solver.append(new_experiment)
     experiments.append(experiments_same_solver)
 # Load ASTRO-DF results
@@ -106,7 +106,7 @@ for dm in demand_means:
         new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
         # Rename problem and solver to produce nicer plot labels.
         new_experiment.solver.name = "ASTRO-DF"
-        new_experiment.problem.name = f"SSCONT-1 with mu_D={round(dm)} and mu_L={round(lm)}"
+        new_experiment.problem.name = fr"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
         #print(new_experiment.problem.name)
         experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
@@ -121,68 +121,68 @@ n_problems = len(experiments[0])
 #     experiments_same_problem = [experiments[solver_idx][problem_idx] for solver_idx in range(n_solvers)]
 #     post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
 
-# # All progress curves for one experiment.
-# plot_progress_curves([experiments[0][0], experiments[3][0]], plot_type="all", all_in_one=True)
+# All progress curves for one experiment.
+plot_progress_curves([experiments[0][0], experiments[3][0]], plot_type="all", all_in_one=True)
 
-# # All progress curves for one experiment.
-# plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+# All progress curves for one experiment.
+plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
 
-# # All progress curves for one experiment.
-# plot_progress_curves([experiments[solver_idx][22] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+# All progress curves for one experiment.
+plot_progress_curves([experiments[solver_idx][22] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
 
-# # All progress curves for one experiment.
-# plot_progress_curves([experiments[0][22], experiments[3][22]], plot_type="all", all_in_one=True)
+# All progress curves for one experiment.
+plot_progress_curves([experiments[0][22], experiments[3][22]], plot_type="all", all_in_one=True)
 
-# # Mean progress curves from all solvers on one problem.
-# plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-#                      plot_type="mean",
-#                      all_in_one=True,
-#                      plot_CIs=True,
-#                      print_max_hw=False
-#                      )
+# Mean progress curves from all solvers on one problem.
+plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+                     plot_type="mean",
+                     all_in_one=True,
+                     plot_CIs=True,
+                     print_max_hw=False
+                     )
 
-# # Mean progress curves from all solvers on one problem.
-# plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-#                      plot_type="mean",
-#                      all_in_one=True,
-#                      plot_CIs=True,
-#                      print_max_hw=False
-#                      )
+# Mean progress curves from all solvers on one problem.
+plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+                     plot_type="mean",
+                     all_in_one=True,
+                     plot_CIs=True,
+                     print_max_hw=False
+                     )
 
-# # Plot 0.9-quantile progress curves from all solvers on one problem.
-# plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-#                      plot_type="quantile",
-#                      beta=0.9,
-#                      all_in_one=True,
-#                      plot_CIs=True,
-#                      print_max_hw=False
-#                      )
+# Plot 0.9-quantile progress curves from all solvers on one problem.
+plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+                     plot_type="quantile",
+                     beta=0.9,
+                     all_in_one=True,
+                     plot_CIs=True,
+                     print_max_hw=False
+                     )
 
-# # Plot 0.9-quantile progress curves from all solvers on one problem.
-# plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-#                      plot_type="quantile",
-#                      beta=0.9,
-#                      all_in_one=True,
-#                      plot_CIs=True,
-#                      print_max_hw=False
-#                      )
+# Plot 0.9-quantile progress curves from all solvers on one problem.
+plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+                     plot_type="quantile",
+                     beta=0.9,
+                     all_in_one=True,
+                     plot_CIs=True,
+                     print_max_hw=False
+                     )
 
 
-# # Plot cdf of 0.2-solve times for all solvers on one problem.
-# plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-#                       solve_tol=0.2,
-#                       all_in_one=True,
-#                       plot_CIs=True,
-#                       print_max_hw=False
-#                       )
+# Plot cdf of 0.2-solve times for all solvers on one problem.
+plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+                      solve_tol=0.2,
+                      all_in_one=True,
+                      plot_CIs=True,
+                      print_max_hw=False
+                      )
 
-# # Plot cdf of 0.2-solve times for all solvers on one problem.
-# plot_solvability_cdfs(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-#                       solve_tol=0.2,
-#                       all_in_one=True,
-#                       plot_CIs=True,
-#                       print_max_hw=False
-#                       )
+# Plot cdf of 0.2-solve times for all solvers on one problem.
+plot_solvability_cdfs(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+                      solve_tol=0.2,
+                      all_in_one=True,
+                      plot_CIs=True,
+                      print_max_hw=False
+                      )
 
 # # Plot area scatterplots of all solvers on all problems.
 # plot_area_scatterplots(experiments=experiments,
