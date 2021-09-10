@@ -156,7 +156,8 @@ class ASTRODF(Solver):
         # lambda_k = 10*math.log(k,10)**1.5
 
         # S_k = math.floor(max(3,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
-        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
+        #print(kappa)
+        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((int(kappa)^ 2) * delta ** 4)))
         return S_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
