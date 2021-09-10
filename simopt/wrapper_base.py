@@ -1983,6 +1983,8 @@ class MetaExperiment(object):
         self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
         self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
         self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
+        print("solver_names ",self.solver_names)
+        # print("solver_names ",self.solver_names[0].name)
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
         for solver_idx in range(self.n_solvers):
@@ -2001,9 +2003,10 @@ class MetaExperiment(object):
                                                  problem_name=problem_names[problem_idx],
                                                  solver_rename=self.solver_names[solver_idx],
                                                  problem_rename=self.problem_names[problem_idx],
-                                                 solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
-                                                 problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]])
+                                                #  solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                #  problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                #  oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]]
+                                                )
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
 

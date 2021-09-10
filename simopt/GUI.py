@@ -2,11 +2,15 @@ import tkinter as tk
 from tkinter import ttk, Scrollbar, filedialog
 from timeit import timeit
 from functools import partial
+from tkinter.constants import FALSE
+
+from scipy.stats.stats import _isconst
 
 from directory import problem_directory
 from directory import solver_directory
 from directory import oracle_directory
 from wrapper_base import Experiment, MetaExperiment
+import wrapper_base
 import pickle
 from tkinter import messagebox
 import ast
@@ -65,6 +69,7 @@ class Experiment_Window(tk.Tk):
         self.widget_list = []
         self.experiment_object_list = []
         self.count_experiment_queue = 1
+        self.normalize_list = []
         
         self.instruction_label = tk.Label(master=self.master, # window label is used in
                             text = "Welcome to SimOpt \n Please complete the fields below to run your experiment: \n Please note: '*' are required fields",
@@ -104,10 +109,11 @@ class Experiment_Window(tk.Tk):
         self.macro_entry = ttk.Entry(master=self.master, textvariable = self.macro_var, justify = tk.LEFT)
         self.macro_entry.insert(index=tk.END, string="10")
         
+        
         self.run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
                         text = "Run", 
-                        width = 15, # width of button
+                        width = 10, # width of button
                         command = self.run_single_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click)
 
         self.add_button = ttk.Button(master=self.master,
@@ -117,12 +123,12 @@ class Experiment_Window(tk.Tk):
 
         self.clear_queue_button = ttk.Button(master=self.master,
                                     text = "Clear All Experiments",
-                                    width = 20,
+                                    width = 15,
                                     command = self.clear_queue)#(self.experiment_added, self.problem_added, self.solver_added, self.macros_added, self.run_button_added))
 
         self.crossdesign_button = ttk.Button(master=self.master,
                                             text = "Cross-Design Experiment",
-                                            width = 25,
+                                            width = 20,
                                             command = self.crossdesign_function)
 
         self.pickle_file_select_label = ttk.Label(master=self.master,
@@ -139,6 +145,17 @@ class Experiment_Window(tk.Tk):
                                                 text = "Load File",
                                                 width = 15,
                                                 command = self.load_pickle_file_function)
+        
+        self.post_process_all_button = ttk.Button(master=self.master,
+                                                text = "Post Process All",
+                                                width = 15,
+                                                command = self.post_rep_all_function)
+
+        self.post_normal_all_button = ttk.Button(master=self.master,
+                                                text = "Post Normalize Selected",
+                                                width = 20,
+                                                state = "normal",
+                                                command = self.post_normal_all_function)
 
         self.pickle_file_pathname_label = ttk.Label(master=self.master,
                                                     text = "File Selected:",
@@ -180,60 +197,22 @@ class Experiment_Window(tk.Tk):
 
         self.tab_one.grid_rowconfigure(0)
 
-        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "", "", ""]
+        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "", "", "","Select"]
 
         for heading in self.heading_list:
             self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
             label = tk.Label(master=self.tab_one, text=heading, font="Calibri 14 bold")
             label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
 
-        #
+        self.tab_two = tk.Frame(master=self.notebook)
+        self.notebook.add(self.tab_two, text="Queue of Meta Experiments")
+        self.tab_two.grid_rowconfigure(0)
+        self.heading_list = ["Problems", "Solvers", "Macro Reps", "", "", "", "",""]
 
-        # self.crossdesign_title_label = ttk.Label(master=self.master,
-        #                                         text = "Create a Cross-Design Experiment",
-        #                                         font = "Calibri 13 bold")
-        # self.crossdesign_title_label.place(x=830, y=425)
-        
-        # self.crossdesign_problem_label = ttk.Label(master=self.master,
-        #                                             text = "Select Problems:",
-        #                                             font = "Calibri 11 bold")
-        # self.crossdesign_problem_label.place(x=830, y=455)
-
-        # self.crossdesign_solver_label = ttk.Label(master=self.master,
-        #                                             text = "Select Solvers:",
-        #                                             font = "Calibri 11 bold")
-        # self.crossdesign_solver_label.place(x=970, y=455)
-
-        # self.crossdesign_checkbox_problem_list = []
-        # self.crossdesign_checkbox_problem_names = []
-        # self.crossdesign_checkbox_solver_list = [] 
-        # self.crossdesign_checkbox_solver_names = []
-
-        # problem_cnt = 0
-        # for problem in problem_directory:
-        #     self.crossdesign_problem_checkbox_var = tk.BooleanVar()
-        #     self.crossdesign_problem_checkbox = tk.Checkbutton(master=self.master,
-        #                                         text = problem,
-        #                                         variable = self.crossdesign_problem_checkbox_var)
-        #     self.crossdesign_problem_checkbox.place(x=830, y=485+(25*problem_cnt))
-
-        #     self.crossdesign_checkbox_problem_list.append(self.crossdesign_problem_checkbox_var)
-        #     self.crossdesign_checkbox_problem_names.append(problem)
-            
-        #     problem_cnt += 1
-        
-        # solver_cnt = 0
-        # for solver in solver_directory:
-        #     self.crossdesign_solver_checkbox_var = tk.BooleanVar()
-        #     self.crossdesign_solver_checkbox = tk.Checkbutton(master=self.master,
-        #                                                     text = solver,
-        #                                                     variable = self.crossdesign_solver_checkbox_var)
-        #     self.crossdesign_solver_checkbox.place(x=970, y=485+(25*solver_cnt))
-
-        #     self.crossdesign_checkbox_solver_list.append(self.crossdesign_solver_checkbox_var)
-        #     self.crossdesign_checkbox_solver_names.append(solver)
-
-        #     solver_cnt += 1
+        for heading in self.heading_list:
+            self.tab_two.grid_columnconfigure(self.heading_list.index(heading))
+            label = tk.Label(master=self.tab_two, text=heading, font="Calibri 14 bold")
+            label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
 
         self.instruction_label.place(x=0, y=0)
         #self.instruction_label.grid(row=0, column=1)
@@ -254,20 +233,22 @@ class Experiment_Window(tk.Tk):
         #self.macro_entry.grid(row=3, column=0, sticky='s')
 
         self.run_button.place(x=5, y=285)
-        self.crossdesign_button.place(x=115, y=285)
+        self.crossdesign_button.place(x=175, y=285)
         self.add_button.place(x=5, y=325)
+        self.clear_queue_button.place(x=175, y=325)
 
         self.pickle_file_select_label.place(x=850, y=375)
         self.pickle_file_select_button.place(x=1040, y=375)
         self.pickle_file_load_button.place(x=1150, y=375)
         self.pickle_file_pathname_label.place(x=850, y=400)
         self.pickle_file_pathname_show.place(x=950, y=400)
+        self.post_process_all_button.place(x=5,y=800)
+        self.post_normal_all_button.place(x=250,y=800)
 
         #self.add_button.grid(row=4, column=0, pady=25)
 
         #self.run_button.grid(row=4, column=0, sticky='s')
 
-        self.clear_queue_button.place(x=115, y=325)
 
         # self.pathname_label.grid(row=3, column=1, sticky='n')
         # self.pathname_entry.grid(row=3, column=1, sticky='s')
@@ -810,12 +791,6 @@ class Experiment_Window(tk.Tk):
             message = "You have not selected all required fields, check for '*' near input boxes."
             tk.messagebox.showerror(title="Error Window", message=message)
 
-    def crossdesign_function(self):
-        self.crossdesign_window = tk.Tk()
-        self.crossdesign_window.geometry("300x350+830+425")
-        self.crossdesign_window.title("Cross-Design Experiment")
-        self.app = Cross_Design_Window(self.crossdesign_window)
-
     def clearRow_function(self, integer):
         # print("this is the integer passed in by the lambda function", integer)
         
@@ -829,6 +804,15 @@ class Experiment_Window(tk.Tk):
         self.experiment_master_list.pop(integer-1)      
         self.experiment_object_list.pop(integer-1)
         self.widget_list.pop(integer-1)
+
+        print(self.normalize_list)
+        if (integer - 1) in self.normalize_list:
+            self.normalize_list.remove(integer - 1)
+        for i in range(len(self.normalize_list)):
+            if i < self.normalize_list[i]:
+                self.normalize_list[i] = self.normalize_list[i] - 1
+            print(self.normalize_list)
+
 
         # print(F"Size of self.experiment_master_list AFTER running is { len(self.experiment_master_list) }")
         # print(F"Size of self.experiment_object_list AFTER running is { len(self.experiment_object_list) }")
@@ -869,7 +853,7 @@ class Experiment_Window(tk.Tk):
             row_of_widgets[5] = clear_button_added
 
             postprocess_button_added = row_of_widgets[6]
-            postprocess_button_added["command"] = partial(self.test_function, row_index+1)   
+            postprocess_button_added["command"] = partial(self.post_rep_function, row_index+1)   
 
             row_of_widgets[6] = postprocess_button_added
 
@@ -880,6 +864,7 @@ class Experiment_Window(tk.Tk):
             row_of_widgets[4].grid(row= (row_index+1), column=4, sticky='nsew', padx=5, pady=3)
             row_of_widgets[5].grid(row= (row_index+1), column=5, sticky='nsew', padx=5, pady=3)
             row_of_widgets[6].grid(row= (row_index+1), column=6, sticky='nsew', padx=5, pady=3)
+            row_of_widgets[7].grid(row= (row_index+1), column=7, sticky='nsew', padx=5, pady=3)
 
         self.count_experiment_queue = len(self.widget_list) + 1
         
@@ -1000,6 +985,8 @@ class Experiment_Window(tk.Tk):
                     self.experiment_master_list[place][5][0]['crn_across_solns'] = self.boolean_var.get()
                     
                     self.rows = 5
+
+                    
                     
                     self.problem_added = tk.Label(master=self.tab_one,
                                                     text=self.selected[3][1],
@@ -1036,12 +1023,18 @@ class Experiment_Window(tk.Tk):
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
                                                         text="Post Process Function",
-                                                        command= self.test_function,
+                                                        command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
-
-                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
+                    
+                    
+                    self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
+                    self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
+                    # self.select_checkbox.pack()
+                    
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added, self.select_checkbox]
                     self.widget_list.insert(place,self.widget_row)
+                    self.select_checkbox.deselect()
 
                     self.count_experiment_queue += 1
 
@@ -1270,7 +1263,7 @@ class Experiment_Window(tk.Tk):
 
                 if compatibility_result == "":
                     self.experiment_object_list.insert(place,self.my_experiment)
-                    print(self.experiment_object_list)
+                    #print(self.experiment_object_list)
 
                     # filler in master list so that placement stays correct
                     self.experiment_master_list.insert(place,None)
@@ -1311,11 +1304,16 @@ class Experiment_Window(tk.Tk):
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
                                                         text="Post Process Function",
-                                                        command= self.test_function,
+                                                        command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
-                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
+                    self.select_checkbox = tk.Checkbutton(self.tab_one,text="",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
+                    self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
+                    # self.select_checkbox.pack()
+                    
+                    
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added,self.select_checkbox]
                     self.widget_list.insert(place,self.widget_row)
 
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
@@ -1349,6 +1347,8 @@ class Experiment_Window(tk.Tk):
 
         run_button = row_of_widgets[3]
         run_button["state"] = "disabled"
+        run_button = row_of_widgets[4]
+        run_button["state"] = "disabled"
         print(run_button["text"], run_button["state"])
         run_button.grid(row=integer, column=3, sticky='nsew', padx=5, pady=3)
 
@@ -1371,7 +1371,51 @@ class Experiment_Window(tk.Tk):
         self.postrep_window.geometry("1500x1000")
         self.postrep_window.title("Post Processing Page")
         print("my exp ", self.my_experiment)
-        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected)
+        #self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected)
+
+    def post_rep_function(self, integer):
+        print("test ", integer)
+        row_index = integer - 1
+        self.selected = self.experiment_object_list[row_index]
+        print(self.selected)
+        # calls postprocessing window
+        self.postrep_window = tk.Tk()
+        self.postrep_window.geometry("1000x600")
+        self.postrep_window.title("Post Processing Page")
+        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, False)
+        
+    def post_rep_all_function(self):
+        self.selected = self.experiment_object_list
+        # calls postprocessing window
+        self.post_normal_all_button["state"] = "normal"
+        self.postrep_window = tk.Tk()
+        self.postrep_window.geometry("1000x600")
+        self.postrep_window.title("Post Processing Page")
+        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.experiment_object_list, True)
+    
+    def post_normal_all_function(self):
+        print(self.experiment_object_list)
+        n_postreps_init_opt = 100
+        normalize_list = []
+        for x in self.normalize_list:
+            normalize_list.append(self.experiment_object_list[x])
+        
+        print(self.normalize_list)
+        print(self.experiment_object_list)
+        print(normalize_list)
+        wrapper_base.post_normalize(normalize_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
+    
+    def checkbox_function(self, rowNum):
+        if rowNum in self.normalize_list:
+            self.normalize_list.remove(rowNum)
+        else:
+            self.normalize_list.append(rowNum)
+        
+    def crossdesign_function(self):
+        self.crossdesign_window = tk.Tk()
+        self.crossdesign_window.geometry("600x600")
+        self.crossdesign_window.title("Cross-Design Experiment")
+        self.app = Cross_Design_Window(self.crossdesign_window)
 
 class Post_Processing_Window():
     """
@@ -1386,11 +1430,13 @@ class Post_Processing_Window():
     experiment_list : list
         List of experiment object arguments
     """
-    def __init__(self, master, myexperiment, experiment_list):
-
+    def __init__(self, master, myexperiment, experiment_list, all):
+        print("all ", all)
+        print("myexperiment ", myexperiment)
+        print("experiment_list ", experiment_list)
         self.master = master
         self.my_experiment = myexperiment
-        print("my exp post pro ", experiment_list)
+        #print("my exp post pro ", experiment_list)
         self.selected = experiment_list
 
         self.frame = tk.Frame(self.master)
@@ -1408,14 +1454,6 @@ class Post_Processing_Window():
         self.n_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_var, justify = tk.LEFT)
         self.n_postreps_entry.insert(index=tk.END, string="100")
 
-        self.n_postreps_init_opt_label = ttk.Label(master = self.master,
-                                text = "Number of postreplications to take at initial x\u2070 and optimal x\u002A:",
-                                font = "Calibri 11 bold",
-                                wraplength = "250")
-
-        self.n_postreps_init_opt_var = tk.StringVar(self.master)
-        self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT)
-        self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
         self.crn_across_budget_label = ttk.Label(master=self.master,
                                     text = "Use CRN for post-replications at solutions recommended at different times?",
@@ -1438,9 +1476,7 @@ class Post_Processing_Window():
         self.crn_across_macroreps_list = ["True", "False"]
         # stays the same, has to change into a special type of variable via tkinter function
         self.crn_across_macroreps_var = tk.StringVar(self.master)
-        # sets the default OptionMenu selection
-        # self.crn_across_macroreps_var.set("False")
-        # creates drop down menu, for tkinter, it is called "OptionMenu"
+
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "Options", *self.crn_across_macroreps_list)
 
         self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
@@ -1450,65 +1486,49 @@ class Post_Processing_Window():
 
         self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
-                        text = "Run", 
+                        text = "Post Process", 
                         width = 15, # width of button
                         command = self.post_processing_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
 
-        self.pickle_file_select_label = ttk.Label(master=self.master,
-                                                text = "Select a pickle file to access: ",
-                                                font = "Calibri 11 bold",
-                                                wraplength = "250")
-
-        self.pickle_file_select_button = ttk.Button(master=self.master,
-                                                    text = "Browse Files",
-                                                    width = 15,
-                                                    command = self.select_pickle_file_fuction)
-
-        self.pickle_file_load_button = ttk.Button(master=self.master,
-                                                text = "Load File",
-                                                width = 15,
-                                                command = self.test_function2)
-
-        self.pickle_file_pathname_label = ttk.Label(master=self.master,
-                                                    text = "File Selected:",
-                                                    font = "Calibri 11 bold")
-
-        self.pickle_file_pathname_show = ttk.Label(master=self.master,
-                                                    text = "No file selected",
-                                                    font = "Calibri 11 italic",
-                                                    foreground = "red")
 
         self.title.place(x=15, y=15)
 
         self.n_postreps_label.place(x=0, y=95)
         self.n_postreps_entry.place(x=255, y=95)
 
-        self.n_postreps_init_opt_label.place(x=0, y=180)
-        self.n_postreps_init_opt_entry.place(x=255, y=180)
+        # self.n_postreps_init_opt_label.place(x=0, y=180)
+        # self.n_postreps_init_opt_entry.place(x=255, y=180)
 
-        self.crn_across_budget_label.place(x=0, y=275)
-        self.crn_across_budget_menu.place(x=255, y=295)
+        self.crn_across_budget_label.place(x=0, y=180)
+        self.crn_across_budget_menu.place(x=255, y=180)
 
-        self.crn_across_macroreps_label.place(x=0, y=350)
-        self.crn_across_macroreps_menu.place(x=255, y=375)
+        self.crn_across_macroreps_label.place(x=0, y=275)
+        self.crn_across_macroreps_menu.place(x=255, y=275)
 
-        self.post_processing_run_label.place(x=0, y=435)
-        self.post_processing_run_button.place(x=255, y=435)
+        self.post_processing_run_label.place(x=0, y=350)
+        self.post_processing_run_button.place(x=255, y=350)        
 
-        self.pickle_file_select_label.place(x=0, y=520)
-        self.pickle_file_select_button.place(x=190, y=520)
-        self.pickle_file_load_button.place(x=300, y=520)
-        self.pickle_file_pathname_label.place(x=0, y=555)
-        self.pickle_file_pathname_show.place(x=100, y=555)
+        # self.pickle_file_select_label.place(x=0, y=520)
+        # self.pickle_file_select_button.place(x=190, y=520)
+        # self.pickle_file_load_button.place(x=300, y=520)
+        # self.pickle_file_pathname_label.place(x=0, y=555)
+        # self.pickle_file_pathname_show.place(x=100, y=555)
 
         self.frame.pack(side="top", fill="both", expand=True)
+        self.run_all = all
+        print("selected ", self.selected)
 
     def post_processing_run_function(self):
-        self.experiment_list = [self.selected[3], self.selected[4], self.selected[2]]
-
-        if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
+        print(self.my_experiment)
+        print(self.run_all)
+        print(self.selected)
+        self.experiment_list = []
+        # self.experiment_list = [self.selected[3], self.selected[4], self.selected[2]]
+        
+        # if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
+        if self.n_postreps_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
             self.experiment_list.append(int(self.n_postreps_entry.get()))
-            self.experiment_list.append(int(self.n_postreps_init_opt_entry.get()))
+            # self.experiment_list.append(int(self.n_postreps_init_opt_entry.get()))
 
             # actually adding a boolean value to the list instead of a string
             if self.crn_across_budget_var.get()=="True":
@@ -1526,8 +1546,8 @@ class Post_Processing_Window():
             self.n_postreps_entry.insert(index=tk.END, string="100")
 
             # reset n_postreps_init_opt_entry
-            self.n_postreps_init_opt_entry.delete(0, len(self.n_postreps_init_opt_entry.get()))
-            self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
+            # self.n_postreps_init_opt_entry.delete(0, len(self.n_postreps_init_opt_entry.get()))
+            # self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
             # reset crn_across_budget_bar
             self.crn_across_budget_var.set("True")
@@ -1535,16 +1555,23 @@ class Post_Processing_Window():
             # reset crn_across_macroreps_var 
             self.crn_across_macroreps_var.set("False")
 
-            self.n_postreps = self.experiment_list[3] # int
-            self.n_postreps_init_opt = self.experiment_list[4] # int
-            self.crn_across_budget = self.experiment_list[5] # boolean
-            self.crn_across_macroreps = self.experiment_list[6] # boolean
+            self.n_postreps = self.experiment_list[0] # int
+            # self.n_postreps_init_opt = self.experiment_list[4] # int
+            self.crn_across_budget = self.experiment_list[1] # boolean
+            self.crn_across_macroreps = self.experiment_list[2] # boolean
 
-            # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
-            self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
-            # print("post-replicate ran successfully")
+            if self.run_all:
+                for exp in self.selected:
+                    exp.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
+                    print("post-replicate ran successfully ", self.my_experiment.all_est_objectives)
+            else:
+                # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
+                self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
+                print("post-replicate ran successfully ", self.my_experiment.all_est_objectives)
 
             # print(self.experiment_list)
+            self.master.destroy()
+            self.post_processed_bool = True
             return self.experiment_list
 
         elif self.n_postreps_entry.get().isnumeric() == False:
@@ -1554,12 +1581,12 @@ class Post_Processing_Window():
             self.n_postreps_entry.delete(0, len(self.n_postreps_entry.get()))
             self.n_postreps_entry.insert(index=tk.END, string="100")
 
-        elif self.n_postreps_init_opt_entry.get().isnumeric() == False:
-            message = "Please enter a valid value for the number of post repliactions at the initial x\u2070 and optimal x\u002A."
-            tk.messagebox.showerror(title="Error Window", message=message)
+        # elif self.n_postreps_init_opt_entry.get().isnumeric() == False:
+        #     message = "Please enter a valid value for the number of post repliactions at the initial x\u2070 and optimal x\u002A."
+        #     tk.messagebox.showerror(title="Error Window", message=message)
 
-            self.n_postreps_init_opt_entry.delete(0, len(self.n_postreps_init_opt_entry.get()))
-            self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
+        #     self.n_postreps_init_opt_entry.delete(0, len(self.n_postreps_init_opt_entry.get()))
+        #     self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
         elif self.crn_across_macroreps_var.get() not in self.crn_across_macroreps_list:
             message = "Please answer the following question: 'Use CRN for post-replications at solutions recommended at different times?' with True or False."
@@ -1583,7 +1610,7 @@ class Post_Processing_Window():
             self.crn_across_budget_var.set("True")
 
             self.crn_across_macroreps_var.set("False")
-
+        
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
                                             initialdir = "./",
@@ -1607,6 +1634,7 @@ class Cross_Design_Window():
     def __init__(self, master):
 
         self.master = master
+        self.count_experiment_queue = 0
 
         self.crossdesign_title_label = ttk.Label(master=self.master,
                                                 text = "Create a Cross-Design Experiment",
@@ -1715,32 +1743,131 @@ class Cross_Design_Window():
             self.crossdesign_button.place(x=15, y=135+(25*problem_cnt))
 
     def confirm_cross_design_function(self):
+        solver_names_list = ["ASTRODF","RNDSRCH","SANE"]
+        problem_names_list = ["CNTNEWS-1","MM1-1","FACSIZE-1","FACSIZE-2","RMITD-1","SSCONT-1"]
         problem_list = []
         solver_list = []
 
         for checkbox in self.crossdesign_checkbox_problem_list:
             if checkbox.get() == True:
-                print(self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)] + " was selected (problem)")
-                problem_list.append(problem_directory[self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)]])
+                #print(self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)] + " was selected (problem)")
+                #problem_list.append(problem_directory[self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)]])
+                problem_list.append(problem_names_list[self.crossdesign_checkbox_problem_list.index(checkbox)])
 
         for checkbox in self.crossdesign_checkbox_solver_list:
             if checkbox.get() == True:
-                print(self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)] + " was selected (solver)")
-                solver_list.append(solver_directory[self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)]])
+                #print(self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)] + " was selected (solver)")
+                #solver_list.append(solver_directory[self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)]])
+                solver_list.append(solver_names_list[self.crossdesign_checkbox_solver_list.index(checkbox)])
+                print("check ", solver_names_list[self.crossdesign_checkbox_solver_list.index(checkbox)])
         
         macro_reps = self.crossdesign_macro_var.get()
 
         self.crossdesign_MetaExperiment = MetaExperiment(solver_names=solver_list, problem_names=problem_list, fixed_factors_filename="all_factors")
+        
+        if self.count_experiment_queue == 0:
+            self.create_meta_exp_frame()
+        self.add_meta_exp_to_frame(self.count_experiment_queue)
 
         return self.crossdesign_MetaExperiment
+        
+        # print(self.crossdesign_MetaExperiment)
+
+    def create_meta_exp_frame(self):
+        # self.queue_label_frame = ttk.Labelframe(master=self.master, text="Meta Experiment")
+
+        # self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
+
+        # self.queue_frame = ttk.Frame(master=self.queue_canvas)
+        # self.vert_scroll_bar = Scrollbar(self.queue_label_frame, orient="vertical", command=self.queue_canvas.yview)
+        # self.queue_canvas.configure(yscrollcommand=self.vert_scroll_bar.set)
+
+        # self.horiz_scroll_bar = Scrollbar(self.queue_label_frame, orient="horizontal", command=self.queue_canvas.xview)
+        # self.queue_canvas.configure(xscrollcommand=self.horiz_scroll_bar.set)
+
+        # self.vert_scroll_bar.pack(side="right", fill="y")
+        # self.horiz_scroll_bar.pack(side="bottom", fill="x")
+
+        # self.queue_canvas.pack(side="left", fill="both", expand=True)
+        # self.queue_canvas.create_window((0,0), window=self.queue_frame, anchor="nw",
+        #                           tags="self.queue_frame")
+        
+        # self.queue_frame.bind("<Configure>", self.onFrameConfigure_queue)
+
+        self.notebook = ttk.Notebook(master=self.master)
+        self.notebook.pack(fill="both")
+
+        self.tab_one = tk.Frame(master=self.notebook)
+        self.notebook.add(self.tab_one, text="Queue of Meta Experiments")
+        self.tab_one.grid_rowconfigure(0)
+        self.heading_list = ["Problems", "Solvers", "Macro Reps", "", "", "", "",""]
+
+        for heading in self.heading_list:
+            self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
+            label = tk.Label(master=self.tab_one, text=heading, font="Calibri 14 bold")
+            label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
+
+        self.notebook.place(x=0,y=350)
+        
+
+    def add_meta_exp_to_frame(self,place):
+        self.problem_added = tk.Label(master=self.tab_one,
+                                                    text=self.crossdesign_MetaExperiment.problem_names,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+        self.problem_added.grid(row=self.count_experiment_queue, column=0, sticky='nsew', padx=5, pady=3)
+
+        self.solver_added = tk.Label(master=self.tab_one,
+                                        text=self.crossdesign_MetaExperiment.solver_names,
+                                        font = "Calibri 10",
+                                        justify="center")
+        self.solver_added.grid(row=self.count_experiment_queue, column=1, sticky='nsew', padx=5, pady=3)
+
+        self.macros_added = tk.Label(master=self.tab_one,
+                                        text="10",
+                                        font = "Calibri 10",
+                                        justify="center")
+        self.macros_added.grid(row=self.count_experiment_queue, column=2, sticky='nsew', padx=5, pady=3)
+
+        self.run_button_added = ttk.Button(master=self.tab_one,
+                                            text="Run Exp. " + str(self.count_experiment_queue),
+                                            command= self.test_function)
+        self.run_button_added.grid(row=self.count_experiment_queue, column=3, sticky='nsew', padx=5, pady=3)
+
+        self.clear_button_added = ttk.Button(master=self.tab_one,
+                                            text="Clear Exp. " + str(self.count_experiment_queue),
+                                            command= self.test_function)
+        self.clear_button_added.grid(row=self.count_experiment_queue, column=4, sticky='nsew', padx=5, pady=3)
+
+        self.postprocess_button_added = ttk.Button(master=self.tab_one,
+                                            text="Post Process Function",
+                                            command= self.test_function,
+                                            state = "disabled")
+        self.postprocess_button_added.grid(row=self.count_experiment_queue, column=5, sticky='nsew', padx=5, pady=3)
+        
+        
+        # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
+        # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
+        
+        self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.clear_button_added, self.postprocess_button_added]
+        # self.widget_list.insert(place,self.widget_row)
+        # self.select_checkbox.deselect()
+
+        self.count_experiment_queue += 1
 
     def test_function(self, *args):
         print("test function connected")
+    
+    def get_crossdesign_MetaExperiment(self):
+        return self.crossdesign_MetaExperiment
+    
+    def onFrameConfigure_queue(self, event):
+        self.queue_canvas.configure(scrollregion=self.queue_canvas.bbox("all"))
 
 def main(): 
     root = tk.Tk()
     root.title("SimOpt Application")
-    root.geometry("1500x1000")
+    root.geometry("1200x1000")
     root.pack_propagate(False)
 
     app = Experiment_Window(root)
@@ -1748,4 +1875,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
