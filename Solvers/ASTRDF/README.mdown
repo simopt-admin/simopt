@@ -1,0 +1,16 @@
+# (ASTRDF) - Adaptive Sampling Trust-Region Algorithm for Derivative-Free Stochastic Optimization
+
+### About the Solver
+
+A derivative-free trust-region algorithm that iteratively constructs a stochastic local model and optimizes it within a trust-region.
+The algorithm samples adaptively in a way that balances sampling error (variance) and structural error (model bias).
+
+### Properties
+
+**Variable Class:** Continuous.
+
+**Constraints Class:** Unconstrained and variable bounds.
+
+### References
+Shashaani, S., F. Hashemi, and R. Pasupathy. (2018). ASTRO-DF: A class of adaptive sampling trust-region algorithms for derivative-free stochastic optimization. *SIAM Journal on Optimization* 28(4):3145-3176.
+[Paper](https://epubs.siam.org/doi/abs/10.1137/15M1042425).
