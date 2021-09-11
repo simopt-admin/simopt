@@ -38,9 +38,11 @@ class IronOre(Oracle):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-        ``n_days (T), holding_cost(h), prod_cost(c), max_prod_perday (m), max_cap (K), mkt_price (Pt), 
+        ``n_days (T), holding_cost(h), prod_cost(c), max_prod_perday (m), max_cap (K), mkt_price (Pt),
         price_begin (x1), inven_cease (x2), price_cease (x3), price_sell (x4), st_dev, max_price,
         min_price, mean_price``
+
+jknjnjknkk
 
         ``demand_mean``
             Mean of exponentially distributed demand in each period (`flt`)
