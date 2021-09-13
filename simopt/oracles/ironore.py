@@ -1,8 +1,8 @@
 """
 Summary
 -------
-Simulate multiple periods worth of sales for a (s,S) inventory problem
-with continuous inventory.
+Simulate multiple periods of production and sales for an inventory problem
+with integer-ordered variables.
 """
 import numpy as np
 
@@ -11,12 +11,10 @@ from base import Oracle, Problem
 
 class IronOre(Oracle):
     """
-    An oracle that simulates multiple periods' worth of sales for a (s,S)
-    inventory problem with continuous inventory, exponentially distributed
-    demand, and poisson distributed lead time. Returns the various types of
-    average costs per period, order rate, stockout rate, fraction of demand
-    met with inventory on hand, average amount backordered given a stockout
-    occured, and average amount ordered given an order occured.
+    An oracle that simulates multiple periods of production and sales for an
+    inventory problem with integer-ordered variables, infinite demand, and
+    stochastic price determined by a mean-reverting random walk.
+    Returns
 
     Attributes
     ----------
@@ -38,32 +36,39 @@ class IronOre(Oracle):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-        ``n_days (T), holding_cost(h), prod_cost(c), max_prod_perday (m), max_cap (K), mkt_price (Pt),
-        price_begin (x1), inven_cease (x2), price_cease (x3), price_sell (x4), st_dev, max_price,
-        min_price, mean_price``
+        Questions:
+        1. do you need a variable for number of replications and market price?
+        2. What are the responses for this problem?
 
-jknjnjknkk
 
-        ``demand_mean``
-            Mean of exponentially distributed demand in each period (`flt`)
-        ``lead_mean``
-            Mean of Poisson distributed order lead time (`flt`)
-        ``backorder_cost``
-            Cost per unit of demand not met with in-stock inventory (`flt`)
+        ``mean_price``
+            Mean ironore price per unit (`flt`)
+        ``max_price``
+            Maximum ironore price per unit (`flt`)
+        ``min_price``
+            Minimum ironore price per unit (`flt`)
+        ``capacity``
+            Maximum holding capacity (`int`)
+        ``st_dev``
+            Standard deviation of random walk steps for price (`flt`)
         ``holding_cost``
             Holding cost per unit per period (`flt`)
-        ``fixed_cost``
-            Order fixed cost (`flt`)
-        ``variable_cost``
-            Order variable cost per unit (`flt`)
-        ``s``
-            Inventory position threshold for placing order (`flt`)
-        ``S``
-            Max inventory position (`flt`)
+        ``prod_cost``
+            Production cost per unit (`flt`)
+        ``max_prod_perday``
+            Maximum units produced per day (`int`)
+        ``price_prod``
+            Price level to start production (`flt`)
+        ``inven_stop``
+            Inventory level to cease production (`int`)
+        ``price_stop``
+            Price level to stop production (`flt`)
+        ``price_sell``
+            Price level to sell all stock (`flt`)
         ``n_days``
-            Number of periods to simulate (`int`)
-        ``warmup``
-            Number of periods as warmup before collecting statistics (`int`)
+            Number of days to simulate (`int`)
+
+
     See also
     --------
     base.Oracle
@@ -74,105 +79,133 @@ jknjnjknkk
         self.n_responses = 7
         self.factors = fixed_factors
         self.specifications = {
-            "demand_mean": {
-                "description": "Mean of exponentially distributed demand in each period.",
+
+            "mean_price": {
+                "description": "Mean ironore price per unit.",
                 "datatype": float,
                 "default": 100.0
             },
-            "lead_mean": {
-                "description": "Mean of Poisson distributed order lead time.",
+            "max_price": {
+                "description": "Maximum ironore price per unit.",
                 "datatype": float,
-                "default": 6.0
+                "default": 200.0
             },
-            "backorder_cost": {
-                "description": "Cost per unit of demand not met with in-stock inventory.",
+            "min_price": {
+                "description": "Minimum ironore price per unit.",
                 "datatype": float,
-                "default": 4.0
+                "default": 0.0
+            },
+            "capacity": {
+                "description": "Maximum holding capacity.",
+                "datatype": int,
+                "default": 10000
+            },
+            "st_dev": {
+                "description": "Standard deviation of random walk steps for price.",
+                "datatype": float,
+                "default": 7.5
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
                 "datatype": float,
                 "default": 1.0
             },
-            "fixed_cost": {
-                "description": "Order fixed cost.",
+            "prod_cost": {
+                "description": "Production cost per unit.",
                 "datatype": float,
-                "default": 36.0
+                "default": 100.0
             },
-            "variable_cost": {
-                "description": "Order variable cost per unit.",
-                "datatype": float,
-                "default": 2.0
-            },
-            "s": {
-                "description": "Inventory threshold for placing order.",
-                "datatype": float,
-                "default": 1000.0
-            },
-            "S": {
-                "description": "Max inventory.",
-                "datatype": float,
-                "default": 2000.0
-            },
-            "n_days": {
-                "description": "Number of periods to simulate.",
+            "max_prod_perday": {
+                "description": "Maximum units produced per day.",
                 "datatype": int,
                 "default": 100
             },
-            "warmup": {
-                "description": "Number of periods as warmup before collecting statistics.",
+            "price_prod": {
+                "description": "Price level to start production.",
+                "datatype": float,
+                "default": 80.0
+            },
+            "inven_stop": {
+                "description": "Inventory level to cease production.",
                 "datatype": int,
-                "default": 20
-            }
+                "default": 7000
+            },
+            "price_stop": {
+                "description": "Price level to stop production.",
+                "datatype": float,
+                "default": 40
+            },
+            "price_sell": {
+                "description": "Price level to sell all stock.",
+                "datatype": float,
+                "default": 100
+            },
+            "n_days": {
+                "description": "Number of days to simulate.",
+                "datatype": int,
+                "default": 1000
+            },
+
         }
+
         self.check_factor_list = {
-            "demand_mean": self.check_demand_mean,
-            "lead_mean": self.check_lead_mean,
-            "backorder_cost": self.check_backorder_cost,
-            "holding_cost": self.check_holding_cost,
-            "fixed_cost": self.check_fixed_cost,
-            "variable_cost": self.check_variable_cost,
-            "s": self.check_s,
-            "S": self.check_S,
-            "n_days": self.check_n_days,
-            "warmup": self.check_warmup
+            "mean_price":self.check_mean_price,
+            "max_price":self.check_max_price,
+            "min_price":self.check_min_price,
+            "capacity":self.check_capacity,
+            "st_dev":self.check_st_dev,
+            "holding_cost":self.check_holding_cost,
+            "prod_cost":self.check_prod_cost,
+            "max_prod_perday":self.check_max_prod_perday,
+            "price_prod":self.check_price_prod,
+            "inven_stop":self.check_inven_stop,
+            "price_stop":self.check_price_stop,
+            "price_sell":self.check_price_sell,
+            "n_days":self.check_n_days,
         }
         # Set factors of the simulation oracle.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
-        return self.factors["demand_mean"] > 0
+    def check_mean_price(self):
+        return self.factors["mean_price"] > 0
 
-    def check_lead_mean(self):
-        return self.factors["lead_mean"] > 0
+    def check_max_price(self):
+        return self.factors["max_price"] > 0
 
-    def check_backorder_cost(self):
-        return self.factors["backorder_cost"] > 0
+    def check_min_price(self):
+        return self.factors["min_price"] > 0
+
+    def check_st_dev(self):
+        return self.factors["st_dev"] > 0
 
     def check_holding_cost(self):
         return self.factors["holding_cost"] > 0
 
-    def check_fixed_cost(self):
-        return self.factors["fixed_cost"] > 0
+    def check_prod_cost(self):
+        return self.factors["prod_cost"] > 0
 
-    def check_variable_cost(self):
-        return self.factors["variable_cost"] > 0
+    def check_max_prod_perday(self):
+        return self.factors["max_prod_perday"] > 0
 
-    def check_s(self):
-        return self.factors["s"] > 0
+    def check_price_prod(self):
+        return self.factors["price_prod"] > 0
 
-    def check_S(self):
-        return self.factors["S"] > 0
+    def check_inven_stop(self):
+        return self.factors["inven_stop"] > 0
+
+    def check_price_stop(self):
+        return self.factors["price_stop"] > 0
+
+    def check_price_sell(self):
+        return self.factors["price_sell"] > 0
 
     def check_n_days(self):
         return self.factors["n_days"] >= 1
 
-    def check_warmup(self):
-        return self.factors["warmup"] >= 0
-
     def check_simulatable_factors(self):
-        return self.factors["s"] < self.factors["S"]
+        return self.factors["price_stop"] < self.factors["price_sell"]
+
 
     def replicate(self, rng_list):
         """
