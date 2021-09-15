@@ -237,14 +237,15 @@ class IronOre(Oracle):
         price_rng = rng_list[0]
         # Initialize quantities to track:
         #   - Market Price in each period (Pt).
-        #   - Stock in each period (st).
+        #   - Starting Stock in each period.
+        #   - Ending Stock in each period.
         #   - Whether currently producing or not.
         #   - Revenue in each period.
         mkt_price = np.zeros(self.factors['n_days'])
         mkt_price[0] = self.factors['mean_price'] # P1 = mu0
         stock = np.zeros(self.factors['n_days'])
-        producing = np.zeros(self.factors['n_days'])
         revenue = np.zeros(self.factors["n_days"])
+        producing = 0
 
         #Run simulation over time horizon.
         for day in range(self.factors['n_days']):
@@ -254,7 +255,7 @@ class IronOre(Oracle):
             mean_dir = math.copysign(1, self.factors['mean_price'] - mkt_price[day])
             mean_move = mean_val *  mean_dir
             move = price_rng.normalvariate(mean_move, self.factors['st_dev'])
-            mkt_price[day + 1] = max(min(mkt_price[day] + move, self.factors['max_price']), self.factors['min_price'])
+            mkt_price[day] = max(min(mkt_price[day] + move, self.factors['max_price']), self.factors['min_price'])
             # If production is underway
             if producing == 1:
                 # cease production if price goes too low or inventory is too much
@@ -262,22 +263,27 @@ class IronOre(Oracle):
                     producing = 0
                 else:
                     prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
-                    stock[day + 1] = stock[day] + prod
-                    revenue[day + 1] = revenue[day] - prod * self.factors['prod_cost']
-            # if production iss not currently underway
+                    stock[day] = stock[day] + prod
+                    revenue[day] = revenue[day] - prod * self.factors['prod_cost']
+            # if production is not currently underway
             else:
                 if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors['inven_stop'])):
                     producing = 1
                     prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
-                    stock[day + 1] = stock[day] + prod
-                    revenue[day + 1] = revenue[day] - prod * self.factors['prod_cost']
+                    stock[day] = stock[day] + prod
+                    revenue[day] = revenue[day] - prod * self.factors['prod_cost']
             # Sell if price is high enough
             if (mkt_price[day] >= self.factors['price_sell']):
-                revenue[day + 1] = revenue[day] + stock[day] * mkt_price[day]
-                stock[day + 1] = 0
+                revenue[day] = revenue[day] + stock[day] * mkt_price[day]
+                stock[day] = 0
             # Charge holding cost
-            revenue[day + 1] = revenue[day] - stock[day] * self.factors['holding_cost']
-        
+            revenue[day] = revenue[day] - stock[day] * self.factors['holding_cost']
+            # Calculate starting quantities for next period
+            if day < self.factors["n_days"] - 1:
+                revenue[day + 1] = revenue[day]
+                stock[day + 1] = stock[day]
+                mkt_price[day + 1] = mkt_price[day] 
+        # Calculate responses from simulation data.
         total_revenue = np.sum(revenue)
         responses = {"total_revenue": total_revenue
                      }
