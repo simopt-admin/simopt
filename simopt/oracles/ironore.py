@@ -6,6 +6,8 @@ with integer-ordered variables.
 """
 import numpy as np
 
+import math
+
 from base import Oracle, Problem
 
 
@@ -37,9 +39,13 @@ class IronOre(Oracle):
         fixed_factors of the simulation model
 
         Questions:
-        1. do you need a variable for number of replications and market price?
-        2. What are the responses for this problem?
+        1. do you need a variable for number of replications and market price? market price would be defined 
+        in the replicate function
+        2. What are the responses for this problem? Total Revenue
 
+        Questions (Joe):
+        1. what is integer-ordered variables?
+        2. why price_sell should be larger than price_stop?
 
         ``mean_price``
             Mean ironore price per unit (`flt`)
@@ -47,7 +53,7 @@ class IronOre(Oracle):
             Maximum ironore price per unit (`flt`)
         ``min_price``
             Minimum ironore price per unit (`flt`)
-        ``capacity``
+        ``capacity (K)``
             Maximum holding capacity (`int`)
         ``st_dev``
             Standard deviation of random walk steps for price (`flt`)
@@ -57,13 +63,13 @@ class IronOre(Oracle):
             Production cost per unit (`flt`)
         ``max_prod_perday``
             Maximum units produced per day (`int`)
-        ``price_prod``
+        ``price_prod (x1)`` 
             Price level to start production (`flt`)
-        ``inven_stop``
+        ``inven_stop (x2)``
             Inventory level to cease production (`int`)
-        ``price_stop``
+        ``price_stop (x3)``
             Price level to stop production (`flt`)
-        ``price_sell``
+        ``price_sell (x4)``
             Price level to sell all stock (`flt`)
         ``n_days``
             Number of days to simulate (`int`)
@@ -74,9 +80,9 @@ class IronOre(Oracle):
     base.Oracle
     """
     def __init__(self, fixed_factors={}):
-        self.name = "SSCONT"
-        self.n_rngs = 2
-        self.n_responses = 7
+        self.name = "IRONORE"
+        self.n_rngs = 1
+        self.n_responses =1
         self.factors = fixed_factors
         self.specifications = {
 
@@ -174,7 +180,10 @@ class IronOre(Oracle):
         return self.factors["max_price"] > 0
 
     def check_min_price(self):
-        return self.factors["min_price"] > 0
+        return self.factors["min_price"] >= 0
+
+    def check_capacity(self):
+        return self.factors["capacity"] >= 0
 
     def check_st_dev(self):
         return self.factors["st_dev"] > 0
@@ -221,84 +230,56 @@ class IronOre(Oracle):
         responses : dict
             performance measures of interest
 
-            ``avg_backorder_costs``
-                average backorder costs per period
-            ``avg_order_costs``
-                average order costs per period
-            ``avg_holding_costs``
-                average holding costs per period
-            ``on_time_rate``
-                fraction of demand met with stock on hand in store
-            ``order_rate``
-                fraction of periods an order was made
-            ``stockout_rate``
-                fraction of periods a stockout occured
-            ``avg_stockout``
-                mean amount of product backordered given a stockout occured
-            ``avg_order``
-                mean amount of product ordered given an order occured
+            ``total_revenue``
+                The total revenue over the time period
         """
         # Designate random number generators.
-        demand_rng = rng_list[0]
-        lead_rng = rng_list[1]
-        # Generate exponential random demands.
-        demands = [demand_rng.expovariate(1/self.factors["demand_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
-        # Initialize starting and ending inventories for each period.
-        start_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        start_inv[0] = self.factors["s"]  # Start with s units at period 0.
-        end_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        # Initialize other quantities to track:
-        #   - Amount of product to be received in each period.
-        #   - Inventory position each period.
-        #   - Amount of product ordered in each period.
-        #   - Amount of product outstanding in each period.
-        orders_received = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        inv_pos = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_placed = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_outstanding = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        # Run simulation over time horizon.
-        for day in range(self.factors["n_days"] + self.factors["warmup"]):
-            # Calculate end-of-period inventory on hand and inventory position.
-            end_inv[day] = start_inv[day] - demands[day]
-            inv_pos[day] = end_inv[day] + orders_outstanding[day]
-            # Place orders, keeping track of outstanding orders and when they will be received.
-            orders_placed[day] = np.max(((inv_pos[day] < self.factors["s"]) * (self.factors["S"] - inv_pos[day])), 0)
-            if orders_placed[day] > 0:
-                lead = lead_rng.poissonvariate(self.factors["lead_mean"])
-                for future_day in range(day + 1, day + lead + 1):
-                    if future_day < self.factors["n_days"] + self.factors["warmup"]:
-                        orders_outstanding[future_day] = orders_outstanding[future_day] + orders_placed[day]
-                if day + lead + 1 < self.factors["n_days"] + self.factors["warmup"]:
-                    orders_received[day + lead + 1] = orders_received[day + lead + 1] + orders_placed[day]
-            # Calculate starting inventory for next period.
-            if day < self.factors["n_days"] + self.factors["warmup"] - 1:
-                start_inv[day + 1] = end_inv[day] + orders_received[day + 1]
-        # Calculate responses from simulation data.
-        order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
-        stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
-        avg_order_costs = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
-                                  self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
-        avg_holding_costs = np.mean(self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
-        on_time_rate = 1 - np.sum(np.min(np.vstack((demands[self.factors["warmup"]:], demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:])), axis=0)
-                                  * ((demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:]) > 0))/np.sum(demands[self.factors["warmup"]:])
-        avg_backorder_costs = self.factors["backorder_cost"]*(1 - on_time_rate)*np.sum(demands[self.factors["warmup"]:])/float(self.factors["n_days"])
-        if np.array(np.where(end_inv[self.factors["warmup"]:] < 0)).size == 0:
-            avg_stockout = 0
-        else:
-            avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:] < 0)])
-        if np.array(np.where(orders_placed[self.factors["warmup"]:] > 0)).size == 0:
-            avg_order = 0
-        else:
-            avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
-        # Compose responses and gradients.
-        responses = {"avg_backorder_costs": avg_backorder_costs,
-                     "avg_order_costs": avg_order_costs,
-                     "avg_holding_costs": avg_holding_costs,
-                     "on_time_rate": on_time_rate,
-                     "order_rate": order_rate,
-                     "stockout_rate": stockout_rate,
-                     "avg_stockout": avg_stockout,
-                     "avg_order": avg_order
+        price_rng = rng_list[0]
+        # Initialize quantities to track:
+        #   - Market Price in each period (Pt).
+        #   - Stock in each period (st).
+        #   - Whether currently producing or not.
+        #   - Revenue in each period.
+        mkt_price = np.zeros(self.factors['n_days'])
+        mkt_price[0] = self.factors['mean_price'] # P1 = mu0
+        stock = np.zeros(self.factors['n_days'])
+        producing = np.zeros(self.factors['n_days'])
+        revenue = np.zeros(self.factors["n_days"])
+
+        #Run simulation over time horizon.
+        for day in range(self.factors['n_days']):
+            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 +Nt(μt,σ))
+            #   - μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
+            mean_val = math.sqrt(math.sqrt(abs(self.factors['mean_price'] - mkt_price[day])))
+            mean_dir = math.copysign(1, self.factors['mean_price'] - mkt_price[day])
+            mean_move = mean_val *  mean_dir
+            move = price_rng.normalvariate(mean_move, self.factors['st_dev'])
+            mkt_price[day + 1] = max(min(mkt_price[day] + move, self.factors['max_price']), self.factors['min_price'])
+            # If production is underway
+            if producing == 1:
+                # cease production if price goes too low or inventory is too much
+                if ((mkt_price[day] <= self.factors['price_stop']) | (stock[day] >= self.factors['inven_stop'])):
+                    producing = 0
+                else:
+                    prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
+                    stock[day + 1] = stock[day] + prod
+                    revenue[day + 1] = revenue[day] - prod * self.factors['prod_cost']
+            # if production iss not currently underway
+            else:
+                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors['inven_stop'])):
+                    producing = 1
+                    prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
+                    stock[day + 1] = stock[day] + prod
+                    revenue[day + 1] = revenue[day] - prod * self.factors['prod_cost']
+            # Sell if price is high enough
+            if (mkt_price[day] >= self.factors['price_sell']):
+                revenue[day + 1] = revenue[day] + stock[day] * mkt_price[day]
+                stock[day + 1] = 0
+            # Charge holding cost
+            revenue[day + 1] = revenue[day] - stock[day] * self.factors['holding_cost']
+        
+        total_revenue = np.sum(revenue)
+        responses = {"total_revenue": total_revenue
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -311,7 +292,7 @@ Minimize the expected total cost for (s, S) inventory system.
 """
 
 
-class SSContMinCost(Problem):
+class IronOreMaxRev(Problem):
     """
     Class to make (s,S) inventory simulation-optimization problems.
 
@@ -403,7 +384,7 @@ class SSContMinCost(Problem):
         }
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = SSCont(self.oracle_fixed_factors)
+        self.oracle = IronOre(self.oracle_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
