@@ -192,6 +192,10 @@ class CntNVMaxProfit(Problem):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -237,9 +241,11 @@ class CntNVMaxProfit(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
+        self.lower_bounds = (0,)
+        self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)
+        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
         self.oracle_default_factors = {
             "purchase_price": 5.0,
             "sales_price": 9.0,

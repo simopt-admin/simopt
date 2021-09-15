@@ -232,6 +232,10 @@ class Problem(object):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float

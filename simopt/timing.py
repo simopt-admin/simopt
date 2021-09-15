@@ -7,6 +7,7 @@ import io
 pr = cProfile.Profile()
 pr.enable()
 
+#exec(open("run_experiments.py").read())
 exec(open("run_experiments.py").read())
 
 pr.disable()

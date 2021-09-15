@@ -279,7 +279,11 @@ def quantile_cross_jump(curves, threshold, beta):
         piecewise-constant curve with a jump at the quantile crossing time (if finite)
     """
     solve_time_quantile = np.quantile([curve.compute_crossing_time(threshold=threshold) for curve in curves], q=beta)
-    if solve_time_quantile == np.inf:
+    # Note: np.quantile will evaluate to np.nan if forced to interpolate
+    # between a finite and infinite value. These are rare cases. Since
+    # crossing times must be non-negative, the quantile should be mapped
+    # to positive infinity.
+    if solve_time_quantile == np.inf or np.isnan(solve_time_quantile):
         jump_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
     else:
         jump_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
@@ -1432,6 +1436,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     if all_in_one:
+        marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="area",
                    solver_name="SOLVER SET",
                    problem_name="PROBLEM SET"
@@ -1445,6 +1450,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 color_str = "C" + str(solver_idx)
+                marker_str = marker_list[solver_idx%len(marker_list)]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
                 areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = np.mean(areas)
@@ -1472,11 +1478,11 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                                           xerr=x_err,
                                           yerr=y_err,
                                           color=color_str,
-                                          marker="o",
+                                          marker=marker_str,
                                           elinewidth=1
                                           )
                 else:
-                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker="o")
+                    handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
         save_plot(solver_name="SOLVER SET",
@@ -1608,6 +1614,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
             solver_curve = mean_of_curves(solver_sub_curves)
+            # CAUTION: Using mean above requires an equal number of macro-replications per problem.
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 handle = solver_curve.plot(color_str=color_str)
@@ -1844,18 +1851,18 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         plt.ylabel("Fraction of Macroreplications Solved", size=14)
         title = f"{solver_name} on {problem_name}\nCDF of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "cdf_solvability":
-        plt.ylabel("Mean Solve Percentage", size=14)
+        plt.ylabel("Problem Averaged Solve Fraction", size=14)
         title = f"CDF-Solvability Profile for {solver_name}\nProfile of CDFs of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "quantile_solvability":
-        plt.ylabel("Proportion of Problems Solved", size=14)
+        plt.ylabel("Fraction of Problems Solved", size=14)
         title = f"Quantile Solvability Profile for {solver_name}\nProfile of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "diff_cdf_solvability":
-        plt.ylabel("Difference in Mean Solve Percentage", size=14)
+        plt.ylabel("Difference in Problem Averaged Solve Fraction", size=14)
         title = f"Difference of CDF-Solvability Profile for {solver_name}\nDifference of Profiles of CDFs of {round(solve_tol, 2)}-Solve Times"
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
     elif plot_type == "diff_quantile_solvability":
-        plt.ylabel("Difference in Proportion of Problems Solved", size=14)
+        plt.ylabel("Difference in Fraction of Problems Solved", size=14)
         title = f"Difference of Quantile Solvability Profile for {solver_name}\nDifference of Profiles of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
@@ -1916,6 +1923,10 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_type}.png"
+    # Reformat path_name to be suitable as a string literal.
+    path_name = path_name.replace("\\", "")
+    path_name = path_name.replace("$", "")
+    path_name = path_name.replace(" ", "_")
     plt.savefig(path_name, bbox_inches="tight")
 
 
