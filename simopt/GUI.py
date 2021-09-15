@@ -878,7 +878,7 @@ class Experiment_Window(tk.Tk):
 
     def viewEdit_function(self, integer):
         row_index = integer
-        print(F"This was the row selected {row_index}")
+        print(f"This was the row selected {row_index}")
 
         current_experiment = self.experiment_object_list[row_index-1]
         #print(current_experiment)
