@@ -156,7 +156,7 @@ class ASTRODF(Solver):
         # S_k = math.floor(max(3,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
 #        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
         # compute sample size 
-        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((int(kappa) ^ 2) * delta ** 4)))
         return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
