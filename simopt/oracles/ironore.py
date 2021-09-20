@@ -239,14 +239,14 @@ class IronOre(Oracle):
         producing = 0
 
         #Run simulation over time horizon.
-        for day in range(self.factors['n_days']):
+        for day in range(1, self.factors['n_days']):
             # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 +Nt(μt,σ))
             #   - μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
             mean_val = math.sqrt(math.sqrt(abs(self.factors['mean_price'] - mkt_price[day])))
             mean_dir = math.copysign(1, self.factors['mean_price'] - mkt_price[day])
             mean_move = mean_val *  mean_dir
             move = price_rng.normalvariate(mean_move, self.factors['st_dev'])
-            mkt_price[day] = max(min(mkt_price[day] + move, self.factors['max_price']), self.factors['min_price'])
+            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors['max_price']), self.factors['min_price'])
             # If production is underway
             if producing == 1:
                 # cease production if price goes too low or inventory is too much
@@ -275,8 +275,7 @@ class IronOre(Oracle):
                 stock[day + 1] = stock[day]
                 mkt_price[day + 1] = mkt_price[day] 
         # Calculate responses from simulation data.
-        total_revenue = np.sum(revenue)
-        responses = {"total_revenue": total_revenue
+        responses = {"total_revenue": revenue[self.factors['n_days'] - 1]
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients

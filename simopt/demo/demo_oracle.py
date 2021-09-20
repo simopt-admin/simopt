@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
@@ -42,13 +42,18 @@ print(myoracle.factors)
 # print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x='hi')))
 
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myoracle.n_rngs)]
-# print(rng_list)
+print(rng_list)
 # mysolution.attach_rngs(rng_list)
 # print(mysolution.rng_list)
 
 
 # Test replicate()
-# responses, gradients = myoracle.replicate(rng_list)
-# print('For a single replication:')
-# print('The responses are {}'.format(responses))
+revenue = []
+REPLICATIONS = 100
+for i in range(REPLICATIONS):
+    responses, gradients = myoracle.replicate(rng_list)
+    revenue.append(responses['total_revenue'])
+
+print('For {} replication:'.format(REPLICATIONS))
+print('The responses are {}'.format(np.mean(revenue)))
 # print('The gradients are {}'.format(gradients))
