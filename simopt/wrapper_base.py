@@ -2114,3 +2114,23 @@ class MetaExperiment(object):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_postreplicate()
                     experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
+
+    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+        """
+        Construct objective curves and (normalized) progress curves
+        for all collections of experiments on all given problem.
+
+        Parameters
+        ----------
+        experiments : list of wrapper_base.Experiment objects
+            experiments of different solvers on a common problem
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_init_opt : bool
+            use CRN for post-replications at solutions x0 and x*?
+        """
+        for problem_idx in range(self.n_problems):
+            experiments_same_problem = [self.experiments[solver_idx][problem_idx] for solver_idx in range(self.n_solvers)]
+            post_normalize(experiments=experiments_same_problem,
+                           n_postreps_init_opt=n_postreps_init_opt,
+                           crn_across_init_opt=crn_across_init_opt)
