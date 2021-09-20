@@ -14,9 +14,9 @@ from base import Oracle, Problem
 class IronOre(Oracle):
     """
     An oracle that simulates multiple periods of production and sales for an
-    inventory problem with integer-ordered variables, infinite demand, and
-    stochastic price determined by a mean-reverting random walk.
-    Returns
+    inventory problem with integer-ordered variables and
+    stochastic price determined by a mean-reverting random walk. Returns total
+    revenue.
 
     Attributes
     ----------
@@ -37,15 +37,6 @@ class IronOre(Oracle):
     ----------
     fixed_factors : dict
         fixed_factors of the simulation model
-
-        Questions:
-        1. do you need a variable for number of replications and market price? market price would be defined 
-        in the replicate function
-        2. What are the responses for this problem? Total Revenue
-
-        Questions (Joe):
-        1. what is integer-ordered variables?
-        2. why price_sell should be larger than price_stop?
 
         ``mean_price``
             Mean ironore price per unit (`flt`)
@@ -212,8 +203,8 @@ class IronOre(Oracle):
     def check_n_days(self):
         return self.factors["n_days"] >= 1
 
-    def check_simulatable_factors(self):
-        return self.factors["price_stop"] < self.factors["price_sell"]
+    # def check_simulatable_factors(self):
+    #     return self.factors["price_stop"] < self.factors["price_sell"]
 
 
     def replicate(self, rng_list):
