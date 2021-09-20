@@ -9,25 +9,28 @@ from oracles.mm1queue import MM1Queue
 from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
 from oracles.facilitysizing import FacilitySize
 from oracles.rmitd import RMITD
+from oracles.contam import Contamination  # new
 from oracles.sscont import SSCont
 from base import Solution
 
-fixed_factors = {"s": 7, "S": 57}
-myoracle = SSCont(fixed_factors)
+# fixed_factors = {"s": 7, "S": 57}
+fixed_factors = {}
+# myoracle = SSCont(fixed_factors)
+myoracle = Contamination(fixed_factors)
 print(myoracle.factors)
 
-mysoln_factors = {}
+# mysoln_factors = {}
 
-# Check simulatability
-for key in fixed_factors:
-    print(key, myoracle.check_simulatable_factor(key))
+# # Check simulatability
+# for key in fixed_factors:
+#     print(key, myoracle.check_simulatable_factor(key))
 
-myoracle.factors.update(mysoln_factors)
-print(myoracle.factors)
-for key in mysoln_factors:
-    print(key, myoracle.check_simulatable_factor(key))
+# myoracle.factors.update(mysoln_factors)
+# print(myoracle.factors)
+# for key in mysoln_factors:
+#     print(key, myoracle.check_simulatable_factor(key))
 
-print(myoracle.check_simulatable_factors())
+# print(myoracle.check_simulatable_factors())
 
 # print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
 # print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
