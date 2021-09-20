@@ -8,13 +8,16 @@ from rng.mrg32k3a import MRG32k3a
 # from oracles.mm1queue import MM1MinMeanSojournTime
 # from oracles.facilitysizing import FacilitySizingTotalCost
 # from oracles.rmitd import RMITDMaxRevenue
-from oracles.sscont import SSContMinCost
+from oracles.contam import ContaminationTotalCost  # new
+# from oracles.sscont import SSContMinCost
 from base import Solution
 
 
-myproblem = SSContMinCost()
+# myproblem = SSContMinCost()
+myproblem = ContaminationTotalCost()
 
-x = (7, 50)
+# x = (7, 50)
+x = (0, 0, 0, 0, 0)
 mysolution = Solution(x, myproblem)
 
 # Create and attach rngs to solution
