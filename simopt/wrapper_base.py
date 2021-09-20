@@ -485,6 +485,21 @@ class Experiment(object):
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
+    def check_run(self):
+        """
+        Check if the experiment has been run.
+
+        Returns
+        -------
+        ran : bool
+            has the experiment been run?
+        """
+        if getattr(self, "all_recommended_xs", None) is None:
+            ran = False
+        else:
+            ran = True
+        return ran
+
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
@@ -537,6 +552,21 @@ class Experiment(object):
         self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
+
+    def check_postreplicate(self):
+        """
+        Check if the experiment has been postreplicated.
+
+        Returns
+        -------
+        postreplicated : bool
+            has the experiment been postreplicated?
+        """
+        if getattr(self, "all_est_objectives", None) is None:
+            postreplicated = False
+        else:
+            postreplicated = True
+        return postreplicated
 
     def bootstrap_sample(self, bootstrap_rng, normalize=True):
         """
@@ -653,7 +683,7 @@ class Experiment(object):
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
-    def clear_runs(self):
+    def clear_run(self):
         """
         Delete results from run() method and any downstream results.
         """
@@ -665,9 +695,9 @@ class Experiment(object):
                 delattr(self, attribute)
             except Exception:
                 pass
-        self.clear_postreps()
+        self.clear_postreplicate()
 
-    def clear_postreps(self):
+    def clear_postreplicate(self):
         """
         Delete results from post_replicate() method and any downstream results.
         """
@@ -1450,7 +1480,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 color_str = "C" + str(solver_idx)
-                marker_str = marker_list[solver_idx%len(marker_list)]  # Cycle through list of marker types.
+                marker_str = marker_list[solver_idx % len(marker_list)]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
                 areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = np.mean(areas)
@@ -2034,7 +2064,7 @@ class MetaExperiment(object):
                 # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                     print(f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_runs()
+                    experiment.clear_run()
                     experiment.run(n_macroreps)
 
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
@@ -2060,5 +2090,5 @@ class MetaExperiment(object):
                         or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                         or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_postreps()
+                    experiment.clear_postreplicate()
                     experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
