@@ -2019,11 +2019,16 @@ class MetaExperiment(object):
         #   - all_solver_fixed_factors
         #   - all_problem_fixed_factors
         #   - all_oracle_fixed_factors
-        fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
-        all_factors = importlib.import_module(fixed_factors_filename)
-        self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
-        self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
-        self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
+        if fixed_factors_filename is None:
+            self.all_solver_fixed_factors = {solver_name: {} for solver_name in self.solver_names}
+            self.all_problem_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+            self.all_oracle_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+        else:
+            fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
+            all_factors = importlib.import_module(fixed_factors_filename)
+            self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
+            self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
+            self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
         for solver_idx in range(self.n_solvers):
@@ -2047,6 +2052,23 @@ class MetaExperiment(object):
                                                  oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]])
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
+
+    def check_compatibility(self):
+        """
+        Check whether all experiments' solvers and problems are compatible.
+
+        Returns
+        -------
+        error_str : str
+            error message in the event any problem and solver are incompatible
+        """
+        error_str = ""
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                new_error_str = self.experiments[solver_idx][problem_idx].check_compatibility()
+                if new_error_str != "":
+                    error_str += f"For solver {self.solver_names[solver_idx]} and problem {self.problem_names[problem_idx]}... {new_error_str}"
+        return error_str
 
     def run(self, n_macroreps):
         """
