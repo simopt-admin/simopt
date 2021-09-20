@@ -1,0 +1,17 @@
+# Random Number Generation
+
+The `simopt.rng.mrg32k3a` module includes a Python implementation of the mrg32k3a pseudorandom number generator of L'Ecuyer (1999) and L'Ecuyer et al. (2002). It extends the implementation used in [PyMOSO](https://github.com/pymoso/PyMOSO#the-pymosoprngmrg32k3a-module) to handle streams, substreams, *and* subsubstreams. The period of ~2<sup>191</sup> is split into ~2<sup>50</sup> streams of length 2<sup>141</sup>, each containing 2<sup>47</sup> substreams of length 2<sup>94</sup>, each containing 2<sup>47</sup> subsubstreams of length 2<sup>47</sup>.
+
+## Details
+The `simopt.rng.mrg32k3a` module includes the `MRG32k3a` class and several useful functions for controlling the generators.
+* The `MRG32k3a` class is a subclass of Python's `random.Random` class and therefore inherits easy-to-use methods for generating random variates. E.g., if `rng` is an instance of the `MRG32k3a` class, the command `rng.normalvariate(mu=2, sigma=5)` generates a normal random variate with mean 2 and standard deviation 5.
+* The `advance_stream`, `advance_substream`, and `advance_subsubstream` functions advance the generator to the start of the next stream, substream, or subsubstream, respectively.
+They make use of techniques for efficiently "jumping ahead," as outlined by L'Ecuyer (1990).
+* The `reset_stream`, `reset_substream`, and `reset_subsubstream` functions reset the generator to the start of the current stream, substream, or subsubstream, respectively.
+
+The `simopt.rng.matmodops` includes basic matrix/modulus operations used by the `simopt.rng.mrg32k3a` module.
+
+### References
+* L'Ecuyer, Pierre (1990). [Random numbers for simulation.](https://dl.acm.org/doi/10.1145/84537.84555) *Communications of the ACM* 33(10):85-97.
+* L'Ecuyer, Pierre (1999). [Good parameters and implementations for combined multiple recursive random number generators.](https://pubsonline.informs.org/doi/pdf/10.1287/opre.47.1.159) *Operations Research* 47(1):159-164.
+* L'Ecuyer, Pierre, Richard Simard, E Jack Chen, and W. David Kelton (2002). [An object-oriented random number package with many long streams and substreams.](https://pubsonline.informs.org/doi/10.1287/opre.50.6.1073.358) *Operations Research* 50(6):1073-1075.

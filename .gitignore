@@ -1,0 +1,9 @@
+
+simopt/rng/.vscode/.ropeproject/config.py
+simopt/rng/.vscode/.ropeproject/objectdb
+simopt/rng/.vscode/settings.json
+*.pyc
+simopt/.vscode/.ropeproject/config.py
+simopt/.vscode/.ropeproject/objectdb
+simopt/.vscode/settings.json
+simopt/simopt.env
