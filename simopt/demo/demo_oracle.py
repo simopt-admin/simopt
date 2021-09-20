@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
@@ -10,24 +10,29 @@ from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
 from oracles.facilitysizing import FacilitySize
 from oracles.rmitd import RMITD
 from oracles.sscont import SSCont
+from oracles.ironore import IronOre
 from base import Solution
 
-fixed_factors = {"s": 7, "S": 57}
-myoracle = SSCont(fixed_factors)
+# fixed_factors = {"s": 7, "S": 57}
+# myoracle = SSCont(fixed_factors)
+# print(myoracle.factors)
+
+myoracle = IronOre()
 print(myoracle.factors)
 
-mysoln_factors = {}
+
+# mysoln_factors = {}
 
 # Check simulatability
-for key in fixed_factors:
-    print(key, myoracle.check_simulatable_factor(key))
+# for key in fixed_factors:
+#     print(key, myoracle.check_simulatable_factor(key))
 
-myoracle.factors.update(mysoln_factors)
-print(myoracle.factors)
-for key in mysoln_factors:
-    print(key, myoracle.check_simulatable_factor(key))
+# myoracle.factors.update(mysoln_factors)
+# print(myoracle.factors)
+# for key in mysoln_factors:
+#     print(key, myoracle.check_simulatable_factor(key))
 
-print(myoracle.check_simulatable_factors())
+# print(myoracle.check_simulatable_factors())
 
 # print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
 # print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
@@ -43,7 +48,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myoracle.n_rngs)
 
 
 # Test replicate()
-responses, gradients = myoracle.replicate(rng_list)
-print('For a single replication:')
-print('The responses are {}'.format(responses))
-print('The gradients are {}'.format(gradients))
+# responses, gradients = myoracle.replicate(rng_list)
+# print('For a single replication:')
+# print('The responses are {}'.format(responses))
+# print('The gradients are {}'.format(gradients))
