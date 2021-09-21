@@ -203,8 +203,8 @@ class IronOre(Oracle):
     def check_n_days(self):
         return self.factors["n_days"] >= 1
 
-    # def check_simulatable_factors(self):
-    #     return self.factors["price_stop"] < self.factors["price_sell"]
+    def check_simulatable_factors(self):
+        return True
 
 
     def replicate(self, rng_list):

@@ -1,59 +1,62 @@
-import numpy as np
+"""
+This script is intended to help with debugging an oracle.
+It imports an oracle, initializes an oracle object with given factors,
+sets up pseudorandom number generators, and runs one or more replications.
+"""
+
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-
+# Import random number generator.
 from rng.mrg32k3a import MRG32k3a
-from oracles.mm1queue import MM1Queue
-from oracles.cntnv import CntNV  # names of .py file and Oracle subclass
-from oracles.facilitysizing import FacilitySize
-from oracles.rmitd import RMITD
-from oracles.sscont import SSCont
+
+# Import oracle.
+# Replace <filename> with name of .py file containing oracle class.
+# Replace <oracle_class_name> with name of oracle class.
+# Ex: from oracles.mm1queue import MM1Queue
 from oracles.ironore import IronOre
-from base import Solution
 
-# fixed_factors = {"s": 7, "S": 57}
-# myoracle = SSCont(fixed_factors)
-# print(myoracle.factors)
+# Fix factors of oracle. Specify a dictionary of factors.
+# Look at Oracle class definition to get names of factors.
+# Ex: for the MM1Queue class,
+#     fixed_factors = {"lambda": 3.0,
+#                      "mu": 8.0}
+fixed_factors = {}  # Resort to all default values.
 
-myoracle = IronOre()
-print(myoracle.factors)
+# Initialize an instance of the specified oracle class.
+# Replace <oracle_class_name> with name of oracle class.
+# Ex: myoracle = MM1Queue(fixed_factors)
+myoracle = IronOre(fixed_factors)
 
+# Working example for MM1 oracle. (Commented out)
+# -----------------------------------------------
+# from oracles.mm1queue import MM1Queue
+# fixed_factors = {"lambda": 3.0, "mu": 8.0}
+# myoracle = MM1Queue(fixed_factors)
+# -----------------------------------------------
 
-# mysoln_factors = {}
+# The rest of this script requires no changes.
 
-# Check simulatability
-# for key in fixed_factors:
-#     print(key, myoracle.check_simulatable_factor(key))
+# Check that all factors describe a simulatable oracle.
+# Check fixed factors individually.
+for key, value in myoracle.factors.items():
+    print(f"The factor {key} is set as {value}. Is this simulatable? {bool(myoracle.check_simulatable_factor(key))}.")
+# Check all factors collectively.
+print(f"Is the specified oracle simulatable? {bool(myoracle.check_simulatable_factors())}.")
 
-# myoracle.factors.update(mysoln_factors)
-# print(myoracle.factors)
-# for key in mysoln_factors:
-#     print(key, myoracle.check_simulatable_factor(key))
-
-# print(myoracle.check_simulatable_factors())
-
-# print('For x = (1,), is_simulatable should be True and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
-# print('For x = [1], is_simulatable should be True(?) and is {}'.format(myoracle.check_simulatable_factor(x=(1,))))
-# print('For x = (-1,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x=(-1,))))
-# print('For x = (0,), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x=(0,))))
-# print('For x = (1,2), is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x=(1,2))))
-# print('For x = "hi", is_simulatable should be False and is {}'.format(myoracle.check_simulatable_factor(x='hi')))
-
+# Create a list of RNG objects for the simulation oracle to use when
+# running replications.
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myoracle.n_rngs)]
-print(rng_list)
-# mysolution.attach_rngs(rng_list)
-# print(mysolution.rng_list)
 
-
-# Test replicate()
-revenue = []
-REPLICATIONS = 100
-for i in range(REPLICATIONS):
-    responses, gradients = myoracle.replicate(rng_list)
-    revenue.append(responses['total_revenue'])
-
-print('For {} replication:'.format(REPLICATIONS))
-print('The responses are {}'.format(np.mean(revenue)))
-# print('The gradients are {}'.format(gradients))
+# Run a single replication of the oracle.
+responses, gradients = myoracle.replicate(rng_list)
+print("\nFor a single replication:")
+print("\nResponses:")
+for key, value in responses.items():
+    print(f"\t {key} is {value}.")
+print("\n Gradients:")
+for outerkey in gradients:
+    print(f"\tFor the response {outerkey}:")
+    for innerkey, value in gradients[outerkey].items():
+        print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
