@@ -4,7 +4,6 @@ Summary
 -------
 Provide base classes for experiments and meta experiments.
 Plus helper functions for reading/writing data and plotting.
-
 Listing
 -------
 Curve : class
@@ -50,7 +49,6 @@ from directory import solver_directory, problem_directory
 class Curve(object):
     """
     Base class for all curves.
-
     Attributes
     ----------
     x_vals : list of floats
@@ -59,7 +57,6 @@ class Curve(object):
         values of vertical components
     n_points : int
         number of values in x- and y- vectors
-
     Parameters
     ----------
     x_vals : list of floats
@@ -77,12 +74,10 @@ class Curve(object):
     def lookup(self, x):
         """
         Lookup the y-value of the curve at an intermediate x-value.
-
         Parameters
         ----------
         x : float
             x-value at which to lookup the y-value
-
         Returns
         -------
         y : float
@@ -98,12 +93,10 @@ class Curve(object):
     def compute_crossing_time(self, threshold):
         """
         Compute the first time at which a curve drops below a given threshold.
-
         Parameters
         ----------
         threshold : float
             value for which to find first crossing time
-
         Returns
         -------
         crossing_time : float
@@ -122,7 +115,6 @@ class Curve(object):
     def compute_area_under_curve(self):
         """
         Compute the area under a curve.
-
         Returns
         -------
         area : float
@@ -134,12 +126,10 @@ class Curve(object):
     def curve_to_mesh(self, mesh):
         """
         Create a curve defined at equally spaced x values.
-
         Parameters
         ----------
         mesh : list of floats
             list of uniformly spaced x values
-
         Returns
         -------
         mesh_curve : wrapper_base.Curve object
@@ -151,7 +141,6 @@ class Curve(object):
     def curve_to_full_curve(self):
         """
         Create a curve with duplicate x- and y-values to indicate steps.
-
         Returns
         -------
         full_curve : wrapper_base.Curve object
@@ -165,12 +154,10 @@ class Curve(object):
     def plot(self, color_str="C0", curve_type="regular"):
         """
         Plot a curve.
-
         Parameters
         ----------
         color_str : str
             string indicating line color, e.g., "C0", "C1", etc.
-
         Returns
         -------
         handle : list of matplotlib.lines.Line2D objects
@@ -196,12 +183,10 @@ def mean_of_curves(curves):
     """
     Compute pointwise (w.r.t. x values) mean of curves.
     Starting and ending x values must coincide for all curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
-
     Returns
     -------
     mean_curve : wrapper_base.Curve object
@@ -217,14 +202,12 @@ def quantile_of_curves(curves, beta):
     """
     Compute pointwise (w.r.t. x values) quantile of curves.
     Starting and ending x values must coincide for all curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
     beta : float
         quantile level
-
     Returns
     -------
     quantile_curve : wrapper_base.Curve object
@@ -239,14 +222,12 @@ def quantile_of_curves(curves, beta):
 def cdf_of_curves_crossing_times(curves, threshold):
     """
     Compute the cdf of crossing times of curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
     threshold : float
         value for which to find first crossing time
-
     Returns
     -------
     cdf_curve : wrapper_base.Curve object
@@ -263,7 +244,6 @@ def cdf_of_curves_crossing_times(curves, threshold):
 def quantile_cross_jump(curves, threshold, beta):
     """
     Compute a simple curve with a jump at the quantile of the crossing times.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
@@ -272,7 +252,6 @@ def quantile_cross_jump(curves, threshold, beta):
         value for which to find first crossing time
     beta : float
         quantile level
-
     Returns
     -------
     jump_curve : wrapper_base.Curve object
@@ -293,12 +272,10 @@ def quantile_cross_jump(curves, threshold, beta):
 def difference_of_curves(curve1, curve2):
     """
     Compute the difference of two curves (Curve 1 - Curve 2).
-
     Parameters
     ----------
     curve1, curve2 : wrapper_base.Curve objects
         curves to take the difference of
-
     Returns
     -------
     difference_curve : wrapper_base.Curve object
@@ -313,12 +290,10 @@ def difference_of_curves(curve1, curve2):
 def max_difference_of_curves(curve1, curve2):
     """
     Compute the maximum difference of two curves (Curve 1 - Curve 2)
-
     Parameters
     ----------
     curve1, curve2 : wrapper_base.Curve objects
         curves to take the difference of
-
     Returns
     -------
     max_diff : float
@@ -332,7 +307,6 @@ def max_difference_of_curves(curve1, curve2):
 class Experiment(object):
     """
     Base class for running one solver on one problem.
-
     Attributes
     ----------
     solver : base.Solver object
@@ -375,7 +349,6 @@ class Experiment(object):
         one for each macroreplication
     progress_curves : list of wrapper_base.Curve objects
         progress curves, one for each macroreplication
-
     Arguments
     ---------
     solver_name : str
@@ -412,7 +385,6 @@ class Experiment(object):
     def check_compatibility(self):
         """
         Check whether the experiment's solver and problem are compatible.
-
         Returns
         -------
         error_str : str
@@ -441,7 +413,6 @@ class Experiment(object):
     def run(self, n_macroreps):
         """
         Run n_macroreps of the solver on the problem.
-
         Arguments
         ---------
         n_macroreps : int
@@ -485,10 +456,23 @@ class Experiment(object):
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
+    def check_run(self):
+        """
+        Check if the experiment has been run.
+        Returns
+        -------
+        ran : bool
+            has the experiment been run?
+        """
+        if getattr(self, "all_recommended_xs", None) is None:
+            ran = False
+        else:
+            ran = True
+        return ran
+
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
-
         Arguments
         ---------
         n_postreps : int
@@ -538,18 +522,30 @@ class Experiment(object):
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
 
+    def check_postreplicate(self):
+        """
+        Check if the experiment has been postreplicated.
+        Returns
+        -------
+        postreplicated : bool
+            has the experiment been postreplicated?
+        """
+        if getattr(self, "all_est_objectives", None) is None:
+            postreplicated = False
+        else:
+            postreplicated = True
+        return postreplicated
+
     def bootstrap_sample(self, bootstrap_rng, normalize=True):
         """
         Generate a bootstrap sample of estimated objective curves or estimated
         progress curves.
-
         Parameters
         ----------
         bootstrap_rng : MRG32k3a object
             random number generator to use for bootstrapping
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
-
         Returns
         -------
         bootstrap_curves : list of wrapper_base.Curve objects
@@ -653,7 +649,7 @@ class Experiment(object):
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
-    def clear_runs(self):
+    def clear_run(self):
         """
         Delete results from run() method and any downstream results.
         """
@@ -665,9 +661,9 @@ class Experiment(object):
                 delattr(self, attribute)
             except Exception:
                 pass
-        self.clear_postreps()
+        self.clear_postreplicate()
 
-    def clear_postreps(self):
+    def clear_postreplicate(self):
         """
         Delete results from post_replicate() method and any downstream results.
         """
@@ -713,7 +709,6 @@ class Experiment(object):
 def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """
     Trim solutions recommended by solver after problem's max budget.
-
     Arguments
     ---------
     problem : base.Problem object
@@ -740,12 +735,10 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
 def read_experiment_results(file_name_path):
     """
     Read in wrapper_base.Experiment object from .pickle file.
-
     Arguments
     ---------
     file_name_path : string
         path of .pickle file for reading wrapper_base.Experiment object
-
     Returns
     -------
     experiment : wrapper_base.Experiment object
@@ -760,7 +753,6 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     """
     Construct objective curves and (normalized) progress curves
     for a collection of experiments on a given problem.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -899,7 +891,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
     """
     Generate bootstrap samples of estimated progress curves (normalized
     and unnormalized) from a set of experiments.
-
     Arguments
     ---------
     experiments : list of list of wrapper_base.Experiment objects
@@ -908,7 +899,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
         random number generator to use for bootstrapping
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
-
     Returns
     -------
     bootstrap_curves : list of list of list of wrapper_base.Curve objects
@@ -958,7 +948,6 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
         main estimator, e.g., mean convergence curve from an experiment
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
-
     Returns
     -------
     bs_CI_lower_bounds, bs_CI_upper_bounds = floats or wrapper_base.Curve objects
@@ -1001,7 +990,6 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
 def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
     """
     Compute a functional of the bootstrapped objective/progress curves.
-
     Parameters
     ----------
     bootstrap_curves : list of list of list of wrapper_base.Curve objects
@@ -1023,7 +1011,6 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
         quantile to plot, e.g., beta quantile
     solve_tol : float in (0,1]
         relative optimality gap definining when a problem is solved
-
     Returns
     -------
     functional : list
@@ -1072,7 +1059,6 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
 def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
     """
     Construct a bootstrap confidence interval for an estimator.
-
     Parameters
     ----------
     observations : list
@@ -1084,7 +1070,6 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
     overall estimator : float
         estimator to compute bootstrap confidence interval of
         (required for bias corrected CI)
-
     Returns
     -------
     bs_CI_lower_bound : float
@@ -1114,7 +1099,6 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
 def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
     """
     Plot bootstrap confidence intervals.
-
     Parameters
     ----------
     bs_CI_lower_bounds, bs_CI_upper_bounds : wrapper_base.Curve objects
@@ -1137,7 +1121,6 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
 def report_max_halfwidth(curve_pairs, normalize):
     """
     Compute and print caption for max halfwidth of one or more bootstrap CI curves
-
     Parameters
     ----------
     curve_pairs : list of list of wrapper_base.Curve objects
@@ -1169,7 +1152,6 @@ def report_max_halfwidth(curve_pairs, normalize):
 def check_common_problem_and_reference(experiments):
     """
     Check if a collection of experiments have the same problem, x0, and x*.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -1189,7 +1171,6 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     """
     Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -1331,7 +1312,6 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
 def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True):
     """
     Plot the solvability cdf for one or more solvers on a single problem.
-
     Arguments
     ---------
     experiments : list of wrapper_base.Experiment objects
@@ -1420,7 +1400,6 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     """
     Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
-
     Parameters
     ----------
     experiments : list of list of wrapper_base.Experiment objects
@@ -1450,7 +1429,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 color_str = "C" + str(solver_idx)
-                marker_str = marker_list[solver_idx%len(marker_list)]  # Cycle through list of marker types.
+                marker_str = marker_list[solver_idx % len(marker_list)]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
                 areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = np.mean(areas)
@@ -1543,7 +1522,6 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
 def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
     """
     Plot the (difference of) solvability profiles for each solver on a set of problems.
-
     Parameters
     ----------
     experiments : list of list of wrapper_base.Experiment objects
@@ -1792,7 +1770,6 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
     """
     Create new figure. Add labels to plot and reformat axes.
-
     Parameters
     ----------
     plot_type : string
@@ -1878,7 +1855,6 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     """
     Create new figure. Add labels to plot and reformat axes.
-
     Arguments
     ---------
     solver_name : string
@@ -1933,7 +1909,6 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
 class MetaExperiment(object):
     """
     Base class for running one or more solver on one or more problem.
-
     Attributes
     ----------
     solver_names : list of strings
@@ -1958,7 +1933,6 @@ class MetaExperiment(object):
             inner key is factor name
     experiments : list of list of Experiment objects
         all problem-solver pairs
-
     Arguments
     ---------
     solver_names : list of strings
@@ -1989,13 +1963,16 @@ class MetaExperiment(object):
         #   - all_solver_fixed_factors
         #   - all_problem_fixed_factors
         #   - all_oracle_fixed_factors
-        fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
-        all_factors = importlib.import_module(fixed_factors_filename)
-        self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
-        self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
-        self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
-        print("solver_names ",self.solver_names)
-        # print("solver_names ",self.solver_names[0].name)
+        if fixed_factors_filename is None:
+            self.all_solver_fixed_factors = {solver_name: {} for solver_name in self.solver_names}
+            self.all_problem_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+            self.all_oracle_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+        else:
+            fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
+            all_factors = importlib.import_module(fixed_factors_filename)
+            self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
+            self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
+            self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
         for solver_idx in range(self.n_solvers):
@@ -2014,17 +1991,31 @@ class MetaExperiment(object):
                                                  problem_name=problem_names[problem_idx],
                                                  solver_rename=self.solver_names[solver_idx],
                                                  problem_rename=self.problem_names[problem_idx],
-                                                #  solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
-                                                #  problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                #  oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]]
-                                                )
+                                                 solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                 problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]])
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
+
+    def check_compatibility(self):
+        """
+        Check whether all experiments' solvers and problems are compatible.
+        Returns
+        -------
+        error_str : str
+            error message in the event any problem and solver are incompatible
+        """
+        error_str = ""
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                new_error_str = self.experiments[solver_idx][problem_idx].check_compatibility()
+                if new_error_str != "":
+                    error_str += f"For solver {self.solver_names[solver_idx]} and problem {self.problem_names[problem_idx]}... {new_error_str}"
+        return error_str
 
     def run(self, n_macroreps):
         """
         Run n_macroreps of each solver on each problem.
-
         Arguments
         ---------
         n_macroreps : int
@@ -2037,14 +2028,13 @@ class MetaExperiment(object):
                 # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                     print(f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_runs()
+                    experiment.clear_run()
                     experiment.run(n_macroreps)
 
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each problem-solver pair, run postreplications at solutions
         recommended by the solver on each macroreplication.
-
         Arguments
         ---------
         n_postreps : int
@@ -2063,5 +2053,24 @@ class MetaExperiment(object):
                         or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                         or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_postreps()
+                    experiment.clear_postreplicate()
                     experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
+
+    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+        """
+        Construct objective curves and (normalized) progress curves
+        for all collections of experiments on all given problem.
+        Parameters
+        ----------
+        experiments : list of wrapper_base.Experiment objects
+            experiments of different solvers on a common problem
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_init_opt : bool
+            use CRN for post-replications at solutions x0 and x*?
+        """
+        for problem_idx in range(self.n_problems):
+            experiments_same_problem = [self.experiments[solver_idx][problem_idx] for solver_idx in range(self.n_solvers)]
+            post_normalize(experiments=experiments_same_problem,
+                           n_postreps_init_opt=n_postreps_init_opt,
+                           crn_across_init_opt=crn_across_init_opt)

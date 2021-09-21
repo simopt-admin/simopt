@@ -78,6 +78,7 @@ class Experiment_Window(tk.Tk):
         self.normalize_list2 = []
         self.widget_meta_list = []
         self.widget_norm_list = []
+        self.post_norm_exp_list = []
         
         self.instruction_label = tk.Label(master=self.master, # window label is used in
                             text = "Welcome to SimOpt \n Please complete the fields below to run your experiment: \n Please note: '*' are required fields",
@@ -212,7 +213,7 @@ class Experiment_Window(tk.Tk):
 
         self.tab_one.grid_rowconfigure(0)
 
-        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "", "", "","Select"]
+        self.heading_list = ["Problem", "Solver", "Macro Reps", "", "", "", "",""]
 
         for heading in self.heading_list:
             self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -232,7 +233,7 @@ class Experiment_Window(tk.Tk):
         self.tab_three = tk.Frame(master=self.notebook)
         self.notebook.add(self.tab_three, text="Post Normalize by Problem")
         self.tab_three.grid_rowconfigure(0)
-        self.heading_list = ["Problem", "Solvers", "", "", "", "", "",""]
+        self.heading_list = ["Problem", "Solvers", "Select", "", "", "", "",""]
 
         for heading in self.heading_list:
             self.tab_three.grid_columnconfigure(self.heading_list.index(heading))
@@ -854,7 +855,7 @@ class Experiment_Window(tk.Tk):
             row_of_widgets[4].grid(row= (row_index+1), column=4, sticky='nsew', padx=5, pady=3)
             row_of_widgets[5].grid(row= (row_index+1), column=5, sticky='nsew', padx=5, pady=3)
             row_of_widgets[6].grid(row= (row_index+1), column=6, sticky='nsew', padx=5, pady=3)
-            row_of_widgets[7].grid(row= (row_index+1), column=7, sticky='nsew', padx=5, pady=3)
+            # row_of_widgets[7].grid(row= (row_index+1), column=7, sticky='nsew', padx=5, pady=3)
 
         self.count_experiment_queue = len(self.widget_list) + 1
         
@@ -1053,13 +1054,13 @@ class Experiment_Window(tk.Tk):
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
                     
                     
-                    self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
-                    self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
+                    # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
+                    # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
                     # self.select_checkbox.pack()
                     
-                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added, self.select_checkbox]
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
                     self.widget_list.insert(place,self.widget_row)
-                    self.select_checkbox.deselect()
+                    # self.select_checkbox.deselect()
 
                     self.count_experiment_queue += 1
 
@@ -1327,12 +1328,12 @@ class Experiment_Window(tk.Tk):
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
-                    self.select_checkbox = tk.Checkbutton(self.tab_one,text="",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
-                    self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
+                    # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
+                    # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
                     # self.select_checkbox.pack()
                     
                     
-                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added,self.select_checkbox]
+                    self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
                     self.widget_list.insert(place,self.widget_row)
 
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
@@ -1414,14 +1415,11 @@ class Experiment_Window(tk.Tk):
     
     def post_normal_all_function(self):
         n_postreps_init_opt = 100
-        normalize_list = []
-        for x in self.normalize_list:
-            normalize_list.append(self.experiment_object_list[x])
         
-        print(self.normalize_list)
-        print(self.experiment_object_list)
-        print(normalize_list)
-        wrapper_base.post_normalize(normalize_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
+        print(self.post_norm_exp_list)
+        print("norm list")
+        # print(normalize_list)
+        wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
     
     def checkbox_function(self, rowNum):
         if rowNum in self.normalize_list:
@@ -1429,31 +1427,22 @@ class Experiment_Window(tk.Tk):
         else:
             self.normalize_list.append(rowNum)
     
-    def checkbox_function2(self, rowNum):
-        prob_name = self.experiment_object_list[rowNum].problem.name
+    def checkbox_function2(self, exp, rowNum):
+        newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name)
+        prob_name = newlist[rowNum].problem.name
         if rowNum in self.normalize_list2:
             self.normalize_list2.remove(rowNum)
+            self.post_norm_exp_list.remove(exp)
 
             if len(self.normalize_list2) == 0:
-                i = 0
-                for exp in self.experiment_object_list:
-                    if exp.post_norm_ready:
-                        # print(self.widget_norm_list)
-                        self.widget_norm_list[i][2]["state"] = "normal"
-                        i = i+1
+                for i in self.widget_norm_list:
+                    i[2]["state"] = "normal"
         else:
             self.normalize_list2.append(rowNum)
-            print("checked")
-            print(prob_name)
-
-            newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name, reverse=True)
-            i = 0
-            for exp in newlist:
-                if exp.post_norm_ready: 
-                    if prob_name != exp.problem.name:
-                        print(i)
-                        self.widget_norm_list[i][2]["state"] = "disabled"
-                    i += 1
+            self.post_norm_exp_list.append(exp)
+            for i in self.widget_norm_list:
+                if i[0]["text"] != prob_name:
+                    i[2]["state"] = "disable"
         
     def crossdesign_function(self):
         # self.crossdesign_window = tk.Tk()
@@ -1564,7 +1553,11 @@ class Experiment_Window(tk.Tk):
         progress.pack(pady = 10)
 
     def post_norm_setup(self):
-        newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name, reverse=True)
+        newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name)
+        
+        self.normalize_list2 = []
+        self.post_norm_exp_list = []
+
         for i,exp in enumerate(newlist):
             if exp.post_norm_ready:
                 row_num = i + 1
@@ -1580,20 +1573,13 @@ class Experiment_Window(tk.Tk):
                                                 justify="center")
                 self.solver_added.grid(row=row_num, column=1, sticky='nsew', padx=5, pady=3)
 
-                self.macros_added = tk.Label(master=self.tab_three,
-                                                text="10",
-                                                font = "Calibri 10",
-                                                justify="center")
-                self.macros_added.grid(row=row_num, column=2, sticky='nsew', padx=5, pady=3)
-
-                self.select_checkbox = tk.Checkbutton(self.tab_three,text="",command=partial(self.checkbox_function2, row_num-1))
+                self.select_checkbox = tk.Checkbutton(self.tab_three,text="",command=partial(self.checkbox_function2, exp, row_num-1))
                 self.select_checkbox.grid(row=row_num, column=3, sticky='nsew', padx=5, pady=3)
 
                 self.widget_norm_list.append([self.problem_added, self.solver_added, self.select_checkbox])
 
     
     
-
 class Cross_Design_Window():
     def __init__(self, master, main_widow):
 
