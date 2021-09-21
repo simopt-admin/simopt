@@ -459,6 +459,7 @@ class Experiment(object):
     def check_run(self):
         """
         Check if the experiment has been run.
+        
         Returns
         -------
         ran : bool
