@@ -1337,12 +1337,13 @@ class Experiment_Window(tk.Tk):
                     self.widget_list.insert(place,self.widget_row)
 
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
-                    run_button = row_of_widgets[3]
-                    run_button["state"] = "disabled"
-                    run_button = row_of_widgets[4]
-                    run_button["state"] = "disabled"
-                    run_button = row_of_widgets[6]
-                    run_button["state"] = "normal"
+                    if self.my_experiment.check_run() == True:
+                        run_button = row_of_widgets[3]
+                        run_button["state"] = "disabled"
+                        run_button = row_of_widgets[4]
+                        run_button["state"] = "disabled"
+                        run_button = row_of_widgets[6]
+                        run_button["state"] = "normal"
 
                     self.count_experiment_queue += 1
 
