@@ -236,6 +236,8 @@ class MM1MinMeanSojournTime(Problem):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -274,6 +276,7 @@ class MM1MinMeanSojournTime(Problem):
             "warmup": 50,
             "people": 200
         }
+        self.oracle_decision_variables = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

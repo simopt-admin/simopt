@@ -195,6 +195,8 @@ class FacilitySizingTotalCost(Problem):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -234,6 +236,7 @@ class FacilitySizingTotalCost(Problem):
         self.optimal_value = None
         self.optimal_solution = None  # (185, 185, 185)
         self.oracle_default_factors = {}
+        self.oracle_decision_factors = {"capacity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -471,6 +474,8 @@ class FacilitySizingMaxService(Problem):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -510,6 +515,7 @@ class FacilitySizingMaxService(Problem):
         self.optimal_value = None
         self.optimal_solution = None  # (175, 179, 143)
         self.oracle_default_factors = {}
+        self.oracle_decision_factors = {"capacity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

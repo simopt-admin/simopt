@@ -248,6 +248,8 @@ class Problem(object):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -299,12 +301,11 @@ class Problem(object):
         if type(self) == type(other):
             if self.factors == other.factors:
                 # Check if non-decision-variable factors of oracles are the same.
-                # TO DO: Want the complement of the statement below...
-                # if self.factor_dict_to_vector(self.oracle.factors) == other.factor_dict_to_vector(other.oracle.factors):
-                #     return True
-                # else:
-                #     print("Problem oracles do not match.")
-                #     return False
+                non_decision_factors = set(self.oracle.factors.keys()) - self.oracle_decision_factors
+                for factor in non_decision_factors:
+                    if self.oracle.factors[factor] != other.oracle.factors[factor]:
+                        print("Oracle factors do not match")
+                        return False
                 return True
             else:
                 print("Problem factors do not match.")
