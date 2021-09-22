@@ -7,3 +7,5 @@ simopt/.vscode/.ropeproject/config.py
 simopt/.vscode/.ropeproject/objectdb
 simopt/.vscode/settings.json
 simopt/simopt.env
+simopt/oracles/.DS_Store
+.DS_Store
