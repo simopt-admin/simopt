@@ -3,7 +3,7 @@ This script is intended to help with debugging an oracle.
 It imports an oracle, initializes an oracle object with given factors,
 sets up pseudorandom number generators, and runs one or more replications.
 """
-
+import numpy as np
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
@@ -60,3 +60,13 @@ for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+
+# Run multiple replications of the oracle.
+REPLICATIONS = 1000
+total_revenue = []
+for _ in range(REPLICATIONS):
+    responses, gradients = myoracle.replicate(rng_list)
+    total_revenue.append(responses['total_revenue'])
+
+print("\nFor multiple replications:")
+print(np.mean(total_revenue))
