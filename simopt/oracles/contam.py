@@ -67,7 +67,7 @@ class Contamination(Oracle):
             "prev_cost": {
                 "description": "Cost of prevention.",
                 "datatype": list,
-                "default": [5, 5, 5, 5, 5]
+                "default": [1, 1, 1, 1, 1]
             },
             "error_prob": {
                 "description": "Error probability.",
@@ -93,11 +93,6 @@ class Contamination(Oracle):
                 "description": "Initial solution.",
                 "datatype": list,
                 "default": [0, 0, 0, 0, 0]
-            },
-            "runlength": {
-                "description": "Number of independent generations.",
-                "datatype": int,
-                "default": 100
             }
         }
         self.check_factor_list = {
@@ -143,7 +138,7 @@ class Contamination(Oracle):
         return self.factors["stages"] > 0
 
     def check_u(self):
-        return self.factors["u"] > 0
+        return all(u > 0 for u in self.factors["u"]) > 0
 
     def check_simulatable_factors(self):
         # Check for matching number of stages.
@@ -168,11 +163,9 @@ class Contamination(Oracle):
         -------
         responses : dict
             performance measures of interest
-            "cost" = total cost
             "exceeded" = a binary variable
                  0 : all stages were under contamination limit
                  1 : at least one stage exceeded the limit
-            "prob" = probability that contamination fractions are less than threshold
         gradients : dict of dicts
             gradient estimates for each response
         """
@@ -180,29 +173,20 @@ class Contamination(Oracle):
         # Outputs will be coupled when generating demand.
         contam_rng = rng_list[0]
         restore_rng = rng_list[1]
-        # cost = 0
-        # exceeded = 0
-        prob = []
+        exceeded = []
         # Generate rates with beta distribution.
         # Check for exceeded.
         X = np.zeros(self.factors["stages"])
         X[0] = restore_rng.betavariate(alpha=1, beta=30)
+        exceeded.append(X[0] <= self.factors["upper_thres"]) # true is 1
         u = self.factors["u"]
         for i in range(1, self.factors["stages"]):
-            runs = []
-            for iter in range(self.factors["runlength"]):
-                c = contam_rng.betavariate(alpha=self.factors["contam_rate_alpha"], beta=self.factors["contam_rate_beta"])
-                r = restore_rng.betavariate(alpha=self.factors["restore_rate_alpha"], beta=self.factors["restore_rate_beta"])
-                X[i] = c*(1-u[i])*(1-X[i-1]) + (1-r*u[i])*X[i-1]
-                # if X[i] > self.factors["upper_thres"]:
-                    # cost += self.factors["prev_cost"][i]*u[i]
-                    # exceeded += 1
-                runs.append(X[i] <= self.factors["upper_thres"])
-            # prob.append(np.mean(runs) > (1 - self.factors["error_prob"][i]))
-            prob.append(np.mean(runs))
+            c = contam_rng.betavariate(alpha=self.factors["contam_rate_alpha"], beta=self.factors["contam_rate_beta"])
+            r = restore_rng.betavariate(alpha=self.factors["restore_rate_alpha"], beta=self.factors["restore_rate_beta"])
+            X[i] = c*(1-u[i])*(1-X[i-1]) + (1-r*u[i])*X[i-1]
+            exceeded.append(X[i] <= self.factors["upper_thres"])
         # Compose responses and gradients.
-        # responses = {'cost': cost, 'exceeded': exceeded, 'Xs': X}
-        responses = {'prob': prob}
+        responses = {'exceeded': exceeded}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -260,6 +244,10 @@ class ContaminationTotalCost(Problem):
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            prev_cost : list
+                cost of prevention
+            upper_thres : float > 0
+                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -292,16 +280,26 @@ class ContaminationTotalCost(Problem):
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
+            "u": {
+                "description": "Initial solution.",
+                "datatype": list,
+                "default": [0, 0, 0, 0, 0]
+            },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
-            # },
-            # "prev_cost": {
-            #     "description": "Cost of prevention.",
-            #     "datatype": list,
-            #     "default": [5, 5, 5, 5, 5]
-            }
+            },
+            "prev_cost": {
+                "description": "Cost of prevention.",
+                "datatype": list,
+                "default": [1, 1, 1, 1, 1]
+            },
+            "upper_thres": {
+                "description": "Upper limit of amount of contamination.",
+                "datatype": float,
+                "default": 0.1
+            }            
         }
 
         super().__init__(fixed_factors, oracle_fixed_factors)
@@ -323,7 +321,7 @@ class ContaminationTotalCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "prevention": vector[:]
+            "u": vector[:]
         }
         return factor_dict
 
@@ -342,7 +340,7 @@ class ContaminationTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["prevention"])
+        vector = tuple(factor_dict["u"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -360,7 +358,7 @@ class ContaminationTotalCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["exceeded"],)
+        objectives = tuple(response_dict["exceeded"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -378,7 +376,7 @@ class ContaminationTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (response_dict["exceeded"],)
+        stoch_constraints = tuple(response_dict["exceeded"],)
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
