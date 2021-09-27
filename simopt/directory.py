@@ -20,6 +20,7 @@ from oracles.mm1queue import MM1Queue, MM1MinMeanSojournTime
 from oracles.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
 from oracles.rmitd import RMITD, RMITDMaxRevenue
 from oracles.sscont import SSCont, SSContMinCost
+from oracles.ironore import IronOre, IronOreMaxRev
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -32,12 +33,14 @@ problem_directory = {
     "FACSIZE-1": FacilitySizingTotalCost,
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
-    "SSCONT-1": SSContMinCost
+    "SSCONT-1": SSContMinCost,
+    "IRONORE-1": IronOreMaxRev
 }
 oracle_directory = {
     "CNTNEWS": CntNV,
     "MM1": MM1Queue,
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
-    "SSCONT": SSCont
+    "SSCONT": SSCont,
+    "IRONORE": IronOre
 }

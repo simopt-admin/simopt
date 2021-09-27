@@ -290,7 +290,7 @@ Minimize the expected total cost for (s, S) inventory system.
 
 class IronOreMaxRev(Problem):
     """
-    Class to make (s,S) inventory simulation-optimization problems.
+    Class to make iron ore inventory simulation-optimization problems.
 
     Attributes
     ----------
@@ -347,12 +347,12 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SSCONT-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="IRONORE-1", fixed_factors={}, oracle_fixed_factors={}):
         self.name = name
-        self.dim = 2
+        self.dim = 4
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
+        self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
         self.lowerbound = 0
@@ -366,7 +366,7 @@ class IronOreMaxRev(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (600, 600)
+                "default": (80,7000,40,100)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -397,8 +397,10 @@ class IronOreMaxRev(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "s": vector[0],
-            "S": vector[0] + vector[1]
+            "x1": vector[0],
+            "x2": vector[1],
+            "x3": vector[2],
+            "x4": vector[3],
         }
         return factor_dict
 
@@ -417,7 +419,7 @@ class IronOreMaxRev(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
+        vector = (factor_dict["x1"], factor_dict["x2"], factor_dict["x3"], factor_dict["x4"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -435,7 +437,7 @@ class IronOreMaxRev(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["avg_backorder_costs"] + response_dict["avg_order_costs"] + response_dict["avg_holding_costs"],)
+        objectives = (response_dict["total_revenue"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -513,7 +515,7 @@ class IronOreMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return (x[0] >= 0 and x[1] >= 0 and x[2] >= 0 and x[3] >= 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -529,5 +531,5 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
+        x = (70 + 20 * rand_sol_rng.random(), 2000 + 6000 * rand_sol_rng.random(), 30 + 20 * rand_sol_rng.random(), 90 + 20 * rand_sol_rng.random())
         return x
