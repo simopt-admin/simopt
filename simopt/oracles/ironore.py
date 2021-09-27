@@ -397,10 +397,10 @@ class IronOreMaxRev(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "x1": vector[0],
-            "x2": vector[1],
-            "x3": vector[2],
-            "x4": vector[3],
+            "price_prod": vector[0],
+            "inven_stop": vector[1],
+            "price_stop": vector[2],
+            "price_sell": vector[3],
         }
         return factor_dict
 
@@ -419,7 +419,7 @@ class IronOreMaxRev(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["x1"], factor_dict["x2"], factor_dict["x3"], factor_dict["x4"])
+        vector = (factor_dict["price_prod"], factor_dict["inven_stop"], factor_dict["price_stop"], factor_dict["price_sell"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):

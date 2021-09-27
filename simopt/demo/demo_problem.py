@@ -17,7 +17,9 @@ from base import Solution
 
 myproblem = IronOreMaxRev()
 
-x = (80, 7000, 40, 100)
+
+x = (90, 9000, 50, 110)
+
 mysolution = Solution(x, myproblem)
 
 # Create and attach rngs to solution
@@ -27,7 +29,7 @@ mysolution.attach_rngs(rng_list, copy=False)
 # print(mysolution.rng_list)
 
 # Test simulate()
-n_reps = 20
+n_reps = 100
 myproblem.simulate(mysolution, m=n_reps)
 print('For ' + str(n_reps) + ' replications:')
 print('The individual objective estimates are {}'.format(mysolution.objectives[:10]))
