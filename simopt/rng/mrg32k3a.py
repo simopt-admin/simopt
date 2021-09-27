@@ -96,20 +96,19 @@ bsmc = [0.3374754822726147, 0.9761690190917186, 0.1607979714918209, 0.0276438810
 
 # Adapted to pure Python from the P. L'Ecuyer code referenced above.
 def mrg32k3a(state):
-    """
-    Generate a random number between 0 and 1 from a given state.
+    """Generate a random number between 0 and 1 from a given state.
 
     Parameters
     ----------
-    state : tuple of int of length 6
-        current state of the generator
+    state : 'tuple' ['int']
+        current state of the generator.
 
     Returns
     -------
-    new_state : tuple of int of length 6
-        next state of the generator
-    u : float
-        pseudo uniform random variate
+    new_state : 'tuple' ['int']
+        next state of the generator.
+    u : 'float'
+        pseudo uniform random variate.
     """
     # Component 1.
     p1 = mrga12 * state[1] - mrga13n * state[0]
@@ -133,18 +132,17 @@ def mrg32k3a(state):
 
 
 def bsm(u):
-    """
-    Approximate a quantile of the standard normal distribution via
+    """Approximate a quantile of the standard normal distribution via
     the Beasley-Springer-Moro algorithm.
 
-    Arguments
-    ---------
-    u : float
-        probability value for the desired quantile (between 0 and 1)
+    Parameters
+    ----------
+    u : 'float'
+        probability value for the desired quantile (between 0 and 1).
 
     Returns
     -------
-    z : float
+    z : 'float'
     """
     y = u - 0.5
     if abs(y) < 0.42:
@@ -179,31 +177,30 @@ def bsm(u):
 
 
 class MRG32k3a(random.Random):
-    """
-    Implements mrg32k3a as the generator for a random.Random object.
+    """Implements mrg32k3a as the generator for a random.Random object.
 
     Attributes
     ----------
-    _current_state : tuple of int of length 6
-        current state of mrg32k3a generator
-    ref_seed : tuple of int of length 6
+    _current_state : 'tuple' ['int']
+        current state of mrg32k3a generator.
+    ref_seed : 'tuple' ['int']
         seed from which to start the generator
-        streams/substreams/subsubstreams are referenced w.r.t. ref_seed
-    s_ss_sss_index : list of int of length 3
-        triplet of the indices of the current stream-substream-subsubstream
-    stream_start : list of int of length 6
-        state corresponding to the start of the current stream
-    substream_start: list of int of length 6
-        state corresponding to the start of the current substream
-    subsubstream_start: list of int of length 6
-        state corresponding to the start of the current subsubstream
+        streams/substreams/subsubstreams are referenced w.r.t. ref_seed.
+    s_ss_sss_index : 'list' ['int']
+        triplet of the indices of the current stream-substream-subsubstream.
+    stream_start : 'list' ['int']
+        state corresponding to the start of the current stream.
+    substream_start: 'list' ['int']
+        state corresponding to the start of the current substream.
+    subsubstream_start: 'list' ['int']
+        state corresponding to the start of the current subsubstream.
 
-    Arguments
-    ---------
-    ref_seed : tuple of int of length 6 (optional)
-        seed from which to start the generator
-    s_ss_sss_index : list of int of length 3
-        triplet of the indices of the stream-substream-subsubstream to start at
+    Parameters
+    ----------
+    ref_seed : 'tuple' ['int'], optional
+        seed from which to start the generator.
+    s_ss_sss_index : 'list' ['int']
+        triplet of the indices of the stream-substream-subsubstream to start at.
 
     See also
     --------
@@ -228,28 +225,26 @@ class MRG32k3a(random.Random):
         return result
 
     def seed(self, new_state):
-        """
-        Set the state (or seed) of the generator and update the generator state.
+        """Set the state (or seed) of the generator and update the generator state.
 
-        Arguments
-        ---------
-        new_state : tuple of int of length 6
-            new state to which to advance the generator
+        Parameters
+        ----------
+        new_state : 'tuple' ['int']
+            new state to which to advance the generator.
         """
         assert(len(new_state) == 6)
         self._current_state = new_state
         super().seed(new_state)
 
     def getstate(self):
-        """
-        Return the state of the generator.
+        """Return the state of the generator.
 
         Returns
         -------
-        _current_state : tuple of int of length 6
-            current state of the generator
-        random.Random.getstate() : tuple of int
-            Random.getstate output
+        _current_state : 'tuple' ['int']
+            current state of the generator.
+        random.Random.getstate() : 'tuple' ['int']
+            Random.getstate output.
 
         See also
         --------
@@ -258,14 +253,13 @@ class MRG32k3a(random.Random):
         return self.get_current_state(), super().getstate()
 
     def setstate(self, state):
-        """
-        Set the internal state of the generator.
+        """Set the internal state of the generator.
 
-        Arguments
-        ---------
-        state : tuple
-            state[0] is new state for the generator
-            state[1] is random.Random.getstate()
+        Parameters
+        ----------
+        state : 'tuple'
+            ''state[0]'' is new state for the generator.
+            ''state[1]'' is random.Random.getstate().
 
         See also
         --------
@@ -275,14 +269,13 @@ class MRG32k3a(random.Random):
         super().setstate(state[1])
 
     def random(self):
-        """
-        Generate a standard uniform variate and advance the generator
+        """Generate a standard uniform variate and advance the generator
         state.
 
         Returns
         -------
-        u : float
-            pseudo uniform random variate
+        u : 'float'
+            pseudo uniform random variate.
         """
         state = self._current_state
         new_state, u = self.generate(state)
@@ -290,57 +283,54 @@ class MRG32k3a(random.Random):
         return u
 
     def get_current_state(self):
-        """
-        Return the current state of the generator.
+        """Return the current state of the generator.
 
         Returns
         -------
-        _current_state : tuple of int of length 6
-            current state of the generator
+        _current_state : 'tuple' ['int']
+            current state of the generator.
         """
         return self._current_state
 
     def normalvariate(self, mu=0, sigma=1):
-        """
-        Generate a normal random variate.
+        """Generate a normal random variate.
 
-        Arguments
-        ---------
-        mu : float
+        Parameters
+        ----------
+        mu : 'float'
             expected value of the normal distribution from which to
-            generate
-        sigma : float
+            generate.
+        sigma : 'float'
             standard deviation of the normal distribution from which to
-            generate
+            generate.
 
         Returns
         -------
-        float
-            a normal random variate from the specified distribution
+        'float'
+            a normal random variate from the specified distribution.
         """
         u = self.random()
         z = bsm(u)
         return mu + sigma*z
 
     def mvnormalvariate(self, mean_vec, cov, factorized=True):
-        """
-        Generate a normal random vector.
+        """Generate a normal random vector.
 
-        Arguments
+        Parameters
         ---------
-        mean_vec : array
+        mean_vec : 'array'
             location parameters of the multivariate normal distribution
-            from which to generate
-        cov : array
+            from which to generate.
+        cov : 'array'
             covariance matrix of the multivariate normal distribution
-            from which to generate
-        factorized : Bool
+            from which to generate.
+        factorized : 'bool'
             False : need to calculate chol based on covariance
-            True : do not need to calculate chol since we already have it
+            True : do not need to calculate chol since we already have it.
         Returns
         -------
-        list of float
-            a normal random multivariate from the specified distribution
+        'list' ['float']
+            a normal random multivariate from the specified distribution.
         """
         n_cols = len(cov)
         if not factorized:
@@ -351,19 +341,18 @@ class MRG32k3a(random.Random):
         return Chol.dot(observations).transpose() + mean_vec
 
     def poissonvariate(self, lmbda):
-        """
-        Generate a poisson random variate.
+        """Generate a poisson random variate.
 
-        Arguments
+        Parameters
         ---------
-        lmbda : float
+        lmbda : 'float'
             expected value of the poisson distribution from which to
-            generate
+            generate.
 
         Returns
         -------
-        float
-            a poisson random variate from the specified distribution
+        'float'
+            a poisson random variate from the specified distribution.
         """
         if lmbda < 35:
             n = 0
@@ -379,8 +368,7 @@ class MRG32k3a(random.Random):
         return n
 
     def advance_stream(self):
-        """
-        Advance the state of the generator to the start of the next stream.
+        """Advance the state of the generator to the start of the next stream.
         Streams are of length 2**141.
         """
         state = self.stream_start
@@ -405,8 +393,7 @@ class MRG32k3a(random.Random):
         self.subsubstream_start = nstate
 
     def advance_substream(self):
-        """
-        Advance the state of the generator to the start of the next substream.
+        """Advance the state of the generator to the start of the next substream.
         Substreams are of length 2**94.
         """
         state = self.substream_start
@@ -429,8 +416,7 @@ class MRG32k3a(random.Random):
         self.subsubstream_start = nstate
 
     def advance_subsubstream(self):
-        """
-        Advance the state of the generator to the start of the next subsubstream.
+        """Advance the state of the generator to the start of the next subsubstream.
         Subsubstreams are of length 2**47.
         """
         state = self.subsubstream_start
@@ -450,8 +436,7 @@ class MRG32k3a(random.Random):
         self.subsubstream_start = nstate
 
     def reset_stream(self):
-        """
-        Reset the state of the generator to the start of the current stream.
+        """Reset the state of the generator to the start of the current stream.
         """
         nstate = self.stream_start
         self.seed(nstate)
@@ -463,8 +448,7 @@ class MRG32k3a(random.Random):
         self.s_ss_sss_index[2] = 0
 
     def reset_substream(self):
-        """
-        Reset the state of the generator to the start of the current substream.
+        """Reset the state of the generator to the start of the current substream.
         """
         nstate = self.substream_start
         self.seed(nstate)
@@ -474,20 +458,18 @@ class MRG32k3a(random.Random):
         self.s_ss_sss_index[2] = 0
 
     def reset_subsubstream(self):
-        """
-        Reset the state of the generator to the start of the current subsubstream.
+        """Reset the state of the generator to the start of the current subsubstream.
         """
         nstate = self.subsubstream_start
         self.seed(nstate)
 
     def start_fixed_s_ss_sss(self, s_ss_sss_triplet):
-        """
-        Set the rng to the start of a specified (stream, substream, subsubstream) triplet.
+        """Set the rng to the start of a specified (stream, substream, subsubstream) triplet.
 
-        Arguments
-        ---------
-        s_ss_sss_triplet : list of int of length 3
-            triplet of the indices of the current stream-substream-subsubstream
+        Parameters
+        ----------
+        s_ss_sss_triplet : 'list' ['int']
+            triplet of the indices of the current stream-substream-subsubstream.
         """
         state = self.ref_seed
         # Split the reference seed into 2 components of length 3.
