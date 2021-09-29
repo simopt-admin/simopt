@@ -23,7 +23,7 @@ from oracles.contam import Contamination
 # Ex: for the MM1Queue class,
 #     fixed_factors = {"lambda": 3.0,
 #                      "mu": 8.0}
-fixed_factors = {"prev_cost": [5, 5, 5, 5, 5]}  # Resort to all default values.
+fixed_factors = {}  # Resort to all default values.
 
 # Initialize an instance of the specified oracle class.
 # Replace <oracle_class_name> with name of oracle class.
@@ -68,7 +68,7 @@ stages = 5
 total_prob = np.zeros(stages)
 for _ in range(REPLICATIONS):
     responses, gradients = myoracle.replicate(rng_list)
-    total_prob = [a + b for a, b in zip(total_prob, responses['exceeded'])]
+    total_prob = [a + b for a, b in zip(total_prob, responses['level'])]
 
 print("\nFor multiple replications:")
 print([i/REPLICATIONS for i in total_prob])

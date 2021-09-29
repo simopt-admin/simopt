@@ -42,7 +42,7 @@ class Contamination(Oracle):
     def __init__(self, fixed_factors={}):
         self.name = "CONTAM"
         self.n_rngs = 2
-        self.n_responses = 3
+        self.n_responses = 1
         self.specifications = {
             "contam_rate_alpha": {
                 "description": "Alpha parameter of beta distribution for growth rate of contamination at each stage.",
@@ -64,33 +64,28 @@ class Contamination(Oracle):
                 "datatype": float,
                 "default": 3/7
             },
-            "prev_cost": {
-                "description": "Cost of prevention.",
-                "datatype": list,
-                "default": [1, 1, 1, 1, 1]
+            "initial_rate_alpha": {
+                "description": "Alpha parameter of beta distribution for initial contamination fraction.",
+                "datatype": float,
+                "default": 1.0
+            },
+            "initial_rate_beta": {
+                "description": "Beta parameter of beta distribution for initial contamination fraction.",
+                "datatype": float,
+                "default": 30.0
             },
             "error_prob": {
                 "description": "Error probability.",
                 "datatype": list,
                 "default": [0.05, 0.05, 0.05, 0.05, 0.05]
             },
-            "upper_thres": {
-                "description": "Upper limit of amount of contamination.",
-                "datatype": float,
-                "default": 0.1
-            },
-            "init_contam": {
-                "description": "Initial contamination fraction.",
-                "datatype": float,
-                "default": 0
-            },
             "stages": {
                 "description": "Stage of food supply chain.",
                 "datatype": int,
                 "default": 5
             },
-            "u": {
-                "description": "Initial solution.",
+            "prev_decision": {
+                "description": "Prevention decision.",
                 "datatype": list,
                 "default": [0, 0, 0, 0, 0]
             }
@@ -100,12 +95,11 @@ class Contamination(Oracle):
             "contam_rate_beta": self.check_contam_rate_beta,
             "restore_rate_alpha": self.check_restore_rate_alpha,
             "restore_rate_beta": self.check_restore_rate_beta,
-            "prev_cost": self.check_prev_cost,
+            "initial_rate_alpha": self.check_initial_rate_alpha,
+            "initial_rate_beta": self.check_initial_rate_beta,
             "error_prob": self.check_error_prob,
-            "upper_thres": self.check_upper_thres,
-            "init_contam": self.check_init_contam,
             "stages": self.check_stages,
-            "u": self.check_u
+            "prev_decision": self.check_prev_decision
         }
         # Set factors of the simulation oracle.
         super().__init__(fixed_factors)
@@ -122,29 +116,29 @@ class Contamination(Oracle):
     def check_restore_rate_beta(self):
         return self.factors["restore_rate_beta"] > 0
 
+    def check_initial_rate_alpha(self):
+        return self.factors["initial_rate_alpha"] > 0
+
+    def check_initial_rate_beta(self):
+        return self.factors["initial_rate_beta"] > 0
+
     def check_prev_cost(self):
         return all(cost > 0 for cost in self.factors["prev_cost"])
 
     def check_error_prob(self):
         return all(error > 0 for error in self.factors["error_prob"])
-    
-    def check_upper_thres(self):
-        return self.factors["upper_thres"] > 0
-    
-    def check_init_contam(self):
-        return self.factors["init_contam"] > 0
 
     def check_stages(self):
         return self.factors["stages"] > 0
 
-    def check_u(self):
-        return all(u > 0 for u in self.factors["u"]) > 0
+    def check_prev_decision(self):
+        return all(u >= 0 & u <= 1 for u in self.factors["prev_decision"])
 
     def check_simulatable_factors(self):
         # Check for matching number of stages.
-        if len(self.factors["prev_cost"]) != self.factors["stages"]:
+        if len(self.factors["error_prob"]) != self.factors["stages"]:
             return False
-        elif len(self.factors["error_prob"]) != self.factors["stages"]:
+        elif len(self.factors["prev_decision"]) != self.factors["stages"]:
             return False
         else:
             return True
@@ -163,9 +157,7 @@ class Contamination(Oracle):
         -------
         responses : dict
             performance measures of interest
-            "exceeded" = a binary variable
-                 0 : all stages were under contamination limit
-                 1 : at least one stage exceeded the limit
+            "level" = a list of contamination levels over time
         gradients : dict of dicts
             gradient estimates for each response
         """
@@ -173,20 +165,16 @@ class Contamination(Oracle):
         # Outputs will be coupled when generating demand.
         contam_rng = rng_list[0]
         restore_rng = rng_list[1]
-        exceeded = []
         # Generate rates with beta distribution.
-        # Check for exceeded.
         X = np.zeros(self.factors["stages"])
-        X[0] = restore_rng.betavariate(alpha=1, beta=30)
-        exceeded.append(X[0] <= self.factors["upper_thres"]) # true is 1
-        u = self.factors["u"]
+        X[0] = restore_rng.betavariate(alpha=self.factors["initial_rate_alpha"], beta=self.factors["initial_rate_beta"])
+        u = self.factors["prev_decision"]
         for i in range(1, self.factors["stages"]):
             c = contam_rng.betavariate(alpha=self.factors["contam_rate_alpha"], beta=self.factors["contam_rate_beta"])
             r = restore_rng.betavariate(alpha=self.factors["restore_rate_alpha"], beta=self.factors["restore_rate_beta"])
             X[i] = c*(1-u[i])*(1-X[i-1]) + (1-r*u[i])*X[i-1]
-            exceeded.append(X[i] <= self.factors["upper_thres"])
         # Compose responses and gradients.
-        responses = {'exceeded': exceeded}
+        responses = {'level': X}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -266,26 +254,26 @@ class ContaminationTotalCost(Problem):
     """
     def __init__(self, name="CONTAM", fixed_factors={}, oracle_fixed_factors={}):
         self.name = name
-        self.dim = 1
+        self.dim = 5  # stages
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "discrete"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (1, 1, 1)
+        self.lower_bounds = (0, 0, 0, 0 ,0)
+        self.upper_bounds = (1, 1, 1, 1, 1)
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (185, 185, 185)
         self.oracle_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
-            "u": {
+            "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": list,
                 "default": [0, 0, 0, 0, 0]
             },
-            "budget": {
+            "prevention_budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
@@ -297,14 +285,36 @@ class ContaminationTotalCost(Problem):
             },
             "upper_thres": {
                 "description": "Upper limit of amount of contamination.",
-                "datatype": float,
-                "default": 0.1
+                "datatype": list,
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }            
+        }
+
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "prevention_budget": self.check_prevention_budget,
+            "prev_cost": self.check_prev_cost,
+            # "upper_thres": self.check_upper_thres
         }
 
         super().__init__(fixed_factors, oracle_fixed_factors)
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = Contamination(self.oracle_fixed_factors)
+
+    def check_initial_solution(self):
+        return all(u >= 0 & u <= 1 for u in self.factors["initial_solution"])
+
+    def check_prev_cost(self):
+        if len(self.factors["prev_cost"]) != self.oracle.factors["stages"]:
+            return False
+        elif any([elem < 0 for elem in self.factors["prev_cost"]]):
+            return False
+        else:
+            return True
+
+    def check_prevention_budget(self):
+        return self.factors["prevention_budget"] > 0
+
 
     def vector_to_factor_dict(self, vector):
         """
@@ -321,7 +331,7 @@ class ContaminationTotalCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "u": vector[:]
+            "level": vector[:]
         }
         return factor_dict
 
@@ -340,7 +350,7 @@ class ContaminationTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["u"])
+        vector = tuple(factor_dict["level"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -358,7 +368,7 @@ class ContaminationTotalCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = tuple(response_dict["exceeded"],)
+        objectives = (0,)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -376,7 +386,7 @@ class ContaminationTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = tuple(response_dict["exceeded"],)
+        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"],)
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -395,7 +405,7 @@ class ContaminationTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (1-self.factors["upper_thres"],)
+        det_stoch_constraints = ([-1 + e for e in self.oracle.factors["error_prob"]],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
@@ -433,7 +443,7 @@ class ContaminationTotalCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)
+        return np.all(x >= 0) & np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng):
         """
