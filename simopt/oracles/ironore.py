@@ -14,9 +14,8 @@ from base import Oracle, Problem
 class IronOre(Oracle):
     """
     An oracle that simulates multiple periods of production and sales for an
-    inventory problem with integer-ordered variables and
-    stochastic price determined by a mean-reverting random walk. Returns total
-    revenue.
+    inventory problem with stochastic price determined by a mean-reverting 
+    random walk. Returns total revenue.
 
     Attributes
     ----------
@@ -39,11 +38,11 @@ class IronOre(Oracle):
         fixed_factors of the simulation model
 
         ``mean_price``
-            Mean ironore price per unit (`flt`)
+            Mean iron ore price per unit (`flt`)
         ``max_price``
-            Maximum ironore price per unit (`flt`)
+            Maximum iron ore price per unit (`flt`)
         ``min_price``
-            Minimum ironore price per unit (`flt`)
+            Minimum iron ore price per unit (`flt`)
         ``capacity (K)``
             Maximum holding capacity (`int`)
         ``st_dev``
@@ -54,13 +53,13 @@ class IronOre(Oracle):
             Production cost per unit (`flt`)
         ``max_prod_perday``
             Maximum units produced per day (`int`)
-        ``price_prod (x1)`` 
+        ``price_prod`` 
             Price level to start production (`flt`)
-        ``inven_stop (x2)``
+        ``inven_stop``
             Inventory level to cease production (`int`)
-        ``price_stop (x3)``
+        ``price_stop``
             Price level to stop production (`flt`)
-        ``price_sell (x4)``
+        ``price_sell``
             Price level to sell all stock (`flt`)
         ``n_days``
             Number of days to simulate (`int`)
@@ -73,22 +72,22 @@ class IronOre(Oracle):
     def __init__(self, fixed_factors={}):
         self.name = "IRONORE"
         self.n_rngs = 1
-        self.n_responses =1
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
 
             "mean_price": {
-                "description": "Mean ironore price per unit.",
+                "description": "Mean iron ore price per unit.",
                 "datatype": float,
                 "default": 100.0
             },
             "max_price": {
-                "description": "Maximum ironore price per unit.",
+                "description": "Maximum iron ore price per unit.",
                 "datatype": float,
                 "default": 200.0
             },
             "min_price": {
-                "description": "Minimum ironore price per unit.",
+                "description": "Minimum iron ore price per unit.",
                 "datatype": float,
                 "default": 0.0
             },
@@ -146,21 +145,21 @@ class IronOre(Oracle):
         }
 
         self.check_factor_list = {
-            "mean_price":self.check_mean_price,
-            "max_price":self.check_max_price,
-            "min_price":self.check_min_price,
-            "capacity":self.check_capacity,
-            "st_dev":self.check_st_dev,
-            "holding_cost":self.check_holding_cost,
-            "prod_cost":self.check_prod_cost,
-            "max_prod_perday":self.check_max_prod_perday,
-            "price_prod":self.check_price_prod,
-            "inven_stop":self.check_inven_stop,
-            "price_stop":self.check_price_stop,
-            "price_sell":self.check_price_sell,
-            "n_days":self.check_n_days,
+            "mean_price": self.check_mean_price,
+            "max_price": self.check_max_price,
+            "min_price": self.check_min_price,
+            "capacity": self.check_capacity,
+            "st_dev": self.check_st_dev,
+            "holding_cost": self.check_holding_cost,
+            "prod_cost": self.check_prod_cost,
+            "max_prod_perday": self.check_max_prod_perday,
+            "price_prod": self.check_price_prod,
+            "inven_stop": self.check_inven_stop,
+            "price_stop": self.check_price_stop,
+            "price_sell": self.check_price_sell,
+            "n_days": self.check_n_days,
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation oracle
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
@@ -204,8 +203,7 @@ class IronOre(Oracle):
         return self.factors["n_days"] >= 1
 
     def check_simulatable_factors(self):
-        return True
-
+        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"]) & (self.factors["min_price"] <= self.factors["max_price"])
 
     def replicate(self, rng_list):
         """
@@ -223,59 +221,65 @@ class IronOre(Oracle):
 
             ``total_revenue``
                 The total revenue over the time period
+            ``frac_producing``
+                fraction of days spent producing iron ore
         """
         # Designate random number generators.
         price_rng = rng_list[0]
         # Initialize quantities to track:
-        #   - Market Price in each period (Pt).
-        #   - Starting Stock in each period.
-        #   - Ending Stock in each period.
-        #   - Whether currently producing or not.
+        #   - Market price in each period (Pt).
+        #   - Starting stock in each period.
+        #   - Ending stock in each period.
         #   - Revenue in each period.
-        mkt_price = np.zeros(self.factors['n_days'])
-        mkt_price[0] = self.factors['mean_price'] # P1 = mu0
-        stock = np.zeros(self.factors['n_days'])
+        #   - Whether producing or not in each period.
+        #   - Production in each period.
+        mkt_price = np.zeros(self.factors["n_days"])
+        mkt_price[0] = self.factors["mean_price"]
+        stock = np.zeros(self.factors["n_days"])
         revenue = np.zeros(self.factors["n_days"])
-        producing = 0
+        producing = np.zeros(self.factors["n_days"])
+        prod = np.zeros(self.factors["n_days"])
 
         #Run simulation over time horizon.
-        for day in range(1, self.factors['n_days']):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 +Nt(μt,σ))
-            #   - μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
-            mean_val = math.sqrt(math.sqrt(abs(self.factors['mean_price'] - mkt_price[day])))
-            mean_dir = math.copysign(1, self.factors['mean_price'] - mkt_price[day])
+        for day in range(1, self.factors["n_days"]):
+            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ))
+            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
+            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
+            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
             mean_move = mean_val *  mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors['st_dev'])
-            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors['max_price']), self.factors['min_price'])
+            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
+            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
             # If production is underway
-            if producing == 1:
+            if producing[day] == 1:
                 # cease production if price goes too low or inventory is too much
-                if ((mkt_price[day] <= self.factors['price_stop']) | (stock[day] >= self.factors['inven_stop'])):
-                    producing = 0
+                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
+                    producing[day] = 0
                 else:
-                    prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
-                    stock[day] = stock[day] + prod
-                    revenue[day] = revenue[day] - prod * self.factors['prod_cost']
+                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
+                    stock[day] = stock[day] + prod[day]
+                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
             # if production is not currently underway
             else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors['inven_stop'])):
-                    producing = 1
-                    prod = min(self.factors['max_prod_perday'], self.factors['capacity'] - stock[day])
-                    stock[day] = stock[day] + prod
-                    revenue[day] = revenue[day] - prod * self.factors['prod_cost']
+                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
+                    producing[day] = 1
+                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
+                    stock[day] = stock[day] + prod[day]
+                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
             # Sell if price is high enough
-            if (mkt_price[day] >= self.factors['price_sell']):
+            if (mkt_price[day] >= self.factors["price_sell"]):
                 revenue[day] = revenue[day] + stock[day] * mkt_price[day]
                 stock[day] = 0
             # Charge holding cost
-            revenue[day] = revenue[day] - stock[day] * self.factors['holding_cost']
+            revenue[day] = revenue[day] - stock[day] * self.factors["holding_cost"]
             # Calculate starting quantities for next period
             if day < self.factors["n_days"] - 1:
                 revenue[day + 1] = revenue[day]
                 stock[day + 1] = stock[day]
                 mkt_price[day + 1] = mkt_price[day] 
+                producing[day + 1] = producing[day]
         # Calculate responses from simulation data.
-        responses = {"total_revenue": revenue[self.factors['n_days'] - 1]
+        responses = {"total_revenue": revenue[self.factors["n_days"] - 1],
+                     "frac_producing": np.mean(producing)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -284,7 +288,7 @@ class IronOre(Oracle):
 """
 Summary
 -------
-Minimize the expected total cost for (s, S) inventory system.
+Maximize the expected total revenue for iron ore inventory system.
 """
 
 
@@ -354,7 +358,7 @@ class IronOreMaxRev(Problem):
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "continuous"
+        self.variable_type = "mixed"
         self.lowerbound = 0
         self.upperbound = np.inf
         self.gradient_available = False
@@ -366,7 +370,7 @@ class IronOreMaxRev(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (80,7000,40,100)
+                "default": (80, 7000, 40, 100)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -531,5 +535,5 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (70 + 20 * rand_sol_rng.random(), 2000 + 6000 * rand_sol_rng.random(), 30 + 20 * rand_sol_rng.random(), 90 + 20 * rand_sol_rng.random())
+        x = (rand_sol_rng.uniform(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.uniform(30, 50), rand_sol_rng.uniform(90, 110))
         return x

@@ -62,11 +62,15 @@ for outerkey in gradients:
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
 # Run multiple replications of the oracle.
-REPLICATIONS = 1000
+REPLICATIONS = 100
 total_revenue = []
+frac_producing = []
 for _ in range(REPLICATIONS):
     responses, gradients = myoracle.replicate(rng_list)
     total_revenue.append(responses['total_revenue'])
+    frac_producing.append(responses['frac_producing'])
 
-print("\nFor multiple replications:")
+print("\nFor {REPLICATIONS} replications:")
 print(np.mean(total_revenue))
+print(frac_producing)
+
