@@ -358,7 +358,7 @@ class IronOreMaxRev(Problem):
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "mixed"
+        self.variable_type = "discrete"
         self.lowerbound = 0
         self.upperbound = np.inf
         self.gradient_available = False
@@ -535,5 +535,5 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.uniform(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.uniform(30, 50), rand_sol_rng.uniform(90, 110))
+        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
         return x
