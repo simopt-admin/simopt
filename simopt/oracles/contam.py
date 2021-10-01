@@ -256,7 +256,7 @@ class ContaminationTotalCost(Problem):
         self.name = name
         self.dim = 5  # stages
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1
+        self.n_stochastic_constraints = 5
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "discrete"
@@ -386,7 +386,7 @@ class ContaminationTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"],)
+        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -405,7 +405,7 @@ class ContaminationTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = ([-1 + e for e in self.oracle.factors["error_prob"]],)
+        det_stoch_constraints = tuple(-np.ones(5) + self.oracle.factors["error_prob"]) # >:/
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
