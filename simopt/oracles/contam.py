@@ -273,7 +273,7 @@ class ContaminationTotalCost(Problem):
                 "datatype": list,
                 "default": [0, 0, 0, 0, 0]
             },
-            "prevention_budget": {
+            "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
@@ -292,7 +292,7 @@ class ContaminationTotalCost(Problem):
 
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "prevention_budget": self.check_prevention_budget,
+            "budget": self.check_budget,
             "prev_cost": self.check_prev_cost,
             # "upper_thres": self.check_upper_thres
         }
@@ -312,8 +312,8 @@ class ContaminationTotalCost(Problem):
         else:
             return True
 
-    def check_prevention_budget(self):
-        return self.factors["prevention_budget"] > 0
+    def check_budget(self):
+        return self.factors["budget"] > 0
 
 
     def vector_to_factor_dict(self, vector):
@@ -405,7 +405,7 @@ class ContaminationTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = tuple(-np.ones(5) + self.oracle.factors["error_prob"]) # >:/
+        det_stoch_constraints = tuple(-np.ones(5) + self.oracle.factors["error_prob"])
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
