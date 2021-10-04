@@ -23,7 +23,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 solver_name = "RNDSRCH"
-problem_name = "CNTNEWS-1"
+problem_name = "IRONORE-1"
 print(f"Testing solver {solver_name} on problem {problem_name}.")
 
 
