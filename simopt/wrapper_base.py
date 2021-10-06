@@ -781,7 +781,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             print("At least two experiments have different numbers of macro-replications.")
         # Check if experiment has been post-replicated and with common number of postreps.
         if getattr(experiment, "n_postreps", None) is None:
-            print(f"The experiment of {experiment.solver_name} on {experiment.problem_name} has not been post-replicated.")
+            print(f"The experiment of {experiment.solver.name} on {experiment.problem.name} has not been post-replicated.")
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
@@ -1362,7 +1362,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
-        save_plot(solver_name="SOLVER SET",
+        return save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type="solve_time_cdf",
                   normalize=True,
@@ -1851,6 +1851,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         plt.ylim((0, 0.5))
         title = f"{solver_name}\nAreas Under Progress Curves"
     plt.title(title, size=14)
+    return plt.figure()
 
 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
@@ -1905,6 +1906,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     path_name = path_name.replace("$", "")
     path_name = path_name.replace(" ", "_")
     plt.savefig(path_name, bbox_inches="tight")
+    return path_name
 
 
 class MetaExperiment(object):

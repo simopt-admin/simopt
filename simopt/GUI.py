@@ -1,13 +1,15 @@
+from os import path
 from random import expovariate
 import tkinter as tk
 from tkinter import ttk, Scrollbar, filedialog
 from timeit import timeit
 from functools import partial
-from tkinter.constants import FALSE
+from tkinter.constants import FALSE, MULTIPLE, S
 from numpy import e
 import time
-
-from scipy.stats.stats import _isconst
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from PIL import ImageTk, Image 
 
 from directory import problem_directory
 from directory import solver_directory
@@ -16,6 +18,7 @@ from wrapper_base import Experiment, MetaExperiment
 import wrapper_base
 import pickle
 from tkinter import messagebox
+from tkinter import Listbox
 import ast
 
 class Experiment_Window(tk.Tk):
@@ -155,10 +158,10 @@ class Experiment_Window(tk.Tk):
                                                 width = 15,
                                                 command = self.load_pickle_file_function)
         
-        self.post_process_all_button = ttk.Button(master=self.master,
-                                                text = "Post Process All",
-                                                width = 15,
-                                                command = self.post_rep_all_function)
+        # self.post_process_all_button = ttk.Button(master=self.master,
+        #                                         text = "Post Process All",
+        #                                         width = 15,
+        #                                         command = self.post_rep_all_function)
 
         self.post_normal_all_button = ttk.Button(master=self.master,
                                                 text = "Post Normalize Selected",
@@ -261,7 +264,7 @@ class Experiment_Window(tk.Tk):
         self.pickle_file_load_button.place(x=1150, y=375)
         self.pickle_file_pathname_label.place(x=850, y=400)
         self.pickle_file_pathname_show.place(x=950, y=400)
-        self.post_process_all_button.place(x=5,y=800)
+        # self.post_process_all_button.place(x=5,y=800)
         self.post_normal_all_button.place(x=250,y=800)
 
         self.queue_label_frame.place(x=0, y=375, height=400, width=800)
@@ -448,20 +451,9 @@ class Experiment_Window(tk.Tk):
             label_oracle = tk.Label(master=self.factor_tab_one_oracle, text=heading, font="Calibri 14 bold")
             label_oracle.grid(row=0, column=self.factor_heading_list_oracle.index(heading), padx=5, pady=3)
 
-        # self.oracle_factor_confirm_button = ttk.Button(master=self.master, # window button is used in
-        #             # aesthetic of button and specific formatting options
-        #             text = "Confirm Oracle Factors",
-        #             command = self.confirm_oracle_factors)
-
-        # self.oracle_factor_confirm_button.place(x=220, y=115)
 
         count_factors_oracle = 1
         for factor_type in self.oracle_object().specifications:
-            # print("size of dictionary", len(self.oracle_object().specifications[factor_type]))
-            # print("first", factor_type)
-            # print("second", self.oracle_object().specifications[factor_type].get("description"))
-            # print("third", self.oracle_object().specifications[factor_type].get("datatype"))    
-            # print("fourth", self.oracle_object().specifications[factor_type].get("default"))   
 
             self.dictionary_size_oracle = len(self.oracle_object().specifications[factor_type])
 
@@ -564,13 +556,6 @@ class Experiment_Window(tk.Tk):
             self.factor_tab_one_solver.grid_columnconfigure(self.factor_heading_list_solver.index(heading))
             label = tk.Label(master=self.factor_tab_one_solver, text=heading, font="Calibri 14 bold")
             label.grid(row=0, column=self.factor_heading_list_solver.index(heading), padx=5, pady=3)
-
-        # self.solver_factor_confirm_button = ttk.Button(master=self.master, # window button is used in
-        #             # aesthetic of button and specific formatting options
-        #             text = "Confirm Solver Factors",
-        #             command = self.confirm_solver_factors)
-
-        # self.solver_factor_confirm_button.place(x=220, y=195)
 
         self.solver_object = solver_directory[self.solver_var.get()]
 
@@ -691,10 +676,6 @@ class Experiment_Window(tk.Tk):
             self.problem_var.set("Problem")
             # resets solver_var to default value
             self.solver_var.set("Solver")
-
-            # self.factor_label_frame_problem.destroy()
-            # self.factor_label_frame_oracle.destroy()
-            # self.factor_label_frame_solver.destroy()
 
             # macro_entry is a positive integer
             if int(self.macro_entry.get()) != 0:
@@ -918,6 +899,7 @@ class Experiment_Window(tk.Tk):
         self.solver_var.set(current_experiment_arguments[1])
         self.macro_var.set(current_experiment_arguments[2])
         self.show_problem_factors(True, current_experiment_arguments)
+        # self.my_experiment[1][3][1]
         self.show_solver_factors(True, current_experiment_arguments)
 
         viewEdit_button_added = self.widget_list[row_index-1][4]
@@ -964,18 +946,10 @@ class Experiment_Window(tk.Tk):
             solver_factors = self.confirm_solver_factors()
             self.selected.append(solver_factors)
 
-            # resets problem_var to default value
-            # self.problem_var.set("Problem")
-            # resets solver_var to default value
-            # self.solver_var.set("Solver")
-
-            # self.factor_label_frame_problem.destroy()
-            # self.factor_label_frame_oracle.destroy()
-            # self.factor_label_frame_solver.destroy()
-
             self.macro_reps = self.selected[2]
             self.solver_name = self.selected[1]
             self.problem_name = self.selected[0]
+            
 
             # macro_entry is a positive integer
             if int(self.macro_entry.get()) != 0:
@@ -1005,6 +979,17 @@ class Experiment_Window(tk.Tk):
                 self.my_experiment.post_norm_ready = False
 
                 compatibility_result = self.my_experiment.check_compatibility()
+                for exp in self.experiment_object_list:
+                    if exp.problem.name == self.my_experiment.problem.name:
+                        if exp.problem != self.my_experiment.problem:
+                            message = "Please Rename Problem with Unique Name, for Unique Factors"
+                            tk.messagebox.showerror(title="Error Window", message=message)
+                            return False
+                    # if exp.solver.name == self.my_experiment.solver.name:
+                    #     if exp.solver != self.my_experiment.solver:
+                    #         message = "Please Rename Solver with Unique Name, for Unique Factors"
+                    #         tk.messagebox.showerror(title="Error Window", message=message)
+                    #         return
                 
                 if compatibility_result == "":
                     self.experiment_object_list.insert(place,self.my_experiment)
@@ -1053,14 +1038,8 @@ class Experiment_Window(tk.Tk):
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
                     
-                    
-                    # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
-                    # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
-                    # self.select_checkbox.pack()
-                    
                     self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
                     self.widget_list.insert(place,self.widget_row)
-                    # self.select_checkbox.deselect()
 
                     self.count_experiment_queue += 1
 
@@ -1233,12 +1212,12 @@ class Experiment_Window(tk.Tk):
         self.experiment_master_list[row_index-1]
         self.experiment_master_list[row_index-1][5][0]['crn_across_solns'] = self.boolean_var.get()
         
-        self.add_function(row_index)
-        self.clearRow_function(row_index + 1)
+        if self.add_function(row_index):
+            self.clearRow_function(row_index + 1)
 
-        self.factor_label_frame_problem.destroy()
-        self.factor_label_frame_oracle.destroy()
-        self.factor_label_frame_solver.destroy()
+            self.factor_label_frame_problem.destroy()
+            self.factor_label_frame_oracle.destroy()
+            self.factor_label_frame_solver.destroy()
      
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
@@ -1266,11 +1245,7 @@ class Experiment_Window(tk.Tk):
             filetype = filetype[len(filetype)-1]
             if filetype in acceptable_types:
                 experiment_pathname = filename[filename.index("experiments/outputs/"):]
-                # print(experiment_pathname)
-                # print(type(experiment_pathname))
-                # with open(experiment_pathname) as file:
-                #     experiment = pickle.load(file)
-                #     print(experiment)
+
                 pickle_file = experiment_pathname
                 infile = open(pickle_file,'rb')
                 new_dict = pickle.load(infile)
@@ -1283,7 +1258,6 @@ class Experiment_Window(tk.Tk):
 
                 if compatibility_result == "":
                     self.experiment_object_list.insert(place,self.my_experiment)
-                    #print(self.experiment_object_list)
 
                     # filler in master list so that placement stays correct
                     self.experiment_master_list.insert(place,None)
@@ -1327,10 +1301,6 @@ class Experiment_Window(tk.Tk):
                                                         command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
-
-                    # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
-                    # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
-                    # self.select_checkbox.pack()
                     
                     
                     self.widget_row = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.viewEdit_button_added, self.clear_button_added, self.postprocess_button_added]
@@ -1344,8 +1314,15 @@ class Experiment_Window(tk.Tk):
                         run_button["state"] = "disabled"
                         run_button = row_of_widgets[6]
                         run_button["state"] = "normal"
+                        self.my_experiment.post_norm_ready = False
+                        if self.my_experiment.check_postreplicate():
+                            self.experiment_object_list[place].post_norm_ready = True
+                            self.widget_list[place][6]["text"] = "Done Post Processing"
+                            self.widget_list[place][6]["state"] = "disabled"
 
                     self.count_experiment_queue += 1
+                    if self.notebook.index('current') == 2:
+                        self.post_norm_setup()
 
             else:
                 message = f"You have loaded a file, but {filetype} files are not acceptable!\nPlease try again."
@@ -1388,45 +1365,21 @@ class Experiment_Window(tk.Tk):
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("1000x600")
         self.postrep_window.title("Post Processing Page")
-        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, False, self)
+        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, self)
 
     def post_process_disable_button(self, meta=False):
         # print('IN post_process_disable_button ', self.post_rep_function_row_index)
         if meta:
-            
             row_index = self.post_rep_function_row_index - 1
-            self.widget_meta_list[row_index][6]["text"] = "Done Post Processing"
-            self.widget_meta_list[row_index][6]["state"] = "disabled"
+            self.widget_meta_list[row_index][5]["text"] = "Done Post Processing"
+            self.widget_meta_list[row_index][5]["state"] = "disabled"
         else:
             row_index = self.post_rep_function_row_index - 1
             self.experiment_object_list[row_index].post_norm_ready = True
             self.widget_list[row_index][6]["text"] = "Done Post Processing"
             self.widget_list[row_index][6]["state"] = "disabled"
-            self.widget_list[row_index][7]["state"] = "normal"
+            # self.widget_list[row_index][7]["state"] = "normal"
         #print(self.widget_list[row_index])
-
-    def post_rep_all_function(self):
-        self.selected = self.experiment_object_list
-        # calls postprocessing window
-        self.post_normal_all_button["state"] = "normal"
-        self.postrep_window = tk.Tk()
-        self.postrep_window.geometry("1000x600")
-        self.postrep_window.title("Post Processing Page")
-        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.experiment_object_list, True)
-    
-    def post_normal_all_function(self):
-        n_postreps_init_opt = 100
-        
-        print(self.post_norm_exp_list)
-        print("norm list")
-        # print(normalize_list)
-        wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
-    
-    def checkbox_function(self, rowNum):
-        if rowNum in self.normalize_list:
-            self.normalize_list.remove(rowNum)
-        else:
-            self.normalize_list.append(rowNum)
     
     def checkbox_function2(self, exp, rowNum):
         newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name)
@@ -1525,7 +1478,7 @@ class Experiment_Window(tk.Tk):
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("1000x600")
         self.postrep_window.title("Post Processing Page")
-        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, False, self, True)
+        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, self, True)
 
     def progress_bar_test(self):
         root = tk.Tk()
@@ -1554,8 +1507,18 @@ class Experiment_Window(tk.Tk):
         progress.pack(pady = 10)
 
     def post_norm_setup(self):
-        newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name)
         
+        newlist = sorted(self.experiment_object_list, key=lambda x: x.problem.name)
+        for widget in self.tab_three.winfo_children():
+            widget.destroy()
+
+        self.heading_list = ["Problem", "Solvers", "Select", "", "", "", "",""]
+        for heading in self.heading_list:
+            self.tab_three.grid_columnconfigure(self.heading_list.index(heading))
+            label = tk.Label(master=self.tab_three, text=heading, font="Calibri 14 bold")
+            label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
+
+        self.widget_norm_list = []
         self.normalize_list2 = []
         self.post_norm_exp_list = []
 
@@ -1575,10 +1538,22 @@ class Experiment_Window(tk.Tk):
                 self.solver_added.grid(row=row_num, column=1, sticky='nsew', padx=5, pady=3)
 
                 self.select_checkbox = tk.Checkbutton(self.tab_three,text="",command=partial(self.checkbox_function2, exp, row_num-1))
-                self.select_checkbox.grid(row=row_num, column=3, sticky='nsew', padx=5, pady=3)
+                self.select_checkbox.grid(row=row_num, column=2, sticky='nsew', padx=5, pady=3)
+                self.select_checkbox.deselect()
 
                 self.widget_norm_list.append([self.problem_added, self.solver_added, self.select_checkbox])
-
+    
+    def post_normal_all_function(self):
+        self.postrep_window = tk.Toplevel()
+        self.postrep_window.geometry("1000x600")
+        self.postrep_window.title("Post Processing Page")
+        self.app = Post_Normal_Window(self.postrep_window, self.post_norm_exp_list, self)
+        # wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
+    
+    def post_norm_return_func(self):
+        # print('IN post_process_disable_button ', self.post_rep_function_row_index)
+        print("youve returned")
+        
     
     
 class Cross_Design_Window():
@@ -1741,7 +1716,7 @@ class Post_Processing_Window():
     experiment_list : list
         List of experiment object arguments
     """
-    def __init__(self, master, myexperiment, experiment_list, all, main_window,meta=False):
+    def __init__(self, master, myexperiment, experiment_list, main_window,meta=False):
 
         self.meta = meta
         self.main_window = main_window
@@ -1862,18 +1837,15 @@ class Post_Processing_Window():
             self.crn_across_budget = self.experiment_list[1] # boolean
             self.crn_across_macroreps = self.experiment_list[2] # boolean
 
-            if self.run_all:
-                for exp in self.selected:
-                    exp.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
-            else:
-                # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
-                self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
+            
+            # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
+            self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
 
             # print(self.experiment_list)
             self.master.destroy()
             self.post_processed_bool = True
 
-            Experiment_Window.post_process_disable_button(self.main_window,meta=self.meta)
+            Experiment_Window.post_process_disable_button(self.main_window,self.meta)
 
             return self.experiment_list
 
@@ -1932,6 +1904,344 @@ class Post_Processing_Window():
 
     def test_function2(self, *args):
         print("connection enabled")
+
+class Post_Normal_Window():
+    """
+    Post Normalize Page of the GUI
+
+    Arguments
+    ----------
+    master : tk.Tk
+        Tkinter window created from Experiment_Window.run_single_function
+    myexperiment : object(Experiment)
+        Experiment object created in Experiment_Window.run_single_function
+    experiment_list : list
+        List of experiment object arguments
+    """
+    def __init__(self, master, experiment_list, main_window, meta=False):
+        self.post_norm_exp_list = experiment_list
+        self.meta = meta
+        self.main_window = main_window
+        self.master = master
+        self.optimal_var = tk.StringVar(master=self.master)
+        self.initial_var = tk.StringVar(master=self.master)
+        self.check_var = tk.IntVar(master=self.master)
+        self.init_var = tk.StringVar(self.master)
+        self.proxy_var = tk.StringVar(self.master)
+        self.proxy_sol = tk.StringVar(self.master)
+
+        self.all_solvers = []
+        for solvers in self.post_norm_exp_list:
+            if solvers.solver.name not in self.all_solvers:
+                self.all_solvers.append(solvers.solver.name)
+        print(self.all_solvers)
+
+        #print("my exp post pro ", experiment_list)
+        self.selected = experiment_list
+
+        self.frame = tk.Frame(self.master)
+        top_lab = "Welcome to the Post-Normalization Page for " + self.post_norm_exp_list[0].problem.name + " \n With Solvers"
+        for solv in self.all_solvers:
+            top_lab = top_lab + ", " + solv 
+
+        self.title = ttk.Label(master = self.master,
+                                text = top_lab,
+                                font = "Calibri 15 bold",
+                                background="#fff")
+
+        self.n_init_label = ttk.Label(master = self.master,
+                                text = "The Selected Initial Solution, x, is " + str(self.post_norm_exp_list[0].x0),
+                                font = "Calibri 11 bold",
+                                wraplength = "400")
+
+        self.n_opt_label = ttk.Label(master = self.master,
+                                text = "The Optimal Solution, x*, is " + str(self.post_norm_exp_list[0].xstar) + " for this " + "Min/max" + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
+                                font = "Calibri 11 bold",
+                                wraplength = "600")
+
+        self.n_initial_label = ttk.Label(master = self.master,
+                                text = "Initial Function Value, f(x) (optional)",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+        self.n_optimal_label = ttk.Label(master = self.master,
+                                text = "Optimal Solution (opitional)",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+        self.n_proxy_val_label = ttk.Label(master = self.master,
+                                text = "Proxy Optimal Value, f(x)",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+        self.n_proxy_sol_label = ttk.Label(master = self.master,
+                                text = "Proxy Optimal Solution, x",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+        
+        
+        t = ["x","f(x)"]
+        self.n_proxy_sol_entry = ttk.Entry(master=self.master, textvariable = self.proxy_sol, justify = tk.LEFT, width=10)
+        self.n_proxy_val_entry = ttk.Entry(master=self.master, textvariable = self.proxy_var, justify = tk.LEFT, width=10)
+        self.n_initial_entry = ttk.Entry(master=self.master, textvariable = self.init_var, justify = tk.LEFT)
+
+        self.n_crn_label = ttk.Label(master = self.master,
+                                text = "CRN for x\u2070 and optimal x\u002A?",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+        self.n_crn_checkbox = tk.Checkbutton(self.master,text="",variable=self.check_var)
+
+
+        self.n_postreps_init_opt_label = ttk.Label(master = self.master,
+                                text = "Number of post-normalizations to take at initial x\u2070 and optimal x\u002A:",
+                                font = "Calibri 11 bold",
+                                wraplength = "250")
+
+        self.n_postreps_init_opt_var = tk.StringVar(self.master)
+        self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT)
+        self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
+        # self.n_initial_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].x0) )
+        if self.post_norm_exp_list[0].xstar:
+            self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar))
+
+
+        self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
+                        text = "Finish Post-Normalization of Experiment",
+                        font = "Calibri 11 bold",
+                        wraplength = "250")
+
+        self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
+                        # aesthetic of button and specific formatting options
+                        text = "Post Normalize", 
+                        width = 15, # width of button
+                        command = self.post_norm_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
+        # self.macro_var = tk.StringVar(self.master)
+        # self.macro_entry = ttk.Entry(master=self.master, textvariable = self.macro_var, justify = tk.LEFT)
+
+        self.title.place(x=15, y=15)
+
+        self.n_init_label.place(x=0, y=70)
+        
+        # self.n_initial_label.place(x=0, y=95)
+        # self.n_initial_entry.place(x=255, y=95)
+
+        self.n_opt_label.place(x=0,y=150)
+
+        # self.n_proxy_label.place(x=0, y=200)
+        self.n_proxy_val_label.place(x=0,y=250)
+        self.n_proxy_sol_label.place(x=300,y=250)
+        self.n_proxy_val_entry.place(x=150, y=250)
+        self.n_proxy_sol_entry.place(x=470, y=250)
+
+        self.n_crn_label.place(x=0, y=300)
+        self.n_crn_checkbox.place(x=255, y=300)
+        #default to selected
+        self.n_crn_checkbox.select()
+
+        self.n_postreps_init_opt_label.place(x=0, y=400)
+        self.n_postreps_init_opt_entry.place(x=255, y=400)
+        
+
+        self.post_processing_run_label.place(x=0, y=500)
+        self.post_processing_run_button.place(x=255, y=500)        
+
+        self.frame.pack(side="top", fill="both", expand=True)
+
+    def post_norm_run_function(self):
+
+        self.experiment_list = []
+        
+        # if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
+        if self.n_postreps_init_opt_entry.get().isnumeric() != False :                        
+            n_postreps_init_opt = int(self.n_postreps_init_opt_entry.get())
+            crn = self.check_var.get()
+            wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=crn, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
+            # self.master.destroy()
+            self.post_processed_bool = True
+
+            # path_name = wrapper_base.plot_solvability_cdfs(self.post_norm_exp_list)
+            
+            # img = tk.PhotoImage(file=path_name)
+            # panel = tk.Label(
+            #     self.master,
+            #     image=img
+            # )
+            # panel.photo = img
+            # panel.place(x=0,y=0)
+
+            self.postrep_window = tk.Toplevel()
+            self.postrep_window.geometry("1000x800")
+            self.postrep_window.title("Post Processing Page")
+            self.master.destroy()
+            Plot_Window(self.postrep_window, self.post_norm_exp_list, self.main_window)
+
+            return 
+
+        elif self.n_postreps_init_opt_entry.get().isnumeric() == False:
+            message = "Please enter a valid value for the number of post replications to take at each recommended solution."
+            tk.messagebox.showerror(title="Error Window", message=message)
+
+            self.n_postreps_entry.delete(0, len(self.n_postreps_entry.get()))
+            self.n_postreps_entry.insert(index=tk.END, string="100")
+
+    def test_function2(self, *args):
+        print("connection enabled")
+
+class Plot_Window():
+        """
+        Plot Window Page of the GUI
+
+        Arguments
+        ----------
+        master : tk.Tk
+            Tkinter window created from Experiment_Window.run_single_function
+        myexperiment : object(Experiment)
+            Experiment object created in Experiment_Window.run_single_function
+        experiment_list : list
+            List of experiment object arguments
+        """
+        def __init__(self, master, experiment_list, main_window, meta=False):
+            self.master = master
+            self.experiment_list = experiment_list
+            self.main_window = main_window
+            self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
+            self.plot_type_names = ["Mean Progress Curve", "Quatile Progress Curve", "Solve time cdf", "Scatter Plot", "cdf Solvability","Quantile Solvability","cdf Difference Plot", "Quanitle Difference Plot"]
+
+            self.problem_menu = Listbox(self.master,selectmode = "multiple")
+            self.solver_menu = Listbox(self.master,selectmode = "multiple")
+            
+
+            self.all_problems = []
+            i = 0
+            for problem in self.experiment_list:
+                if problem.problem.name not in self.all_problems:
+                    self.all_problems.append(problem.problem.name)
+                    self.problem_menu.insert(i,problem.problem.name)
+                    i += 1
+
+            self.all_solvers = []
+            i = 0
+            for solvers in self.experiment_list:
+                if solvers.solver.name not in self.all_solvers:
+                    self.all_solvers.append(solvers.solver.name)
+                    self.solver_menu.insert(i,solvers.solver.name)
+                    i += 1
+
+            self.instruction_label = tk.Label(master=self.master, # window label is used in
+                            text = "Welcome to the Plotting Page of SimOpt \n Select which Problem and Solvers to Plot",
+                            font = "Calibri 15 bold")
+        
+            self.problem_label = tk.Label(master=self.master, # window label is used in
+                            text = "Please Select the Problem:*",
+                            font = "Calibri 11 bold")
+            self.plot_label = tk.Label(master=self.master, # window label is used in
+                            text = "Please Select Plot Type",
+                            font = "Calibri 11 bold")
+            
+            # from experiments.inputs.all_factors.py:
+            self.problem_list = problem_directory
+            # stays the same, has to change into a special type of variable via tkinter function
+            self.problem_var = tk.StringVar(master=self.master)
+            self.plot_var = tk.StringVar(master=self.master)
+
+            # self.problem_menu = tk.Listbox(self.master, self.problem_var, "Problem", *self.all_problems, command=self.experiment_list[0].problem.name)
+            self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names, command=self.experiment_list[0].problem.name)
+            
+            self.solver_label = tk.Label(master=self.master, # window label is used in
+                            text = "Please select the Solver:*",
+                            font = "Calibri 11 bold")
+
+            # from experiments.inputs.all_factors.py:
+            self.solver_list = solver_directory
+            # stays the same, has to change into a special type of variable via tkinter function
+            self.solver_var = tk.StringVar(master=self.master)
+        
+            # creates drop down menu, for tkinter, it is called "OptionMenu"
+            # self.solver_menu = ttk.OptionMenu(self.master, self.solver_var, "Solver", *self.all_solvers)       
+            
+            self.add_button = ttk.Button(master=self.master,
+                                        text = "Add",
+                                        width = 15,
+                                        command=self.test_funct)
+
+
+            self.post_normal_all_button = ttk.Button(master=self.master,
+                                                    text = "Plot",
+                                                    width = 20,
+                                                    state = "normal",
+                                                    command = self.test_funct)
+
+
+            self.queue_label_frame = ttk.Labelframe(master=self.master, text="Experiment")
+
+            self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
+
+            self.queue_frame = ttk.Frame(master=self.queue_canvas)
+            self.vert_scroll_bar = Scrollbar(self.queue_label_frame, orient="vertical", command=self.queue_canvas.yview)
+            self.queue_canvas.configure(yscrollcommand=self.vert_scroll_bar.set)
+
+            self.horiz_scroll_bar = Scrollbar(self.queue_label_frame, orient="horizontal", command=self.queue_canvas.xview)
+            self.queue_canvas.configure(xscrollcommand=self.horiz_scroll_bar.set)
+
+            self.vert_scroll_bar.pack(side="right", fill="y")
+            self.horiz_scroll_bar.pack(side="bottom", fill="x")
+
+            self.queue_canvas.pack(side="left", fill="both", expand=True)
+            self.queue_canvas.create_window((0,0), window=self.queue_frame, anchor="nw",
+                                    tags="self.queue_frame")
+            
+            # self.queue_frame.bind("<Configure>", self.onFrameConfigure_queue)
+
+            self.notebook = ttk.Notebook(master=self.queue_frame)
+            self.notebook.pack(fill="both")
+
+            # def on_tab_change(event):
+            #     tab = event.widget.tab('current')['text']
+            #     if tab == 'Post Normalize by Problem':
+            #         self.post_norm_setup()
+                    
+            # self.notebook.bind('<<NotebookTabChanged>>', on_tab_change)
+
+            self.tab_one = tk.Frame(master=self.notebook)
+
+            # 
+            self.notebook.add(self.tab_one, text="Experiments to Plot")
+
+            self.tab_one.grid_rowconfigure(0)
+
+            self.heading_list = ["Problem", "Solver", "Plot Type"]
+
+            for heading in self.heading_list:
+                self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
+                label = tk.Label(master=self.tab_one, text=heading, font="Calibri 14 bold")
+                label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
+
+
+            self.instruction_label.place(x=0, y=0)
+
+            self.problem_label.place(x=0, y=85)
+            self.problem_menu.place(x=200, y=85)
+
+            self.solver_label.place(x=400, y=85)
+            self.solver_menu.place(x=600, y=85)
+
+            self.plot_label.place(x=0, y=150)
+            self.plot_menu.place(x=200, y=150)
+
+            self.add_button.place(x=5, y=250)
+
+            self.post_normal_all_button.place(x=270,y=600)
+
+            self.queue_label_frame.place(x=0, y=300, height=300, width=700)
+
+            # self.frame.pack(fill='both')
+        
+        def test_funct():
+            print("test")
+
+#             If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
+# and
+# https://stackoverflow.com/questions/20399243/display-message-when-hovering-over-something-with-mouse-cursor-in-python (see the one with 11 upvotes)
+
+
+
 
 def main(): 
     root = tk.Tk()
