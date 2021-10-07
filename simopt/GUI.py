@@ -2103,9 +2103,10 @@ class Plot_Window():
             self.main_window = main_window
             self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
             self.plot_type_names = ["Mean Progress Curve", "Quatile Progress Curve", "Solve time cdf", "Scatter Plot", "cdf Solvability","Quantile Solvability","cdf Difference Plot", "Quanitle Difference Plot"]
+            self.num_plots = 0
 
-            self.problem_menu = Listbox(self.master,selectmode = "multiple")
-            self.solver_menu = Listbox(self.master,selectmode = "multiple")
+            self.problem_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
+            self.solver_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
             
 
             self.all_problems = []
@@ -2142,7 +2143,7 @@ class Plot_Window():
             self.plot_var = tk.StringVar(master=self.master)
 
             # self.problem_menu = tk.Listbox(self.master, self.problem_var, "Problem", *self.all_problems, command=self.experiment_list[0].problem.name)
-            self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names, command=self.experiment_list[0].problem.name)
+            self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names)
             
             self.solver_label = tk.Label(master=self.master, # window label is used in
                             text = "Please select the Solver:*",
@@ -2159,7 +2160,7 @@ class Plot_Window():
             self.add_button = ttk.Button(master=self.master,
                                         text = "Add",
                                         width = 15,
-                                        command=self.test_funct)
+                                        command=self.add_plot)
 
 
             self.post_normal_all_button = ttk.Button(master=self.master,
@@ -2206,7 +2207,7 @@ class Plot_Window():
 
             self.tab_one.grid_rowconfigure(0)
 
-            self.heading_list = ["Problem", "Solver", "Plot Type"]
+            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters"]
 
             for heading in self.heading_list:
                 self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -2222,21 +2223,71 @@ class Plot_Window():
             self.solver_label.place(x=400, y=85)
             self.solver_menu.place(x=600, y=85)
 
-            self.plot_label.place(x=0, y=150)
-            self.plot_menu.place(x=200, y=150)
+            self.plot_label.place(x=0, y=250)
+            self.plot_menu.place(x=200, y=250)
 
-            self.add_button.place(x=5, y=250)
+            self.add_button.place(x=5, y=310)
 
-            self.post_normal_all_button.place(x=270,y=600)
+            self.post_normal_all_button.place(x=270,y=700)
 
-            self.queue_label_frame.place(x=0, y=300, height=300, width=700)
+            self.queue_label_frame.place(x=0, y=400, height=250, width=700)
 
             # self.frame.pack(fill='both')
         
-        def test_funct():
-            print("test")
+        def test_funct(self):
+            for i in self.solver_menu.curselection():
+                print(self.solver_menu.get(i))
+                
+        
+        def add_plot(self):
+            place = self.num_plots
 
-#             If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
+            solverList = ""
+            for i in self.solver_menu.curselection():
+                print(self.solver_menu.get(i))
+                solverList = solverList + self.solver_menu.get(i) + " "
+            
+            problemList = ""
+            for i in self.problem_menu.curselection():
+                print(self.problem_menu.get(i))
+                problemList = problemList + self.problem_menu.get(i) + " "
+
+            plotType = str(self.plot_var.get())
+            # plotType = self.plot_var
+            # path_name = wrapper_base.plot_solvability_cdfs(self.post_norm_exp_list)
+            
+            # img = tk.PhotoImage(file=path_name)
+            # panel = tk.Label(
+            #     self.master,
+            #     image=img
+            # )
+            # panel.photo = img
+            # panel.place(x=0,y=0)
+            self.problem_button_added = tk.Label(master=self.tab_one,
+                                                    text=problemList,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+            self.problem_button_added.grid(row=place, column=1, sticky='nsew', padx=5, pady=3)
+
+            self.solver_button_added = tk.Label(master=self.tab_one,
+                                                    text=solverList,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+            self.solver_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
+
+            self.plot_type_button_added = tk.Label(master=self.tab_one,
+                                                    text=plotType,
+                                                    font = "Calibri 10",
+                                                    justify="center")
+            self.plot_type_button_added.grid(row=place, column=3, sticky='nsew', padx=5, pady=3)
+            
+            # self.widget_row = [self.problem_button_added, self.solver_button_added, self.plot_type_button_added]
+            # self.widget_list.insert(0,self.widget_row)
+
+            self.num_plots += 1
+
+
+# If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
 # and
 # https://stackoverflow.com/questions/20399243/display-message-when-hovering-over-something-with-mouse-cursor-in-python (see the one with 11 upvotes)
 
