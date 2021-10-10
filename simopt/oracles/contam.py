@@ -294,6 +294,7 @@ class ContaminationTotalCost(Problem):
         # Instantiate oracle with fixed factors and over-riden defaults.
         self.oracle = Contamination(self.oracle_fixed_factors)
         self.dim = self.oracle.factors["stages"]
+        self.oracle_decision_factors = set("prev_decision")
 
     def check_initial_solution(self):
         return all(u >= 0 & u <= 1 for u in self.factors["initial_solution"])
