@@ -229,6 +229,12 @@ class RMITDMaxRevenue(Problem):
         optimal solution
     oracle : Oracle object
         associated simulation oracle that generates replications
+    oracle_default_factors : dict
+        default values for overriding oracle-level default factors
+    oracle_fixed_factors : dict
+        combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -268,6 +274,7 @@ class RMITDMaxRevenue(Problem):
         self.optimal_value = None
         self.optimal_solution = None  # (90, 50, 0)
         self.oracle_default_factors = {}
+        self.oracle_decision_factors = {"initial_inventory", "reservation_qtys"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

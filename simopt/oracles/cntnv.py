@@ -208,6 +208,8 @@ class CntNVMaxProfit(Problem):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -253,6 +255,7 @@ class CntNVMaxProfit(Problem):
             "Burr_c": 2.0,
             "Burr_k": 20.0
             }
+        self.oracle_decision_factors = {"order_quantity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

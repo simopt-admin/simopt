@@ -310,6 +310,8 @@ class SSContMinCost(Problem):
         default values for overriding oracle-level default factors
     oracle_fixed_factors : dict
         combination of overriden oracle-level factors and defaults
+    oracle_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -349,6 +351,7 @@ class SSContMinCost(Problem):
         self.optimal_value = None
         self.optimal_solution = None
         self.oracle_default_factors = {}
+        self.oracle_decision_factors = {"s", "S"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
