@@ -8,13 +8,13 @@ import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-# from oracles.mm1queue import MM1Queue
+# from models.mm1queue import MM1Queue
 from data_farming_base import DesignPoint, DataFarmingExperiment #, DataFarmingMetaExperiment
 from csv import DictReader
 
 
 factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quantity"]
-myexperiment = DataFarmingExperiment(oracle_name="CNTNEWS", factor_settings_filename="oracle_factor_settings", factor_headers=factor_headers, design_filename=None, oracle_fixed_factors={})
+myexperiment = DataFarmingExperiment(model_name="CNTNEWS", factor_settings_filename="model_factor_settings", factor_headers=factor_headers, design_filename=None, model_fixed_factors={})
 myexperiment.run(n_reps=10, crn_across_design_pts=False)
 myexperiment.print_to_csv(csv_filename="cntnews_data_farming_output")
 
@@ -26,7 +26,7 @@ myexperiment.print_to_csv(csv_filename="cntnews_data_farming_output")
 #                                              design_filename="random_search_design",
 #                                              solver_fixed_factors={},
 #                                              problem_fixed_factors={},
-#                                              oracle_fixed_factors={})
+#                                              model_fixed_factors={})
 # myMetaExperiment.run(n_macroreps=20)
 # myMetaExperiment.post_replicate(n_postreps=100, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 # # myMetaExperiment.calculate_statistics() # solve_tols=[0.10], beta=0.50)

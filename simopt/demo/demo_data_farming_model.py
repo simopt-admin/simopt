@@ -13,7 +13,7 @@ from data_farming_base import DataFarmingExperiment
 from csv import DictReader
 
 # Specify the name of the model as it appears in directory.py
-oracle_name = "CNTNEWS"
+model_name = "CNTNEWS"
 
 # Specify the names of the model factors (in order) that will be varied.
 factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quantity"]
@@ -26,7 +26,7 @@ factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quant
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-factor_settings_filename = "oracle_factor_settings"
+factor_settings_filename = "model_factor_settings"
 
 # OR, if the design has been created, provide the name of a .text file
 # containing the following:
@@ -34,7 +34,7 @@ factor_settings_filename = "oracle_factor_settings"
 #    - the number of columns equal to the number of factors being varied
 #    - each value in the table gives the value of the factor (col index)
 #      for the design point (row index)
-# E.g., design_filename = "oracle_factor_settings_design"
+# E.g., design_filename = "model_factor_settings_design"
 design_filename = None
 
 # Specify a common number of replications to run of the model at each
@@ -51,11 +51,11 @@ output_filename = "cntnews_data_farming_output"
 # No code beyond this point needs to be edited.
 
 # Create DataFarmingExperiment object.
-myexperiment = DataFarmingExperiment(oracle_name=oracle_name,
+myexperiment = DataFarmingExperiment(model_name=model_name,
                                      factor_settings_filename=factor_settings_filename,
                                      factor_headers=factor_headers,
                                      design_filename=design_filename,
-                                     oracle_fixed_factors={}
+                                     model_fixed_factors={}
                                      )
 
 # Run replications and print results to file.
