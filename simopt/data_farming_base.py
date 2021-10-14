@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import csv
-import pickle
 from copy import deepcopy
 
 from directory import oracle_directory
@@ -15,22 +14,22 @@ class DesignPoint(object):
 
     Attributes
     ----------
-    oracle : Oracle object
+    oracle : 'base.Oracle'
         oracle to simulate
-    oracle_factors : dict
+    oracle_factors : 'dict'
         oracle factor names and values
-    rng_list : list of rng.MRG32k3a objects
+    rng_list : 'list' ['rng.MRG32k3a']
         rngs for oracle to use when running replications at the solution
-    n_reps : int
+    n_reps : 'int'
         number of replications run at a design point
-    responses : dict
+    responses : 'dict'
         responses observed from replications
-    gradients : dict of dict
+    gradients : 'dict' ['dict']
         gradients of responses (w.r.t. oracle factors) observed from replications
 
-    Arguments
-    ---------
-    oracle : Oracle object
+    Parameters
+    ----------
+    oracle : 'base.Oracle'
         oracle with factors oracle_factors
     """
     def __init__(self, oracle):
@@ -48,7 +47,7 @@ class DesignPoint(object):
 
         Arguments
         ---------
-        rng_list : list of rng.MRG32k3a objects
+        rng_list : 'list' ['rng.MRG32k3a']
             list of random-number generators used to run simulation replications
         """
         if copy:
@@ -61,8 +60,8 @@ class DesignPoint(object):
         Simulate m replications for the current oracle factors.
         Append results to the responses and gradients dictionaries.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         m : int > 0
             number of macroreplications to run at the design point
         """
@@ -92,24 +91,24 @@ class DataFarmingExperiment(object):
 
     Attributes
     ----------
-    oracle : Oracle object
+    oracle : 'base.Oracle'
         oracle on which the experiment is run
-    design : list of DesignPoint objects
+    design : 'list' ['data_farming_base.DesignPoint']
         list of design points forming the design
     n_design_pts : int
         number of design points in the design
 
-    Arguments
-    ---------
-    oracle_name : string
+    Parameters
+    ----------
+    oracle_name : 'str'
         name of oracle on which the experiment is run
-    factor_settings_filename : string
+    factor_settings_filename : 'str'
         name of .txt file containing factor ranges and # of digits
-    factor_headers : list of strings
+    factor_headers : 'list' ['str']
         ordered list of factor names appearing in factor settings/design file
-    design_filename : string
+    design_filename : 'str'
         name of .txt file containing design matrix
-    oracle_fixed_factors : dictionary
+    oracle_fixed_factors : 'dict'
         non-default values of oracle factors that will not be varied
     """
     def __init__(self, oracle_name, factor_settings_filename, factor_headers, design_filename=None, oracle_fixed_factors={}):
@@ -118,21 +117,21 @@ class DataFarmingExperiment(object):
         if design_filename is None:
             # Create oracle factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + factor_settings_filename + ".txt > ./data_farming_experiments/" + factor_settings_filename + "_design.txt"
+            command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
             os.system(command)
             # Append design to base filename.
-            design_filename = factor_settings_filename + "_design"
+            design_filename = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file.
-        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        design_table = np.loadtxt(f"./data_farming_experiments/{design_filename}.txt")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
         self.design = []
         design_pt_factors = {}
-        for i in range(self.n_design_pts):
-            for j in range(len(factor_headers)):
+        for dp_index in range(self.n_design_pts):
+            for factor_idx in range(len(factor_headers)):
                 # Parse oracle factors for next design point.
-                design_pt_factors[factor_headers[j]] = design_table[i][j]
+                design_pt_factors[factor_headers[factor_idx]] = design_table[dp_index][factor_idx]
             # Update oracle factors according to next design point.
             self.oracle.factors.update(design_pt_factors)
             # Create new design point and add to design.
@@ -142,11 +141,11 @@ class DataFarmingExperiment(object):
         """
         Run a fixed number of macroreplications at each design point.
 
-        Arguments
-        ---------
-        n_reps : int
+        Parameters
+        ----------
+        n_reps : 'int'
             number of replications run at each design point
-        crn_across_design_pts : Boolean
+        crn_across_design_pts : 'bool'
             use CRN across design points?
         """
         # Setup random number generators for oracle.
@@ -175,9 +174,9 @@ class DataFarmingExperiment(object):
         Extract observed responses from simulated design points.
         Publish to .csv output file.
 
-        Argument
-        --------
-        csv_filename : string
+        Parameters
+        ----------
+        csv_filename : 'str'
             name of .csv file to print output to
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
