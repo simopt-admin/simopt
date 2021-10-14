@@ -1949,12 +1949,16 @@ class Post_Normal_Window():
                                 background="#fff")
 
         self.n_init_label = ttk.Label(master = self.master,
-                                text = "The Selected Initial Solution, x, is " + str(self.post_norm_exp_list[0].x0),
+                                # text = "The Selected Initial Solution, x, is " + str(self.post_norm_exp_list[0].x0),
+                                text = "The Selected Initial Solution, x, is " ,
                                 font = "Calibri 11 bold",
                                 wraplength = "400")
 
         self.n_opt_label = ttk.Label(master = self.master,
-                                text = "The Optimal Solution, x*, is " + str(self.post_norm_exp_list[0].xstar) + " for this " + minmax + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
+                                #print this one
+                                #exp.problem.optimal_solution
+                                text = "The Optimal Solution, x*, is " + " for this " + minmax + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
+                                # text = "The Optimal Solution, x*, is " + str(self.post_norm_exp_list[0].xstar) + " for this " + minmax + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
                                 font = "Calibri 11 bold",
                                 wraplength = "600")
 
@@ -1997,8 +2001,10 @@ class Post_Normal_Window():
         self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT)
         self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
         # self.n_initial_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].x0) )
-        if self.post_norm_exp_list[0].xstar:
-            self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar))
+        
+        # if self.post_norm_exp_list[0].xstar:
+        #     self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar))
+        
         # if self.post_norm_exp_list[0].xstar:
         #     self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar[0]))
 
@@ -2104,6 +2110,7 @@ class Plot_Window():
             self.num_plots = 0
             self.plot_exp_list = []
             self.plot_type_list = []
+            self.checkbox_list = []
 
             self.problem_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
             self.solver_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
@@ -2143,7 +2150,14 @@ class Plot_Window():
             self.plot_var = tk.StringVar(master=self.master)
 
             # self.problem_menu = tk.Listbox(self.master, self.problem_var, "Problem", *self.all_problems, command=self.experiment_list[0].problem.name)
-            self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names)
+            self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names, command=partial(self.get_parameters, self.plot_var))
+
+            self.CI_label = tk.Label(master=self.master, # window label is used in
+                            text = "Plot with Confidence Intervals",
+                            font = "Calibri 11 bold")
+            self.CI_checkbox = tk.Checkbutton(self.master,text="",command=partial(self.checkbox_function, self.num_plots + 1))
+            self.CI_checkbox.select()
+            self.checkbox_list_current_val = (True)
             
             self.solver_label = tk.Label(master=self.master, # window label is used in
                             text = "Please select the Solver:*",
@@ -2200,7 +2214,7 @@ class Plot_Window():
 
             self.tab_one.grid_rowconfigure(0)
 
-            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters", "Confidence Intervals"]
+            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters", "Confidence Intervals", "Clear Row"]
 
             for heading in self.heading_list:
                 self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -2219,12 +2233,15 @@ class Plot_Window():
             self.plot_label.place(x=0, y=250)
             self.plot_menu.place(x=200, y=250)
 
-            self.add_button.place(x=5, y=310)
+            self.CI_label.place(x=0,y=280)
+            self.CI_checkbox.place(x=200,y=280)
+
+            self.add_button.place(x=5, y=340)
 
             self.post_normal_all_button.place(x=270,y=700)
 
             self.queue_label_frame.place(x=0, y=400, height=250, width=700)
-            self.checkbox_list = []
+            
             # self.frame.pack(fill='both')
         
         def test_funct(self):
@@ -2277,27 +2294,78 @@ class Plot_Window():
                                                     justify="center")
             self.plot_type_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
             
-            self.select_checkbox = tk.Checkbutton(self.tab_one,text="",command=partial(self.checkbox_function, place))
-            self.select_checkbox.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
-            self.select_checkbox.select()
-            self.checkbox_list.append(True)
+            checkbox_val = "False"
+            if self.checkbox_list_current_val:
+                checkbox_val = "True"
+            self.select_checkbox_label = tk.Label(self.tab_one,text=checkbox_val)
+            self.select_checkbox_label.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
+           
+
+            self.clear_plot = tk.Button(master=self.tab_one,
+                                                    text="Clear",
+                                                    font = "Calibri 10",
+                                                    justify="center")
+            self.clear_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
             
 
             self.num_plots += 1
 
         def checkbox_function(self,place):
-            curVal = self.checkbox_list[place - 1]
+            curVal = self.checkbox_list_current_val
             if curVal:
-                self.checkbox_list[place - 1] = False
+                self.checkbox_list_current_val = False
             else:
-                self.checkbox_list[place - 1] = True
+                self.checkbox_list_current_val = True
+
+        def get_parameters(self,a,plot_choice):
+            # beta=0.50, normalize=True
+            print("hi")
+            print(plot_choice,a)
+            if plot_choice == "Mean Progress Curve":
+                param_list = {'beta':0.50, 'normalize':True}
+            elif plot_choice == "Quatile Progress Curve":
+                param_list = {'beta':0.50, 'normalize':True}
+            elif plot_choice == "Solve time cdf":
+                param_list = {'solve_tol':0.1}        
+            elif plot_choice == "Scatter Plot":
+                param_list = {}
+            elif plot_choice == "cdf Solvability":
+                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}        
+            elif plot_choice == "Quantile Solvability":
+                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}                 
+            elif plot_choice == "cdf Difference Plot":
+                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}                    
+            elif plot_choice == "Quanitle Difference Plot":
+                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}        
+            else:
+                print("invalid plot?")
+            
+            self.params = [tk.IntVar(master=self.master), tk.IntVar(master=self.master),tk.IntVar(master=self.master)]
+            i = 0
+
+            starting_place = [400,600,280]
+            for param, param_val in param_list.items():
+                self.param_label = tk.Label(master=self.tab_one, text=param, font = "Calibri 10", justify="center")
+                self.param_entry = ttk.Entry(master=self.master, textvariable = self.params[i], justify = tk.LEFT)
+                self.param_entry.insert(index=tk.END, string=param_val)
+                self.param_label.place(x=starting_place[0],y=starting_place[2])
+                self.param_entry.place(x=starting_place[1],y=starting_place[2])
+                starting_place[3] = starting_place[3] +25
+                i += 1
+
+
 
         def plot_button(self):
             self.postrep_window = tk.Toplevel()
             self.postrep_window.geometry("1000x600")
             self.postrep_window.title("Plotting Page")
-
-            
+            # have one plot and have arrow to scroll through each
+            # one plot solver per row
+            # view individual plot options
+            # hover over for image
+            # CI before adding, table static only
+            # Plot individually vs together 
+            # all plots 
             
             ro = 0
             c = 0
@@ -2319,25 +2387,25 @@ class Plot_Window():
                     path_name = wrapper_base.plot_solvability_cdfs(exp,plot_CIs=ci,print_max_hw=ci)
                 
                 elif self.plot_type_list[i] == "Scatter Plot":
-                    path_name = wrapper_base.plot_area_scatterplots(exp,plot_CIs=ci,print_max_hw=ci)
+                    path_name = wrapper_base.plot_area_scatterplots([exp],plot_CIs=ci,print_max_hw=ci)
                 
                 elif self.plot_type_list[i] == "cdf Solvability":
-                    path_name = wrapper_base.plot_solvability_profiles(exp,"cdf_solvability",plot_CIs=ci,print_max_hw=ci)
+                    path_name = wrapper_base.plot_solvability_profiles([exp],"cdf_solvability",plot_CIs=ci,print_max_hw=ci)
                 
                 elif self.plot_type_list[i] == "Quantile Solvability":
-                    path_name = wrapper_base.plot_solvability_profiles(exp,"quantile_solvability",plot_CIs=ci,print_max_hw=ci)
+                    path_name = wrapper_base.plot_solvability_profiles([exp],"quantile_solvability",plot_CIs=ci,print_max_hw=ci)
                 
                 elif self.plot_type_list[i] == "cdf Difference Plot":
-                    path_name = wrapper_base.plot_solvability_profiles(exp,"diff_cdf_solvability",plot_CIs=ci,print_max_hw=ci)
+                    path_name = wrapper_base.plot_solvability_profiles([exp],"diff_cdf_solvability",plot_CIs=ci,print_max_hw=ci)
                 
                 elif self.plot_type_list[i] == "Quanitle Difference Plot":
-                    path_name = wrapper_base.plot_solvability_profiles(exp,"diff_quantile_solvability",plot_CIs=ci,print_max_hw=ci)
+                    path_name = wrapper_base.plot_solvability_profiles([exp],"diff_quantile_solvability",plot_CIs=ci,print_max_hw=ci)
                 
                 else:
                     print(self.plot_type_list[i])
                 
-                width = 200
-                height = 200
+                width = 400
+                height = 400
                 img = Image.open(path_name)
                 img = img.resize((width,height), Image.ANTIALIAS)
                 img =  ImageTk.PhotoImage(img)
