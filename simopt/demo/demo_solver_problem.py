@@ -20,10 +20,10 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Specify the names of the solver and problem to test.
 # These names are strings and should match those input to directory.py.
 # Ex:
-# solver_name = "RNDSRCH"  # Random search solver
-# problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
-solver_name = "RNDSRCH"
-problem_name = "IRONORE-1"
+solver_name = "RNDSRCH"  # Random search solver
+problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
+# solver_name = <solver_name>
+# problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
 
 
@@ -40,7 +40,7 @@ myexperiment.run(n_macroreps=10)
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
-myexperiment = read_experiment_results(file_name_path)
+# myexperiment = read_experiment_results(file_name_path)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
