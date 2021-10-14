@@ -1,26 +1,26 @@
 """
 Summary
 -------
-Simulate multiple periods of production and sales for an inventory problem
-with integer-ordered variables.
+Simulate multiple periods of production and sales for an iron ore inventory problem.
 """
 import numpy as np
 
 import math
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class IronOre(Oracle):
+class IronOre(Model):
     """
-    An oracle that simulates multiple periods of production and sales for an
+    An model that simulates multiple periods of production and sales for an
     inventory problem with stochastic price determined by a mean-reverting 
-    random walk. Returns total revenue.
+    random walk. Returns total revenue, fraction of days producing iron, and
+    mean stock.
 
     Attributes
     ----------
     name : str
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -67,12 +67,12 @@ class IronOre(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "IRONORE"
         self.n_rngs = 1
-        self.n_responses = 2
+        self.n_responses = 3
         self.factors = fixed_factors
         self.specifications = {
 
@@ -159,7 +159,7 @@ class IronOre(Oracle):
             "price_sell": self.check_price_sell,
             "n_days": self.check_n_days,
         }
-        # Set factors of the simulation oracle
+        # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
@@ -207,12 +207,12 @@ class IronOre(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -222,7 +222,9 @@ class IronOre(Oracle):
             ``total_revenue``
                 The total revenue over the time period
             ``frac_producing``
-                fraction of days spent producing iron ore
+                The fraction of days spent producing iron ore
+            ``mean_stock``
+                The average stocks over the time period
         """
         # Designate random number generators.
         price_rng = rng_list[0]
@@ -279,7 +281,8 @@ class IronOre(Oracle):
                 producing[day + 1] = producing[day]
         # Calculate responses from simulation data.
         responses = {"total_revenue": revenue[self.factors["n_days"] - 1],
-                     "frac_producing": np.mean(producing)
+                     "frac_producing": np.mean(producing),
+                     "mean_stock": np.mean(stock)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -320,12 +323,14 @@ class IronOreMaxRev(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : base.Oracle
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : base.Model
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -344,14 +349,14 @@ class IronOreMaxRev(Problem):
         user-specified name of problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORE-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -359,12 +364,12 @@ class IronOreMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lowerbound = 0
-        self.upperbound = np.inf
+        self.lowerbound = (0)
+        self.upperbound = (np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.oracle_default_factors = {}
+        self.model_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -382,9 +387,9 @@ class IronOreMaxRev(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = IronOre(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = IronOre(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """

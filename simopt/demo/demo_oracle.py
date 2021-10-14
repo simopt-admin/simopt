@@ -65,12 +65,16 @@ for outerkey in gradients:
 REPLICATIONS = 100
 total_revenue = []
 frac_producing = []
+mean_stock = []
 for _ in range(REPLICATIONS):
     responses, gradients = myoracle.replicate(rng_list)
     total_revenue.append(responses['total_revenue'])
     frac_producing.append(responses['frac_producing'])
+    mean_stock.append(responses['mean_stock'])
 
 print("\nFor {REPLICATIONS} replications:")
 print(np.mean(total_revenue))
-print(frac_producing)
+print(np.mean(frac_producing))
+print(np.mean(mean_stock))
+
 
