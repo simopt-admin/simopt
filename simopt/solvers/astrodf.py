@@ -69,18 +69,18 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 200
             },
-            "tau": {
-                "description": "shirink ratio for delta_candidate",
-                "datatype": float,
-                "default": 0.5
-            },
             "eta_1": {
-                "description": "threshhold for decent success",
+                "description": "threshhold for success at all",
                 "datatype": float,
                 "default": 0.1
             },
             "eta_2": {
                 "description": "threshhold for good success",
+                "datatype": float,
+                "default": 0.5
+            },
+            "gamma_0": {
+                "description": "shrinkage/expansion ratio for delta_0 in parameter tuning",
                 "datatype": float,
                 "default": 0.5
             },
@@ -110,17 +110,17 @@ class ASTRODF(Solver):
                 "default": 50
             },
             "c_lambda": {
-                "description": "hyperparameter to determine sample size",
+                "description": "hyperparameter (exponent) to determine minimum sample size",
                 "datatype": float,
-                "default": 0
+                "default": 0.1 ##changed
             },
             "epsilon_lambda": {
-                "description": "hyperparameter to determine sample size",
+                "description": "hyperparameter (coefficient) to determine minimum sample size",
                 "datatype": float,
                 "default": 0.5
             },
             "kappa": {
-                "description": "hyperparameter to determine sample size",
+                "description": "hyperparameter in adaptive sampling in outer/inner loop",
                 "datatype": float,
                 "default": 100
             }
@@ -148,16 +148,19 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    def samplesize(self, k, sig, delta):
+    def samplesize(self, k, sig2, delta):
         c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
         kappa = self.factors["kappa"]
+#        lambda_k = max(2,(10 + c_lambda) * math.log(k+1, 10) ** (1 + epsilon_lambda))
+#        lambda_k = max(3,(10 + c_lambda * problem.dim * math.log(problem.dim+0.1, 10)) * math.log(k+1, 10) ** (1 + epsilon_lambda))
         lambda_k = (10 + c_lambda) * math.log(k, 10) ** (1 + epsilon_lambda)
-        # lambda_k = 10*math.log(k,10)**1.5
 
         # S_k = math.floor(max(3,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
-        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
-        return S_k
+#        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
+        # compute sample size 
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
+        return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
         w = self.factors["w"]
@@ -174,7 +177,7 @@ class ASTRODF(Solver):
             Y = self.interpolation_points(x_k, delta_k, problem)
             for i in range(2 * d + 1):
                 new_solution = self.create_new_solution(Y[i][0], problem)
-
+                
                 # need to check there is existing result
                 problem.simulate(new_solution, 1)
                 expended_budget += 1
@@ -185,8 +188,8 @@ class ASTRODF(Solver):
                     problem.simulate(new_solution, 1)
                     expended_budget += 1
                     sample_size += 1
-                    sig = new_solution.objectives_var
-                    if sample_size >= self.samplesize(k, sig, delta_k):
+                    sig2 = new_solution.objectives_var
+                    if sample_size >= self.samplesize(k, sig2, delta_k):
                         break
                 fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
 
@@ -227,11 +230,11 @@ class ASTRODF(Solver):
 
             if sum(x_k) != 0:
                 # block constraints
-                if minus[0][i] < problem.lowerbound:
-                    minus[0][i] = problem.lowerbound + epsilon
+                if minus[0][i] < problem.lower_bounds[i]:
+                    minus[0][i] = problem.lower_bounds[i] + epsilon
                     # Y[0][i] = (minus[0][i]+plus[0][i])/2
-                if plus[0][i] > problem.upperbound:
-                    plus[0][i] = problem.upperbound - epsilon
+                if plus[0][i] > problem.upper_bounds[i]:
+                    plus[0][i] = problem.upper_bounds[i] - epsilon
                     # Y[0][i] = (minus[0][i]+plus[0][i])/2
 
             Y.append(plus)
@@ -282,8 +285,8 @@ class ASTRODF(Solver):
                 problem.simulate(candidate_solution, 1)
                 expended_budget += 1
                 sample_size += 1
-                sig = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig, delta_k):
+                sig2 = candidate_solution.objectives_var
+                if sample_size >= self.samplesize(k, sig2, delta_k):
                     break
 
             # calculate success ratio
@@ -343,8 +346,8 @@ class ASTRODF(Solver):
         intermediate_budgets = []
         expended_budget = 0
         delta_max = self.factors["delta_max"]
-        tau = self.factors["tau"]
-        delta_candidate = [tau * delta_max, delta_max, delta_max / tau]
+        gamma_0 = self.factors["gamma_0"]
+        delta_candidate = [gamma_0 * delta_max, delta_max, delta_max / gamma_0]
         #print(delta_candidate)
 
         # default values
@@ -393,8 +396,10 @@ class ASTRODF(Solver):
             candidate_x = new_x - tau * delta * grad / norm(grad)
 
             for i in range(problem.dim):
-                if candidate_x[i] < problem.lowerbound:
-                    candidate_x[i] = problem.lowerbound + 0.01
+                if candidate_x[i] < problem.lower_bounds[i]:
+                    candidate_x[i] = problem.lower_bounds[i] + 0.01
+                elif candidate_x[i] > problem.upper_bounds[i]:
+                    candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
@@ -408,8 +413,8 @@ class ASTRODF(Solver):
                 problem.simulate(candidate_solution, 1)
                 expended_budget += 1
                 sample_size += 1
-                sig = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig, delta_k):
+                sig2 = candidate_solution.objectives_var
+                if sample_size >= self.samplesize(k, sig2, delta_k):
                     break
 
             # calculate success ratio

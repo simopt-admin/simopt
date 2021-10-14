@@ -5,19 +5,19 @@ Simulate a day's worth of sales for a newsvendor.
 """
 import numpy as np
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class CntNV(Oracle):
+class CntNV(Model):
     """
-    An oracle that simulates a day's worth of sales for a newsvendor
+    A model that simulates a day's worth of sales for a newsvendor
     with a Burr Type XII demand distribution. Returns the profit, after
     accounting for order costs and salvage.
 
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -36,7 +36,7 @@ class CntNV(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "CNTNEWS"
@@ -83,7 +83,7 @@ class CntNV(Oracle):
             "Burr_c": self.check_Burr_c,
             "Burr_k": self.check_Burr_k
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_purchase_price(self):
@@ -111,12 +111,12 @@ class CntNV(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -192,18 +192,24 @@ class CntNVMaxProfit(Problem):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -222,14 +228,14 @@ class CntNVMaxProfit(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="CNTNEWS-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="CNTNEWS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -237,16 +243,19 @@ class CntNVMaxProfit(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
+        self.lower_bounds = (0,)
+        self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)
-        self.oracle_default_factors = {
+        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
+        self.model_default_factors = {
             "purchase_price": 5.0,
             "sales_price": 9.0,
             "salvage_price": 1.0,
             "Burr_c": 2.0,
             "Burr_k": 20.0
             }
+        self.model_decision_factors = {"order_quantity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -264,9 +273,9 @@ class CntNVMaxProfit(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = CntNV(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = CntNV(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """

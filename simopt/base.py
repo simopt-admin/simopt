@@ -2,13 +2,13 @@
 """
 Summary
 -------
-Provide base classes for solvers, problems, and oracles.
+Provide base classes for solvers, problems, and models.
 
 Listing
 -------
 Solver : class
 Problem : class
-Oracle : class
+Model : class
 Solution : class
 """
 
@@ -187,9 +187,9 @@ class Solver(object):
         new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
         # Manipulate progenitor rngs to prepare for next new solution.
         if not self.factors["crn_across_solns"]:  # If CRN are not used ...
-            # ...advance each rng to start of the substream = current substream + # of oracle RNGs.
+            # ...advance each rng to start of the substream = current substream + # of model RNGs.
             for rng in self.solution_progenitor_rngs:
-                for _ in range(problem.oracle.n_rngs):
+                for _ in range(problem.model.n_rngs):
                     rng.advance_substream()
         return new_solution
 
@@ -232,18 +232,24 @@ class Problem(object):
     variable_type : string
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -260,22 +266,22 @@ class Problem(object):
     ---------
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed_factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the model
     """
-    def __init__(self, fixed_factors, oracle_fixed_factors):
+    def __init__(self, fixed_factors, model_fixed_factors):
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        # Set subset of factors of the simulation oracle.
-        # Fill in missing oracle factors with problem-level default values.
-        for key in self.oracle_default_factors:
-            if key not in oracle_fixed_factors:
-                oracle_fixed_factors[key] = self.oracle_default_factors[key]
-        self.oracle_fixed_factors = oracle_fixed_factors
+        # Set subset of factors of the simulation model.
+        # Fill in missing model factors with problem-level default values.
+        for key in self.model_default_factors:
+            if key not in model_fixed_factors:
+                model_fixed_factors[key] = self.model_default_factors[key]
+        self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
     def __eq__(self, other):
@@ -294,13 +300,12 @@ class Problem(object):
         """
         if type(self) == type(other):
             if self.factors == other.factors:
-                # Check if non-decision-variable factors of oracles are the same.
-                # TO DO: Want the complement of the statement below...
-                # if self.factor_dict_to_vector(self.oracle.factors) == other.factor_dict_to_vector(other.oracle.factors):
-                #     return True
-                # else:
-                #     print("Problem oracles do not match.")
-                #     return False
+                # Check if non-decision-variable factors of models are the same.
+                non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
+                for factor in non_decision_factors:
+                    if self.model.factors[factor] != other.model.factors[factor]:
+                        print("Model factors do not match")
+                        return False
                 return True
             else:
                 print("Problem factors do not match.")
@@ -538,11 +543,11 @@ class Problem(object):
             # pad numpy arrays if necessary
             if solution.n_reps + m > solution.storage_size:
                 solution.pad_storage(m)
-            # set the decision factors of the oracle
-            self.oracle.factors.update(solution.decision_factors)
+            # set the decision factors of the model
+            self.model.factors.update(solution.decision_factors)
             for _ in range(m):
                 # generate one replication at x
-                responses, gradients = self.oracle.replicate(solution.rng_list)
+                responses, gradients = self.model.replicate(solution.rng_list)
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 # TEMPORARILY COMMENT OUT GRADIENTS
                 # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
@@ -581,15 +586,15 @@ class Problem(object):
                 self.simulate(solution=solution, m=n_reps_to_take)
 
 
-class Oracle(object):
+class Model(object):
     """
-    Base class to implement simulation oracles (models) featured in
+    Base class to implement simulation models (models) featured in
     simulation-optimization problems.
 
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -604,10 +609,10 @@ class Oracle(object):
     Arguments
     ---------
     fixed_factors : dict
-        dictionary of user-specified oracle factors
+        dictionary of user-specified model factors
     """
     def __init__(self, fixed_factors):
-        # set factors of the simulation oracle
+        # set factors of the simulation model
         # fill in missing factors with default values
         self.factors = fixed_factors
         for key in self.specifications:
@@ -616,26 +621,26 @@ class Oracle(object):
 
     def __eq__(self, other):
         """
-        Check if two oracles are equivalent.
+        Check if two models are equivalent.
 
         Arguments
         ---------
-        other : base.Oracle object
-            other Oracle object to compare to self
+        other : base.Model object
+            other Model object to compare to self
 
         Returns
         -------
         bool
-            Are the two oracles equivalent?
+            Are the two models equivalent?
         """
         if type(self) == type(other):
             if self.factors == other.factors:
                 return True
             else:
-                print("Oracle factors do not match.")
+                print("Model factors do not match.")
                 return False
         else:
-            print("Oracle types do not match.")
+            print("Model types do not match.")
             return False
 
     def check_simulatable_factor(self, factor_name):
@@ -650,7 +655,7 @@ class Oracle(object):
         Returns
         -------
         is_simulatable : bool
-            indicates if oracle specified by factors is simulatable
+            indicates if model specified by factors is simulatable
         """
         is_simulatable = True
         is_simulatable *= self.check_factor_datatype(factor_name)
@@ -665,7 +670,7 @@ class Oracle(object):
         Returns
         -------
         is_simulatable : bool
-            indicates if oracle specified by factors is simulatable
+            indicates if model specified by factors is simulatable
         """
         return True
         # raise NotImplementedError
@@ -684,12 +689,12 @@ class Oracle(object):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -715,7 +720,7 @@ class Solution(object):
     decision_factors : dict
         decision factor names and values
     rng_list : list of rng.MRG32k3a objects
-        rngs for oracle to use when running replications at the solution
+        rngs for model to use when running replications at the solution
     n_reps : int
         number of replications run at the solution
     det_objectives : tuple

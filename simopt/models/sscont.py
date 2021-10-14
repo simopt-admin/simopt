@@ -6,12 +6,12 @@ with continuous inventory.
 """
 import numpy as np
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class SSCont(Oracle):
+class SSCont(Model):
     """
-    An oracle that simulates multiple periods' worth of sales for a (s,S)
+    A model that simulates multiple periods' worth of sales for a (s,S)
     inventory problem with continuous inventory, exponentially distributed
     demand, and poisson distributed lead time. Returns the various types of
     average costs per period, order rate, stockout rate, fraction of demand
@@ -21,7 +21,7 @@ class SSCont(Oracle):
     Attributes
     ----------
     name : str
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -60,7 +60,7 @@ class SSCont(Oracle):
             Number of periods as warmup before collecting statistics (`int`)
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "SSCONT"
@@ -131,7 +131,7 @@ class SSCont(Oracle):
             "n_days": self.check_n_days,
             "warmup": self.check_warmup
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
@@ -170,12 +170,12 @@ class SSCont(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -294,18 +294,24 @@ class SSContMinCost(Problem):
     variable_type : str
         description of variable types:
             "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : base.Oracle
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : base.Model
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -324,14 +330,14 @@ class SSContMinCost(Problem):
         user-specified name of problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="SSCONT-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="SSCONT-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 2
         self.n_objectives = 1
@@ -339,12 +345,13 @@ class SSContMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lowerbound = 0
-        self.upperbound = np.inf
+        self.lower_bounds = (0, 0)
+        self.upper_bounds = (np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.oracle_default_factors = {}
+        self.model_default_factors = {}
+        self.model_decision_factors = {"s", "S"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -362,9 +369,9 @@ class SSContMinCost(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = SSCont(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = SSCont(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
