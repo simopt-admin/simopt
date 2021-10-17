@@ -2256,7 +2256,7 @@ class Plot_Window():
                 print(self.solver_menu.get(i))
                   
         def add_plot(self):
-            place = self.num_plots + 1
+            
 
             solverList = ""
             self.solvers = []
@@ -2282,14 +2282,8 @@ class Plot_Window():
             
             i = len(self.plot_type_list)-1
             exp = self.plot_exp_list[len(self.plot_exp_list)-1]
-            
-            print("solvers", self.solvers)
-            print("probs", probs)
-            print(exp)
-
             exp2 = [[e] for e in exp]
-            print(exp2)
-            
+          
 
             param_value_list = []
             for t in self.params:
@@ -2311,64 +2305,66 @@ class Plot_Window():
                 path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, beta=param_value_list[2],normalize=param_value_list[3])
             elif self.plot_type_list[i] == "Solve time cdf":
                 path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2])
-            
             elif self.plot_type_list[i] == "Scatter Plot":
-                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci)
-            
+                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci)           
             elif self.plot_type_list[i] == "cdf Solvability":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],ref_solver=param_value_list[3])
-            
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
             elif self.plot_type_list[i] == "Quantile Solvability":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])
-            
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])        
             elif self.plot_type_list[i] == "cdf Difference Plot":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],ref_solver=param_value_list[3])
-            
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
             elif self.plot_type_list[i] == "Quanitle Difference Plot":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])
-            
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])           
             else:
                 print(self.plot_type_list[i])
 
             self.all_path_names.append(path_name)
+            print(path_name)
 
-            self.problem_button_added = tk.Label(master=self.tab_one,
-                                                    text=problemList,
-                                                    font = "Calibri 10",
-                                                    justify="center")
-            self.problem_button_added.grid(row=place, column=0, sticky='nsew', padx=5, pady=3)
+            for i,new_plot in enumerate(path_name):
+                place = self.num_plots + 1
+                if len(path_name) == 1:
+                    prob_text = solverList
+                else:
+                    prob_text = self.solver_menu.get(i) 
 
-            self.solver_button_added = tk.Label(master=self.tab_one,
-                                                    text=solverList,
-                                                    font = "Calibri 10",
-                                                    justify="center")
-            self.solver_button_added.grid(row=place, column=1, sticky='nsew', padx=5, pady=3)
+                self.problem_button_added = tk.Label(master=self.tab_one,
+                                                        text=problemList,
+                                                        font = "Calibri 10",
+                                                        justify="center")
+                self.problem_button_added.grid(row=place, column=0, sticky='nsew', padx=5, pady=3)
 
-            self.plot_type_button_added = tk.Label(master=self.tab_one,
-                                                    text=plotType,
-                                                    font = "Calibri 10",
-                                                    justify="center")
-            self.plot_type_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
-           
+                self.solver_button_added = tk.Label(master=self.tab_one,
+                                                        text=prob_text,
+                                                        font = "Calibri 10",
+                                                        justify="center")
+                self.solver_button_added.grid(row=place, column=1, sticky='nsew', padx=5, pady=3)
 
-            self.clear_plot = tk.Button(master=self.tab_one,
-                                                    text="Clear",
-                                                    font = "Calibri 10",
-                                                    justify="center",
-                                                    command=partial(self.clear_row, place-1))
-            self.clear_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
-            
-            self.view_plot = tk.Button(master=self.tab_one,
-                                                    text="View Plot",
-                                                    font = "Calibri 10",
-                                                    justify="center",
-                                                    command=partial(self.view_one_pot, path_name))
-            self.view_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
-            # self.view_plot.pack()
-            self.changeOnHover(self.view_plot, "red", "yellow")
+                self.plot_type_button_added = tk.Label(master=self.tab_one,
+                                                        text=plotType,
+                                                        font = "Calibri 10",
+                                                        justify="center")
+                self.plot_type_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
             
 
-            self.num_plots += 1
+                self.clear_plot = tk.Button(master=self.tab_one,
+                                                        text="Clear",
+                                                        font = "Calibri 10",
+                                                        justify="center",
+                                                        command=partial(self.clear_row, place-1))
+                self.clear_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
+                
+                self.view_plot = tk.Button(master=self.tab_one,
+                                                        text="View Plot",
+                                                        font = "Calibri 10",
+                                                        justify="center",
+                                                        command=partial(self.view_one_pot, new_plot))
+                self.view_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
+                # self.view_plot.pack()
+                self.changeOnHover(self.view_plot, "red", "yellow")
+                
+
+                self.num_plots += 1
 
         def changeOnHover(self, button, colorOnHover, colorOnLeave):
             # adjusting backgroung of the widget

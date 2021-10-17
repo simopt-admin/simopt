@@ -1194,6 +1194,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     """
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
+    file_list = []
     # Set up plot.
     n_experiments = len(experiments)
     if all_in_one:
@@ -1253,12 +1254,13 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize)
-        return save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type=plot_type,
                   normalize=normalize
-                  )
+                  )]
     else:  # Plot separately.
+        
         for experiment in experiments:
             setup_plot(plot_type=plot_type,
                        solver_name=experiment.solver.name,
@@ -1303,11 +1305,12 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=normalize)
-            return save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name=experiment.problem.name,
                       plot_type=plot_type,
                       normalize=normalize
-                      )
+                      ))
+        return file_list
 
 
 def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True):
@@ -1327,6 +1330,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         print caption with max half-width
     """
     # Check if problems are the same with the same x0 and x*.
+    file_list = []
     check_common_problem_and_reference(experiments)
     # Set up plot.
     n_experiments = len(experiments)
@@ -1362,12 +1366,12 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
-        return save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type="solve_time_cdf",
                   normalize=True,
                   extra=solve_tol
-                  )
+                  )]
     else:  # Plot separately.
         for experiment in experiments:
             setup_plot(plot_type="solve_time_cdf",
@@ -1389,12 +1393,12 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True)
-            return save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name=experiment.problem.name,
                       plot_type="solve_time_cdf",
                       normalize=True,
                       extra=solve_tol
-                      )
+                      ))
 
 
 def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True):
@@ -1465,12 +1469,13 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
-        return save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name="PROBLEM SET",
                   plot_type="area_scatterplot",
                   normalize=True
-                  )
+                  )]
     else:
+        file_list = []
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
             setup_plot(plot_type="area",
@@ -1513,11 +1518,11 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                                           )
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
-            return save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name="PROBLEM SET",
                       plot_type="area_scatterplot",
                       normalize=True
-                      )
+                      ))
 
 
 def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
@@ -1612,20 +1617,20 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
 
         if plot_type == "cdf_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
-            return save_plot(solver_name="SOLVER SET",
+            return [save_plot(solver_name="SOLVER SET",
                       problem_name="PROBLEM SET",
                       plot_type=plot_type,
                       normalize=True,
                       extra=solve_tol
-                      )
+                      )]
         elif plot_type == "quantile_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
-            return save_plot(solver_name="SOLVER SET",
+            return [save_plot(solver_name="SOLVER SET",
                       problem_name="PROBLEM SET",
                       plot_type=plot_type,
                       normalize=True,
                       extra=[solve_tol, beta]
-                      )
+                      )]
         elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             print(solver_names)
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
@@ -1651,20 +1656,21 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
             plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
             if plot_type == "diff_cdf_solvability":
-                return save_plot(solver_name="SOLVER SET",
+                return [save_plot(solver_name="SOLVER SET",
                           problem_name="PROBLEM SET",
                           plot_type=plot_type,
                           normalize=True,
                           extra=solve_tol
-                          )
+                          )]
             elif plot_type == "diff_quantile_solvability":
-                return save_plot(solver_name="SOLVER SET",
+                return [save_plot(solver_name="SOLVER SET",
                           problem_name="PROBLEM SET",
                           plot_type=plot_type,
                           normalize=True,
                           extra=[solve_tol, beta]
-                          )
+                          )]
     else:
+        file_list = []
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         for solver_idx in range(n_solvers):
@@ -1684,18 +1690,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 # Set up plot.
                 if plot_type == "cdf_solvability":
-                    return setup_plot(plot_type=plot_type,
+                    file_list.append(setup_plot(plot_type=plot_type,
                                solver_name=experiments[solver_idx][0].solver.name,
                                problem_name="PROBLEM SET",
                                solve_tol=solve_tol
-                               )
+                               ))
                 elif plot_type == "quantile_solvability":
-                    return setup_plot(plot_type=plot_type,
+                    file_list.append(setup_plot(plot_type=plot_type,
                                solver_name=experiments[solver_idx][0].solver.name,
                                problem_name="PROBLEM SET",
                                beta=beta,
                                solve_tol=solve_tol
-                               )
+                               ))
                 handle = solver_curve.plot()
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
@@ -1709,37 +1715,37 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                                                          )
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if plot_type == "cdf_solvability":
-                    return save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                    file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                               problem_name="PROBLEM SET",
                               plot_type=plot_type,
                               normalize=True,
                               extra=solve_tol
-                              )
+                              ))
                 elif plot_type == "quantile_solvability":
-                    return save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                    file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                               problem_name="PROBLEM SET",
                               plot_type=plot_type,
                               normalize=True,
                               extra=[solve_tol, beta]
-                              )
+                              ))
         if plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
                     if plot_type == "diff_cdf_solvability":
-                        return setup_plot(plot_type=plot_type,
+                        file_list.append(setup_plot(plot_type=plot_type,
                                    solver_name=experiments[solver_idx][0].solver.name,
                                    problem_name="PROBLEM SET",
                                    solve_tol=solve_tol
-                                   )
+                                   ))
                     elif plot_type == "diff_quantile_solvability":
-                        return setup_plot(plot_type=plot_type,
+                        file_list.append(setup_plot(plot_type=plot_type,
                                    solver_name=experiments[solver_idx][0].solver.name,
                                    problem_name="PROBLEM SET",
                                    beta=beta,
                                    solve_tol=solve_tol
-                                   )
+                                   ))
                     diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
                     handle = diff_solver_curve.plot()
                     if plot_CIs:
@@ -1754,19 +1760,20 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                                                              )
                         plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                     if plot_type == "diff_cdf_solvability":
-                        return save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                        file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                   problem_name="PROBLEM SET",
                                   plot_type=plot_type,
                                   normalize=True,
                                   extra=solve_tol
-                                  )
+                                  ))
                     elif plot_type == "diff_quantile_solvability":
-                        return save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                        file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                   problem_name="PROBLEM SET",
                                   plot_type=plot_type,
                                   normalize=True,
                                   extra=[solve_tol, beta]
-                                  )
+                                  ))
+    return file_list           
 
 
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
