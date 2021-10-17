@@ -69,6 +69,7 @@ class Experiment_Window(tk.Tk):
 
 
     def __init__(self, master):
+        #problem.model_decision_factors
         
         self.master = master
 
@@ -115,7 +116,7 @@ class Experiment_Window(tk.Tk):
         # creates drop down menu, for tkinter, it is called "OptionMenu"
         self.solver_menu = ttk.OptionMenu(self.master, self.solver_var, "Solver", *self.solver_list, command=self.show_solver_factors)       
 
-        self.macro_label = ttk.Label(master=self.master,
+        self.macro_label = tk.Label(master=self.master,
                         text = "Number of Macro Replications:*",
                         font = "Calibri 11 bold")
 
@@ -145,7 +146,7 @@ class Experiment_Window(tk.Tk):
                                             width = 20,
                                             command = self.crossdesign_function)
 
-        self.pickle_file_select_label = ttk.Label(master=self.master,
+        self.pickle_file_select_label = tk.Label(master=self.master,
                                                 text = "Select a pickle file to access: ",
                                                 font = "Calibri 11 bold",
                                                 wraplength = "250")
@@ -171,11 +172,11 @@ class Experiment_Window(tk.Tk):
                                                 state = "normal",
                                                 command = self.post_normal_all_function)
 
-        self.pickle_file_pathname_label = ttk.Label(master=self.master,
+        self.pickle_file_pathname_label = tk.Label(master=self.master,
                                                     text = "File Selected:",
                                                     font = "Calibri 11 bold")
 
-        self.pickle_file_pathname_show = ttk.Label(master=self.master,
+        self.pickle_file_pathname_show = tk.Label(master=self.master,
                                                     text = "No file selected",
                                                     font = "Calibri 11 italic",
                                                     foreground = "red",
@@ -1557,17 +1558,17 @@ class Cross_Design_Window():
         self.master = master
         self.main_window = main_widow
 
-        self.crossdesign_title_label = ttk.Label(master=self.master,
+        self.crossdesign_title_label = tk.Label(master=self.master,
                                                 text = "Create a Cross-Design Experiment",
                                                 font = "Calibri 13 bold")
         self.crossdesign_title_label.place(x=5, y=25)
         
-        self.crossdesign_problem_label = ttk.Label(master=self.master,
+        self.crossdesign_problem_label = tk.Label(master=self.master,
                                                     text = "Select Problems:",
                                                     font = "Calibri 11 bold")
         self.crossdesign_problem_label.place(x=5, y=55)
 
-        self.crossdesign_solver_label = ttk.Label(master=self.master,
+        self.crossdesign_solver_label = tk.Label(master=self.master,
                                                     text = "Select Solvers:",
                                                     font = "Calibri 11 bold")
         self.crossdesign_solver_label.place(x=145, y=55)
@@ -1605,7 +1606,7 @@ class Cross_Design_Window():
 
         if problem_cnt < solver_cnt:
             solver_cnt += 1
-            self.crossdesign_macro_label = ttk.Label(master=self.master,
+            self.crossdesign_macro_label = tk.Label(master=self.master,
                                                     text = "Number of Macro Replications:",
                                                     font = "Calibri 11 bold")
             self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
@@ -1624,7 +1625,7 @@ class Cross_Design_Window():
         if problem_cnt > solver_cnt:
             problem_cnt += 1
 
-            self.crossdesign_macro_label = ttk.Label(master=self.master,
+            self.crossdesign_macro_label = tk.Label(master=self.master,
                                                     text = "Number of Macro Replications:",
                                                     font = "Calibri 11 bold")
             self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
@@ -1645,7 +1646,7 @@ class Cross_Design_Window():
             problem_cnt += 1
             print("problem == solver")
 
-            self.crossdesign_macro_label = ttk.Label(master=self.master,
+            self.crossdesign_macro_label = tk.Label(master=self.master,
                                                     text = "Number of Macro Replications:",
                                                     font = "Calibri 11 bold")
             self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
@@ -1726,7 +1727,7 @@ class Post_Processing_Window():
                                 text = "Welcome to the Post-Processing Page",
                                 font = "Calibri 15 bold")
 
-        self.n_postreps_label = ttk.Label(master = self.master,
+        self.n_postreps_label = tk.Label(master = self.master,
                                     text = "Number of postreplications to take at each recommended solution:",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
@@ -1736,7 +1737,7 @@ class Post_Processing_Window():
         self.n_postreps_entry.insert(index=tk.END, string="100")
 
 
-        self.crn_across_budget_label = ttk.Label(master=self.master,
+        self.crn_across_budget_label = tk.Label(master=self.master,
                                     text = "Use CRN for post-replications at solutions recommended at different times?",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
@@ -1749,7 +1750,7 @@ class Post_Processing_Window():
         # creates drop down menu, for tkinter, it is called "OptionMenu"
         self.crn_across_budget_menu = ttk.OptionMenu(self.master, self.crn_across_budget_var, "True", *self.crn_across_budget_list)
 
-        self.crn_across_macroreps_label = ttk.Label(master=self.master,
+        self.crn_across_macroreps_label = tk.Label(master=self.master,
                                         text = "Use CRN for post-replications at solutions recommended on different macroreplications?",
                                         font = "Calibri 11 bold",
                                         wraplength = "250")
@@ -1760,7 +1761,7 @@ class Post_Processing_Window():
 
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "False", *self.crn_across_macroreps_list)
 
-        self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
+        self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
                         text = "Finish Post-Replication of Experiment",
                         font = "Calibri 11 bold",
                         wraplength = "250")
@@ -1962,19 +1963,19 @@ class Post_Normal_Window():
                                 font = "Calibri 11 bold",
                                 wraplength = "600")
 
-        self.n_initial_label = ttk.Label(master = self.master,
-                                text = "Initial Function Value, f(x) (optional)",
-                                font = "Calibri 11 bold",
-                                wraplength = "250")
-        self.n_optimal_label = ttk.Label(master = self.master,
+        # self.n_initial_label = tk.Label(master = self.master,
+        #                         text = "Initial Function Value, f(x) (optional)",
+        #                         font = "Calibri 11 bold",
+        #                         wraplength = "250")
+        self.n_optimal_label = tk.Label(master = self.master,
                                 text = "Optimal Solution (opitional)",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
-        self.n_proxy_val_label = ttk.Label(master = self.master,
+        self.n_proxy_val_label = tk.Label(master = self.master,
                                 text = "Proxy Optimal Value, f(x)",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
-        self.n_proxy_sol_label = ttk.Label(master = self.master,
+        self.n_proxy_sol_label = tk.Label(master = self.master,
                                 text = "Proxy Optimal Solution, x",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
@@ -1985,14 +1986,14 @@ class Post_Normal_Window():
         self.n_proxy_val_entry = ttk.Entry(master=self.master, textvariable = self.proxy_var, justify = tk.LEFT, width=10)
         self.n_initial_entry = ttk.Entry(master=self.master, textvariable = self.init_var, justify = tk.LEFT)
 
-        self.n_crn_label = ttk.Label(master = self.master,
+        self.n_crn_label = tk.Label(master = self.master,
                                 text = "CRN for x\u2070 and optimal x\u002A?",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
         self.n_crn_checkbox = tk.Checkbutton(self.master,text="",variable=self.check_var)
 
 
-        self.n_postreps_init_opt_label = ttk.Label(master = self.master,
+        self.n_postreps_init_opt_label = tk.Label(master = self.master,
                                 text = "Number of post-normalizations to take at initial x\u2070 and optimal x\u002A:",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
@@ -2009,7 +2010,7 @@ class Post_Normal_Window():
         #     self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar[0]))
 
 
-        self.post_processing_run_label = ttk.Label(master=self.master, # window label is used for
+        self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
                         text = "Finish Post-Normalization of Experiment",
                         font = "Calibri 11 bold",
                         wraplength = "250")
@@ -2111,6 +2112,9 @@ class Plot_Window():
             self.plot_exp_list = []
             self.plot_type_list = []
             self.checkbox_list = []
+            self.plot_CI_list = []
+            self.plot_param_list = []
+            self.all_path_names = []
 
             self.problem_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
             self.solver_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
@@ -2151,13 +2155,6 @@ class Plot_Window():
 
             # self.problem_menu = tk.Listbox(self.master, self.problem_var, "Problem", *self.all_problems, command=self.experiment_list[0].problem.name)
             self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names, command=partial(self.get_parameters, self.plot_var))
-
-            self.CI_label = tk.Label(master=self.master, # window label is used in
-                            text = "Plot with Confidence Intervals",
-                            font = "Calibri 11 bold")
-            self.CI_checkbox = tk.Checkbutton(self.master,text="",command=partial(self.checkbox_function, self.num_plots + 1))
-            self.CI_checkbox.select()
-            self.checkbox_list_current_val = (True)
             
             self.solver_label = tk.Label(master=self.master, # window label is used in
                             text = "Please select the Solver:*",
@@ -2178,7 +2175,7 @@ class Plot_Window():
 
 
             self.post_normal_all_button = ttk.Button(master=self.master,
-                                                    text = "Plot",
+                                                    text = "See All Plots",
                                                     width = 20,
                                                     state = "normal",
                                                     command = self.plot_button)
@@ -2214,7 +2211,7 @@ class Plot_Window():
 
             self.tab_one.grid_rowconfigure(0)
 
-            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters", "Confidence Intervals", "Clear Row"]
+            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters", "Clear Row", "View Plot"]
 
             for heading in self.heading_list:
                 self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -2233,22 +2230,31 @@ class Plot_Window():
             self.plot_label.place(x=0, y=250)
             self.plot_menu.place(x=200, y=250)
 
-            self.CI_label.place(x=0,y=280)
-            self.CI_checkbox.place(x=200,y=280)
-
             self.add_button.place(x=5, y=340)
 
             self.post_normal_all_button.place(x=270,y=700)
 
-            self.queue_label_frame.place(x=0, y=400, height=250, width=700)
+            self.queue_label_frame.place(x=0, y=400, height=250, width=900)
             
+            self.param_label = []
+            self.param_entry = []
+            self.factor_label_frame_problem = None
+
+            self.CI_label_frame = ttk.Labelframe(master=self.master, text="Plot Parameters (Optional)")
+            self.CI_canvas = tk.Canvas(master=self.CI_label_frame, borderwidth=0)
+            self.CI_frame = ttk.Frame(master=self.CI_canvas)
+
+            self.CI_canvas.pack(side="left", fill="both", expand=True)
+            self.CI_canvas.create_window((0,0), window=self.CI_frame, anchor="nw",
+                                    tags="self.queue_frame")
+            
+            self.CI_label_frame.place(x=400, y=200, height=200, width=300)
             # self.frame.pack(fill='both')
         
         def test_funct(self):
             for i in self.solver_menu.curselection():
                 print(self.solver_menu.get(i))
-                
-        
+                  
         def add_plot(self):
             place = self.num_plots + 1
 
@@ -2262,7 +2268,6 @@ class Plot_Window():
             
             problemList = ""
             probs = []
-            
             for i in self.problem_menu.curselection():
                 problemList = problemList + self.problem_menu.get(i) + " "
                 for exp in self.experiment_list:
@@ -2273,8 +2278,59 @@ class Plot_Window():
             # print(probs,solvers)
             plotType = str(self.plot_var.get())
             self.plot_type_list.append(plotType)
-            self.plot_params = {"cdf_solvability":[{"beta":.5},{"normalize":True},{"all_in_one":True}], "quantile_solvability":0,"diff_cdf_solvability":0,"diff_quantile_solvability":0}
+            # self.plot_params = {"cdf_solvability":[{"beta":.5},{"normalize":True},{"all_in_one":True}], "quantile_solvability":0,"diff_cdf_solvability":0,"diff_quantile_solvability":0}
+            
+            i = len(self.plot_type_list)-1
+            exp = self.plot_exp_list[len(self.plot_exp_list)-1]
+            
+            print("solvers", self.solvers)
+            print("probs", probs)
+            print(exp)
 
+            exp2 = [[e] for e in exp]
+            print(exp2)
+            
+
+            param_value_list = []
+            for t in self.params:
+                # print(t.get())
+                if t.get() == "True":
+                    param_value_list.append(True)
+                elif t.get() == "False":
+                    param_value_list.append(False)
+                elif t.get() != "":
+                    try:
+                        param_value_list.append(float(t.get()))
+                    except ValueError:  
+                        param_value_list.append(t.get())
+
+            ci = param_value_list[0]
+            if self.plot_type_list[i] == "Mean Progress Curve":
+                path_name = wrapper_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, normalize=param_value_list[2])
+            elif self.plot_type_list[i] == "Quatile Progress Curve":
+                path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, beta=param_value_list[2],normalize=param_value_list[3])
+            elif self.plot_type_list[i] == "Solve time cdf":
+                path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2])
+            
+            elif self.plot_type_list[i] == "Scatter Plot":
+                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci)
+            
+            elif self.plot_type_list[i] == "cdf Solvability":
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],ref_solver=param_value_list[3])
+            
+            elif self.plot_type_list[i] == "Quantile Solvability":
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])
+            
+            elif self.plot_type_list[i] == "cdf Difference Plot":
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],ref_solver=param_value_list[3])
+            
+            elif self.plot_type_list[i] == "Quanitle Difference Plot":
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])
+            
+            else:
+                print(self.plot_type_list[i])
+
+            self.all_path_names.append(path_name)
 
             self.problem_button_added = tk.Label(master=self.tab_one,
                                                     text=problemList,
@@ -2293,36 +2349,48 @@ class Plot_Window():
                                                     font = "Calibri 10",
                                                     justify="center")
             self.plot_type_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
-            
-            checkbox_val = "False"
-            if self.checkbox_list_current_val:
-                checkbox_val = "True"
-            self.select_checkbox_label = tk.Label(self.tab_one,text=checkbox_val)
-            self.select_checkbox_label.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
            
 
             self.clear_plot = tk.Button(master=self.tab_one,
                                                     text="Clear",
                                                     font = "Calibri 10",
-                                                    justify="center")
-            self.clear_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
+                                                    justify="center",
+                                                    command=partial(self.clear_row, place-1))
+            self.clear_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
+            
+            self.view_plot = tk.Button(master=self.tab_one,
+                                                    text="View Plot",
+                                                    font = "Calibri 10",
+                                                    justify="center",
+                                                    command=partial(self.view_one_pot, path_name))
+            self.view_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
+            # self.view_plot.pack()
+            self.changeOnHover(self.view_plot, "red", "yellow")
             
 
             self.num_plots += 1
 
-        def checkbox_function(self,place):
-            curVal = self.checkbox_list_current_val
-            if curVal:
-                self.checkbox_list_current_val = False
-            else:
-                self.checkbox_list_current_val = True
+        def changeOnHover(self, button, colorOnHover, colorOnLeave):
+            # adjusting backgroung of the widget
+            # background on entering widget
+            button.bind("<Enter>", func=lambda e: button.config(
+                background=colorOnHover))
+        
+            # background color on leving widget
+            button.bind("<Leave>", func=lambda e: button.config(
+                background=colorOnLeave))
 
         def get_parameters(self,a,plot_choice):
+            # ref solver needs to a drop down of solvers that is selected in the problem
+            # numbers between 0 and 1
+            # checkbox for normalize
+            # move CI to parameters
+            # checkbox with print_max_hw checkbox
+            # remove CI from experiment box
+
             # beta=0.50, normalize=True
-            print("hi")
-            print(plot_choice,a)
             if plot_choice == "Mean Progress Curve":
-                param_list = {'beta':0.50, 'normalize':True}
+                param_list = {'normalize':True}
             elif plot_choice == "Quatile Progress Curve":
                 param_list = {'beta':0.50, 'normalize':True}
             elif plot_choice == "Solve time cdf":
@@ -2330,30 +2398,79 @@ class Plot_Window():
             elif plot_choice == "Scatter Plot":
                 param_list = {}
             elif plot_choice == "cdf Solvability":
-                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}        
+                param_list = {'solve_tol':0.1, 'ref_solver':None}        
             elif plot_choice == "Quantile Solvability":
                 param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}                 
             elif plot_choice == "cdf Difference Plot":
-                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}                    
+                param_list = {'solve_tol':0.1, 'ref_solver':None}                    
             elif plot_choice == "Quanitle Difference Plot":
                 param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}        
             else:
                 print("invalid plot?")
+            self.param_list = param_list
             
-            self.params = [tk.IntVar(master=self.master), tk.IntVar(master=self.master),tk.IntVar(master=self.master)]
-            i = 0
 
-            starting_place = [400,600,280]
+            self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
+            
+            self.CI_label_frame.destroy()
+            self.CI_label_frame = ttk.Labelframe(master=self.master, text="Plot Parameters (Optional)")
+            self.CI_canvas = tk.Canvas(master=self.CI_label_frame, borderwidth=0)
+            self.CI_frame = ttk.Frame(master=self.CI_canvas)
+
+            self.CI_canvas.pack(side="left", fill="both", expand=True)
+            self.CI_canvas.create_window((0,0), window=self.CI_frame, anchor="nw",
+                                    tags="self.queue_frame")
+            self.CI_canvas.grid_rowconfigure(0)
+            
+            self.CI_label_frame.place(x=400, y=200, height=200, width=300)
+
+            
+            tf_list = ['True','False']
+
+            self.solvers_names = []
+            for i in self.solver_menu.curselection():
+                self.solvers_names.append(self.solver_menu.get(i))
+
+
+            i = 0
+            entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
+            label = tk.Label(master=self.CI_canvas, text="Confidence Intervals", font="Calibri 14")
+            label.grid(row=i, column=0, padx=5, pady=3)
+            entry.grid(row=i, column=1, padx=5, pady=3)
+            i +=1 
+            entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
+            label = tk.Label(master=self.CI_canvas, text="Plot Together", font="Calibri 14")
+            label.grid(row=i, column=0, padx=5, pady=3)
+            entry.grid(row=i, column=1, padx=5, pady=3)
+
+            i += 1
             for param, param_val in param_list.items():
-                self.param_label = tk.Label(master=self.tab_one, text=param, font = "Calibri 10", justify="center")
-                self.param_entry = ttk.Entry(master=self.master, textvariable = self.params[i], justify = tk.LEFT)
-                self.param_entry.insert(index=tk.END, string=param_val)
-                self.param_label.place(x=starting_place[0],y=starting_place[2])
-                self.param_entry.place(x=starting_place[1],y=starting_place[2])
-                starting_place[3] = starting_place[3] +25
+                # if len(self.param_label) > i:
+                #     self.param_label[i].destroy()
+                if param == 'normalize':
+                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
+
+                    label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
+                    label.grid(row=i, column=0, padx=5, pady=3)
+                    entry.grid(row=i, column=1, padx=5, pady=3)
+                elif param == 'ref_solver':
+                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i], self.solvers_names[0], *self.solvers_names)
+                    label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
+                    label.grid(row=i, column=0, padx=5, pady=3)
+                    entry.grid(row=i, column=1, padx=5, pady=3)
+                else:
+                    label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
+                    label.grid(row=i, column=0, padx=5, pady=3)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT)
+                    if param_val is not None:
+                        entry.insert(index=tk.END, string=param_val)
+                    entry.grid(row=i, column=1, padx=5, pady=3)
                 i += 1
 
-
+        def clear_row(self, place):
+            # self.plot_CI_list.pop(place)
+            # self.plot_exp_list.pop(place)
+            print("Clear")
 
         def plot_button(self):
             self.postrep_window = tk.Toplevel()
@@ -2363,9 +2480,10 @@ class Plot_Window():
             # one plot solver per row
             # view individual plot options
             # hover over for image
-            # CI before adding, table static only
             # Plot individually vs together 
             # all plots 
+            # https://www.tutorialspoint.com/python/tk_place.htm
+            # widget.place(relx = percent of x, rely = percent of y)
             
             ro = 0
             c = 0
@@ -2373,36 +2491,7 @@ class Plot_Window():
             #  self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
             # self.plot_type_names = ["Mean Progress Curve", "Quatile Progress Curve", "Solve time cdf", "Scatter Plot", "cdf Solvability","Quantile Solvability","cdf Difference Plot", "Quanitle Difference Plot"]
             
-            for i,exp in enumerate(self.plot_exp_list):
-                print(exp)
-                # plotType = self.plot_var
-                ci = self.checkbox_list[i]
-                if self.plot_type_list[i] == "Mean Progress Curve":
-                    path_name = wrapper_base.plot_progress_curves(exp,"mean",plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "Quatile Progress Curve":
-                    path_name = wrapper_base.plot_progress_curves(exp,"quantile",plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "Solve time cdf":
-                    path_name = wrapper_base.plot_solvability_cdfs(exp,plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "Scatter Plot":
-                    path_name = wrapper_base.plot_area_scatterplots([exp],plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "cdf Solvability":
-                    path_name = wrapper_base.plot_solvability_profiles([exp],"cdf_solvability",plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "Quantile Solvability":
-                    path_name = wrapper_base.plot_solvability_profiles([exp],"quantile_solvability",plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "cdf Difference Plot":
-                    path_name = wrapper_base.plot_solvability_profiles([exp],"diff_cdf_solvability",plot_CIs=ci,print_max_hw=ci)
-                
-                elif self.plot_type_list[i] == "Quanitle Difference Plot":
-                    path_name = wrapper_base.plot_solvability_profiles([exp],"diff_quantile_solvability",plot_CIs=ci,print_max_hw=ci)
-                
-                else:
-                    print(self.plot_type_list[i])
+            for i,path_name in enumerate(self.all_path_names):
                 
                 width = 400
                 height = 400
@@ -2422,11 +2511,38 @@ class Plot_Window():
                 if c == 4:
                     c = 0
                     ro += 1
-                print(ro,c)
                 
                 # panel.place(x=0,y=0)
             
             i = 0
+        
+        def view_one_pot(self, path_name):
+            self.postrep_window = tk.Toplevel()
+            self.postrep_window.geometry("1000x600")
+            self.postrep_window.title("Plotting Page")
+            
+            ro = 0
+            c = 0
+
+            width = 400
+            height = 400
+            img = Image.open(path_name)
+            img = img.resize((width,height), Image.ANTIALIAS)
+            img =  ImageTk.PhotoImage(img)
+            # img = tk.PhotoImage(file=path_name)
+            
+            # img = img.resize(200,200)
+            self.panel = tk.Label(
+                self.postrep_window,
+                image=img
+            )
+            self.panel.photo = img
+            self.panel.grid(row=ro,column=c)
+            c += 1
+            if c == 4:
+                c = 0
+                ro += 1
+
 
 # If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
 # and

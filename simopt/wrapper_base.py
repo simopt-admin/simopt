@@ -1627,6 +1627,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                       extra=[solve_tol, beta]
                       )
         elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+            print(solver_names)
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
