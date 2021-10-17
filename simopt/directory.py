@@ -20,6 +20,7 @@ from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
 from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
+from models.ironore import IronOre, IronOreMaxRev
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -32,12 +33,14 @@ problem_directory = {
     "FACSIZE-1": FacilitySizingTotalCost,
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
-    "SSCONT-1": SSContMinCost
+    "SSCONT-1": SSContMinCost,
+    "IRONORE-1": IronOreMaxRev
 }
 model_directory = {
     "CNTNEWS": CntNV,
     "MM1": MM1Queue,
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
-    "SSCONT": SSCont
+    "SSCONT": SSCont,
+    "IRONORE": IronOre
 }

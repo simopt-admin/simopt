@@ -1,7 +1,7 @@
 """
 Summary
 -------
-Simulate multiple periods of production and sales for an iron ore inventory problem.
+Simulate maintenances of a facility.
 """
 import numpy as np
 
@@ -10,12 +10,11 @@ import math
 from base import Model, Problem
 
 
-class IronOre(Model):
+class MainOpt(Model):
     """
-    An model that simulates multiple periods of production and sales for an
-    inventory problem with stochastic price determined by a mean-reverting 
-    random walk. Returns total revenue, fraction of days producing iron, and
-    mean stock.
+    An model that simulates multiple periods of maintenances of
+    a facility.
+    Returns total cost.
 
     Attributes
     ----------
@@ -31,151 +30,96 @@ class IronOre(Model):
         details of each factor (for GUI, data validation, and defaults)
     check_factor_list : dict
         switch case for checking factor simulatability
-
+    
     Arguments
-    ----------
-    fixed_factors : dict
-        fixed_factors of the simulation model
+    ---------
+    fixed_factors : nested dict
+        fixed factors of the simulation model
 
     See also
     --------
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "IRONORE"
-        self.n_rngs = 1
-        self.n_responses = 3
+        self.name = "MAINOPT"
+        self.n_rngs = 3
+        self.n_responses = 1
         self.factors = fixed_factors
         self.specifications = {
 
-            "mean_price": {
-                "description": "Mean iron ore price per unit.",
+            "C_pm": {
+                "description": "Preventive maintenance cost.",
                 "datatype": float,
-                "default": 100.0
+                "default": 18998.0
             },
-            "max_price": {
-                "description": "Maximum iron ore price per unit.",
+            "C_cm": {
+                "description": "Corrective maintenance cost.",
                 "datatype": float,
-                "default": 200.0
+                "default": 97997.0
             },
-            "min_price": {
-                "description": "Minimum iron ore price per unit.",
+            "C_trip": {
+                "description": "Cost given trip occurs.",
                 "datatype": float,
-                "default": 0.0
+                "default": 4349781.0
             },
-            "capacity": {
-                "description": "Maximum holding capacity.",
+            "p_trip": {
+                "description": "Probability larger failure (trip) occurs.",
+                "datatype": float,
+                "default": 0.0073
+            },
+            "time_horizon": {
+                "description": "Time horizon.",
+                "datatype": float,
+                "default": 10
+            },
+            "num_PMs": {
+                "description": "Number of preventive maintenances over the time horizon",
                 "datatype": int,
-                "default": 10000
+                "default": 2
             },
-            "st_dev": {
-                "description": "Standard deviation of random walk steps for price.",
-                "datatype": float,
-                "default": 7.5
+            "PM_times": {
+                "description": "Time of preventive maintenances.",
+                "datatype": list,
+                "default": [5, 5]
             },
-            "holding_cost": {
-                "description": "Holding cost per unit per period.",
-                "datatype": float,
-                "default": 1.0
-            },
-            "prod_cost": {
-                "description": "Production cost per unit.",
-                "datatype": float,
-                "default": 100.0
-            },
-            "max_prod_perday": {
-                "description": "Maximum units produced per day.",
-                "datatype": int,
-                "default": 100
-            },
-            "price_prod": {
-                "description": "Price level to start production.",
-                "datatype": float,
-                "default": 80.0
-            },
-            "inven_stop": {
-                "description": "Inventory level to cease production.",
-                "datatype": int,
-                "default": 7000
-            },
-            "price_stop": {
-                "description": "Price level to stop production.",
-                "datatype": float,
-                "default": 40
-            },
-            "price_sell": {
-                "description": "Price level to sell all stock.",
-                "datatype": float,
-                "default": 100
-            },
-            "n_days": {
-                "description": "Number of days to simulate.",
-                "datatype": int,
-                "default": 1000
-            },
-
         }
 
         self.check_factor_list = {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
-            "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
-            "n_days": self.check_n_days,
+            "C_pm": self.check_C_pm,
+            "C_cm": self.check_C_cm,
+            "C_trip": self.check_C_trip,
+            "p_trip": self.check_p_trip,
+            "num_PMs": self.check_num_PMs,
+            "time_horizon": self.check_time_horizon,
+            "PM_times": self.check_PM_times,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self):
-        return self.factors["mean_price"] > 0
+    def check_C_pm(self):
+        return self.factors["C_pm"] > 0
 
-    def check_max_price(self):
-        return self.factors["max_price"] > 0
+    def check_C_cm(self):
+        return self.factors["C_cm"] > 0
 
-    def check_min_price(self):
-        return self.factors["min_price"] >= 0
+    def check_C_trip(self):
+        return self.factors["C_trip"] >= 0
 
-    def check_capacity(self):
-        return self.factors["capacity"] >= 0
+    def check_p_trip(self):
+        return self.factors["p_trip"] >= 0 | self.factors["p_trip"] <= 1
 
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
+    def check_time_horizon(self):
+        return self.factors["time_horizon"] > 0
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+    def check_num_PMs(self):
+        return self.factors["num_PMs"] > 0
 
-    def check_prod_cost(self):
-        return self.factors["prod_cost"] > 0
-
-    def check_max_prod_perday(self):
-        return self.factors["max_prod_perday"] > 0
-
-    def check_price_prod(self):
-        return self.factors["price_prod"] > 0
-
-    def check_inven_stop(self):
-        return self.factors["inven_stop"] > 0
-
-    def check_price_stop(self):
-        return self.factors["price_stop"] > 0
-
-    def check_price_sell(self):
-        return self.factors["price_sell"] > 0
-
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
+    def check_PM_times(self):
+        return all((PM_time > 0) & (PM_time <= self.factors["time_horizon"]) for PM_time in self.factors["PM_times"])
 
     def check_simulatable_factors(self):
-        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"]) & (self.factors["min_price"] <= self.factors["max_price"])
+        return (sum(PM_time for PM_time in self.factors["PM_times"]) == self.factors["time_horizon"]) & (len(self.factors["PM_times"]) == self.factors["num_PMs"])
 
     def replicate(self, rng_list):
         """
@@ -190,67 +134,39 @@ class IronOre(Model):
         -------
         responses : dict
             performance measures of interest
-            "total_revenue" = The total revenue over the time period
-            "frac_producing" = The fraction of days spent producing iron ore
-            "mean_stock" = The average stocks over the time period
+            "total_cost" = total cost
         """
         # Designate random number generators.
-        price_rng = rng_list[0]
+        uni_rng = rng_list[0]
+        exp_rng = rng_list[1]
+        ptrip_rng = rng_list[2]
+        # Initialize interval times between PM time and 
+        inter_PMtimes = (self.factors["PM_times"] + [self.factors["time_horizon"]]) - ([0] + self.factors["PM_times"])
+        num_stretch = len(inter_PMtimes)
         # Initialize quantities to track:
-        #   - Market price in each period (Pt).
-        #   - Starting stock in each period.
-        #   - Ending stock in each period.
-        #   - Revenue in each period.
-        #   - Whether producing or not in each period.
-        #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        revenue = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
+        #   - Cost in each period.
+        #   - Time state in each period.
+        cost = np.zeros(self.factors["time_horizon"])
+        time = np.zeros(self.factors["time_horizon"])
 
         #Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ))
-            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
-            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
-            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val *  mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
-            # If production is underway
-            if producing[day] == 1:
-                # cease production if price goes too low or inventory is too much
-                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
-                    producing[day] = 0
+        for period in range(self.factors["time_horizon"]):
+            # Determine which stretch the current period is on
+            stretch = period // num_stretch + 1
+            # Generate first failure from z(t) distribution via acceptance-rejection method
+
+            # If previous failure is before maintenance, determine cost of failure, then generate another time
+            while time[period] < inter_PMtimes[stretch]:
+                # Generate random "trip". If a trip occurs, cost increase by C_trip; 
+                # otherwise, cost increases by C_cm
+                p = ptrip_rng.random()
+                if p < self.factors["p_trip"]:
+                    cost[period] += self.factors["C_trip"]
                 else:
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
-            # if production is not currently underway
-            else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
-                    producing[day] = 1
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
-            # Sell if price is high enough
-            if (mkt_price[day] >= self.factors["price_sell"]):
-                revenue[day] = revenue[day] + stock[day] * mkt_price[day]
-                stock[day] = 0
-            # Charge holding cost
-            revenue[day] = revenue[day] - stock[day] * self.factors["holding_cost"]
-            # Calculate starting quantities for next period
-            if day < self.factors["n_days"] - 1:
-                revenue[day + 1] = revenue[day]
-                stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day] 
-                producing[day + 1] = producing[day]
+                    cost[period] += self.factors["C_cm"]
+
         # Calculate responses from simulation data.
-        responses = {"total_revenue": revenue[self.factors["n_days"] - 1],
-                     "frac_producing": np.mean(producing),
-                     "mean_stock": np.mean(stock)
+        responses = {"total_cost": cost[self.factors["time_horizon"] - 1]
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -263,9 +179,9 @@ Maximize the expected total revenue for iron ore inventory system.
 """
 
 
-class IronOreMaxRev(Problem):
+class MainOptMinCost(Problem):
     """
-    Class to make iron ore inventory simulation-optimization problems.
+    Class to make facility maintenance simulation-optimization problems.
 
     Attributes
     ----------
@@ -324,7 +240,7 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="MAINOPT-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -357,7 +273,7 @@ class IronOreMaxRev(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = IronOre(self.model_fixed_factors)
+        self.model = MainOpt(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
