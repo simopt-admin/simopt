@@ -42,8 +42,8 @@ class MainOpt(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "MAINOPT"
-        self.n_rngs = 3
-        self.n_responses = 1
+        self.n_rngs = 2
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
 
@@ -69,7 +69,7 @@ class MainOpt(Model):
             },
             "time_horizon": {
                 "description": "Time horizon.",
-                "datatype": float,
+                "datatype": int,
                 "default": 10
             },
             "num_PMs": {
@@ -107,7 +107,7 @@ class MainOpt(Model):
         return self.factors["C_trip"] >= 0
 
     def check_p_trip(self):
-        return self.factors["p_trip"] >= 0 | self.factors["p_trip"] <= 1
+        return (self.factors["p_trip"] >= 0 or self.factors["p_trip"] <= 1)
 
     def check_time_horizon(self):
         return self.factors["time_horizon"] > 0
@@ -135,38 +135,65 @@ class MainOpt(Model):
         responses : dict
             performance measures of interest
             "total_cost" = total cost
+            "total_failure" = total failure
         """
         # Designate random number generators.
-        uni_rng = rng_list[0]
-        exp_rng = rng_list[1]
-        ptrip_rng = rng_list[2]
-        # Initialize interval times between PM time and 
-        inter_PMtimes = (self.factors["PM_times"] + [self.factors["time_horizon"]]) - ([0] + self.factors["PM_times"])
+        fail_rng = rng_list[0]
+        ptrip_rng = rng_list[1]
+        # Initialize interval times between PM time and the number of stretches
+        inter_PMtimes = self.factors["PM_times"]
         num_stretch = len(inter_PMtimes)
         # Initialize quantities to track:
         #   - Cost in each period.
         #   - Time state in each period.
+        #   - Whether the current period has failure.
+        #   - Whether the current period has a "trip".
+        #   - Stretch the current period belongs to.
         cost = np.zeros(self.factors["time_horizon"])
         time = np.zeros(self.factors["time_horizon"])
-
+        failure = np.zeros(self.factors["time_horizon"])
+        trip = np.zeros(self.factors["time_horizon"])
+        stretch = np.zeros(self.factors["time_horizon"])
         #Run simulation over time horizon.
         for period in range(self.factors["time_horizon"]):
-            # Determine which stretch the current period is on
-            stretch = period // num_stretch + 1
-            # Generate first failure from z(t) distribution via acceptance-rejection method
+            # Calculate the failure rate z(t)
+            z = 1 - np.exp(-time[period])
+            # Generate random failure. 
+            u = fail_rng.random()
+            if u < z:
+                failure[period] = 1
+            # If failure occurs:
+            if failure[period] == 1:
+                # If previous failure is before maintenance, determine cost of failure
+                if time[period] < inter_PMtimes[int(stretch[period])]:
+                    # Generate random "trip". If a trip occurs, cost increase by C_trip; 
+                    # otherwise, cost increases by C_cm
+                    p = ptrip_rng.random()
+                    if p < self.factors["p_trip"]:
+                        trip[period] = 1
+                        cost[period] += self.factors["C_trip"]
+                    else:
+                        cost[period] += self.factors["C_cm"]  
+                        time[period] = 0
+                # elif time[period] == inter_PMtimes[stretch[period]]:
+                #     time[period] = 0
+                #     stretch[period] += 1
+                #     cost[period] += self.factors["C_pm"] 
+            # Perform PM when it is the scheuduled time
+            if period == np.cumsum(inter_PMtimes)[int(stretch[period])] - 1:
+                time[period] = 0
+                stretch[period] += 1
+                cost[period] += self.factors["C_pm"]    
+            # Calculate starting quantities for next period
+            if period < self.factors["time_horizon"] - 1:
+                cost[period + 1] = cost[period]
+                time[period + 1] = time[period] + 1
+                stretch[period + 1] = stretch[period]
 
-            # If previous failure is before maintenance, determine cost of failure, then generate another time
-            while time[period] < inter_PMtimes[stretch]:
-                # Generate random "trip". If a trip occurs, cost increase by C_trip; 
-                # otherwise, cost increases by C_cm
-                p = ptrip_rng.random()
-                if p < self.factors["p_trip"]:
-                    cost[period] += self.factors["C_trip"]
-                else:
-                    cost[period] += self.factors["C_cm"]
 
         # Calculate responses from simulation data.
-        responses = {"total_cost": cost[self.factors["time_horizon"] - 1]
+        responses = {"total_cost": cost[self.factors["time_horizon"] - 1],
+                    "total_failure":stretch[self.factors["time_horizon"] - 1]
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients

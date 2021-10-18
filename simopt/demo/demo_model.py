@@ -16,6 +16,7 @@ from rng.mrg32k3a import MRG32k3a
 # Replace <model_class_name> with name of model class.
 # Ex: from models.mm1queue import MM1Queue
 from models.ironore import IronOre
+from models.mainopt import MainOpt
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
@@ -27,7 +28,7 @@ fixed_factors = {}  # Resort to all default values.
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = IronOre(fixed_factors)
+mymodel = MainOpt(fixed_factors)
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
@@ -60,3 +61,11 @@ for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+
+import numpy as np
+cost = []
+for _ in range(1000):
+    responses, gradients = mymodel.replicate(rng_list)
+    cost.append(responses["total_failure"])
+
+print(np.mean(cost))
