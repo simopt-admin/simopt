@@ -399,7 +399,8 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_list.append(self.save_var_problem)
         self.problem_factors_types.append(str)
 
-        self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
+        #self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
+        self.factor_label_frame_problem.place(x=420, y=70, height=150, width=450)
 
         # Switching from Problems to Oracles
 
@@ -510,7 +511,7 @@ class Experiment_Window(tk.Tk):
                 count_factors_oracle += 1
 
         # print(self.oracle_factors_list)
-        # self.factor_label_frame_oracle.place(x=900, y=70, height=300, width=600)
+        self.factor_label_frame_oracle.place(x=900, y=70, height=300, width=600)
 
     def show_solver_factors(self, *args):
 
@@ -646,7 +647,7 @@ class Experiment_Window(tk.Tk):
 
         self.solver_factors_types.append(str)
 
-        self.factor_label_frame_solver.place(x=900, y=70, height=300, width=500)
+        self.factor_label_frame_solver.place(x=420, y=220, height=150, width=450)
 
     def run_single_function(self):
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
@@ -2318,7 +2319,7 @@ class Plot_Window():
             else:
                 print(self.plot_type_list[i])
 
-            self.all_path_names.append(path_name)
+            # self.all_path_names.append(path_name)
             print(path_name)
 
             for i,new_plot in enumerate(path_name):
@@ -2362,7 +2363,7 @@ class Plot_Window():
                 self.view_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
                 # self.view_plot.pack()
                 self.changeOnHover(self.view_plot, "red", "yellow")
-                
+                self.all_path_names.append(new_plot)
 
                 self.num_plots += 1
 
@@ -2480,7 +2481,7 @@ class Plot_Window():
             # all plots 
             # https://www.tutorialspoint.com/python/tk_place.htm
             # widget.place(relx = percent of x, rely = percent of y)
-            
+            print(self.all_path_names)
             ro = 0
             c = 0
             # print(self.plot_exp_list)
@@ -2504,7 +2505,7 @@ class Plot_Window():
                 self.panel.photo = img
                 self.panel.grid(row=ro,column=c)
                 c += 1
-                if c == 4:
+                if c == 3:
                     c = 0
                     ro += 1
                 
