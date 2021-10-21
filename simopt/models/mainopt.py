@@ -82,6 +82,16 @@ class MainOpt(Model):
                 "datatype": list,
                 "default": [5, 5]
             },
+            "scale": {
+                "description": "Scale parameter of Weibull distribution.",
+                "datatype": float,
+                "default": math.sqrt(2)
+            },
+            "shape": {
+                "description": "Shape parameter of Weibull distribution.",
+                "datatype": float,
+                "default": 2
+            },
         }
 
         self.check_factor_list = {
@@ -149,11 +159,13 @@ class MainOpt(Model):
         #   - Whether the current period has failure.
         #   - Whether the current period has a "trip".
         #   - Stretch the current period belongs to.
+
         cost = np.zeros(self.factors["time_horizon"])
         time = np.zeros(self.factors["time_horizon"])
         failure = np.zeros(self.factors["time_horizon"])
         trip = np.zeros(self.factors["time_horizon"])
         stretch = np.zeros(self.factors["time_horizon"])
+        fail_rng.weibullvariate()
         #Run simulation over time horizon.
         for period in range(self.factors["time_horizon"]):
             # Calculate the failure rate z(t)
@@ -193,7 +205,7 @@ class MainOpt(Model):
 
         # Calculate responses from simulation data.
         responses = {"total_cost": cost[self.factors["time_horizon"] - 1],
-                    "total_failure":stretch[self.factors["time_horizon"] - 1]
+                    "total_failure":failure[self.factors["time_horizon"] - 1]
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
