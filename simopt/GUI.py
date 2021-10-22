@@ -99,7 +99,7 @@ class Experiment_Window(tk.Tk):
         # stays the same, has to change into a special type of variable via tkinter function
         self.problem_var = tk.StringVar(master=self.master)
         # sets the default OptionMenu value
-        # self.problem_var.set("----")
+
         # creates drop down menu, for tkinter, it is called "OptionMenu"
         self.problem_menu = ttk.OptionMenu(self.master, self.problem_var, "Problem", *self.problem_list, command=self.show_problem_factors)
 
@@ -112,7 +112,7 @@ class Experiment_Window(tk.Tk):
         # stays the same, has to change into a special type of variable via tkinter function
         self.solver_var = tk.StringVar(master=self.master)
         # sets the default OptionMenu value
-        # self.solver_var.set("----")
+
         # creates drop down menu, for tkinter, it is called "OptionMenu"
         self.solver_menu = ttk.OptionMenu(self.master, self.solver_var, "Solver", *self.solver_list, command=self.show_solver_factors)       
 
@@ -248,29 +248,36 @@ class Experiment_Window(tk.Tk):
 
         self.instruction_label.place(x=0, y=0)
 
-        self.problem_label.place(x=0, y=85)
-        self.problem_menu.place(x=225, y=85)
+        self.problem_label.place(relx=0, rely=.1)
+        self.problem_menu.place(x=225, rely=.1)
+        # self.problem_label.place(relx=0, rely=85)
+        # self.problem_menu.place(relx=225, rely=85)
 
-        self.solver_label.place(x=0, y=165)
-        self.solver_menu.place(x=225, y=165)
+        self.solver_label.place(x=0, rely=.15)
+        self.solver_menu.place(x=225, rely=.15 )
 
-        self.macro_label.place(x=0, y=245)
-        self.macro_entry.place(x=225, y=245)
+        self.macro_label.place(x=0, rely=.25)
+        self.macro_entry.place(x=225, rely=.25, relwidth=.08)
 
-        self.run_button.place(x=5, y=285)
-        self.crossdesign_button.place(x=175, y=285)
-        self.add_button.place(x=5, y=325)
-        self.clear_queue_button.place(x=175, y=325)
+        self.run_button.place(x=5, rely=.3, width=200)
+        self.crossdesign_button.place(x=175, rely=.3, width=200)
+        self.add_button.place(x=5, rely=.34, width=200)
+        self.clear_queue_button.place(x=175, rely=.34, width=200)
+        self.pickle_file_load_button.place(x=5, rely=.38)
+        # self.run_button.place(x=5, y=285, width=200)
+        # self.crossdesign_button.place(x=175, y=285, width=200)
+        # self.add_button.place(x=5, y=325, width=200)
+        # self.clear_queue_button.place(x=175, y=325, width=200)
 
-        self.pickle_file_select_label.place(x=850, y=375)
-        self.pickle_file_select_button.place(x=1040, y=375)
-        self.pickle_file_load_button.place(x=1150, y=375)
-        self.pickle_file_pathname_label.place(x=850, y=400)
-        self.pickle_file_pathname_show.place(x=950, y=400)
+        # self.pickle_file_select_label.place(x=850, y=375)
+        # self.pickle_file_select_button.place(x=1040, y=375)
+        # self.pickle_file_load_button.place(x=1150, y=375)
+        # self.pickle_file_pathname_label.place(x=850, y=400)
+        # self.pickle_file_pathname_show.place(x=950, y=400)
         # self.post_process_all_button.place(x=5,y=800)
-        self.post_normal_all_button.place(x=250,y=800)
-
-        self.queue_label_frame.place(x=0, y=375, height=400, width=800)
+        
+        self.queue_label_frame.place(x=0, rely=.46, relheight=.44, relwidth=.8)
+        self.post_normal_all_button.place(x=250,rely=.95)
 
         self.frame.pack(fill='both')
 
@@ -400,7 +407,7 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_types.append(str)
 
         #self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
-        self.factor_label_frame_problem.place(x=420, y=70, height=150, width=450)
+        self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
 
         # Switching from Problems to Oracles
 
@@ -462,7 +469,7 @@ class Experiment_Window(tk.Tk):
                                                     font = "Calibri 11 bold")
 
                 self.int_float_var_oracle = tk.StringVar(self.factor_tab_one_oracle)
-                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = "50")
+                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 20)
                 
                 if args and len(args) == 2 and args[0] == True:
                     self.int_float_entry_oracle.insert(index=tk.END, string=str(args[1][4][0][factor_type]))
@@ -511,7 +518,7 @@ class Experiment_Window(tk.Tk):
                 count_factors_oracle += 1
 
         # print(self.oracle_factors_list)
-        self.factor_label_frame_oracle.place(x=900, y=70, height=300, width=600)
+        self.factor_label_frame_oracle.place(relx=.66, y=70, height=300, relwidth=.34)
 
     def show_solver_factors(self, *args):
 
@@ -1228,12 +1235,14 @@ class Experiment_Window(tk.Tk):
             # filename_short = filename_short_list[len(filename_short_list)-1]
             self.pickle_file_pathname_show["text"] = filename
             self.pickle_file_pathname_show["foreground"] = "blue"
-            self.pickle_file_pathname_show.place(x=950, y=400)
+            # self.pickle_file_pathname_show.place(x=950, y=400)
         else:
             message = "You attempted to select a file but failed, please try again if necessary"
             tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
  
     def load_pickle_file_function(self):
+        self.select_pickle_file_fuction()
+
         filename = self.pickle_file_pathname_show["text"]
         acceptable_types = ["pickle", "pck", "pcl", "pkl", "db"]
 
@@ -1550,9 +1559,7 @@ class Experiment_Window(tk.Tk):
     def post_norm_return_func(self):
         # print('IN post_process_disable_button ', self.post_rep_function_row_index)
         print("youve returned")
-        
-    
-    
+           
 class Cross_Design_Window():
     def __init__(self, master, main_widow):
 
@@ -2212,7 +2219,7 @@ class Plot_Window():
 
             self.tab_one.grid_rowconfigure(0)
 
-            self.heading_list = ["Problem", "Solver", "Plot Type", "Parameters", "Clear Row", "View Plot"]
+            self.heading_list = ["Problem", "Solver", "Plot Type", "Clear Row", "View Plot", "Parameters"]
 
             for heading in self.heading_list:
                 self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -2235,7 +2242,7 @@ class Plot_Window():
 
             self.post_normal_all_button.place(x=270,y=700)
 
-            self.queue_label_frame.place(x=0, y=400, height=250, width=900)
+            self.queue_label_frame.place(x=0, y=400, height=250, width=1000)
             
             self.param_label = []
             self.param_entry = []
@@ -2249,7 +2256,7 @@ class Plot_Window():
             self.CI_canvas.create_window((0,0), window=self.CI_frame, anchor="nw",
                                     tags="self.queue_frame")
             
-            self.CI_label_frame.place(x=400, y=200, height=200, width=300)
+            self.CI_label_frame.place(x=400, y=200, height=200, width=400)
             # self.frame.pack(fill='both')
         
         def test_funct(self):
@@ -2300,21 +2307,30 @@ class Plot_Window():
                         param_value_list.append(t.get())
 
             ci = param_value_list[0]
+
             if self.plot_type_list[i] == "Mean Progress Curve":
                 path_name = wrapper_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, normalize=param_value_list[2])
+                param_list = {"plot CIs":ci, "print max hw":ci, "normalize":param_value_list[2]}
             elif self.plot_type_list[i] == "Quatile Progress Curve":
                 path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, beta=param_value_list[2],normalize=param_value_list[3])
+                param_list = {"plot CIs":ci, "print max hw":ci, "normalize":param_value_list[3], "beta":param_value_list[2]}
             elif self.plot_type_list[i] == "Solve time cdf":
                 path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2])
+                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2]}
             elif self.plot_type_list[i] == "Scatter Plot":
-                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci)           
+                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci) 
+                param_list = {}
             elif self.plot_type_list[i] == "cdf Solvability":
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
+                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[3]}
             elif self.plot_type_list[i] == "Quantile Solvability":
+                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3]}
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])        
             elif self.plot_type_list[i] == "cdf Difference Plot":
+                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[3]}
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
             elif self.plot_type_list[i] == "Quanitle Difference Plot":
+                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3]}
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])           
             else:
                 print(self.plot_type_list[i])
@@ -2346,6 +2362,17 @@ class Plot_Window():
                                                         font = "Calibri 10",
                                                         justify="center")
                 self.plot_type_button_added.grid(row=place, column=2, sticky='nsew', padx=5, pady=3)
+                
+                param_text = ""
+                for key, item in param_list.items():
+                    param_text = param_text + key + ": " + str(item) + ", "
+                param_text = param_text[:len(param_text)-2]
+
+                self.params_label_added = tk.Label(master=self.tab_one,
+                                                        text=param_text,
+                                                        font = "Calibri 10",
+                                                        justify="center")
+                self.params_label_added.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
             
 
                 self.clear_plot = tk.Button(master=self.tab_one,
@@ -2353,14 +2380,14 @@ class Plot_Window():
                                                         font = "Calibri 10",
                                                         justify="center",
                                                         command=partial(self.clear_row, place-1))
-                self.clear_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
+                self.clear_plot.grid(row=place, column=3, sticky='nsew', padx=5, pady=3)
                 
                 self.view_plot = tk.Button(master=self.tab_one,
                                                         text="View Plot",
                                                         font = "Calibri 10",
                                                         justify="center",
                                                         command=partial(self.view_one_pot, new_plot))
-                self.view_plot.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
+                self.view_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
                 # self.view_plot.pack()
                 self.changeOnHover(self.view_plot, "red", "yellow")
                 self.all_path_names.append(new_plot)
@@ -2419,7 +2446,7 @@ class Plot_Window():
                                     tags="self.queue_frame")
             self.CI_canvas.grid_rowconfigure(0)
             
-            self.CI_label_frame.place(x=400, y=200, height=200, width=300)
+            self.CI_label_frame.place(x=400, y=200, height=200, width=400)
 
             
             tf_list = ['True','False']
