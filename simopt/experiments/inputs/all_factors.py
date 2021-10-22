@@ -11,7 +11,7 @@
 #                              "SSCONT-1":{}
 #                              }
 
-# all_oracle_fixed_factors = {"CNTNEWS-1": {},
+# all_model_fixed_factors = {"CNTNEWS-1": {},
 #                             "FACSIZE-2": {},
 #                             "RMITD-1": {},
 #                             "SSCONT-1":{}
@@ -25,7 +25,7 @@ all_problem_fixed_factors = {"MM1-1mu3": {"budget": 100},
                              "MM1-1mu4": {"budget": 100},
                              }
 
-all_oracle_fixed_factors = {"MM1-1mu3": {"mu": 3.0},
+all_model_fixed_factors = {"MM1-1mu3": {"mu": 3.0},
                              "MM1-1mu4": {"mu": 4.0},
                             }
                         

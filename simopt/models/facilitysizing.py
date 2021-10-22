@@ -5,19 +5,19 @@ Simulate demand at facilities.
 """
 import numpy as np
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class FacilitySize(Oracle):
+class FacilitySize(Model):
     """
-    An oracle that simulates a facilitysize problem with a
+    A model that simulates a facilitysize problem with a
     multi-variate normal distribution.
     Returns the probability of violating demand in each scenario.
 
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -36,7 +36,7 @@ class FacilitySize(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "FACSIZE"
@@ -70,7 +70,7 @@ class FacilitySize(Oracle):
             "capacity": self.check_capacity,
             "n_fac": self.check_n_fac
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_mean_vec(self):
@@ -107,12 +107,12 @@ class FacilitySize(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -189,13 +189,13 @@ class FacilitySizingTotalCost(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
-    oracle_decision_factors : set of str
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
         set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
@@ -215,14 +215,14 @@ class FacilitySizingTotalCost(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="FACSIZE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 3
         self.n_objectives = 1
@@ -235,8 +235,8 @@ class FacilitySizingTotalCost(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (185, 185, 185)
-        self.oracle_default_factors = {}
-        self.oracle_decision_factors = {"capacity"}
+        self.model_default_factors = {}
+        self.model_decision_factors = {"capacity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -266,12 +266,12 @@ class FacilitySizingTotalCost(Problem):
             "installation_costs": self.check_installation_costs,
             "epsilon": self.check_epsilon
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults.
-        self.oracle = FacilitySize(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = FacilitySize(self.model_fixed_factors)
 
     def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.oracle.factors["n_fac"]:
+        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
             return False
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
             return False
@@ -468,13 +468,13 @@ class FacilitySizingMaxService(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
-    oracle_decision_factors : set of str
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
         set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
@@ -494,14 +494,14 @@ class FacilitySizingMaxService(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-2", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="FACSIZE-2", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 3
         self.n_objectives = 1
@@ -514,8 +514,8 @@ class FacilitySizingMaxService(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None  # (175, 179, 143)
-        self.oracle_default_factors = {}
-        self.oracle_decision_factors = {"capacity"}
+        self.model_default_factors = {}
+        self.model_decision_factors = {"capacity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -545,12 +545,12 @@ class FacilitySizingMaxService(Problem):
             "installation_costs": self.check_installation_costs,
             "installation_budget": self.check_installation_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults.
-        self.oracle = FacilitySize(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = FacilitySize(self.model_fixed_factors)
 
     def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.oracle.factors["n_fac"]:
+        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
             return False
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
             return False

@@ -17,7 +17,7 @@ myMetaExperiment = DataFarmingMetaExperiment(solver_name="RNDSRCH",
                                              design_filename="random_search_design",
                                              solver_fixed_factors={},
                                              problem_fixed_factors={},
-                                             oracle_fixed_factors={})
+                                             model_fixed_factors={})
 myMetaExperiment.run(n_macroreps=20, crn_across_solns=True)
 myMetaExperiment.post_replicate(n_postreps=100, n_postreps_init_opt=100, crn_across_budget=True, crn_across_macroreps=False)
 

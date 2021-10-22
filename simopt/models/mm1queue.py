@@ -5,12 +5,12 @@ Simulate a M/M/1 queue.
 """
 import numpy as np
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class MM1Queue(Oracle):
+class MM1Queue(Model):
     """
-    An oracle that simulates an M/M/1 queue with an Exponential(lambda)
+    A model that simulates an M/M/1 queue with an Exponential(lambda)
     interarrival time distribution and an Exponential(x) service time
     distribution. Returns
         - the average sojourn time
@@ -21,7 +21,7 @@ class MM1Queue(Oracle):
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -40,7 +40,7 @@ class MM1Queue(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "MM1"
@@ -78,7 +78,7 @@ class MM1Queue(Oracle):
             "warmup": self.check_warmup,
             "people": self.check_people
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_lambda(self):
@@ -100,12 +100,12 @@ class MM1Queue(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -230,13 +230,13 @@ class MM1MinMeanSojournTime(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
-    oracle_decision_factors : set of str
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
         set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
@@ -252,14 +252,14 @@ class MM1MinMeanSojournTime(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed_factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed_factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="MM1-1", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="MM1-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -272,11 +272,11 @@ class MM1MinMeanSojournTime(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (2.75,)
-        self.oracle_default_factors = {
+        self.model_default_factors = {
             "warmup": 50,
             "people": 200
         }
-        self.oracle_decision_variables = {"mu"}
+        self.model_decision_variables = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -294,9 +294,9 @@ class MM1MinMeanSojournTime(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and overwritten defaults.
-        self.oracle = MM1Queue(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = MM1Queue(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
