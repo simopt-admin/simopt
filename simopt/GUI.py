@@ -276,7 +276,7 @@ class Experiment_Window(tk.Tk):
         # self.pickle_file_pathname_show.place(x=950, y=400)
         # self.post_process_all_button.place(x=5,y=800)
         
-        self.queue_label_frame.place(x=0, rely=.46, relheight=.44, relwidth=.8)
+        self.queue_label_frame.place(x=0, rely=.48, relheight=.44, relwidth=.8)
         self.post_normal_all_button.place(x=250,rely=.95)
 
         self.frame.pack(fill='both')
@@ -407,7 +407,7 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_types.append(str)
 
         #self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
-        self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
+        self.factor_label_frame_problem.place(relx=.32, rely=.08, relheight=.2, relwidth=.34)
 
         # Switching from Problems to Oracles
 
@@ -518,7 +518,8 @@ class Experiment_Window(tk.Tk):
                 count_factors_oracle += 1
 
         # print(self.oracle_factors_list)
-        self.factor_label_frame_oracle.place(relx=.66, y=70, height=300, relwidth=.34)
+        # relx=.32, rely=.08, relheight=.2, relwidth=.34
+        self.factor_label_frame_oracle.place(relx=.66, rely=.08, relheight=.4, relwidth=.34)
 
     def show_solver_factors(self, *args):
 
@@ -653,8 +654,8 @@ class Experiment_Window(tk.Tk):
         self.solver_factors_list.append(self.save_var_solver)
 
         self.solver_factors_types.append(str)
-
-        self.factor_label_frame_solver.place(x=420, y=220, height=150, width=450)
+        # self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
+        self.factor_label_frame_solver.place(relx=.32, rely=.28, relheight=.2, relwidth=.34)
 
     def run_single_function(self):
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
