@@ -5,12 +5,12 @@ Simulate contamination rates.
 """
 import numpy as np
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class Contamination(Oracle):
+class Contamination(Model):
     """
-    An oracle that simulates a contamination problem with a
+    A model that simulates a contamination problem with a
     beta distribution.
     Returns the probability of violating contamination upper limit 
     in each level of supply chain.
@@ -18,7 +18,7 @@ class Contamination(Oracle):
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -37,7 +37,7 @@ class Contamination(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "CONTAM"
@@ -81,8 +81,8 @@ class Contamination(Oracle):
             },
             "prev_decision": {
                 "description": "Prevention decision.",
-                "datatype": list,
-                "default": [0, 0, 0, 0, 0]
+                "datatype": tuple,
+                "default": (0, 0, 0, 0, 0)
             }
         }
         self.check_factor_list = {
@@ -95,7 +95,7 @@ class Contamination(Oracle):
             "stages": self.check_stages,
             "prev_decision": self.check_prev_decision
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_contam_rate_alpha(self):
@@ -135,12 +135,12 @@ class Contamination(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -206,12 +206,12 @@ class ContaminationTotalCost(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -234,26 +234,26 @@ class ContaminationTotalCost(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="CONTAM", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="CONTAM", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 5
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
-        self.variable_type = "discrete"
+        self.variable_type = "continuous"
         self.lower_bounds = (0, 0, 0, 0 ,0)
         self.upper_bounds = (1, 1, 1, 1, 1)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.oracle_default_factors = {}
+        self.model_default_factors = {}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -288,19 +288,25 @@ class ContaminationTotalCost(Problem):
             "budget": self.check_budget,
             "prev_cost": self.check_prev_cost,
             "error_prob": self.check_error_prob,
+            "upper_thres": self.check_upper_thres,
         }
 
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults.
-        self.oracle = Contamination(self.oracle_fixed_factors)
-        self.dim = self.oracle.factors["stages"]
-        self.oracle_decision_factors = set("prev_decision")
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = Contamination(self.model_fixed_factors)
+        self.dim = self.model.factors["stages"]
+        self.model_decision_factors = set("prev_decision")
 
     def check_initial_solution(self):
-        return all(u >= 0 & u <= 1 for u in self.factors["initial_solution"])
+        if len(self.factors["initial_solution"]) != self.dim:
+            return False
+        elif all(u < 0 or u > 1 for u in self.factors["initial_solution"]):
+            return False
+        else:
+            return True
 
     def check_prev_cost(self):
-        if len(self.factors["prev_cost"]) != self.oracle.factors["stages"]:
+        if len(self.factors["prev_cost"]) != self.dim:
             return False
         elif any([elem < 0 for elem in self.factors["prev_cost"]]):
             return False
@@ -311,9 +317,20 @@ class ContaminationTotalCost(Problem):
         return self.factors["budget"] > 0
 
     def check_error_prob(self):
-        if len(self.factors["error_prob"]) != self.oracle.factors["stages"]:
+        if len(self.factors["error_prob"]) != self.dim:
             return False
         elif all(error < 0 for error in self.factors["error_prob"]):
+            return False
+        else:
+            return True
+
+    def check_upper_thres(self):
+        return len(self.factors["upper_thres"]) == self.dim
+
+    def check_simulatable_factors(self):
+        if len(self.lower_bounds) != self.dim:
+            return False
+        elif len(self.upper_bounds) != self.dim:
             return False
         else:
             return True
