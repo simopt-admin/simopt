@@ -8,16 +8,8 @@ simopt
    data_farming_base
    directory
    main
-   oracles
-   problems
+   models
    rng
    solvers
-   test_df_wrapper
-   test_matmodops
-   test_mrg32k3a
-   test_oracle
-   test_problem
-   test_run_wrapper
-   test_solver_problem
-   tests
+   test
    wrapper_base

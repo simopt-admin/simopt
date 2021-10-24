@@ -14,6 +14,10 @@ The paper  `Pasupathy and Henderson (2006) <https://www.informs-sim.org/wsc06pap
 
 The `Oracle Library <oracles.html>`_ contains the simulation logic to simulate a variety of systems. The `Problem Library <problems.html>`_ builds upon the Oracle Library and contains a variety of SO test problems. The `Solver Library <solvers.html>`_ provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  `here <instructions.html>`_.
 
+Getting Started
+----------------
+
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, and matplotlib. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
 
 Contents
 -------------------

@@ -4,6 +4,14 @@ solvers package
 Submodules
 ----------
 
+solvers.astrodf module
+----------------------
+
+.. automodule:: solvers.astrodf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 solvers.randomsearch module
 ---------------------------
 
