@@ -40,7 +40,7 @@ class DynamNews(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "DYNAMNews"
-        self.n_rngs = 1
+        self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
         self.specifications = {
@@ -57,7 +57,7 @@ class DynamNews(Model):
             "c_utility": {
                 "description": "Constant of each product's utility",
                 "datatype": list,
-                "default": np.array((1.0, 1.0))
+                "default": [1.0, 1.0]
             },
             "mu": {
                 "description": "Mu for calculating Gumbel random variable",
@@ -67,17 +67,17 @@ class DynamNews(Model):
             "init_level": {
                 "description": "Initial inventory level",
                 "datatype": list,
-                "default": np.array((2, 3))
+                "default": [2, 3]
             },
             "price": {
-                "description": "Price of products",
+                "description": "Sell price of products",
                 "datatype": list,
-                "default": np.array((9, 9))
+                "default": [9, 9]
             },
             "cost": {
                 "description": "Cost of products",
                 "datatype": list,
-                "default": np.array((5, 5))
+                "default": [5, 5]
             },
         }
         self.check_factor_list = {
@@ -102,7 +102,7 @@ class DynamNews(Model):
         return len(self.factors["c_utility"]) == self.factors["num_prod"]
 
     def check_init_level(self):
-        return all(self.factors["init_level"] > 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
+        return all(np.array(self.factors["init_level"]) > 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
 
     def check_mu(self):
         return True
@@ -134,37 +134,40 @@ class DynamNews(Model):
         """
         # Designate random number generator for generating a Gumbel random variable
         Gumbel_rng = rng_list[0]
-        # Compute a Gumbel rv for the utility.
-        gumbel = Gumbel_rng.gumbel(self.factors["mu"] * np.euler_gamma, self.factors["mu"], size = self.factors["num_product"])
+        # Compute Gumbel rvs for the utility of the products.
+        gumbel = []
+        for j in range(self.factors["num_prod"]):
+            gumbel.append(Gumbel_rng.gumbelvariate(-self.factors["mu"] * np.euler_gamma, self.factors["mu"]))
+        # Compute utility for each product and each customer
         utility = np.zeros((self.factors["num_customer"], self.factors["num_prod"] + 1))
         for j in range(self.factors["num_prod"] + 1):
-            if  j == 0:
+            if j == 0:
                 utility[:, j] = 0
             else:
                 utility[:, j] = self.factors["c_utility"][j - 1] + gumbel[j - 1]
 
         # Initialize inventory
-        inventory = self.factors["init_level"]
-        itembought = np.zeros(self.factors["num_customers"])
+        inventory = np.copy(self.factors["init_level"])
+        itembought = np.zeros(self.factors["num_customer"])
 
         # Loop through customers
         for t in range(self.factors["num_customer"]):
             instock = np.where(inventory > 0)[0]
             itembought[t] = 0
             for j in instock:
-                if utility[t][j + 1] > utility[t][itembought[t]]:
+                if utility[t][j + 1] > utility[t][int(itembought[t])]:
                     itembought[t] = j + 1
             if itembought[t] != 0:
-                inventory[itembought[t]] -= 1
-                      
+                inventory[int(itembought[t] - 1)] -= 1
+
         # Calculate profit.
         numsold = self.factors["init_level"] - inventory
-        unitprofit = self.factors["price"] - self.factors["cost"]
+        unitprofit = np.array(self.factors["price"]) - np.array(self.factors["cost"])
         profit = unitprofit * numsold
 
 
         # Compose responses and gradients.
-        responses = {"profit": profit}
+        responses = {"profit": np.sum(profit)}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses

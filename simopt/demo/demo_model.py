@@ -3,7 +3,7 @@ This script is intended to help with debugging an model.
 It imports an model, initializes an model object with given factors,
 sets up pseudorandom number generators, and runs one or more replications.
 """
-
+import numpy as np
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
@@ -23,7 +23,18 @@ from models.dynamnews import DynamNews
 # Ex: for the MM1Queue class,
 #     fixed_factors = {"lambda": 3.0,
 #                      "mu": 8.0}
-fixed_factors = {}  # Resort to all default values.
+c_utility = []
+for j in range(1, 11):
+    c_utility.append(5 + j)
+
+fixed_factors = {
+    "num_prod": 10,
+    "num_customer": 30,
+    "c_utility": c_utility,
+    "init_level": 3 * np.ones(10),
+    "price": 9 * np.ones(10),
+    "cost": 5 * np.ones(10)}  
+# fixed_factors = {} # Resort to all default values.
 
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
@@ -64,7 +75,7 @@ for outerkey in gradients:
 
 import numpy as np
 cost = []
-for _ in range(100):
+for _ in range(1000):
     responses, gradients = mymodel.replicate(rng_list)
     cost.append(responses["profit"])
 
