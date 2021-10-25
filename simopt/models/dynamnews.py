@@ -47,7 +47,7 @@ class DynamNews(Model):
             "num_prod": {
                 "description": "Number of Products",
                 "datatype": int,
-                "default": 0
+                "default": 2
             },
             "num_customer": {
                 "description": "Number of Customers",
@@ -57,57 +57,65 @@ class DynamNews(Model):
             "c_utility": {
                 "description": "Constant of each product's utility",
                 "datatype": list,
+                "default": np.array((1.0, 1.0))
+            },
+            "mu": {
+                "description": "Mu for calculating Gumbel random variable",
+                "datatype": float,
                 "default": 1.0
             },
-            "order_quantity": {
-                "description": "Order quantity",
-                "datatype": float,  # or int
-                "default": 0.5
+            "init_level": {
+                "description": "Initial inventory level",
+                "datatype": list,
+                "default": np.array((2, 3))
             },
-            "Burr_c": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 2.0
+            "price": {
+                "description": "Price of products",
+                "datatype": list,
+                "default": np.array((9, 9))
             },
-            "Burr_k": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 20.0
-            }
+            "cost": {
+                "description": "Cost of products",
+                "datatype": list,
+                "default": np.array((5, 5))
+            },
         }
         self.check_factor_list = {
-            "purchase_price": self.check_purchase_price,
-            "sales_price": self.check_sales_price,
-            "salvage_price": self.check_salvage_price,
-            "order_quantity": self.check_order_quantity,
-            "Burr_c": self.check_Burr_c,
-            "Burr_k": self.check_Burr_k
+            "num_prod": self.check_num_prod,
+            "num_customer": self.check_num_customer,
+            "c_utility": self.check_c_utility,
+            "mu": self.check_mu,
+            "init_level": self.check_init_level,
+            "price": self.check_price,
+            "cost": self.check_cost
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_purchase_price(self):
-        return self.factors["purchase_price"] > 0
+    def check_num_prod(self):
+        return self.factors["num_prod"] > 0
 
-    def check_sales_price(self):
-        return self.factors["sales_price"] > 0
+    def check_num_customer(self):
+        return self.factors["num_customer"] > 0
 
-    def check_salvage_price(self):
-        return self.factors["salvage_price"] > 0
+    def check_c_utility(self):
+        return len(self.factors["c_utility"]) == self.factors["num_prod"]
 
-    def check_order_quantity(self):
-        return self.factors["order_quantity"] > 0
+    def check_init_level(self):
+        return all(self.factors["init_level"] > 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
 
-    def check_Burr_c(self):
-        return self.factors["Burr_c"] > 0
+    def check_mu(self):
+        return True
 
-    def check_Burr_k(self):
-        return self.factors["Burr_k"] > 0
+    def check_price(self):
+        return True
+    
+    def check_cost(self):
+        return True
+    
 
     def check_simulatable_factors(self):
-        return (self.factors["salvage_price"]
-                < self.factors["purchase_price"]
-                < self.factors["sales_price"])
+        return True
 
     def replicate(self, rng_list):
         """
@@ -123,43 +131,44 @@ class DynamNews(Model):
         responses : dict
             performance measures of interest
             "profit" = profit in this scenario
-            "stockout_qty" = amount by which demand exceeded supply
-            "stockout" = was there unmet demand? (Y/N)
         """
-        # Designate random number generator for demand variability.
-        demand_rng = rng_list[0]
-        # Generate random demand according to Burr Type XII distribution.
-        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
-        base = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)
-        exponent = (1 / self.factors["Burr_c"])
-        demand = base**exponent
+        # Designate random number generator for generating a Gumbel random variable
+        Gumbel_rng = rng_list[0]
+        # Compute a Gumbel rv for the utility.
+        gumbel = Gumbel_rng.gumbel(self.factors["mu"] * np.euler_gamma, self.factors["mu"], size = self.factors["num_product"])
+        utility = np.zeros((self.factors["num_customer"], self.factors["num_prod"] + 1))
+        for j in range(self.factors["num_prod"] + 1):
+            if  j == 0:
+                utility[:, j] = 0
+            else:
+                utility[:, j] = self.factors["c_utility"][j - 1] + gumbel[j - 1]
+
+        # Initialize inventory
+        inventory = self.factors["init_level"]
+        itembought = np.zeros(self.factors["num_customers"])
+
+        # Loop through customers
+        for t in range(self.factors["num_customer"]):
+            instock = np.where(inventory > 0)[0]
+            itembought[t] = 0
+            for j in instock:
+                if utility[t][j + 1] > utility[t][itembought[t]]:
+                    itembought[t] = j + 1
+            if itembought[t] != 0:
+                inventory[itembought[t]] -= 1
+                      
         # Calculate profit.
-        order_cost = (self.factors["purchase_price"]
-                      * self.factors["order_quantity"])
-        sales_revenue = (min(demand, self.factors["order_quantity"])
-                         * self.factors["sales_price"])
-        salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
-                           * self.factors["salvage_price"])
-        profit = sales_revenue + salvage_revenue - order_cost
-        stockout_qty = max(demand - self.factors["order_quantity"], 0)
-        stockout = int(stockout_qty > 0)
-        # Calculate gradient of profit w.r.t. order quantity.
-        if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["sales_price"]
-                                          - self.factors["purchase_price"])
-        elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["salvage_price"]
-                                          - self.factors["purchase_price"])
-        else:
-            grad_profit_order_quantity = np.nan
+        numsold = self.factors["init_level"] - inventory
+        unitprofit = self.factors["price"] - self.factors["cost"]
+        profit = unitprofit * numsold
+
+
         # Compose responses and gradients.
-        responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
+        responses = {"profit": profit}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
                      }
-        gradients["profit"]["order_quantity"] = grad_profit_order_quantity
         return responses, gradients
 
 
