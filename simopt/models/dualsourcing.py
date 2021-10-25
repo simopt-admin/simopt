@@ -53,7 +53,7 @@ class DuralSourcing(Model):
         ``penalty_cost``
             Penalty cost per unit per period for backlogging(`flt`)
         ``distribution``
-            Demand distribution(`str`)
+            Demand distribution (`str`)
         ``st_dev``
             Standard deviation of demand distribution (`flt`)
         ``mu``
@@ -62,11 +62,6 @@ class DuralSourcing(Model):
             Order-up-to level for regular orders (`int`)
         ``order_level_exp``
             Order-up-to level for expedited orders (`int`)
-        
-        -inv_position_reg
-        -inv_position_exp
-        -order_reg
-        -order_exp
 
 
     See also
@@ -90,130 +85,126 @@ class DuralSourcing(Model):
                 "datatype": int,
                 "default": 40
             },
-            "mean_price": {
-                "description": "Mean iron ore price per unit.",
+            "cost_reg": {
+                "description": "Regular ordering cost per unit.",
                 "datatype": float,
-                "default": 100.0
+                "default": 100.00
             },
-            "max_price": {
-                "description": "Maximum iron ore price per unit.",
+            "cost_exp": {
+                "description": "Expedited ordering cost per unit.",
                 "datatype": float,
-                "default": 200.0
+                "default": 110.00
             },
-            "min_price": {
-                "description": "Minimum iron ore price per unit.",
-                "datatype": float,
-                "default": 0.0
-            },
-            "capacity": {
-                "description": "Maximum holding capacity.",
+            "lead_reg": {
+                "description": "Lead time for regular orders in days.",
                 "datatype": int,
-                "default": 10000
+                "default": 2
             },
-            "st_dev": {
-                "description": "Standard deviation of random walk steps for price.",
-                "datatype": float,
-                "default": 7.5
+            "lead_exp": {
+                "description": "Lead time for expedited orders in days.",
+                "datatype": int,
+                "default": 0
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
                 "datatype": float,
-                "default": 1.0
+                "default": 5.00
             },
-            "prod_cost": {
-                "description": "Production cost per unit.",
+            "penalty_cost": {
+                "description": "Penalty cost per unit per period for backlogging.",
                 "datatype": float,
-                "default": 100.0
+                "default": 495.00
             },
-            "max_prod_perday": {
-                "description": "Maximum units produced per day.",
+            "distribution": {
+                "description": "Demand distribution.",
+                "datatype": str,
+                "default": 'Normal'
+            },
+            "st_dev": {
+                "description": "Standard deviation of demand distribution.",
+                "datatype": float,
+                "default": 10.0
+            },
+            "mu": {
+                "description": "Mean of demand distribution.",
+                "datatype": float,
+                "default": 30.0
+            },
+            "order_level_reg": {
+                "description": "Order-up-to level for regular orders.",
                 "datatype": int,
-                "default": 100
+                "default": 80
             },
-            "price_prod": {
-                "description": "Price level to start production.",
-                "datatype": float,
-                "default": 80.0
-            },
-            "inven_stop": {
-                "description": "Inventory level to cease production.",
+            "order_level_exp": {
+                "description": "Order-up-to level for expedited orders.",
                 "datatype": int,
-                "default": 7000
-            },
-            "price_stop": {
-                "description": "Price level to stop production.",
-                "datatype": float,
-                "default": 40
-            },
-            "price_sell": {
-                "description": "Price level to sell all stock.",
-                "datatype": float,
-                "default": 100
+                "default": 50
             },
             
 
         }
 
         self.check_factor_list = {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
-            "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
             "n_days": self.check_n_days,
+            "initial_inv": self.check_initial_inv,
+            "cost_reg": self.check_cost_reg,
+            "cost_exp": self.check_cost_exp,
+            "lead_reg": self.check_lead_reg,
+            "lead_exp": self.check_lead_exp,
+            "holding_cost": self.check_holding_cost,
+            "penalty_cost": self.check_penalty_cost,
+            "distribution": self.check_distribution,
+            "st_dev": self.check_st_dev,
+            "mu": self.check_mu,
+            "order_level_reg": self.check_order_level_reg,
+            "order_level_exp": self.check_order_level_exp,
+            
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self):
-        return self.factors["mean_price"] > 0
+    def check_n_days(self):
+        return self.factors["n_days"] >= 1
+    
+    def check_initial_inv(self):
+        return self.factors["initial_inv"] >= 0
 
-    def check_max_price(self):
-        return self.factors["max_price"] > 0
+    def check_cost_reg(self):
+        return self.factors["cost_reg"] > 0
 
-    def check_min_price(self):
-        return self.factors["min_price"] >= 0
+    def check_cost_exp(self):
+        return self.factors["cost_exp"] > 0
 
-    def check_capacity(self):
-        return self.factors["capacity"] >= 0
-
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
+    def check_lead_reg(self):
+        return self.factors["lead_reg"] >= 0
+    
+    def check_lead_exp(self):
+        return self.factors["lead_exp"] >= 0
 
     def check_holding_cost(self):
         return self.factors["holding_cost"] > 0
 
-    def check_prod_cost(self):
-        return self.factors["prod_cost"] > 0
+    def check_penalty_cost(self):
+        return self.factors["penalty_cost"] > 0
 
-    def check_max_prod_perday(self):
-        return self.factors["max_prod_perday"] > 0
+    def check_distribution(self):
+        return self.factors["distribution"] in ('Normal', 'Uniform','Exponential')
+    
+    def check_st_dev(self):
+        return self.factors["st_dev"] > 0
 
-    def check_price_prod(self):
-        return self.factors["price_prod"] > 0
+    def check_mu(self):
+        return self.factors["mu"] > 0
 
-    def check_inven_stop(self):
-        return self.factors["inven_stop"] > 0
+    def check_order_level_reg(self):
+        return self.factors["order_level_reg"] >= 0
 
-    def check_price_stop(self):
-        return self.factors["price_stop"] > 0
-
-    def check_price_sell(self):
-        return self.factors["price_sell"] > 0
-
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
+    def check_order_level_exp(self):
+        return self.factors["order_level_exp"] >= 0
 
     def check_simulatable_factors(self):
-        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"]) & (self.factors["min_price"] <= self.factors["max_price"])
+        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_exp"])
 
     def replicate(self, rng_list):
         """
@@ -229,12 +220,12 @@ class DuralSourcing(Model):
         responses : dict
             performance measures of interest
 
-            ``total_revenue``
-                The total revenue over the time period
-            ``frac_producing``
-                The fraction of days spent producing iron ore
-            ``mean_stock``
-                The average stocks over the time period
+            ``average_holding_cost``
+                The average holding cost over the time period
+            ``average_penalty_cost``
+                The average penalty cost over the time period
+            ``average_ordering_cost``
+                The average ordering cost over the time period
         """
         # Designate random number generators.
         price_rng = rng_list[0]
@@ -245,12 +236,16 @@ class DuralSourcing(Model):
         #   - Revenue in each period.
         #   - Whether producing or not in each period.
         #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        revenue = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
+        lead_diff = self.factors["lead_reg"] - self.factors["lead_exp"]
+        orders_reg = np.zeros(self.factors["lead_reg"])
+        orders_exp = np.zeros(self.factors["lead_exp"])
+        #generate demand
+
+        #track total expenses
+        total_holding_cost = np.zeros(self.factors["n_days"])
+        total_penalty_cost = np.zeros(self.factors["n_days"])
+        total_ordering_cost = np.zeros(self.factors["n_days"])
+        inv = self.factors["initial_inv"]
 
         #Run simulation over time horizon.
         for day in range(1, self.factors["n_days"]):
