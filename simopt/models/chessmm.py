@@ -6,19 +6,19 @@ Simulate matching of arriving chess players.
 import numpy as np
 from scipy import special
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class ChessMatchmaking(Oracle):
+class ChessMatchmaking(Model):
     """
-    An oracle that simulates a matchmaking problem with a
+    A model that simulates a matchmaking problem with a
     Elo (truncated normal) distribution of players and Poisson arrivals.
     Returns the average difference between matched players.
 
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -37,7 +37,7 @@ class ChessMatchmaking(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.Model
     """
     def __init__(self, fixed_factors={}):
         self.name = "CHESS"
@@ -74,24 +74,18 @@ class ChessMatchmaking(Oracle):
                 "datatype": int,
                 "default": 10000
             },
-            "width": {
+            "width_decision": {
                 "description": "Maximum allowable difference between Elo ratings.",
-                "datatype": float,
-                "default": 150.0
-            },
-            "max_diff_decision": {
-                "description": "Max difference between Elo ratings to match decision.",
                 "datatype": tuple,
-                "default": (0)
+                "default": (150,)
             }
         }
         self.check_factor_list = {
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
-            "width": self.check_width,
-            "max_diff_decision": self.check_max_diff_decision
+            "width_decision": self.check_width_decision
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_poisson_rate(self):
@@ -100,20 +94,17 @@ class ChessMatchmaking(Oracle):
     def check_num_players(self):
         return self.factors["num_players"] > 0
 
-    def check_width(self):
-        return self.factors["width"] > 0
-
-    def check_max_diff_decision(self):
-        return self.factors["max_diff_decision"] >= 0
+    def check_width_decision(self):
+        return self.factors["width_decision"] > 0
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -142,7 +133,7 @@ class ChessMatchmaking(Oracle):
           time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
           old_total = total_diff
           for p in range(len(waiting_players)):
-            if abs(player - waiting_players[p]) <= self.factors["width"]:
+            if abs(player - waiting_players[p]) <= self.factors["width_decision"]:
               total_diff += abs(player - waiting_players[p])
               elo_diffs.append(abs(player - waiting_players[p]))
               del waiting_players[p]
@@ -203,12 +194,12 @@ class ChessAvgDifference(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -231,15 +222,16 @@ class ChessAvgDifference(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="CHESS", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="CHESS", fixed_factors={}, model_fixed_factors={}):
         self.name = name
+        self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
@@ -250,18 +242,19 @@ class ChessAvgDifference(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.oracle_default_factors = {}
+        self.model_default_factors = {}
+        self.model_decision_factors = set("width_decision")
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (150)
+                "default": (150,)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             },
             "upper_time": {
                 "description": "Upper bound on wait time.",
@@ -276,11 +269,9 @@ class ChessAvgDifference(Problem):
             "upper_time": self.check_upper_time,
         }
 
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults.
-        self.oracle = ChessMatchmaking(self.oracle_fixed_factors)
-        self.dim = 1
-        self.oracle_decision_factors = set("max_diff_decision")
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = ChessMatchmaking(self.model_fixed_factors)
 
     def check_initial_solution(self):
         if len(self.factors["initial_solution"]) != self.dim:
@@ -318,7 +309,7 @@ class ChessAvgDifference(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "max_diff_decision": vector[:]
+            "width_decision": vector[:]
         }
         return factor_dict
 
@@ -337,7 +328,7 @@ class ChessAvgDifference(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["max_diff_decision"])
+        vector = (factor_dict["width_decision"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -446,5 +437,5 @@ class ChessAvgDifference(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.randint(0, 10000))
+        x = (max(30, rand_sol_rng.normalvariate(150, 50)),)
         return x
