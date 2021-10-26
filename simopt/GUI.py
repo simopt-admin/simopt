@@ -5,11 +5,7 @@ from tkinter import ttk, Scrollbar, filedialog
 from timeit import timeit
 from functools import partial
 from tkinter.constants import FALSE, MULTIPLE, S
-from matplotlib.colors import Normalize
-from numpy import e
 import time
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from PIL import ImageTk, Image 
 
 from directory import problem_directory
@@ -65,6 +61,14 @@ class Experiment_Window(tk.Tk):
     onFrameConfigure_factor_solver(self, event) : creates scrollbar for the solver factors notebook
     onFrameConfigure_factor_oracle(self, event) : creates scrollbar for the oracle factor notebook
     test_function(self, *args) : placeholder function to make sure buttons, OptionMenus, etc are connected properly
+    """
+
+    """
+    Notes for 10/22
+    hover over text for descripiton of parameters 
+    split parameters into parameters and settings
+        add max hw
+    add where plots are saved to
     """
 
 
@@ -2125,6 +2129,8 @@ class Plot_Window():
             self.plot_param_list = []
             self.all_path_names = []
 
+            self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
+
             self.problem_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
             self.solver_menu = Listbox(self.master,selectmode = "multiple",exportselection=False,width=10,height=6)
             
@@ -2208,8 +2214,6 @@ class Plot_Window():
             self.queue_canvas.create_window((0,0), window=self.queue_frame, anchor="nw",
                                     tags="self.queue_frame")
             
-            # self.queue_frame.bind("<Configure>", self.onFrameConfigure_queue)
-
             self.notebook = ttk.Notebook(master=self.queue_frame)
             self.notebook.pack(fill="both")
 
@@ -2230,20 +2234,20 @@ class Plot_Window():
 
             self.instruction_label.place(x=0, y=0)
 
-            self.problem_label.place(x=0, y=85)
-            self.problem_menu.place(x=200, y=85)
+            self.problem_label.place(x=0, rely=.08)
+            self.problem_menu.place(x=0, rely=.11, relwidth=.3)
 
-            self.solver_label.place(x=400, y=85)
-            self.solver_menu.place(x=600, y=85)
+            self.solver_label.place(relx=.4, rely=.08)
+            self.solver_menu.place(relx=.4, rely=.11, relwidth=.3)
 
-            self.plot_label.place(x=0, y=250)
-            self.plot_menu.place(x=200, y=250)
+            self.plot_label.place(x=0, rely=.3)
+            self.plot_menu.place(relx=.15, rely=.3)
 
-            self.add_button.place(x=5, y=340)
+            self.add_button.place(x=5, rely=.4)
 
-            self.post_normal_all_button.place(x=270,y=700)
+            self.post_normal_all_button.place(relx=.3,rely=.95)
 
-            self.queue_label_frame.place(x=0, y=400, height=250, width=1000)
+            self.queue_label_frame.place(relx=0, rely=.55, height=250, relwidth=1)
             
             self.param_label = []
             self.param_entry = []
@@ -2257,7 +2261,30 @@ class Plot_Window():
             self.CI_canvas.create_window((0,0), window=self.CI_frame, anchor="nw",
                                     tags="self.queue_frame")
             
-            self.CI_label_frame.place(x=400, y=200, height=200, width=400)
+            self.CI_label_frame.place(relx=.35, rely=.25, relheight=.2, relwidth=.3)
+
+            self.settings_label_frame = ttk.Labelframe(master=self.master, text="Plot Settings (Optional)")
+            self.settings_canvas = tk.Canvas(master=self.settings_label_frame, borderwidth=0)
+            self.settings_frame = ttk.Frame(master=self.settings_canvas)
+
+            self.settings_canvas.pack(side="left", fill="both", expand=True)
+            self.settings_canvas.create_window((0,0), window=self.settings_frame, anchor="nw",
+                                    tags="self.queue_frame")
+            self.settings_canvas.grid_rowconfigure(0)
+
+            tf_list = ['True','False']
+            self.settings_label_frame.place(relx=.6, rely=.25, relheight=.2, relwidth=.3)
+
+            entry1 = ttk.OptionMenu(self.settings_canvas, self.params[0], "True", *tf_list)
+            label1 = tk.Label(master=self.settings_canvas, text="Confidence Intervals", font="Calibri 14")
+            label1.grid(row=0, column=0, padx=5, pady=3)
+            entry1.grid(row=0, column=1, padx=5, pady=3)
+           
+            entry = ttk.OptionMenu(self.settings_canvas, self.params[1], "True", *tf_list)
+            label = tk.Label(master=self.settings_canvas, text="Plot Together", font="Calibri 14")
+            label.grid(row=1, column=0, padx=5, pady=3)
+            entry.grid(row=1, column=1, padx=5, pady=3)
+            
             # self.frame.pack(fill='both')
         
         def test_funct(self):
@@ -2435,7 +2462,7 @@ class Plot_Window():
             self.param_list = param_list
             
 
-            self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
+            # self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
             
             self.CI_label_frame.destroy()
             self.CI_label_frame = ttk.Labelframe(master=self.master, text="Plot Parameters (Optional)")
@@ -2447,7 +2474,7 @@ class Plot_Window():
                                     tags="self.queue_frame")
             self.CI_canvas.grid_rowconfigure(0)
             
-            self.CI_label_frame.place(x=400, y=200, height=200, width=400)
+            self.CI_label_frame.place(relx=.35, rely=.25, relheight=.2, relwidth=.25)
 
             
             tf_list = ['True','False']
@@ -2458,36 +2485,26 @@ class Plot_Window():
 
 
             i = 0
-            entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
-            label = tk.Label(master=self.CI_canvas, text="Confidence Intervals", font="Calibri 14")
-            label.grid(row=i, column=0, padx=5, pady=3)
-            entry.grid(row=i, column=1, padx=5, pady=3)
-            i +=1 
-            entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
-            label = tk.Label(master=self.CI_canvas, text="Plot Together", font="Calibri 14")
-            label.grid(row=i, column=0, padx=5, pady=3)
-            entry.grid(row=i, column=1, padx=5, pady=3)
-
-            i += 1
             for param, param_val in param_list.items():
                 # if len(self.param_label) > i:
                 #     self.param_label[i].destroy()
                 if param == 'normalize':
-                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
+                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i+2], "True", *tf_list)
 
                     label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
                     label.grid(row=i, column=0, padx=5, pady=3)
                     entry.grid(row=i, column=1, padx=5, pady=3)
                 elif param == 'ref_solver':
-                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i], self.solvers_names[0], *self.solvers_names)
+                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i+2], self.solvers_names[0], *self.solvers_names)
                     label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
                     label.grid(row=i, column=0, padx=5, pady=3)
                     entry.grid(row=i, column=1, padx=5, pady=3)
                 else:
                     label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
                     label.grid(row=i, column=0, padx=5, pady=3)
-                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i+2], justify = tk.LEFT)
                     if param_val is not None:
+                        entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
                     entry.grid(row=i, column=1, padx=5, pady=3)
                 i += 1
