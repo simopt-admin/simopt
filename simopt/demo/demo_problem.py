@@ -5,6 +5,7 @@ sets up pseudorandom number generators, and runs multiple replications
 at a given solution.
 """
 
+import numpy as np
 import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
@@ -20,6 +21,7 @@ from base import Solution
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: from models.cntnv import CntNVMaxProfit
 from models.ironore import IronOreMaxRev
+from models.dynamnews import DynamNewsMaxProfit
 
 # Fix factors of problem. Specify a dictionary of factors.
 # Look at Problem class definition to get names of factors.
@@ -27,18 +29,27 @@ from models.ironore import IronOreMaxRev
 #     fixed_factors = {"initial_solution": (2,),
 #                      "budget": 500}
 fixed_factors = {}  # Resort to all default values.
+# c_utility = []
+# for j in range(1, 11):
+#     c_utility.append(5 + j)
 
+# fixed_factors = {
+#     "num_prod": 10,
+#     "num_customer": 30,
+#     "c_utility": c_utility,
+#     "price": 9 * np.ones(10),
+#     "cost": 5 * np.ones(10)}
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = IronOreMaxRev(fixed_factors=fixed_factors)
+myproblem = DynamNewsMaxProfit(fixed_factors=fixed_factors, model_fixed_factors= fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
 # Ex: for the CntNVMaxProfit class
 #     x = (3,)
-x = (90, 9000, 50, 110)
+x = [2,3]
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 
@@ -69,7 +80,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 10
+n_reps = 100
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to terminal.

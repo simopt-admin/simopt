@@ -27,14 +27,14 @@ c_utility = []
 for j in range(1, 11):
     c_utility.append(5 + j)
 
-fixed_factors = {
-    "num_prod": 10,
-    "num_customer": 30,
-    "c_utility": c_utility,
-    "init_level": 3 * np.ones(10),
-    "price": 9 * np.ones(10),
-    "cost": 5 * np.ones(10)}  
-# fixed_factors = {} # Resort to all default values.
+# fixed_factors = {
+#     "num_prod": 10,
+#     "num_customer": 30,
+#     "c_utility": c_utility,
+#     "init_level": 3 * np.ones(10),
+#     "price": 9 * np.ones(10),
+#     "cost": 5 * np.ones(10)}  
+fixed_factors = {} # Resort to all default values.
 
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
@@ -74,9 +74,12 @@ for outerkey in gradients:
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
 import numpy as np
-cost = []
+profit = []
+n_stockout = []
 for _ in range(1000):
     responses, gradients = mymodel.replicate(rng_list)
-    cost.append(responses["profit"])
+    profit.append(responses["profit"])
+    n_stockout.append(responses["n_prod_stockout"])
 
-print(np.mean(cost))
+print(np.mean(profit))
+print(np.mean(n_stockout))

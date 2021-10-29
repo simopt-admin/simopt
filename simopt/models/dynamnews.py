@@ -11,8 +11,7 @@ from base import Model, Problem
 class DynamNews(Model):
     """
     A model that simulates a day's worth of sales for a newsvendor
-    with a Burr Type XII demand distribution. Returns the profit, after
-    accounting for order costs and salvage.
+    with dynamic consumer substitution. Returns the profit.
 
     Attributes
     ----------
@@ -39,9 +38,9 @@ class DynamNews(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "DYNAMNews"
-        self.n_rngs = 2
-        self.n_responses = 1
+        self.name = "DYNAMNEWS"
+        self.n_rngs = 1
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
             "num_prod": {
@@ -131,34 +130,42 @@ class DynamNews(Model):
         responses : dict
             performance measures of interest
             "profit" = profit in this scenario
+            "n_prod_stockout" = number of products which are out of stock
         """
         # Designate random number generator for generating a Gumbel random variable
         Gumbel_rng = rng_list[0]
         # Compute Gumbel rvs for the utility of the products.
-        gumbel = []
-        for j in range(self.factors["num_prod"]):
-            gumbel.append(Gumbel_rng.gumbelvariate(-self.factors["mu"] * np.euler_gamma, self.factors["mu"]))
+        gumbel = np.zeros(((self.factors["num_customer"], self.factors["num_prod"])))
+        for t in range(self.factors["num_customer"]):
+            for j in range(self.factors["num_prod"]):
+                gumbel[t][j] = Gumbel_rng.gumbelvariate(-self.factors["mu"] * np.euler_gamma, self.factors["mu"])
         # Compute utility for each product and each customer
         utility = np.zeros((self.factors["num_customer"], self.factors["num_prod"] + 1))
-        for j in range(self.factors["num_prod"] + 1):
-            if j == 0:
-                utility[:, j] = 0
-            else:
-                utility[:, j] = self.factors["c_utility"][j - 1] + gumbel[j - 1]
+        for t in range(self.factors["num_customer"]):
+            for j in range(self.factors["num_prod"] + 1):
+                if j == 0:
+                    utility[t][j] = 0
+                else:
+                    utility[t][j] = self.factors["c_utility"][j - 1] + gumbel[t][j - 1]
 
-        # Initialize inventory
+        # Initialize inventory.
         inventory = np.copy(self.factors["init_level"])
         itembought = np.zeros(self.factors["num_customer"])
+        stockout = np.zeros(self.factors["num_prod"])
 
         # Loop through customers
         for t in range(self.factors["num_customer"]):
             instock = np.where(inventory > 0)[0]
+            # Initialize the purchase option to be no-purchase.
             itembought[t] = 0
+            # Assign the purchase option to be the product that maximizes the utility.
             for j in instock:
                 if utility[t][j + 1] > utility[t][int(itembought[t])]:
                     itembought[t] = j + 1
             if itembought[t] != 0:
                 inventory[int(itembought[t] - 1)] -= 1
+                stockout[int(itembought[t] - 1)] = 1
+
 
         # Calculate profit.
         numsold = self.factors["init_level"] - inventory
@@ -167,7 +174,7 @@ class DynamNews(Model):
 
 
         # Compose responses and gradients.
-        responses = {"profit": np.sum(profit)}
+        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(stockout)}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
@@ -247,39 +254,43 @@ class DynamNewsMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DYNAMNews-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="DYNAMNEWS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 1
+        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "continuous"
+        self.variable_type = "discrete"
         self.lower_bounds = (0,)
         self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
+        self.optimal_solution = None
         self.model_default_factors = {
-            "purchase_price": 5.0,
-            "sales_price": 9.0,
-            "salvage_price": 1.0,
-            "Burr_c": 2.0,
-            "Burr_k": 20.0
+            "mu": 1.0
             }
-        self.model_decision_factors = {"order_quantity"}
+        self.model_fixed_factors = {
+                "num_prod": 2,
+                "num_customer": 5,
+                "c_utility": [1, 1],
+                "price": [9, 9],
+                "cost": [5, 5]
+        }
+        self.model_decision_factors = {"init_level"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (0,)
+                "default": (2, 3)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
-            }
+            },
+            
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -304,7 +315,7 @@ class DynamNewsMaxProfit(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "order_quantity": vector[0]
+            "init_level": vector[:]
         }
         return factor_dict
 
@@ -323,7 +334,7 @@ class DynamNewsMaxProfit(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["order_quantity"],)
+        vector = tuple(factor_dict["init_level"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -419,7 +430,7 @@ class DynamNewsMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x[0] > 0
+        return np.all(x > 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -435,6 +446,5 @@ class DynamNewsMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1) r.v.
-        x = (rand_sol_rng.expovariate(1),)
+        x = tuple([5 * rand_sol_rng.random() for _ in range(self.dim)])
         return x

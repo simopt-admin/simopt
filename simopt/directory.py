@@ -21,6 +21,7 @@ from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, Facilit
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.ironore import IronOre, IronOreMaxRev
+from models.dynamnews import DynamNews, DynamNewsMaxProfit
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -34,7 +35,8 @@ problem_directory = {
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
-    "IRONORE-1": IronOreMaxRev
+    "IRONORE-1": IronOreMaxRev,
+    "DYNAMNEWS-1": DynamNewsMaxProfit
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -42,5 +44,6 @@ model_directory = {
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
     "SSCONT": SSCont,
-    "IRONORE": IronOre
+    "IRONORE": IronOre,
+    "DYNAMNEWS": DynamNews
 }

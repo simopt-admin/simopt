@@ -14,7 +14,7 @@ class IronOre(Model):
     """
     An model that simulates multiple periods of production and sales for an
     inventory problem with stochastic price determined by a mean-reverting 
-    random walk. Returns total revenue, fraction of days producing iron, and
+    random walk. Returns total profit, fraction of days producing iron, and
     mean stock.
 
     Attributes
@@ -111,7 +111,7 @@ class IronOre(Model):
             "n_days": {
                 "description": "Number of days to simulate.",
                 "datatype": int,
-                "default": 1000
+                "default": 365
             },
 
         }
@@ -190,7 +190,7 @@ class IronOre(Model):
         -------
         responses : dict
             performance measures of interest
-            "total_revenue" = The total revenue over the time period
+            "total_profit" = The total profit over the time period
             "frac_producing" = The fraction of days spent producing iron ore
             "mean_stock" = The average stocks over the time period
         """
@@ -200,13 +200,13 @@ class IronOre(Model):
         #   - Market price in each period (Pt).
         #   - Starting stock in each period.
         #   - Ending stock in each period.
-        #   - Revenue in each period.
+        #   - Profit in each period.
         #   - Whether producing or not in each period.
         #   - Production in each period.
         mkt_price = np.zeros(self.factors["n_days"])
         mkt_price[0] = self.factors["mean_price"]
         stock = np.zeros(self.factors["n_days"])
-        revenue = np.zeros(self.factors["n_days"])
+        profit = np.zeros(self.factors["n_days"])
         producing = np.zeros(self.factors["n_days"])
         prod = np.zeros(self.factors["n_days"])
 
@@ -227,28 +227,28 @@ class IronOre(Model):
                 else:
                     prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
                     stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
+                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
             # if production is not currently underway
             else:
                 if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
                     producing[day] = 1
                     prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
                     stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
+                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
             # Sell if price is high enough
             if (mkt_price[day] >= self.factors["price_sell"]):
-                revenue[day] = revenue[day] + stock[day] * mkt_price[day]
+                profit[day] = profit[day] + stock[day] * mkt_price[day]
                 stock[day] = 0
             # Charge holding cost
-            revenue[day] = revenue[day] - stock[day] * self.factors["holding_cost"]
+            profit[day] = profit[day] - stock[day] * self.factors["holding_cost"]
             # Calculate starting quantities for next period
             if day < self.factors["n_days"] - 1:
-                revenue[day + 1] = revenue[day]
+                profit[day + 1] = profit[day]
                 stock[day + 1] = stock[day]
                 mkt_price[day + 1] = mkt_price[day] 
                 producing[day + 1] = producing[day]
         # Calculate responses from simulation data.
-        responses = {"total_revenue": revenue[self.factors["n_days"] - 1],
+        responses = {"total_profit": profit[self.factors["n_days"] - 1],
                      "frac_producing": np.mean(producing),
                      "mean_stock": np.mean(stock)
                      }
@@ -259,7 +259,7 @@ class IronOre(Model):
 """
 Summary
 -------
-Maximize the expected total revenue for iron ore inventory system.
+Maximize the expected total profit for iron ore inventory system.
 """
 
 
@@ -414,7 +414,7 @@ class IronOreMaxRev(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_revenue"],)
+        objectives = (response_dict["total_profit"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
