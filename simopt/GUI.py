@@ -91,7 +91,7 @@ class Experiment_Window(tk.Tk):
         self.post_norm_exp_list = []
         
         self.instruction_label = tk.Label(master=self.master, # window label is used in
-                            text = "Welcome to SimOpt \n Please complete the fields below to run your experiment: \n Please note: '*' are required fields",
+                            text = "Welcome to SimOpt \n Please edit the fields below to run your experiment: \n Please note: '*' are required fields",
                             font = "Calibri 15 bold")
         
         self.problem_label = tk.Label(master=self.master, # window label is used in
@@ -129,11 +129,11 @@ class Experiment_Window(tk.Tk):
         self.macro_entry.insert(index=tk.END, string="10")
         
         
-        self.run_button = ttk.Button(master=self.master, # window button is used in
-                        # aesthetic of button and specific formatting options
-                        text = "Run", 
-                        width = 10, # width of button
-                        command = self.run_single_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click)
+        # self.run_button = ttk.Button(master=self.master, # window button is used in
+        #                 # aesthetic of button and specific formatting options
+        #                 text = "Run", 
+        #                 width = 10, # width of button
+        #                 command = self.run_single_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click)
 
         self.add_button = ttk.Button(master=self.master,
                                     text = "Add Experiment",
@@ -263,11 +263,11 @@ class Experiment_Window(tk.Tk):
         self.macro_label.place(x=0, rely=.25)
         self.macro_entry.place(x=225, rely=.25, relwidth=.08)
 
-        self.run_button.place(x=5, rely=.3, width=200)
+        # self.run_button.place(x=5, rely=.3, width=200)
+        self.pickle_file_load_button.place(x=5, rely=.3, width=175)
         self.crossdesign_button.place(x=175, rely=.3, width=200)
         self.add_button.place(x=5, rely=.34, width=200)
         self.clear_queue_button.place(x=175, rely=.34, width=200)
-        self.pickle_file_load_button.place(x=5, rely=.38)
         # self.run_button.place(x=5, y=285, width=200)
         # self.crossdesign_button.place(x=175, y=285, width=200)
         # self.add_button.place(x=5, y=325, width=200)
@@ -411,7 +411,7 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_types.append(str)
 
         #self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
-        self.factor_label_frame_problem.place(relx=.32, rely=.08, relheight=.2, relwidth=.34)
+        self.factor_label_frame_problem.place(relx=.32, rely=.04, relheight=.3, relwidth=.34)
 
         # Switching from Problems to Oracles
 
@@ -523,7 +523,7 @@ class Experiment_Window(tk.Tk):
 
         # print(self.oracle_factors_list)
         # relx=.32, rely=.08, relheight=.2, relwidth=.34
-        self.factor_label_frame_oracle.place(relx=.66, rely=.08, relheight=.4, relwidth=.34)
+        self.factor_label_frame_oracle.place(relx=.66, rely=.04, relheight=.4, relwidth=.34)
 
     def show_solver_factors(self, *args):
 
@@ -659,7 +659,7 @@ class Experiment_Window(tk.Tk):
 
         self.solver_factors_types.append(str)
         # self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
-        self.factor_label_frame_solver.place(relx=.32, rely=.28, relheight=.2, relwidth=.34)
+        self.factor_label_frame_solver.place(relx=.32, rely=.34, relheight=.3, relwidth=.34)
 
     def run_single_function(self):
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
@@ -1215,6 +1215,19 @@ class Experiment_Window(tk.Tk):
         # integer = integer
         print(F"test function connected to the number {integer}")
     
+    # post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+    def meta_normalize(self, integer):
+        print(integer-1)
+        row_index = integer - 1
+        self.widget_meta_list[row_index][6]["state"] = "disabled"
+
+        self.my_experiment = self.meta_experiment_master_list[row_index]
+        # self.macro_reps = self.selected[2]
+        self.macro_reps = 100
+
+        self.my_experiment.post_normalize(n_postreps_init_opt=self.macro_reps, crn_across_init_opt=True)
+        self.widget_meta_list[row_index][7]["state"] = "normal"
+        
     def save_edit_function(self, integer):
         
         row_index = integer
@@ -1384,6 +1397,8 @@ class Experiment_Window(tk.Tk):
             row_index = self.post_rep_function_row_index - 1
             self.widget_meta_list[row_index][5]["text"] = "Done Post Processing"
             self.widget_meta_list[row_index][5]["state"] = "disabled"
+            self.widget_meta_list[row_index][6]["state"] = "normal"
+            # self.normalize_button_added["state"] = "normal"
         else:
             row_index = self.post_rep_function_row_index - 1
             self.experiment_object_list[row_index].post_norm_ready = True
@@ -1452,11 +1467,23 @@ class Experiment_Window(tk.Tk):
                                             state = "disabled")
         self.postprocess_button_added.grid(row=row_num, column=5, sticky='nsew', padx=5, pady=3)
         
+        self.normalize_button_added = ttk.Button(master=self.tab_two,
+                                            text="Post Normalize",
+                                            command = partial(self.meta_normalize,row_num),
+                                            state = "disabled")
+        self.normalize_button_added.grid(row=row_num, column=6, sticky='nsew', padx=5, pady=3)
+        
+        self.plot_button_added = ttk.Button(master=self.tab_two,
+                                            text="Plot",
+                                            command = partial(self.plot_meta_function,row_num),
+                                            state = "disabled")
+        self.plot_button_added.grid(row=row_num, column=7, sticky='nsew', padx=5, pady=3)
+        
         
         # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
         # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
         
-        self.widget_row_meta = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.clear_button_added, self.postprocess_button_added]
+        self.widget_row_meta = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.clear_button_added, self.postprocess_button_added, self.normalize_button_added, self.plot_button_added]
         self.widget_meta_list.insert(row_num-1,self.widget_row_meta)
         self.meta_experiment_master_list.insert(row_num-1,self.cross_app.crossdesign_MetaExperiment)
         # self.select_checkbox.deselect()
@@ -1464,6 +1491,18 @@ class Experiment_Window(tk.Tk):
         self.count_meta_experiment_queue += 1
         self.notebook.select(self.tab_two)
     
+    #__init__(self, master, experiment_list, main_window, meta=False):
+    def plot_meta_function(self,integer):
+        row_index = integer - 1
+        self.my_experiment = self.meta_experiment_master_list[row_index]
+        print(self.my_experiment.experiments)
+
+        self.postrep_window = tk.Toplevel()
+        self.postrep_window.geometry("1000x800")
+        self.postrep_window.title("Post Processing Page")
+        # self.master.destroy()
+        Plot_Window(self.postrep_window, self.my_experiment.experiments[0], self)
+
     def run_meta_function(self, integer):
         row_index = integer - 1
         self.widget_meta_list[row_index][5]["state"] = "normal"
@@ -1474,9 +1513,9 @@ class Experiment_Window(tk.Tk):
         # self.macro_reps = self.selected[2]
         self.macro_reps = 10
 
-        print(self.my_experiment.n_solvers)
-        print(self.my_experiment.n_problems)
-        print(self.macro_reps)
+        # print(self.my_experiment.n_solvers)
+        # print(self.my_experiment.n_problems)
+        # print(self.macro_reps)
 
         self.my_experiment.run(n_macroreps=self.macro_reps)
 
@@ -2116,6 +2155,7 @@ class Plot_Window():
             List of experiment object arguments
         """
         def __init__(self, master, experiment_list, main_window, meta=False):
+            print(experiment_list)
             self.master = master
             self.experiment_list = experiment_list
             self.main_window = main_window
@@ -2128,6 +2168,7 @@ class Plot_Window():
             self.plot_CI_list = []
             self.plot_param_list = []
             self.all_path_names = []
+            self.bad_label = None
 
             self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
 
@@ -2178,10 +2219,7 @@ class Plot_Window():
             # from experiments.inputs.all_factors.py:
             self.solver_list = solver_directory
             # stays the same, has to change into a special type of variable via tkinter function
-            self.solver_var = tk.StringVar(master=self.master)
-        
-            # creates drop down menu, for tkinter, it is called "OptionMenu"
-            # self.solver_menu = ttk.OptionMenu(self.master, self.solver_var, "Solver", *self.all_solvers)       
+            self.solver_var = tk.StringVar(master=self.master)   
             
             self.add_button = ttk.Button(master=self.master,
                                         text = "Add",
@@ -2224,7 +2262,7 @@ class Plot_Window():
 
             self.tab_one.grid_rowconfigure(0)
 
-            self.heading_list = ["Problem", "Solver", "Plot Type", "Clear Row", "View Plot", "Parameters"]
+            self.heading_list = ["Problem", "Solver", "Plot Type", "Clear Row", "View Plot", "Parameters", "PNG File Path"]
 
             for heading in self.heading_list:
                 self.tab_one.grid_columnconfigure(self.heading_list.index(heading))
@@ -2243,7 +2281,14 @@ class Plot_Window():
             self.plot_label.place(x=0, rely=.3)
             self.plot_menu.place(relx=.15, rely=.3)
 
-            self.add_button.place(x=5, rely=.4)
+            # self.add_button.place(x=5, rely=.4)
+            self.add_button.pack(padx=10, pady=5)
+            button1_ttp = CreateToolTip(self.add_button, \
+                'Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, '
+                'consectetur, adipisci velit. Neque porro quisquam est qui dolorem ipsum '
+                'quia dolor sit amet, consectetur, adipisci velit. Neque porro quisquam '
+                'est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.')
+
 
             self.post_normal_all_button.place(relx=.3,rely=.95)
 
@@ -2284,9 +2329,12 @@ class Plot_Window():
             label = tk.Label(master=self.settings_canvas, text="Plot Together", font="Calibri 14")
             label.grid(row=1, column=0, padx=5, pady=3)
             entry.grid(row=1, column=1, padx=5, pady=3)
+
+            
             
             # self.frame.pack(fill='both')
         
+
         def test_funct(self):
             for i in self.solver_menu.curselection():
                 print(self.solver_menu.get(i))
@@ -2309,12 +2357,19 @@ class Plot_Window():
                 for exp in self.experiment_list:
                     if exp.problem.name == self.problem_menu.get(i):
                         probs.append(exp)
+            if len(probs) == 0 or len(self.solvers) == 0 or str(self.plot_var.get()) == "Plot":
+                txt = "Please Select At Least One Problem and One Solver and A Plot Type"
+                self.bad_label = tk.Label(master=self.master,text=txt,font = "Calibri 10",justify="center")
+                self.bad_label.place(x=5, rely=.45)
+                return
+            elif self.bad_label != None:
+                self.bad_label.destroy()
+                self.bad_label = None
             
             self.plot_exp_list.append(self.solvers)
-            # print(probs,solvers)
+
             plotType = str(self.plot_var.get())
             self.plot_type_list.append(plotType)
-            # self.plot_params = {"cdf_solvability":[{"beta":.5},{"normalize":True},{"all_in_one":True}], "quantile_solvability":0,"diff_cdf_solvability":0,"diff_quantile_solvability":0}
             
             i = len(self.plot_type_list)-1
             exp = self.plot_exp_list[len(self.plot_exp_list)-1]
@@ -2362,9 +2417,6 @@ class Plot_Window():
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])           
             else:
                 print(self.plot_type_list[i])
-
-            # self.all_path_names.append(path_name)
-            print(path_name)
 
             for i,new_plot in enumerate(path_name):
                 place = self.num_plots + 1
@@ -2416,6 +2468,12 @@ class Plot_Window():
                                                         justify="center",
                                                         command=partial(self.view_one_pot, new_plot))
                 self.view_plot.grid(row=place, column=4, sticky='nsew', padx=5, pady=3)
+
+                self.plot_path = tk.Label(master=self.tab_one,
+                                                        text=new_plot,
+                                                        font = "Calibri 10",
+                                                        justify="center")
+                self.plot_path.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
                 # self.view_plot.pack()
                 self.changeOnHover(self.view_plot, "red", "yellow")
                 self.all_path_names.append(new_plot)
@@ -2535,8 +2593,8 @@ class Plot_Window():
             
             for i,path_name in enumerate(self.all_path_names):
                 
-                width = 400
-                height = 400
+                width = 350
+                height = 350
                 img = Image.open(path_name)
                 img = img.resize((width,height), Image.ANTIALIAS)
                 img =  ImageTk.PhotoImage(img)
@@ -2589,7 +2647,6 @@ class Plot_Window():
 # If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
 # and
 # https://stackoverflow.com/questions/20399243/display-message-when-hovering-over-something-with-mouse-cursor-in-python (see the one with 11 upvotes)
-
 
 
 
