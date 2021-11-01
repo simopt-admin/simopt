@@ -231,14 +231,13 @@ class DuralSourcing(Model):
         """
         # Designate random number generators.
         price_rng = rng_list[0]
-        lead_diff = self.factors["lead_reg"] - self.factors["lead_exp"]
         #vectors of regular orders to be received in periods n through n+lr-1
         orders_reg = np.zeros(self.factors["lead_reg"])
         #vectors of expedited orders to be received in periods n through n+le-1
         orders_exp = np.zeros(self.factors["lead_exp"])
         #generate demand
         if self.factors['distribution'] == 'Normal':
-            demand = scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])
+            demand = np.round(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days']),0)
         #track total expenses
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
