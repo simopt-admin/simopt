@@ -7,7 +7,7 @@ import numpy as np
 
 import math
 
-import scipy as sc
+import scipy.stats as scs
 
 from base import Model, Problem
 
@@ -238,7 +238,7 @@ class DuralSourcing(Model):
         orders_exp = np.zeros(self.factors["lead_exp"])
         #generate demand
         if self.factors['distribution'] == 'Normal':
-            demand = sc.stats.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])
+            demand = scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])
         #track total expenses
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
