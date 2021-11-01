@@ -3,10 +3,12 @@ This script is intended to help with debugging problems and solvers.
 It create a problem-solver pairing (using the directory) and runs multiple
 macroreplications of the solver on the problem.
 """
-
+import numpy as np
 import sys
 import os.path as o
 import os
+
+from numpy.lib.ufunclike import fix
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the Experiment class and other useful functions
@@ -31,8 +33,24 @@ print(f"Testing solver {solver_name} on problem {problem_name}.")
 file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
 print(f"Results will be stored as {file_name_path}.")
 
+c_utility = []
+for j in range(1, 11):
+    c_utility.append(5 + j)
+
+fixed_factors = {
+    "num_prod": 10,
+    "num_customer": 30,
+    "c_utility": c_utility,
+    "mu": 1.0,
+    "init_level":  list(3 * np.ones(10)),
+    "price": list(9 * np.ones(10)),
+    "cost": list(5 * np.ones(10)),
+    "initial_solution": list(3 * np.ones(10))}
+
 # Initialize an instance of the experiment class.
-myexperiment = Experiment(solver_name, problem_name)
+# myexperiment = Experiment(solver_name, problem_name)
+
+myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors, model_fixed_factors= fixed_factors)
 
 # Run a fixed number of macroreplications of the solver on the problem.
 myexperiment.run(n_macroreps=10)

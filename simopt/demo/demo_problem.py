@@ -28,28 +28,29 @@ from models.dynamnews import DynamNewsMaxProfit
 # Ex: for the CntNVMaxProfit class,
 #     fixed_factors = {"initial_solution": (2,),
 #                      "budget": 500}
-fixed_factors = {}  # Resort to all default values.
-# c_utility = []
-# for j in range(1, 11):
-#     c_utility.append(5 + j)
+# fixed_factors = {}  # Resort to all default values.
+c_utility = []
+for j in range(1, 11):
+    c_utility.append(5 + j)
 
-# fixed_factors = {
-#     "num_prod": 10,
-#     "num_customer": 30,
-#     "c_utility": c_utility,
-#     "price": 9 * np.ones(10),
-#     "cost": 5 * np.ones(10)}
+fixed_factors = {
+    "num_prod": 10,
+    "num_customer": 30,
+    "c_utility": c_utility,
+    "price": 9 * np.ones(10),
+    "cost": 5 * np.ones(10)}
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = DynamNewsMaxProfit(fixed_factors=fixed_factors, model_fixed_factors= fixed_factors)
+myproblem = DynamNewsMaxProfit(model_fixed_factors= fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
 # Ex: for the CntNVMaxProfit class
 #     x = (3,)
-x = [2,3]
+# x = (2,3)
+x = 3 * np.ones(10)
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 

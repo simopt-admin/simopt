@@ -101,20 +101,19 @@ class DynamNews(Model):
         return len(self.factors["c_utility"]) == self.factors["num_prod"]
 
     def check_init_level(self):
-        return all(np.array(self.factors["init_level"]) > 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
+        return all(np.array(self.factors["init_level"]) >= 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
 
     def check_mu(self):
         return True
 
     def check_price(self):
-        return True
+        return all(np.array(self.factors["price"]) >= 0) & (len(self.factors["price"]) == self.factors["num_prod"])
     
     def check_cost(self):
-        return True
-    
+        return all(np.array(self.factors["cost"]) >= 0) & (len(self.factors["cost"]) == self.factors["num_prod"])
 
     def check_simulatable_factors(self):
-        return True
+        return all(np.subtract(self.factors["price"],self.factors["cost"]) >= 0)
 
     def replicate(self, rng_list):
         """
@@ -164,17 +163,15 @@ class DynamNews(Model):
                     itembought[t] = j + 1
             if itembought[t] != 0:
                 inventory[int(itembought[t] - 1)] -= 1
-                stockout[int(itembought[t] - 1)] = 1
-
 
         # Calculate profit.
         numsold = self.factors["init_level"] - inventory
-        unitprofit = np.array(self.factors["price"]) - np.array(self.factors["cost"])
-        profit = unitprofit * numsold
-
+        revenue = numsold * np.array(self.factors["price"])
+        cost = self.factors["init_level"] * np.array(self.factors["cost"])
+        profit = revenue - cost
 
         # Compose responses and gradients.
-        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(stockout)}
+        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0)}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
@@ -256,7 +253,6 @@ class DynamNewsMaxProfit(Problem):
     """
     def __init__(self, name="DYNAMNEWS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
@@ -267,16 +263,8 @@ class DynamNewsMaxProfit(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
-        self.model_default_factors = {
-            "mu": 1.0
-            }
-        self.model_fixed_factors = {
-                "num_prod": 2,
-                "num_customer": 5,
-                "c_utility": [1, 1],
-                "price": [9, 9],
-                "cost": [5, 5]
-        }
+        self.model_default_factors = {}
+        self.model_fixed_factors = {}
         self.model_decision_factors = {"init_level"}
         self.factors = fixed_factors
         self.specifications = {
@@ -299,6 +287,7 @@ class DynamNewsMaxProfit(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = DynamNews(self.model_fixed_factors)
+        self.dim = self.model.factors["num_prod"]
 
     def vector_to_factor_dict(self, vector):
         """
@@ -446,5 +435,5 @@ class DynamNewsMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([5 * rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([10 * rand_sol_rng.random() for _ in range(self.dim)])
         return x

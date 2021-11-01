@@ -27,14 +27,14 @@ c_utility = []
 for j in range(1, 11):
     c_utility.append(5 + j)
 
-# fixed_factors = {
-#     "num_prod": 10,
-#     "num_customer": 30,
-#     "c_utility": c_utility,
-#     "init_level": 3 * np.ones(10),
-#     "price": 9 * np.ones(10),
-#     "cost": 5 * np.ones(10)}  
-fixed_factors = {} # Resort to all default values.
+fixed_factors = {
+    "num_prod": 10,
+    "num_customer": 30,
+    "c_utility": c_utility,
+    "init_level": 3 * np.ones(10),
+    "price": 9 * np.ones(10),
+    "cost": 5 * np.ones(10)}  
+# fixed_factors = {} # Resort to all default values.
 
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
