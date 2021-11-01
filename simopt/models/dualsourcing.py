@@ -7,6 +7,8 @@ import numpy as np
 
 import math
 
+import scipy as sc
+
 from base import Model, Problem
 
 
@@ -229,18 +231,14 @@ class DuralSourcing(Model):
         """
         # Designate random number generators.
         price_rng = rng_list[0]
-        # Initialize quantities to track:
-        #   - Market price in each period (Pt).
-        #   - Starting stock in each period.
-        #   - Ending stock in each period.
-        #   - Revenue in each period.
-        #   - Whether producing or not in each period.
-        #   - Production in each period.
         lead_diff = self.factors["lead_reg"] - self.factors["lead_exp"]
+        #vectors of regular orders to be received in periods n through n+lr-1
         orders_reg = np.zeros(self.factors["lead_reg"])
+        #vectors of expedited orders to be received in periods n through n+le-1
         orders_exp = np.zeros(self.factors["lead_exp"])
         #generate demand
-
+        if self.factors['distribution'] == 'Normal':
+            demand = sc.stats.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])
         #track total expenses
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
@@ -248,46 +246,30 @@ class DuralSourcing(Model):
         inv = self.factors["initial_inv"]
 
         #Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ))
-            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
-            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
-            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val *  mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
-            # If production is underway
-            if producing[day] == 1:
-                # cease production if price goes too low or inventory is too much
-                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
-                    producing[day] = 0
-                else:
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
-            # if production is not currently underway
-            else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
-                    producing[day] = 1
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    revenue[day] = revenue[day] - prod[day] * self.factors["prod_cost"]
-            # Sell if price is high enough
-            if (mkt_price[day] >= self.factors["price_sell"]):
-                revenue[day] = revenue[day] + stock[day] * mkt_price[day]
-                stock[day] = 0
-            # Charge holding cost
-            revenue[day] = revenue[day] - stock[day] * self.factors["holding_cost"]
-            # Calculate starting quantities for next period
-            if day < self.factors["n_days"] - 1:
-                revenue[day + 1] = revenue[day]
-                stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day] 
-                producing[day + 1] = producing[day]
+        for day in range(self.factors["n_days"]):
+            #Calculate inventory positions
+            inv_position_exp = inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]])
+            inv_position_reg = inv + np.sum(orders_exp) + np.sum(orders_reg)
+            #Place orders if needed
+            orders_exp = np.append(orders_exp, np.max(0,(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
+            orders_reg = np.append(orders_exp, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] )
+            #Charge ordering cost
+            total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
+            #Orders arrive, update on-hand inventory
+            Inv = Inv + orders_exp[0] + orders_reg[0]
+            orders_exp = np.delete(orders_exp,0)
+            orders_reg = np.delete(orders_reg,0)
+            #Satisfy or backorder demand
+            dn = np.max(0,demand[day])
+            inv = inv - dn
+            total_penalty_cost[day] = -1*self.factors['penalty_cost']*min(0,inv)
+            #Charge holding cost
+            total_holding_cost[day] = self.factors['holding_cost']*max(0,inv)
+
         # Calculate responses from simulation data.
-        responses = {"total_revenue": revenue[self.factors["n_days"] - 1],
-                     "frac_producing": np.mean(producing),
-                     "mean_stock": np.mean(stock)
+        responses = {"average_ordering_cost": np.mean(total_ordering_cost),
+                     "average_penalty_cost": np.mean(total_penalty_cost),
+                     "average_holding_cost": np.mean(total_holding_cost)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -296,13 +278,13 @@ class DuralSourcing(Model):
 """
 Summary
 -------
-Maximize the expected total revenue for iron ore inventory system.
+Minimize the expected total cost for dual-sourcing inventory system.
 """
 
 
 class IronOreMaxRev(Problem):
     """
-    Class to make iron ore inventory simulation-optimization problems.
+    Class to make dual-sourcing inventory simulation-optimization problems.
 
     Attributes
     ----------
@@ -361,12 +343,12 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="DUALSOURCING-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 4
+        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (1,)
+        self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
         self.lowerbound = (0)
@@ -380,7 +362,7 @@ class IronOreMaxRev(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (80, 7000, 40, 100)
+                "default": (50,80)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -394,7 +376,7 @@ class IronOreMaxRev(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = IronOre(self.model_fixed_factors)
+        self.model = DuralSourcing(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -411,10 +393,8 @@ class IronOreMaxRev(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "price_prod": vector[0],
-            "inven_stop": vector[1],
-            "price_stop": vector[2],
-            "price_sell": vector[3],
+            "order_level_exp": vector[0],
+            "order_level_reg": vector[1]
         }
         return factor_dict
 
@@ -433,7 +413,7 @@ class IronOreMaxRev(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["price_prod"], factor_dict["inven_stop"], factor_dict["price_stop"], factor_dict["price_sell"])
+        vector = (factor_dict["order_level_exp"], factor_dict["order_level_reg"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -451,7 +431,7 @@ class IronOreMaxRev(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_revenue"],)
+        objectives = (response_dict["average_ordering_cost"] + response_dict["average_penalty_cost"] + response_dict["average_holding_cost"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
