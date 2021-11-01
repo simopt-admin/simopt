@@ -252,7 +252,7 @@ class DuralSourcing(Model):
             inv_position_reg = inv + np.sum(orders_exp) + np.sum(orders_reg)
             #Place orders if needed
             orders_exp = np.append(orders_exp, np.max(0,(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_exp, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] )
+            orders_reg = np.append(orders_exp, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
             #Charge ordering cost
             total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
             #Orders arrive, update on-hand inventory
