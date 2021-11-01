@@ -509,7 +509,7 @@ class IronOreMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0 and x[2] >= 0 and x[3] >= 0)
+        return (x[0] >= 0 and x[1] >= 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -525,5 +525,5 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        x = (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
         return x
