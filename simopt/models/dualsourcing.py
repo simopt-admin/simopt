@@ -282,7 +282,7 @@ Minimize the expected total cost for dual-sourcing inventory system.
 """
 
 
-class IronOreMaxRev(Problem):
+class DualSourcingMinCost(Problem):
     """
     Class to make dual-sourcing inventory simulation-optimization problems.
 
