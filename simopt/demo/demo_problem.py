@@ -19,7 +19,7 @@ from base import Solution
 # # Replace <filename> with name of .py file containing problem class.
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: from models.cntnv import CntNVMaxProfit
-from models.ironore import IronOreMaxRev
+from models.dualsourcing import DualSourcingMinCost
 
 # Fix factors of problem. Specify a dictionary of factors.
 # Look at Problem class definition to get names of factors.
@@ -31,14 +31,14 @@ fixed_factors = {}  # Resort to all default values.
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = IronOreMaxRev(fixed_factors=fixed_factors)
+myproblem = DualSourcingMinCost(fixed_factors=fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
 # Ex: for the CntNVMaxProfit class
 #     x = (3,)
-x = (90, 9000, 50, 110)
+x = (50,80)
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 
