@@ -237,7 +237,7 @@ class DuralSourcing(Model):
         orders_exp = np.zeros(self.factors["lead_exp"])
         #generate demand
         if self.factors['distribution'] == 'Normal':
-            demand = np.round(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days']),0)
+            demand = round(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days']) )
         #track total expenses
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
