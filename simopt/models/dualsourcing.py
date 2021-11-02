@@ -105,7 +105,7 @@ class DuralSourcing(Model):
             "lead_exp": {
                 "description": "Lead time for expedited orders in days.",
                 "datatype": int,
-                "default": 0
+                "default": 1
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
@@ -235,6 +235,8 @@ class DuralSourcing(Model):
         orders_reg = np.zeros(self.factors["lead_reg"])
         #vectors of expedited orders to be received in periods n through n+le-1
         orders_exp = np.zeros(self.factors["lead_exp"])
+        print('orders_exp' + str(orders_exp))
+        print('orders_reg' + str(orders_reg))
         #generate demand
         if self.factors['distribution'] == 'Normal':
             demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])).astype(int)
@@ -247,19 +249,24 @@ class DuralSourcing(Model):
         #Run simulation over time horizon.
         for day in range(self.factors["n_days"]):
             #Calculate inventory positions
-            inv_position_exp = inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]])
-            inv_position_reg = inv + np.sum(orders_exp) + np.sum(orders_reg)
+            inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
+            print('inv_position_exp' + str(inv_position_exp))
+            inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
+            print('inv_position_reg' + str(inv_position_reg))
             #Place orders if needed
-            orders_exp = np.append(orders_exp, np.max(0,(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_exp, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
+            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
+            orders_exp = np.append(orders_exp, max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
+            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
+            print('orders_exp' + str(orders_exp))
+            print('orders_reg' + str(orders_reg))
             #Charge ordering cost
             total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
             #Orders arrive, update on-hand inventory
-            Inv = Inv + orders_exp[0] + orders_reg[0]
+            inv = inv + orders_exp[0] + orders_reg[0]
             orders_exp = np.delete(orders_exp,0)
             orders_reg = np.delete(orders_reg,0)
             #Satisfy or backorder demand
-            dn = np.max(0,demand[day])
+            dn = max(0,demand[day])
             inv = inv - dn
             total_penalty_cost[day] = -1*self.factors['penalty_cost']*min(0,inv)
             #Charge holding cost
