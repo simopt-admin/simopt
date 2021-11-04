@@ -459,6 +459,7 @@ class Experiment(object):
     def check_run(self):
         """
         Check if the experiment has been run.
+
         Returns
         -------
         ran : bool
@@ -525,6 +526,7 @@ class Experiment(object):
     def check_postreplicate(self):
         """
         Check if the experiment has been postreplicated.
+
         Returns
         -------
         postreplicated : bool
@@ -2000,6 +2002,7 @@ class MetaExperiment(object):
     def check_compatibility(self):
         """
         Check whether all experiments' solvers and problems are compatible.
+        
         Returns
         -------
         error_str : str
@@ -2059,6 +2062,7 @@ class MetaExperiment(object):
     def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
         """
         Construct objective curves and (normalized) progress curves
+
         for all collections of experiments on all given problem.
         Parameters
         ----------
