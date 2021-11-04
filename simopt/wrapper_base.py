@@ -2077,4 +2077,4 @@ class MetaExperiment(object):
             experiments_same_problem = [self.experiments[solver_idx][problem_idx] for solver_idx in range(self.n_solvers)]
             post_normalize(experiments=experiments_same_problem,
                            n_postreps_init_opt=n_postreps_init_opt,
-                           crn_across_init_opt=crn_across_init_opt) 
+                           crn_across_init_opt=crn_across_init_opt)
