@@ -2078,4 +2078,3 @@ class MetaExperiment(object):
             post_normalize(experiments=experiments_same_problem,
                            n_postreps_init_opt=n_postreps_init_opt,
                            crn_across_init_opt=crn_across_init_opt)
-                           
