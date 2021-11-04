@@ -2318,8 +2318,8 @@ class Plot_Window():
             self.plot_label.place(x=0, rely=.3)
             self.plot_menu.place(relx=.15, rely=.3)
 
-            # self.add_button.place(x=5, rely=.4)
-            self.add_button.pack(padx=10, pady=5)
+            self.add_button.place(x=5, rely=.4)
+            # self.add_button.pack(padx=10, pady=5)
             # button1_ttp = CreateToolTip(self.add_button, \
             #     'Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, '
             #     'consectetur, adipisci velit. Neque porro quisquam est qui dolorem ipsum '
@@ -2367,11 +2367,14 @@ class Plot_Window():
             label.grid(row=1, column=0, padx=5, pady=3)
             entry.grid(row=1, column=1, padx=5, pady=3)
 
+            entry2 = ttk.OptionMenu(self.settings_canvas, self.params[2], "True", *tf_list)
+            label2 = tk.Label(master=self.settings_canvas, text="Print Max HW", font="Calibri 14")
+            label2.grid(row=2, column=0, padx=5, pady=3)
+            entry2.grid(row=2, column=1, padx=5, pady=3)
             
             
             # self.frame.pack(fill='both')
         
-
         def test_funct(self):
             for i in self.solver_menu.curselection():
                 print(self.solver_menu.get(i))
@@ -2428,31 +2431,32 @@ class Plot_Window():
                         param_value_list.append(t.get())
 
             ci = param_value_list[0]
+            hw = param_value_list[2]
 
             if self.plot_type_list[i] == "Mean Progress Curve":
-                path_name = wrapper_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, normalize=param_value_list[2])
-                param_list = {"plot CIs":ci, "print max hw":ci, "normalize":param_value_list[2]}
+                path_name = wrapper_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, normalize=param_value_list[3])
+                param_list = {"plot CIs":ci, "print max hw":hw, "normalize":param_value_list[3]}
             elif self.plot_type_list[i] == "Quatile Progress Curve":
-                path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=ci, beta=param_value_list[2],normalize=param_value_list[3])
-                param_list = {"plot CIs":ci, "print max hw":ci, "normalize":param_value_list[3], "beta":param_value_list[2]}
+                path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, beta=param_value_list[3],normalize=param_value_list[4])
+                param_list = {"plot CIs":ci, "print max hw":hw, "normalize":param_value_list[4], "beta":param_value_list[3]}
             elif self.plot_type_list[i] == "Solve time cdf":
-                path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2])
-                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2]}
+                path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3])
+                param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3]}
             elif self.plot_type_list[i] == "Scatter Plot":
-                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=ci) 
+                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=hw) 
                 param_list = {}
             elif self.plot_type_list[i] == "cdf Solvability":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
-                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[3]}
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],ref_solver=None)            
+                param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3]}
             elif self.plot_type_list[i] == "Quantile Solvability":
-                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=ci, solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])        
+                param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"beta":param_value_list[4]}
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=None)        
             elif self.plot_type_list[i] == "cdf Difference Plot":
-                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[3]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],ref_solver=param_value_list[3])            
+                param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"ref solver":param_value_list[4]}
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],ref_solver=param_value_list[4])            
             elif self.plot_type_list[i] == "Quanitle Difference Plot":
-                param_list = {"plot CIs":ci, "print max hw":ci, "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=ci,solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=param_value_list[4])           
+                param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"ref solver":param_value_list[5],"beta":param_value_list[4]}
+                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=param_value_list[5])           
             else:
                 print(self.plot_type_list[i])
 
@@ -2511,7 +2515,7 @@ class Plot_Window():
                                                         text=new_plot,
                                                         font = "Calibri 10",
                                                         justify="center")
-                self.plot_path.grid(row=place, column=5, sticky='nsew', padx=5, pady=3)
+                self.plot_path.grid(row=place, column=6, sticky='nsew', padx=5, pady=3)
                 # self.view_plot.pack()
                 self.changeOnHover(self.view_plot, "red", "yellow")
                 self.all_path_names.append(new_plot)
@@ -2546,9 +2550,9 @@ class Plot_Window():
             elif plot_choice == "Scatter Plot":
                 param_list = {}
             elif plot_choice == "cdf Solvability":
-                param_list = {'solve_tol':0.1, 'ref_solver':None}        
+                param_list = {'solve_tol':0.1}        
             elif plot_choice == "Quantile Solvability":
-                param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None}                 
+                param_list = {'solve_tol':0.1, 'beta':0.5}                 
             elif plot_choice == "cdf Difference Plot":
                 param_list = {'solve_tol':0.1, 'ref_solver':None}                    
             elif plot_choice == "Quanitle Difference Plot":
@@ -2580,7 +2584,7 @@ class Plot_Window():
                 self.solvers_names.append(self.solver_menu.get(i))
 
 
-            i = 0
+            i = 1
             for param, param_val in param_list.items():
                 # if len(self.param_label) > i:
                 #     self.param_label[i].destroy()
