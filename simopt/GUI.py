@@ -10,7 +10,7 @@ from PIL import ImageTk, Image
 
 from directory import problem_directory
 from directory import solver_directory
-from directory import oracle_directory
+from directory import model_directory
 from wrapper_base import Experiment, MetaExperiment
 import wrapper_base
 import pickle
@@ -418,7 +418,7 @@ class Experiment_Window(tk.Tk):
         problem = str(self.problem_var.get())
         self.oracle = problem.split("-")
         self.oracle = self.oracle[0]
-        self.oracle_object = oracle_directory[self.oracle]
+        self.oracle_object = model_directory[self.oracle]
 
         self.factor_label_frame_oracle = ttk.Labelframe(master=self.master, text="Oracle Factors")
 
@@ -980,7 +980,7 @@ class Experiment_Window(tk.Tk):
                 self.solver_name = self.selected[1]
                 self.problem_name = self.selected[0]
                 
-                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, oracle_fixed_factors=self.oracle_factors)
+                self.my_experiment = Experiment(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, model_fixed_factors=self.oracle_factors)
                 self.my_experiment.n_macroreps = self.selected[2]
                 self.my_experiment.post_norm_ready = False
 
@@ -2459,7 +2459,7 @@ class Plot_Window():
                 path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=param_value_list[5])           
             else:
                 print(self.plot_type_list[i])
-
+            print(path_name)
             for i,new_plot in enumerate(path_name):
                 place = self.num_plots + 1
                 if len(path_name) == 1:
