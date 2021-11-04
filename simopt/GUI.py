@@ -1,7 +1,7 @@
 from os import path
 from random import expovariate
 import tkinter as tk
-from tkinter import ttk, Scrollbar, filedialog
+from tkinter import Place, ttk, Scrollbar, filedialog
 from timeit import timeit
 from functools import partial
 from tkinter.constants import FALSE, MULTIPLE, S
@@ -69,6 +69,12 @@ class Experiment_Window(tk.Tk):
     split parameters into parameters and settings
         add max hw
     add where plots are saved to
+
+    10/29
+    meta experiment - post normalize with post replicate
+    one button for both
+    no ref_solver for any but the last two
+    edit add button
     """
 
 
@@ -95,7 +101,7 @@ class Experiment_Window(tk.Tk):
                             font = "Calibri 15 bold")
         
         self.problem_label = tk.Label(master=self.master, # window label is used in
-                        text = "Please select the type of Problem:*",
+                        text = "Select Problem:*",
                         font = "Calibri 11 bold")
         
         # from experiments.inputs.all_factors.py:
@@ -108,7 +114,7 @@ class Experiment_Window(tk.Tk):
         self.problem_menu = ttk.OptionMenu(self.master, self.problem_var, "Problem", *self.problem_list, command=self.show_problem_factors)
 
         self.solver_label = tk.Label(master=self.master, # window label is used in
-                        text = "Please select the type of Solver:*",
+                        text = "Select Solver:*",
                         font = "Calibri 11 bold")
 
         # from experiments.inputs.all_factors.py:
@@ -121,7 +127,7 @@ class Experiment_Window(tk.Tk):
         self.solver_menu = ttk.OptionMenu(self.master, self.solver_var, "Solver", *self.solver_list, command=self.show_solver_factors)       
 
         self.macro_label = tk.Label(master=self.master,
-                        text = "Number of Macro Replications:*",
+                        text = "Number Macro Replications:*",
                         font = "Calibri 11 bold")
 
         self.macro_var = tk.StringVar(self.master)
@@ -252,35 +258,24 @@ class Experiment_Window(tk.Tk):
 
         self.instruction_label.place(x=0, y=0)
 
-        self.problem_label.place(relx=0, rely=.1)
-        self.problem_menu.place(x=225, rely=.1)
+        self.problem_label.place(x=210, rely=.1)
+        self.problem_menu.place(x=310, rely=.1)
         # self.problem_label.place(relx=0, rely=85)
         # self.problem_menu.place(relx=225, rely=85)
 
-        self.solver_label.place(x=0, rely=.15)
-        self.solver_menu.place(x=225, rely=.15 )
+        self.solver_label.place(x=0, rely=.1)
+        self.solver_menu.place(x=105, rely=.1 )
 
-        self.macro_label.place(x=0, rely=.25)
-        self.macro_entry.place(x=225, rely=.25, relwidth=.08)
+        self.macro_label.place(x=420, rely=.1)
+        self.macro_entry.place(x=620, rely=.1, relwidth=.08)
 
         # self.run_button.place(x=5, rely=.3, width=200)
-        self.pickle_file_load_button.place(x=5, rely=.3, width=175)
-        self.crossdesign_button.place(x=175, rely=.3, width=200)
-        self.add_button.place(x=5, rely=.34, width=200)
-        self.clear_queue_button.place(x=175, rely=.34, width=200)
-        # self.run_button.place(x=5, y=285, width=200)
-        # self.crossdesign_button.place(x=175, y=285, width=200)
-        # self.add_button.place(x=5, y=325, width=200)
-        # self.clear_queue_button.place(x=175, y=325, width=200)
-
-        # self.pickle_file_select_label.place(x=850, y=375)
-        # self.pickle_file_select_button.place(x=1040, y=375)
-        # self.pickle_file_load_button.place(x=1150, y=375)
-        # self.pickle_file_pathname_label.place(x=850, y=400)
-        # self.pickle_file_pathname_show.place(x=950, y=400)
-        # self.post_process_all_button.place(x=5,y=800)
+        self.pickle_file_load_button.place(x=5, rely=.49, width=175)
+        self.crossdesign_button.place(x=175, rely=.49, width=200)
+        self.add_button.place(x=5, rely=.46, width=200)
+        self.clear_queue_button.place(x=370, rely=.49, width=200) 
         
-        self.queue_label_frame.place(x=0, rely=.48, relheight=.44, relwidth=.8)
+        self.queue_label_frame.place(x=0, rely=.53, relheight=.42, relwidth=.8)
         self.post_normal_all_button.place(x=250,rely=.95)
 
         self.frame.pack(fill='both')
@@ -337,6 +332,7 @@ class Experiment_Window(tk.Tk):
             self.dictionary_size_problem = len(self.problem_object().specifications[factor_type])
 
             if self.problem_object().specifications[factor_type].get("datatype") != bool:
+            
                 self.int_float_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(self.problem_object().specifications[factor_type].get("description")),
                                                     font = "Calibri 11 bold")
@@ -366,6 +362,7 @@ class Experiment_Window(tk.Tk):
 
 
             if self.problem_object().specifications[factor_type].get("datatype") == bool:
+                
                 self.boolean_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(self.problem_object().specifications[factor_type].get("description")),
                                                     font = "Calibri 11 bold")
@@ -411,7 +408,7 @@ class Experiment_Window(tk.Tk):
         self.problem_factors_types.append(str)
 
         #self.factor_label_frame_problem.place(x=400, y=70, height=300, width=475)
-        self.factor_label_frame_problem.place(relx=.32, rely=.04, relheight=.3, relwidth=.34)
+        self.factor_label_frame_problem.place(relx=.35, rely=.15, relheight=.3, relwidth=.34)
 
         # Switching from Problems to Oracles
 
@@ -523,7 +520,7 @@ class Experiment_Window(tk.Tk):
 
         # print(self.oracle_factors_list)
         # relx=.32, rely=.08, relheight=.2, relwidth=.34
-        self.factor_label_frame_oracle.place(relx=.66, rely=.04, relheight=.4, relwidth=.34)
+        self.factor_label_frame_oracle.place(relx=.7, rely=.15, relheight=.3, relwidth=.3)
 
     def show_solver_factors(self, *args):
 
@@ -659,7 +656,7 @@ class Experiment_Window(tk.Tk):
 
         self.solver_factors_types.append(str)
         # self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
-        self.factor_label_frame_solver.place(relx=.32, rely=.34, relheight=.3, relwidth=.34)
+        self.factor_label_frame_solver.place(x=0, rely=.15, relheight=.3, relwidth=.34)
 
     def run_single_function(self):
         if self.problem_var.get() in problem_directory and self.solver_var.get() in solver_directory and self.macro_entry.get().isnumeric() != False:
@@ -850,7 +847,7 @@ class Experiment_Window(tk.Tk):
         self.count_experiment_queue = len(self.widget_list) + 1
         
     def clear_meta_function(self, integer):
-
+        print(integer)
         for widget in self.widget_meta_list[integer-1]:
             widget.grid_remove()
 
@@ -1214,19 +1211,6 @@ class Experiment_Window(tk.Tk):
         # current_experiment_arguments = self.experiment_master_list[row_index-1][5]
         # integer = integer
         print(F"test function connected to the number {integer}")
-    
-    # post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
-    def meta_normalize(self, integer):
-        print(integer-1)
-        row_index = integer - 1
-        self.widget_meta_list[row_index][6]["state"] = "disabled"
-
-        self.my_experiment = self.meta_experiment_master_list[row_index]
-        # self.macro_reps = self.selected[2]
-        self.macro_reps = 100
-
-        self.my_experiment.post_normalize(n_postreps_init_opt=self.macro_reps, crn_across_init_opt=True)
-        self.widget_meta_list[row_index][7]["state"] = "normal"
         
     def save_edit_function(self, integer):
         
@@ -1395,7 +1379,7 @@ class Experiment_Window(tk.Tk):
         # print('IN post_process_disable_button ', self.post_rep_function_row_index)
         if meta:
             row_index = self.post_rep_function_row_index - 1
-            self.widget_meta_list[row_index][5]["text"] = "Done Post Processing"
+            self.widget_meta_list[row_index][5]["text"] = "Post Processed & Normalized"
             self.widget_meta_list[row_index][5]["state"] = "disabled"
             self.widget_meta_list[row_index][6]["state"] = "normal"
             # self.normalize_button_added["state"] = "normal"
@@ -1467,23 +1451,17 @@ class Experiment_Window(tk.Tk):
                                             state = "disabled")
         self.postprocess_button_added.grid(row=row_num, column=5, sticky='nsew', padx=5, pady=3)
         
-        self.normalize_button_added = ttk.Button(master=self.tab_two,
-                                            text="Post Normalize",
-                                            command = partial(self.meta_normalize,row_num),
-                                            state = "disabled")
-        self.normalize_button_added.grid(row=row_num, column=6, sticky='nsew', padx=5, pady=3)
-        
         self.plot_button_added = ttk.Button(master=self.tab_two,
                                             text="Plot",
                                             command = partial(self.plot_meta_function,row_num),
                                             state = "disabled")
-        self.plot_button_added.grid(row=row_num, column=7, sticky='nsew', padx=5, pady=3)
+        self.plot_button_added.grid(row=row_num, column=6, sticky='nsew', padx=5, pady=3)
         
         
         # self.select_checkbox = tk.Checkbutton(self.tab_one,text="",state="disabled",command=partial(self.checkbox_function, self.count_experiment_queue - 1))
         # self.select_checkbox.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
         
-        self.widget_row_meta = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.clear_button_added, self.postprocess_button_added, self.normalize_button_added, self.plot_button_added]
+        self.widget_row_meta = [self.problem_added, self.solver_added, self.macros_added, self.run_button_added, self.clear_button_added, self.postprocess_button_added, self.plot_button_added]
         self.widget_meta_list.insert(row_num-1,self.widget_row_meta)
         self.meta_experiment_master_list.insert(row_num-1,self.cross_app.crossdesign_MetaExperiment)
         # self.select_checkbox.deselect()
@@ -1778,6 +1756,10 @@ class Post_Processing_Window():
         self.title = ttk.Label(master = self.master,
                                 text = "Welcome to the Post-Processing Page",
                                 font = "Calibri 15 bold")
+        if self.meta:
+            self.title = ttk.Label(master = self.master,
+                                text = "Welcome to the Post-Processing and Post-Normalizing Page",
+                                font = "Calibri 15 bold")
 
         self.n_postreps_label = tk.Label(master = self.master,
                                     text = "Number of postreplications to take at each recommended solution:",
@@ -1812,11 +1794,43 @@ class Post_Processing_Window():
         self.crn_across_macroreps_var = tk.StringVar(self.master)
 
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "False", *self.crn_across_macroreps_list)
+        
+        self.crn_norm_budget_label = tk.Label(master=self.master,
+                                    text = "Use CRN for post-replications at solutions x0 and x*?",
+                                    font = "Calibri 11 bold",
+                                    wraplength = "250")
+        self.crn_norm_across_macroreps_var = tk.StringVar(self.master)
+        self.crn_norm_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_norm_across_macroreps_var, "True", *self.crn_across_macroreps_list)
+
+        self.n_norm_label = ttk.Label(master = self.master,
+                                    text = "Post Normalize Parameters",
+                                    font = "Calibri 14 bold",
+                                    wraplength = "250")
+        
+        self.n_proc_label = ttk.Label(master = self.master,
+                                    text = "Post Process Parameters",
+                                    font = "Calibri 14 bold",
+                                    wraplength = "250")
+
+        self.n_norm_ostreps_label = tk.Label(master = self.master,
+                                    text = "Number of postreplications to take at initial x0 and optimal x*:",
+                                    font = "Calibri 11 bold",
+                                    wraplength = "250")
+
+        self.n_norm_postreps_var = tk.StringVar(self.master)
+        self.n_norm_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_norm_postreps_var, justify = tk.LEFT)
+        self.n_norm_postreps_entry.insert(index=tk.END, string="100")
 
         self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
                         text = "Finish Post-Replication of Experiment",
                         font = "Calibri 11 bold",
                         wraplength = "250")
+        
+        if self.meta:
+            self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
+                            text = "Finish Post-Replication and Post- Normalization of Experiment",
+                            font = "Calibri 11 bold",
+                            wraplength = "250")
 
         self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
@@ -1827,20 +1841,40 @@ class Post_Processing_Window():
 
         self.title.place(x=15, y=15)
 
-        self.n_postreps_label.place(x=0, y=95)
-        self.n_postreps_entry.place(x=255, y=95)
+        if not self.meta:
+            self.n_postreps_label.place(x=0, y=95)
+            self.n_postreps_entry.place(x=255, y=95)
 
-        # self.n_postreps_init_opt_label.place(x=0, y=180)
-        # self.n_postreps_init_opt_entry.place(x=255, y=180)
+            self.crn_across_budget_label.place(x=0, y=180)
+            self.crn_across_budget_menu.place(x=255, y=180)
 
-        self.crn_across_budget_label.place(x=0, y=180)
-        self.crn_across_budget_menu.place(x=255, y=180)
+            self.crn_across_macroreps_label.place(x=0, y=275)
+            self.crn_across_macroreps_menu.place(x=255, y=275)
 
-        self.crn_across_macroreps_label.place(x=0, y=275)
-        self.crn_across_macroreps_menu.place(x=255, y=275)
+            self.post_processing_run_label.place(x=0, y=350)
+            self.post_processing_run_button.place(x=255, y=350)   
+        else:
+            self.n_proc_label.place(x=15, y=55)
 
-        self.post_processing_run_label.place(x=0, y=350)
-        self.post_processing_run_button.place(x=255, y=350)        
+            self.n_postreps_label.place(x=0, y=95)
+            self.n_postreps_entry.place(x=255, y=95)
+
+            self.crn_across_budget_label.place(x=0, y=160)
+            self.crn_across_budget_menu.place(x=255, y=160)
+
+            self.crn_across_macroreps_label.place(x=0, y=245)
+            self.crn_across_macroreps_menu.place(x=255, y=245)
+
+            self.n_norm_label.place(x=15, y=330)
+
+            self.crn_norm_budget_label.place(x=0,y=380)
+            self.crn_norm_across_macroreps_menu.place(x=255,y=380)
+
+            self.n_norm_ostreps_label.place(x=0, y=450)
+            self.n_norm_postreps_entry.place(x=255,y=450)
+
+            self.post_processing_run_label.place(x=0, y=520)
+            self.post_processing_run_button.place(x=255, y=520)     
 
         self.frame.pack(side="top", fill="both", expand=True)
         self.run_all = all
@@ -1851,7 +1885,7 @@ class Post_Processing_Window():
         # self.experiment_list = [self.selected[3], self.selected[4], self.selected[2]]
         
         # if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
-        if self.n_postreps_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
+        if self.n_postreps_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list and (self.meta == True and self.n_norm_postreps_entry.get().isnumeric() or self.meta == False):
             self.experiment_list.append(int(self.n_postreps_entry.get()))
             # self.experiment_list.append(int(self.n_postreps_init_opt_entry.get()))
 
@@ -1865,14 +1899,13 @@ class Post_Processing_Window():
                 self.experiment_list.append(True)
             else:
                 self.experiment_list.append(False)
-                        
+
+            norm = False
+            if self.crn_norm_across_macroreps_var.get() == "True":
+                norm = True
             # reset n_postreps_entry
             self.n_postreps_entry.delete(0, len(self.n_postreps_entry.get()))
             self.n_postreps_entry.insert(index=tk.END, string="100")
-
-            # reset n_postreps_init_opt_entry
-            # self.n_postreps_init_opt_entry.delete(0, len(self.n_postreps_init_opt_entry.get()))
-            # self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
             # reset crn_across_budget_bar
             self.crn_across_budget_var.set("True")
@@ -1889,11 +1922,15 @@ class Post_Processing_Window():
             # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
             self.my_experiment.post_replicate(self.n_postreps, self.crn_across_budget, self.crn_across_macroreps)
 
+            if self.meta:
+                self.my_experiment.post_normalize(n_postreps_init_opt=int(self.n_norm_postreps_entry.get()), crn_across_init_opt=norm)
+
             # print(self.experiment_list)
             self.master.destroy()
             self.post_processed_bool = True
-
             Experiment_Window.post_process_disable_button(self.main_window,self.meta)
+            
+
 
             return self.experiment_list
 
@@ -2283,11 +2320,11 @@ class Plot_Window():
 
             # self.add_button.place(x=5, rely=.4)
             self.add_button.pack(padx=10, pady=5)
-            button1_ttp = CreateToolTip(self.add_button, \
-                'Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, '
-                'consectetur, adipisci velit. Neque porro quisquam est qui dolorem ipsum '
-                'quia dolor sit amet, consectetur, adipisci velit. Neque porro quisquam '
-                'est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.')
+            # button1_ttp = CreateToolTip(self.add_button, \
+            #     'Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, '
+            #     'consectetur, adipisci velit. Neque porro quisquam est qui dolorem ipsum '
+            #     'quia dolor sit amet, consectetur, adipisci velit. Neque porro quisquam '
+            #     'est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.')
 
 
             self.post_normal_all_button.place(relx=.3,rely=.95)
@@ -2374,7 +2411,8 @@ class Plot_Window():
             i = len(self.plot_type_list)-1
             exp = self.plot_exp_list[len(self.plot_exp_list)-1]
             exp2 = [[e] for e in exp]
-          
+            #keep as list of list for multiple solvers if using exp2
+            #one problem, multiple solvers
 
             param_value_list = []
             for t in self.params:
