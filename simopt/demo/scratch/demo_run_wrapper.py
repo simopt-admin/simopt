@@ -4,7 +4,7 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 from rng.mrg32k3a import MRG32k3a
-from base import Solver, Problem, Oracle, Solution
+from base import Solver, Problem, Model, Solution
 from wrapper_base import Experiment, read_experiment_results, MetaExperiment
 
 mymetaexperiment = MetaExperiment(solver_names=["RNDSRCH"], problem_names=["MM1-1", "CNTNEWS-1", "FACSIZE-1"], fixed_factors_filename="all_factors")

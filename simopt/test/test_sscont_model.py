@@ -1,14 +1,14 @@
 import unittest
 from rng.mrg32k3a import MRG32k3a
-from oracles.sscont import SSCont
+from models.sscont import SSCont
 
-class TestSSContOracle(unittest.TestCase):
+class TestSSContModel(unittest.TestCase):
     
     def test_replicate(self):
-        myoracle = SSCont()
-        rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myoracle.n_rngs)]
-        responses, gradients = myoracle.replicate(rng_list)
-        self.assertTrue(responses["avg_order"] >= myoracle.factors["S"] - myoracle.factors["s"])
+        mymodel = SSCont()
+        rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
+        responses, gradients = mymodel.replicate(rng_list)
+        self.assertTrue(responses["avg_order"] >= mymodel.factors["S"] - mymodel.factors["s"])
         self.assertTrue((0 <= responses["order_rate"]) & (responses["order_rate"] <= 1))
         self.assertTrue((0 <= responses["on_time_rate"]) & (responses["on_time_rate"] <= 1))
         self.assertTrue((0 <= responses["stockout_rate"]) & (responses["stockout_rate"] <= 1))
