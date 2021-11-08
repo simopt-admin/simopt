@@ -1527,6 +1527,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                       ))
     return file_list          
 
+
 def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
     """
     Plot the (difference of) solvability profiles for each solver on a set of problems.
@@ -1776,6 +1777,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                   extra=[solve_tol, beta]
                                   ))
     return file_list          
+
 
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
     """
