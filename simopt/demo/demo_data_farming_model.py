@@ -26,7 +26,8 @@ factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quant
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-factor_settings_filename = "model_factor_settings"
+#factor_settings_filename = "model_factor_settings"
+factor_settings_filename = None
 
 # OR, if the design has been created, provide the name of a .text file
 # containing the following:
@@ -35,7 +36,8 @@ factor_settings_filename = "model_factor_settings"
 #    - each value in the table gives the value of the factor (col index)
 #      for the design point (row index)
 # E.g., design_filename = "model_factor_settings_design"
-design_filename = None
+#design_filename = None
+design_filename = "model_factor_settings_design"
 
 # Specify a common number of replications to run of the model at each
 # design point.

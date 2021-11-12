@@ -5,7 +5,7 @@ from copy import deepcopy
 
 from directory import model_directory
 from rng.mrg32k3a import MRG32k3a
-from wrapper_base import Experiment
+from wrapper_base import Experiment, post_normalize
 
 
 class DesignPoint(object):
@@ -117,7 +117,8 @@ class DataFarmingExperiment(object):
         if design_filename is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+            command = f"stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
+            #command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
             os.system(command)
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
@@ -260,7 +261,12 @@ class DataFarmingMetaExperiment(object):
             # In Python 3.9, will be able to use: dict1 | dict2.
             # Create new design point and add to design0.
             file_name_path = "data_farming_experiments/outputs/" + solver_name + "_on_" + problem_name + "_designpt_" + str(i) + ".pickle"
-            new_design_pt = Experiment(solver_name, problem_name, new_design_pt_solver_factors, problem_fixed_factors, model_fixed_factors, file_name_path=file_name_path)
+            new_design_pt = Experiment(solver_name=solver_name,
+                                       problem_name=problem_name,
+                                       solver_fixed_factors=new_design_pt_solver_factors,
+                                       problem_fixed_factors=problem_fixed_factors,
+                                       model_fixed_factors=model_fixed_factors,
+                                       file_name_path=file_name_path)
             self.design.append(new_design_pt)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
@@ -279,11 +285,13 @@ class DataFarmingMetaExperiment(object):
             experiment = self.design[design_pt_index]
             if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                 print("Running Design Point " + str(design_pt_index) + ".")
-                experiment.clear_runs()
+                experiment.clear_run()
+                print(experiment.solver.name)
+                print(experiment.problem.name)
                 experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def post_replicate(self, n_postreps, n_postreps_init_opt, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         For each design point, run postreplications at solutions
         recommended by the solver on each macroreplication.
@@ -304,12 +312,26 @@ class DataFarmingMetaExperiment(object):
             # If the problem-solver pair has not been post-processed in this way before,
             # post-process it now.
             if (getattr(experiment, "n_postreps", None) != n_postreps
-                    or getattr(experiment, "n_postreps_init_opt", None) != n_postreps_init_opt
                     or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                     or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                 print("Post-processing Design Point " + str(design_pt_index) + ".")
-                experiment.clear_postreps()
-                experiment.post_replicate(n_postreps, n_postreps_init_opt, crn_across_budget, crn_across_macroreps)
+                experiment.clear_postreplicate()
+                experiment.post_replicate(n_postreps, crn_across_budget=crn_across_budget, crn_across_macroreps=crn_across_macroreps)
+
+
+    # Largely taken from MetaExperiment class in wrapper_base.py.
+    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+        """
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_init_opt : bool
+            use CRN for post-replications at solutions x0 and x*?
+        """
+        post_normalize(experiments=self.design,
+                       n_postreps_init_opt=n_postreps_init_opt,
+                       crn_across_init_opt=crn_across_init_opt
+                       )
+
 
     def calculate_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], beta=0.50):
         """
