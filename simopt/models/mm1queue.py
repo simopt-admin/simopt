@@ -48,26 +48,22 @@ class MM1Queue(Model):
         self.n_responses = 2
         self.specifications = {
             "lambda": {
-                "description": "Rate parameter of interarrival \
-                                time distribution.",
+                "description": "Rate parameter of interarrival time distribution.",
                 "datatype": float,
                 "default": 1.5
             },
             "mu": {
-                "description": "Rate parameter of service time \
-                                distribution.",
+                "description": "Rate parameter of service time distribution.",
                 "datatype": float,
                 "default": 3.0
             },
             "warmup": {
-                "description": "Number of people as warmup before \
-                                collecting statistics",
+                "description": "Number of people as warmup before collecting statistics",
                 "datatype": int,
                 "default": 20
             },
             "people": {
-                "description": "Number of people from which to calculate \
-                                the average sojourn time",
+                "description": "Number of people from which to calculate the average sojourn time",
                 "datatype": int,
                 "default": 50
             }
