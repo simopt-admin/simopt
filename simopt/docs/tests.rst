@@ -28,10 +28,10 @@ tests.test\_mrg32k3a module
    :undoc-members:
    :show-inheritance:
 
-tests.test\_oracle module
+tests.test\_model module
 -------------------------
 
-.. automodule:: tests.test_oracle
+.. automodule:: tests.test_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -60,10 +60,10 @@ tests.test\_solver\_problem module
    :undoc-members:
    :show-inheritance:
 
-tests.test\_sscont\_oracle module
+tests.test\_sscont\_model module
 ---------------------------------
 
-.. automodule:: tests.test_sscont_oracle
+.. automodule:: tests.test_sscont_model
    :members:
    :undoc-members:
    :show-inheritance:

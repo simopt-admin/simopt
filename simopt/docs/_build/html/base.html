@@ -49,24 +49,24 @@
 <span id="base-module"></span><h1>base module<a class="headerlink" href="#module-base" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
-<p>Provide base classes for solvers, problems, and oracles.</p>
+<p>Provide base classes for solvers, problems, and models.</p>
 </div>
 <div class="section" id="listing">
 <h2>Listing<a class="headerlink" href="#listing" title="Permalink to this headline">¶</a></h2>
 <p>Solver : class
 Problem : class
-Oracle : class
+model : class
 Solution : class</p>
 <dl class="py class">
-<dt id="base.Oracle">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Oracle</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Base class to implement simulation oracles (models) featured in
+<p>Base class to implement simulation models (models) featured in
 simulation-optimization problems.</p>
 <dl class="py attribute">
-<dt id="base.Oracle.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#base.Oracle.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>name of oracle</p>
+<dt id="base.model.name">
+<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#base.model.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>name of model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>string</p>
@@ -75,8 +75,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.n_rngs">
-<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#base.Oracle.n_rngs" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.n_rngs">
+<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#base.model.n_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -86,8 +86,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.n_responses">
-<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#base.Oracle.n_responses" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.n_responses">
+<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#base.model.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -97,8 +97,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.Oracle.factors" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.factors">
+<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.model.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -108,8 +108,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.Oracle.specifications" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.specifications">
+<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.model.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -119,8 +119,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.check_factor_list">
-<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#base.Oracle.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.check_factor_list">
+<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#base.model.check_factor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>switch case for checking factor simulatability</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -131,12 +131,12 @@ simulation-optimization problems.</p>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified oracle factors</p>
+<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified model factors</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="base.Oracle.check_factor_datatype">
-<code class="sig-name descname"><span class="pre">check_factor_datatype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.check_factor_datatype">
+<code class="sig-name descname"><span class="pre">check_factor_datatype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.model.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a factor’s data type matches its specification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -149,15 +149,15 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.check_simulatable_factor">
-<code class="sig-name descname"><span class="pre">check_simulatable_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_simulatable_factor" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.check_simulatable_factor">
+<code class="sig-name descname"><span class="pre">check_simulatable_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.model.check_simulatable_factor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>factor_name</strong> (<em>string</em>) – name of factor for dictionary lookup (i.e., key)</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>is_simulatable</strong> – indicates if oracle specified by factors is simulatable</p>
+<dd class="field-even"><p><strong>is_simulatable</strong> – indicates if model specified by factors is simulatable</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
@@ -166,12 +166,12 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.check_simulatable_factors">
-<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<dt id="base.model.check_simulatable_factors">
+<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.model.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if oracle specified by factors is simulatable</p>
+<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if model specified by factors is simulatable</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
@@ -180,12 +180,12 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.replicate">
-<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.replicate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simulate a single replication for the current oracle factors.</p>
+<dt id="base.model.replicate">
+<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.model.replicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a single replication for the current model factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – rngs for oracle to use when simulating a replication</p>
+<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – rngs for model to use when simulating a replication</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -201,7 +201,7 @@ simulation-optimization problems.</p>
 
 <dl class="py class">
 <dt id="base.Problem">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Problem</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Problem</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -354,20 +354,20 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#base.Problem.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="base.Problem.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#base.Problem.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#base.Problem.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="base.Problem.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#base.Problem.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -376,9 +376,9 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#base.Problem.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="base.Problem.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#base.Problem.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -424,7 +424,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>model_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -657,7 +657,7 @@ and dictionaries of decision factors.</p>
 <dl class="py attribute">
 <dt id="base.Solution.rng_list">
 <code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#base.Solution.rng_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>rngs for oracle to use when running replications at the solution</p>
+<dd><p>rngs for model to use when running replications at the solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>list of rng.MRG32k3a objects</p>

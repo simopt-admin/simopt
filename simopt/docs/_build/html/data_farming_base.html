@@ -49,17 +49,17 @@
 <span id="data-farming-base-module"></span><h1>data_farming_base module<a class="headerlink" href="#module-data_farming_base" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="data_farming_base.DataFarmingExperiment">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingExperiment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Base class for data-farming experiments consisting of an oracle
+<p>Base class for data-farming experiments consisting of an model
 and design of associated factors.</p>
 <dl class="py attribute">
-<dt id="data_farming_base.DataFarmingExperiment.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>oracle on which the experiment is run</p>
+<dt id="data_farming_base.DataFarmingExperiment.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#data_farming_base.DataFarmingExperiment.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>model on which the experiment is run</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -89,11 +89,11 @@ and design of associated factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>oracle_name</strong> (<em>string</em>) – name of oracle on which the experiment is run</p></li>
+<li><p><strong>model_name</strong> (<em>string</em>) – name of model on which the experiment is run</p></li>
 <li><p><strong>factor_settings_filename</strong> (<em>string</em>) – name of .txt file containing factor ranges and # of digits</p></li>
 <li><p><strong>factor_headers</strong> (<em>list of strings</em>) – ordered list of factor names appearing in factor settings/design file</p></li>
 <li><p><strong>design_filename</strong> (<em>string</em>) – name of .txt file containing design matrix</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<em>dictionary</em>) – non-default values of oracle factors that will not be varied</p></li>
+<li><p><strong>model_fixed_factors</strong> (<em>dictionary</em>) – non-default values of model factors that will not be varied</p></li>
 </ul>
 </dd>
 </dl>
@@ -126,7 +126,7 @@ Publish to .csv output file.</p>
 
 <dl class="py class">
 <dt id="data_farming_base.DataFarmingMetaExperiment">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingMetaExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DataFarmingMetaExperiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_settings_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_factor_headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DataFarmingMetaExperiment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for data-farming meta experiments consisting of problem-solver
 pairs and a design of associated factors.</p>
@@ -162,7 +162,7 @@ pairs and a design of associated factors.</p>
 <li><p><strong>design_filename</strong> (<em>string</em>) – name of .txt file containing design matrix</p></li>
 <li><p><strong>solver_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified solver factors that will not be varied</p></li>
 <li><p><strong>problem_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors that will not be varied</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified oracle factors that will not be varied</p></li>
+<li><p><strong>model_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified model factors that will not be varied</p></li>
 </ul>
 </dd>
 </dl>
@@ -232,24 +232,24 @@ Publish to .csv output file.</p>
 
 <dl class="py class">
 <dt id="data_farming_base.DesignPoint">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DesignPoint</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oracle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">data_farming_base.</span></code><code class="sig-name descname"><span class="pre">DesignPoint</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for design points represented as dictionaries of factors.</p>
 <dl class="py attribute">
-<dt id="data_farming_base.DesignPoint.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>oracle to simulate</p>
+<dt id="data_farming_base.DesignPoint.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>model to simulate</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="data_farming_base.DesignPoint.oracle_factors">
-<code class="sig-name descname"><span class="pre">oracle_factors</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.oracle_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>oracle factor names and values</p>
+<dt id="data_farming_base.DesignPoint.model_factors">
+<code class="sig-name descname"><span class="pre">model_factors</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.model_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>model factor names and values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -260,7 +260,7 @@ Publish to .csv output file.</p>
 <dl class="py attribute">
 <dt id="data_farming_base.DesignPoint.rng_list">
 <code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.rng_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>rngs for oracle to use when running replications at the solution</p>
+<dd><p>rngs for model to use when running replications at the solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
@@ -293,7 +293,7 @@ Publish to .csv output file.</p>
 <dl class="py attribute">
 <dt id="data_farming_base.DesignPoint.gradients">
 <code class="sig-name descname"><span class="pre">gradients</span></code><a class="headerlink" href="#data_farming_base.DesignPoint.gradients" title="Permalink to this definition">¶</a></dt>
-<dd><p>gradients of responses (w.r.t. oracle factors) observed from replications</p>
+<dd><p>gradients of responses (w.r.t. model factors) observed from replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>dict of dict</p>
@@ -303,7 +303,7 @@ Publish to .csv output file.</p>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>oracle</strong> (<em>Oracle object</em>) – oracle with factors oracle_factors</p>
+<dd class="field-odd"><p><strong>model</strong> (<em>model object</em>) – model with factors model_factors</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -320,7 +320,7 @@ Publish to .csv output file.</p>
 <dl class="py method">
 <dt id="data_farming_base.DesignPoint.simulate">
 <code class="sig-name descname"><span class="pre">simulate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_farming_base.DesignPoint.simulate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simulate m replications for the current oracle factors.
+<dd><p>Simulate m replications for the current model factors.
 Append results to the responses and gradients dictionaries.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

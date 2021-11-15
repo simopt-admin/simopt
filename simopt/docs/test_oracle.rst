@@ -1,7 +1,7 @@
-test\_oracle module
+test\_model module
 ===================
 
-.. automodule:: test_oracle
+.. automodule:: test_model
    :members:
    :undoc-members:
    :show-inheritance:

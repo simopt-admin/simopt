@@ -1,45 +1,45 @@
-oracles package
+models package
 ===============
 
 Submodules
 ----------
 
-oracles.cntnv module
+models.cntnv module
 --------------------
 
-.. automodule:: oracles.cntnv
+.. automodule:: models.cntnv
    :members:
    :undoc-members:
    :show-inheritance:
 
-oracles.facilitysizing module
+models.facilitysizing module
 -----------------------------
 
-.. automodule:: oracles.facilitysizing
+.. automodule:: models.facilitysizing
    :members:
    :undoc-members:
    :show-inheritance:
 
-oracles.mm1queue module
+models.mm1queue module
 -----------------------
 
-.. automodule:: oracles.mm1queue
+.. automodule:: models.mm1queue
    :members:
    :undoc-members:
    :show-inheritance:
 
-oracles.rmitd module
+models.rmitd module
 --------------------
 
-.. automodule:: oracles.rmitd
+.. automodule:: models.rmitd
    :members:
    :undoc-members:
    :show-inheritance:
 
-oracles.sscont module
+models.sscont module
 ---------------------
 
-.. automodule:: oracles.sscont
+.. automodule:: models.sscont
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ oracles.sscont module
 Module contents
 ---------------
 
-.. automodule:: oracles
+.. automodule:: models
    :members:
    :undoc-members:
    :show-inheritance:

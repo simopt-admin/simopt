@@ -45,7 +45,7 @@
 <p>The purpose of the SimOpt testbed is to encourage development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.</p>
 <p>For the purposes of this site, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.</p>
 <p>The paper  <a class="reference external" href="https://www.informs-sim.org/wsc06papers/028.pdf">Pasupathy and Henderson (2006)</a> explains the original motivation for the testbed, and the follow-up paper <a class="reference external" href="https://www.informs-sim.org/wsc11papers/363.pdf">Pasupathy and Henderson (2011)</a> describes an earlier interface for MATLAB implementations of problems and solvers. The paper <a class="reference external" href="https://www.informs-sim.org/wsc17papers/includes/files/179.pdf">Dong et al. (2017)</a>  conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance. The recent Winter Simulation Conference paper <a class="reference external" href="https://www.informs-sim.org/wsc19papers/374.pdf">Eckman et al. (2019)</a> describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.</p>
-<p>The <a class="reference external" href="oracles.html">Oracle Library</a> contains the simulation logic to simulate a variety of systems. The <a class="reference external" href="problems.html">Problem Library</a> builds upon the Oracle Library and contains a variety of SO test problems. The <a class="reference external" href="solvers.html">Solver Library</a> provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  <a class="reference external" href="instructions.html">here</a>.</p>
+<p>The <a class="reference external" href="models.html">model Library</a> contains the simulation logic to simulate a variety of systems. The <a class="reference external" href="problems.html">Problem Library</a> builds upon the model Library and contains a variety of SO test problems. The <a class="reference external" href="solvers.html">Solver Library</a> provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  <a class="reference external" href="instructions.html">here</a>.</p>
 <div class="section" id="contents">
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -62,14 +62,14 @@
 <li class="toctree-l3"><a class="reference internal" href="directory.html#listing">Listing</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="oracles.html">oracles package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles.cntnv">oracles.cntnv module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles.facilitysizing">oracles.facilitysizing module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles.mm1queue">oracles.mm1queue module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles.rmitd">oracles.rmitd module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles.sscont">oracles.sscont module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="oracles.html#module-oracles">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">models package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.cntnv">models.cntnv module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.facilitysizing">models.facilitysizing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.mm1queue">models.mm1queue module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.rmitd">models.rmitd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.sscont">models.sscont module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="problems.html">problems package</a><ul>

@@ -17,7 +17,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="rng package" href="rng.html" />
-    <link rel="prev" title="oracles package" href="oracles.html" /> 
+    <link rel="prev" title="models package" href="models.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -32,7 +32,7 @@
           <a href="rng.html" title="rng package"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="oracles.html" title="oracles package"
+          <a href="models.html" title="models package"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
@@ -57,7 +57,7 @@
 <p>Maximize the expected profit for the continuous newsvendor problem.</p>
 <dl class="py class">
 <dt id="problems.cntnv_max_profit.CntNVMaxProfit">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.cntnv_max_profit.</span></code><code class="sig-name descname"><span class="pre">CntNVMaxProfit</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.cntnv_max_profit.</span></code><code class="sig-name descname"><span class="pre">CntNVMaxProfit</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -199,20 +199,20 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.cntnv_max_profit.CntNVMaxProfit.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="problems.cntnv_max_profit.CntNVMaxProfit.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -221,9 +221,9 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="problems.cntnv_max_profit.CntNVMaxProfit.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#problems.cntnv_max_profit.CntNVMaxProfit.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -269,7 +269,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>factors</strong> (<em>oracle_fixed</em>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>factors</strong> (<em>model_fixed</em>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -433,7 +433,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 constraint on the total cost of installing capacity.</p>
 <dl class="py class">
 <dt id="problems.facilitysizing_max_service.FacilitySizingMaxService">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.facilitysizing_max_service.</span></code><code class="sig-name descname"><span class="pre">FacilitySizingMaxService</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.facilitysizing_max_service.</span></code><code class="sig-name descname"><span class="pre">FacilitySizingMaxService</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -575,20 +575,20 @@ constraint on the total cost of installing capacity.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -597,9 +597,9 @@ constraint on the total cost of installing capacity.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="problems.facilitysizing_max_service.FacilitySizingMaxService.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#problems.facilitysizing_max_service.FacilitySizingMaxService.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -645,7 +645,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>factors</strong> (<em>oracle_fixed</em>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>factors</strong> (<em>model_fixed</em>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -806,7 +806,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 facilities subject to a chance constraint on stockout probability.</p>
 <dl class="py class">
 <dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.facilitysizing_totalcost.</span></code><code class="sig-name descname"><span class="pre">FacilitySizingTotalCost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.facilitysizing_totalcost.</span></code><code class="sig-name descname"><span class="pre">FacilitySizingTotalCost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -948,20 +948,20 @@ facilities subject to a chance constraint on stockout probability.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -970,9 +970,9 @@ facilities subject to a chance constraint on stockout probability.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="problems.facilitysizing_totalcost.FacilitySizingTotalCost.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#problems.facilitysizing_totalcost.FacilitySizingTotalCost.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -1018,7 +1018,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>factors</strong> (<em>oracle_fixed</em>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>factors</strong> (<em>model_fixed</em>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -1178,7 +1178,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <p>Minimize the mean sojourn time of an M/M/1 queue.</p>
 <dl class="py class">
 <dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.mm1_min_mean_sojourn_time.</span></code><code class="sig-name descname"><span class="pre">MM1MinMeanSojournTime</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.mm1_min_mean_sojourn_time.</span></code><code class="sig-name descname"><span class="pre">MM1MinMeanSojournTime</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -1320,20 +1320,20 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -1342,9 +1342,9 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#problems.mm1_min_mean_sojourn_time.MM1MinMeanSojournTime.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -1390,7 +1390,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>model_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -1555,7 +1555,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 with inter-temporal dependence problem.</p>
 <dl class="py class">
 <dt id="problems.rmitd_maxrevenue.RMITDMaxRevenue">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.rmitd_maxrevenue.</span></code><code class="sig-name descname"><span class="pre">RMITDMaxRevenue</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.RMITDMaxRevenue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.rmitd_maxrevenue.</span></code><code class="sig-name descname"><span class="pre">RMITDMaxRevenue</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.rmitd_maxrevenue.RMITDMaxRevenue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -1697,12 +1697,12 @@ with inter-temporal dependence problem.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.rmitd_maxrevenue.RMITDMaxRevenue.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.RMITDMaxRevenue.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.rmitd_maxrevenue.RMITDMaxRevenue.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.rmitd_maxrevenue.RMITDMaxRevenue.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>model object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1745,7 +1745,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>model_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -1851,7 +1851,7 @@ of objectives.</p>
 <p>Minimize the expected total cost for (s, S) inventory system.</p>
 <dl class="py class">
 <dt id="problems.sscont_min_cost.SSContMinCost">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.sscont_min_cost.</span></code><code class="sig-name descname"><span class="pre">SSContMinCost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">problems.sscont_min_cost.</span></code><code class="sig-name descname"><span class="pre">SSContMinCost</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Problem" title="base.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Problem</span></code></a></p>
 <p>Class to make (s,S) inventory simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -1993,20 +1993,20 @@ of objectives.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.sscont_min_cost.SSContMinCost.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt id="problems.sscont_min_cost.SSContMinCost.model">
+<code class="sig-name descname"><span class="pre">model</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="base.html#base.Oracle" title="base.Oracle">base.Oracle</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="base.html#base.model" title="base.model">base.model</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.sscont_min_cost.SSContMinCost.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
+<dt id="problems.sscont_min_cost.SSContMinCost.model_default_factors">
+<code class="sig-name descname"><span class="pre">model_default_factors</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -2015,9 +2015,9 @@ of objectives.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="problems.sscont_min_cost.SSContMinCost.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
+<dt id="problems.sscont_min_cost.SSContMinCost.model_fixed_factors">
+<code class="sig-name descname"><span class="pre">model_fixed_factors</span></code><a class="headerlink" href="#problems.sscont_min_cost.SSContMinCost.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
@@ -2063,7 +2063,7 @@ or a random problem instance</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>factors</strong> (<em>oracle_fixed</em>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>factors</strong> (<em>model_fixed</em>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
@@ -2265,8 +2265,8 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="oracles.html"
-                        title="previous chapter">oracles package</a></p>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter">models package</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="rng.html"
                         title="next chapter">rng package</a></p>
@@ -2304,7 +2304,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
           <a href="rng.html" title="rng package"
              >next</a> |</li>
         <li class="right" >
-          <a href="oracles.html" title="oracles package"
+          <a href="models.html" title="models package"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>

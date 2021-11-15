@@ -62,7 +62,7 @@ MetaExperiment : class
 stylize_area_plot : function</p>
 <dl class="py class">
 <dt id="wrapper_base.Experiment">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">Experiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">wrapper_base.</span></code><code class="sig-name descname"><span class="pre">Experiment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#wrapper_base.Experiment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for running one solver on one problem.</p>
 <dl class="py attribute">
@@ -343,7 +343,7 @@ for each solve_tol</p>
 <li><p><strong>problem_name</strong> (<em>string</em>) – name of problem</p></li>
 <li><p><strong>solver_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified solver factors</p></li>
 <li><p><strong>problem_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified oracle factors</p></li>
+<li><p><strong>model_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified model factors</p></li>
 </ul>
 </dd>
 </dl>
@@ -638,10 +638,10 @@ inner key is factor name</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="wrapper_base.MetaExperiment.all_oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">all_oracle_fixed_factors</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dt id="wrapper_base.MetaExperiment.all_model_fixed_factors">
+<code class="sig-name descname"><span class="pre">all_model_fixed_factors</span></code><a class="headerlink" href="#wrapper_base.MetaExperiment.all_model_fixed_factors" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
-<dt>fixed oracle factors for each problem</dt><dd><p>outer key is problem name
+<dt>fixed model factors for each problem</dt><dd><p>outer key is problem name
 inner key is factor name</p>
 </dd>
 </dl>
@@ -669,7 +669,7 @@ inner key is factor name</p>
 <li><p><strong>solver_names</strong> (<em>list of strings</em>) – list of solver names</p></li>
 <li><p><strong>problem_names</strong> (<em>list of strings</em>) – list of problem names</p></li>
 <li><p><strong>fixed_factors_filename</strong> (<em>string</em>) – name of .py file containing dictionaries of fixed factors
-for solvers/problems/oracles.</p></li>
+for solvers/problems/models.</p></li>
 </ul>
 </dd>
 </dl>

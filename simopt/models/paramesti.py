@@ -6,19 +6,19 @@ Simulate 2 dimentional gamma variables.
 import numpy as np
 import math
 
-from base import Oracle, Problem
+from base import Model, Problem
 
 
-class ParameterEstimation(Oracle):
+class ParameterEstimation(Model):
     """
-    An oracle that simulates MLE estimators for a two-dimentinal beta variable.
+    An model that simulates MLE estimators for a two-dimentinal beta variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
     parameters x in 2-D beta probability density function.
 
     Attributes
     ----------
     name : string
-        name of oracle
+        name of model
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -37,7 +37,7 @@ class ParameterEstimation(Oracle):
 
     See also
     --------
-    base.Oracle
+    base.model
     """
     def __init__(self, fixed_factors={}):
         self.name = "PARAMESTI"
@@ -59,7 +59,7 @@ class ParameterEstimation(Oracle):
             "xstar": self.check_xstar,
             "x": self.check_x
         }
-        # Set factors of the simulation oracle.
+        # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_xstar(self):
@@ -80,12 +80,12 @@ class ParameterEstimation(Oracle):
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current oracle factors.
+        Simulate a single replication for the current model factors.
 
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
-            rngs for oracle to use when simulating a replication
+            rngs for model to use when simulating a replication
 
         Returns
         -------
@@ -148,12 +148,12 @@ class ParamEstiMinLogLik(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    oracle : Oracle object
-        associated simulation oracle that generates replications
-    oracle_default_factors : dict
-        default values for overriding oracle-level default factors
-    oracle_fixed_factors : dict
-        combination of overriden oracle-level factors and defaults
+    model : model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -176,14 +176,14 @@ class ParamEstiMinLogLik(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the oracle
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="PARAMESTI", fixed_factors={}, oracle_fixed_factors={}):
+    def __init__(self, name="PARAMESTI", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 2
         self.n_objectives = 1
@@ -196,7 +196,7 @@ class ParamEstiMinLogLik(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (2,5)
-        self.oracle_default_factors = {
+        self.model_default_factors = {
             "x": [1,1]
         }
         self.factors = fixed_factors
@@ -218,9 +218,9 @@ class ParamEstiMinLogLik(Problem):
             "budget": self.check_budget
         }
 
-        super().__init__(fixed_factors, oracle_fixed_factors)
-        # Instantiate oracle with fixed factors and over-riden defaults.
-        self.oracle = ParameterEstimation(self.oracle_fixed_factors)
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = ParameterEstimation(self.model_fixed_factors)
 
     def check_initial_solution(self):
         return all(xstar > 0 & xstar < 10 for xstar in self.factors["initial_solution"])
@@ -318,7 +318,7 @@ class ParamEstiMinLogLik(Problem):
     #     det_stoch_constraints_gradients : tuple
     #         vector of gradients of deterministic components of stochastic constraints
     #     """
-    #     det_stoch_constraints = tuple(-np.ones(5) + self.oracle.factors["error_prob"])
+    #     det_stoch_constraints = tuple(-np.ones(5) + self.model.factors["error_prob"])
     #     det_stoch_constraints_gradients = ((0,),)
     #     return det_stoch_constraints, det_stoch_constraints_gradients
 
@@ -338,8 +338,8 @@ class ParamEstiMinLogLik(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.dot(self.factors["prev_cost"], x),)(0.1 * (x[0]**2),) ###?
-        det_objectives_gradients = ((self.factors["prev_cost"],),)
+        det_objectives = ((self.factors['xstar'],),)###?
+        det_objectives_gradients = ((self.factors['xstar'],),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
