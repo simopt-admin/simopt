@@ -390,20 +390,20 @@ class Experiment(object):
         dictionary of user-specified solver factors
     problem_fixed_factors : dict
         dictionary of user-specified problem factors
-    oracle_fixed_factors : dict
-        dictionary of user-specified oracle factors
+    model_fixed_factors : dict
+        dictionary of user-specified model factors
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, oracle_fixed_factors={}, file_name_path=None):
+    def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, model_fixed_factors={}, file_name_path=None):
         if solver_rename is None:
             self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
         else:
             self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
         if problem_rename is None:
-            self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+            self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
         else:
-            self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, oracle_fixed_factors=oracle_fixed_factors)
+            self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
         if file_name_path is None:
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
@@ -471,7 +471,7 @@ class Experiment(object):
         for mrep in range(self.n_macroreps):
             print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             # Create, initialize, and attach RNGs used for simulating solutions.
-            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.oracle.n_rngs)]
+            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.model.n_rngs)]
             self.solver.solution_progenitor_rngs = progenitor_rngs
             # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
@@ -484,6 +484,21 @@ class Experiment(object):
             self.all_intermediate_budgets.append(intermediate_budgets)
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
+
+    def check_run(self):
+        """
+        Check if the experiment has been run.
+
+        Returns
+        -------
+        ran : bool
+            has the experiment been run?
+        """
+        if getattr(self, "all_recommended_xs", None) is None:
+            ran = False
+        else:
+            ran = True
+        return ran
 
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
@@ -501,10 +516,10 @@ class Experiment(object):
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
         self.crn_across_macroreps = crn_across_macroreps
-        # Create, initialize, and attach RNGs for oracle.
+        # Create, initialize, and attach RNGs for model.
         # Stream 0: reserved for post-replications.
         # Skip over first set of substreams dedicated for sampling x0 and x*.
-        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.oracle.n_rngs + rng_index, 0]) for rng_index in range(self.problem.oracle.n_rngs)]
+        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs + rng_index, 0]) for rng_index in range(self.problem.model.n_rngs)]
         # Initialize matrix containing
         #     all postreplicates of objective,
         #     for each macroreplication,
@@ -529,14 +544,29 @@ class Experiment(object):
                     rng.reset_substream()
             else:
                 # Advance each rng to start of
-                #     substream = current substream + # of oracle RNGs.
+                #     substream = current substream + # of model RNGs.
                 for rng in baseline_rngs:
-                    for _ in range(self.problem.oracle.n_rngs):
+                    for _ in range(self.problem.model.n_rngs):
                         rng.advance_substream()
         # Store estimated objective for each macrorep for each budget.
         self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Save Experiment object to .pickle file.
         self.record_experiment_results()
+
+    def check_postreplicate(self):
+        """
+        Check if the experiment has been postreplicated.
+
+        Returns
+        -------
+        postreplicated : bool
+            has the experiment been postreplicated?
+        """
+        if getattr(self, "all_est_objectives", None) is None:
+            postreplicated = False
+        else:
+            postreplicated = True
+        return postreplicated
 
     def bootstrap_sample(self, bootstrap_rng, normalize=True):
         """
@@ -653,7 +683,7 @@ class Experiment(object):
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
-    def clear_runs(self):
+    def clear_run(self):
         """
         Delete results from run() method and any downstream results.
         """
@@ -665,9 +695,9 @@ class Experiment(object):
                 delattr(self, attribute)
             except Exception:
                 pass
-        self.clear_postreps()
+        self.clear_postreplicate()
 
-    def clear_postreps(self):
+    def clear_postreplicate(self):
         """
         Delete results from post_replicate() method and any downstream results.
         """
@@ -793,9 +823,9 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
     # Take post-replications at common x0.
-    # Create, initialize, and attach RNGs for oracle.
+    # Create, initialize, and attach RNGs for model.
         # Stream 0: reserved for post-replications.
-    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.oracle.n_rngs)]
+    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
         x0_postreps = [proxy_init_val] * n_postreps_init_opt
@@ -1450,7 +1480,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 color_str = "C" + str(solver_idx)
-                marker_str = marker_list[solver_idx%len(marker_list)]  # Cycle through list of marker types.
+                marker_str = marker_list[solver_idx % len(marker_list)]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
                 areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = np.mean(areas)
@@ -1952,8 +1982,8 @@ class MetaExperiment(object):
         fixed problem factors for each problem
             outer key is problem name
             inner key is factor name
-    all_oracle_fixed_factors : dict of dict
-        fixed oracle factors for each problem
+    all_model_fixed_factors : dict of dict
+        fixed model factors for each problem
             outer key is problem name
             inner key is factor name
     experiments : list of list of Experiment objects
@@ -1971,7 +2001,7 @@ class MetaExperiment(object):
         user-specified names for problems
     fixed_factors_filename : string
         name of .py file containing dictionaries of fixed factors
-        for solvers/problems/oracles.
+        for solvers/problems/models.
     """
     def __init__(self, solver_names, problem_names, solver_renames=None, problem_renames=None, fixed_factors_filename=None):
         self.n_solvers = len(solver_names)
@@ -1984,16 +2014,21 @@ class MetaExperiment(object):
             self.problem_names = problem_names
         else:
             self.problem_names = problem_renames
-        # Read in fixed solver/problem/oracle factors from .py file in the Experiments folder.
+        # Read in fixed solver/problem/model factors from .py file in the Experiments folder.
         # File should contain three dictionaries of dictionaries called
         #   - all_solver_fixed_factors
         #   - all_problem_fixed_factors
-        #   - all_oracle_fixed_factors
-        fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
-        all_factors = importlib.import_module(fixed_factors_filename)
-        self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
-        self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
-        self.all_oracle_fixed_factors = getattr(all_factors, "all_oracle_fixed_factors")
+        #   - all_model_fixed_factors
+        if fixed_factors_filename is None:
+            self.all_solver_fixed_factors = {solver_name: {} for solver_name in self.solver_names}
+            self.all_problem_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+            self.all_model_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+        else:
+            fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
+            all_factors = importlib.import_module(fixed_factors_filename)
+            self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
+            self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
+            self.all_model_fixed_factors = getattr(all_factors, "all_model_fixed_factors")
         # Create all problem-solver pairs (i.e., instances of Experiment class)
         self.experiments = []
         for solver_idx in range(self.n_solvers):
@@ -2003,7 +2038,7 @@ class MetaExperiment(object):
                     # If a file exists, read in Experiment object.
                     with open(f"experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
                         next_experiment = pickle.load(file)
-                    # TO DO: Check if the solver/problem/oracle factors in the file match
+                    # TO DO: Check if the solver/problem/model factors in the file match
                     # those for the MetaExperiment.
                 except Exception:
                     # If no file exists, create new Experiment object.
@@ -2014,9 +2049,26 @@ class MetaExperiment(object):
                                                  problem_rename=self.problem_names[problem_idx],
                                                  solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
                                                  problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                 oracle_fixed_factors=self.all_oracle_fixed_factors[self.problem_names[problem_idx]])
+                                                 model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]])
                 solver_experiments.append(next_experiment)
             self.experiments.append(solver_experiments)
+
+    def check_compatibility(self):
+        """
+        Check whether all experiments' solvers and problems are compatible.
+
+        Returns
+        -------
+        error_str : str
+            error message in the event any problem and solver are incompatible
+        """
+        error_str = ""
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                new_error_str = self.experiments[solver_idx][problem_idx].check_compatibility()
+                if new_error_str != "":
+                    error_str += f"For solver {self.solver_names[solver_idx]} and problem {self.problem_names[problem_idx]}... {new_error_str}"
+        return error_str
 
     def run(self, n_macroreps):
         """
@@ -2034,7 +2086,7 @@ class MetaExperiment(object):
                 # run it now and save result to .pickle file.
                 if (getattr(experiment, "n_macroreps", None) != n_macroreps):
                     print(f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_runs()
+                    experiment.clear_run()
                     experiment.run(n_macroreps)
 
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
@@ -2060,5 +2112,25 @@ class MetaExperiment(object):
                         or getattr(experiment, "crn_across_budget", None) != crn_across_budget
                         or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
-                    experiment.clear_postreps()
+                    experiment.clear_postreplicate()
                     experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
+
+    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+        """
+        Construct objective curves and (normalized) progress curves
+        for all collections of experiments on all given problem.
+
+        Parameters
+        ----------
+        experiments : list of wrapper_base.Experiment objects
+            experiments of different solvers on a common problem
+        n_postreps_init_opt : int
+            number of postreplications to take at initial x0 and optimal x*
+        crn_across_init_opt : bool
+            use CRN for post-replications at solutions x0 and x*?
+        """
+        for problem_idx in range(self.n_problems):
+            experiments_same_problem = [self.experiments[solver_idx][problem_idx] for solver_idx in range(self.n_solvers)]
+            post_normalize(experiments=experiments_same_problem,
+                           n_postreps_init_opt=n_postreps_init_opt,
+                           crn_across_init_opt=crn_across_init_opt)

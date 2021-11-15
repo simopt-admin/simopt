@@ -23,7 +23,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(1, os.path.abspath('zhangy/Desktop/simopt/simopt/oracles'))
 
 
 # -- Project information -----------------------------------------------------
@@ -41,6 +40,7 @@ release = '1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
 
 extensions = [
     'sphinx.ext.autodoc',

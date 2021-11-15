@@ -1,53 +1,28 @@
-# Documentation link
+# Welcome to SimOpt!
+SimOpt is a testbed of simulation-optimization problems and solvers.
+Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
-https://simopt.readthedocs.io/en/latest/index.html
+For the purposes of this site, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
 
-# Base classes and functions
+Several papers have discussed the development of SimOpt and experiments run on the testbed:
+* [Pasupathy and Henderson (2006)](https://www.informs-sim.org/wsc06papers/028.pdf) explains the original motivation for the testbed.
+* [Pasupathy and Henderson (2011)](https://www.informs-sim.org/wsc11papers/363.pdf) describes an earlier interface for MATLAB implementations of problems and solvers.
+* [Dong et al. (2017)](https://www.informs-sim.org/wsc17papers/includes/files/179.pdf) conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance.
+* [Eckman et al. (2019)](https://www.informs-sim.org/wsc19papers/374.pdf) describes in detail changes to the architecture of the MATLAB version of SimOpt and the control of random number streams.
+* [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2021/09/SimOpt-metrics-paper.pdf) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt.
 
-The `base` module includes base classes for solvers, problems, oracles and solutions.
+## Documentation
+Full documentation for the source code and descriptions of the problems and solvers can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
-## `Problem` class
-New problems can be added to the library by subclassing the `Problem` class.
+## Getting Started
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, and matplotlib.
+Then clone the repo.
+To see an example of how to run an experiment of a solver on a problem, please view or run demo/demo\_solver\_problem.py.
+A graphical user interface (GUI) is also under development.
 
-Any subclass <ins>**must**</ins> define the following attributes:
-* `minmax` : indicator of maximization (+1) or minimization (-1);
-* `dim` : the number of decision variables;
-* `oracle` : associated `Oracle` object for generating replications;
+Users can contribute problems and solver to SimOpt by using pull requests in GitHub or corresponding with the developers.
 
-and the following methdos:
-* `vector_to_factor_dict` : converts a vector of variables to a dictionary with factor keys;
-* `list_of_factor_dict_to_vector` : converts a list of dictionaries with factor keys to a vector of variables.
-
-The `Oracle` class also features several useful methods:
-* `simulate` : takes a fixed number of replications, using distinct subsubstreams for each replication.
-
-## `Oracle` class
-New oracles can be added to the library by subclassing the `Oracle` class.
-
-Any subclass <ins>**must**</ins> define the following attributes:
-* `n_rng` : the number of random number generators needed to run a replication;
-* `n_responses` : the number of stochastic responses (performance measures);
-* `specifications` : dictionary describing factors and data requirements;
-* `check_factor_list` : a dictionary of functions for checking that individual factors describe a simulatable model;
-
-and the following methods:
-* `check_simulatable_factors` : checks whether the oracle characterized by all of the factors can be simulated;
-* `replicate` : generates a single simulation replication.
-
-The `Oracle` class also features several useful methods:
-* `attach_rngs` : assigns a set of random number generators to the oracle;
-* `check_simulatable_factor` : checks whether a given factor satisfies its constraints on simulatability and data type requirements.
-
-## `Solution` class
-Objects in the `Solution` class store the outputs of past replications taken a given solution.
-Attributes include:
-* `x` : the vector of decision variables describing the solution;
-* `dim` : the length of `x`;
-* `decision_factors` : a dictionary of decision factors describing the solution;
-* `n_reps` : the number of replications taken at the solution thus far;
-* `responses` : the performance measures of interest from each replication; and
-* `gradients` : the gradients of the responses from each replication.
-
-The `Solution` class includes the following methods:
-* `response_mean`, `response_var`, `response_std_error`, `response_cov` : calculate summary statistics of the responses; and
-* `gradient_mean`, `gradient_var`, `gradient_std_error`, `gradient_cov` : calculate summary statistics of the gradients.
+## Acknowledgments
+An earlier website for SimOpt, [http://www.simopt.org](http://www.simopt.org), was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
+Recent work on the development of SimOpt has been supported by the National Science Foundation under grant nos. DGE-1650441, CMMI-1537394, CMMI-1254298, CMMI-1536895, IIS-1247696, and TRIPODS+X DMS-1839346, by the Air Force Office of Scientific Research under grant nos. FA9550-12-1-0200, FA9550-15-1-0038, and FA9550-16-1-0046, and by the Army Research Office under grant no. W911NF-17-1-0094.
+Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation (NSF).
