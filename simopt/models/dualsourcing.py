@@ -12,7 +12,7 @@ import scipy.stats as scs
 from base import Model, Problem
 
 
-class DuralSourcing(Model):
+class DualSourcing(Model):
     """
     An model that simulates multiple periods of ordering and sales for a single-staged, 
     dual sourcing inventory problem with stochastic demand. Returns average holding cost, 
@@ -235,8 +235,8 @@ class DuralSourcing(Model):
         orders_reg = np.zeros(self.factors["lead_reg"])
         #vectors of expedited orders to be received in periods n through n+le-1
         orders_exp = np.zeros(self.factors["lead_exp"])
-        print('orders_exp' + str(orders_exp))
-        print('orders_reg' + str(orders_reg))
+#        print('orders_exp' + str(orders_exp))
+#        print('orders_reg' + str(orders_reg))
         #generate demand
         if self.factors['distribution'] == 'Normal':
             demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])).astype(int)
@@ -250,15 +250,15 @@ class DuralSourcing(Model):
         for day in range(self.factors["n_days"]):
             #Calculate inventory positions
             inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
-            print('inv_position_exp' + str(inv_position_exp))
+#            print('inv_position_exp' + str(inv_position_exp))
             inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
-            print('inv_position_reg' + str(inv_position_reg))
+#            print('inv_position_reg' + str(inv_position_reg))
             #Place orders if needed
-            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
+#            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
             orders_exp = np.append(orders_exp, max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
             orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
-            print('orders_exp' + str(orders_exp))
-            print('orders_reg' + str(orders_reg))
+#            print('orders_exp' + str(orders_exp))
+#            print('orders_reg' + str(orders_reg))
             #Charge ordering cost
             total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
             #Orders arrive, update on-hand inventory
@@ -363,6 +363,7 @@ class DualSourcingMinCost(Problem):
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
+        self.model_decision_factors = {"order_level_exp", "order_level_reg"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -382,7 +383,7 @@ class DualSourcingMinCost(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = DuralSourcing(self.model_fixed_factors)
+        self.model = DualSourcing(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """

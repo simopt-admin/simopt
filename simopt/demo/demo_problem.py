@@ -69,7 +69,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 10
+n_reps = 100
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to terminal.
