@@ -19,7 +19,9 @@ from base import Solution
 # # Replace <filename> with name of .py file containing problem class.
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: from oracles.cntnv import CntNVMaxProfit
-from oracles.contam import ContaminationTotalCost
+# from models.contam import ContaminationTotalCost
+# from models.chessmm import ChessAvgDifference
+from models.san import SANLongestPath
 
 # # Fix factors of problem. Specify a dictionary of factors.
 # # Look at Problem class definition to get names of factors.
@@ -31,7 +33,9 @@ fixed_factors = {}  # Resort to all default values.
 # # Initialize an instance of the specified problem class.
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = ContaminationTotalCost()
+# myproblem = ContaminationTotalCost()
+# myproblem = ChessAvgDifference()
+myproblem = SANLongestPath()
 
 # # Initialize a solution x corresponding to the problem.
 # # Look at the Problem class definition to identify the decision variables.
@@ -40,12 +44,12 @@ myproblem = ContaminationTotalCost()
 # #     x = (3,)
 # x = (,)
 # # The following line does not need to be changed.
-x = (0, 0, 0, 0, 1)
+x = (1,1,1,1,1,1,1,1,1,1,1,1,1)
 mysolution = Solution(x, myproblem)
 
 # Working example for CntNVMaxProfit problem. (Commented out)
 # -----------------------------------------------
-# from oracles.cntnv import CntNVMaxProfit
+# from models.cntnv import CntNVMaxProfit
 # fixed_factors = {"initial_solution": (2,), "budget": 500}
 # myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
 # x = (3,)
@@ -55,7 +59,7 @@ mysolution = Solution(x, myproblem)
 # Another working example for CntNVMaxProfit problem. (Commented out)
 # This example has stochastic constraints.
 # -----------------------------------------------
-# from oracles.facilitysizing import FacilitySizingTotalCost
+# from models.facilitysizing import FacilitySizingTotalCost
 # fixed_factors = {"epsilon": 0.1}
 # myproblem = FacilitySizingTotalCost(fixed_factors=fixed_factors)
 # x = (200, 200, 200)
@@ -66,7 +70,7 @@ mysolution = Solution(x, myproblem)
 # The rest of this script requires no changes.
 
 # Create and attach rngs to solution
-rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.oracle.n_rngs)]
+rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.n_rngs)]
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.

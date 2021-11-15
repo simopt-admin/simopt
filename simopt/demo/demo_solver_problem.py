@@ -23,7 +23,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 solver_name = "RNDSRCH"
-problem_name = "CONTAM-1"
+problem_name = "SAN-1"
 print(f"Testing solver {solver_name} on problem {problem_name}.")
 
 
@@ -38,7 +38,7 @@ myexperiment = Experiment(solver_name, problem_name)
 myexperiment.run(n_macroreps=10)
 
 # If the solver runs have already been performed, uncomment the
-# following pair of lines (and uncommmen the myexperiment.run(...)
+# following pair of lines (and uncomment the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
 # myexperiment = read_experiment_results(file_name_path)
 

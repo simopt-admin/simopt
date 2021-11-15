@@ -21,6 +21,8 @@ from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, Facilit
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.contam import Contamination, ContaminationTotalCost
+from models.chessmm import ChessMatchmaking, ChessAvgDifference
+from models.san import SAN, SANLongestPath
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -34,7 +36,9 @@ problem_directory = {
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
-    "CONTAM-1": ContaminationTotalCost
+    "CONTAM-1": ContaminationTotalCost,
+    "CHESS-1": ChessAvgDifference,
+    "SAN-1": SANLongestPath
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -42,5 +46,7 @@ model_directory = {
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
     "SSCONT": SSCont,
-    "CONTAM": Contamination
+    "CONTAM": Contamination,
+    "CHESS": ChessMatchmaking,
+    "SAN": SAN
 }
