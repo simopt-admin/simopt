@@ -69,11 +69,12 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 100
+n_reps = 10
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to terminal.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")
+print(mysolution.objectives)
 print(f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with standard error {round(mysolution.objectives_stderr[0], 4)}.")
 print("The individual responses were:")
 for idx in range(n_reps):

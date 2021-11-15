@@ -105,7 +105,7 @@ class DualSourcing(Model):
             "lead_exp": {
                 "description": "Lead time for expedited orders in days.",
                 "datatype": int,
-                "default": 1
+                "default": 0
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
@@ -257,8 +257,8 @@ class DualSourcing(Model):
 #            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
             orders_exp = np.append(orders_exp, max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
             orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
-#            print('orders_exp' + str(orders_exp))
-#            print('orders_reg' + str(orders_reg))
+ #           print('orders_exp' + str(orders_exp))
+ #           print('orders_reg' + str(orders_reg))
             #Charge ordering cost
             total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
             #Orders arrive, update on-hand inventory
