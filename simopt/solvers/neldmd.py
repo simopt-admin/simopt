@@ -124,4 +124,68 @@ class NELDMD(Solver):
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
     
+    def solve(self, problem):
+         """
+        Run a single macroreplication of a solver on a problem.
+
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+
+        Returns
+        -------
+        recommended_solns : list of Solution objects
+            list of solutions recommended throughout the budget
+        intermediate_budgets : list of ints
+            list of intermediate budgets when recommended solutions changes
+        """
+    n_pts = problem.dim + 1
+    #Check for sufficiently large budget
+    if problem.factors["budget"] <  self.factors["r"]*n_pts:
+        print('Budget is too small for a good quality run of Nelder-Mead.')
+        return
+    #Determine max number of solutions that can be sampled within budget
+    max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
+    #Shrink variable bounds to avoid floating errors
+    lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
+    upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
+    #set rng + ssolsM ?
+
+    n_calls = np.zeros(max_num_sol)
+    A = np.zeros((max_num_sol+1),problem.dim)
+    fn_mean = np.zeros(max_num_sol)
+    fn_var = np.zeros(max_num_sol)
+    #Using CRN: for each solution, start at substream 1
+    problemseed = 1
+    #Track overall budget spent
+    budget_spent = 0
+
+    # Start Solving
+    # Evaluate solutions in initial structure
+    fn_val = np.zeros(n_pts)
+    fn_var_val = np.zeros(n_pts)
+    for i in range(n_pts):
+        #what's ssolsM(i1,:)? seems like "new_x"
+        new_solution = self.create_new_solution(new_x, problem)
+        problem.simulate(new_solution, self.factors["r"])
+        budget_spent = budget_spent + self.factors["r"]
+        fn_val[0] = -1*problem.minmax*new_solution.objectives_mean
+        fn_var_val[0] = new_solution.objectives_var
+    # up to line 128
+
+    
+    
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# what is Varbds in matlab?
+# How do you set rng? self.rng_list[0]?
+# What's ssolsM
+problem.factors["budget"]
+problem.minmax
+problem.dim
+self.factors["r"]
+
+
+n_pts ~ numExtPts in matlab
+max_num_sol ~ MaxNumSoln 
