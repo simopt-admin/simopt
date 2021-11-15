@@ -9,15 +9,10 @@ simopt
    directory
    main
    oracles
-   problems
    rng
+   run_experiments
    solvers
-   test_df_wrapper
-   test_matmodops
-   test_mrg32k3a
-   test_oracle
-   test_problem
-   test_run_wrapper
-   test_solver_problem
-   tests
+   test
+   timing
+   timing_bootstrap
    wrapper_base

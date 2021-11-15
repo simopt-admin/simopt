@@ -12,6 +12,14 @@ oracles.cntnv module
    :undoc-members:
    :show-inheritance:
 
+oracles.contam module
+---------------------
+
+.. automodule:: oracles.contam
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 oracles.facilitysizing module
 -----------------------------
 
@@ -43,6 +51,7 @@ oracles.sscont module
    :members:
    :undoc-members:
    :show-inheritance:
+
 
 Module contents
 ---------------

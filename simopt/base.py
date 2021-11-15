@@ -558,6 +558,7 @@ class Problem(object):
                     # convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints
                     solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
+                    #print('Hi: ', solution.stoch_constraints[solution.n_reps])
                     # solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
                 # increment counter
                 solution.n_reps += 1

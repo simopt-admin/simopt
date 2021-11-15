@@ -118,12 +118,12 @@ class DataFarmingExperiment(object):
         if design_filename is None:
             # Create oracle factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + factor_settings_filename + ".txt > ./data_farming_experiments/" + factor_settings_filename + "_design.txt"
+            command = "stack_nolhs.rb -s 1 ./simopt/data_farming_experiments/" + factor_settings_filename + ".txt > ./simopt/data_farming_experiments/" + factor_settings_filename + "_design.txt"
             os.system(command)
             # Append design to base filename.
             design_filename = factor_settings_filename + "_design"
         # Read in design matrix from .txt file.
-        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        design_table = np.loadtxt("./simopt/data_farming_experiments/" + design_filename + ".txt")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
@@ -180,7 +180,7 @@ class DataFarmingExperiment(object):
         csv_filename : string
             name of .csv file to print output to
         """
-        with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
+        with open("./simopt/data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             # Print headers.
             oracle_factor_names = list(self.oracle.specifications.keys())
@@ -234,12 +234,12 @@ class DataFarmingMetaExperiment(object):
         if design_filename is None:
             # Create solver factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = "stack_nolhs.rb -s 1 ./data_farming_experiments/" + solver_factor_settings_filename + ".txt > ./data_farming_experiments/" + solver_factor_settings_filename + "_design.txt"
+            command = "stack_nolhs.rb -s 1 ./simopt/data_farming_experiments/" + solver_factor_settings_filename + ".txt > ./simopt/data_farming_experiments/" + solver_factor_settings_filename + "_design.txt"
             os.system(command)
             # Append design to base filename.
             design_filename = solver_factor_settings_filename + "_design"
         # Read in design matrix from .txt file.
-        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        design_table = np.loadtxt("./simopt/data_farming_experiments/" + design_filename + ".txt")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
@@ -343,7 +343,7 @@ class DataFarmingMetaExperiment(object):
         csv_filename : string
             name of .csv file to print output to
         """
-        with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
+        with open("./simopt/data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             # Print headers.
             base_experiment = self.design[0]
