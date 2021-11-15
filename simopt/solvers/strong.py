@@ -72,7 +72,7 @@ class STRONG(Solver):
                 "datatype": float,
                 "default": 10**(-7)
             },
-            "delta_threshold": { #was delta_threshold in code for astrodf
+            "delta_threshold": {
                 "description": "maximum value of the radius",
                 "datatype": float,
                 "default": 1.2
@@ -92,17 +92,12 @@ class STRONG(Solver):
                 "datatype": float,
                 "default": 0.3
             },
-            "gamma_0": {
-                "description": "shrinkage/expansion ratio for delta_0 in parameter tuning",
-                "datatype": float,
-                "default": 0.5
-            },
-            "gamma1": {
+            "gamma_1": {
                 "description": "the constant of shrinking the trust regionthe new solution",
                 "datatype": float,
                 "default": 0.9
             },
-            "gamma2": {
+            "gamma_2": {
                 "description": "the constant of expanding the trust region",
                 "datatype": float,
                 "default": 1.11
@@ -145,52 +140,6 @@ class STRONG(Solver):
         N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
         return N_k
 
-    def model_construction(self, x_k, delta, k, problem, expended_budget):
-        w = self.factors["w"]
-        mu = self.factors["mu"]
-        beta = self.factors["beta"]
-        j = 0
-        d = problem.dim
-        while True:
-            fval = []
-            j = j + 1
-            delta_k = delta * w ** (j - 1)
-
-            # make the interpolation set
-            Y = self.interpolation_points(x_k, delta_k, problem)
-            for i in range(2 * d + 1):
-                new_solution = self.create_new_solution(Y[i][0], problem)
-                
-                # need to check there is existing result
-                problem.simulate(new_solution, 1)
-                expended_budget += 1
-                sample_size = 1
-
-                # Adaptive sampling
-                while True:
-                    problem.simulate(new_solution, 1)
-                    expended_budget += 1
-                    sample_size += 1
-                    sig2 = new_solution.objectives_var
-                    if sample_size >= self.samplesize(k, sig2, delta_k):
-                        break
-                fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
-
-            Z = self.interpolation_points(np.array(x_k) - np.array(x_k), delta_k, problem)
-
-            # make the model and get the model parameters
-            q, grad, Hessian = self.coefficient(Z, fval, problem)
-
-            # check the condition and break
-            if norm(grad) > 0.1:
-                break
-
-            if delta_k <= mu * norm(grad):
-                break
-
-        delta_k = min(max(beta * norm(grad), delta_k), delta)
-        return fval, Y, q, grad, Hessian, delta_k, expended_budget
-
     def coefficient(self, Y, fval, problem):
         M = []
         d = problem.dim
@@ -224,88 +173,7 @@ class STRONG(Solver):
             Y.append(minus)
         return Y
 
-    def parameter_tuning(self, delta, problem):
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
 
-        # default values
-        delta_threshold = self.factors["delta_threshold"]
-        eta_1 = self.factors["eta_1"]
-        eta_2 = self.factors["eta_2"]
-        gamma_1 = self.factors["gamma_1"]
-        gamma_2 = self.factors["gamma_2"]
-
-        k = 0  # iteration number
-
-        # Start with the initial solution
-        new_x = problem.factors["initial_solution"]
-        new_solution = self.create_new_solution(new_x, problem)
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
-
-        while expended_budget < problem.factors["budget"] * 0.01:
-            k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget = self.model_construction(new_x, delta, k, problem, expended_budget)
-
-            # Cauchy reduction
-            if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
-                tau = 1
-            else:
-                tau = min(1, norm(grad) ** 3 / (delta * np.matmul(np.matmul(grad, Hessian), grad)))
-
-            grad = np.reshape(grad, (1, problem.dim))[0]
-            candidate_x = new_x - tau * delta * grad / norm(grad)
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-
-            # adaptive sampling needed
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size = 1
-
-            # Adaptive sampling
-            while True:
-                problem.simulate(candidate_solution, 1)
-                expended_budget += 1
-                sample_size += 1
-                sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig2, delta_k):
-                    break
-
-            # calculate success ratio
-            fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
-
-            # replace the candidate x if the interpolation set has lower objective function value
-            if min(fval) < fval_tilde:
-                minpos = fval.index(min(fval))
-                fval_tilde = min(fval)
-                candidate_x = Y[minpos][0]
-
-            if (self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(
-                    np.array(candidate_x) - np.array(new_x), q)) == 0:
-                rho = 0
-            else:
-                rho = (fval[0] - fval_tilde) / (
-                            self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(
-                        candidate_x - new_x, q));
-
-            if rho >= eta_2:  # very successful
-                new_x = candidate_x
-                final_ob = candidate_solution.objectives_mean
-                delta_k = min(gamma_1 * delta_k, delta_threshold)
-                recommended_solns.append(candidate_solution)
-                intermediate_budgets.append(expended_budget)
-            elif rho >= eta_1:  # successful
-                new_x = candidate_x
-                final_ob = candidate_solution.objectives_mean
-                delta_k = min(delta_k, delta_threshold)
-                recommended_solns.append(candidate_solution)
-                intermediate_budgets.append(expended_budget)
-            else:
-                delta_k = min(gamma_2 * delta_k, delta_threshold)
-                final_ob = fval[0]
-
-        return final_ob, k, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x
 
     def solve(self, problem):
         """
@@ -329,13 +197,12 @@ class STRONG(Solver):
         intermediate_budgets = []
         expended_budget = 0
         delta_threshold = self.factors["delta_threshold"]
-        
-        delta_candidate = [gamma_0 * delta_threshold, delta_threshold, delta_threshold / gamma_0]
-        #print(delta_candidate)
 
         # default values
+        r = self.factors["r"]
+        delta_T = self.factors["delta_T"]
+        eta_0 = self.factors["eta_0"]
         eta_1 = self.factors["eta_1"]
-        eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
         k = 0  # iteration number
@@ -346,28 +213,57 @@ class STRONG(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        # Parameter tuning run
-        tp_final_ob_pt, k, delta, recommended_solns, intermediate_budgets, expended_budget, new_x = self.parameter_tuning(
-            delta_candidate[0], problem)
-        for i in range(1, 3):
-            final_ob_pt, k_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt = self.parameter_tuning(
-                delta_candidate[i], problem)
-            expended_budget += expended_budget_pt
-            if -1 * problem.minmax[0] * final_ob_pt < -1 * problem.minmax[0] * tp_final_ob_pt:
-                k = k_pt
-                delta = delta_pt
-                recommended_solns = recommended_solns_pt
-                intermediate_budgets = intermediate_budgets_pt
-                new_x = new_x_pt
-
         intermediate_budgets = (
                     intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * problem.factors["budget"] * 0.01).tolist()
         intermediate_budgets[0] = 0
 
         while expended_budget < problem.factors["budget"]:
+            
+            # Stage 1
+            if delta_T > delta_threshold:
+                # step 1: build the linear model
+                #grad, Hessian = finite_diff()
+
+                # step 2: solve the subproblem
+                # Cauchy reduction
+                if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
+                    tau = 1
+                else:
+                    tau = min(1, norm(grad) ** 3 / (delta_T * np.matmul(np.matmul(grad, Hessian), grad)))
+
+                grad = np.reshape(grad, (1, problem.dim))[0]
+                candidate_x = new_x - tau * delta_T * grad / norm(grad)
+
+                for i in range(problem.dim):
+                    if candidate_x[i] < problem.lower_bounds[i]:
+                        candidate_x[i] = problem.lower_bounds[i] + 0.01
+                    elif candidate_x[i] > problem.upper_bounds[i]:
+                        candidate_x[i] = problem.upper_bounds[i] - 0.01
+
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+
+                # step 3: compute the ratio
+                problem.simulate(candidate_solution, r)
+                expended_budget += r
+                sample_size += r
+                sig2 = candidate_solution.objectives_var
+                if sample_size >= self.samplesize(k, sig2, delta_k):
+                    break
+                Q_bar_old = -1 * problem.minmax[0] * new_solution.objectives_mean
+                Q_bar_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
+                r_old = Q_bar_old
+                r_new = Q_bar_old + np.subtract(candidate_solution, new_solution)*Grad + (1/2)*np.subtract(candidate_solution, new_solution)*Hessian*np.subtract(candidate_solution, new_solution)
+                rho = (Q_bar_old - Q_bar_new)/(r_old - r_new)
+
+
+                # step 4: update the trust region size and determine to accept or reject the solution
+
+
+
+
+
+        while expended_budget < problem.factors["budget"]:
             k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget = self.model_construction(new_x, delta, k, problem,
-                                                                                          expended_budget)
 
             # Cauchy reduction
             if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
@@ -385,20 +281,6 @@ class STRONG(Solver):
                     candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-
-            # adaptive sampling needed
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size = 1
-
-            # Adaptive sampling
-            while True:
-                problem.simulate(candidate_solution, 1)
-                expended_budget += 1
-                sample_size += 1
-                sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig2, delta_k):
-                    break
 
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
