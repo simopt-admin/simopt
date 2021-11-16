@@ -181,7 +181,9 @@ class SAN(Model):
         responses = {
           'ET': np.mean(means)
         }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+          'ET': {'mean_grad': np.mean(meanGrad, axis=0)}
+        }
         return responses, gradients
 
 """

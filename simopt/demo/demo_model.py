@@ -60,8 +60,8 @@ print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():
     print(f"\t {key} is {value}.")
-# print("\n Gradients:")
-# for outerkey in gradients:
-#     print(f"\tFor the response {outerkey}:")
-#     for innerkey, value in gradients[outerkey].items():
-#         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+print("\n Gradients:")
+for outerkey in gradients:
+    print(f"\tFor the response {outerkey}:")
+    for innerkey, value in gradients[outerkey].items():
+        print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
