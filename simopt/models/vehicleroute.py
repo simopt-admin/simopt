@@ -274,7 +274,6 @@ class VehicleRouteTotalDist(Problem):
     """
     def __init__(self, name="VEHROUTE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
         self.minmax = (-1,)
@@ -324,7 +323,7 @@ class VehicleRouteTotalDist(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "capacity": vector[:]
+            "routes": vector[:]
         }
         return factor_dict
 
@@ -343,7 +342,7 @@ class VehicleRouteTotalDist(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["capacity"])
+        vector = tuple(factor_dict["routes"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
