@@ -41,7 +41,7 @@ class VehicleRoute(Model):
     def __init__(self, fixed_factors={}):
         self.name = "VEHROUTE"
         self.n_rngs = 2
-        self.n_responses = 3
+        self.n_responses = 4
         self.specifications = {
             "n_cus": {
                 "description": "The number of customers.",
@@ -56,12 +56,12 @@ class VehicleRoute(Model):
             "d_lim": {
                 "description": "The demand capacity of each vehicle",
                 "datatype": float,
-                "default": 350
+                "default": 350.0
             },
             "t_lim": {
                 "description": "The travel time limit along each route",
                 "datatype": float,
-                "default": 240
+                "default": 240.0
             },
             "alpha": {
                 "description": "The desired service level of capacity.",
@@ -70,7 +70,7 @@ class VehicleRoute(Model):
             },
             "beta": {
                 "description": "The desire service level of time.",
-                "datatype": int,
+                "datatype": float,
                 "default": 0.9
             },
             "dist_mat": {
@@ -91,7 +91,8 @@ class VehicleRoute(Model):
             "t_lim": self.check_t_lim,
             "alpha": self.check_alpha,
             "beta": self.check_beta,
-            "dist_mat": self.check_dist_mat
+            "dist_mat": self.check_dist_mat,
+            "routes": self.check_routes
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -116,11 +117,18 @@ class VehicleRoute(Model):
 
     def check_dist_mat(self):
         return np.all(self.factors["dist_mat"]) > 0
+    
+    def check_routes(self):
+        return np.all(self.factors["routes"]) > 0
 
     def check_simulatable_factors(self):
         if len(self.factors["dist_mat"]) != self.factors["n_cus"] + 1:
             return False
         elif len(self.factors["dist_mat"][0]) != self.factors["n_cus"] + 1:
+            return False
+        elif len(self.factors["routes"]) != self.factors["n_veh"]:
+            return False
+        elif len(self.factors["routes"][0]) != self.factors["n_cus"]:
             return False
         else:
             return True
@@ -140,52 +148,53 @@ class VehicleRoute(Model):
             performance measures of interest
             "total_dist" = total distance traveled by the vehicles
             "num_veh_used" = the number of vehicles that are used in current set of routes
-            "demand_underlim_flag" = a binary variable
-                 0 : 
-                 1 :
-            "time_underlim_flag" = a binary variable
-                 0 : 
-                 1 :
+            "demand_routes" = the demand along the route for each vehicle
+            "time_routes" = the travel time along the route for each vehicle
         gradients : dict of dicts
             gradient estimates for each response
         """
 
         # Generate random travel time with uniform distribution
         time_rng = rng_list[0]
-        t_travel = np.zeros(self.factors["n_cus"] + 1, self.factors["n_cus"] + 1)
+        t_travel = np.zeros((self.factors["n_cus"] + 1, self.factors["n_cus"] + 1))
         for i in range(self.factors["n_cus"] + 1):
             for j in range(self.factors["n_cus"] + 1):
-                t_travel[i, j] = time_rng.rand(0.5 * self.factors["dist_mat"][i][j], 1.5 * self.factors["dist_mat"][i][j])
+                t_travel[i, j] = time_rng.uniform(0.5 * self.factors["dist_mat"][i][j], 1.5 * self.factors["dist_mat"][i][j])
         
         # Generate random customer demand with uniform distribution (110,190)
         demand_rng = rng_list[1]
         demand = np.zeros(self.factors["n_cus"] + 1)
         for i in range(self.factors["n_cus"] + 1):
-            demand[i] = demand_rng.rand(110, 190)
-
-        # Calculate the total distance of current set of routes
+            demand[i] = demand_rng.uniform(110, 190)
+        
+        # Initialize quantities to track
+        num_veh_used = 0
         total_dist = 0
         time_routes = np.zeros(self.factors["n_veh"])
         demand_routes = np.zeros(self.factors["n_veh"])
 
         for i in range(self.factors["n_veh"]):
-            total_dist += self.factors["dist_mat"][0][self.factors["routes"][i, 0]]
-            time_routes[i] += t_travel[0, self.factors["routes"][i, 0]]
+            total_dist += self.factors["dist_mat"][0][self.factors["routes"][i][0]]
+            time_routes[i] += t_travel[0, self.factors["routes"][i][0]]
+            # Calculate the number of vehicles that are used in the current set of routes
+            if np.sum(np.array(self.factors["routes"])[i, :] > 0) > 0:
+                num_veh_used += 1
             for j in range(1, self.factors["n_cus"]):
-                total_dist += self.factors["dist_mat"][self.factors["routes"][i, j - 1]][self.factors["routes"][i, j]]
-                time_routes[i] += t_travel[self.factors["routes"][i, j - 1], self.factors["routes"][i, j]]
+                total_dist += self.factors["dist_mat"][self.factors["routes"][i][j - 1]][self.factors["routes"][i][j]]
+                time_routes[i] += t_travel[self.factors["routes"][i][j - 1], self.factors["routes"][i][j]]
             # Goes to every customer, so last entry does not end with zero - still need to add final leg (back to depot)
-            if self.factors["routes"][i, self.factors["n_cus"] - 1] != 0:
-                total_dist += self.factors["dist_mat"][self.factors["routes"][i, self.factors["n_cus"] - 1]][0]
-                time_routes[i] += t_travel[self.factors["routes"][i, self.factors["n_cus"] - 1], 0]
+            if self.factors["routes"][i][self.factors["n_cus"] - 1] != 0:
+                total_dist += self.factors["dist_mat"][self.factors["routes"][i][self.factors["n_cus"] - 1]][0]
+                time_routes[i] += t_travel[self.factors["routes"][i][self.factors["n_cus"] - 1], 0]
             # Calculate total demand of route i
-            demand_routes[i] = np.sum(demand[j] for j in self.factors["routes"][i, :])
+            demand_routes[i] = np.sum(demand[j] for j in np.array(self.factors["routes"])[i, :])
 
 
         # Compose responses and gradients.
-        responses = {'total_dist': total_dist,
-                     'n_fac_stockout': n_fac_stockout,
-                     'n_cut': n_cut}
+        responses = {"total_dist": total_dist,
+                     "num_veh_used": num_veh_used,
+                     "demand_routes": demand_routes,
+                     "time_routes": time_routes}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -265,7 +274,7 @@ class VehicleRouteTotalDist(Problem):
     """
     def __init__(self, name="VEHROUTE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
+        
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
         self.minmax = (-1,)
@@ -273,11 +282,11 @@ class VehicleRouteTotalDist(Problem):
         self.variable_type = "continuous"
         self.lower_bounds = (0, 0, 0)
         self.upper_bounds = (np.inf, np.inf, np.inf)
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  # (185, 185, 185)
+        self.optimal_solution = None  
         self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
+        self.model_decision_factors = {"routes"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -289,38 +298,16 @@ class VehicleRouteTotalDist(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
-            },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1, 1, 1)
-            },
-            "epsilon": {
-                "description": "Maximum allowed probability of stocking out.",
-                "datatype": float,
-                "default": 0.05
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon
+            "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = VehicleRoute(self.model_fixed_factors)
-
-    def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
-            return False
-        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
-            return False
-        else:
-            return True
-
-    def check_epsilon(self):
-        return 0 <= self.factors["epsilon"] <= 1
+        self.dim = self.model.factors["n_veh"]
 
     def vector_to_factor_dict(self, vector):
         """

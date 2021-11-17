@@ -17,29 +17,30 @@ from rng.mrg32k3a import MRG32k3a
 # Ex: from models.mm1queue import MM1Queue
 from models.ironore import IronOre
 from models.dynamnews import DynamNews
+from models.vehicleroute import VehicleRoute
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
 # Ex: for the MM1Queue class,
 #     fixed_factors = {"lambda": 3.0,
 #                      "mu": 8.0}
-c_utility = []
-for j in range(1, 11):
-    c_utility.append(5 + j)
+# c_utility = []
+# for j in range(1, 11):
+#     c_utility.append(5 + j)
 
-fixed_factors = {
-    "num_prod": 10,
-    "num_customer": 30,
-    "c_utility": c_utility,
-    "init_level": 3 * np.ones(10),
-    "price": 9 * np.ones(10),
-    "cost": 5 * np.ones(10)}  
-# fixed_factors = {} # Resort to all default values.
+# fixed_factors = {
+#     "num_prod": 10,
+#     "num_customer": 30,
+#     "c_utility": c_utility,
+#     "init_level": 3 * np.ones(10),
+#     "price": 9 * np.ones(10),
+#     "cost": 5 * np.ones(10)}  
+fixed_factors = {} # Resort to all default values.
 
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = DynamNews(fixed_factors)
+mymodel = VehicleRoute(fixed_factors)
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
@@ -73,13 +74,10 @@ for outerkey in gradients:
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
-import numpy as np
-profit = []
-n_stockout = []
-for _ in range(1000):
-    responses, gradients = mymodel.replicate(rng_list)
-    profit.append(responses["profit"])
-    n_stockout.append(responses["n_prod_stockout"])
+# import numpy as np
+# total_dist = []
+# for _ in range(1000):
+#     responses, gradients = mymodel.replicate(rng_list)
+#     total_dist.append(responses["total_dist"])
 
-print(np.mean(profit))
-print(np.mean(n_stockout))
+# print(np.mean(total_dist))
