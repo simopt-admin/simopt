@@ -53,26 +53,6 @@ class VehicleRoute(Model):
                 "datatype": int,
                 "default": 5
             },
-            "d_lim": {
-                "description": "The demand capacity of each vehicle",
-                "datatype": float,
-                "default": 350.0
-            },
-            "t_lim": {
-                "description": "The travel time limit along each route",
-                "datatype": float,
-                "default": 240.0
-            },
-            "alpha": {
-                "description": "The desired service level of capacity.",
-                "datatype": list,
-                "default": [0.9, 0.9, 0.9, 0.9, 0.9]
-            },
-            "beta": {
-                "description": "The desire service level of time.",
-                "datatype": list,
-                "default": [0.9, 0.9, 0.9, 0.9, 0.9]
-            },
             "dist_mat": {
                 "description": "The matrix representing the distance between vertices.",
                 "datatype": list,
