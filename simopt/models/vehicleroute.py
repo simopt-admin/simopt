@@ -166,8 +166,8 @@ class VehicleRoute(Model):
         
         # Generate random customer demand with uniform distribution (110,190)
         demand_rng = rng_list[1]
-        demand = np.zeros(self.factors["n_cus"] + 1)
-        for i in range(self.factors["n_cus"] + 1):
+        demand = np.zeros(self.factors["n_cus"])
+        for i in range(self.factors["n_cus"]):
             demand[i] = demand_rng.uniform(110, 190)
         
         # Initialize quantities to track
@@ -191,7 +191,7 @@ class VehicleRoute(Model):
                 total_dist += self.factors["dist_mat"][routes[i, self.factors["n_cus"] - 1]][0]
                 time_routes[i] += t_travel[routes[i, self.factors["n_cus"] - 1], 0]
             # Calculate total demand of route i
-            demand_routes[i] = np.sum(demand[j] for j in routes[i, :])
+            demand_routes[i] = np.sum(demand[j - 1] for j in routes[i, :] if j > 0)
 
 
         # Compose responses and gradients.
