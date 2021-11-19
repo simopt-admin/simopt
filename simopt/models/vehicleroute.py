@@ -157,7 +157,6 @@ class VehicleRoute(Model):
         demand_routes = np.zeros(self.factors["n_veh"])
 
         for i in range(self.factors["n_veh"]):
-            # print(routes)
             total_dist += self.factors["dist_mat"][0][routes[i, 0]]
             time_routes[i] += t_travel[0, routes[i, 0]]
             # Calculate the number of vehicles that are used in the current set of routes
@@ -458,5 +457,8 @@ class VehicleRouteMinDist(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.randint(0, self.model.factors["n_cus"]) for _ in range(self.dim)])
-        return x
+        x = [0 for _ in range(self.dim)]
+        loc = rand_sol_rng.sample(range(0, self.dim), self.model.factors["n_cus"])
+        for i in range(len(loc)):
+            x[loc[i]] = i + 1
+        return tuple(x)
