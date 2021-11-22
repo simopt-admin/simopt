@@ -62,11 +62,11 @@ for outerkey in gradients:
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
 # Run multiple replications of the model.
-REPLICATIONS = 1000
-total = 0
-for i in range(REPLICATIONS):
-    responses = mymodel.replicate(rng_list)
-    total += responses[0]['logliks']
+# REPLICATIONS = 1000
+# total = 0
+# for i in range(REPLICATIONS):
+#     responses = mymodel.replicate(rng_list)
+#     total += responses[0]['logliks']
 
-print("\nFor multiple replications:")
-print(total/REPLICATIONS)
+# print("\nFor multiple replications:")
+# print(total/REPLICATIONS)

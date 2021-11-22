@@ -244,7 +244,7 @@ class ParamEstiMinLogLik(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "logliks": vector[0] #vector[:]
+            "logliks": vector[:]
         }
         return factor_dict
 
@@ -338,8 +338,8 @@ class ParamEstiMinLogLik(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = ((self.factors['xstar'],),)###?
-        det_objectives_gradients = ((self.factors['xstar'],),)
+        det_objectives = ((0,),)###?
+        det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
