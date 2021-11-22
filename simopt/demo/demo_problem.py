@@ -22,27 +22,28 @@ from base import Solution
 # # Ex: from models.cntnv import CntNVMaxProfit
 from models.ironore import IronOreMaxRev
 from models.dynamnews import DynamNewsMaxProfit
+from models.vehicleroute import VehicleRouteMinDist
 
 # Fix factors of problem. Specify a dictionary of factors.
 # Look at Problem class definition to get names of factors.
 # Ex: for the CntNVMaxProfit class,
 #     fixed_factors = {"initial_solution": (2,),
 #                      "budget": 500}
-# fixed_factors = {}  # Resort to all default values.
-c_utility = []
-for j in range(1, 11):
-    c_utility.append(5 + j)
+fixed_factors = {}  # Resort to all default values.
+# c_utility = []
+# for j in range(1, 11):
+#     c_utility.append(5 + j)
 
-fixed_factors = {
-    "num_prod": 10,
-    "num_customer": 30,
-    "c_utility": c_utility,
-    "price": 9 * np.ones(10),
-    "cost": 5 * np.ones(10)}
+# fixed_factors = {
+#     "num_prod": 10,
+#     "num_customer": 30,
+#     "c_utility": c_utility,
+#     "price": 9 * np.ones(10),
+#     "cost": 5 * np.ones(10)}
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = DynamNewsMaxProfit(model_fixed_factors= fixed_factors)
+myproblem = VehicleRouteMinDist(fixed_factors= fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
@@ -50,7 +51,8 @@ myproblem = DynamNewsMaxProfit(model_fixed_factors= fixed_factors)
 # Ex: for the CntNVMaxProfit class
 #     x = (3,)
 # x = (2,3)
-x = 3 * np.ones(10)
+# x = 3 * np.ones(10)
+x = (1, 0, 0, 0, 0, 2, 0, 0 ,0 ,0, 3, 0, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0)
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 
@@ -81,7 +83,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 100
+n_reps = 10
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to terminal.
