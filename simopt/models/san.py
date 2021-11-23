@@ -174,8 +174,8 @@ class SAN(Model):
             Tderiv[8,:] = Tderiv[7,:]
             Tderiv[8,12] = Tderiv[8,12] + arcs[12] / thetas[12]
           
-          means[i] = T[8] + sum(1/x for x in list(self.factors["initial_thetas"]))
-          meanGrad[i,:] = Tderiv[8,:] - [1/x**2 for x in list(self.factors["initial_thetas"])]
+          means[i] = T[8] + sum(1/np.array(self.factors["initial_thetas"]))
+          meanGrad[i,:] = Tderiv[8,:] - 1/(np.array(self.factors["initial_thetas"]))**2
 
         # Compose responses and gradients.
         responses = {
@@ -421,7 +421,7 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0,)
+        det_objectives = (np.sum(1/np.array(x)),)
         det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
@@ -457,5 +457,5 @@ class SANLongestPath(Problem):
         """
         x = []
         for i in range(self.dim):
-          x.append(rand_sol_rng.random())
+          x.append((rand_sol_rng.random() + 0.01) * (100 - 0.01)) # U(0.01, 100)
         return x
