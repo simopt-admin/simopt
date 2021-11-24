@@ -58,7 +58,7 @@ class SAN(Model):
             "runlength": {
                 "description": "Number of replications to calculate expectation.",
                 "datatype": int,
-                "default": 100
+                "default": 1
             },
             "initial_thetas": {
                 "description": "Initial solution of means.",
@@ -99,7 +99,7 @@ class SAN(Model):
         -------
         responses : dict
             performance measures of interest
-            "T" = the duration of path
+            "ET" = the duration of path
         gradients : dict of dicts
             gradient estimates for each response
         """
@@ -109,13 +109,13 @@ class SAN(Model):
         means = np.zeros(self.factors["runlength"])
         meanGrad = np.zeros((self.factors["runlength"], self.factors["num_arcs"]))
         for i in range(self.factors["runlength"]):
-          exp_rng.advance_substream()
+          # exp_rng.advance_substream()
           T = np.zeros(self.factors["num_nodes"])
           Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
-          arcs = [exp_rng.expovariate(1/x) for x in list(self.factors["initial_thetas"])]
+          thetas = list(self.factors["initial_thetas"])
+          arcs = [exp_rng.expovariate(1/x) for x in thetas]
           # thetas = [exp_rng.expovariate(1) for i in range((self.factors["num_arcs"]))]
           # arcs = [t*x for t in thetas for x in list(self.factors["initial_thetas"])]
-          thetas = list(self.factors["initial_thetas"])
 
           # Brute force calculation like in Matlab code
           T[1] = T[0] + arcs[0]
@@ -174,7 +174,8 @@ class SAN(Model):
             Tderiv[8,:] = Tderiv[7,:]
             Tderiv[8,12] = Tderiv[8,12] + arcs[12] / thetas[12]
           
-          means[i] = T[8] + sum(1/np.array(self.factors["initial_thetas"]))
+        # means[i] = T[8] + sum(1/np.array(self.factors["initial_thetas"]))
+          means[i] = T[8]
           meanGrad[i,:] = Tderiv[8,:] - 1/(np.array(self.factors["initial_thetas"]))**2
 
         # Compose responses and gradients.
@@ -182,7 +183,7 @@ class SAN(Model):
           'ET': np.mean(means)
         }
         gradients = {
-          'ET': {'mean_grad': np.mean(meanGrad, axis=0)}
+          'ET_grad': {'mean_grad': np.mean(meanGrad, axis=0)}
         }
         return responses, gradients
 
@@ -231,6 +232,8 @@ class SANLongestPath(Problem):
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
@@ -256,7 +259,7 @@ class SANLongestPath(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SAN", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="SAN-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -269,7 +272,7 @@ class SANLongestPath(Problem):
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = set("initial_thetas")
+        self.model_decision_factors = {"initial_thetas"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -346,7 +349,7 @@ class SANLongestPath(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["initial_thetas"],)
+        vector = tuple(factor_dict["initial_thetas"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -439,7 +442,7 @@ class SANLongestPath(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0)
+        return np.all(np.array(x) >= 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -455,7 +458,5 @@ class SANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = []
-        for i in range(self.dim):
-          x.append((rand_sol_rng.random() + 0.01) * (100 - 0.01)) # U(0.01, 100)
+        x = tuple([(rand_sol_rng.random() + 0.01) * (100 - 0.01) for _ in range(self.dim)]) # U(0.01, 100)
         return x
