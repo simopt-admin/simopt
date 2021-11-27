@@ -272,7 +272,7 @@ class MM1MinMeanSojournTime(Problem):
             "warmup": 50,
             "people": 200
         }
-        self.model_decision_variables = {"mu"}
+        self.model_decision_factors = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
