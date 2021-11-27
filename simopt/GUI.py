@@ -142,6 +142,12 @@ class Experiment_Window(tk.Tk):
         self.or_label = tk.Label(master=self.master, # window label is used in
             text = "OR ",
             font = "Calibri 11 bold")
+        self.or_label2 = tk.Label(master=self.master, # window label is used in
+            text = "OR Select Below:",
+            font = "Calibri 11 bold")
+        self.or_label22 = tk.Label(master=self.master, # window label is used in
+            text = "select from below ",
+            font = "Calibri 11")
         
         # from experiments.inputs.all_factors.py:
         self.problem_list = problem_directory
@@ -271,7 +277,7 @@ class Experiment_Window(tk.Tk):
             tab = event.widget.tab('current')['text']
             if tab == 'Post Normalize by Problem':
                 self.post_norm_setup()
-                self.post_normal_all_button.place(x=400,rely=.95)
+                self.post_normal_all_button.place(x=5,rely=.95)
             else:
                 self.post_normal_all_button.place_forget()
             
@@ -279,9 +285,6 @@ class Experiment_Window(tk.Tk):
         self.notebook.bind('<<NotebookTabChanged>>', on_tab_change)
 
         self.instruction_label.place(relx=.3, y=0)
-
-        # self.factor_label_frame_problem.place(relx=.35, rely=.15, relheight=.33, relwidth=.34)
-        # self.factor_label_frame_oracle.place(relx=.7, rely=.15, relheight=.33, relwidth=.3)
 
         self.problem_label.place(relx=.35, rely=.1)
         self.problem_menu.place(relx=.45, rely=.1)
@@ -291,31 +294,29 @@ class Experiment_Window(tk.Tk):
 
         self.macro_label.place(relx=.7, rely=.1)
         self.macro_entry.place(relx=.9, rely=.1, width=100)
-        # self.macro_entry.place(x=600, rely=.1, relwidth=.08)
-
-        # self.or_label.place(x=650, rely=.1, width=200)
-        # self.crossdesign_button.place(x=800, rely=.1, width=200)
-        self.crossdesign_button.place(x=190, rely=.95, width=200)
-
-        # self.run_button.place(x=5, rely=.3, width=200)
-        y_place = .95
-        self.pickle_file_load_button.place(x=5, rely=y_place, width=175)
         
-        # self.add_button.place(x=5, rely=.48, width=200, height=30)
-        # self.clear_queue_button.place(x=370, rely=y_place, width=200) 
+        self.or_label.place(x=180, rely=.06)
+        self.crossdesign_button.place(x=210, rely=.06, width=200)
+
+        y_place = .06
+        self.pickle_file_load_button.place(x=5, rely=y_place, width=175)
+        self.or_label2.place(x=412, rely=.06)
+        # self.or_label22.place(x=435, rely=.06)
         
         self.queue_label_frame.place(x=5, rely=.53, relheight=.39, relwidth=.99)
         # self.post_normal_all_button.place(x=400,rely=.95)
 
         self.frame.pack(fill='both')
 
-        self.l1 = tk.Button(self.master, text="Hover over me")
-        self.l2 = tk.Label(self.master, text="", width=40)
-        self.l1.place(x=0,y=0)
-        self.l2.place(x=0,y=20)
+        # uncomment this to test hover
 
-        self.l1.bind("<Enter>", self.on_enter)
-        self.l1.bind("<Leave>", self.on_leave)
+        # self.l1 = tk.Button(self.master, text="Hover over me")
+        # self.l2 = tk.Label(self.master, text="", width=40)
+        # self.l1.place(x=0,y=0)
+        # self.l2.place(x=0,y=20)
+
+        # self.l1.bind("<Enter>", self.on_enter)
+        # self.l1.bind("<Leave>", self.on_leave)
 
     def on_enter(self, event):
         self.l2.configure(text="HOVER WORKS (:")
@@ -1675,6 +1676,13 @@ class Cross_Design_Window():
         
         # Solver can handle upto deterministic constraints, but problem has stochastic constraints.
         stochastic = ["FACSIZE-1","FACSIZE-2","RMITD-1"]
+        if len(solver_list) == 0 or len(problem_list) == 0:
+            self.crossdesign_warning = tk.Label(master=self.master,
+                                                text = "Select at least one solver and one problem",
+                                                font = "Calibri 13 bold",
+                                                wraplength=300)
+            self.crossdesign_warning.place(x=10, y=345)
+            return
 
         if "ASTRODF" in solver_list and any(item in stochastic for item in problem_list) :
             self.crossdesign_warning = tk.Label(master=self.master,
