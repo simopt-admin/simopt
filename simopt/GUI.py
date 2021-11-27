@@ -1770,7 +1770,7 @@ class Post_Processing_Window():
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "False", *self.crn_across_macroreps_list)
         
         self.crn_norm_budget_label = tk.Label(master=self.master,
-                                    text = "Use CRN for post-replications at solutions x0 and x*?",
+                                    text = "Use CRN for post-replications at solutions x\u2070 and x\u002A?",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
         self.crn_norm_across_macroreps_var = tk.StringVar(self.master)
@@ -1787,7 +1787,7 @@ class Post_Processing_Window():
                                     wraplength = "250")
 
         self.n_norm_ostreps_label = tk.Label(master = self.master,
-                                    text = "Number of postreplications to take at initial x0 and optimal x*:",
+                                    text = "Number of postreplications to take at initial x\u2070 and optimal x\u002A:",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
 
@@ -2002,18 +2002,15 @@ class Post_Normal_Window():
             initsol = str(initsol)
 
         self.n_init_label = tk.Label(master = self.master,
-                                #text = "The Selected Initial Solution, x, is " + str(self.post_norm_exp_list[0].x0),
                                 text = "The Selected Initial Solution, x, is " + initsol ,
                                 font = "Calibri 11 bold",
                                 wraplength = "400")
 
         self.n_opt_label = tk.Label(master = self.master,
-                                # this one
-                                #exp.problem.optimal_solution
-                                text = "The Optimal Solution, x*, is " + opt +  " for this " + minmax + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
-                                # text = "The Optimal Solution, x*, is " + str(self.post_norm_exp_list[0].xstar) + " for this " + minmax + ". \nIf the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
+                                text = "The Optimal Solution, x\u002A, is " + opt +  " for this " + minmax + ". If the proxy optimal value and proxy optimal solution are unspecified simopt will chose the best solution ",
                                 font = "Calibri 11 bold",
-                                wraplength = "600")
+                                wraplength = "500",
+                                justify="left")
 
         self.n_optimal_label = tk.Label(master = self.master,
                                 text = "Optimal Solution (opitional)",
@@ -2049,14 +2046,6 @@ class Post_Normal_Window():
         self.n_postreps_init_opt_var = tk.StringVar(self.master)
         self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT)
         self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
-        # self.n_initial_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].x0) )
-        
-        # if self.post_norm_exp_list[0].xstar:
-        #     self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar))
-        
-        # if self.post_norm_exp_list[0].xstar:
-        #     self.n_proxy_sol_entry.insert(index=tk.END, string=str(self.post_norm_exp_list[0].xstar[0]))
-
 
         self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
                         text = "Finish Post-Normalization of Experiment",
@@ -2068,16 +2057,12 @@ class Post_Normal_Window():
                         text = "Post Normalize", 
                         width = 15, # width of button
                         command = self.post_norm_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
-        # self.macro_var = tk.StringVar(self.master)
-        # self.macro_entry = ttk.Entry(master=self.master, textvariable = self.macro_var, justify = tk.LEFT)
+
 
         self.title.place(x=15, y=15)
 
         self.n_init_label.place(x=0, y=70)
         
-        # self.n_initial_label.place(x=0, y=95)
-        # self.n_initial_entry.place(x=255, y=95)
-
         self.n_opt_label.place(x=0,y=150)
 
         # self.n_proxy_label.place(x=0, y=200)
