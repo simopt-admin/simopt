@@ -37,4 +37,17 @@ By cross-designing and experiment, the user is creating a Meta Experiment, and i
 * Click "Confirm Cross-Design Experiment" 
 * The pop up window will disappear and the Experiments frame will automatically switch to Queue of Meta Experiments
 
+## Run an Experiment
+To run an experiment or meta experiment that has not already been run click the "Run Exp." button in the queue of experiments or queue of meta experiments. Once the experiment is run, it can not be run again. **Note:** running an experiment could take a couple of seconds to a couple of minutes depending on the experiment and the number of macroreplications.
 
+## Post Process and Post Normalize
+Post Processing happens before post normalizing. After Post Normalizing the Plotting window is automatically shown.
+### Experiments
+Experiments can be post-processed from the queue of Experiments tab, by clicking "Post Process". Adjust Post Processing factors as necessary. Only Experiments that have already been run and have not yet been post processed can be post processed. <br> 
+After Post Processing, click the "Post Normalize by Problem" tab to select which experiments to post normalize together.
+* Only Experiments with the same Problem can be Post-Normalized Together.
+* Once all Experiments are checked, click the "Post Normalize Selected" button at the bottom of the GUI (this button only appears when in the Post Normalize Tab)
+* Update any values necessary and click "Post Normalize" when the expermient or experiments are ready to be post normalized
+### Meta Experiments
+Meta Experiments are post processed and post normalized at the same time.
+* Click the Post Process button for the specific Meta Experiment, then change any values necessary, then click "Post Process"
