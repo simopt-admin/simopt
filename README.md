@@ -9,7 +9,7 @@ The main page for the GUI has all the options necessary to start working. At the
 There are three main ways to start an experient, load from a file, cross-design an experient, or create an individual experiement. 
 At the bottom, there is a frame containing all experiments. The expereiemnts are in different tabs, depending on if they are inidividual, a meta experiment (made from a cross design expereiment), or if they have ready to be Post- Normalized and plotted. 
 
-## Adding Experiments to the experiment queue
+## Adding Experiments
 This section will explain how to add experiments to the queue of Experimenets or Meta Experiments.
 ### Load a File
 * In the top left corner a user can click "Load File". Their file system will pop up and the user can naviage to an appriopriate .pickle file to select.
