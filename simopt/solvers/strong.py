@@ -191,7 +191,7 @@ class STRONG(Solver):
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
                 # step 3: compute the ratio
-                # Use r simulated observations to estimate g(x_start\)
+                # Use r simulated observations to estimate g_new
                 problem.simulate(candidate_solution, r)
                 expended_budget += r
                 # Find the old objective value and the new objective value
@@ -199,13 +199,13 @@ class STRONG(Solver):
                 g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
                 # construct the polynomial 
                 r_old = g_old
-                r_new = g_old + np.matmul(np.subtract(candidate_solution, new_solution), grad) + (1/2)* np.matmil(np.matmul(np.subtract(candidate_solution, new_solution), Hessian), np.subtract(candidate_solution, new_solution))
+                r_new = g_old + np.matmul(np.subtract(candidate_solution, new_solution), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_solution, new_solution), Hessian), np.subtract(candidate_solution, new_solution))
                 rho = (g_old - g_new)/(r_old - r_new)
 
                 # step 4: update the trust region size and determine to accept or reject the solution
                 if rho < eta_0 | (g_old  - g_new) <= 0 | (r_old - r_new) <= 0:
                     # the solution fails either the RC or SR test, the center point reamins and the trust region shrinks
-                    delta_T = gamma_1*delta_T
+                    delta_T = gamma_1 * delta_T
                 elif (eta_0 <= rho) & (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains
                     new_solution = candidate_solution
@@ -223,11 +223,119 @@ class STRONG(Solver):
             # Stage II 
             # When trust region size is very small, use the quadratic design
             else:
+                n_onbound = np.sum(BdsCheck != 0)
+                if n_onbound <= 1:
+                    NumOfEval = problem.dim **2
+                else:
+                    NumOfEval = problem.dim **2 + problem.dim - math.factorial(n_onbound) / (math.factorial(2), math.factorial(n_onbound - 2))
+                # step1 Build the quadratic model
+                grad, Hessian = self.finite_diff(new_solution, delta_T, BdsCheck, 2, problem, r)
+                expended_budget += NumOfEval * r
+                # step2 Solve the subproblem
+                # Cauchy reduction
+                if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
+                    tau = 1
+                else:
+                    tau = min(1, norm(grad) ** 3 / (delta_T * np.matmul(np.matmul(grad, Hessian), grad)))
 
+                grad = np.reshape(grad, (1, problem.dim))[0]
+                candidate_x = new_x - tau * delta_T * grad / norm(grad)
+
+                for i in range(problem.dim):
+                    if candidate_x[i] < problem.lower_bounds[i]:
+                        candidate_x[i] = problem.lower_bounds[i] + 0.01
+                    elif candidate_x[i] > problem.upper_bounds[i]:
+                        candidate_x[i] = problem.upper_bounds[i] - 0.01
+
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+                # step 3: compute the ratio
+                # Use r simulated observations to estimate g(x_start\)
+                problem.simulate(candidate_solution, r)
+                expended_budget += r
+                # Find the old objective value and the new objective value
+                g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
+                g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
+                # construct the polynomial 
+                r_old = g_old
+                r_new = g_old + np.matmul(np.subtract(candidate_solution, new_solution), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_solution, new_solution), Hessian), np.subtract(candidate_solution, new_solution))
+                rho = (g_old - g_new)/(r_old - r_new)
+                # step4 Update the trust region size and determine to accept or reject the solution
+                if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new ) <= 0):
+                    # Inner Loop
+                    rr_old = r_old
+                    g_b_old = rr_old
+                    sub_counter = 1
+                    result_solution = new_solution
+
+                    while np.sum(result_solution != new_solution) == 0:
+                        if expended_budget > problem.factors["budget"]: 
+                            break
+                        # step1 Build the quadratic model
+                        G, H = self.finite_diff(new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r)
+                        expended_budget += NumOfEval * (sub_counter + 1) * r
+                        # step2 determine the new inner solution based on the accumulated design matrix X
+                        if np.matmul(np.matmul(G, H), G) <= 0:
+                            tau = 1
+                        else:
+                            tau = min(1, norm(G) ** 3 / (delta_T * np.matmul(np.matmul(G, H), G)))
+
+                        G = np.reshape(G, (1, problem.dim))[0]
+                        try_x = new_x - tau * delta_T * G / norm(G)
+
+                        for i in range(problem.dim):
+                            if try_x[i] < problem.lower_bounds[i]:
+                                try_x[i] = problem.lower_bounds[i] + 0.01
+                            elif try_x[i] > problem.upper_bounds[i]:
+                                try_x[i] = problem.upper_bounds[i] - 0.01
+                        try_solution = self.create_new_solution(tuple(try_x), problem)
+                        # step 3
+                        problem.simulate(try_solution, r + np.ceil(sub_counter**1.01))
+                        expended_budget += r + np.ceil(sub_counter**1.01)
+                        g_b_new = -1 * problem.minmax[0] * try_solution.objectives_mean
+                        dummy_solution = new_solution
+                        problem.simulate(dummy_solution, np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01))
+                        expended_budget += np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)
+                        dummy = -1 * problem.minmax[0] * dummy_solution.objectives_mean
+                        # update g_old
+                        g_b_old = (g_b_old * (r + np.ceil((sub_counter - 1)**1.01)) + np.matmul((np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)), dummy)) / (r + np.ceil(sub_counter**1.01))
+                        rr_new = g_b_old + np.matmul(np.subtract(try_solution, new_solution), G) + (1/2)* np.matmul(np.matmul(np.subtract(try_solution, new_solution), H), np.subtract(try_solution, new_solution))
+                        rr_old = g_b_old
+                        rrho = (g_b_old - g_b_new) / (rr_old - rr_new)
+                        if (rrho < eta_0) | ((g_b_old - g_b_new) <= 0) | ((rr_old - rr_new) <= 0):
+                            delta_T = gamma_1 * delta_T
+                            result_solution = new_solution
+
+                        elif (eta_0 <= rrho) & (rrho < eta_1):
+                            result_solution = try_solution #accept the solution and remains the size of  trust region
+                            rr_old = g_b_new
+                        else:
+                            delta_T = gamma_2 * delta_T
+                            result_solution = try_solution #accept the solution and expand the size of trust reigon
+                            rr_old = g_b_new
+                        sub_counter = sub_counter + 1
+                    new_solution = try_solution
+                    new_x = try_x
+                    recommended_solns.append(try_solution)
+                    intermediate_budgets.append(expended_budget)
+                elif (eta_0 <= rho) & (rho < eta_1):
+                    # The center point moves to the new solution and the trust region remains
+                    new_solution = candidate_solution
+                    new_x = candidate_x
+                    recommended_solns.append(candidate_solution)
+                    intermediate_budgets.append(expended_budget)
+                else:
+                    # The center point moves to the new solution and the trust region enlarges
+                    delta_T = gamma_2*delta_T
+                    new_solution = candidate_solution
+                    new_x = candidate_x
+                    recommended_solns.append(candidate_solution)
+                    intermediate_budgets.append(expended_budget)
+                    
 
         return recommended_solns, intermediate_budgets
     
-    def finite_diff(self, new_solution, delta_T, BdsCheck, stage, problem, r):
+    # Finite difference for calculating gradients and BFGS for calculating Hessian Matrix
+    def finite_diff(new_solution, delta_T, BdsCheck, stage, problem, r):
         # Store values for each dimension
         FnPlusMinus = np.zeros((problem.dim, 3)) 
         grad = np.zeros(problem.dim)
@@ -240,7 +348,7 @@ class STRONG(Solver):
             steph1 = delta_T # forward stepsize
             steph2 = delta_T # backward stepsize
             
-            # check VarBds
+            # check variable bounds
             if x1[i] + steph1 > problem.upper_bounds[i]:
                 steph1 = np.abs(problem.upper_bounds[i] - x1[i])
             if x2[i] - steph2 < problem.lower_bounds[i]:
