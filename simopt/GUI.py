@@ -2236,7 +2236,7 @@ class Plot_Window():
                                                     command = self.plot_button)
 
 
-            self.queue_label_frame = ttk.LabelFrame(master=self.master, text="Experiment")
+            self.queue_label_frame = ttk.LabelFrame(master=self.master, text="Plots")
 
             self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
 
