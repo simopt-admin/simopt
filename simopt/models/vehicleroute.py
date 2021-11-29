@@ -262,10 +262,6 @@ class VehicleRouteMinDist(Problem):
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 
-                            np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 
-                            np.inf, np.inf, np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None  
@@ -312,6 +308,9 @@ class VehicleRouteMinDist(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = VehicleRoute(self.model_fixed_factors)
         self.dim = self.model.factors["n_veh"] * self.model.factors["n_cus"]
+        self.lower_bounds = tuple(np.zeros(self.dim))
+        self.upper_bounds = tuple(np.inf * np.ones(self.dim))
+
 
     def vector_to_factor_dict(self, vector):
         """

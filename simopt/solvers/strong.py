@@ -407,7 +407,7 @@ class STRONG(Solver):
                 
                 # upper triangle in Hessian
                 for j in range(i + 1, problem.dim):
-                    if BdsCheck[i]**2 + BdsCheck[j]**2 == 0 # neither x nor y on boundary
+                    if BdsCheck[i]**2 + BdsCheck[j]**2 == 0: # neither x nor y on boundary
                         # f(x+h,y+k)
                         x5 = new_solution
                         x5[i] = x5[i] + FnPlusMinus[i, 2]
