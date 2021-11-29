@@ -16,7 +16,7 @@ class TableAllocation(Model):
     """
     An model that simulates a table capacity allocation problem at a restaurant 
     with a homogenous Poisson arrvial process and exponential service times.
-    Returns expected maximal operating profit.
+    Returns expected maximum revenue.
 
     Attributes
     ----------
@@ -38,8 +38,8 @@ class TableAllocation(Model):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-        ``n_min``
-            Number of minutes to simulate (`int`)
+        ``n_hour``
+            Number of hours to simulate (`int`)
         ``capacity``
             Maximum total capacity (`int`)
         ``table_cap``
@@ -48,7 +48,7 @@ class TableAllocation(Model):
             Average number of arrivals per hour (`flt`)
         ``service_time_means``
             Mean service time in minutes (`flt`)
-        ``rev_per_table``
+        ``table_revenue``
             Per table revenue earned (`flt`)
         ``num_tables``
             Number of tables of each capacity (`int`)
@@ -57,27 +57,17 @@ class TableAllocation(Model):
     --------
     base.Model
     """
-        ``n_min``
-        ``capacity``
-        ``table_size``
-        ``lambda``
-        ``arrival_rate``
-        ``service_time_means``
-        ``rev_per_table``
-        ``num_tables``
-
-
     def __init__(self, fixed_factors={}):
         self.name = "TABLEALLOCATION"
         self.n_rngs = 1
-        self.n_responses = 1
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
 
-            "n_min": {
-                "description": "Number of minutes to simulate.",
+            "n_hour": {
+                "description": "Number of hours to simulate.",
                 "datatype": int,
-                "default": 180
+                "default": 3
             },
             "capacity": {
                 "description": "Maximum total capacity.",
@@ -86,93 +76,77 @@ class TableAllocation(Model):
             },
             "table_cap": {
                 "description": "Capacity of each type of table.",
-                "datatype": float,
+                "datatype": list,
                 "default": [2,4,6,8]
             },
             "lambda": {
                 "description": "Average number of arrivals per hour.",
-                "datatype": float,
+                "datatype": list,
                 "default": [3, 6, 3, 3, 2, 4/3, 6/5, 1]
             },
             "service_time_means": {
                 "description": "Mean service time in minutes.",
-                "datatype": float,
+                "datatype": list,
                 "default": [20, 25, 30, 35, 40, 45, 50, 60]
             },
-            "rev_per_table": {
-                "description": "Per table revenue earned.",
-                "datatype": int,
+            "table_revenue": {
+                "description": "Revenue earned for each group size.",
+                "datatype": list,
                 "default": [15, 30, 45, 60, 75, 90, 105, 120]
             },
             "num_tables": {
                 "description": "Number of tables of each capacity.",
-                "datatype": float,
-                "default": 5.00
+                "datatype": list,
+                "default": [10,5,4,2]
             }
 
         }
 
         self.check_factor_list = {
-            "n_days": self.check_n_days,
-            "initial_inv": self.check_initial_inv,
-            "cost_reg": self.check_cost_reg,
-            "cost_exp": self.check_cost_exp,
-            "lead_reg": self.check_lead_reg,
-            "lead_exp": self.check_lead_exp,
-            "holding_cost": self.check_holding_cost,
-            "penalty_cost": self.check_penalty_cost,
-            "distribution": self.check_distribution,
-            "st_dev": self.check_st_dev,
-            "mu": self.check_mu,
-            "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp,
-            
+            "n_hour": self.check_n_hour,
+            "capacity": self.check_capacity,
+            "table_cap": self.check_table_cap,
+            "lambda": self.check_lambda,
+            "service_time_means": self.check_service_time_means,
+            "table_revenue": self.check_table_revenue,
+            "num_tables": self.check_num_tables
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
+    def check_n_hour(self):
+        return self.factors["n_hour"] >= 1
     
-    def check_initial_inv(self):
-        return self.factors["initial_inv"] >= 0
+    def check_capacity(self):
+        return self.factors["capacity"] > 0
 
-    def check_cost_reg(self):
-        return self.factors["cost_reg"] > 0
+    def check_table_cap(self):
+        return self.factors["table_cap"] > 0
 
-    def check_cost_exp(self):
-        return self.factors["cost_exp"] > 0
+    def check_lambda(self):
+        return self.factors["lambda"] >= 0
 
-    def check_lead_reg(self):
-        return self.factors["lead_reg"] >= 0
+    def check_service_time_means(self):
+        return self.factors["service_time_means"] > 0
     
-    def check_lead_exp(self):
-        return self.factors["lead_exp"] >= 0
+    def check_table_revenue(self):
+        return self.factors["table_revenue"] >= 0
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
-
-    def check_penalty_cost(self):
-        return self.factors["penalty_cost"] > 0
-
-    def check_distribution(self):
-        return self.factors["distribution"] in ('Normal', 'Uniform','Exponential')
-    
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
-
-    def check_mu(self):
-        return self.factors["mu"] > 0
-
-    def check_order_level_reg(self):
-        return self.factors["order_level_reg"] >= 0
-
-    def check_order_level_exp(self):
-        return self.factors["order_level_exp"] >= 0
+    def check_num_tables(self):
+        return self.factors["num_tables"] >= 0
 
     def check_simulatable_factors(self):
-        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_exp"])
+        if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
+            return False
+        elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
+            return False
+        elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]) :
+            return False
+        elif len(self.factors["service_time_means"]) != len(self.factors["table_revenue"]):
+            return False
+        else:
+            return True
 
     def replicate(self, rng_list):
         """
@@ -189,28 +163,60 @@ class TableAllocation(Model):
             performance measures of interest
 
             ``total_revenue``
-                The total revenue earned over the simulation period.
+                Total revenue earned over the simulation period.
+            ``service_rate``
+                Fraction of customer arrivals that are seated.
 
         """
-        # Calculate total arrival rate
-        # Possible group sizes
-        # Probabilities to decide which group arrived
-        # Track total revenue 
-        # Initiate system time, total revenue to 0
+        # Generate total number of arrivals in the period
+        total_arrivals = np.random.poisson(round(self.factors["n_hour"]*sum(self.factors["lambda"])))
+        # Generate arrival times in minutes
+        arrival_times = np.sort(np.random.uniform(0,self.factors["n_hour"],total_arrivals)*60)
+        # Maximum group size
+        max_group_size = max(self.factors["table_cap"])
+        # Cumulative Probabilities to decide which group arrived
+        cum_prob_group = np.cumsum(self.factors["lambda"]/sum(self.factors["lambda"]))
+
+        # Initiate system time in minutes
+        time = 0
+        # Track total revenue
+        total_rev = 0
         # Track table availability 
-        # (i,j) is the time that jth table of size i becomes available
-        # Generate arrival times
-        while time < self.factors['n_min']:
-            # Sample arrival 
-            # Update system time
+        table_avail = np.zeros(len(self.factors["num_tables"]),max(self.factors["num_tables"])) # (i,j) is the time that jth table of size i becomes available
+        # Track seating rate
+        found = np.zeros(len(arrival_times))
+
+        for n in range(len(arrival_times)):
             # Determine group size
+            u = np.random.uniform(0,1)
+            group_size = 1
+            for i in cum_prob_group:
+                if i < u:
+                    group_size = group_size + 1
             # Find smallest available table
-            # Sample service time
-            # Update table availability
-
-
+            i = 0
+            min_table_type = self.factors["num_tables"][i]
+            while group_size > self.factors["num_tables"][i]:
+                min_table_type = self.factors["num_tables"][i+1]
+                i = i + 1
+            # Find available table
+            for k in self.factors["num_tables"][i:]:
+                for j in range(len(self.factors["num_tables"][k])):
+                    if table_avail[k,j] < arrival_times[n]: #check if table is available at current time
+                        found[n] = 1
+                        break
+                if found[n] == 1:
+                    break
+            if found[n] == 1:
+                # Sample service time
+                service_time = np.random.exponential(self.factors["service_time_means"][group_size - 1])
+                # Update table availability
+                table_avail[k,j] = table_avail[k,j] + service_time
+                # Update revenue
+                total_rev = total_rev + self.factors["table_revenue"][group_size - 1]
         # Calculate responses from simulation data.
-        responses = {"total_revenue": total_revenue
+        responses = {"total_revenue": total_rev,
+                    "service_rate": sum(found)/len(found)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -219,13 +225,13 @@ class TableAllocation(Model):
 """
 Summary
 -------
-Minimize the expected total cost for dual-sourcing inventory system.
+Maximize the total expected revenue for a restaurant operation.
 """
 
 
 class DualSourcingMinCost(Problem):
     """
-    Class to make dual-sourcing inventory simulation-optimization problems.
+    Class to make table allocation simulation-optimization problems.
 
     Attributes
     ----------
@@ -284,27 +290,27 @@ class DualSourcingMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DUALSOURCING-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="TABLEALLOCATION-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 2
+        self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "box"
+        self.minmax = (1,)
+        self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lowerbound = (0)
-        self.upperbound = (np.inf)
+        self.lowerbound = (0,)*len(self.factors["table_capacity"])
+        self.upperbound = (np.inf,)*len(self.factors["table_capacity"])
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"order_level_exp", "order_level_reg"}
+        self.model_decision_factors = {"num_tables"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (50,80)
+                "default": ([10,5,4,2])
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -318,7 +324,7 @@ class DualSourcingMinCost(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = DualSourcing(self.model_fixed_factors)
+        self.model = TableAllocation(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -335,8 +341,7 @@ class DualSourcingMinCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "order_level_exp": vector[0],
-            "order_level_reg": vector[1]
+            "num_tables": vector[0]
         }
         return factor_dict
 
@@ -355,7 +360,7 @@ class DualSourcingMinCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["order_level_exp"], factor_dict["order_level_reg"])
+        vector = (factor_dict["num_tables"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -373,7 +378,7 @@ class DualSourcingMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["average_ordering_cost"] + response_dict["average_penalty_cost"] + response_dict["average_holding_cost"],)
+        objectives = (response_dict["total_revenue"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -451,7 +456,7 @@ class DualSourcingMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return (np.sum(np.multiply(self.factors["table_cap"],x[0])) <= self.factors["capacity"])
 
     def get_random_solution(self, rand_sol_rng):
         """
