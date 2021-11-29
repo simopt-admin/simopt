@@ -55,11 +55,11 @@ Meta Experiments are post processed and post normalized at the same time.
 * Click the Post Process button for the specific Meta Experiment, then change any values necessary, then click "Post Process"
 
 ## Plotting Experiments
-The Plotting page is the same for both Experiments and Meta Experiments. Currently multiple Experimetns with the same Problem can be plotted together, and any problem/ solver from one Meta Experiment can be plotted together. 
+The Plotting page is the same for both Experiments and Meta Experiments. Currently multiple Experimetns with the same Problem can be plotted together, and any problem/ solver from one Meta Experiment can be plotted together. To return to the main page, simply click the red x in the top left corner of the window.
 * On the left side, select a problem from the problem list 
 * Select solvers from the solver list
 * One the right side select a plot type and adjust plot parameters and setting 
 * Click "Add"
-All plots will show in the plotting queue, along with infomration about thier parameters and where the file is saved at. <br>
-To veiw one plot click "View Plot", or all plots can be viewed together by clicking "See All Plots" at the bottom of the page. <br>
-To return to the main page, simply click the red x in the top left corner of the window.
+* All plots will show in the plotting queue, along with infomration about thier parameters and where the file is saved at. 
+* To veiw one plot click "View Plot", or all plots can be viewed together by clicking "See All Plots" at the bottom of the page
+
