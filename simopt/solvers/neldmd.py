@@ -152,10 +152,9 @@ class NELDMD(Solver):
         upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
         # Initial dim + 1 random points
         sol = np.zeros(n_pts)
-        new_x = problem.factors["initial_solution"]
-        sol[0] = new_x
+        sol[0] = problem.factors["initial_solution"]
         for i in range(1, n_pts):
-            sol[i] = self.create_new_solution(new_x, problem)  # use self.get_random_solution() instead?
+            sol[i] = self.create_new_solution(sol[i-1], problem)
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
@@ -182,10 +181,7 @@ class NELDMD(Solver):
         fn_mean[0] = -1*problem.minmax*fn_val[0]
         fn_var[0] = fn_var_val[0]
         # Sort solutions by obj function estimate
-        fn_val_idx = np.argsort(fn_val)
-        sort_fn_val = fn_val[fn_val_idx]
-        sort_fn_var_val = fn_var_val[fn_val_idx]
-        sort_sol = sol[fn_val_idx]
+        sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, fn_val, fn_var_val, sol)
         # Record only when recommended solution changes
         record_idx = 1
 
@@ -197,7 +193,7 @@ class NELDMD(Solver):
             p_cent = np.mean(sort_sol[1:-1])  # centroid for other pts
             orig_pt = p_high  # save the original point
             p_refl = (1 + self.factors["alpha"])*p_cent - self.factors["alpha"]*p_high  # reflection
-            p_refl = checkCons() ### TODO: write helper function
+            p_refl = self.check_const() ### TODO: write helper function
             
             # Evaluate reflected point
             problem.simulate(p_refl, self.factors["r"])
@@ -218,10 +214,7 @@ class NELDMD(Solver):
                 sort_fn_var_val[-1] = refl_fn_var_val
 
                 # Sort & end updating
-                fn_val_idx = np.argsort(sort_fn_val)
-                sort_fn_val = sort_fn_val[fn_val_idx]
-                sort_fn_var_val = sort_fn_var_val[fn_val_idx]
-                sort_sol = sort_sol[fn_val_idx]
+                sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, sort_fn_val, sort_fn_var_val, sort_sol)
 
                 # Best solution remains the same, so no reporting
 
@@ -229,7 +222,7 @@ class NELDMD(Solver):
             elif refl_fn_val < fn_low:
                 p_exp2 = p_refl
                 p_exp = self.factors["gammap"]*p_refl + (1-self.factors["gammap"])*p_cent
-                p_exp = checkCons()  ### TODO: helper function
+                p_exp = self.check_const()  ### TODO: helper function
 
                 # Evaluate expansion point
                 problem.simulate(p_exp, self.factors["r"])
@@ -244,10 +237,7 @@ class NELDMD(Solver):
                     sort_fn_var_val[-1] = exp_fn_var_val
 
                     # Sort & end updating
-                    fn_val_idx = np.argsort(sort_fn_val)
-                    sort_fn_val = sort_fn_val[fn_val_idx]
-                    sort_fn_var_val = sort_fn_var_val[fn_val_idx]
-                    sort_sol = sort_sol[fn_val_idx] 
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, sort_fn_val, sort_fn_var_val, sort_sol)
 
                     # Record data from expansion point (new best)
                     if budget_spent <= problem.factors["budget"]:
@@ -277,6 +267,18 @@ class NELDMD(Solver):
             
             # Check if accept contraction or shrink
             elif refl_fn_val > fn_sec:  # line 238
+                print("here")
+
+
+    def sort_and_end_update(self, fn_val, fn_val_var, sol):
+        fn_val_idx = np.argsort(fn_val)
+        sort_fn_val = fn_val[fn_val_idx]
+        sort_fn_var_val = fn_val_var[fn_val_idx]
+        sort_sol = sol[fn_val_idx]
+        return sort_fn_val, sort_fn_var_val, sort_sol
+
+    def check_const(self):
+        return 0  ### TODO
 
                         
     
