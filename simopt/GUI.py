@@ -1284,7 +1284,7 @@ class Experiment_Window(tk.Tk):
                         self.my_experiment.post_norm_ready = False
                         if self.my_experiment.check_postreplicate():
                             self.experiment_object_list[place].post_norm_ready = True
-                            self.widget_list[place][6]["text"] = "Post Processing Complete"
+                            self.widget_list[place][6]["text"] = "Done Processing Complete"
                             self.widget_list[place][6]["state"] = "disabled"
                         
                         separator = ttk.Separator(master=self.tab_one, orient='horizontal')      
@@ -1471,7 +1471,7 @@ class Experiment_Window(tk.Tk):
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("700x600")
         self.postrep_window.title("Post Processing Page")
-        self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, self, True)
+        self.app = Post_Processing_Window(self.postrep_window, self.selected, self.selected, self, True)
 
     def progress_bar_test(self):
         root = tk.Tk()
