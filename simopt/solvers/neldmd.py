@@ -125,7 +125,7 @@ class NELDMD(Solver):
         return self.factors["sensitivity"] > 0
     
     def solve(self, problem):
-         """
+        """
         Run a single macroreplication of a solver on a problem.
 
         Arguments
@@ -140,44 +140,148 @@ class NELDMD(Solver):
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
         """
-    n_pts = problem.dim + 1
-    #Check for sufficiently large budget
-    if problem.factors["budget"] <  self.factors["r"]*n_pts:
-        print('Budget is too small for a good quality run of Nelder-Mead.')
-        return
-    #Determine max number of solutions that can be sampled within budget
-    max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
-    #Shrink variable bounds to avoid floating errors
-    lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
-    upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
-    #set rng + ssolsM ?
+        n_pts = problem.dim + 1
+        # Check for sufficiently large budget
+        if problem.factors["budget"] <  self.factors["r"]*n_pts:
+            print('Budget is too small for a good quality run of Nelder-Mead.')
+            return
+        # Determine max number of solutions that can be sampled within budget
+        max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
+        # Shrink variable bounds to avoid floating errors
+        lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
+        upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
+        # Initial dim + 1 random points
+        sol = np.zeros(n_pts)
+        new_x = problem.factors["initial_solution"]
+        sol[0] = new_x
+        for i in range(1, n_pts):
+            sol[i] = self.create_new_solution(new_x, problem)  # use self.get_random_solution() instead?
 
-    n_calls = np.zeros(max_num_sol)
-    A = np.zeros((max_num_sol+1),problem.dim)
-    fn_mean = np.zeros(max_num_sol)
-    fn_var = np.zeros(max_num_sol)
-    #Using CRN: for each solution, start at substream 1
-    problemseed = 1
-    #Track overall budget spent
-    budget_spent = 0
+        # Initialize larger than necessary (extra point for end of budget)
+        n_calls = np.zeros(max_num_sol)
+        A = np.zeros(((max_num_sol+1),problem.dim))
+        fn_mean = np.zeros(max_num_sol)
+        fn_var = np.zeros(max_num_sol)
+        # Using CRN: for each solution, start at substream 1
+        problemseed = 1
+        # Track overall budget spent
+        budget_spent = 0
 
-    # Start Solving
-    # Evaluate solutions in initial structure
-    fn_val = np.zeros(n_pts)
-    fn_var_val = np.zeros(n_pts)
-    for i in range(n_pts):
-        #what's ssolsM(i1,:)? seems like "new_x"
-        new_solution = self.create_new_solution(new_x, problem)
-        problem.simulate(new_solution, self.factors["r"])
-        budget_spent = budget_spent + self.factors["r"]
-        fn_val[0] = -1*problem.minmax*new_solution.objectives_mean
-        fn_var_val[0] = new_solution.objectives_var
-    # up to line 128
+        # Start Solving
+        # Evaluate solutions in initial structure
+        fn_val = np.zeros(n_pts)
+        fn_var_val = np.zeros(n_pts)
+        for i in range(n_pts):
+            problem.simulate(sol[i], self.factors["r"])
+            budget_spent += self.factors["r"]
+            fn_val[i] = -1*problem.minmax*sol[i].objectives_mean
+            fn_var_val[i] = sol[i].objectives_var
+        # Record initial solution data
+        n_calls[0] = 0
+        A[0] = sol[0]
+        fn_mean[0] = -1*problem.minmax*fn_val[0]
+        fn_var[0] = fn_var_val[0]
+        # Sort solutions by obj function estimate
+        fn_val_idx = np.argsort(fn_val)
+        sort_fn_val = fn_val[fn_val_idx]
+        sort_fn_var_val = fn_var_val[fn_val_idx]
+        sort_sol = sol[fn_val_idx]
+        # Record only when recommended solution changes
+        record_idx = 1
 
+        # Reflect worst and update sort_sol
+        # Maximization problem is converted to minimization by -z
+        while budget_spent <= problem.factors["budget"]:
+            # Reflect worse point
+            p_high = sort_sol[-1]  # current worst point
+            p_cent = np.mean(sort_sol[1:-1])  # centroid for other pts
+            orig_pt = p_high  # save the original point
+            p_refl = (1 + self.factors["alpha"])*p_cent - self.factors["alpha"]*p_high  # reflection
+            p_refl = checkCons() ### TODO: write helper function
+            
+            # Evaluate reflected point
+            problem.simulate(p_refl, self.factors["r"])
+            budget_spent += self.factors["r"]
+            refl_fn_val = -1*problem.minmax*p_refl.objectives_mean
+            refl_fn_var_val = p_refl.objectives_var
+            
+            # Track best, worst, and second worst points
+            p_low = sort_sol[0]  # current best pt
+            fn_low = sort_fn_val[0]
+            fn_sec = sort_fn_val[-2]  # current 2nd worst z
+            fn_high = sort_fn_val[-1]  # worst z from unreflected structure
+
+            # Check if accept reflection
+            if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
+                sort_sol[-1] = p_refl  # the new point replaces the previous worst
+                sort_fn_val[-1] = refl_fn_val
+                sort_fn_var_val[-1] = refl_fn_var_val
+
+                # Sort & end updating
+                fn_val_idx = np.argsort(sort_fn_val)
+                sort_fn_val = sort_fn_val[fn_val_idx]
+                sort_fn_var_val = sort_fn_var_val[fn_val_idx]
+                sort_sol = sort_sol[fn_val_idx]
+
+                # Best solution remains the same, so no reporting
+
+            # Check if accept expansion (of reflection in the same direction)
+            elif refl_fn_val < fn_low:
+                p_exp2 = p_refl
+                p_exp = self.factors["gammap"]*p_refl + (1-self.factors["gammap"])*p_cent
+                p_exp = checkCons()  ### TODO: helper function
+
+                # Evaluate expansion point
+                problem.simulate(p_exp, self.factors["r"])
+                budget_spent += self.factors["r"]
+                exp_fn_val = -1*problem.minmax*p_exp.objectives_mean
+                exp_fn_var_val = p_refl.objectives_var
+
+                # Check if expansion point is an improvement relative to simplex
+                if exp_fn_val < fn_low:
+                    sort_sol[-1] = p_exp  # p_exp replaces p_high
+                    sort_fn_val[-1] = exp_fn_val
+                    sort_fn_var_val[-1] = exp_fn_var_val
+
+                    # Sort & end updating
+                    fn_val_idx = np.argsort(sort_fn_val)
+                    sort_fn_val = sort_fn_val[fn_val_idx]
+                    sort_fn_var_val = sort_fn_var_val[fn_val_idx]
+                    sort_sol = sort_sol[fn_val_idx] 
+
+                    # Record data from expansion point (new best)
+                    if budget_spent <= problem.factors["budget"]:
+                        n_calls[record_idx] = budget_spent
+                        A[record_idx] = p_exp
+                        fn_mean[record_idx] = -1*problem.minmax*exp_fn_val  # flip sign back
+                        fn_var[record_idx] = exp_fn_var_val
+                        record_idx += 1
+                else:
+                    sort_sol[-1] = p_refl  # p_refl replaces p_high
+                    sort_fn_val[-1] = refl_fn_val
+                    sort_fn_var_val[-1] = refl_fn_var_val
+
+                    # Sort & end updating
+                    fn_val_idx = np.argsort(sort_fn_val)
+                    sort_fn_val = sort_fn_val[fn_val_idx]
+                    sort_fn_var_val = sort_fn_var_val[fn_val_idx]
+                    sort_sol = sort_sol[fn_val_idx] 
+
+                    # Record data from expansion point (new best)
+                    if budget_spent <= problem.factors["budget"]:
+                        n_calls[record_idx] = budget_spent
+                        A[record_idx] = p_refl
+                        fn_mean[record_idx] = -1*problem.minmax*refl_fn_val  # flip sign back
+                        fn_var[record_idx] = refl_fn_var_val
+                        record_idx += 1
+            
+            # Check if accept contraction or shrink
+            elif refl_fn_val > fn_sec:  # line 238
+
+                        
     
-    
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # what is Varbds in matlab?
 # How do you set rng? self.rng_list[0]?
 # What's ssolsM
@@ -188,4 +292,4 @@ self.factors["r"]
 
 
 n_pts ~ numExtPts in matlab
-max_num_sol ~ MaxNumSoln 
+max_num_sol ~ MaxNumSoln
