@@ -11,7 +11,7 @@ At the bottom, there is a frame containing all experiments. The expereiemnts are
 
 ## Installation
 This GUI depends on Python 3, numpy, scipy, matplotlib, Pillow, and tkinter. <br>
-To run the GUI navigate to the Simopt/Simopt directory and run ``` python3 GUI.py ```
+To run the GUI navigate to the Simopt/simopt directory and run ``` python3 GUI.py ```
 
 ## Adding Experiments
 This section will explain how to add experiments to the queue of Experimenets or Meta Experiments.
