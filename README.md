@@ -29,19 +29,21 @@ Instead of loading in an experiment, the user can create one from the main page 
 * Select the "Add Experiment" Button (This button will only show up once a solver and problem is selected)
 
 ### Cross-Design Experiment
-By cross-designing and experiment, the user is creating a Meta Experiment, and it will be add to the Queue of Meta Experiments. Meta Experiments can only be created this way, and not loaded from a file.
+By cross-designing and experiment, the user is creating a Meta Experiment, and it will be add to the Queue of Meta Experiments. Meta Experiments can only be created this way, and not loaded from a file. 
 * Click Cross-Design Experiment
 * Check which Problems and Solvers the experiment should contain
 * Note that deterministic sovlers can not handle stochastic problems (ex: FACSIZE-2 can not be solved with ASTRODF)
 * The default number of Macroreplicaitions is 10, but that can be adjusted
 * Click "Confirm Cross-Design Experiment" 
 * The pop up window will disappear and the Experiments frame will automatically switch to Queue of Meta Experiments
+To exit out of the Meta Experiment pop-up without creating an experiment, click the red x in the top left corner of the window.
 
 ## Run an Experiment
 To run an experiment or meta experiment that has not already been run click the "Run Exp." button in the queue of experiments or queue of meta experiments. Once the experiment is run, it can not be run again. **Note:** running an experiment could take a couple of seconds to a couple of minutes depending on the experiment and the number of macroreplications.
 
 ## Post Process and Post Normalize
 Post Processing happens before post normalizing. After Post Normalizing the Plotting window is automatically shown.
+To exit out of the Post Process/ Normalize pop-up without post processing or normalizing, click the red x in the top left corner of the window.
 ### Experiments
 Experiments can be post-processed from the queue of Experiments tab, by clicking "Post Process". Adjust Post Processing factors as necessary. Only Experiments that have already been run and have not yet been post processed can be post processed. <br> 
 After Post Processing, click the "Post Normalize by Problem" tab to select which experiments to post normalize together.
@@ -51,3 +53,13 @@ After Post Processing, click the "Post Normalize by Problem" tab to select which
 ### Meta Experiments
 Meta Experiments are post processed and post normalized at the same time.
 * Click the Post Process button for the specific Meta Experiment, then change any values necessary, then click "Post Process"
+
+## Plotting Experiments
+The Plotting page is the same for both Experiments and Meta Experiments. Currently multiple Experimetns with the same Problem can be plotted together, and any problem/ solver from one Meta Experiment can be plotted together. 
+* On the left side, select a problem from the problem list 
+* Select solvers from the solver list
+* One the right side select a plot type and adjust plot parameters and setting 
+* Click "Add"
+All plots will show in the plotting queue, along with infomration about thier parameters and where the file is saved at. <br>
+To veiw one plot click "View Plot", or all plots can be viewed together by clicking "See All Plots" at the bottom of the page. <br>
+To return to the main page, simply click the red x in the top left corner of the window.
