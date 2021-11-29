@@ -5,7 +5,7 @@ SimOpt is a testbed of simulation-optimization problems and solvers.
 * The `MATLAB` folder contains a previous stable version of the testbed written in MATLAB.
 
 # User Guide for SimOpt
-The main page for the GUI has all the options necessary to start working. At the top are the three ways to start working with an experiment.
+The main page for the GUI has all the options necessary to add an expirment. At the top are the three ways to create or continue working with an experiment.
 There are three main ways to start an experient, load from a file, cross-design an experient, or create an individual experiement. 
 At the bottom, there is a frame containing all experiments. The expereiemnts are in different tabs, depending on if they are inidividual, a meta experiment (made from a cross design expereiment), or if they have ready to be Post- Normalized and plotted. 
 
