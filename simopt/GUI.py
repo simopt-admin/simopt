@@ -7,7 +7,6 @@ from functools import partial
 from tkinter.constants import FALSE, MULTIPLE, S
 import time
 from PIL import ImageTk, Image 
-import math
 
 from directory import problem_directory
 from directory import solver_directory
@@ -15,7 +14,6 @@ from directory import model_directory
 from wrapper_base import Experiment, MetaExperiment
 import wrapper_base
 import pickle
-from tkinter import messagebox
 from tkinter import Listbox
 import ast
 from PIL import ImageTk
@@ -846,10 +844,10 @@ class Experiment_Window(tk.Tk):
         # self.my_experiment[1][3][1]
         self.show_solver_factors(True, current_experiment_arguments)
 
-        viewEdit_button_added = self.widget_list[row_index-1][4]
+        viewEdit_button_added = self.widget_list[row_index-1][5]
         viewEdit_button_added["text"] = "Save Changes"
         viewEdit_button_added["command"] = partial(self.save_edit_function, row_index)
-        viewEdit_button_added.grid(row= (row_index), column=4, sticky='nsew', padx=5, pady=3)
+        viewEdit_button_added.grid(row= (row_index), column=5, sticky='nsew', padx=5, pady=3)
 
     def clear_queue(self):
         
@@ -965,22 +963,22 @@ class Experiment_Window(tk.Tk):
                     self.macros_added.grid(row=self.count_experiment_queue, column=3, sticky='nsew', padx=5, pady=3)
 
                     self.run_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Run Exp. " ,
+                                                        text="Run" ,
                                                         command= partial(self.run_row_function, self.count_experiment_queue))
                     self.run_button_added.grid(row=self.count_experiment_queue, column=4, sticky='nsew', padx=5, pady=3)
 
                     self.viewEdit_button_added = ttk.Button(master=self.tab_one,
-                                                        text="View / Edit Exp. " ,
+                                                        text="View / Edit" ,
                                                         command= partial(self.viewEdit_function, self.count_experiment_queue))
                     self.viewEdit_button_added.grid(row=self.count_experiment_queue, column=5, sticky='nsew', padx=5, pady=3)
 
                     self.clear_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Clear Exp. " ,
+                                                        text="Remove" ,
                                                         command= partial(self.clearRow_function, self.count_experiment_queue))
                     self.clear_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Post Process Function",
+                                                        text="Post Process",
                                                         command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
@@ -1170,8 +1168,14 @@ class Experiment_Window(tk.Tk):
         self.experiment_master_list[row_index-1]
         self.experiment_master_list[row_index-1][5][0]['crn_across_solns'] = self.boolean_var.get()
         
+
         if self.add_function(row_index):
             self.clearRow_function(row_index + 1)
+
+             # resets problem_var to default value
+            self.problem_var.set("Problem")
+            # resets solver_var to default value
+            self.solver_var.set("Solver")
 
             self.factor_label_frame_problem.destroy()
             self.factor_label_frame_oracle.destroy()
@@ -1248,22 +1252,22 @@ class Experiment_Window(tk.Tk):
                     self.macros_added.grid(row=self.count_experiment_queue, column=3, sticky='nsew', padx=5, pady=3)
 
                     self.run_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Run Exp. ",
+                                                        text="Run",
                                                         command= partial(self.run_row_function, self.count_experiment_queue))
                     self.run_button_added.grid(row=self.count_experiment_queue, column=4, sticky='nsew', padx=5, pady=3)
 
                     self.viewEdit_button_added = ttk.Button(master=self.tab_one,
-                                                        text="View / Edit Exp. " ,
+                                                        text="View / Edit" ,
                                                         command= partial(self.viewEdit_function, self.count_experiment_queue))
                     self.viewEdit_button_added.grid(row=self.count_experiment_queue, column=5, sticky='nsew', padx=5, pady=3)
 
                     self.clear_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Clear Exp. " ,
+                                                        text="Remove  " ,
                                                         command= partial(self.clearRow_function, self.count_experiment_queue))
                     self.clear_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Post Process Function",
+                                                        text="Post Process",
                                                         command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
@@ -1348,7 +1352,7 @@ class Experiment_Window(tk.Tk):
         else:
             row_index = self.post_rep_function_row_index - 1
             self.experiment_object_list[row_index].post_norm_ready = True
-            self.widget_list[row_index][6]["text"] = "Done Post Processing"
+            self.widget_list[row_index][6]["text"] = "Post Processing Complete"
             self.widget_list[row_index][6]["state"] = "disabled"
             # self.widget_list[row_index][7]["state"] = "normal"
     
@@ -1397,17 +1401,17 @@ class Experiment_Window(tk.Tk):
         self.macros_added.grid(row=row_num, column=2, sticky='nsew', padx=5, pady=3)
 
         self.run_button_added = ttk.Button(master=self.tab_two,
-                                            text="Run Exp. " + str(row_num),
+                                            text="Run" ,
                                             command = partial(self.run_meta_function,row_num))
         self.run_button_added.grid(row=row_num, column=3, sticky='nsew', padx=5, pady=3)
 
         self.clear_button_added = ttk.Button(master=self.tab_two,
-                                            text="Clear Exp. " + str(row_num),
+                                            text="Remove",
                                             command= partial(self.clear_meta_function,row_num))
         self.clear_button_added.grid(row=row_num, column=4, sticky='nsew', padx=5, pady=3)
 
         self.postprocess_button_added = ttk.Button(master=self.tab_two,
-                                            text="Post Process Function",
+                                            text="Post Process",
                                             command = partial(self.post_rep_meta_function,row_num),
                                             state = "disabled")
         self.postprocess_button_added.grid(row=row_num, column=5, sticky='nsew', padx=5, pady=3)
@@ -1778,7 +1782,7 @@ class Post_Processing_Window():
         self.crn_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_across_macroreps_var, "False", *self.crn_across_macroreps_list)
         
         self.crn_norm_budget_label = tk.Label(master=self.master,
-                                    text = "Use CRN for post-replications at solutions x\u2070 and x\u002A?",
+                                    text = "Use CRN for post-replications at solutions x\u2080 and x\u002A?",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
         self.crn_norm_across_macroreps_var = tk.StringVar(self.master)
@@ -1795,7 +1799,7 @@ class Post_Processing_Window():
                                     wraplength = "250")
 
         self.n_norm_ostreps_label = tk.Label(master = self.master,
-                                    text = "Number of postreplications to take at initial x\u2070 and optimal x\u002A:",
+                                    text = "Number of postreplications to take at initial x\u2080 and optimal x\u002A:",
                                     font = "Calibri 11 bold",
                                     wraplength = "250")
 
@@ -2010,7 +2014,7 @@ class Post_Normal_Window():
             initsol = str(initsol)
 
         self.n_init_label = tk.Label(master = self.master,
-                                text = "The Selected Initial Solution, x, is " + initsol ,
+                                text = "The Selected Initial Solution, x\u2080, is " + initsol ,
                                 font = "Calibri 11 bold",
                                 wraplength = "400")
 
@@ -2025,11 +2029,11 @@ class Post_Normal_Window():
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
         self.n_proxy_val_label = tk.Label(master = self.master,
-                                text = "Proxy Optimal Value, f(x)",
+                                text = "Proxy Optimal Value, f(x\u002A)",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
         self.n_proxy_sol_label = tk.Label(master = self.master,
-                                text = "Proxy Optimal Solution, x",
+                                text = "Proxy Optimal Solution, x\u002A",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
         
@@ -2040,14 +2044,14 @@ class Post_Normal_Window():
         self.n_initial_entry = ttk.Entry(master=self.master, textvariable = self.init_var, justify = tk.LEFT)
 
         self.n_crn_label = tk.Label(master = self.master,
-                                text = "CRN for x\u2070 and optimal x\u002A?",
+                                text = "CRN for x\u2080 and optimal x\u002A?",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
         self.n_crn_checkbox = tk.Checkbutton(self.master,text="",variable=self.check_var)
 
 
         self.n_postreps_init_opt_label = tk.Label(master = self.master,
-                                text = "Number of post-normalizations to take at initial x\u2070 and optimal x\u002A:",
+                                text = "Number of post-normalizations to take at initial x\u2080 and optimal x\u002A:",
                                 font = "Calibri 11 bold",
                                 wraplength = "250")
 
@@ -2558,17 +2562,32 @@ class Plot_Window():
 
                 if param == 'normalize':
                     entry = ttk.OptionMenu(self.CI_canvas, self.params[i+2], "True", *tf_list)
-                    label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
+                    label = tk.Label(master=self.CI_canvas, text="Normalize By Relative Optimality Gap", font="Calibri 14", wraplength="200")
                     label.grid(row=i, column=0, padx=5, pady=3)
                     entry.grid(row=i, column=1, padx=5, pady=3)
                 elif param == 'ref_solver':
                     label = tk.Label(master=self.CI_canvas, text="Please Select Solver", font="Calibri 14")
                     if len(self.solvers_names) != 0:
-                        label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
+                        label = tk.Label(master=self.CI_canvas, text="Benchmark Solver", font="Calibri 14")
                         entry = ttk.OptionMenu(self.CI_canvas, self.params[i+2], self.solvers_names[0], *self.solvers_names)
                         entry.grid(row=i, column=1, padx=5, pady=3)
                     label.grid(row=i, column=0, padx=5, pady=3)
-                    
+                elif param == 'solve_tol':
+                    label = tk.Label(master=self.CI_canvas, text="Optimality Gap Threshold", font="Calibri 14", wraplength="100")
+                    label.grid(row=i, column=0, padx=5, pady=3)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i+2], justify = tk.LEFT)
+                    if param_val is not None:
+                        entry.delete(0, 'end')
+                        entry.insert(index=tk.END, string=param_val)
+                    entry.grid(row=i, column=1, padx=5, pady=3)
+                elif param == 'beta':
+                    label = tk.Label(master=self.CI_canvas, text="Quantile Probability", font="Calibri 14", wraplength="100")
+                    label.grid(row=i, column=0, padx=5, pady=3)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i+2], justify = tk.LEFT)
+                    if param_val is not None:
+                        entry.delete(0, 'end')
+                        entry.insert(index=tk.END, string=param_val)
+                    entry.grid(row=i, column=1, padx=5, pady=3)
                 else:
                     label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 14")
                     label.grid(row=i, column=0, padx=5, pady=3)
