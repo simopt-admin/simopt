@@ -1,7 +1,7 @@
 """
 This script is intended to help with running a data-farming experiment on
-a simulation model. It creates a design of model factors and runs multiple
-replications at each configuration of the model. Outputs are printed to a file.
+a solver. It creates a design of solver factors and runs multiple
+macroreplications at each version of the solver. Outputs are printed to a file.
 """
 
 import sys
@@ -55,6 +55,8 @@ n_macroreps = 5
 
 ### NOT YET IMPLEMENTED.
 # Specify whether to use common random numbers across different design points.
+# Default is to use CRN across design points since each design point is a
+# ProblemSolver instance.
 # crn_across_design_pts = True
 
 # Specify the number of postreplications to take at each recommended solution
@@ -94,18 +96,5 @@ myDFMetaExperiment.post_normalize(n_postreps_init_opt=n_postreps_init_opt,
                                   crn_across_init_opt=crn_across_init_opt
                                   )
 
-# myMetaExperiment.calculate_statistics() # solve_tols=[0.10], beta=0.50)
-# myMetaExperiment.print_to_csv(csv_filename="meta_raw_results")
-
-
-# SCRATCH
-# --------------------------------
-# from csv import DictReader
-# # open file in read mode
-# with open('example_design_matrix.csv', 'r') as read_obj:
-#     # pass the file object to DictReader() to get the DictReader object
-#     csv_dict_reader = DictReader(read_obj)
-#     # iterate over each line as a ordered dictionary
-#     for row in csv_dict_reader:
-#         # row variable is a dictionary that represents a row in csv
-#         print(row)
+# Compute the performance metrics at each design point and print to csv.
+myDFMetaExperiment.report_statistics(solve_tols=[0.05, 0.10, 0.20, 0.50])

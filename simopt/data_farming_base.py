@@ -2,6 +2,7 @@ import numpy as np
 import os
 import csv
 from copy import deepcopy
+import itertools
 
 from directory import model_directory
 from rng.mrg32k3a import MRG32k3a
@@ -117,8 +118,8 @@ class DataFarmingExperiment(object):
         if design_filename is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = f"stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
-            #command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+            command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
+            # command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
             os.system(command)
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
@@ -318,7 +319,6 @@ class DataFarmingMetaExperiment(object):
                 experiment.clear_postreplicate()
                 experiment.post_replicate(n_postreps, crn_across_budget=crn_across_budget, crn_across_macroreps=crn_across_macroreps)
 
-
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
         """
@@ -332,45 +332,27 @@ class DataFarmingMetaExperiment(object):
                        crn_across_init_opt=crn_across_init_opt
                        )
 
-
-    def calculate_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], beta=0.50):
+    def report_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
         """
-        For each design point, calculate statistics from each macroreplication.
-            - area under estimated progress curve
-            - alpha-solve time
+        For each design point, calculate statistics from each macoreplication and print to csv.
 
         Arguments
         ---------
         solve_tols : list of floats in (0,1]
             relative optimality gap(s) definining when a problem is solved
-        beta : float in (0,1)
-            quantile to compute, e.g., beta quantile
-        """
-        for design_pt_index in range(self.n_design_pts):
-            experiment = self.design[design_pt_index]
-            experiment.clear_stats()
-            experiment.compute_area_stats(compute_CIs=False)
-            experiment.compute_solvability(solve_tols=solve_tols)
-            experiment.compute_solvability_quantiles(beta=0.50, compute_CIs=False)
-            experiment.record_experiment_results()
-
-    def print_to_csv(self, csv_filename="meta_raw_results"):
-        """
-        Extract observed statistics from simulated design points.
-        Publish to .csv output file.
-
-        Argument
-        --------
         csv_filename : string
             name of .csv file to print output to
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            # Print headers.
             base_experiment = self.design[0]
             solver_factor_names = list(base_experiment.solver.specifications.keys())
-            problem_factor_names = []  # list(base_experiment.problem.specifications.keys())
-            model_factor_names = list(base_experiment.problem.model.specifications.keys())
+            problem_factor_names = list(base_experiment.problem.specifications.keys())
+            model_factor_names = list(set(base_experiment.problem.model.specifications.keys()) - base_experiment.problem.model_decision_factors)
+            # Concatenate solve time headers.
+            solve_time_headers = [[f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"] for solve_tol in solve_tols]
+            solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
+            # Print headers.
             csv_writer.writerow(["DesignPt#"]
                                 + solver_factor_names
                                 + problem_factor_names
@@ -378,28 +360,20 @@ class DataFarmingMetaExperiment(object):
                                 + ["MacroRep#"]
                                 + ["Final Relative Optimality Gap"]
                                 + ["Area Under Progress Curve"]
-                                + ["0.05-Solve Time", "0.05-Solved? (Y/N)"]
-                                + ["0.10-Solve Time", "0.10-Solved? (Y/N)"]
-                                + ["0.20-Solve Time", "0.20-Solved? (Y/N)"]
-                                + ["0.50-Solve Time", "0.50-Solved? (Y/N)"])
+                                + solve_time_headers)
+            # Compute performance metrics.
             for designpt_index in range(self.n_design_pts):
                 experiment = self.design[designpt_index]
                 # Parse lists of factors.
                 solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
-                problem_factor_list = []
+                problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
                 model_factor_list = [experiment.problem.model.factors[model_factor_name] for model_factor_name in model_factor_names]
                 for mrep in range(experiment.n_macroreps):
+                    progress_curve = experiment.progress_curves[mrep]
                     # Parse list of statistics.
-                    statistics_list = [experiment.all_prog_curves[mrep][-1],
-                                       experiment.areas[mrep],
-                                       experiment.solve_times[0][mrep],
-                                       int(experiment.solve_times[0][mrep] < np.infty),
-                                       experiment.solve_times[1][mrep],
-                                       int(experiment.solve_times[1][mrep] < np.infty),
-                                       experiment.solve_times[2][mrep],
-                                       int(experiment.solve_times[2][mrep] < np.infty),
-                                       experiment.solve_times[3][mrep],
-                                       int(experiment.solve_times[3][mrep] < np.infty)
-                                       ]
+                    solve_time_values = [[progress_curve.compute_crossing_time(threshold=solve_tol)] + [int(progress_curve.compute_crossing_time(threshold=solve_tol) < np.infty)] for solve_tol in solve_tols]
+                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
+                    statistics_list = [progress_curve.y_vals[-1],
+                                       progress_curve.compute_area_under_curve()] + solve_time_values
                     print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
                     csv_writer.writerow(print_list)
