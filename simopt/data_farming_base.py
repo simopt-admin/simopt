@@ -3,6 +3,7 @@ import os
 import csv
 from copy import deepcopy
 import itertools
+import pandas as pd
 
 from directory import model_directory
 from rng.mrg32k3a import MRG32k3a
@@ -123,8 +124,8 @@ class DataFarmingExperiment(object):
             os.system(command)
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
-        # Read in design matrix from .txt file.
-        design_table = np.loadtxt(f"./data_farming_experiments/{design_filename}.txt")
+        # Read in design matrix from .txt file. Result is a pandas DataFrame.
+        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-16")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
@@ -133,7 +134,7 @@ class DataFarmingExperiment(object):
         for dp_index in range(self.n_design_pts):
             for factor_idx in range(len(factor_headers)):
                 # Parse model factors for next design point.
-                design_pt_factors[factor_headers[factor_idx]] = design_table[dp_index][factor_idx]
+                design_pt_factors[factor_headers[factor_idx]] = design_table[factor_idx][dp_index]
             # Update model factors according to next design point.
             self.model.factors.update(design_pt_factors)
             # Create new design point and add to design.
@@ -239,24 +240,19 @@ class DataFarmingMetaExperiment(object):
             os.system(command)
             # Append design to base filename.
             design_filename = solver_factor_settings_filename + "_design"
-        # Read in design matrix from .txt file.
-        design_table = np.loadtxt("./data_farming_experiments/" + design_filename + ".txt")
+        # Read in design matrix from .txt file. Result is a pandas DataFrame.
+        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-16")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
         self.design = []
         design_pt_solver_factors = {}
         for i in range(self.n_design_pts):
-            # TO DO: Fix this issue with numpy 1D and 2D arrays handled differently
-            if len(solver_factor_headers) == 1:
-                # TO DO: Resolve type-casting issues:
-                # E.g., sample_size must be an integer for RNDSRCH, but np.loadtxt will make it a float.
-                # parse solver factors for next design point
-                design_pt_solver_factors[solver_factor_headers[0]] = int(design_table[i])
-            else:
-                for j in range(len(solver_factor_headers)):
-                    # Parse solver factors for next design point.
-                    design_pt_solver_factors[solver_factor_headers[j]] = design_table[i, j]
+            # TO DO: Resolve type-casting issues
+            # Parse solver factors for next design point.
+            for j in range(len(solver_factor_headers)):
+                # Parse solver factors for next design point.
+                design_pt_solver_factors[solver_factor_headers[j]] = design_table[j][i]
             # Merge solver fixed factors and solver factors specified for design point.
             new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
             # In Python 3.9, will be able to use: dict1 | dict2.

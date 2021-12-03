@@ -10,17 +10,19 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 
 from data_farming_base import DataFarmingMetaExperiment
-from csv import DictReader
 
 
 # Specify the name of the solver as it appears in directory.py
-solver_name = "RNDSRCH"
+# solver_name = "RNDSRCH"
+solver_name = "ASTRODF"
 
 # Specify the names of the model factors (in order) that will be varied.
-solver_factor_headers = ["sample_size"]
+# solver_factor_headers = ["sample_size"]
+solver_factor_headers = ["eta_1", "eta_2"]
 
 # Specify the name of the problem as it appears in directory.py
-problem_name = "FACSIZE-2"
+# problem_name = "FACSIZE-2"
+problem_name = "SSCONT-1"
 
 # If creating the design, provide the name of a .txt file containing
 # the following:
@@ -30,7 +32,7 @@ problem_name = "FACSIZE-2"
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-#solver_factor_settings_filename = "solver_factor_settings"
+# solver_factor_settings_filename = "solver_factor_settings"
 solver_factor_settings_filename = None
 
 # OR, if the design has been created, provide the name of a .text file
@@ -40,8 +42,9 @@ solver_factor_settings_filename = None
 #    - each value in the table gives the value of the factor (col index)
 #      for the design point (row index)
 # E.g., design_filename = "solver_factor_settings_design"
-#design_filename = None
-design_filename = "random_search_design"
+# design_filename = None
+# design_filename = "random_search_design"
+design_filename = "astrodf_design"
 
 # OPTIONAL: Provide additional overrides for default solver/problem/model factors.
 # If empty, default factor settings are used.
@@ -51,9 +54,9 @@ model_fixed_factors = {}
 
 # Specify a common number of macroreplications of each version of the solver
 # to run on the problem, i.e., the number of runs at each design point.
-n_macroreps = 5
+n_macroreps = 3
 
-### NOT YET IMPLEMENTED.
+# NOT YET IMPLEMENTED.
 # Specify whether to use common random numbers across different design points.
 # Default is to use CRN across design points since each design point is a
 # ProblemSolver instance.
@@ -67,9 +70,9 @@ n_postreps = 100
 n_postreps_init_opt = 200
 
 # Specify the CRN control for postreplications.
-crn_across_budget=True  # Default
-crn_across_macroreps=False  # Default
-crn_across_init_opt=True  # Default
+crn_across_budget = True  # Default
+crn_across_macroreps = False  # Default
+crn_across_init_opt = True  # Default
 
 # No code beyond this point needs to be edited.
 

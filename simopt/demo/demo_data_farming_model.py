@@ -10,7 +10,6 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 
 from data_farming_base import DataFarmingExperiment
-from csv import DictReader
 
 # Specify the name of the model as it appears in directory.py
 model_name = "CNTNEWS"
@@ -26,7 +25,7 @@ factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quant
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-#factor_settings_filename = "model_factor_settings"
+# factor_settings_filename = "model_factor_settings"
 factor_settings_filename = None
 
 # OR, if the design has been created, provide the name of a .text file
@@ -36,7 +35,7 @@ factor_settings_filename = None
 #    - each value in the table gives the value of the factor (col index)
 #      for the design point (row index)
 # E.g., design_filename = "model_factor_settings_design"
-#design_filename = None
+# design_filename = None
 design_filename = "model_factor_settings_design"
 
 # Specify a common number of replications to run of the model at each
