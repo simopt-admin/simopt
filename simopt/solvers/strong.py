@@ -151,25 +151,24 @@ class STRONG(Solver):
         # Start with the initial solution
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
+        problem.simulate(new_solution, r)
+        expended_budget += r
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        intermediate_budgets = (
-                    intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * problem.factors["budget"] * 0.01).tolist()
-        intermediate_budgets[0] = 0
-
         while expended_budget < problem.factors["budget"]: 
+            k += 1
             # check variable bounds
-            forward = (np.array(new_solution) == np.array(problem.lower_bounds)).all()
-            backward = (np.array(new_solution) == np.array(problem.upper_bounds)).all()
+            forward = [int(new_x[i] == problem.lower_bounds[i]) for i in range(problem.dim)]
+            backward = [int(new_x[i] == problem.upper_bounds[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff
-            BdsCheck = forward - backward
+            BdsCheck = np.subtract(forward, backward)
 
             # Stage 1
             if delta_T > delta_threshold:
                 # step 1: build the linear model
                 NumOfEval = 2 * problem.dim - np.sum(BdsCheck != 0)
-                grad, Hessian = self.finite_diff(new_solution, delta_T, BdsCheck, 1, problem, r)
+                grad, Hessian = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r)
                 expended_budget += NumOfEval * r
 
                 # step 2: solve the subproblem
@@ -189,7 +188,6 @@ class STRONG(Solver):
                         candidate_x[i] = problem.upper_bounds[i] - 0.01
 
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-
                 # step 3: compute the ratio
                 # Use r simulated observations to estimate g_new
                 problem.simulate(candidate_solution, r)
@@ -199,11 +197,11 @@ class STRONG(Solver):
                 g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
                 # construct the polynomial 
                 r_old = g_old
-                r_new = g_old + np.matmul(np.subtract(candidate_solution, new_solution), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_solution, new_solution), Hessian), np.subtract(candidate_solution, new_solution))
+                r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
                 rho = (g_old - g_new)/(r_old - r_new)
 
                 # step 4: update the trust region size and determine to accept or reject the solution
-                if rho < eta_0 | (g_old  - g_new) <= 0 | (r_old - r_new) <= 0:
+                if (rho < eta_0) | ((g_old  - g_new) <= 0) | ((r_old - r_new) <= 0):
                     # the solution fails either the RC or SR test, the center point reamins and the trust region shrinks
                     delta_T = gamma_1 * delta_T
                 elif (eta_0 <= rho) & (rho < eta_1):
@@ -219,7 +217,7 @@ class STRONG(Solver):
                     new_x = candidate_x
                     recommended_solns.append(candidate_solution)
                     intermediate_budgets.append(expended_budget)
-                    
+                r = int(np.ceil(1.01 * r))
             # Stage II 
             # When trust region size is very small, use the quadratic design
             else:
@@ -229,7 +227,7 @@ class STRONG(Solver):
                 else:
                     NumOfEval = problem.dim **2 + problem.dim - math.factorial(n_onbound) / (math.factorial(2), math.factorial(n_onbound - 2))
                 # step1 Build the quadratic model
-                grad, Hessian = self.finite_diff(new_solution, delta_T, BdsCheck, 2, problem, r)
+                grad, Hessian = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, r)
                 expended_budget += NumOfEval * r
                 # step2 Solve the subproblem
                 # Cauchy reduction
@@ -257,7 +255,7 @@ class STRONG(Solver):
                 g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
                 # construct the polynomial 
                 r_old = g_old
-                r_new = g_old + np.matmul(np.subtract(candidate_solution, new_solution), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_solution, new_solution), Hessian), np.subtract(candidate_solution, new_solution))
+                r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + (1/2)* np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
                 rho = (g_old - g_new)/(r_old - r_new)
                 # step4 Update the trust region size and determine to accept or reject the solution
                 if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new ) <= 0):
@@ -266,12 +264,13 @@ class STRONG(Solver):
                     g_b_old = rr_old
                     sub_counter = 1
                     result_solution = new_solution
+                    result_x = new_x
 
-                    while np.sum(result_solution != new_solution) == 0:
+                    while np.sum(result_x != new_x) == 0:
                         if expended_budget > problem.factors["budget"]: 
                             break
                         # step1 Build the quadratic model
-                        G, H = self.finite_diff(new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r)
+                        G, H = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r)
                         expended_budget += NumOfEval * (sub_counter + 1) * r
                         # step2 determine the new inner solution based on the accumulated design matrix X
                         if np.matmul(np.matmul(G, H), G) <= 0:
@@ -289,33 +288,36 @@ class STRONG(Solver):
                                 try_x[i] = problem.upper_bounds[i] - 0.01
                         try_solution = self.create_new_solution(tuple(try_x), problem)
                         # step 3
-                        problem.simulate(try_solution, r + np.ceil(sub_counter**1.01))
-                        expended_budget += r + np.ceil(sub_counter**1.01)
+                        problem.simulate(try_solution, int(r + np.ceil(sub_counter**1.01)))
+                        expended_budget += int(r + np.ceil(sub_counter**1.01))
                         g_b_new = -1 * problem.minmax[0] * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        problem.simulate(dummy_solution, np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01))
-                        expended_budget += np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)
+                        problem.simulate(dummy_solution, int(np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)))
+                        expended_budget += int(np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01))
                         dummy = -1 * problem.minmax[0] * dummy_solution.objectives_mean
                         # update g_old
-                        g_b_old = (g_b_old * (r + np.ceil((sub_counter - 1)**1.01)) + np.matmul((np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)), dummy)) / (r + np.ceil(sub_counter**1.01))
-                        rr_new = g_b_old + np.matmul(np.subtract(try_solution, new_solution), G) + (1/2)* np.matmul(np.matmul(np.subtract(try_solution, new_solution), H), np.subtract(try_solution, new_solution))
+                        g_b_old = (g_b_old * (r + np.ceil((sub_counter - 1)**1.01)) + (np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)) * dummy) / (r + np.ceil(sub_counter**1.01))
+                        rr_new = g_b_old + np.matmul(np.subtract(try_x, new_x), G) + (1/2)* np.matmul(np.matmul(np.subtract(try_x, new_x), H), np.subtract(try_x, new_x))
                         rr_old = g_b_old
                         rrho = (g_b_old - g_b_new) / (rr_old - rr_new)
                         if (rrho < eta_0) | ((g_b_old - g_b_new) <= 0) | ((rr_old - rr_new) <= 0):
                             delta_T = gamma_1 * delta_T
                             result_solution = new_solution
+                            result_x = new_x
 
                         elif (eta_0 <= rrho) & (rrho < eta_1):
-                            result_solution = try_solution #accept the solution and remains the size of  trust region
+                            result_solution = try_solution
+                            result_x = try_x #accept the solution and remains the size of trust region
                             rr_old = g_b_new
                         else:
                             delta_T = gamma_2 * delta_T
-                            result_solution = try_solution #accept the solution and expand the size of trust reigon
+                            result_solution = try_solution 
+                            result_x = try_x #accept the solution and expand the size of trust reigon
                             rr_old = g_b_new
                         sub_counter = sub_counter + 1
-                    new_solution = try_solution
-                    new_x = try_x
-                    recommended_solns.append(try_solution)
+                    new_solution = result_solution
+                    new_x = result_x
+                    recommended_solns.append(result_solution)
                     intermediate_budgets.append(expended_budget)
                 elif (eta_0 <= rho) & (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains
@@ -330,12 +332,12 @@ class STRONG(Solver):
                     new_x = candidate_x
                     recommended_solns.append(candidate_solution)
                     intermediate_budgets.append(expended_budget)
-                    
+                r = int(np.ceil(1.01 * r))
 
         return recommended_solns, intermediate_budgets
     
     # Finite difference for calculating gradients and BFGS for calculating Hessian Matrix
-    def finite_diff(new_solution, delta_T, BdsCheck, stage, problem, r):
+    def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r):
         # Store values for each dimension
         FnPlusMinus = np.zeros((problem.dim, 3)) 
         grad = np.zeros(problem.dim)
@@ -343,8 +345,8 @@ class STRONG(Solver):
 
         for i in range(problem.dim):
             # initialization
-            x1 = new_solution
-            x2 = new_solution
+            x1 = list(new_x)
+            x2 = list(new_x)
             steph1 = delta_T # forward stepsize
             steph2 = delta_T # backward stepsize
             
@@ -352,7 +354,7 @@ class STRONG(Solver):
             if x1[i] + steph1 > problem.upper_bounds[i]:
                 steph1 = np.abs(problem.upper_bounds[i] - x1[i])
             if x2[i] - steph2 < problem.lower_bounds[i]:
-                steph2 = np.abs(x2(i) - problem.lower_bounds[i])
+                steph2 = np.abs(x2[i] - problem.lower_bounds[i])
             
             # decide stepsize
             if BdsCheck[i] == 0:   #central diff
@@ -365,15 +367,15 @@ class STRONG(Solver):
             else:    # backward diff
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i,2]
-            
+            x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
-                problem.simulate(x1, 1)
-                fn1 = -1 * problem.minmax[0] * x1.objectives_mean
+                problem.simulate(x1_solution, 1)
+                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 FnPlusMinus[i, 0] = fn1 # first column is f(x+h,y)
-            
+            x2_solution = self.create_new_solution(tuple(x2), problem)
             if BdsCheck[i] != 1:
-                problem.simulate(x2, 1)
-                fn2 = -1 * problem.minmax[0] * x2.objectives_mean
+                problem.simulate(x2_solution, 1)
+                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 FnPlusMinus[i, 1] = fn2 # second column is f(x-h,y)
             
             # Calculate gradient
@@ -391,119 +393,131 @@ class STRONG(Solver):
                 if BdsCheck[i] == 0:
                     Hessian[i, i] = (FnPlusMinus[i, 0] - 2 * fn + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
                 elif BdsCheck[i] == 1:
-                    x3 = new_solution
+                    x3 = list(new_x)
                     x3[i] = x3[i] + FnPlusMinus[i, 2] / 2
+                    x3_solution = self.create_new_solution(tuple(x3), problem)
                     # check budget
-                    problem.simulate(x3, r)
-                    fn3 = -1 * problem.minmax[0] * x3.objectives_mean
+                    problem.simulate(x3_solution, r)
+                    fn3 = -1 * problem.minmax[0] * x3_solution.objectives_mean
                     Hessian[i, i] = 4 * (FnPlusMinus[i, 1] - 2 * fn3 + fn) / (FnPlusMinus[i, 2]**2)
                 elif BdsCheck[i] == -1:
-                    x4 = new_solution
+                    x4 = list(new_x)
                     x4[i] = x4[i] - FnPlusMinus[i, 2] / 2
+                    x4_solution = self.create_new_solution(tuple(x4), problem)
                     # check budget
-                    problem.simulate(x4, r)
-                    fn4 = -1 * problem.minmax[0] * x4.objectives_mean
+                    problem.simulate(x4_solution, r)
+                    fn4 = -1 * problem.minmax[0] * x4_solution.objectives_mean
                     Hessian[i, i] = 4 * (fn - 2 * fn4 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
                 
                 # upper triangle in Hessian
                 for j in range(i + 1, problem.dim):
                     if BdsCheck[i]**2 + BdsCheck[j]**2 == 0: # neither x nor y on boundary
                         # f(x+h,y+k)
-                        x5 = new_solution
+                        x5 = list(new_x)
                         x5[i] = x5[i] + FnPlusMinus[i, 2]
                         x5[j] = x5[j] + FnPlusMinus[j, 2]
+                        x5_solution = self.create_new_solution(tuple(x5), problem)
                         # check budget
-                        problem.simulate(x5, r)
-                        fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                        problem.simulate(x5_solution, r)
+                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                         # f(x-h,y-k)
-                        x6 = new_solution
+                        x6 = list(new_x)
                         x6[i] = x6[i] - FnPlusMinus[i, 2]
                         x6[j] = x6[j] - FnPlusMinus[j, 2]
+                        x6_solution = self.create_new_solution(tuple(x5), problem)
                         # check budget
-                        problem.simulate(x6, r)
-                        fn6 = -1 * problem.minmax[0] * x6.objectives_mean
+                        problem.simulate(x6_solution , r)
+                        fn6 = -1 * problem.minmax[0] * x6_solution .objectives_mean
                         # compute second order gradient
                         Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + 2 * fn - FnPlusMinus[i, 1] - FnPlusMinus[j, 1] + fn6) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j ,2])
                         Hessian[j, i] = Hessian[i, j]
                     elif BdsCheck[j] == 0: # x on boundary, y not
                         # f(x+/-h,y+k)
-                        x5 = new_solution
+                        x5 = list(new_x)
                         x5[i] = x5[i] + BdsCheck[i] * FnPlusMinus[i, 2]
                         x5[j] = x5[j] + FnPlusMinus[j, 2]
+                        x5_solution = self.create_new_solution(tuple(x5), problem)
                         # check budget
-                        problem.simulate(x5, r)
-                        fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                        problem.simulate(x5_solution, r)
+                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                         # f(x+/-h,y-k)
-                        x6 = new_solution
+                        x6 = list(new_x)
                         x6[i] = x6[i] + BdsCheck[i] * FnPlusMinus[i, 2]
                         x6[j] = x6[j] - FnPlusMinus[j, 2]
+                        x6_solution = self.create_new_solution(tuple(x6), problem)
                         # check budget
-                        problem.simulate(x6, r)
-                        fn6 = -1 * problem.minmax[0] * x6.objectives_mean
+                        problem.simulate(x6_solution, r)
+                        fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
                         # compute second order gradient
                         Hessian[i, j] = (fn5 - FnPlusMinus[j, 0] - fn6 + FnPlusMinus[j, 1]) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j, 2] * BdsCheck[i])
                         Hessian[j, i] = Hessian[i, j]
                     elif BdsCheck[i] == 0: # y on boundary, x not
                         # f(x+h,y+/-k)
-                        x5 = new_solution
+                        x5 = list(new_x)
                         x5[i] = x5[i] + FnPlusMinus[i, 2]
                         x5[j] = x5[j] + BdsCheck[j] * FnPlusMinus[j, 2]
+                        x5_solution = self.create_new_solution(tuple(x5), problem)                        
                         # check budget
-                        problem.simulate(x5, r)
-                        fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                        problem.simulate(x5_solution, r)
+                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                         # f(x-h,y+/-k)
-                        x6 = new_solution
+                        x6 = list(new_x)
                         x6[i] = x6[i] + FnPlusMinus[i, 2]
                         x6[j] = x6[j] + BdsCheck[j] * FnPlusMinus[j, 2]
+                        x6_solution = self.create_new_solution(tuple(x6), problem) 
                         # check budget
-                        problem.simulate(x6, r)
-                        fn6 = -1 * problem.minmax[0] * x6.objectives_mean
+                        problem.simulate(x6_solution, r)
+                        fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
                         # compute second order gradient
                         Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - fn6 + FnPlusMinus[i, 1])/(2*FnPlusMinus[i, 2]*FnPlusMinus[j, 2]*BdsCheck[j])
                         Hessian[j, i] = Hessian[i, j]
                     elif BdsCheck[i] == 1:
                         if BdsCheck[j] == 1:
                             # f(x+h,y+k)
-                            x5 = new_solution
+                            x5 = list(new_x)
                             x5[i] = x5[i] + FnPlusMinus[i, 2]
                             x5[j] = x5[j] + FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem) 
                             #check budget
-                            problem.simulate(x5, r)
-                            fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                            problem.simulate(x5_solution, r)
+                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                             # compute second order gradient
                             Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + fn)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                             Hessian[j, i] = Hessian[i, j]
                         else:
                             # f(x+h,y-k)
-                            x5 = new_solution
+                            x5 = list(new_x)
                             x5[i] = x5[i] + FnPlusMinus[i, 2]
                             x5[j] = x5[j] - FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem) 
                             #check budget
-                            problem.simulate(x5, r)
-                            fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                            problem.simulate(x5_solution, r)
+                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                             # compute second order gradient
                             Hessian[i, j] = (FnPlusMinus[i, 0] - fn5 - fn + FnPlusMinus[j, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                             Hessian[j, i] = Hessian[i, j]
                     elif BdsCheck[i] == -1:
                         if BdsCheck[j] == 1:
                             # f(x-h,y+k)
-                            x5 = new_solution
+                            x5 = list(new_x)
                             x5[i] = x5[i] - FnPlusMinus[i, 2]
                             x5[j] = x5[j] + FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem) 
                             #check budget
-                            problem.simulate(x5, r)
-                            fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                            problem.simulate(x5_solution, r)
+                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                             # compute second order gradient
                             Hessian[i, j] = (FnPlusMinus[j, 0] - fn - fn5 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                             Hessian[j, i] = Hessian[i, j]
                         else:
                             # f(x-h,y-k)
-                            x5 = new_solution
+                            x5 = list(new_x)
                             x5[i] = x5[i] - FnPlusMinus[i, 2]
                             x5[j] = x5[j] - FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem) 
                             #check budget
-                            problem.simulate(x5, r)
-                            fn5 = -1 * problem.minmax[0] * x5.objectives_mean
+                            problem.simulate(x5_solution, r)
+                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
                             # compute second order gradient
                             Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                             Hessian[j, i] = Hessian[i, j]

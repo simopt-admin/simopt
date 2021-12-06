@@ -332,12 +332,13 @@ class IronOreMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lowerbound = (0)
-        self.upperbound = (np.inf)
+        self.lower_bounds = (0, 0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
+        self.model_decision_factors = {"price_prod", "inven_stop", "price_stop", "price_sell"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

@@ -14,6 +14,7 @@ model_directory : dictionary
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.simannealing import SANE
+from solvers.strong import STRONG
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -28,6 +29,7 @@ solver_directory = {
     "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
     "SANE": SANE,
+    "STRONG": STRONG,
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
