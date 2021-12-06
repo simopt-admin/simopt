@@ -332,8 +332,6 @@ class ASTRODF(Solver):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------
