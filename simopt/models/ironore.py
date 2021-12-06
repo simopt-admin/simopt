@@ -4,7 +4,6 @@ Summary
 Simulate multiple periods of production and sales for an iron ore inventory problem.
 """
 import numpy as np
-
 import math
 
 from base import Model, Problem
@@ -12,8 +11,8 @@ from base import Model, Problem
 
 class IronOre(Model):
     """
-    An model that simulates multiple periods of production and sales for an
-    inventory problem with stochastic price determined by a mean-reverting 
+    A model that simulates multiple periods of production and sales for an
+    inventory problem with stochastic price determined by a mean-reverting
     random walk. Returns total profit, fraction of days producing iron, and
     mean stock.
 
@@ -47,7 +46,6 @@ class IronOre(Model):
         self.n_responses = 3
         self.factors = fixed_factors
         self.specifications = {
-
             "mean_price": {
                 "description": "Mean iron ore price per unit.",
                 "datatype": float,
@@ -112,8 +110,7 @@ class IronOre(Model):
                 "description": "Number of days to simulate.",
                 "datatype": int,
                 "default": 365
-            },
-
+            }
         }
 
         self.check_factor_list = {
@@ -175,7 +172,7 @@ class IronOre(Model):
         return self.factors["n_days"] >= 1
 
     def check_simulatable_factors(self):
-        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"]) & (self.factors["min_price"] <= self.factors["max_price"])
+        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
 
     def replicate(self, rng_list):
         """
@@ -210,42 +207,42 @@ class IronOre(Model):
         producing = np.zeros(self.factors["n_days"])
         prod = np.zeros(self.factors["n_days"])
 
-        #Run simulation over time horizon.
+        # Run simulation over time horizon.
         for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ))
-            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4)
+            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ)).
+            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4).
             mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
             mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val *  mean_dir
+            mean_move = mean_val * mean_dir
             move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
             mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
-            # If production is underway
+            # If production is underway...
             if producing[day] == 1:
-                # cease production if price goes too low or inventory is too much
+                # ... cease production if price goes too low or inventory is too high.
                 if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
                     producing[day] = 0
                 else:
                     prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
                     stock[day] = stock[day] + prod[day]
                     profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # if production is not currently underway
+            # If production is not currently underway...
             else:
                 if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
                     producing[day] = 1
                     prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
                     stock[day] = stock[day] + prod[day]
                     profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # Sell if price is high enough
+            # Sell if price is high enough.
             if (mkt_price[day] >= self.factors["price_sell"]):
                 profit[day] = profit[day] + stock[day] * mkt_price[day]
                 stock[day] = 0
-            # Charge holding cost
+            # Charge holding cost.
             profit[day] = profit[day] - stock[day] * self.factors["holding_cost"]
-            # Calculate starting quantities for next period
+            # Calculate starting quantities for next period.
             if day < self.factors["n_days"] - 1:
                 profit[day + 1] = profit[day]
                 stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day] 
+                mkt_price[day + 1] = mkt_price[day]
                 producing[day + 1] = producing[day]
         # Calculate responses from simulation data.
         responses = {"total_profit": profit[self.factors["n_days"] - 1],
@@ -453,7 +450,7 @@ class IronOreMaxRev(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0, 0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
