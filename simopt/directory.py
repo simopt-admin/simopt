@@ -21,6 +21,7 @@ from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, Facilit
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
+from models.tableallocation import TableAllocation, TableAllocationMaxRev
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -34,7 +35,8 @@ problem_directory = {
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
-    "DUALSOURCING-1": DualSourcingMinCost
+    "DUALSOURCING-1": DualSourcingMinCost,
+    "TABLEALLOCATION-1": TableAllocationMaxRev
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -42,5 +44,6 @@ model_directory = {
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
     "SSCONT": SSCont,
-    "DUALSOURCING": DualSourcing
+    "DUALSOURCING": DualSourcing,
+    "TABLEALLOCATION": TableAllocation
 }

@@ -122,19 +122,19 @@ class TableAllocation(Model):
         return self.factors["capacity"] > 0
 
     def check_table_cap(self):
-        return self.factors["table_cap"] > 0
+        return self.factors["table_cap"] > [0,0,0,0]
 
     def check_lambda(self):
-        return self.factors["lambda"] >= 0
+        return self.factors["lambda"] >= [0 for i in range(max(self.factors["table_cap"]))]
 
     def check_service_time_means(self):
-        return self.factors["service_time_means"] > 0
+        return self.factors["service_time_means"] > [0 for i in range(max(self.factors["table_cap"]))]
     
     def check_table_revenue(self):
-        return self.factors["table_revenue"] >= 0
+        return self.factors["table_revenue"] >= [0 for i in range(max(self.factors["table_cap"]))]
 
     def check_num_tables(self):
-        return self.factors["num_tables"] >= 0
+        return self.factors["num_tables"] >= [0,0,0,0]
 
     def check_simulatable_factors(self):
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
@@ -168,6 +168,7 @@ class TableAllocation(Model):
                 Fraction of customer arrivals that are seated.
 
         """
+        print(self.factors["num_tables"])
         # Generate total number of arrivals in the period
         total_arrivals = np.random.poisson(round(self.factors["n_hour"]*sum(self.factors["lambda"])))
         # Generate arrival times in minutes
@@ -175,14 +176,14 @@ class TableAllocation(Model):
         # Maximum group size
         max_group_size = max(self.factors["table_cap"])
         # Cumulative Probabilities to decide which group arrived
-        cum_prob_group = np.cumsum(self.factors["lambda"]/sum(self.factors["lambda"]))
+        cum_prob_group = np.cumsum(np.divide(self.factors["lambda"],sum(self.factors["lambda"])))
 
         # Initiate system time in minutes
         time = 0
         # Track total revenue
         total_rev = 0
         # Track table availability 
-        table_avail = np.zeros(len(self.factors["num_tables"]),max(self.factors["num_tables"])) # (i,j) is the time that jth table of size i becomes available
+        table_avail = np.zeros((4,max(self.factors["num_tables"]))) # (i,j) is the time that jth table of size i becomes available
         # Track seating rate
         found = np.zeros(len(arrival_times))
 
@@ -200,8 +201,8 @@ class TableAllocation(Model):
                 min_table_type = self.factors["num_tables"][i+1]
                 i = i + 1
             # Find available table
-            for k in self.factors["num_tables"][i:]:
-                for j in range(len(self.factors["num_tables"][k])):
+            for k in range(i,len(self.factors["num_tables"])):
+                for j in range(self.factors["num_tables"][k]):
                     if table_avail[k,j] < arrival_times[n]: #check if table is available at current time
                         found[n] = 1
                         break
@@ -229,7 +230,7 @@ Maximize the total expected revenue for a restaurant operation.
 """
 
 
-class DualSourcingMinCost(Problem):
+class TableAllocationMaxRev(Problem):
     """
     Class to make table allocation simulation-optimization problems.
 
@@ -298,8 +299,8 @@ class DualSourcingMinCost(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lowerbound = (0,)*len(self.factors["table_capacity"])
-        self.upperbound = (np.inf,)*len(self.factors["table_capacity"])
+        self.lowerbound = ([0,0,0,0])
+        self.upperbound = ([np.inf,np.inf,np.inf,np.inf])
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -310,7 +311,7 @@ class DualSourcingMinCost(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": ([10,5,4,2])
+                "default": ([10,5,4,2],)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -360,7 +361,7 @@ class DualSourcingMinCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["num_tables"])
+        vector = (factor_dict["num_tables"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -456,7 +457,7 @@ class DualSourcingMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(np.multiply(self.factors["table_cap"],x[0])) <= self.factors["capacity"])
+        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"],x[0])) <= self.model_fixed_factors["capacity"])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -472,5 +473,9 @@ class DualSourcingMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
+        cap = self.model_fixed_factors["capacity"]/4
+        num_tables = []
+        for i in range(4):
+            num_tables.append(int(cap/self.model_fixed_factors["table_cap"][i]))
+        x = (num_tables,)
         return x
