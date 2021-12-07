@@ -4,9 +4,6 @@ Summary
 Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
 """
 import numpy as np
-
-import math
-
 import scipy.stats as scs
 
 from base import Model, Problem
@@ -14,8 +11,8 @@ from base import Model, Problem
 
 class DualSourcing(Model):
     """
-    An model that simulates multiple periods of ordering and sales for a single-staged, 
-    dual sourcing inventory problem with stochastic demand. Returns average holding cost, 
+    A model that simulates multiple periods of ordering and sales for a single-staged,
+    dual sourcing inventory problem with stochastic demand. Returns average holding cost,
     average penalty cost, and average ordering cost per period.
 
     Attributes
@@ -76,7 +73,6 @@ class DualSourcing(Model):
         self.n_responses = 3
         self.factors = fixed_factors
         self.specifications = {
-
             "n_days": {
                 "description": "Number of days to simulate.",
                 "datatype": int,
@@ -120,7 +116,7 @@ class DualSourcing(Model):
             "distribution": {
                 "description": "Demand distribution.",
                 "datatype": str,
-                "default": 'Normal'
+                "default": "Normal"
             },
             "st_dev": {
                 "description": "Standard deviation of demand distribution.",
@@ -141,11 +137,8 @@ class DualSourcing(Model):
                 "description": "Order-up-to level for expedited orders.",
                 "datatype": int,
                 "default": 50
-            },
-            
-
+            }
         }
-
         self.check_factor_list = {
             "n_days": self.check_n_days,
             "initial_inv": self.check_initial_inv,
@@ -159,8 +152,7 @@ class DualSourcing(Model):
             "st_dev": self.check_st_dev,
             "mu": self.check_mu,
             "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp,
-            
+            "order_level_exp": self.check_order_level_exp
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -168,7 +160,7 @@ class DualSourcing(Model):
     # Check for simulatable factors
     def check_n_days(self):
         return self.factors["n_days"] >= 1
-    
+
     def check_initial_inv(self):
         return self.factors["initial_inv"] >= 0
 
@@ -180,7 +172,7 @@ class DualSourcing(Model):
 
     def check_lead_reg(self):
         return self.factors["lead_reg"] >= 0
-    
+
     def check_lead_exp(self):
         return self.factors["lead_exp"] >= 0
 
@@ -191,8 +183,8 @@ class DualSourcing(Model):
         return self.factors["penalty_cost"] > 0
 
     def check_distribution(self):
-        return self.factors["distribution"] in ('Normal', 'Uniform','Exponential')
-    
+        return self.factors["distribution"] in {"Normal", "Uniform", "Exponential"}
+
     def check_st_dev(self):
         return self.factors["st_dev"] > 0
 
@@ -206,7 +198,7 @@ class DualSourcing(Model):
         return self.factors["order_level_exp"] >= 0
 
     def check_simulatable_factors(self):
-        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_exp"])
+        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_reg"])
 
     def replicate(self, rng_list):
         """
@@ -230,47 +222,43 @@ class DualSourcing(Model):
                 The average ordering cost over the time period
         """
         # Designate random number generators.
-        price_rng = rng_list[0]
-        #vectors of regular orders to be received in periods n through n+lr-1
+        demand_rng = rng_list[0]
+        # Vectors of regular orders to be received in periods n through n + lr - 1.
         orders_reg = np.zeros(self.factors["lead_reg"])
-        #vectors of expedited orders to be received in periods n through n+le-1
+        # Vectors of expedited orders to be received in periods n through n + le - 1.
         orders_exp = np.zeros(self.factors["lead_exp"])
-#        print('orders_exp' + str(orders_exp))
-#        print('orders_reg' + str(orders_reg))
-        #generate demand
-        if self.factors['distribution'] == 'Normal':
-            demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])).astype(int)
-        #track total expenses
+
+        # Generate demand.
+        if self.factors["distribution"] == "Normal":
+            demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
+            #demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors["mu"], scale=self.factors["st_dev"], size=self.factors["n_days"])).astype(int)
+        # Track total expenses.
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
         total_ordering_cost = np.zeros(self.factors["n_days"])
         inv = self.factors["initial_inv"]
 
-        #Run simulation over time horizon.
+        # Run simulation over time horizon.
         for day in range(self.factors["n_days"]):
-            #Calculate inventory positions
+            # Calculate inventory positions.
             inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
-#            print('inv_position_exp' + str(inv_position_exp))
             inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
-#            print('inv_position_reg' + str(inv_position_reg))
-            #Place orders if needed
-#            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_exp = np.append(orders_exp, max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
- #           print('orders_exp' + str(orders_exp))
- #           print('orders_reg' + str(orders_reg))
-            #Charge ordering cost
-            total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
-            #Orders arrive, update on-hand inventory
+            # Place orders if needed.
+            orders_exp = np.append(orders_exp, max(0, round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
+            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]]))
+            # Charge ordering cost.
+            total_ordering_cost[day] = self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]] + self.factors["cost_reg"] * orders_reg[self.factors["lead_reg"]]
+            # Orders arrive, update on-hand inventory.
             inv = inv + orders_exp[0] + orders_reg[0]
-            orders_exp = np.delete(orders_exp,0)
-            orders_reg = np.delete(orders_reg,0)
-            #Satisfy or backorder demand
-            dn = max(0,demand[day])
-            inv = inv - dn
-            total_penalty_cost[day] = -1*self.factors['penalty_cost']*min(0,inv)
-            #Charge holding cost
-            total_holding_cost[day] = self.factors['holding_cost']*max(0,inv)
+            orders_exp = np.delete(orders_exp, 0)
+            orders_reg = np.delete(orders_reg, 0)
+            # Satisfy or backorder demand.
+            #dn = max(0, demand[day]) THIS IS DONE TWICE
+            #inv = inv - dn
+            inv = inv - demand[day]
+            total_penalty_cost[day] = -1 * self.factors["penalty_cost"] * min(0, inv)
+            # Charge holding cost.
+            total_holding_cost[day] = self.factors["holding_cost"] * max(0, inv)
 
         # Calculate responses from simulation data.
         responses = {"average_ordering_cost": np.mean(total_ordering_cost),
@@ -357,8 +345,8 @@ class DualSourcingMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lowerbound = (0)
-        self.upperbound = (np.inf)
+        self.lowerbound = (0, 0)
+        self.upperbound = (np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -369,7 +357,7 @@ class DualSourcingMinCost(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (50,80)
+                "default": (50, 80)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -387,7 +375,7 @@ class DualSourcingMinCost(Problem):
 
     def vector_to_factor_dict(self, vector):
         """
-        Convert a vector of variables to a dictionary with factor keys
+        Convert a vector of variables to a dictionary with factor keys.
 
         Arguments
         ---------
@@ -476,7 +464,7 @@ class DualSourcingMinCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):

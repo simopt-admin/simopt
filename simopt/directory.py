@@ -22,6 +22,7 @@ from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.ironore import IronOre, IronOreMaxRev
 from models.dynamnews import DynamNews, DynamNewsMaxProfit
+from models.dualsourcing import DualSourcing, DualSourcingMinCost
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -36,7 +37,8 @@ problem_directory = {
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
     "IRONORE-1": IronOreMaxRev,
-    "DYNAMNEWS-1": DynamNewsMaxProfit
+    "DYNAMNEWS-1": DynamNewsMaxProfit,
+    "DUALSOURCING-1": DualSourcingMinCost
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -45,5 +47,6 @@ model_directory = {
     "RMITD": RMITD,
     "SSCONT": SSCont,
     "IRONORE": IronOre,
-    "DYNAMNEWS": DynamNews
+    "DYNAMNEWS": DynamNews,
+    "DUALSOURCING": DualSourcing
 }
