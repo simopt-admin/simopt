@@ -1,3 +1,5 @@
+
+
 """
 Summary
 -------
@@ -13,6 +15,8 @@ from numpy.linalg import norm
 import numpy as np
 import math
 import warnings
+from scipy.optimize import NonlinearConstraint
+from scipy.optimize import minimize
 warnings.filterwarnings("ignore")
 
 class ASTRODF(Solver):
@@ -62,12 +66,12 @@ class ASTRODF(Solver):
                 "default": True
             },
             "delta_max": {
-                "description": "maximum value of the radius",
+                "description": "maximum value of the trust-region radius",
                 "datatype": float,
                 "default": 200
             },
             "eta_1": {
-                "description": "threshhold for success at all",
+                "description": "threshhold for any success at all",
                 "datatype": float,
                 "default": 0.1
             },
@@ -77,47 +81,47 @@ class ASTRODF(Solver):
                 "default": 0.5
             },
             "gamma_0": {
-                "description": "shrinkage/expansion ratio for delta_0 in parameter tuning",
+                "description": "initial trust-region radius parameter tuning constant",
                 "datatype": float,
                 "default": 0.5
             },
             "gamma_1": {
-                "description": "very successful step radius increase",
+                "description": "very successful step trust-region radius increase",
                 "datatype": float,
                 "default": 1.25
             },
             "gamma_2": {
-                "description": "unsuccessful step radius decrease",
+                "description": "unsuccessful step trust-region radius decrease",
                 "datatype": float,
                 "default": 0.8
             },
             "w": {
-                "description": "decreasing rate for delta in contracation loop",
+                "description": "trust-region radius rate of shrinkage in contracation loop",
                 "datatype": float,
                 "default": 0.9
             },
             "mu": {
-                "description": "the constant to make upper bound for delta in contraction loop",
+                "description": "trust-region radius ratio upper bound in contraction loop",
                 "datatype": float,
                 "default": 100
             },
             "beta": {
-                "description": "the constant to make the delta in main loop not too small",
+                "description": "trust-region radius ratio lower bound in contraction loop",
                 "datatype": float,
                 "default": 50
             },
             "c_lambda": {
-                "description": "hyperparameter (exponent) to determine minimum sample size",
+                "description": "minimum sample size exponent",
                 "datatype": float,
                 "default": 0.1 ##changed
             },
             "epsilon_lambda": {
-                "description": "hyperparameter (coefficient) to determine minimum sample size",
+                "description": "minimum sample size coefficient",
                 "datatype": float,
                 "default": 0.5
             },
             "kappa": {
-                "description": "hyperparameter in adaptive sampling in outer/inner loop",
+                "description": "adaptive sampling constant in outer/inner loop",
                 "datatype": float,
                 "default": 100
             }
@@ -149,17 +153,13 @@ class ASTRODF(Solver):
         c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
         kappa = self.factors["kappa"]
-#        lambda_k = max(2,(10 + c_lambda) * math.log(k+1, 10) ** (1 + epsilon_lambda))
-#        lambda_k = max(3,(10 + c_lambda * problem.dim * math.log(problem.dim+0.1, 10)) * math.log(k+1, 10) ** (1 + epsilon_lambda))
         lambda_k = (10 + c_lambda) * math.log(k, 10) ** (1 + epsilon_lambda)
-
-        # S_k = math.floor(max(3,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
-#        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
-        # compute sample size 
-        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((int(kappa) ^ 2) * delta ** 4)))
+        # compute sample size
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
+        interpolation_solns = []
         w = self.factors["w"]
         mu = self.factors["mu"]
         beta = self.factors["beta"]
@@ -170,12 +170,12 @@ class ASTRODF(Solver):
             j = j + 1
             delta_k = delta * w ** (j - 1)
 
-            # make the interpolation set
+            # construct the interpolation set
             Y = self.interpolation_points(x_k, delta_k, problem)
             for i in range(2 * d + 1):
                 new_solution = self.create_new_solution(Y[i][0], problem)
-                
-                # need to check there is existing result
+
+                # check if there is existing result
                 problem.simulate(new_solution, 1)
                 expended_budget += 1
                 sample_size = 1
@@ -189,10 +189,11 @@ class ASTRODF(Solver):
                     if sample_size >= self.samplesize(k, sig2, delta_k):
                         break
                 fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
+                interpolation_solns.append(new_solution)
 
             Z = self.interpolation_points(np.array(x_k) - np.array(x_k), delta_k, problem)
 
-            # make the model and get the model parameters
+            # construct the model and get the model coefficients
             q, grad, Hessian = self.coefficient(Z, fval, problem)
 
             # check the condition and break
@@ -203,7 +204,7 @@ class ASTRODF(Solver):
                 break
 
         delta_k = min(max(beta * norm(grad), delta_k), delta)
-        return fval, Y, q, grad, Hessian, delta_k, expended_budget
+        return fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns
 
     def coefficient(self, Y, fval, problem):
         M = []
@@ -214,8 +215,11 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i]) ** 2)
 
         q = np.matmul(inv(M), fval)
-        Hessian = np.diag(q[d + 1:2 * d + 1])
-        return q, q[1:d + 1], Hessian
+        grad = q[1:d + 1]
+        grad = np.reshape(grad, d)
+        Hessian = q[d + 1:2 * d + 1]
+        Hessian = np.reshape(Hessian, d)
+        return q, grad, Hessian
 
     def interpolation_points(self, x_k, delta, problem):
         Y = [[x_k]]
@@ -260,16 +264,27 @@ class ASTRODF(Solver):
 
         while expended_budget < problem.factors["budget"] * 0.01:
             k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget = self.model_construction(new_x, delta, k, problem, expended_budget)
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta, k, problem, expended_budget)
 
+            '''
             # Cauchy reduction
             if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
                 tau = 1
             else:
                 tau = min(1, norm(grad) ** 3 / (delta * np.matmul(np.matmul(grad, Hessian), grad)))
-
             grad = np.reshape(grad, (1, problem.dim))[0]
             candidate_x = new_x - tau * delta * grad / norm(grad)
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+            '''
+
+            # Search engine - solve subproblem
+            def subproblem(s):
+                return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
+
+            con_f = lambda s: norm(s)
+            nlc = NonlinearConstraint(con_f, 0, delta_k)
+            solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
+            candidate_x = new_x + solve_subproblem.x
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # adaptive sampling needed
@@ -294,14 +309,12 @@ class ASTRODF(Solver):
                 minpos = fval.index(min(fval))
                 fval_tilde = min(fval)
                 candidate_x = Y[minpos][0]
+                candidate_solution = interpolation_solns[minpos]
 
-            if (self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(
-                    np.array(candidate_x) - np.array(new_x), q)) == 0:
+            if (self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(np.array(candidate_x) - np.array(new_x), q)) == 0:
                 rho = 0
             else:
-                rho = (fval[0] - fval_tilde) / (
-                            self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(
-                        candidate_x - new_x, q));
+                rho = (fval[0] - fval_tilde) / (self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(candidate_x - new_x, q));
 
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
@@ -342,7 +355,7 @@ class ASTRODF(Solver):
         expended_budget = 0
         delta_max = self.factors["delta_max"]
         gamma_0 = self.factors["gamma_0"]
-        delta_candidate = [gamma_0 * delta_max, delta_max, delta_max / gamma_0]
+        delta_candidate = [gamma_0 * 0.1 * delta_max, 0.1 * delta_max, 0.1 * delta_max / gamma_0]
         #print(delta_candidate)
 
         # default values
@@ -378,17 +391,27 @@ class ASTRODF(Solver):
 
         while expended_budget < problem.factors["budget"]:
             k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget = self.model_construction(new_x, delta, k, problem,
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta, k, problem,
                                                                                           expended_budget)
 
+            '''
             # Cauchy reduction
             if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
                 tau = 1
             else:
                 tau = min(1, norm(grad) ** 3 / (delta * np.matmul(np.matmul(grad, Hessian), grad)))
-
             grad = np.reshape(grad, (1, problem.dim))[0]
             candidate_x = new_x - tau * delta * grad / norm(grad)
+            '''
+
+            # Search engine - solve subproblem
+            def subproblem(s):
+                return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
+
+            con_f = lambda s: norm(s)
+            nlc = NonlinearConstraint(con_f, 0, delta_k)
+            solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
+            candidate_x = new_x + solve_subproblem.x
 
             for i in range(problem.dim):
                 if candidate_x[i] < problem.lower_bounds[i]:
@@ -420,6 +443,7 @@ class ASTRODF(Solver):
                 minpos = fval.index(min(fval))
                 fval_tilde = min(fval)
                 candidate_x = Y[minpos][0]
+                candidate_solution = interpolation_solns[minpos]
 
             if (self.local_model_evaluate(np.zeros(problem.dim), q) - self.local_model_evaluate(
                     np.array(candidate_x) - np.array(new_x), q)) == 0:
