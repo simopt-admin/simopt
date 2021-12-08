@@ -18,7 +18,6 @@ warnings.filterwarnings("ignore")
 class ASTRODF(Solver):
     """
     Needed description
-
     Attributes
     ----------
     name : string
@@ -40,14 +39,12 @@ class ASTRODF(Solver):
         details of each factor (for GUI, data validation, and defaults)
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
-
     Arguments
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
-
     See also
     --------
     base.Solver
@@ -159,7 +156,7 @@ class ASTRODF(Solver):
         # S_k = math.floor(max(3,lambda_k,(lambda_k*sig)/((kappa^2)*delta**(2*(1+1/alpha_k)))))
 #        S_k = math.floor(max(lambda_k, (lambda_k * sig) / ((kappa ^ 2) * delta ** 4)))
         # compute sample size 
-        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((int(kappa) ^ 2) * delta ** 4)))
         return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
@@ -327,14 +324,12 @@ class ASTRODF(Solver):
     def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
-
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
-
         Returns
         -------
         recommended_solns : list of Solution objects

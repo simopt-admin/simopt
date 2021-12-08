@@ -4,7 +4,6 @@ Summary
 -------
 Provide base classes for experiments and meta experiments.
 Plus helper functions for reading/writing data and plotting.
-
 Listing
 -------
 Curve : class
@@ -50,7 +49,6 @@ from directory import solver_directory, problem_directory
 class Curve(object):
     """
     Base class for all curves.
-
     Attributes
     ----------
     x_vals : list of floats
@@ -59,7 +57,6 @@ class Curve(object):
         values of vertical components
     n_points : int
         number of values in x- and y- vectors
-
     Parameters
     ----------
     x_vals : list of floats
@@ -77,12 +74,10 @@ class Curve(object):
     def lookup(self, x):
         """
         Lookup the y-value of the curve at an intermediate x-value.
-
         Parameters
         ----------
         x : float
             x-value at which to lookup the y-value
-
         Returns
         -------
         y : float
@@ -98,12 +93,10 @@ class Curve(object):
     def compute_crossing_time(self, threshold):
         """
         Compute the first time at which a curve drops below a given threshold.
-
         Parameters
         ----------
         threshold : float
             value for which to find first crossing time
-
         Returns
         -------
         crossing_time : float
@@ -122,7 +115,6 @@ class Curve(object):
     def compute_area_under_curve(self):
         """
         Compute the area under a curve.
-
         Returns
         -------
         area : float
@@ -134,12 +126,10 @@ class Curve(object):
     def curve_to_mesh(self, mesh):
         """
         Create a curve defined at equally spaced x values.
-
         Parameters
         ----------
         mesh : list of floats
             list of uniformly spaced x values
-
         Returns
         -------
         mesh_curve : wrapper_base.Curve object
@@ -151,7 +141,6 @@ class Curve(object):
     def curve_to_full_curve(self):
         """
         Create a curve with duplicate x- and y-values to indicate steps.
-
         Returns
         -------
         full_curve : wrapper_base.Curve object
@@ -165,12 +154,10 @@ class Curve(object):
     def plot(self, color_str="C0", curve_type="regular"):
         """
         Plot a curve.
-
         Parameters
         ----------
         color_str : str
             string indicating line color, e.g., "C0", "C1", etc.
-
         Returns
         -------
         handle : list of matplotlib.lines.Line2D objects
@@ -196,12 +183,10 @@ def mean_of_curves(curves):
     """
     Compute pointwise (w.r.t. x values) mean of curves.
     Starting and ending x values must coincide for all curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
-
     Returns
     -------
     mean_curve : wrapper_base.Curve object
@@ -217,14 +202,12 @@ def quantile_of_curves(curves, beta):
     """
     Compute pointwise (w.r.t. x values) quantile of curves.
     Starting and ending x values must coincide for all curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
     beta : float
         quantile level
-
     Returns
     -------
     quantile_curve : wrapper_base.Curve object
@@ -239,14 +222,12 @@ def quantile_of_curves(curves, beta):
 def cdf_of_curves_crossing_times(curves, threshold):
     """
     Compute the cdf of crossing times of curves.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
         collection of curves to aggregate
     threshold : float
         value for which to find first crossing time
-
     Returns
     -------
     cdf_curve : wrapper_base.Curve object
@@ -263,7 +244,6 @@ def cdf_of_curves_crossing_times(curves, threshold):
 def quantile_cross_jump(curves, threshold, beta):
     """
     Compute a simple curve with a jump at the quantile of the crossing times.
-
     Parameters
     ----------
     curves : list of wrapper_base.Curve objects
@@ -272,7 +252,6 @@ def quantile_cross_jump(curves, threshold, beta):
         value for which to find first crossing time
     beta : float
         quantile level
-
     Returns
     -------
     jump_curve : wrapper_base.Curve object
@@ -293,12 +272,10 @@ def quantile_cross_jump(curves, threshold, beta):
 def difference_of_curves(curve1, curve2):
     """
     Compute the difference of two curves (Curve 1 - Curve 2).
-
     Parameters
     ----------
     curve1, curve2 : wrapper_base.Curve objects
         curves to take the difference of
-
     Returns
     -------
     difference_curve : wrapper_base.Curve object
@@ -313,12 +290,10 @@ def difference_of_curves(curve1, curve2):
 def max_difference_of_curves(curve1, curve2):
     """
     Compute the maximum difference of two curves (Curve 1 - Curve 2)
-
     Parameters
     ----------
     curve1, curve2 : wrapper_base.Curve objects
         curves to take the difference of
-
     Returns
     -------
     max_diff : float
@@ -332,7 +307,6 @@ def max_difference_of_curves(curve1, curve2):
 class Experiment(object):
     """
     Base class for running one solver on one problem.
-
     Attributes
     ----------
     solver : base.Solver object
@@ -375,7 +349,6 @@ class Experiment(object):
         one for each macroreplication
     progress_curves : list of wrapper_base.Curve objects
         progress curves, one for each macroreplication
-
     Arguments
     ---------
     solver_name : str
@@ -412,7 +385,6 @@ class Experiment(object):
     def check_compatibility(self):
         """
         Check whether the experiment's solver and problem are compatible.
-
         Returns
         -------
         error_str : str
@@ -441,7 +413,6 @@ class Experiment(object):
     def run(self, n_macroreps):
         """
         Run n_macroreps of the solver on the problem.
-
         Arguments
         ---------
         n_macroreps : int
@@ -503,7 +474,6 @@ class Experiment(object):
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """
         Run postreplications at solutions recommended by the solver.
-
         Arguments
         ---------
         n_postreps : int
@@ -572,14 +542,12 @@ class Experiment(object):
         """
         Generate a bootstrap sample of estimated objective curves or estimated
         progress curves.
-
         Parameters
         ----------
         bootstrap_rng : MRG32k3a object
             random number generator to use for bootstrapping
         normalize : Boolean
             normalize progress curves w.r.t. optimality gaps?
-
         Returns
         -------
         bootstrap_curves : list of wrapper_base.Curve objects
@@ -743,7 +711,6 @@ class Experiment(object):
 def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """
     Trim solutions recommended by solver after problem's max budget.
-
     Arguments
     ---------
     problem : base.Problem object
@@ -770,12 +737,10 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
 def read_experiment_results(file_name_path):
     """
     Read in wrapper_base.Experiment object from .pickle file.
-
     Arguments
     ---------
     file_name_path : string
         path of .pickle file for reading wrapper_base.Experiment object
-
     Returns
     -------
     experiment : wrapper_base.Experiment object
@@ -790,7 +755,6 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     """
     Construct objective curves and (normalized) progress curves
     for a collection of experiments on a given problem.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -929,7 +893,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
     """
     Generate bootstrap samples of estimated progress curves (normalized
     and unnormalized) from a set of experiments.
-
     Arguments
     ---------
     experiments : list of list of wrapper_base.Experiment objects
@@ -938,7 +901,6 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
         random number generator to use for bootstrapping
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
-
     Returns
     -------
     bootstrap_curves : list of list of list of wrapper_base.Curve objects
@@ -988,7 +950,6 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
         main estimator, e.g., mean convergence curve from an experiment
     normalize : bool
         normalize progress curves w.r.t. optimality gaps?
-
     Returns
     -------
     bs_CI_lower_bounds, bs_CI_upper_bounds = floats or wrapper_base.Curve objects
@@ -1031,7 +992,6 @@ def bootstrap_procedure(experiments, n_bootstraps, plot_type, beta=None, solve_t
 def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
     """
     Compute a functional of the bootstrapped objective/progress curves.
-
     Parameters
     ----------
     bootstrap_curves : list of list of list of wrapper_base.Curve objects
@@ -1053,7 +1013,6 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
         quantile to plot, e.g., beta quantile
     solve_tol : float in (0,1]
         relative optimality gap definining when a problem is solved
-
     Returns
     -------
     functional : list
@@ -1102,7 +1061,6 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
 def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, overall_estimator=None):
     """
     Construct a bootstrap confidence interval for an estimator.
-
     Parameters
     ----------
     observations : list
@@ -1114,7 +1072,6 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
     overall estimator : float
         estimator to compute bootstrap confidence interval of
         (required for bias corrected CI)
-
     Returns
     -------
     bs_CI_lower_bound : float
@@ -1144,7 +1101,6 @@ def compute_bootstrap_CI(observations, conf_level=0.95, bias_correction=True, ov
 def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
     """
     Plot bootstrap confidence intervals.
-
     Parameters
     ----------
     bs_CI_lower_bounds, bs_CI_upper_bounds : wrapper_base.Curve objects
@@ -1167,7 +1123,6 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
 def report_max_halfwidth(curve_pairs, normalize):
     """
     Compute and print caption for max halfwidth of one or more bootstrap CI curves
-
     Parameters
     ----------
     curve_pairs : list of list of wrapper_base.Curve objects
@@ -1199,7 +1154,6 @@ def report_max_halfwidth(curve_pairs, normalize):
 def check_common_problem_and_reference(experiments):
     """
     Check if a collection of experiments have the same problem, x0, and x*.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -1219,7 +1173,6 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     """
     Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
-
     Parameters
     ----------
     experiments : list of wrapper_base.Experiment objects
@@ -1242,6 +1195,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     """
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
+    file_list = []
     # Set up plot.
     n_experiments = len(experiments)
     if all_in_one:
@@ -1301,12 +1255,13 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize)
-        save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type=plot_type,
                   normalize=normalize
-                  )
+                  )]
     else:  # Plot separately.
+        
         for experiment in experiments:
             setup_plot(plot_type=plot_type,
                        solver_name=experiment.solver.name,
@@ -1351,17 +1306,17 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=normalize)
-            save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name=experiment.problem.name,
                       plot_type=plot_type,
                       normalize=normalize
-                      )
+                      ))
+    return file_list
 
 
 def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True):
     """
     Plot the solvability cdf for one or more solvers on a single problem.
-
     Arguments
     ---------
     experiments : list of wrapper_base.Experiment objects
@@ -1376,6 +1331,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         print caption with max half-width
     """
     # Check if problems are the same with the same x0 and x*.
+    file_list = []
     check_common_problem_and_reference(experiments)
     # Set up plot.
     n_experiments = len(experiments)
@@ -1411,12 +1367,12 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
-        save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type="solve_time_cdf",
                   normalize=True,
                   extra=solve_tol
-                  )
+                  )]
     else:  # Plot separately.
         for experiment in experiments:
             setup_plot(plot_type="solve_time_cdf",
@@ -1438,19 +1394,19 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True)
-            save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name=experiment.problem.name,
                       plot_type="solve_time_cdf",
                       normalize=True,
                       extra=solve_tol
-                      )
+                      ))
+    return file_list          
 
 
 def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True):
     """
     Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
-
     Parameters
     ----------
     experiments : list of list of wrapper_base.Experiment objects
@@ -1515,12 +1471,13 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
-        save_plot(solver_name="SOLVER SET",
+        return [save_plot(solver_name="SOLVER SET",
                   problem_name="PROBLEM SET",
                   plot_type="area_scatterplot",
                   normalize=True
-                  )
+                  )]
     else:
+        file_list = []
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
             setup_plot(plot_type="area",
@@ -1563,17 +1520,17 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                                           )
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
-            save_plot(solver_name=experiment.solver.name,
+            file_list.append(save_plot(solver_name=experiment.solver.name,
                       problem_name="PROBLEM SET",
                       plot_type="area_scatterplot",
                       normalize=True
-                      )
+                      ))
+    return file_list          
 
 
 def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
     """
     Plot the (difference of) solvability profiles for each solver on a set of problems.
-
     Parameters
     ----------
     experiments : list of list of wrapper_base.Experiment objects
@@ -1663,21 +1620,22 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
 
         if plot_type == "cdf_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
-            save_plot(solver_name="SOLVER SET",
+            return [save_plot(solver_name="SOLVER SET",
                       problem_name="PROBLEM SET",
                       plot_type=plot_type,
                       normalize=True,
                       extra=solve_tol
-                      )
+                      )]
         elif plot_type == "quantile_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
-            save_plot(solver_name="SOLVER SET",
+            return [save_plot(solver_name="SOLVER SET",
                       problem_name="PROBLEM SET",
                       plot_type=plot_type,
                       normalize=True,
                       extra=[solve_tol, beta]
-                      )
+                      )]
         elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+            print(solver_names)
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
@@ -1701,20 +1659,21 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
             plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
             if plot_type == "diff_cdf_solvability":
-                save_plot(solver_name="SOLVER SET",
+                return [save_plot(solver_name="SOLVER SET",
                           problem_name="PROBLEM SET",
                           plot_type=plot_type,
                           normalize=True,
                           extra=solve_tol
-                          )
+                          )]
             elif plot_type == "diff_quantile_solvability":
-                save_plot(solver_name="SOLVER SET",
+                return [save_plot(solver_name="SOLVER SET",
                           problem_name="PROBLEM SET",
                           plot_type=plot_type,
                           normalize=True,
                           extra=[solve_tol, beta]
-                          )
+                          )]
     else:
+        file_list = []
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         for solver_idx in range(n_solvers):
@@ -1734,18 +1693,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 # Set up plot.
                 if plot_type == "cdf_solvability":
-                    setup_plot(plot_type=plot_type,
+                    file_list.append(setup_plot(plot_type=plot_type,
                                solver_name=experiments[solver_idx][0].solver.name,
                                problem_name="PROBLEM SET",
                                solve_tol=solve_tol
-                               )
+                               ))
                 elif plot_type == "quantile_solvability":
-                    setup_plot(plot_type=plot_type,
+                    file_list.append(setup_plot(plot_type=plot_type,
                                solver_name=experiments[solver_idx][0].solver.name,
                                problem_name="PROBLEM SET",
                                beta=beta,
                                solve_tol=solve_tol
-                               )
+                               ))
                 handle = solver_curve.plot()
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
@@ -1759,37 +1718,37 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                                                          )
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if plot_type == "cdf_solvability":
-                    save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                    file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                               problem_name="PROBLEM SET",
                               plot_type=plot_type,
                               normalize=True,
                               extra=solve_tol
-                              )
+                              ))
                 elif plot_type == "quantile_solvability":
-                    save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                    file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                               problem_name="PROBLEM SET",
                               plot_type=plot_type,
                               normalize=True,
                               extra=[solve_tol, beta]
-                              )
+                              ))
         if plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
                     if plot_type == "diff_cdf_solvability":
-                        setup_plot(plot_type=plot_type,
+                        file_list.append(setup_plot(plot_type=plot_type,
                                    solver_name=experiments[solver_idx][0].solver.name,
                                    problem_name="PROBLEM SET",
                                    solve_tol=solve_tol
-                                   )
+                                   ))
                     elif plot_type == "diff_quantile_solvability":
-                        setup_plot(plot_type=plot_type,
+                        file_list.append(setup_plot(plot_type=plot_type,
                                    solver_name=experiments[solver_idx][0].solver.name,
                                    problem_name="PROBLEM SET",
                                    beta=beta,
                                    solve_tol=solve_tol
-                                   )
+                                   ))
                     diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
                     handle = diff_solver_curve.plot()
                     if plot_CIs:
@@ -1804,25 +1763,25 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                                                              )
                         plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                     if plot_type == "diff_cdf_solvability":
-                        save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                        file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                   problem_name="PROBLEM SET",
                                   plot_type=plot_type,
                                   normalize=True,
                                   extra=solve_tol
-                                  )
+                                  ))
                     elif plot_type == "diff_quantile_solvability":
-                        save_plot(solver_name=experiments[solver_idx][0].solver.name,
+                        file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                   problem_name="PROBLEM SET",
                                   plot_type=plot_type,
                                   normalize=True,
                                   extra=[solve_tol, beta]
-                                  )
+                                  ))
+    return file_list          
 
 
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
     """
     Create new figure. Add labels to plot and reformat axes.
-
     Parameters
     ----------
     plot_type : string
@@ -1908,7 +1867,6 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     """
     Create new figure. Add labels to plot and reformat axes.
-
     Arguments
     ---------
     solver_name : string
@@ -1958,12 +1916,12 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     path_name = path_name.replace("$", "")
     path_name = path_name.replace(" ", "_")
     plt.savefig(path_name, bbox_inches="tight")
+    return path_name
 
 
 class MetaExperiment(object):
     """
     Base class for running one or more solver on one or more problem.
-
     Attributes
     ----------
     solver_names : list of strings
@@ -1988,7 +1946,6 @@ class MetaExperiment(object):
             inner key is factor name
     experiments : list of list of Experiment objects
         all problem-solver pairs
-
     Arguments
     ---------
     solver_names : list of strings
@@ -2073,7 +2030,6 @@ class MetaExperiment(object):
     def run(self, n_macroreps):
         """
         Run n_macroreps of each solver on each problem.
-
         Arguments
         ---------
         n_macroreps : int
@@ -2093,7 +2049,6 @@ class MetaExperiment(object):
         """
         For each problem-solver pair, run postreplications at solutions
         recommended by the solver on each macroreplication.
-
         Arguments
         ---------
         n_postreps : int
