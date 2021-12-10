@@ -70,7 +70,7 @@ class Experiment_Window(tk.Tk):
     add where plots are saved to
 
     10/29
-    meta experiment - post normalize with post replicate
+    meta experiment - postnormalize with post replicate
     one button for both
     no ref_solver for any but the last two
     edit add button
@@ -199,7 +199,7 @@ class Experiment_Window(tk.Tk):
         
 
         self.post_normal_all_button = ttk.Button(master=self.master,
-                                                text = "Post Normalize Selected",
+                                                text = "Postnormalize Selected Experiments",
                                                 width = 20,
                                                 state = "normal",
                                                 command = self.post_normal_all_function)
@@ -252,7 +252,7 @@ class Experiment_Window(tk.Tk):
             label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
 
         self.tab_two = tk.Frame(master=self.notebook)
-        self.notebook.add(self.tab_two, text="Queue of Meta Experiments")
+        self.notebook.add(self.tab_two, text="Queue of MetaExperiments")
         self.tab_two.grid_rowconfigure(0)
         self.heading_list = ["Problems", "Solvers", "Macroreps", "", "", "", "",""]
 
@@ -262,7 +262,7 @@ class Experiment_Window(tk.Tk):
             label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
 
         self.tab_three = tk.Frame(master=self.notebook)
-        self.notebook.add(self.tab_three, text="Post Normalize by Problem")
+        self.notebook.add(self.tab_three, text="Postnormalize by Problem")
         self.tab_three.grid_rowconfigure(0)
         self.heading_list = ["Problem", "Solvers", "Select", "", "", "", "",""]
 
@@ -273,7 +273,7 @@ class Experiment_Window(tk.Tk):
 
         def on_tab_change(event):
             tab = event.widget.tab('current')['text']
-            if tab == 'Post Normalize by Problem':
+            if tab == 'Postnormalize by Problem':
                 self.post_norm_setup()
                 self.post_normal_all_button.place(x=5,rely=.95)
             else:
@@ -978,7 +978,7 @@ class Experiment_Window(tk.Tk):
                     self.clear_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Post Process",
+                                                        text="Postprocess",
                                                         command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
@@ -1267,7 +1267,7 @@ class Experiment_Window(tk.Tk):
                     self.clear_button_added.grid(row=self.count_experiment_queue, column=6, sticky='nsew', padx=5, pady=3)
 
                     self.postprocess_button_added = ttk.Button(master=self.tab_one,
-                                                        text="Post Process",
+                                                        text="Postprocess",
                                                         command= partial(self.post_rep_function, self.count_experiment_queue),
                                                         state = "disabled")
                     self.postprocess_button_added.grid(row=self.count_experiment_queue, column=7, sticky='nsew', padx=5, pady=3)
@@ -1339,20 +1339,20 @@ class Experiment_Window(tk.Tk):
         # calls postprocessing window
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("600x400")
-        self.postrep_window.title("Post Processing Page")
+        self.postrep_window.title("Postprocessing Page")
         self.app = Post_Processing_Window(self.postrep_window, self.my_experiment, self.selected, self)
 
     def post_process_disable_button(self, meta=False):
         if meta:
             row_index = self.post_rep_function_row_index - 1
-            self.widget_meta_list[row_index][5]["text"] = "Post Processed & Normalized"
+            self.widget_meta_list[row_index][5]["text"] = "Postprocessed & Postnormalized"
             self.widget_meta_list[row_index][5]["state"] = "disabled"
             self.widget_meta_list[row_index][6]["state"] = "normal"
             # self.normalize_button_added["state"] = "normal"
         else:
             row_index = self.post_rep_function_row_index - 1
             self.experiment_object_list[row_index].post_norm_ready = True
-            self.widget_list[row_index][6]["text"] = "Post Processing Complete"
+            self.widget_list[row_index][6]["text"] = "Postprocessing Complete"
             self.widget_list[row_index][6]["state"] = "disabled"
             # self.widget_list[row_index][7]["state"] = "normal"
     
@@ -1411,7 +1411,7 @@ class Experiment_Window(tk.Tk):
         self.clear_button_added.grid(row=row_num, column=4, sticky='nsew', padx=5, pady=3)
 
         self.postprocess_button_added = ttk.Button(master=self.tab_two,
-                                            text="Post Process",
+                                            text="Postprocess",
                                             command = partial(self.post_rep_meta_function,row_num),
                                             state = "disabled")
         self.postprocess_button_added.grid(row=row_num, column=5, sticky='nsew', padx=5, pady=3)
@@ -1445,7 +1445,7 @@ class Experiment_Window(tk.Tk):
 
         self.postrep_window = tk.Toplevel()
         self.postrep_window.geometry("800x800")
-        self.postrep_window.title("Post Normalizing Page")
+        self.postrep_window.title("Postnormalizing Page")
         # self.master.destroy()
         # Plot_Window(self.postrep_window, self.my_experiment.experiments[0], self, True, self.meta_experiment_master_list[row_index])
         Plot_Window(self.postrep_window, exps, self)
@@ -1474,7 +1474,7 @@ class Experiment_Window(tk.Tk):
         # calls postprocessing window
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("700x600")
-        self.postrep_window.title("Post Processing Page")
+        self.postrep_window.title("Postprocessing Page")
         self.app = Post_Processing_Window(self.postrep_window, self.selected, self.selected, self, True)
 
     def progress_bar_test(self):
@@ -1543,7 +1543,7 @@ class Experiment_Window(tk.Tk):
     def post_normal_all_function(self):
         self.postrep_window = tk.Toplevel()
         self.postrep_window.geometry("800x600")
-        self.postrep_window.title("Post Normalzing Page")
+        self.postrep_window.title("Postnormalzing Page")
         self.app = Post_Normal_Window(self.postrep_window, self.post_norm_exp_list, self)
         # wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
     
@@ -1717,7 +1717,7 @@ class Cross_Design_Window():
 
 class Post_Processing_Window():
     """
-    Post Processing Page of the GUI
+    Postprocessing Page of the GUI
 
     Arguments
     ----------
@@ -1789,12 +1789,12 @@ class Post_Processing_Window():
         self.crn_norm_across_macroreps_menu = ttk.OptionMenu(self.master, self.crn_norm_across_macroreps_var, "True", *self.crn_across_macroreps_list)
 
         self.n_norm_label = tk.Label(master = self.master,
-                                    text = "Post Normalize Parameters",
+                                    text = "Postnormalize Parameters",
                                     font = "Calibri 14 bold",
                                     wraplength = "250")
         
         self.n_proc_label = tk.Label(master = self.master,
-                                    text = "Post Process Parameters",
+                                    text = "Postprocess Parameters",
                                     font = "Calibri 14 bold",
                                     wraplength = "250")
 
@@ -1820,7 +1820,7 @@ class Post_Processing_Window():
 
         self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
-                        text = "Post Process", 
+                        text = "Postprocess", 
                         width = 15, # width of button
                         command = self.post_processing_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
 
@@ -1954,7 +1954,7 @@ class Post_Processing_Window():
 
 class Post_Normal_Window():
     """
-    Post Normalize Page of the GUI
+    Postnormalization Page of the GUI
 
     Arguments
     ----------
@@ -2066,7 +2066,7 @@ class Post_Normal_Window():
 
         self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
-                        text = "Post Normalize", 
+                        text = "Postnormalize", 
                         width = 15, # width of button
                         command = self.post_norm_run_function) # if command=function(), it will only work once, so cannot call function, only specify which one, activated by left mouse click
 
@@ -2117,7 +2117,7 @@ class Post_Normal_Window():
 
             self.postrep_window = tk.Toplevel()
             self.postrep_window.geometry("1000x800")
-            self.postrep_window.title("Post Processing Page")
+            self.postrep_window.title("Postprocessing Page")
             self.master.destroy()
             Plot_Window(self.postrep_window, self.post_norm_exp_list, self.main_window)
 
