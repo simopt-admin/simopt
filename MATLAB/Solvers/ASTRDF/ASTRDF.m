@@ -984,7 +984,7 @@ function [y, grad,hess,Xvec,xstar] = Model_Approximation(x, lin_quad, qcoef, ret
 
     if return_optimal==true
         if rcond(hess)>.001
-            xstar=hess\(-1*beta); %the unconstrained optimal (set grad==0)
+            xstar=hess(-1*beta); %the unconstrained optimal (set grad==0)
             xstar=xstar';
         else
             xstar=[];

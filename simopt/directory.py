@@ -2,24 +2,24 @@
 """
 Summary
 -------
-Provide dictionary directories listing solvers, problems, and oracles.
+Provide dictionary directories listing solvers, problems, and models.
 
 Listing
 -------
 solver_directory : dictionary
 problem_directory : dictionary
-oracle_directory : dictionary
+model_directory : dictionary
 """
 # import solvers
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.simannealing import SANE
-# import oracles and problems
-from oracles.cntnv import CntNV, CntNVMaxProfit
-from oracles.mm1queue import MM1Queue, MM1MinMeanSojournTime
-from oracles.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
-from oracles.rmitd import RMITD, RMITDMaxRevenue
-from oracles.sscont import SSCont, SSContMinCost
+# import models and problems
+from models.cntnv import CntNV, CntNVMaxProfit
+from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
+from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
+from models.rmitd import RMITD, RMITDMaxRevenue
+from models.sscont import SSCont, SSContMinCost
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -34,7 +34,7 @@ problem_directory = {
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost
 }
-oracle_directory = {
+model_directory = {
     "CNTNEWS": CntNV,
     "MM1": MM1Queue,
     "FACSIZE": FacilitySize,
