@@ -153,6 +153,7 @@ class STRONG(Solver):
         new_solution = self.create_new_solution(new_x, problem)
         problem.simulate(new_solution, r)
         expended_budget += r
+        best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
@@ -208,15 +209,23 @@ class STRONG(Solver):
                     # The center point moves to the new solution and the trust region remains
                     new_solution = candidate_solution
                     new_x = candidate_x
-                    recommended_solns.append(candidate_solution)
-                    intermediate_budgets.append(expended_budget)
+                    # Update incumbent best solution
+                    if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean):
+                        best_solution = new_solution
+                        recommended_solns.append(new_solution)
+                        intermediate_budgets.append(expended_budget)
                 else:
                     # The center point moves to the new solution and the trust region enlarges
                     delta_T = gamma_2*delta_T
                     new_solution = candidate_solution
                     new_x = candidate_x
-                    recommended_solns.append(candidate_solution)
-                    intermediate_budgets.append(expended_budget)
+                    # Update incumbent best solution
+                    if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean):
+                        best_solution = new_solution
+                        recommended_solns.append(new_solution)
+                        intermediate_budgets.append(expended_budget)
                 r = int(np.ceil(1.01 * r))
             # Stage II 
             # When trust region size is very small, use the quadratic design
@@ -317,21 +326,33 @@ class STRONG(Solver):
                         sub_counter = sub_counter + 1
                     new_solution = result_solution
                     new_x = result_x
-                    recommended_solns.append(result_solution)
-                    intermediate_budgets.append(expended_budget)
+                    # Update incumbent best solution
+                    if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean):
+                        best_solution = new_solution
+                        recommended_solns.append(new_solution)
+                        intermediate_budgets.append(expended_budget)
                 elif (eta_0 <= rho) & (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains
                     new_solution = candidate_solution
                     new_x = candidate_x
-                    recommended_solns.append(candidate_solution)
-                    intermediate_budgets.append(expended_budget)
+                    # Update incumbent best solution
+                    if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean):
+                        best_solution = new_solution
+                        recommended_solns.append(new_solution)
+                        intermediate_budgets.append(expended_budget)
                 else:
                     # The center point moves to the new solution and the trust region enlarges
                     delta_T = gamma_2*delta_T
                     new_solution = candidate_solution
                     new_x = candidate_x
-                    recommended_solns.append(candidate_solution)
-                    intermediate_budgets.append(expended_budget)
+                    # Update incumbent best solution
+                    if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean):
+                        best_solution = new_solution
+                        recommended_solns.append(new_solution)
+                        intermediate_budgets.append(expended_budget)
                 r = int(np.ceil(1.01 * r))
 
         return recommended_solns, intermediate_budgets
