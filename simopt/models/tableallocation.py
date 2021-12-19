@@ -168,7 +168,6 @@ class TableAllocation(Model):
                 Fraction of customer arrivals that are seated.
 
         """
-        print(self.factors["num_tables"])
         # Generate total number of arrivals in the period
         total_arrivals = np.random.poisson(round(self.factors["n_hour"]*sum(self.factors["lambda"])))
         # Generate arrival times in minutes
@@ -196,10 +195,10 @@ class TableAllocation(Model):
                     group_size = group_size + 1
             # Find smallest available table
             i = 0
-            min_table_type = self.factors["num_tables"][i]
-            while group_size > self.factors["num_tables"][i]:
-                min_table_type = self.factors["num_tables"][i+1]
+            min_table_type = self.factors["table_cap"][i]
+            while group_size > self.factors["table_cap"][i]:
                 i = i + 1
+                min_table_type = self.factors["table_cap"][i]
             # Find available table
             for k in range(i,len(self.factors["num_tables"])):
                 for j in range(self.factors["num_tables"][k]):
@@ -216,6 +215,7 @@ class TableAllocation(Model):
                 # Update revenue
                 total_rev = total_rev + self.factors["table_revenue"][group_size - 1]
         # Calculate responses from simulation data.
+        
         responses = {"total_revenue": total_rev,
                     "service_rate": sum(found)/len(found)
                      }
@@ -473,9 +473,14 @@ class TableAllocationMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        cap = self.model_fixed_factors["capacity"]/4
-        num_tables = []
-        for i in range(4):
-            num_tables.append(int(cap/self.model_fixed_factors["table_cap"][i]))
-        x = (num_tables,)
-        return x
+        allocated = 0
+        num_tables = [0,0,0,0]
+        while allocated < self.model_fixed_factors["capacity"]:
+            table = int(np.random.uniform(0,4))
+            if self.model_fixed_factors["table_cap"][table] <= (self.model_fixed_factors["capacity"] - allocated):
+              num_tables[table] = num_tables[table] + 1
+              allocated = allocated + self.model_fixed_factors["table_cap"][table]
+            elif self.model_fixed_factors["table_cap"][0] > (self.model_fixed_factors["capacity"] - allocated):
+              break
+
+        return (num_tables,)
