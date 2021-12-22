@@ -120,24 +120,79 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 0.5
             },
-            "kappa": {
-                "description": "adaptive sampling constant in outer/inner loop",
+            "kappa_inner": {
+                "description": "adaptive sampling constant in inner loop",
                 "datatype": float,
                 "default": 100
+            },
+            "kappa_outer": {
+                "description": "adaptive sampling constant in inner loop",
+                "datatype": float,
+                "default": 100
+            },
+            "solver_select": {
+                "description": "Use Cauchy point or the built-in search engine? True: Cauchy point, False: the built-in search engine",
+                "datatype": bool,
+                "default": False
             }
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_sample_size
+            "delta_max": self.check_delta_max,
+            "eta_1": self.check_eta_1,
+            "eta_2": self.check_eta_2,
+            "gamma_0": self.check_gamma_0,
+            "gamma_1": self.check_gamma_1,
+            "gamma_2": self.check_gamma_2,
+            "w": self.check_w,
+            "beta": self.check_beta,
+            "mu": self.check_mu,
+            "c_lambda": self.check_c_lambda,
+            "epsilon_lambda": self.check_epsilon_lambda,
+            "kappa_inner": self.check_kappa_inner,
+            "kappa_outer": self.check_kappa_outer
         }
         super().__init__(fixed_factors)
 
-    def check_sample_size(self):
-        return self.factors["sample_size"] > 0
-    '''
-    def check_solver_factors(self):
-        pass
-    '''
+    def check_delta_max(self):
+        return self.factors["delta_max"] > 0
+
+    def check_eta_1(self):
+        return self.factors["eta_1"] > 0
+
+    def check_eta_2(self):
+        return self.factors["eta_2"] > self.factors["eta_1"]
+
+    def check_gamma_0(self):
+        return self.factors["gamma_0"] > 0
+
+    def check_gamma_1(self):
+        return self.factors["gamma_1"] > 1
+
+    def check_gamma_2(self):
+        return self.factors["gamma_2"] < 1
+
+    def check_w(self):
+        return (self.factors["w"] < 1 and self.factors["w"] > 0)
+
+    def check_beta(self):
+        return (self.factors["beta"] < self.factors['mu'] and self.factors["beta"] > 0)
+
+    def check_mu(self):
+        return self.factors["beta"] > 0
+
+    def check_c_lambda(self):
+        return self.factors["c_lambda"] > 0
+
+    def check_epsilon_lambda(self):
+        return self.factors["epsilon_lambda"] > 0
+
+    def check_kappa_inner(self):
+        return self.factors["kappa_inner"] > 0
+
+    def check_kappa_outer(self):
+        return self.factors["kappa_outer"] > 0
+
     def standard_basis(self, size, index):
         arr = np.zeros(size)
         arr[index] = 1.0
@@ -149,13 +204,16 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    def samplesize(self, k, sig2, delta):
+    def samplesize(self, k, sig2, delta, io):
         c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
-        kappa = self.factors["kappa"]
+        if io == 1: #inner:
+            kappa = self.factors["kappa_inner"]
+        else: #outer
+            kappa = self.factors["kappa_outer"]
         lambda_k = (10 + c_lambda) * math.log(k, 10) ** (1 + epsilon_lambda)
         # compute sample size
-        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
         return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
@@ -173,7 +231,7 @@ class ASTRODF(Solver):
             # construct the interpolation set
             Y = self.interpolation_points(x_k, delta_k, problem)
             for i in range(2 * d + 1):
-                new_solution = self.create_new_solution(Y[i][0], problem)
+                new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
 
                 # check if there is existing result
                 problem.simulate(new_solution, 1)
@@ -186,7 +244,7 @@ class ASTRODF(Solver):
                     expended_budget += 1
                     sample_size += 1
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.samplesize(k, sig2, delta_k):
+                    if sample_size >= self.samplesize(k, sig2, delta_k, 1):
                         break
                 fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                 interpolation_solns.append(new_solution)
@@ -253,12 +311,13 @@ class ASTRODF(Solver):
         eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
+        solver_select = self.factors["solver_select"]
 
         k = 0  # iteration number
 
         # Start with the initial solution
         new_x = problem.factors["initial_solution"]
-        new_solution = self.create_new_solution(new_x, problem)
+        new_solution = self.create_new_solution(tuple(new_x), problem)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
@@ -266,26 +325,25 @@ class ASTRODF(Solver):
             k += 1
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta, k, problem, expended_budget)
 
-            '''
-            # Cauchy reduction
-            if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
-                tau = 1
+            if solver_select == True:
+                # Cauchy reduction
+                if np.dot(np.multiply(grad, Hessian), grad) <= 0:
+                    tau = 1
+                else:
+                    tau = min(1, norm(grad) ** 3 / (delta * np.dot(np.multiply(grad, Hessian), grad)))
+                grad = np.reshape(grad, (1, problem.dim))[0]
+                candidate_x = new_x - tau * delta * grad / norm(grad)
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
             else:
-                tau = min(1, norm(grad) ** 3 / (delta * np.matmul(np.matmul(grad, Hessian), grad)))
-            grad = np.reshape(grad, (1, problem.dim))[0]
-            candidate_x = new_x - tau * delta * grad / norm(grad)
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-            '''
+                # Search engine - solve subproblem
+                def subproblem(s):
+                    return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
 
-            # Search engine - solve subproblem
-            def subproblem(s):
-                return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
-
-            con_f = lambda s: norm(s)
-            nlc = NonlinearConstraint(con_f, 0, delta_k)
-            solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
-            candidate_x = new_x + solve_subproblem.x
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+                con_f = lambda s: norm(s)
+                nlc = NonlinearConstraint(con_f, 0, delta_k)
+                solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
+                candidate_x = new_x + solve_subproblem.x
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # adaptive sampling needed
             problem.simulate(candidate_solution, 1)
@@ -298,7 +356,7 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig2, delta_k):
+                if sample_size >= self.samplesize(k, sig2, delta_k, 0):
                     break
 
             # calculate success ratio
@@ -356,18 +414,18 @@ class ASTRODF(Solver):
         delta_max = self.factors["delta_max"]
         gamma_0 = self.factors["gamma_0"]
         delta_candidate = [gamma_0 * 0.1 * delta_max, 0.1 * delta_max, 0.1 * delta_max / gamma_0]
-        #print(delta_candidate)
 
         # default values
         eta_1 = self.factors["eta_1"]
         eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
+        solver_select = self.factors["solver_select"]
         k = 0  # iteration number
 
         # Start with the initial solution
         new_x = problem.factors["initial_solution"]
-        new_solution = self.create_new_solution(new_x, problem)
+        new_solution = self.create_new_solution(tuple(new_x), problem)
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
@@ -394,24 +452,23 @@ class ASTRODF(Solver):
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta, k, problem,
                                                                                           expended_budget)
 
-            '''
-            # Cauchy reduction
-            if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
-                tau = 1
+            if solver_select == True:
+                # Cauchy reduction
+                if np.dot(np.multiply(grad, Hessian), grad) <= 0:
+                    tau = 1
+                else:
+                    tau = min(1, norm(grad) ** 3 / (delta * np.dot(np.multiply(grad, Hessian), grad)))
+                grad = np.reshape(grad, (1, problem.dim))[0]
+                candidate_x = new_x - tau * delta * grad / norm(grad)
             else:
-                tau = min(1, norm(grad) ** 3 / (delta * np.matmul(np.matmul(grad, Hessian), grad)))
-            grad = np.reshape(grad, (1, problem.dim))[0]
-            candidate_x = new_x - tau * delta * grad / norm(grad)
-            '''
+                # Search engine - solve subproblem
+                def subproblem(s):
+                    return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
 
-            # Search engine - solve subproblem
-            def subproblem(s):
-                return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
-
-            con_f = lambda s: norm(s)
-            nlc = NonlinearConstraint(con_f, 0, delta_k)
-            solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
-            candidate_x = new_x + solve_subproblem.x
+                con_f = lambda s: norm(s)
+                nlc = NonlinearConstraint(con_f, 0, delta_k)
+                solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
+                candidate_x = new_x + solve_subproblem.x
 
             for i in range(problem.dim):
                 if candidate_x[i] < problem.lower_bounds[i]:
@@ -432,7 +489,7 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(k, sig2, delta_k):
+                if sample_size >= self.samplesize(k, sig2, delta_k, 0):
                     break
 
             # calculate success ratio
