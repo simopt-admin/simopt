@@ -23,6 +23,7 @@ from models.sscont import SSCont, SSContMinCost
 from models.ironore import IronOre, IronOreMaxRev
 from models.dynamnews import DynamNews, DynamNewsMaxProfit
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
+from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -38,7 +39,9 @@ problem_directory = {
     "SSCONT-1": SSContMinCost,
     "IRONORE-1": IronOreMaxRev,
     "DYNAMNEWS-1": DynamNewsMaxProfit,
-    "DUALSOURCING-1": DualSourcingMinCost
+    "DUALSOURCING-1": DualSourcingMinCost,
+    "CONTAM-1": ContaminationTotalCostDisc,
+    "CONTAM-2": ContaminationTotalCostCont
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -48,5 +51,6 @@ model_directory = {
     "SSCONT": SSCont,
     "IRONORE": IronOre,
     "DYNAMNEWS": DynamNews,
-    "DUALSOURCING": DualSourcing
+    "DUALSOURCING": DualSourcing,
+    "CONTAM": Contamination
 }
