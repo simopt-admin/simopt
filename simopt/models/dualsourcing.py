@@ -51,8 +51,6 @@ class DualSourcing(Model):
             Holding cost per unit per period (`flt`)
         ``penalty_cost``
             Penalty cost per unit per period for backlogging(`flt`)
-        ``distribution``
-            Demand distribution (`str`)
         ``st_dev``
             Standard deviation of demand distribution (`flt`)
         ``mu``
@@ -113,11 +111,6 @@ class DualSourcing(Model):
                 "datatype": float,
                 "default": 495.00
             },
-            "distribution": {
-                "description": "Demand distribution.",
-                "datatype": str,
-                "default": "Normal"
-            },
             "st_dev": {
                 "description": "Standard deviation of demand distribution.",
                 "datatype": float,
@@ -148,7 +141,6 @@ class DualSourcing(Model):
             "lead_exp": self.check_lead_exp,
             "holding_cost": self.check_holding_cost,
             "penalty_cost": self.check_penalty_cost,
-            "distribution": self.check_distribution,
             "st_dev": self.check_st_dev,
             "mu": self.check_mu,
             "order_level_reg": self.check_order_level_reg,
@@ -181,9 +173,6 @@ class DualSourcing(Model):
 
     def check_penalty_cost(self):
         return self.factors["penalty_cost"] > 0
-
-    def check_distribution(self):
-        return self.factors["distribution"] in {"Normal", "Uniform", "Exponential"}
 
     def check_st_dev(self):
         return self.factors["st_dev"] > 0
@@ -229,9 +218,8 @@ class DualSourcing(Model):
         orders_exp = np.zeros(self.factors["lead_exp"])
 
         # Generate demand.
-        if self.factors["distribution"] == "Normal":
-            demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
-            #demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors["mu"], scale=self.factors["st_dev"], size=self.factors["n_days"])).astype(int)
+        demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
+        
         # Track total expenses.
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
