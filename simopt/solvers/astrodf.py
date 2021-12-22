@@ -102,12 +102,12 @@ class ASTRODF(Solver):
             },
             "mu": {
                 "description": "trust-region radius ratio upper bound in contraction loop",
-                "datatype": float,
+                "datatype": int,
                 "default": 100
             },
             "beta": {
                 "description": "trust-region radius ratio lower bound in contraction loop",
-                "datatype": float,
+                "datatype": int,
                 "default": 50
             },
             "c_lambda": {
@@ -122,12 +122,12 @@ class ASTRODF(Solver):
             },
             "kappa_inner": {
                 "description": "adaptive sampling constant in inner loop",
-                "datatype": float,
+                "datatype": int,
                 "default": 100
             },
             "kappa_outer": {
-                "description": "adaptive sampling constant in inner loop",
-                "datatype": float,
+                "description": "adaptive sampling constant in outer loop",
+                "datatype": int,
                 "default": 100
             },
             "solver_select": {
@@ -413,7 +413,8 @@ class ASTRODF(Solver):
         expended_budget = 0
         delta_max = self.factors["delta_max"]
         gamma_0 = self.factors["gamma_0"]
-        delta_candidate = [gamma_0 * 0.1 * delta_max, 0.1 * delta_max, 0.1 * delta_max / gamma_0]
+        delta_start = delta_max * 0.5
+        delta_candidate = [gamma_0 * delta_start, delta_start, delta_start / gamma_0]
 
         # default values
         eta_1 = self.factors["eta_1"]

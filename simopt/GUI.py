@@ -252,7 +252,7 @@ class Experiment_Window(tk.Tk):
             label.grid(row=0, column=self.heading_list.index(heading), padx=5, pady=3)
 
         self.tab_two = tk.Frame(master=self.notebook)
-        self.notebook.add(self.tab_two, text="Queue of MetaExperiments")
+        self.notebook.add(self.tab_two, text="Queue of Meta-Experiments")
         self.tab_two.grid_rowconfigure(0)
         self.heading_list = ["Problems", "Solvers", "Macroreps", "", "", "", "",""]
 
@@ -273,7 +273,7 @@ class Experiment_Window(tk.Tk):
 
         def on_tab_change(event):
             tab = event.widget.tab('current')['text']
-            if tab == 'Postnormalize by Problem':
+            if tab == 'Post-Normalize by Problem':
                 self.post_norm_setup()
                 self.post_normal_all_button.place(x=5,rely=.95)
             else:
@@ -1954,7 +1954,7 @@ class Post_Processing_Window():
 
 class Post_Normal_Window():
     """
-    Postnormalization Page of the GUI
+    Post-Normalization Page of the GUI
 
     Arguments
     ----------
