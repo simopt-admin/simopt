@@ -15,32 +15,32 @@ from rng.mrg32k3a import MRG32k3a
 # Import the Solution class.
 from base import Solution
 
-# # Import problem.
-# # Replace <filename> with name of .py file containing problem class.
-# # Replace <problem_class_name> with name of problem class.
-# # Ex: from models.cntnv import CntNVMaxProfit
-# from models.<filename> import <problem_class_name>
+# Import problem.
+# Replace <filename> with name of .py file containing problem class.
+# Replace <problem_class_name> with name of problem class.
+# Ex: from models.cntnv import CntNVMaxProfit
+from models.<filename> import <problem_class_name>
 
-# # Fix factors of problem. Specify a dictionary of factors.
-# # Look at Problem class definition to get names of factors.
-# # Ex: for the CntNVMaxProfit class,
-# #     fixed_factors = {"initial_solution": (2,),
-# #                      "budget": 500}
-# fixed_factors = {}  # Resort to all default values.
+# Fix factors of problem. Specify a dictionary of factors.
+# Look at Problem class definition to get names of factors.
+# Ex: for the CntNVMaxProfit class,
+#     fixed_factors = {"initial_solution": (2,),
+#                      "budget": 500}
+fixed_factors = {}  # Resort to all default values.
 
-# # Initialize an instance of the specified problem class.
-# # Replace <problem_class_name> with name of problem class.
-# # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-# myproblem = <problem_class_name>(fixed_factors=fixed_factors)
+# Initialize an instance of the specified problem class.
+# Replace <problem_class_name> with name of problem class.
+# Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+myproblem = <problem_class_name>(fixed_factors=fixed_factors)
 
-# # Initialize a solution x corresponding to the problem.
-# # Look at the Problem class definition to identify the decision variables.
-# # x will be a tuple consisting of the decision variables.
-# # Ex: for the CntNVMaxProfit class
-# #     x = (3,)
-# x = (,)
-# # The following line does not need to be changed.
-# mysolution = Solution(x, myproblem)
+# Initialize a solution x corresponding to the problem.
+# Look at the Problem class definition to identify the decision variables.
+# x will be a tuple consisting of the decision variables.
+# Ex: for the CntNVMaxProfit class
+#     x = (3,)
+x = (,)
+# The following line does not need to be changed.
+mysolution = Solution(x, myproblem)
 
 # Working example for CntNVMaxProfit problem. (Commented out)
 # -----------------------------------------------
