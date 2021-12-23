@@ -295,14 +295,6 @@ class ContaminationTotalCostDisc(Problem):
         self.lower_bounds = (0,) * self.model.factors["stages"]
         self.upper_bounds = (1,) * self.model.factors["stages"]
 
-    def check_initial_solution(self):
-        if len(self.factors["initial_solution"]) != self.dim:
-            return False
-        elif all(u < 0 or u > 1 for u in self.factors["initial_solution"]):
-            return False
-        else:
-            return True
-
     def check_prev_cost(self):
         if len(self.factors["prev_cost"]) != self.dim:
             return False
@@ -310,9 +302,6 @@ class ContaminationTotalCostDisc(Problem):
             return False
         else:
             return True
-
-    def check_budget(self):
-        return self.factors["budget"] > 0
 
     def check_error_prob(self):
         if len(self.factors["error_prob"]) != self.dim:
@@ -324,14 +313,6 @@ class ContaminationTotalCostDisc(Problem):
 
     def check_upper_thres(self):
         return len(self.factors["upper_thres"]) == self.dim
-
-    def check_simulatable_factors(self):
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
 
     def vector_to_factor_dict(self, vector):
         """

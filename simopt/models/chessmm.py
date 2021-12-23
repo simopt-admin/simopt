@@ -41,8 +41,8 @@ class ChessMatchmaking(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "CHESS"
-        self.n_rngs = 3
-        self.n_responses = 1
+        self.n_rngs = 2
+        self.n_responses = 2
         self.specifications = {
             "elo_mean": {
                 "description": "Mean of normal distribution for Elo rating.",
@@ -52,41 +52,39 @@ class ChessMatchmaking(Model):
             "elo_sd": {
                 "description": "Standard deviation of normal distribution for Elo rating.",
                 "datatype": float,
-                "default": 1200/(np.sqrt(2)*special.erfcinv(1/50))
+                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
             },
             "poisson_rate": {
                 "description": "Rate of Poisson process for player arrivals.",
                 "datatype": float,
                 "default": 1.0
             },
-            "initial_mean": {
-                "description": "Mean of normal distribution for multiple starting solutions.",
-                "datatype": float,
-                "default": 150.0
-            },
-            "initial_sd": {
-                "description": "Standard deviation of normal distribution for multiple starting solutions.",
-                "datatype": float,
-                "default": 50.0
-            },
             "num_players": {
                 "description": "Number of players.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             },
-            "width_decision": {
+            "allowable_diff": {
                 "description": "Maximum allowable difference between Elo ratings.",
-                "datatype": tuple,
-                "default": (150,)
+                "datatype": float,
+                "default": 150.0
             }
         }
         self.check_factor_list = {
+            "elo_mean": self.check_elo_mean,
+            "elo_sd": self.check_elo_sd,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
-            "width_decision": self.check_width_decision
+            "allowable_diff": self.check_allowable_diff
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
+
+    def check_elo_mean(self):
+        return self.factors["elo_mean"] > 0
+
+    def check_elo_sd(self):
+        return self.factors["elo_sd"] > 0
 
     def check_poisson_rate(self):
         return self.factors["poisson_rate"] > 0
@@ -94,8 +92,8 @@ class ChessMatchmaking(Model):
     def check_num_players(self):
         return self.factors["num_players"] > 0
 
-    def check_width_decision(self):
-        return self.factors["width_decision"] > 0
+    def check_allowable_diff(self):
+        return self.factors["allowable_diff"] > 0
 
     def replicate(self, rng_list):
         """
@@ -110,55 +108,54 @@ class ChessMatchmaking(Model):
         -------
         responses : dict
             performance measures of interest
-            "exp_diff" = the average Elo difference between all pairs
-            "exp_wait_time" = the average waiting time
+            "avg_diff" = the average Elo difference between all pairs
+            "avg_wait_time" = the average waiting time
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate separate random number generators.
         elo_rng = rng_list[0]
         arrival_rng = rng_list[1]
-        initial_rng = rng_list[2]
-
+        # Initialize statistics.
+        # Incoming players are initialized with a wait time of 0.
         wait_times = np.zeros(self.factors["num_players"])
         waiting_players = []
-        not_matched = []
         total_diff = 0
         elo_diffs = []
-
-        for i in range(self.factors["num_players"]):
-          player = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
-          while np.any(player < 0) or np.any(player > 2400):
-              player = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
-          time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
-          old_total = total_diff
-          for p in range(len(waiting_players)):
-            if abs(player - waiting_players[p]) <= self.factors["width_decision"]:
-              total_diff += abs(player - waiting_players[p])
-              elo_diffs.append(abs(player - waiting_players[p]))
-              del waiting_players[p]
-              del not_matched[p]
-              break
-            else:
-              wait_times[p] += time
-          if old_total == total_diff:
-            waiting_players.append(player)
-            not_matched.append(i)
-        for i in not_matched:   # unmatched players not included in wait time
-            wait_times[i] = 0
-
+        # Simulate arrival and matching and players.
+        for player in range(self.factors["num_players"]):
+            # Generate interarrival time of the player.
+            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
+            # Generate rating of the player via acceptance/rejection (not truncation).
+            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            while player_rating < 0 or player_rating > 2400:
+                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            # Attempt to match the incoming player with waiting players in FIFO manner.
+            old_total = total_diff
+            for p in range(len(waiting_players)):
+                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                    total_diff += abs(player_rating - waiting_players[p])
+                    elo_diffs.append(abs(player_rating - waiting_players[p]))
+                    del waiting_players[p]
+                    break
+                else:
+                    wait_times[p] += time
+            # If incoming player is not matched, add them to the waiting pool.
+            if old_total == total_diff:
+                waiting_players.append(player_rating)
         # Compose responses and gradients.
-        responses = {
-          'exp_diff': np.mean(elo_diffs),
-          'exp_wait_time': np.mean(wait_times)
-        }
+        responses = {"avg_diff": np.mean(elo_diffs),
+                     "avg_wait_time": np.mean(wait_times)
+                     }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
+
 
 """
 Summary
 -------
-Minimize the average Elo difference between all pairs of matched players.
+Minimize the expected Elo difference between all pairs of matched
+players subject to the expected waiting time being sufficiently small.
 """
 
 
@@ -229,21 +226,21 @@ class ChessAvgDifference(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CHESS", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CHESS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
-        self.n_stochastic_constraints = 0
+        self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0)
-        self.upper_bounds = None
+        self.lower_bounds = (0,)
+        self.upper_bounds = (2400,)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = set("width_decision")
+        self.model_decision_factors = {"allowable_diff"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -258,41 +255,21 @@ class ChessAvgDifference(Problem):
             },
             "upper_time": {
                 "description": "Upper bound on wait time.",
-                "datatype": int,
-                "default": 5
-            }            
+                "datatype": float,
+                "default": 5.0
+            }
         }
-
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "upper_time": self.check_upper_time,
         }
-
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = ChessMatchmaking(self.model_fixed_factors)
 
-    def check_initial_solution(self):
-        if len(self.factors["initial_solution"]) != self.dim:
-            return False
-        else:
-            return True
-
-    def check_budget(self):
-        return self.factors["budget"] > 0
-
     def check_upper_time(self):
-        return len(self.factors["upper_time"]) == self.dim
-
-    def check_simulatable_factors(self):
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
-
+        return self.factors["upper_time"] > 0
 
     def vector_to_factor_dict(self, vector):
         """
@@ -309,7 +286,7 @@ class ChessAvgDifference(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "width_decision": vector[:]
+            "allowable_diff": vector[:]
         }
         return factor_dict
 
@@ -328,7 +305,7 @@ class ChessAvgDifference(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["width_decision"],)
+        vector = (factor_dict["allowable_diff"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -346,7 +323,7 @@ class ChessAvgDifference(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["exp_diff"],)
+        objectives = (response_dict["avg_diff"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -364,7 +341,7 @@ class ChessAvgDifference(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (response_dict["exp_wait_time"],)
+        stoch_constraints = (-1 * response_dict["avg_wait_time"],)
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -383,8 +360,8 @@ class ChessAvgDifference(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (-self.factors["upper_time"],)
-        det_stoch_constraints_gradients = (0) # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints = (self.factors["upper_time"],)
+        det_stoch_constraints_gradients = ((0,),)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
@@ -421,7 +398,7 @@ class ChessAvgDifference(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0)
+        return x >= 0
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -437,5 +414,5 @@ class ChessAvgDifference(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (max(30, rand_sol_rng.normalvariate(150, 50)),)
+        x = (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)
         return x

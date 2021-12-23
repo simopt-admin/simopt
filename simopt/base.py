@@ -315,7 +315,12 @@ class Problem(object):
             return False
 
     def check_initial_solution(self):
-        return self.check_deterministic_constraints(x=self.factors["initial_solution"])
+        if len(self.factors["initial_solution"]) != self.dim:
+            return False
+        elif not self.check_deterministic_constraints(x=self.factors["initial_solution"]):
+            return False
+        else:
+            return True
 
     def check_budget(self):
         return self.factors["budget"] > 0

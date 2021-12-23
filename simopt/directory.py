@@ -24,6 +24,7 @@ from models.ironore import IronOre, IronOreMaxRev
 from models.dynamnews import DynamNews, DynamNewsMaxProfit
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
 from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
+from models.chessmm import ChessMatchmaking, ChessAvgDifference
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -41,7 +42,8 @@ problem_directory = {
     "DYNAMNEWS-1": DynamNewsMaxProfit,
     "DUALSOURCING-1": DualSourcingMinCost,
     "CONTAM-1": ContaminationTotalCostDisc,
-    "CONTAM-2": ContaminationTotalCostCont
+    "CONTAM-2": ContaminationTotalCostCont,
+    "CHESS-1": ChessAvgDifference
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -52,5 +54,6 @@ model_directory = {
     "IRONORE": IronOre,
     "DYNAMNEWS": DynamNews,
     "DUALSOURCING": DualSourcing,
-    "CONTAM": Contamination
+    "CONTAM": Contamination,
+    "CHESS": ChessMatchmaking
 }
