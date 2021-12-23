@@ -413,7 +413,7 @@ class ASTRODF(Solver):
         expended_budget = 0
         delta_max = self.factors["delta_max"]
         gamma_0 = self.factors["gamma_0"]
-        delta_start = delta_max * 0.5
+        delta_start = delta_max * 0.25
         delta_candidate = [gamma_0 * delta_start, delta_start, delta_start / gamma_0]
 
         # default values
