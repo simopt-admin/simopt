@@ -4,6 +4,14 @@ solvers package
 Submodules
 ----------
 
+solvers.astrodf module
+----------------------
+
+.. automodule:: solvers.astrodf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 solvers.randomsearch module
 ---------------------------
 
@@ -16,6 +24,14 @@ solvers.simannealing module
 ---------------------------
 
 .. automodule:: solvers.simannealing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+solvers.strong module
+---------------------
+
+.. automodule:: solvers.strong
    :members:
    :undoc-members:
    :show-inheritance:

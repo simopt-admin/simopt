@@ -4,12 +4,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>rng package &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -17,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="solvers package" href="solvers.html" />
-    <link rel="prev" title="problems package" href="problems.html" /> 
+    <link rel="prev" title="models package" href="models.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -32,7 +33,7 @@
           <a href="solvers.html" title="solvers package"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="problems.html" title="problems package"
+          <a href="models.html" title="models package"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
@@ -45,18 +46,18 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="rng-package">
+  <section id="rng-package">
 <h1>rng package<a class="headerlink" href="#rng-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
+<section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-rng.matmodops">
+</section>
+<section id="module-rng.matmodops">
 <span id="rng-matmodops-module"></span><h2>rng.matmodops module<a class="headerlink" href="#module-rng.matmodops" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="summary">
+<section id="summary">
 <h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
 <p>Useful matrix/modulus operations for mrg32k3a generator.</p>
-</div>
-<div class="section" id="listing">
+</section>
+<section id="listing">
 <h3>Listing<a class="headerlink" href="#listing" title="Permalink to this headline">¶</a></h3>
 <p>mat33_mat31_mult
 mat33_mat33_mult
@@ -65,140 +66,140 @@ mat33_mod
 mat33_mat33_mod
 mat33_power_mod</p>
 <dl class="py function">
-<dt id="rng.matmodops.mat31_mod">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat31_mod</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat31_mod" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat31_mod">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat31_mod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat31_mod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute moduli of a 3x1 matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>b</strong> (<em>list of float</em>) – 3x1 matrix</p></li>
-<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
+<li><p><strong>b</strong> (<em>'list'</em><em> [</em><em>'float'</em><em>]</em>) – 3x1 matrix.</p></li>
+<li><p><strong>m</strong> (<em>'float'</em>) – modulus.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x1 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x1 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of float</p>
+<dd class="field-odd"><p>‘list’ [‘float’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.matmodops.mat33_mat31_mult">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat33_mat31_mult</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat31_mult" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat33_mat31_mult">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat33_mat31_mult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat31_mult" title="Permalink to this definition">¶</a></dt>
 <dd><p>Multiply a 3x3 matrix with a 3x1 matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>b</strong> (<em>list of float</em>) – 3x1 matrix</p></li>
+<li><p><strong>A</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>b</strong> (<em>'list'</em><em> [</em><em>'float'</em><em>]</em>) – 3x1 matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x1 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x1 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of float</p>
+<dd class="field-odd"><p>‘list’ [‘float’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.matmodops.mat33_mat33_mod">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat33_mat33_mod</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat33_mod" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat33_mat33_mod">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat33_mat33_mod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat33_mod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute moduli of a 3x3 matrix x 3x3 matrix product.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>B</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
+<li><p><strong>A</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>B</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>m</strong> (<em>'float'</em>) – modulus.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x3 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x3 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of list of float</p>
+<dd class="field-odd"><p>‘list’ [‘list’ [‘float’]]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.matmodops.mat33_mat33_mult">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat33_mat33_mult</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat33_mult" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat33_mat33_mult">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat33_mat33_mult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mat33_mult" title="Permalink to this definition">¶</a></dt>
 <dd><p>Multiply a 3x3 matrix with a 3x3 matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>B</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
+<li><p><strong>A</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>B</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x3 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x3 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of float</p>
+<dd class="field-odd"><p>‘list’ [‘float’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.matmodops.mat33_mod">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat33_mod</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mod" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat33_mod">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat33_mod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_mod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute moduli of a 3x3 matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
+<li><p><strong>A</strong> (<em>'list'</em><em> [</em><em>'float'</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>m</strong> (<em>'float'</em>) – modulus.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x3 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x3 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of float</p>
+<dd class="field-odd"><p>‘list’ [‘float’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.matmodops.mat33_power_mod">
-<code class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></code><code class="sig-name descname"><span class="pre">mat33_power_mod</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_power_mod" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.matmodops.mat33_power_mod">
+<span class="sig-prename descclassname"><span class="pre">rng.matmodops.</span></span><span class="sig-name descname"><span class="pre">mat33_power_mod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.matmodops.mat33_power_mod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute moduli of a 3x3 matrix power.
 Use divide-and-conquer algorithm described in L’Ecuyer (1990).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>list of list of float</em>) – 3x3 matrix</p></li>
-<li><p><strong>j</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – exponent</p></li>
-<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – modulus</p></li>
+<li><p><strong>A</strong> (<em>'list'</em><em> [</em><em>'list'</em><em> [</em><em>'float'</em><em>]</em><em>]</em>) – 3x3 matrix.</p></li>
+<li><p><strong>j</strong> (<em>'int'</em>) – exponent.</p></li>
+<li><p><strong>m</strong> (<em>'float'</em>) – modulus.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>res</strong> – 3x3 matrix</p>
+<dd class="field-even"><p><strong>res</strong> – 3x3 matrix.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of list of float</p>
+<dd class="field-odd"><p>‘list’ [‘list’ [‘float’]]</p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="module-rng.mrg32k3a">
+</section>
+</section>
+<section id="module-rng.mrg32k3a">
 <span id="rng-mrg32k3a-module"></span><h2>rng.mrg32k3a module<a class="headerlink" href="#module-rng.mrg32k3a" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id1">
+<section id="id1">
 <h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Provide a subclass of random.Random using mrg32k3a as the generator
 with stream/substream/subsubstream support.</p>
-</div>
-<div class="section" id="id2">
+</section>
+<section id="id2">
 <h3>Listing<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p>MRG323k3a : class
+<p>MRG32k3a : class
 advance_stream : method
 advance_substream : method
 advance_subsubstream : method
@@ -207,73 +208,73 @@ reset_substream : method
 reset_subsubstream : method
 start_fixed_s_ss_sss : method</p>
 <dl class="py class">
-<dt id="rng.mrg32k3a.MRG32k3a">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></code><code class="sig-name descname"><span class="pre">MRG32k3a</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></span><span class="sig-name descname"><span class="pre">MRG32k3a</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 <p>Implements mrg32k3a as the generator for a random.Random object.</p>
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a._current_state">
-<code class="sig-name descname"><span class="pre">_current_state</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a._current_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>current state of mrg32k3a generator</p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a._current_state">
+<span class="sig-name descname"><span class="pre">_current_state</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a._current_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>current state of mrg32k3a generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>tuple of int of length 6</p>
+<dd class="field-odd"><p>‘tuple’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a.ref_seed">
-<code class="sig-name descname"><span class="pre">ref_seed</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.ref_seed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.ref_seed">
+<span class="sig-name descname"><span class="pre">ref_seed</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.ref_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>seed from which to start the generator
-streams/substreams/subsubstreams are referenced w.r.t. ref_seed</p>
+streams/substreams/subsubstreams are referenced w.r.t. ref_seed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>tuple of int of length 6</p>
+<dd class="field-odd"><p>‘tuple’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a.s_ss_sss_index">
-<code class="sig-name descname"><span class="pre">s_ss_sss_index</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.s_ss_sss_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>triplet of the indices of the current stream-substream-subsubstream</p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.s_ss_sss_index">
+<span class="sig-name descname"><span class="pre">s_ss_sss_index</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.s_ss_sss_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>triplet of the indices of the current stream-substream-subsubstream.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of int of length 3</p>
+<dd class="field-odd"><p>‘list’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a.stream_start">
-<code class="sig-name descname"><span class="pre">stream_start</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.stream_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>state corresponding to the start of the current stream</p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.stream_start">
+<span class="sig-name descname"><span class="pre">stream_start</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.stream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current stream.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of int of length 6</p>
+<dd class="field-odd"><p>‘list’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a.substream_start">
-<code class="sig-name descname"><span class="pre">substream_start</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.substream_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>state corresponding to the start of the current substream</p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.substream_start">
+<span class="sig-name descname"><span class="pre">substream_start</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.substream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current substream.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of int of length 6</p>
+<dd class="field-odd"><p>‘list’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="rng.mrg32k3a.MRG32k3a.subsubstream_start">
-<code class="sig-name descname"><span class="pre">subsubstream_start</span></code><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.subsubstream_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>state corresponding to the start of the current subsubstream</p>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.subsubstream_start">
+<span class="sig-name descname"><span class="pre">subsubstream_start</span></span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.subsubstream_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>state corresponding to the start of the current subsubstream.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of int of length 6</p>
+<dd class="field-odd"><p>‘list’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -281,200 +282,222 @@ streams/substreams/subsubstreams are referenced w.r.t. ref_seed</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ref_seed</strong> (<em>tuple of int of length 6</em><em> (</em><em>optional</em><em>)</em>) – seed from which to start the generator</p></li>
-<li><p><strong>s_ss_sss_index</strong> (<em>list of int of length 3</em>) – triplet of the indices of the stream-substream-subsubstream to start at</p></li>
+<li><p><strong>ref_seed</strong> (<em>'tuple'</em><em> [</em><em>'int'</em><em>]</em><em>, </em><em>optional</em>) – seed from which to start the generator.</p></li>
+<li><p><strong>s_ss_sss_index</strong> (<em>'list'</em><em> [</em><em>'int'</em><em>]</em>) – triplet of the indices of the stream-substream-subsubstream to start at.</p></li>
 </ul>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.advance_stream">
-<code class="sig-name descname"><span class="pre">advance_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_stream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.advance_stream">
+<span class="sig-name descname"><span class="pre">advance_stream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advance the state of the generator to the start of the next stream.
 Streams are of length 2**141.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.advance_substream">
-<code class="sig-name descname"><span class="pre">advance_substream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_substream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.advance_substream">
+<span class="sig-name descname"><span class="pre">advance_substream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_substream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advance the state of the generator to the start of the next substream.
 Substreams are of length 2**94.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.advance_subsubstream">
-<code class="sig-name descname"><span class="pre">advance_subsubstream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_subsubstream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.advance_subsubstream">
+<span class="sig-name descname"><span class="pre">advance_subsubstream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.advance_subsubstream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advance the state of the generator to the start of the next subsubstream.
 Subsubstreams are of length 2**47.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.get_current_state">
-<code class="sig-name descname"><span class="pre">get_current_state</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.get_current_state" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.get_current_state">
+<span class="sig-name descname"><span class="pre">get_current_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.get_current_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the current state of the generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>_current_state</strong> – current state of the generator</p>
+<dd class="field-odd"><p><strong>_current_state</strong> – current state of the generator.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple of int of length 6</p>
+<dd class="field-even"><p>‘tuple’ [‘int’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.getstate">
-<code class="sig-name descname"><span class="pre">getstate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.getstate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.getstate">
+<span class="sig-name descname"><span class="pre">getstate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.getstate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the state of the generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>_current_state</strong> (<em>tuple of int of length 6</em>) – current state of the generator</p></li>
-<li><p><strong>random.Random.getstate()</strong> (<em>tuple of int</em>) – Random.getstate output</p></li>
+<li><p><strong>_current_state</strong> (<em>‘tuple’ [‘int’]</em>) – current state of the generator.</p></li>
+<li><p><strong>random.Random.getstate()</strong> (<em>‘tuple’ [‘int’]</em>) – Random.getstate output.</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.mvnormalvariate">
-<code class="sig-name descname"><span class="pre">mvnormalvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factorized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.mvnormalvariate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.gumbelvariate">
+<span class="sig-name descname"><span class="pre">gumbelvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.gumbelvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a gumbel random variate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>'float'</em>) – location of the mode of the gumbel distribution from which to
+generate.</p></li>
+<li><p><strong>beta</strong> (<em>'float'</em>) – scale parameter of the gumbel distribution from which to
+generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a gumbel random variate from the specified distribution.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>‘float’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.mvnormalvariate">
+<span class="sig-name descname"><span class="pre">mvnormalvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factorized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.mvnormalvariate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a normal random vector.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mean_vec</strong> (<em>array</em>) – location parameters of the multivariate normal distribution
-from which to generate</p></li>
-<li><p><strong>cov</strong> (<em>array</em>) – covariance matrix of the multivariate normal distribution
-from which to generate</p></li>
-<li><p><strong>factorized</strong> (<em>Bool</em>) – False : need to calculate chol based on covariance
-True : do not need to calculate chol since we already have it</p></li>
+<li><p><strong>mean_vec</strong> (<em>'array'</em>) – location parameters of the multivariate normal distribution
+from which to generate.</p></li>
+<li><p><strong>cov</strong> (<em>'array'</em>) – covariance matrix of the multivariate normal distribution
+from which to generate.</p></li>
+<li><p><strong>factorized</strong> (<em>'bool'</em>) – False : need to calculate chol based on covariance
+True : do not need to calculate chol since we already have it.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a normal random multivariate from the specified distribution</p>
+<dd class="field-even"><p>a normal random multivariate from the specified distribution.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of float</p>
+<dd class="field-odd"><p>‘list’ [‘float’]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.normalvariate">
-<code class="sig-name descname"><span class="pre">normalvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.normalvariate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.normalvariate">
+<span class="sig-name descname"><span class="pre">normalvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.normalvariate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a normal random variate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – expected value of the normal distribution from which to
-generate</p></li>
-<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – standard deviation of the normal distribution from which to
-generate</p></li>
+<li><p><strong>mu</strong> (<em>'float'</em>) – expected value of the normal distribution from which to
+generate.</p></li>
+<li><p><strong>sigma</strong> (<em>'float'</em>) – standard deviation of the normal distribution from which to
+generate.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a normal random variate from the specified distribution</p>
+<dd class="field-even"><p>a normal random variate from the specified distribution.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+<dd class="field-odd"><p>‘float’</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.poissonvariate">
-<code class="sig-name descname"><span class="pre">poissonvariate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.poissonvariate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.poissonvariate">
+<span class="sig-name descname"><span class="pre">poissonvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.poissonvariate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a poisson random variate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>lmbda</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – expected value of the poisson distribution from which to
-generate</p>
+<dd class="field-odd"><p><strong>lmbda</strong> (<em>'float'</em>) – expected value of the poisson distribution from which to
+generate.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a poisson random variate from the specified distribution</p>
+<dd class="field-even"><p>a poisson random variate from the specified distribution.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+<dd class="field-odd"><p>‘float’</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.random">
-<code class="sig-name descname"><span class="pre">random</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.random" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.random">
+<span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.random" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a standard uniform variate and advance the generator
 state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>u</strong> – pseudo uniform random variate</p>
+<dd class="field-odd"><p><strong>u</strong> – pseudo uniform random variate.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+<dd class="field-even"><p>‘float’</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.reset_stream">
-<code class="sig-name descname"><span class="pre">reset_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_stream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.reset_stream">
+<span class="sig-name descname"><span class="pre">reset_stream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset the state of the generator to the start of the current stream.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.reset_substream">
-<code class="sig-name descname"><span class="pre">reset_substream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_substream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.reset_substream">
+<span class="sig-name descname"><span class="pre">reset_substream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_substream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset the state of the generator to the start of the current substream.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.reset_subsubstream">
-<code class="sig-name descname"><span class="pre">reset_subsubstream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_subsubstream" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.reset_subsubstream">
+<span class="sig-name descname"><span class="pre">reset_subsubstream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.reset_subsubstream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset the state of the generator to the start of the current subsubstream.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.seed">
-<code class="sig-name descname"><span class="pre">seed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.seed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the state (or seed) of the generator and update the generator state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>new_state</strong> (<em>tuple of int of length 6</em>) – new state to which to advance the generator</p>
+<dd class="field-odd"><p><strong>new_state</strong> (<em>'tuple'</em><em> [</em><em>'int'</em><em>]</em>) – new state to which to advance the generator.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.setstate">
-<code class="sig-name descname"><span class="pre">setstate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.setstate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.setstate">
+<span class="sig-name descname"><span class="pre">setstate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.setstate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the internal state of the generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>state</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – state[0] is new state for the generator
-state[1] is random.Random.getstate()</p>
+<dd class="field-odd"><p><strong>state</strong> (<em>'tuple'</em>) – ‘’state[0]’’ is new state for the generator.
+‘’state[1]’’ is random.Random.getstate().</p>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
+<p><a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 </div>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rng.mrg32k3a.MRG32k3a.start_fixed_s_ss_sss">
-<code class="sig-name descname"><span class="pre">start_fixed_s_ss_sss</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_ss_sss_triplet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.start_fixed_s_ss_sss" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.start_fixed_s_ss_sss">
+<span class="sig-name descname"><span class="pre">start_fixed_s_ss_sss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_ss_sss_triplet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.start_fixed_s_ss_sss" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the rng to the start of a specified (stream, substream, subsubstream) triplet.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>s_ss_sss_triplet</strong> (<em>list of int of length 3</em>) – triplet of the indices of the current stream-substream-subsubstream</p>
+<dd class="field-odd"><p><strong>s_ss_sss_triplet</strong> (<em>'list'</em><em> [</em><em>'int'</em><em>]</em>) – triplet of the indices of the current stream-substream-subsubstream.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -482,47 +505,47 @@ state[1] is random.Random.getstate()</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.mrg32k3a.bsm">
-<code class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></code><code class="sig-name descname"><span class="pre">bsm</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.bsm" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.bsm">
+<span class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></span><span class="sig-name descname"><span class="pre">bsm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.bsm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Approximate a quantile of the standard normal distribution via
 the Beasley-Springer-Moro algorithm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>u</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – probability value for the desired quantile (between 0 and 1)</p>
+<dd class="field-odd"><p><strong>u</strong> (<em>'float'</em>) – probability value for the desired quantile (between 0 and 1).</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>z</strong></p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+<dd class="field-odd"><p>‘float’</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="rng.mrg32k3a.mrg32k3a">
-<code class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></code><code class="sig-name descname"><span class="pre">mrg32k3a</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.mrg32k3a" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="rng.mrg32k3a.mrg32k3a">
+<span class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></span><span class="sig-name descname"><span class="pre">mrg32k3a</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.mrg32k3a" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random number between 0 and 1 from a given state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>state</strong> (<em>tuple of int of length 6</em>) – current state of the generator</p>
+<dd class="field-odd"><p><strong>state</strong> (<em>'tuple'</em><em> [</em><em>'int'</em><em>]</em>) – current state of the generator.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>new_state</strong> (<em>tuple of int of length 6</em>) – next state of the generator</p></li>
-<li><p><strong>u</strong> (<em>float</em>) – pseudo uniform random variate</p></li>
+<li><p><strong>new_state</strong> (<em>‘tuple’ [‘int’]</em>) – next state of the generator.</p></li>
+<li><p><strong>u</strong> (<em>‘float’</em>) – pseudo uniform random variate.</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="module-rng">
+</section>
+</section>
+<section id="module-rng">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rng" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -551,8 +574,8 @@ the Beasley-Springer-Moro algorithm.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="problems.html"
-                        title="previous chapter">problems package</a></p>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter">models package</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="solvers.html"
                         title="next chapter">solvers package</a></p>
@@ -567,7 +590,7 @@ the Beasley-Springer-Moro algorithm.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -590,7 +613,7 @@ the Beasley-Springer-Moro algorithm.</p>
           <a href="solvers.html" title="solvers package"
              >next</a> |</li>
         <li class="right" >
-          <a href="problems.html" title="problems package"
+          <a href="models.html" title="models package"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
@@ -599,7 +622,7 @@ the Beasley-Springer-Moro algorithm.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
   </body>
 </html>
