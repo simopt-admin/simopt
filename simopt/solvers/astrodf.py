@@ -61,7 +61,7 @@ class ASTRODF(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "Use CRN across solutions?",
+                "description": "CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },
@@ -73,67 +73,87 @@ class ASTRODF(Solver):
             "eta_1": {
                 "description": "threshhold for any success at all",
                 "datatype": float,
-                "default": 0.1
+                "default": 0.0
             },
             "eta_2": {
                 "description": "threshhold for good success",
                 "datatype": float,
                 "default": 0.5
             },
-            "gamma_0": {
-                "description": "initial trust-region radius parameter tuning constant",
+            "gamma_01": {
+                "description": "initial trust-region radius parameter tuning coefficient 1",
+                "datatype": float,
+                "default": 0.08
+            },
+            "gamma_02": {
+                "description": "initial trust-region radius parameter tuning coefficient 2",
                 "datatype": float,
                 "default": 0.5
             },
             "gamma_1": {
                 "description": "very successful step trust-region radius increase",
                 "datatype": float,
-                "default": 1.25
+                "default": 1.5
             },
             "gamma_2": {
                 "description": "unsuccessful step trust-region radius decrease",
                 "datatype": float,
-                "default": 0.8
+                "default": 0.75
             },
             "w": {
                 "description": "trust-region radius rate of shrinkage in contracation loop",
                 "datatype": float,
-                "default": 0.9
+                "default": 0.85
             },
             "mu": {
                 "description": "trust-region radius ratio upper bound in contraction loop",
                 "datatype": int,
-                "default": 100
+                "default": 1000
             },
             "beta": {
                 "description": "trust-region radius ratio lower bound in contraction loop",
                 "datatype": int,
-                "default": 50
+                "default": 10
             },
-            "c_lambda": {
-                "description": "minimum sample size exponent",
+            "c1_lambda": {
+                "description": "minimum sample size coefficient 1",
                 "datatype": float,
-                "default": 0.1 ##changed
+                "default": 5
+            },
+            "c2_lambda": {
+                "description": "minimum sample size coefficient 2",
+                "datatype": float,
+                "default": 5
             },
             "epsilon_lambda": {
-                "description": "minimum sample size coefficient",
+                "description": "minimum sample size exponent",
                 "datatype": float,
-                "default": 0.5
+                "default": 0.00001 ## less means faster increase at the beginning
             },
             "kappa_inner": {
                 "description": "adaptive sampling constant in inner loop",
-                "datatype": int,
-                "default": 100
+                "datatype": float,
+                "default": 0.01
             },
             "kappa_outer": {
                 "description": "adaptive sampling constant in outer loop",
-                "datatype": int,
-                "default": 100
+                "datatype": float,
+                "default": 0.01
             },
             "solver_select": {
-                "description": "Use Cauchy point or the built-in search engine? True: Cauchy point, False: the built-in search engine",
+                "description": "subproblem solver with Cauchy point or the built-in solver? True: Cauchy point, False: built-in solver",
                 "datatype": bool,
                 "default": False
+            },
+            "criticality_step": {
+                "description": "True: skip contraction loop if not near critical region, False: always run contraction loop",
+                "datatype": bool,
+                "default": False
+            },
+            "criticality_threshold": {
+                "description": "threshold on gradient norm indicating near-critical region",
+                "datatype": float,
+                "default": 0.1
             }
         }
         self.check_factor_list = {
@@ -141,16 +161,19 @@ class ASTRODF(Solver):
             "delta_max": self.check_delta_max,
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
-            "gamma_0": self.check_gamma_0,
+            "gamma_01": self.check_gamma_01,
+            "gamma_02": self.check_gamma_02,
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
             "w": self.check_w,
             "beta": self.check_beta,
             "mu": self.check_mu,
-            "c_lambda": self.check_c_lambda,
+            "c1_lambda": self.check_c1_lambda,
+            "c2_lambda": self.check_c2_lambda,
             "epsilon_lambda": self.check_epsilon_lambda,
             "kappa_inner": self.check_kappa_inner,
-            "kappa_outer": self.check_kappa_outer
+            "kappa_outer": self.check_kappa_outer,
+            "criticality_threshold": self.criticality_threshold
         }
         super().__init__(fixed_factors)
 
@@ -163,26 +186,32 @@ class ASTRODF(Solver):
     def check_eta_2(self):
         return self.factors["eta_2"] > self.factors["eta_1"]
 
-    def check_gamma_0(self):
-        return self.factors["gamma_0"] > 0
+    def check_gamma_01(self):
+        return (self.factors["gamma_01"] > 0 and self.factors["gamma_01"] < 1 )
 
+    def check_gamma_02(self):
+        return (self.factors["gamma_02"] > self.factors["gamma_01"] and self.factors["gamma_02"] < 1 )
+    
     def check_gamma_1(self):
         return self.factors["gamma_1"] > 1
 
     def check_gamma_2(self):
-        return self.factors["gamma_2"] < 1
+        return (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
 
     def check_w(self):
         return (self.factors["w"] < 1 and self.factors["w"] > 0)
 
     def check_beta(self):
-        return (self.factors["beta"] < self.factors['mu'] and self.factors["beta"] > 0)
+        return (self.factors["beta"] < self.factors["mu"] and self.factors["beta"] > 0)
 
     def check_mu(self):
-        return self.factors["beta"] > 0
+        return self.factors["mu"] > 0
 
-    def check_c_lambda(self):
-        return self.factors["c_lambda"] > 0
+    def check_c1_lambda(self):
+        return self.factors["c1_lambda"] > 0
+
+    def check_c2_lambda(self):
+        return self.factors["c2_lambda"] > 0
 
     def check_epsilon_lambda(self):
         return self.factors["epsilon_lambda"] > 0
@@ -192,6 +221,9 @@ class ASTRODF(Solver):
 
     def check_kappa_outer(self):
         return self.factors["kappa_outer"] > 0
+    
+    def check_criticality_threshold(self):
+        return self.factors["criticality_threshold"] > 0
 
     def standard_basis(self, size, index):
         arr = np.zeros(size)
@@ -205,15 +237,17 @@ class ASTRODF(Solver):
         return np.matmul(X, q)
 
     def samplesize(self, k, sig2, delta, io):
-        c_lambda = self.factors["c_lambda"]
+        c1_lambda = self.factors["c1_lambda"]
+        c2_lambda = self.factors["c2_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
         if io == 1: #inner:
             kappa = self.factors["kappa_inner"]
         else: #outer
             kappa = self.factors["kappa_outer"]
-        lambda_k = (10 + c_lambda) * math.log(k, 10) ** (1 + epsilon_lambda)
+        lambda_k = (10 + c1_lambda) * math.log(k + c2_lambda, 10) ** (1 + epsilon_lambda)
         # compute sample size
-        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ^ 2) * delta ** 4)))
+        N_k = math.ceil(max(2, lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
+        ## for later: could we normalize f's before computing sig2?
         return N_k
 
     def model_construction(self, x_k, delta, k, problem, expended_budget):
@@ -221,6 +255,8 @@ class ASTRODF(Solver):
         w = self.factors["w"]
         mu = self.factors["mu"]
         beta = self.factors["beta"]
+        criticality_step = self.factors["criticality_step"]
+        criticality_threshold = self.factors["criticality_threshold"]
         j = 0
         d = problem.dim
         while True:
@@ -254,9 +290,10 @@ class ASTRODF(Solver):
             # construct the model and get the model coefficients
             q, grad, Hessian = self.coefficient(Z, fval, problem)
 
+            if not criticality_step:
             # check the condition and break
-            if norm(grad) > 0.1:
-                break
+                if norm(grad) > criticality_threshold:
+                    break
 
             if delta_k <= mu * norm(grad):
                 break
@@ -412,9 +449,10 @@ class ASTRODF(Solver):
         intermediate_budgets = []
         expended_budget = 0
         delta_max = self.factors["delta_max"]
-        gamma_0 = self.factors["gamma_0"]
-        delta_start = delta_max * 0.25
-        delta_candidate = [gamma_0 * delta_start, delta_start, delta_start / gamma_0]
+        gamma_01 = self.factors["gamma_01"]
+        gamma_02 = self.factors["gamma_02"]
+        delta_start = delta_max * gamma_01
+        delta_candidate = [gamma_02 * delta_start, delta_start, delta_start / gamma_02]
 
         # default values
         eta_1 = self.factors["eta_1"]
