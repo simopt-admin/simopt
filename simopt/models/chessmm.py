@@ -361,7 +361,7 @@ class ChessAvgDifference(Problem):
             vector of gradients of deterministic components of stochastic constraints
         """
         det_stoch_constraints = (self.factors["upper_time"],)
-        det_stoch_constraints_gradients = ((0,),)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):

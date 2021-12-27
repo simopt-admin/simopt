@@ -26,6 +26,7 @@ from models.dualsourcing import DualSourcing, DualSourcingMinCost
 from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
 from models.chessmm import ChessMatchmaking, ChessAvgDifference
 from models.san import SAN, SANLongestPath
+from models.hotel import Hotel, HotelRevenue
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -45,7 +46,8 @@ problem_directory = {
     "CONTAM-1": ContaminationTotalCostDisc,
     "CONTAM-2": ContaminationTotalCostCont,
     "CHESS-1": ChessAvgDifference,
-    "SAN-1": SANLongestPath
+    "SAN-1": SANLongestPath,
+    "HOTEL-1": HotelRevenue
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -58,5 +60,6 @@ model_directory = {
     "DUALSOURCING": DualSourcing,
     "CONTAM": Contamination,
     "CHESS": ChessMatchmaking,
-    "SAN": SAN
+    "SAN": SAN,
+    "HOTEL": Hotel
 }
