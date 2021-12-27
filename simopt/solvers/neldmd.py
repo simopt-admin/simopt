@@ -6,7 +6,7 @@ The algorithm maintains a simplex of points that moves around the feasible
 region according to certain geometric operations: reflection, expansion, 
 scontraction, and shrinking.
 """
-from base import Solver
+from base import Solution, Solver
 import numpy as np
 import math
 import warnings
@@ -66,8 +66,8 @@ class NELDMD(Solver):
             },
             "r": {
                 "description": "number of replications taken at each solution",
-                "datatype": float,
-                "default": 30.
+                "datatype": int,
+                "default": 30
             },
             "alpha": {
                 "description": "reflection coefficient > 0",
@@ -148,19 +148,21 @@ class NELDMD(Solver):
         # Determine max number of solutions that can be sampled within budget
         max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
         # Shrink variable bounds to avoid floating errors
-        lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
-        upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
+        if problem.lower_bounds != None:
+            lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
+        if problem.upper_bounds != None:
+            upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
         # Initial dim + 1 random points
-        sol = np.zeros(n_pts)
-        sol[0] = problem.factors["initial_solution"]
+        sol = []
+        sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
         for i in range(1, n_pts):
-            sol[i] = self.create_new_solution(sol[i-1], problem)
+            sol.append(self.create_new_solution(sol[i-1].x, problem))
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
-        A = np.zeros(((max_num_sol+1),problem.dim))
-        fn_mean = np.zeros(max_num_sol)
-        fn_var = np.zeros(max_num_sol)
+        A = np.empty(((max_num_sol+1),problem.dim), dtype=object)
+        fn_mean = np.empty(max_num_sol, dtype=object)
+        fn_var = np.empty(max_num_sol, dtype=object)
         # Using CRN: for each solution, start at substream 1
         problemseed = 1
         # Track overall budget spent
@@ -168,8 +170,8 @@ class NELDMD(Solver):
 
         # Start Solving
         # Evaluate solutions in initial structure
-        fn_val = np.zeros(n_pts)
-        fn_var_val = np.zeros(n_pts)
+        fn_val = np.empty(n_pts, dtype=object)
+        fn_var_val = np.empty(n_pts, dtype=object)
         for i in range(n_pts):
             problem.simulate(sol[i], self.factors["r"])
             budget_spent += self.factors["r"]
@@ -181,7 +183,7 @@ class NELDMD(Solver):
         fn_mean[0] = -1*problem.minmax*fn_val[0]
         fn_var[0] = fn_var_val[0]
         # Sort solutions by obj function estimate
-        sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, fn_val, fn_var_val, sol)
+        sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(fn_val, fn_var_val, sol)
         # Record only when recommended solution changes
         record_idx = 1
 
@@ -190,12 +192,13 @@ class NELDMD(Solver):
         while budget_spent <= problem.factors["budget"]:
             # Reflect worse point
             p_high = sort_sol[-1]  # current worst point
-            p_cent = np.mean(sort_sol[1:-1])  # centroid for other pts
+            p_cent = np.mean([s.x for s in sort_sol[1:-1]])  # centroid for other pts
             orig_pt = p_high  # save the original point
             p_refl = (1 + self.factors["alpha"])*p_cent - self.factors["alpha"]*p_high  # reflection
-            p_refl = self.check_const() ### TODO: write helper function
+            # p_refl = self.check_const() ### TODO: write helper function
             
             # Evaluate reflected point
+            p_refl = Solution(p_refl, problem)
             problem.simulate(p_refl, self.factors["r"])
             budget_spent += self.factors["r"]
             refl_fn_val = -1*problem.minmax*p_refl.objectives_mean
@@ -214,7 +217,7 @@ class NELDMD(Solver):
                 sort_fn_var_val[-1] = refl_fn_var_val
 
                 # Sort & end updating
-                sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, sort_fn_val, sort_fn_var_val, sort_sol)
+                sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
 
                 # Best solution remains the same, so no reporting
 
@@ -222,13 +225,13 @@ class NELDMD(Solver):
             elif refl_fn_val < fn_low:
                 p_exp2 = p_refl
                 p_exp = self.factors["gammap"]*p_refl + (1-self.factors["gammap"])*p_cent
-                p_exp = self.check_const()  ### TODO: helper function
+                # p_exp = self.check_const()  ### TODO: helper function
 
                 # Evaluate expansion point
                 problem.simulate(p_exp, self.factors["r"])
                 budget_spent += self.factors["r"]
                 exp_fn_val = -1*problem.minmax*p_exp.objectives_mean
-                exp_fn_var_val = p_refl.objectives_var
+                exp_fn_var_val = p_exp.objectives_var
 
                 # Check if expansion point is an improvement relative to simplex
                 if exp_fn_val < fn_low:
@@ -237,7 +240,7 @@ class NELDMD(Solver):
                     sort_fn_var_val[-1] = exp_fn_var_val
 
                     # Sort & end updating
-                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(self, sort_fn_val, sort_fn_var_val, sort_sol)
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
 
                     # Record data from expansion point (new best)
                     if budget_spent <= problem.factors["budget"]:
@@ -252,10 +255,7 @@ class NELDMD(Solver):
                     sort_fn_var_val[-1] = refl_fn_var_val
 
                     # Sort & end updating
-                    fn_val_idx = np.argsort(sort_fn_val)
-                    sort_fn_val = sort_fn_val[fn_val_idx]
-                    sort_fn_var_val = sort_fn_var_val[fn_val_idx]
-                    sort_sol = sort_sol[fn_val_idx] 
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
 
                     # Record data from expansion point (new best)
                     if budget_spent <= problem.factors["budget"]:
@@ -266,32 +266,95 @@ class NELDMD(Solver):
                         record_idx += 1
             
             # Check if accept contraction or shrink
-            elif refl_fn_val > fn_sec:  # line 238
-                print("here")
+            elif refl_fn_val > fn_sec:
+                if refl_fn_val <= fn_high:
+                    p_high = p_refl  # p_refl replaces p_high
+                    fn_high = refl_fn_val  # replace fn_high
+                
+                # Attempt contraction or shrinking
+                p_cont2 = p_high
+                p_cont = self.factors["betap"]*p_high + (1-self.factors["betap"])*p_cent
+                # p_cont = self.check_const()  ### TODO: helper function
+
+                # Evaluate contraction point
+                problem.simulate(p_cont, self.factors["r"])
+                budget_spent += self.factors["r"]
+                cont_fn_val = -1*problem.minmax*p_cont.objectives_mean
+                cont_fn_var_val = p_cont.objectives_var
+
+                # Accept contraction
+                if cont_fn_val <= fn_high:
+                    sort_sol[-1] = p_cont  # p_cont replaces p_high
+                    sort_fn_val[-1] = cont_fn_val
+                    sort_fn_var_val[-1] = cont_fn_var_val
+
+                    # Sort & end updating
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
+
+                    # Check if contraction point is new best
+                    if cont_fn_val < fn_low:
+                        # Record data from contraction point (new best)
+                        if budget_spent <= problem.factors["budget"]:
+                            n_calls[record_idx] = budget_spent
+                            A[record_idx] = p_cont
+                            fn_mean[record_idx] = -1*problem.minmax*cont_fn_val  # flip sign back
+                            fn_var[record_idx] = cont_fn_var_val
+                            record_idx += 1
+                else:  # Contraction fails -> Simplex shrinks by delta with p_low fixed
+                    sort_sol[-1] = p_high  # Replaced by p_refl
+
+                    # Check for new best
+                    new_best = 0
+
+                    for i in range(1, len(sort_sol)):
+                        p_new2 = p_low
+                        p_new = self.factors["delta"]*sort_sol[i] + (1-self.factors["delta"])*p_low
+                        # p_new = self.check_const()
+                        problem.simulate(p_new, self.factors["r"])
+                        budget_spent += self.factors["r"]
+                        new_fn_val = -1*problem.minmax*p_new.objectives_mean
+                        new_fn_var_val = p_new.objectives_var
+
+                        # Check for new best
+                        if new_fn_val <= fn_low:
+                            new_best = 1
+                        
+                        # Update sort_sol
+                        sort_sol[i] = p_new  # p_new replaces pi
+                        sort_fn_val[i] = new_fn_val
+                        sort_fn_var_val[i] = new_fn_var_val
+                    
+                    # Sort & end updating
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
+
+                    # Record data if there is a new best solution in the contraction
+                    if new_best == 1 and budget_spent <= problem.factors["budget"]:
+                        n_calls[record_idx] = budget_spent
+                        A[record_idx] = sort_sol[0]
+                        fn_mean[record_idx] = -1*problem.minmax*sort_fn_val[0]  # flip sign back
+                        fn_var[record_idx] = sort_fn_var_val[0]
+                        record_idx += 1
+
+        # Record solution at max budget
+        n_calls[record_idx] = problem.factors["budget"]
+        A[record_idx] = A[record_idx-1]
+        fn_mean[record_idx] = fn_mean[record_idx-1]
+        fn_var[record_idx] = fn_var[record_idx-1]
+        
+        # Trim empty rows from data
+        n_calls = n_calls[:record_idx]
+        A = A[:record_idx]
+        fn_mean = fn_mean[:record_idx]
+        fn_var = fn_var[:record_idx]
 
 
+    ### HELPER FUNCTIONS
     def sort_and_end_update(self, fn_val, fn_val_var, sol):
         fn_val_idx = np.argsort(fn_val)
         sort_fn_val = fn_val[fn_val_idx]
         sort_fn_var_val = fn_val_var[fn_val_idx]
-        sort_sol = sol[fn_val_idx]
+        sort_sol = [s for _, s in sorted(zip(fn_val_idx, sol))]
         return sort_fn_val, sort_fn_var_val, sort_sol
 
     def check_const(self):
         return 0  ### TODO
-
-                        
-    
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# what is Varbds in matlab?
-# How do you set rng? self.rng_list[0]?
-# What's ssolsM
-problem.factors["budget"]
-problem.minmax
-problem.dim
-self.factors["r"]
-
-
-n_pts ~ numExtPts in matlab
-max_num_sol ~ MaxNumSoln
