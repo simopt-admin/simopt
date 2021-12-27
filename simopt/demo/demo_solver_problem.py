@@ -22,7 +22,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Ex:
 solver_name = "RNDSRCH"  # Random search solver
 #problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
-problem_name = "TABLEALLOCATION-1"
+problem_name = "PARAMESTI-1"
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -36,7 +36,7 @@ print(f"Results will be stored as {file_name_path}.")
 myexperiment = Experiment(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=5)
+myexperiment.run(n_macroreps=20)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)

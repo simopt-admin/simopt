@@ -28,6 +28,7 @@ from models.chessmm import ChessMatchmaking, ChessAvgDifference
 from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
+from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -49,7 +50,8 @@ problem_directory = {
     "CHESS-1": ChessAvgDifference,
     "SAN-1": SANLongestPath,
     "HOTEL-1": HotelRevenue,
-    "TABLEALLOCATION-1": TableAllocationMaxRev
+    "TABLEALLOCATION-1": TableAllocationMaxRev,
+    "PARAMESTI-1": ParamEstiMinLogLik
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -64,5 +66,6 @@ model_directory = {
     "CHESS": ChessMatchmaking,
     "SAN": SAN,
     "HOTEL": Hotel,
-    "TABLEALLOCATION": TableAllocation
+    "TABLEALLOCATION": TableAllocation,
+    "PARAMESTI": ParameterEstimation
 }

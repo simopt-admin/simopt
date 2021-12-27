@@ -11,9 +11,9 @@ from base import Model, Problem
 
 class ParameterEstimation(Model):
     """
-    An model that simulates MLE estimators for a two-dimentinal beta variable.
+    An model that simulates MLE estimators for a two-dimensional gamma variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
-    parameters x in 2-D beta probability density function.
+    parameters x in 2-D gamma probability density function.
 
     Attributes
     ----------
@@ -47,12 +47,12 @@ class ParameterEstimation(Model):
             "xstar": {
                 "description": "x^*, the unknown parameter that maximizes g(x).",
                 "datatype": list,
-                "default": [2,5]
+                "default": [2, 5]
             },
             "x": {
                 "description": "x, variable in pdf.",
                 "datatype": list,
-                "default": [1,1]
+                "default": [1, 1]
             }
         }
         self.check_factor_list = {
@@ -63,10 +63,10 @@ class ParameterEstimation(Model):
         super().__init__(fixed_factors)
 
     def check_xstar(self):
-        return all(xstar_i>0 for xstar_i in self.factors["xstar"])
+        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
 
     def check_x(self):
-        return all(x_i>0 for x_i in self.factors["x"])
+        return all(x_i > 0 for x_i in self.factors["x"])
 
     def check_simulatable_factors(self):
         # Check for dimension of x and xstar.
@@ -76,7 +76,6 @@ class ParameterEstimation(Model):
             return False
         else:
             return True
-
 
     def replicate(self, rng_list):
         """
@@ -91,7 +90,7 @@ class ParameterEstimation(Model):
         -------
         responses : dict
             performance measures of interest
-            "logliks" = a list of loglikelihoods over time
+            "loglik" = the corresponding loglikelihood
         gradients : dict of dicts
             gradient estimates for each response
         """
@@ -99,15 +98,16 @@ class ParameterEstimation(Model):
         # Outputs will be coupled when generating Y_j's.
         y2_rng = rng_list[0]
         y1_rng = rng_list[1]
-        # Generate y1 and y2, gamma distribution.
+        # Generate y1 and y2 from specified gamma distributions.
         y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
-        y1 = y1_rng.gammavariate(self.factors['xstar'][0]*y2, 1)
+        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
         # Compute Log Likelihood
-        loglik = - y1 - y2 + (self.factors['x'][0]*y2-1)*np.log(y1) + (self.factors['x'][1]-1)*np.log(y2) - np.log(math.gamma(self.factors['x'][0]*y2)) - np.log(math.gamma(self.factors['x'][1]))
+        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
         # Compose responses and gradients.
-        responses = {'logliks': loglik}
+        responses = {'loglik': loglik}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
+
 
 """
 Summary
@@ -183,51 +183,41 @@ class ParamEstiMinLogLik(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="PARAMESTI", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="PARAMESTI-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (+1,)
-        self.constraint_type = "deterministic" ###?
+        self.minmax = (1,)
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.lower_bounds = (0, 0)
-        self.upper_bounds = (10, 10)   ###?
+        self.upper_bounds = (10, 10)
         self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None  # (2,5)
-        self.model_default_factors = {
-            "x": [1,1]
-        }
+        self.model_default_factors = {}
+        self.model_decision_factors = {"x"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": list,
-                "default": [1,1]
+                "default": (1, 1)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
-            }          
+            }
         }
-
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = ParameterEstimation(self.model_fixed_factors)
-
-    def check_initial_solution(self):
-        return all(xstar > 0 & xstar < 10 for xstar in self.factors["initial_solution"])
-
-    def check_budget(self):
-        return self.factors["budget"] > 0
-
+        self.optimal_solution = list(self.model.factors["xstar"])
+        self.optimal_value = None
 
     def vector_to_factor_dict(self, vector):
         """
@@ -244,7 +234,7 @@ class ParamEstiMinLogLik(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "logliks": vector[:]
+            "x": vector[:]
         }
         return factor_dict
 
@@ -263,7 +253,7 @@ class ParamEstiMinLogLik(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["logliks"])
+        vector = tuple(factor_dict["x"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -281,46 +271,8 @@ class ParamEstiMinLogLik(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["logliks"],)
+        objectives = (response_dict["loglik"],)
         return objectives
-
-    # def response_dict_to_stoch_constraints(self, response_dict):
-    #     """
-    #     Convert a dictionary with response keys to a vector
-    #     of left-hand sides of stochastic constraints: E[Y] >= 0
-
-    #     Arguments
-    #     ---------
-    #     response_dict : dictionary
-    #         dictionary with response keys and associated values
-
-    #     Returns
-    #     -------
-    #     stoch_constraints : tuple
-    #         vector of LHSs of stochastic constraint
-    #     """
-    #     stoch_constraints = tuple(response_dict["logliks"] <= self.factors["upper_thres"])
-    #     return stoch_constraints
-
-    # def deterministic_stochastic_constraints_and_gradients(self, x):
-    #     """
-    #     Compute deterministic components of stochastic constraints for a solution `x`.
-
-    #     Arguments
-    #     ---------
-    #     x : tuple
-    #         vector of decision variables
-
-    #     Returns
-    #     -------
-    #     det_stoch_constraints : tuple
-    #         vector of deterministic components of stochastic constraints
-    #     det_stoch_constraints_gradients : tuple
-    #         vector of gradients of deterministic components of stochastic constraints
-    #     """
-    #     det_stoch_constraints = tuple(-np.ones(5) + self.model.factors["error_prob"])
-    #     det_stoch_constraints_gradients = ((0,),)
-    #     return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
         """
@@ -338,8 +290,8 @@ class ParamEstiMinLogLik(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = ((0,),)###?
-        det_objectives_gradients = ((0, 0, 0),)
+        det_objectives = (0,)
+        det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -356,7 +308,7 @@ class ParamEstiMinLogLik(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 10)
+        return True
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -372,5 +324,5 @@ class ParamEstiMinLogLik(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300*rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
         return x
