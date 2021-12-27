@@ -27,6 +27,7 @@ from models.contam import Contamination, ContaminationTotalCostDisc, Contaminati
 from models.chessmm import ChessMatchmaking, ChessAvgDifference
 from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
+from models.tableallocation import TableAllocation, TableAllocationMaxRev
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -47,7 +48,8 @@ problem_directory = {
     "CONTAM-2": ContaminationTotalCostCont,
     "CHESS-1": ChessAvgDifference,
     "SAN-1": SANLongestPath,
-    "HOTEL-1": HotelRevenue
+    "HOTEL-1": HotelRevenue,
+    "TABLEALLOCATION-1": TableAllocationMaxRev
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -61,5 +63,6 @@ model_directory = {
     "CONTAM": Contamination,
     "CHESS": ChessMatchmaking,
     "SAN": SAN,
-    "HOTEL": Hotel
+    "HOTEL": Hotel,
+    "TABLEALLOCATION": TableAllocation
 }

@@ -5,16 +5,12 @@ Simulate multiple periods of arrival and seating at a restaurant.
 """
 import numpy as np
 
-import math
-
-import scipy.stats as scs
-
 from base import Model, Problem
 
 
 class TableAllocation(Model):
     """
-    An model that simulates a table capacity allocation problem at a restaurant 
+    A model that simulates a table capacity allocation problem at a restaurant
     with a homogenous Poisson arrvial process and exponential service times.
     Returns expected maximum revenue.
 
@@ -38,7 +34,7 @@ class TableAllocation(Model):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-        ``n_hour``
+        ``n_hours``
             Number of hours to simulate (`int`)
         ``capacity``
             Maximum total capacity (`int`)
@@ -59,33 +55,32 @@ class TableAllocation(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "TABLEALLOCATION"
-        self.n_rngs = 1
+        self.n_rngs = 3
         self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
-
-            "n_hour": {
+            "n_hours": {
                 "description": "Number of hours to simulate.",
-                "datatype": int,
-                "default": 3
+                "datatype": float,
+                "default": 5.0
             },
             "capacity": {
-                "description": "Maximum total capacity.",
+                "description": "Maximum capacity of restaurant.",
                 "datatype": int,
                 "default": 80
             },
             "table_cap": {
-                "description": "Capacity of each type of table.",
+                "description": "Seating capacity of each type of table.",
                 "datatype": list,
-                "default": [2,4,6,8]
+                "default": [2, 4, 6, 8]
             },
             "lambda": {
                 "description": "Average number of arrivals per hour.",
                 "datatype": list,
-                "default": [3, 6, 3, 3, 2, 4/3, 6/5, 1]
+                "default": [3, 6, 3, 3, 2, 4 / 3, 6 / 5, 1]
             },
             "service_time_means": {
-                "description": "Mean service time in minutes.",
+                "description": "Mean service time (in minutes).",
                 "datatype": list,
                 "default": [20, 25, 30, 35, 40, 45, 50, 60]
             },
@@ -97,13 +92,11 @@ class TableAllocation(Model):
             "num_tables": {
                 "description": "Number of tables of each capacity.",
                 "datatype": list,
-                "default": [10,5,4,2]
+                "default": [10, 5, 4, 2]
             }
-
         }
-
         self.check_factor_list = {
-            "n_hour": self.check_n_hour,
+            "n_hours": self.check_n_hours,
             "capacity": self.check_capacity,
             "table_cap": self.check_table_cap,
             "lambda": self.check_lambda,
@@ -115,33 +108,33 @@ class TableAllocation(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_hour(self):
-        return self.factors["n_hour"] >= 1
-    
+    def check_n_hours(self):
+        return self.factors["n_hours"] > 0
+
     def check_capacity(self):
         return self.factors["capacity"] > 0
 
     def check_table_cap(self):
-        return self.factors["table_cap"] > [0,0,0,0]
+        return self.factors["table_cap"] > [0, 0, 0, 0]
 
     def check_lambda(self):
-        return self.factors["lambda"] >= [0 for i in range(max(self.factors["table_cap"]))]
+        return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
     def check_service_time_means(self):
-        return self.factors["service_time_means"] > [0 for i in range(max(self.factors["table_cap"]))]
-    
+        return self.factors["service_time_means"] > [0] * max(self.factors["table_cap"])
+
     def check_table_revenue(self):
-        return self.factors["table_revenue"] >= [0 for i in range(max(self.factors["table_cap"]))]
+        return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
 
     def check_num_tables(self):
-        return self.factors["num_tables"] >= [0,0,0,0]
+        return self.factors["num_tables"] >= [0, 0, 0, 0]
 
     def check_simulatable_factors(self):
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
             return False
         elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
             return False
-        elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]) :
+        elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]):
             return False
         elif len(self.factors["service_time_means"]) != len(self.factors["table_revenue"]):
             return False
@@ -168,56 +161,48 @@ class TableAllocation(Model):
                 Fraction of customer arrivals that are seated.
 
         """
-        # Generate total number of arrivals in the period
-        total_arrivals = np.random.poisson(round(self.factors["n_hour"]*sum(self.factors["lambda"])))
-        # Generate arrival times in minutes
-        arrival_times = np.sort(np.random.uniform(0,self.factors["n_hour"],total_arrivals)*60)
-        # Maximum group size
-        max_group_size = max(self.factors["table_cap"])
-        # Cumulative Probabilities to decide which group arrived
-        cum_prob_group = np.cumsum(np.divide(self.factors["lambda"],sum(self.factors["lambda"])))
-
-        # Initiate system time in minutes
-        time = 0
-        # Track total revenue
+        # Designate separate random number generators.
+        arrival_rng = rng_list[0]
+        group_size_rng = rng_list[1]
+        service_rng = rng_list[2]
+        # Track total revenue.
         total_rev = 0
-        # Track table availability 
-        table_avail = np.zeros((4,max(self.factors["num_tables"]))) # (i,j) is the time that jth table of size i becomes available
+        # Track table availability.
+        # (i,j) is the time that jth table of size i becomes available.
+        table_avail = np.zeros((4, max(self.factors["num_tables"])))
+        # Generate total number of arrivals in the period
+        n_arrivals = arrival_rng.poissonvariate(round(self.factors["n_hours"] * sum(self.factors["lambda"])))
+        # Generate arrival times in minutes
+        arrival_times = 60 * np.sort([arrival_rng.uniform(0, self.factors["n_hours"]) for _ in range(n_arrivals)])
         # Track seating rate
-        found = np.zeros(len(arrival_times))
-
-        for n in range(len(arrival_times)):
-            # Determine group size
-            u = np.random.uniform(0,1)
-            group_size = 1
-            for i in cum_prob_group:
-                if i < u:
-                    group_size = group_size + 1
-            # Find smallest available table
-            i = 0
-            min_table_type = self.factors["table_cap"][i]
-            while group_size > self.factors["table_cap"][i]:
-                i = i + 1
-                min_table_type = self.factors["table_cap"][i]
-            # Find available table
-            for k in range(i,len(self.factors["num_tables"])):
+        found = np.zeros(n_arrivals)
+        # Pass through all arrivals of groups to the restaurants.
+        for n in range(n_arrivals):
+            # Determine group size.
+            group_size = group_size_rng.choices(population=range(1, max(self.factors["table_cap"]) + 1), weights=self.factors["lambda"])[0]
+            # Find smallest table size to start search.
+            table_size_idx = 0
+            while self.factors["table_cap"][table_size_idx] < group_size:
+                table_size_idx = table_size_idx + 1
+            # Find smallest available table.
+            for k in range(table_size_idx, len(self.factors["num_tables"])):
                 for j in range(self.factors["num_tables"][k]):
-                    if table_avail[k,j] < arrival_times[n]: #check if table is available at current time
+                    # Check if table is currently available.
+                    if table_avail[k, j] < arrival_times[n]:
                         found[n] = 1
                         break
                 if found[n] == 1:
                     break
             if found[n] == 1:
-                # Sample service time
-                service_time = np.random.exponential(self.factors["service_time_means"][group_size - 1])
-                # Update table availability
-                table_avail[k,j] = table_avail[k,j] + service_time
-                # Update revenue
+                # Sample service time.
+                service_time = service_rng.expovariate(lambd=1 / self.factors["service_time_means"][group_size - 1])
+                # Update table availability.
+                table_avail[k, j] = table_avail[k, j] + service_time
+                # Update revenue.
                 total_rev = total_rev + self.factors["table_revenue"][group_size - 1]
         # Calculate responses from simulation data.
-        
         responses = {"total_revenue": total_rev,
-                    "service_rate": sum(found)/len(found)
+                     "service_rate": sum(found) / len(found)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -293,14 +278,14 @@ class TableAllocationMaxRev(Problem):
     """
     def __init__(self, name="TABLEALLOCATION-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 1
+        self.dim = 4
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lowerbound = ([0,0,0,0])
-        self.upperbound = ([np.inf,np.inf,np.inf,np.inf])
+        self.lowerbound = ([0, 0, 0, 0])
+        self.upperbound = ([np.inf, np.inf, np.inf, np.inf])
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -311,7 +296,7 @@ class TableAllocationMaxRev(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": ([10,5,4,2],)
+                "default": (10, 5, 4, 2)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -342,7 +327,7 @@ class TableAllocationMaxRev(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "num_tables": vector[0]
+            "num_tables": vector[:]
         }
         return factor_dict
 
@@ -417,7 +402,7 @@ class TableAllocationMaxRev(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -457,7 +442,7 @@ class TableAllocationMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"],x[0])) <= self.model_fixed_factors["capacity"])
+        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"], x)) <= self.model_fixed_factors["capacity"])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -473,14 +458,14 @@ class TableAllocationMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
+        # Add new tables of random size to the restaurant until the capacity is reached.
         allocated = 0
-        num_tables = [0,0,0,0]
+        num_tables = [0, 0, 0, 0]
         while allocated < self.model_fixed_factors["capacity"]:
-            table = int(np.random.uniform(0,4))
+            table = rand_sol_rng.randint(0, len(self.model_fixed_factors["table_cap"]) - 1)
             if self.model_fixed_factors["table_cap"][table] <= (self.model_fixed_factors["capacity"] - allocated):
-              num_tables[table] = num_tables[table] + 1
-              allocated = allocated + self.model_fixed_factors["table_cap"][table]
+                num_tables[table] = num_tables[table] + 1
+                allocated = allocated + self.model_fixed_factors["table_cap"][table]
             elif self.model_fixed_factors["table_cap"][0] > (self.model_fixed_factors["capacity"] - allocated):
-              break
-
-        return (num_tables,)
+                break
+        return tuple(num_tables)

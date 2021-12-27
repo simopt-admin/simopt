@@ -457,7 +457,7 @@ class HotelRevenue(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = (0,) * self.dim
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
