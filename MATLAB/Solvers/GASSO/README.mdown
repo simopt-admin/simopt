@@ -3,7 +3,7 @@
 ### About the Solver
 
 A gradient-based algorithm that iteratively draws candidate solutions from a sampling distribution and then, based on their objective function evaluations, updates the parameters of the sampling distribution.
-For more details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Solvers/GASSO/GASSO_Algorithm.pdf).
+For more details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/MATLAB/Solvers/GASSO/GASSO_Algorithm.pdf).
 
 ### Properties
 
