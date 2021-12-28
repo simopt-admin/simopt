@@ -9,7 +9,7 @@ The `simopt.rng.mrg32k3a` module includes the `MRG32k3a` class and several usefu
 They make use of techniques for efficiently "jumping ahead," as outlined by L'Ecuyer (1990).
 * The `reset_stream`, `reset_substream`, and `reset_subsubstream` functions reset the generator to the start of the current stream, substream, or subsubstream, respectively.
 
-The `simopt.rng.matmodops` includes basic matrix/modulus operations used by the `simopt.rng.mrg32k3a` module.
+The `simopt.rng.matmodops` module includes basic matrix/modulus operations used by the `simopt.rng.mrg32k3a` module.
 
 ### References
 * L'Ecuyer, Pierre (1990). [Random numbers for simulation.](https://dl.acm.org/doi/10.1145/84537.84555) *Communications of the ACM* 33(10):85-97.
