@@ -15,9 +15,13 @@ The paper  `Pasupathy and Henderson (2006) <https://www.informs-sim.org/wsc06pap
 The `models <models.html>`_ library contains the simulation logic to simulate a variety of systems and SO test problems built around these models. The `solvers <solvers.html>`_ library provides users with the latest SO solvers to solve different types of SO problems. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers.
 
 The source code consists of the following modules:
-* The `base.py <base.html>`_ module contains class definitions for the library.
+
+* The `base.py <base.html>`_ module contains class definitions for models, problems, and solvers.
+
 * The `wrapper_base.py <wrapper_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
-* The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data farming experiments.
+
+* The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data-farming experiments.
+
 * The `directory.py <directory.html>`_ module contains a listing of models, problems, and solvers in the library.
 
 The `rng <rng.html>`_ folder contains the source code for the MRG32k3a random number generator used throughout SimOpt.
