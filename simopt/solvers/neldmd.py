@@ -160,7 +160,7 @@ class NELDMD(Solver):
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
-        A = np.empty(((max_num_sol+1),problem.dim), dtype=object)
+        A = np.empty((max_num_sol+1), dtype=object)
         fn_mean = np.empty(max_num_sol, dtype=object)
         fn_var = np.empty(max_num_sol, dtype=object)
         # Using CRN: for each solution, start at substream 1
@@ -192,13 +192,15 @@ class NELDMD(Solver):
         while budget_spent <= problem.factors["budget"]:
             # Reflect worse point
             p_high = sort_sol[-1]  # current worst point
-            p_cent = np.mean([s.x for s in sort_sol[1:-1]])  # centroid for other pts
+            p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
             orig_pt = p_high  # save the original point
-            p_refl = (1 + self.factors["alpha"])*p_cent - self.factors["alpha"]*p_high  # reflection
+            p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
+                                                   tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
             # p_refl = self.check_const() ### TODO: write helper function
             
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
+            p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
             problem.simulate(p_refl, self.factors["r"])
             budget_spent += self.factors["r"]
             refl_fn_val = -1*problem.minmax*p_refl.objectives_mean
@@ -224,10 +226,13 @@ class NELDMD(Solver):
             # Check if accept expansion (of reflection in the same direction)
             elif refl_fn_val < fn_low:
                 p_exp2 = p_refl
-                p_exp = self.factors["gammap"]*p_refl + (1-self.factors["gammap"])*p_cent
+                p_exp = tuple(map(lambda i, j: i + j, tuple(self.factors["gammap"]* x for x in p_refl.x), 
+                                                      tuple((1-self.factors["gammap"])* x for x in p_cent)))
                 # p_exp = self.check_const()  ### TODO: helper function
 
                 # Evaluate expansion point
+                p_exp= Solution(p_exp, problem)
+                p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_exp, self.factors["r"])
                 budget_spent += self.factors["r"]
                 exp_fn_val = -1*problem.minmax*p_exp.objectives_mean
@@ -273,10 +278,13 @@ class NELDMD(Solver):
                 
                 # Attempt contraction or shrinking
                 p_cont2 = p_high
-                p_cont = self.factors["betap"]*p_high + (1-self.factors["betap"])*p_cent
+                p_cont = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
+                                                       tuple((1-self.factors["betap"])* x for x in p_cent)))
                 # p_cont = self.check_const()  ### TODO: helper function
 
                 # Evaluate contraction point
+                p_cont= Solution(p_cont, problem)
+                p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_cont, self.factors["r"])
                 budget_spent += self.factors["r"]
                 cont_fn_val = -1*problem.minmax*p_cont.objectives_mean
@@ -308,8 +316,11 @@ class NELDMD(Solver):
 
                     for i in range(1, len(sort_sol)):
                         p_new2 = p_low
-                        p_new = self.factors["delta"]*sort_sol[i] + (1-self.factors["delta"])*p_low
+                        p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"]* x for x in sort_sol[i].x), 
+                                                       tuple((1-self.factors["delta"])* x for x in p_low.x)))
                         # p_new = self.check_const()
+                        p_new= Solution(p_new, problem)
+                        p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         problem.simulate(p_new, self.factors["r"])
                         budget_spent += self.factors["r"]
                         new_fn_val = -1*problem.minmax*p_new.objectives_mean
@@ -347,6 +358,10 @@ class NELDMD(Solver):
         fn_mean = fn_mean[:record_idx]
         fn_var = fn_var[:record_idx]
 
+        recommended_solns = list(A)
+        intermediate_budgets = list(n_calls)
+        return recommended_solns, intermediate_budgets
+
 
     ### HELPER FUNCTIONS
     def sort_and_end_update(self, fn_val, fn_val_var, sol):
@@ -356,5 +371,8 @@ class NELDMD(Solver):
         sort_sol = [s for _, s in sorted(zip(fn_val_idx, sol))]
         return sort_fn_val, sort_fn_var_val, sort_sol
 
-    def check_const(self):
+    def check_const(self, lb, ub, pt, pt2):
+        col = len(pt2)
+        step = pt - pt2
+        tmax = np.ones()
         return 0  ### TODO
