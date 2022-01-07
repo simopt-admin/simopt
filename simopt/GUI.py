@@ -62,57 +62,6 @@ class Experiment_Window(tk.Tk):
     test_function(self, *args) : placeholder function to make sure buttons, OptionMenus, etc are connected properly
     """
 
-    """
-    Notes for 10/22
-    hover over text for descripiton of parameters
-    split parameters into parameters and settings
-        add max hw
-    add where plots are saved to
-
-    10/29
-    meta experiment - postnormalize with post replicate
-    one button for both
-    no ref_solver for any but the last two
-    edit add button
-
-
-    11/4
-    DONE:
-    change path name for plot
-    defualt meta is 200
-    nothing attached to far left
-    remove last line of title
-    5px margin on both sides
-    first input for factor of problem change so it doesnt show tuple
-    macroreplications
-    full length for experiment window
-    make factor windows longer
-    HOVER
-
-    check solvers going into meta plot window
-    horizontal lines in experiment window
-    Post norm button
-
-    11/12
-    mm1 and astrodf
-    latex quotes for expressions
-    https://stackoverflow.com/questions/4028267/how-to-render-latex-markup-using-python
-    user guide
-
-    move select solver drop down to directly above
-    oracle to model
-    crossdesign then load
-    change disabled color
-    add check on meta if no solver or problem is selected
-    multple problems on a solver plotting
-    
-    12/23
-    todo: load meta-experiments
-    todo: cross-design error messages
-    
-    """
-
-
     def __init__(self, master):
 
         #problem.model_decision_factors
@@ -2678,12 +2627,6 @@ class Plot_Window():
             if c == 4:
                 c = 0
                 ro += 1
-
-
-# If we wanted to have a pop-up help message show if the user hovers over one of the widgets: https://jakirkpatrick.wordpress.com/2012/02/01/making-a-hovering-box-in-tkinter/
-# and
-# https://stackoverflow.com/questions/20399243/display-message-when-hovering-over-something-with-mouse-cursor-in-python (see the one with 11 upvotes)
-
 
 
 def main():

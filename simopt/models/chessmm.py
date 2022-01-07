@@ -286,7 +286,7 @@ class ChessAvgDifference(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "allowable_diff": vector[:]
+            "allowable_diff": vector[0]
         }
         return factor_dict
 
