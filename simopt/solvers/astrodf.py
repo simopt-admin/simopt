@@ -173,7 +173,7 @@ class ASTRODF(Solver):
             "epsilon_lambda": self.check_epsilon_lambda,
             "kappa_inner": self.check_kappa_inner,
             "kappa_outer": self.check_kappa_outer,
-            "criticality_threshold": self.criticality_threshold
+            "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
 
