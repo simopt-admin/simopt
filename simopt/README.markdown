@@ -17,67 +17,69 @@ Full documentation for the source code and descriptions of the problems and solv
 ## Getting Started
 Please make sure you have the following dependencies installed: Python 3, numpy, scipy, and matplotlib.
 Then clone the repo.
-To see an example of how to run an experiment of a solver on a problem, please view or run demo/demo\_solver\_problem.py.
+To see an example of how to run an Experiment of a solver on a problem, please view or run demo/demo\_solver\_problem.py.
 A graphical user interface (GUI) is now available.
 
 # User Guide for the Graphical User Interface of SimOpt
-The main page for the GUI has all the options necessary to add an experiment to the list and generate desirable plots for it. At the top are the three ways to create or continue working with an experiment.
-There are three main ways to start an experiment:
-Load a pickle file of a previously created experiment.
-Cross-design experiment of a collection of problem-solver pairs.
-Create an individual experiment on a single problem-solver pair.
-At the bottom, there is a frame containing all experiments. The experiments are in different tabs, depending on if they are single problem-solver pairs, a (currently called) MetaExperiment made from a cross-design), or if they are ready to be postnormalized and prepared for plotting.
+The main page for the GUI has all the options necessary to add an Experiment to the list or load an existing Experiment and generate desirable plots for it. At the top of the main page are the three ways to create or continue working with an existing Experiment:
+
+* Load a .pickle file of a previously created Experiment.
+* Generate a cross-design Experiment, which is a collection of problem-solver pairs or a MetaExperiment.
+* Create an individual Experiment on a single problem-solver pair.
+
+At the bottom, there is a frame containing all Experiments. The Experiments are listed in different tabs: the first tab lists the individual problem-solver pairs ready to be run or post-replicated, the second tab lists the (currently called) MetaExperiments made from the cross-design, and the third tab lists the or if they are ready to be post-normalized and prepared for plotting.
 
 ## Installation
 This GUI depends on Python 3, numpy, scipy, matplotlib, Pillow, and tkinter. <br>
 To run the GUI, navigate to the Simopt/simopt directory and run ``` python3 GUI.py ```
 
 ## Adding Experiments
-This section will explain how to add experiments to the Experiments or MetaExperiments queue.
-### Load a File
-* In the top left corner, a user can click "Load File". Their file system will pop up, and the user can navigate to an appropriate \*.pickle file to select.
+This section will explain how to add Experiments to the Experiments or MetaExperiments queue.
+
+### Loading a File
+* In the top left corner, you can click "Load File". Your file system will pop up, and you can navigate to an appropriate \*.pickle file to select.
 * The file must be \*.pickle, and if it is not, the GUI will throw an error.
-* Once an experiment is loaded, it will be added to the Queue of Experiments.
-* The Run and Postprocess buttons will be updated to accurately represent if the experiment has already been run and postprocessed.
+* Once an Experiment is loaded, it will be added to the Queue of Experiments.
+* The Run and Post-Process buttons will be updated to accurately represent if the Experiment has already been run and post-processed.
 
 ### Creating an Experiment through the GUI
-Instead of loading in an experiment, the user can create one from the main page of the GUI:
-* First, select a solver from the "Solver" dropdown.
+Instead of loading in an existing Experiment, you can create one from the main page of the GUI:
+* First, select a solver from the "Solver" dropdown list.
 * Change factors associated with the solver as necessary.
-* All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors)
-* Select a problem from the "Problem" dropdown.
+* All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors). If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
+* Select a problem from the "Problem" dropdown list.
 * Change factors associated with the Problem and Model as necessary.
-* All problems with unique factors must have unique names (no two problems can have the same name, but different factors)
-* The default number of macroreplications is 10. The user can modify this in the top left corner
-* Select the "Add Experiment" button, which only appears when a solver and Problem is selected.
+* All problems with unique factors must have unique names (no two problems can have the same name, but different factors). If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
+* The default number of macroreplications is 10. You can modify this in the top left corner.
+* Select the "Add Experiment" button, which only appears when a solver and Problem is selected. Then, a new Experiment will be added in the "Queue of Experiments".
 
-### Cross-Design Experiment
-By cross-designing an experiment, the user creates a MetaExperiment, which will be added to the Queue of Meta Experiments. Meta Experiments can only be created and not loaded from a file.
-* Click Cross-Design Experiment
-* Check which Problems and Solvers the experiment should contain
-* Note that deterministic solvers can not handle stochastic problems (ex: FACSIZE-2 can not be solved with ASTRODF)
-* The default number of Macroreplicaitions is 10, but that can be adjusted
+### Creating a Cross-Design Experiment
+By cross-designing an Experiment, you can create a MetaExperiment, which will be added to the Queue of Meta Experiments. Meta Experiments can only be created and not loaded from a file.
+* Click the "Cross-Design Experiments" button.
+* Check the compatibility of the Problems and Solvers being selected. Note that deterministic solvers can not handle stochastic problems (ex: FACSIZE-2 can not be solved with ASTRODF).
+* The default number of macroreplicaitions is 10, but you can modify that.
 * Click "Confirm Cross-Design Experiment."
-* The pop-up window will disappear, and the Experiments frame will automatically switch to Queue of Meta Experiments
-To exit out of the Meta Experiment pop-up without creating an experiment, click the red x in the top left corner of the window.
+* The pop-up window will disappear, and the Experiments frame will automatically switch to the "Queue of MetaExperiments".
+* To exit out of the MetaExperiment pop-up without creating an Experiment, click the red x in the top left corner of the window.
 
 ## Run an Experiment
-To run an experiment or meta experiment that has not already been run, click the "Run Exp." button in the queue of experiments or queue of meta experiments. Once the experiment is run, it can not be rerun.
-**Note:** running an experiment could take a couple of seconds to a couple of minutes depending on the experiment and the number of macroreplications.
+To run an Experiment or MetaExperiment that has not already been run, click the "Run Exp." button in the "Queue of Experiments" or "Queue of MetaExperiments". Once the Experiment is run, it can not be rerun.
+**Note:** running an Experiment could take a couple of seconds to a couple of minutes depending on the Experiment and the number of macroreplications.
 
-## Postprocess and Postnormalize
-Post Processing happens before post normalizing. After postnormalization is complete, the Plotting window appears.
-To exit out of the Post Process/ Normalize pop-up without postprocessing or normalizing, click the red x in the top left corner of the window.
+## Post-Processing and Post-Normalization
+Post Processing happens before post normalizing. After post-normalization is complete, the Plotting window appears.
+To exit out of the Post Process/ Normalize pop-up without post-processing or normalizing, click the red x in the top left corner of the window.
+
 ### Experiments
-Experiments can be post-processed from the queue of Experiments tab by clicking "Postprocess." Adjust Post Processing factors as necessary. Only Experiments that have already been run and have not yet been postprocessed can be postprocessed. <br>
-After Post Processing, click the "Postnormalize by Problem" tab to select which experiments to postnormalize together.
-* Only Experiments with the same Problem can be postnormalized Together.
+Experiments can be post-processed from the "Queue of Experiments" tab by clicking "Post-Process." Adjust Post Processing factors as necessary. Only Experiments that have already been run and have not yet been post-processed can be post-processed. <br>
+After post-processing, click the "Post-Normalize by Problem" tab to select which Experiments to post-normalize together.
+* Only Experiments with the same Problem can be post-normalized Together.
 * Once all Experiments are checked, click the "Post Normalize Selected" button at the bottom of the GUI (this button only appears when in the Post Normalize Tab)
-* Update any values necessary and click "Post Normalize" when the experiment or experiments are ready to be postnormalized
+* Update any values necessary and click "Post-Normalize" when the Experiment or Experiments are ready to be post-normalized
 
-### Meta Experiments
-Meta Experiments are postprocessed and postnormalized at the same time.
-* Click the Post Process button for the specific Meta Experiment, then change any values necessary, then click "Postprocess"
+### MetaExperiments
+MetaExperiments are post-processed and post-normalized at the same time.
+* Click the Post Process button for the specific Meta Experiment, then change any values necessary, then click "Post-Process"
 
 ## Plotting Experiments
 The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem/ solver from one Meta Experiment can be plotted together. To return to the main page, click the red x in the top left corner of the window.
@@ -90,7 +92,8 @@ The Plotting page is the same for both Experiments and Meta Experiments. Current
 
 
 ## Note to Users
-Users can contribute problems and solver to SimOpt by using pull requests in GitHub or corresponding with the developers.
+You can contribute problems and solver to SimOpt by using pull requests in GitHub or corresponding with the developers.
+* To do: as of now, the plotting functionality of multiple problems and multiple solvers is under construction.
 
 ## Acknowledgments
 An earlier website for SimOpt, [http://www.simopt.org](http://www.simopt.org), was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
