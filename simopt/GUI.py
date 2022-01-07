@@ -139,17 +139,17 @@ class Experiment_Window(tk.Tk):
                             justify="center")
 
         self.problem_label = tk.Label(master=self.master, # window label is used in
-                        text = "Select a Problem:",
+                        text = "Select Problem:",
                         font = "Calibri 13")
 
         self.or_label = tk.Label(master=self.master, # window label is used in
             text = " OR ",
             font = "Calibri 13")
         self.or_label2 = tk.Label(master=self.master, # window label is used in
-            text = " OR Select a Problem and a Solver from Below:",
+            text = " OR Select Problem and Solver from Below:",
             font = "Calibri 13")
         self.or_label22 = tk.Label(master=self.master, # window label is used in
-            text = "Select From Below",
+            text = "Select from Below",
             font = "Calibri 12")
 
         # from experiments.inputs.all_factors.py:
@@ -162,7 +162,7 @@ class Experiment_Window(tk.Tk):
         self.problem_menu = ttk.OptionMenu(self.master, self.problem_var, "Problem", *self.problem_list, command=self.show_problem_factors)
 
         self.solver_label = tk.Label(master=self.master, # window label is used in
-                        text = "Select a Solver:",
+                        text = "Select Solver:",
                         font = "Calibri 13")
 
         # from experiments.inputs.all_factors.py:
@@ -1190,7 +1190,7 @@ class Experiment_Window(tk.Tk):
     def select_pickle_file_fuction(self, *args):
         filename = filedialog.askopenfilename(parent = self.master,
                                             initialdir = "./",
-                                            title = "Select a Pickle File",
+                                            title = "Select Pickle File",
                                             # filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
                                             #              ,("Python files", "*.py"),("All files", "*.*") )
                                                            )
@@ -1294,7 +1294,7 @@ class Experiment_Window(tk.Tk):
                         self.my_experiment.post_norm_ready = False
                         if self.my_experiment.check_postreplicate():
                             self.experiment_object_list[place].post_norm_ready = True
-                            self.widget_list[place][6]["text"] = "Done Processing Complete"
+                            self.widget_list[place][6]["text"] = "Post-Processing Complete"
                             self.widget_list[place][6]["state"] = "disabled"
 
                         separator = ttk.Separator(master=self.tab_one, orient='horizontal')
@@ -2205,14 +2205,14 @@ class Plot_Window():
             self.solver_menu.bind('<<ListboxSelect>>', self.solver_select_function)
 
             self.instruction_label = tk.Label(master=self.master, # window label is used in
-                            text = "Welcome to the Plotting Page of SimOpt \n Select a Problem and Solvers to Plot",
+                            text = "Welcome to the Plotting Page of SimOpt \n Select Problems and Solvers to Plot",
                             font = "Calibri 15 bold",justify="center")
 
             self.problem_label = tk.Label(master=self.master, # window label is used in
-                            text = "Please Select the Problem:*",
+                            text = "Select Problem(s):*",
                             font = "Calibri 13")
             self.plot_label = tk.Label(master=self.master, # window label is used in
-                            text = "Please Select Plot Type",
+                            text = "Select Plot Type:*",
                             font = "Calibri 13")
 
             # from experiments.inputs.all_factors.py:
@@ -2225,7 +2225,7 @@ class Plot_Window():
             self.plot_menu = ttk.OptionMenu(self.master, self.plot_var, "Plot", *self.plot_type_names, command=partial(self.get_parameters, self.plot_var))
 
             self.solver_label = tk.Label(master=self.master, # window label is used in
-                            text = "Please Select the Solver(s):*",
+                            text = "Select Solver(s):*",
                             font = "Calibri 13")
 
             # from experiments.inputs.all_factors.py:
@@ -2373,7 +2373,7 @@ class Plot_Window():
                     if exp.problem.name == self.problem_menu.get(i):
                         probs.append(exp)
             if len(probs) == 0 or len(self.solvers) == 0 or str(self.plot_var.get()) == "Plot":
-                txt = "Please Select at least 1 Problem, 1 Solver, and 1 Plot Type"
+                txt = "At least 1 Problem, 1 Solver, and 1 Plot Type must be selected."
                 self.bad_label = tk.Label(master=self.master,text=txt,font = "Calibri 12",justify="center")
                 self.bad_label.place(relx=.5, rely=.45)
                 return
@@ -2572,7 +2572,7 @@ class Plot_Window():
                     label.grid(row=i, column=0, padx=10, pady=3)
                     entry.grid(row=i, column=1, padx=10, pady=3)
                 elif param == 'ref_solver':
-                    label = tk.Label(master=self.CI_canvas, text="Please Select a Solver", font="Calibri 14")
+                    label = tk.Label(master=self.CI_canvas, text="Select Solver", font="Calibri 14")
                     if len(self.solvers_names) != 0:
                         label = tk.Label(master=self.CI_canvas, text="Benchmark Solver", font="Calibri 14")
                         entry = ttk.OptionMenu(self.CI_canvas, self.params[i+2], self.solvers_names[0], *self.solvers_names)
