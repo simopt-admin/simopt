@@ -2,7 +2,7 @@
 Summary
 -------
 Simulate multiple periods worth of sales for a (s,S) inventory problem
-with continuous inventory. A detailed description of the problem can be found 'here <https://simopt.readthedocs.io/en/latest/sscont.html>'_.
+with continuous inventory. A detailed description of the problem can be found `here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
 """
 import numpy as np
 
