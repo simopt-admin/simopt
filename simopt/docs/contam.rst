@@ -21,7 +21,7 @@ supply chain by solving the following problem:
 
 .. image:: contam.PNG
   :alt: The CONTAM formulation has failed to display
-  :width: 300
+  :width: 500
 
 (Binary vector variables, constrained.)
 
