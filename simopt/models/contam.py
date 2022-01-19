@@ -40,7 +40,6 @@ class Contamination(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        w=5
         
         self.name = "CONTAM"
         self.n_rngs = 2
