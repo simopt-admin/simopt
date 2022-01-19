@@ -334,8 +334,6 @@ class ContaminationTotalCostDisc(Problem):
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
-        w = 10
-        
         """
         Convert a dictionary with factor keys to a vector
         of variables.
