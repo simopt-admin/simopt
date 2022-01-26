@@ -149,22 +149,26 @@ class NELDMD(Solver):
         max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
         # Shrink variable bounds to avoid floating errors
         if problem.lower_bounds != None:
-            lower_bounds = problem.lower_bounds + self.factors["sensitivity"]
+            lower_bounds = tuple(map(lambda i: i + self.factors["sensitivity"], problem.lower_bounds))
+        else:
+            lower_bounds = None
         if problem.upper_bounds != None:
-            upper_bounds = problem.upper_bounds - self.factors["sensitivity"]
+            upper_bounds = tuple(map(lambda i: i - self.factors["sensitivity"], problem.upper_bounds))
+        else:
+            upper_bounds = None
         # Initial dim + 1 random points
         sol = []
         sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
         for i in range(1, n_pts):
-            sol.append(self.create_new_solution(sol[i-1].x, problem))
+            rand_x = problem.get_random_solution(self.rng_list[1])
+            sol.append(self.create_new_solution(rand_x, problem))
+        print("initial sol", [i.x for i in sol])   # DELETE
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
         A = np.empty((max_num_sol+1), dtype=object)
         fn_mean = np.empty(max_num_sol, dtype=object)
         fn_var = np.empty(max_num_sol, dtype=object)
-        # Using CRN: for each solution, start at substream 1
-        problemseed = 1
         # Track overall budget spent
         budget_spent = 0
 
@@ -175,12 +179,12 @@ class NELDMD(Solver):
         for i in range(n_pts):
             problem.simulate(sol[i], self.factors["r"])
             budget_spent += self.factors["r"]
-            fn_val[i] = -1*problem.minmax*sol[i].objectives_mean
+            fn_val[i] = tuple([-1*x for x in problem.minmax])*sol[i].objectives_mean
             fn_var_val[i] = sol[i].objectives_var
         # Record initial solution data
         n_calls[0] = 0
         A[0] = sol[0]
-        fn_mean[0] = -1*problem.minmax*fn_val[0]
+        fn_mean[0] = tuple([-1*x for x in problem.minmax])*fn_val[0]
         fn_var[0] = fn_var_val[0]
         # Sort solutions by obj function estimate
         sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(fn_val, fn_var_val, sol)
@@ -189,21 +193,26 @@ class NELDMD(Solver):
 
         # Reflect worst and update sort_sol
         # Maximization problem is converted to minimization by -z
+        loop = 0   # DELETE
         while budget_spent <= problem.factors["budget"]:
+            loop += 1    # DELETE
+            print("loop", loop)   # DELETE
+            print([i.x for i in sort_sol])   # DELETE
             # Reflect worse point
             p_high = sort_sol[-1]  # current worst point
             p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
+            print("centroid", p_cent)   # DELETE
             orig_pt = p_high  # save the original point
             p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
                                                    tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
-            # p_refl = self.check_const() ### TODO: write helper function
+            p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
             
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-            problem.simulate(p_refl, self.factors["r"])
+            problem.simulate(p_refl, self.factors["r"])   # STUCK HERE when solution is lb for chessmm (min)
             budget_spent += self.factors["r"]
-            refl_fn_val = -1*problem.minmax*p_refl.objectives_mean
+            refl_fn_val = tuple([-1*x for x in problem.minmax])*p_refl.objectives_mean
             refl_fn_var_val = p_refl.objectives_var
             
             # Track best, worst, and second worst points
@@ -212,8 +221,14 @@ class NELDMD(Solver):
             fn_sec = sort_fn_val[-2]  # current 2nd worst z
             fn_high = sort_fn_val[-1]  # worst z from unreflected structure
 
+            print("sort_fn_val", sort_fn_val)   # DELETE
+            print("best", fn_low)   # DELETE
+            print("-2", fn_sec)     # DELETE
+            print("refl", refl_fn_val)   # DELETE
+
             # Check if accept reflection
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
+                print("accept reflection")   # DELETE
                 sort_sol[-1] = p_refl  # the new point replaces the previous worst
                 sort_fn_val[-1] = refl_fn_val
                 sort_fn_var_val[-1] = refl_fn_var_val
@@ -225,17 +240,18 @@ class NELDMD(Solver):
 
             # Check if accept expansion (of reflection in the same direction)
             elif refl_fn_val < fn_low:
+                print("accept expansion")   # DELETE
                 p_exp2 = p_refl
                 p_exp = tuple(map(lambda i, j: i + j, tuple(self.factors["gammap"]* x for x in p_refl.x), 
                                                       tuple((1-self.factors["gammap"])* x for x in p_cent)))
-                # p_exp = self.check_const()  ### TODO: helper function
+                p_exp = self.check_const(lower_bounds, upper_bounds, p_exp, p_exp2.x)
 
                 # Evaluate expansion point
                 p_exp= Solution(p_exp, problem)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_exp, self.factors["r"])
                 budget_spent += self.factors["r"]
-                exp_fn_val = -1*problem.minmax*p_exp.objectives_mean
+                exp_fn_val = tuple([-1*x for x in problem.minmax])*p_exp.objectives_mean
                 exp_fn_var_val = p_exp.objectives_var
 
                 # Check if expansion point is an improvement relative to simplex
@@ -251,7 +267,7 @@ class NELDMD(Solver):
                     if budget_spent <= problem.factors["budget"]:
                         n_calls[record_idx] = budget_spent
                         A[record_idx] = p_exp
-                        fn_mean[record_idx] = -1*problem.minmax*exp_fn_val  # flip sign back
+                        fn_mean[record_idx] = tuple([-1*x for x in problem.minmax])*exp_fn_val  # flip sign back
                         fn_var[record_idx] = exp_fn_var_val
                         record_idx += 1
                 else:
@@ -266,12 +282,13 @@ class NELDMD(Solver):
                     if budget_spent <= problem.factors["budget"]:
                         n_calls[record_idx] = budget_spent
                         A[record_idx] = p_refl
-                        fn_mean[record_idx] = -1*problem.minmax*refl_fn_val  # flip sign back
+                        fn_mean[record_idx] = tuple([-1*x for x in problem.minmax])*refl_fn_val  # flip sign back
                         fn_var[record_idx] = refl_fn_var_val
                         record_idx += 1
             
             # Check if accept contraction or shrink
             elif refl_fn_val > fn_sec:
+                print("accept contraction")   # DELETE
                 if refl_fn_val <= fn_high:
                     p_high = p_refl  # p_refl replaces p_high
                     fn_high = refl_fn_val  # replace fn_high
@@ -280,14 +297,14 @@ class NELDMD(Solver):
                 p_cont2 = p_high
                 p_cont = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
                                                        tuple((1-self.factors["betap"])* x for x in p_cent)))
-                # p_cont = self.check_const()  ### TODO: helper function
+                p_cont = self.check_const(lower_bounds, upper_bounds, p_cont, p_cont2.x)
 
                 # Evaluate contraction point
                 p_cont= Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_cont, self.factors["r"])
                 budget_spent += self.factors["r"]
-                cont_fn_val = -1*problem.minmax*p_cont.objectives_mean
+                cont_fn_val = tuple([-1*x for x in problem.minmax])*p_cont.objectives_mean
                 cont_fn_var_val = p_cont.objectives_var
 
                 # Accept contraction
@@ -305,7 +322,7 @@ class NELDMD(Solver):
                         if budget_spent <= problem.factors["budget"]:
                             n_calls[record_idx] = budget_spent
                             A[record_idx] = p_cont
-                            fn_mean[record_idx] = -1*problem.minmax*cont_fn_val  # flip sign back
+                            fn_mean[record_idx] = tuple([-1*x for x in problem.minmax])*cont_fn_val  # flip sign back
                             fn_var[record_idx] = cont_fn_var_val
                             record_idx += 1
                 else:  # Contraction fails -> Simplex shrinks by delta with p_low fixed
@@ -318,12 +335,12 @@ class NELDMD(Solver):
                         p_new2 = p_low
                         p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"]* x for x in sort_sol[i].x), 
                                                        tuple((1-self.factors["delta"])* x for x in p_low.x)))
-                        # p_new = self.check_const()
+                        p_new = self.check_const(lower_bounds, upper_bounds, p_new, p_new2.x)
                         p_new= Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         problem.simulate(p_new, self.factors["r"])
                         budget_spent += self.factors["r"]
-                        new_fn_val = -1*problem.minmax*p_new.objectives_mean
+                        new_fn_val = tuple([-1*x for x in problem.minmax])*p_new.objectives_mean
                         new_fn_var_val = p_new.objectives_var
 
                         # Check for new best
@@ -342,7 +359,7 @@ class NELDMD(Solver):
                     if new_best == 1 and budget_spent <= problem.factors["budget"]:
                         n_calls[record_idx] = budget_spent
                         A[record_idx] = sort_sol[0]
-                        fn_mean[record_idx] = -1*problem.minmax*sort_fn_val[0]  # flip sign back
+                        fn_mean[record_idx] = tuple([-1*x for x in problem.minmax])*sort_fn_val[0]  # flip sign back
                         fn_var[record_idx] = sort_fn_var_val[0]
                         record_idx += 1
 
@@ -371,8 +388,21 @@ class NELDMD(Solver):
         sort_sol = [s for _, s in sorted(zip(fn_val_idx, sol))]
         return sort_fn_val, sort_fn_var_val, sort_sol
 
+    # Check & modify (if needed) the new point based on bounds
     def check_const(self, lb, ub, pt, pt2):
         col = len(pt2)
-        step = pt - pt2
-        tmax = np.ones()
-        return 0  ### TODO
+        step = tuple(map(lambda i, j: i - j, pt, pt2))
+        tmax = np.ones(col)
+        for i in range(col):
+            if step[i] > 0 and ub != None:
+                tmax[i] = (ub[i] - pt2[i]) / step[i]
+            elif step[i] < 0 and lb != None:
+                tmax[i] = (lb[i] - pt2[i]) / step[i]
+        t = min(1, min(tmax))
+        modified = list(map(lambda i, j: i + t*j, pt2, step))
+        # Remove rounding error
+        for i in range(col):
+            if abs(modified[i]) < 0.0000005:
+                modified[i] = 0
+        print("modified", modified, "pt", pt)   # DELETE
+        return tuple(modified)
