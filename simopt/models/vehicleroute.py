@@ -157,6 +157,7 @@ class VehicleRoute(Model):
         demand_routes = np.zeros(self.factors["n_veh"])
 
         for i in range(self.factors["n_veh"]):
+            print(i)
             total_dist += self.factors["dist_mat"][0][routes[i, 0]]
             time_routes[i] += t_travel[0, routes[i, 0]]
             # Calculate the number of vehicles that are used in the current set of routes
