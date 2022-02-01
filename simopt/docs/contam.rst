@@ -7,6 +7,7 @@ Consider a food supply chain consisting :math:`n` stages. Suppose there exists a
 The model will determine the contamination levels in each state, given the initial contamination fraction :math:`X_1`, which follows a Beta distribution.
 
 The contamination level at each stage is given by the following equation:
+
 :math:`X_i = Λ_i * (1 - u_i) * (1 - X_i-1) + (1 - Γ_i * u_i) * X_i-1`
 
 Factor
