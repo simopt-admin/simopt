@@ -14,6 +14,8 @@ class CntNV(Model):
     with a Burr Type XII demand distribution. Returns the profit, after
     accounting for order costs and salvage.
 
+    A detailed description of the problem can be found `here <https://simopt.readthedocs.io/en/latest/contNews.html>`_.
+
     Attributes
     ----------
     name : string
