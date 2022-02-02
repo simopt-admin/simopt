@@ -11,28 +11,28 @@ The contamination level at each stage is given by the following equation:
 :math:`X_i = Λ_i * (1 - u_i) * (1 - X_i-1) + (1 - Γ_i * u_i) * X_i-1`
 
 Factor
-    - Contamination Rate Alpha:  
-    		Description: 
+    - Contamination Rate Alpha:
+    		Description: Alpha parameter of beta distribution for growth rate of contamination at each stage.
     		
 		Default value: 1.0
     - Contamination Rate Beta:  
-    		Description: 
+    		Description: Beta parameter of beta distribution for growth rate of contamination at each stage. 
     		
 		Default value: 17/3
     - Restore Rate Alpha:  
-    		Description: 
+    		Description: Alpha parameter of beta distribution for rate that contamination decreases by after prevention effort.
     		
 		Default value: 1.0
     - Restore Rate Beta:  
-    		Description: 
+    		Description: Beta parameter of beta distribution for rate that contamination decreases by after prevention effort.
     		
 		Default value: 3/7
     - Initial Rate Alpha:  
-    		Description: 
+    		Description: Alpha parameter of beta distribution for initial contamination fraction.
     		
 		Default value:  1.0
     - Initial Rate Beta:  
-    		Description: 
+    		Description: Beta parameter of beta distribution for initial contamination fraction.
     		
 		Default value: 30.0
     - Stages: 
@@ -48,4 +48,25 @@ Response
 	- Level (:math:`X_i`): List of contamination levels over time
 
 
-References: Contamination Control Problem. 
+References: 
+Contamination Control Problem. Shin, Kaeyoung., Pasupathy, Raghu. Virginia Tech. (December 18, 2010).
+This example is adapted from the article by Y. Hu et al. [1]
+
+
+**Optimization Problem**
+description in words and summary of properties, e.g., 3-dimensional problem with stochastic constraints
+
+Objective: Minimize the overall cost of the preventive measures and efficiently control contamination in the food supply chain
+(:math:`Σ (c_i * u_i)`)
+
+Constraints: < in words, but can refer to relevant response names >
+
+Decision Variables: < in words, but can refer to relevant factor names >
+
+Fixed factor values: (could be the default values listed above)
+
+Starting solution:
+
+Optimal solution:
+
+Optimal objective function value:
