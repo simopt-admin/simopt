@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate a M/M/1 queue.
+A detailed description of the problem can be found `here `
+
 """
 import numpy as np
 
