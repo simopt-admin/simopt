@@ -9,12 +9,12 @@ and :math:`\mu` are the arrival and service rates, respectively). Furthermore, l
 Lastly, let
 
 
-.. :math:`\hat{f} (x) = (\beta_0 + \beta_1 * x + \beta_2 * x^2) / (1 - x)
+  :math:`\hat{f} (x) = (\beta_0 + \beta_1 * x + \beta_2 * x^2) / (1 - x)
 
 
 The goal is to find \beta_0, \beta_1 and \beta_2 in order to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, i.e. 
 
-.. min :math:`(\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))`
+   min :math:`(\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))`
 
 where :math:`\Gamma` is the convenience matrix for :math:`\bar{f} (x)`. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
 If the simulation at each :math:`x_i` is done independently, then :math:`\Gamma` would be a diagonal matrix.
