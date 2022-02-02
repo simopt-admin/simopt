@@ -1,7 +1,7 @@
 """
 Summary
 -------
-Simulate contamination rates.
+Simulate contamination rates. A detailed description of the problem can be found `here <https://simopt.readthedocs.io/en/latest/contam.html>`
 """
 import numpy as np
 
