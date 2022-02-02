@@ -4,12 +4,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>solvers package &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -45,26 +46,285 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="solvers-package">
+  <section id="solvers-package">
 <h1>solvers package<a class="headerlink" href="#solvers-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
+<section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-solvers.randomsearch">
-<span id="solvers-randomsearch-module"></span><h2>solvers.randomsearch module<a class="headerlink" href="#module-solvers.randomsearch" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="summary">
+</section>
+<section id="module-solvers.astrodf">
+<span id="solvers-astrodf-module"></span><h2>solvers.astrodf module<a class="headerlink" href="#module-solvers.astrodf" title="Permalink to this headline">¶</a></h2>
+<section id="summary">
 <h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
+<p>ASTRODF
+Based on the sample average approximation, the solver makes the surrogate model within the trust region at each iteration k.
+The sample sizes are determined adaptively.
+Solve the subproblem and decide whether the algorithm take the candidate solution as next ieration center point or not.
+Cannot handle stochastic constraints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">solvers.astrodf.</span></span><span class="sig-name descname"><span class="pre">ASTRODF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ASTRODF'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
+<p>Needed description
+.. attribute:: name</p>
+<blockquote>
+<div><p>name of solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.objective_type">
+<span class="sig-name descname"><span class="pre">objective_type</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.objective_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of objective types:</dt><dd><p>“single” or “multi”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.constraint_type">
+<span class="sig-name descname"><span class="pre">constraint_type</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.constraint_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.variable_type">
+<span class="sig-name descname"><span class="pre">variable_type</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.variable_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.gradient_needed">
+<span class="sig-name descname"><span class="pre">gradient_needed</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.gradient_needed" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates if gradient of objective function is needed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>changeable factors (i.e., parameters) of the solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.specifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>details of each factor (for GUI, data validation, and defaults)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#solvers.astrodf.ASTRODF.rng_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of RNGs used for the solver’s internal purposes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – user-specified name for solver</p></li>
+<li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – fixed_factors of the solver</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_beta">
+<span class="sig-name descname"><span class="pre">check_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_c1_lambda">
+<span class="sig-name descname"><span class="pre">check_c1_lambda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_c1_lambda" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_c2_lambda">
+<span class="sig-name descname"><span class="pre">check_c2_lambda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_c2_lambda" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_criticality_threshold">
+<span class="sig-name descname"><span class="pre">check_criticality_threshold</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_criticality_threshold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_delta_max">
+<span class="sig-name descname"><span class="pre">check_delta_max</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_delta_max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_epsilon_lambda">
+<span class="sig-name descname"><span class="pre">check_epsilon_lambda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_epsilon_lambda" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_eta_1">
+<span class="sig-name descname"><span class="pre">check_eta_1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_eta_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_eta_2">
+<span class="sig-name descname"><span class="pre">check_eta_2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_eta_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_gamma_01">
+<span class="sig-name descname"><span class="pre">check_gamma_01</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_gamma_01" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_gamma_02">
+<span class="sig-name descname"><span class="pre">check_gamma_02</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_gamma_02" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_gamma_1">
+<span class="sig-name descname"><span class="pre">check_gamma_1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_gamma_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_gamma_2">
+<span class="sig-name descname"><span class="pre">check_gamma_2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_gamma_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_kappa_inner">
+<span class="sig-name descname"><span class="pre">check_kappa_inner</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_kappa_inner" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_kappa_outer">
+<span class="sig-name descname"><span class="pre">check_kappa_outer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_kappa_outer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_mu">
+<span class="sig-name descname"><span class="pre">check_mu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_mu" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.check_w">
+<span class="sig-name descname"><span class="pre">check_w</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.check_w" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.coefficient">
+<span class="sig-name descname"><span class="pre">coefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.coefficient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.interpolation_points">
+<span class="sig-name descname"><span class="pre">interpolation_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.interpolation_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.local_model_evaluate">
+<span class="sig-name descname"><span class="pre">local_model_evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.local_model_evaluate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.model_construction">
+<span class="sig-name descname"><span class="pre">model_construction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expended_budget</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.model_construction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.parameter_tuning">
+<span class="sig-name descname"><span class="pre">parameter_tuning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.parameter_tuning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.samplesize">
+<span class="sig-name descname"><span class="pre">samplesize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">io</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.samplesize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a single macroreplication of a solver on a problem.
+:param problem: simulation-optimization problem to solve
+:type problem: Problem object
+:param crn_across_solns: indicates if CRN are used when simulating different solutions
+:type crn_across_solns: bool</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>recommended_solns</strong> (<em>list of Solution objects</em>) – list of solutions recommended throughout the budget</p></li>
+<li><p><strong>intermediate_budgets</strong> (<em>list of ints</em>) – list of intermediate budgets when recommended solutions changes</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.astrodf.ASTRODF.standard_basis">
+<span class="sig-name descname"><span class="pre">standard_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.astrodf.ASTRODF.standard_basis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+<section id="module-solvers.randomsearch">
+<span id="solvers-randomsearch-module"></span><h2>solvers.randomsearch module<a class="headerlink" href="#module-solvers.randomsearch" title="Permalink to this headline">¶</a></h2>
+<section id="id1">
+<h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.</p>
 <dl class="py class">
-<dt id="solvers.randomsearch.RandomSearch">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">solvers.randomsearch.</span></code><code class="sig-name descname"><span class="pre">RandomSearch</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">solvers.randomsearch.</span></span><span class="sig-name descname"><span class="pre">RandomSearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RNDSRCH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
 <p>A solver that randomly samples solutions from the feasible region.
 Take a fixed number of replications at each solution.</p>
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -74,8 +334,8 @@ Take a fixed number of replications at each solution.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.objective_type">
-<code class="sig-name descname"><span class="pre">objective_type</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.objective_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.objective_type">
+<span class="sig-name descname"><span class="pre">objective_type</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.objective_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of objective types:</dt><dd><p>“single” or “multi”</p>
 </dd>
@@ -88,8 +348,8 @@ Take a fixed number of replications at each solution.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.constraint_type">
-<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.constraint_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.constraint_type">
+<span class="sig-name descname"><span class="pre">constraint_type</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -102,8 +362,8 @@ Take a fixed number of replications at each solution.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.variable_type">
-<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.variable_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.variable_type">
+<span class="sig-name descname"><span class="pre">variable_type</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -116,41 +376,41 @@ Take a fixed number of replications at each solution.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.gradient_needed">
-<code class="sig-name descname"><span class="pre">gradient_needed</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.gradient_needed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.gradient_needed">
+<span class="sig-name descname"><span class="pre">gradient_needed</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.gradient_needed" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is needed</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors (i.e., parameters) of the solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.specifications" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="solvers.randomsearch.RandomSearch.rng_list">
-<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#solvers.randomsearch.RandomSearch.rng_list" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used for the solver’s internal purposes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -161,7 +421,10 @@ Take a fixed number of replications at each solution.</p>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – fixed_factors of the solver</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – user-specified name for solver</p></li>
+<li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – fixed_factors of the solver</p></li>
+</ul>
 </dd>
 </dl>
 <div class="admonition seealso">
@@ -169,33 +432,19 @@ Take a fixed number of replications at each solution.</p>
 <p><a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
 </div>
 <dl class="py method">
-<dt id="solvers.randomsearch.RandomSearch.check_sample_size">
-<code class="sig-name descname"><span class="pre">check_sample_size</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.check_sample_size" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.check_sample_size">
+<span class="sig-name descname"><span class="pre">check_sample_size</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.check_sample_size" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="solvers.randomsearch.RandomSearch.check_solver_factors">
-<code class="sig-name descname"><span class="pre">check_solver_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.check_solver_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine if the joint settings of solver factors are permissible.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if solver factors are permissible</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="solvers.randomsearch.RandomSearch.solve">
-<code class="sig-name descname"><span class="pre">solve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.solve" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="solvers.randomsearch.RandomSearch.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.randomsearch.RandomSearch.solve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a single macroreplication of a solver on a problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>problem</strong> (<em>Problem object</em>) – simulation-optimization problem to solve</p></li>
-<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
+<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -210,185 +459,12 @@ Take a fixed number of replications at each solution.</p>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="module-solvers.simannealing">
-<span id="solvers-simannealing-module"></span><h2>solvers.simannealing module<a class="headerlink" href="#module-solvers.simannealing" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id1">
-<h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>Simulated Annealing in Noisy Environments (SANE).</p>
-<dl class="py class">
-<dt id="solvers.simannealing.SANE">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">solvers.simannealing.</span></code><code class="sig-name descname"><span class="pre">SANE</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
-<p>Simulated Annealing in Noisy Environments (SANE)
-“Simulated Annealing in the Presence of Noise”
-Jurgen Branke, Stephan Meisel and Christian Schmidt
-Journal of Heuristics (2008) 14: 627–654.</p>
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#solvers.simannealing.SANE.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>name of solver</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.objective_type">
-<code class="sig-name descname"><span class="pre">objective_type</span></code><a class="headerlink" href="#solvers.simannealing.SANE.objective_type" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>description of objective types:</dt><dd><p>“single” or “multi”</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.constraint_type">
-<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#solvers.simannealing.SANE.constraint_type" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.variable_type">
-<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#solvers.simannealing.SANE.variable_type" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.gradient_needed">
-<code class="sig-name descname"><span class="pre">gradient_needed</span></code><a class="headerlink" href="#solvers.simannealing.SANE.gradient_needed" title="Permalink to this definition">¶</a></dt>
-<dd><p>indicates if gradient of objective function is needed</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#solvers.simannealing.SANE.factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>changeable factors (i.e., parameters) of the solver</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#solvers.simannealing.SANE.specifications" title="Permalink to this definition">¶</a></dt>
-<dd><p>details of each factor (for GUI, data validation, and defaults)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="solvers.simannealing.SANE.rng_list">
-<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#solvers.simannealing.SANE.rng_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of RNGs used for the solver’s internal purposes</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – fixed_factors of the solver</p>
-</dd>
-</dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
-</div>
-<dl class="py method">
-<dt id="solvers.simannealing.SANE.check_cooling_coeff">
-<code class="sig-name descname"><span class="pre">check_cooling_coeff</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE.check_cooling_coeff" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="solvers.simannealing.SANE.check_init_temp">
-<code class="sig-name descname"><span class="pre">check_init_temp</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE.check_init_temp" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="solvers.simannealing.SANE.check_sampling_variance">
-<code class="sig-name descname"><span class="pre">check_sampling_variance</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE.check_sampling_variance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="solvers.simannealing.SANE.check_solver_factors">
-<code class="sig-name descname"><span class="pre">check_solver_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE.check_solver_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine if the joint settings of solver factors are permissible.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if solver factors are permissible</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="solvers.simannealing.SANE.solve">
-<code class="sig-name descname"><span class="pre">solve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.simannealing.SANE.solve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a single macroreplication of a solver on a problem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>problem</strong> (<em>Problem object</em>) – simulation-optimization problem to solve</p></li>
-<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>recommended_solns</strong> (<em>list of Solution objects</em>) – list of solutions recommended throughout the budget</p></li>
-<li><p><strong>intermediate_budgets</strong> (<em>list of ints</em>) – list of intermediate budgets when recommended solutions changes</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="module-solvers">
+</section>
+</section>
+<section id="module-solvers">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-solvers" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -397,15 +473,16 @@ Journal of Heuristics (2008) 14: 627–654.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">solvers package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-solvers.randomsearch">solvers.randomsearch module</a><ul>
+<li><a class="reference internal" href="#module-solvers.astrodf">solvers.astrodf module</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-solvers.simannealing">solvers.simannealing module</a><ul>
+<li><a class="reference internal" href="#module-solvers.randomsearch">solvers.randomsearch module</a><ul>
 <li><a class="reference internal" href="#id1">Summary</a></li>
 </ul>
 </li>
@@ -414,12 +491,17 @@ Journal of Heuristics (2008) 14: 627–654.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rng.html"
-                        title="previous chapter">rng package</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="wrapper_base.html"
-                        title="next chapter">wrapper_base module</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rng.html"
+                          title="previous chapter">rng package</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="wrapper_base.html"
+                          title="next chapter">wrapper_base module</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -431,7 +513,7 @@ Journal of Heuristics (2008) 14: 627–654.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -463,7 +545,7 @@ Journal of Heuristics (2008) 14: 627–654.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>
