@@ -1,7 +1,7 @@
-base module
-===========
+GUI module
+==========
 
-.. automodule:: base
+.. automodule:: GUI
     :members:
     :undoc-members:
     :show-inheritance:
