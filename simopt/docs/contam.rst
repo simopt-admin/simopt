@@ -10,7 +10,7 @@ The contamination level at each stage is given by the following equation:
 
 :math:`X_i = Λ_i * (1 - u_i) * (1 - X_i-1) + (1 - Γ_i * u_i) * X_i-1`
 
-Factor
+Factors
     - Contamination Rate Alpha:
     		Description: Alpha parameter of beta distribution for growth rate of contamination at each stage.
     		
