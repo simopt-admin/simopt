@@ -120,5 +120,4 @@ class RandomSearch(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-        print([sol.x for sol in recommended_solns])
         return recommended_solns, intermediate_budgets

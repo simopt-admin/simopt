@@ -171,16 +171,11 @@ class STRONG(Solver):
                 NumOfEval = 2 * problem.dim - np.sum(BdsCheck != 0)
                 grad, Hessian = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r)
                 expended_budget += NumOfEval * r
+                # print(grad, Hessian)
 
                 # step 2: solve the subproblem
                 # Cauchy reduction
-                if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
-                    tau = 1
-                else:
-                    tau = min(1, norm(grad) ** 3 / (delta_T * np.matmul(np.matmul(grad, Hessian), grad)))
-
-                grad = np.reshape(grad, (1, problem.dim))[0]
-                candidate_x = new_x - tau * delta_T * grad / norm(grad)
+                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T)
 
                 for i in range(problem.dim):
                     if candidate_x[i] < problem.lower_bounds[i]:
@@ -211,7 +206,8 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -222,7 +218,8 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -240,13 +237,7 @@ class STRONG(Solver):
                 expended_budget += NumOfEval * r
                 # step2 Solve the subproblem
                 # Cauchy reduction
-                if np.matmul(np.matmul(grad, Hessian), grad) <= 0:
-                    tau = 1
-                else:
-                    tau = min(1, norm(grad) ** 3 / (delta_T * np.matmul(np.matmul(grad, Hessian), grad)))
-
-                grad = np.reshape(grad, (1, problem.dim))[0]
-                candidate_x = new_x - tau * delta_T * grad / norm(grad)
+                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T)
 
                 for i in range(problem.dim):
                     if candidate_x[i] < problem.lower_bounds[i]:
@@ -328,7 +319,8 @@ class STRONG(Solver):
                     new_x = result_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -338,7 +330,8 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -349,16 +342,34 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean):
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
                 r = int(np.ceil(1.01 * r))
-
+        for i in recommended_solns:
+            print(i.x)
         return recommended_solns, intermediate_budgets
     
+    ##Finding the Cauchy Point
+    def Cauchy_point(self, G, H, new_x, problem, delta_T):
+        Q = np.matmul(np.matmul(G, H), G)
+        if Q <= 0:
+            tau = 1
+        else:
+            if (norm(G))**3/(delta_T*Q) <1:
+                tau = (norm(G))**3/(delta_T * Q)
+            else:
+                tau = 1
+        G = np.reshape(G, (1, problem.dim))[0]
+        candidate_x = new_x - tau * delta_T * G / norm(G)
+        print(candidate_x)
+        return candidate_x
+
     # Finite difference for calculating gradients and BFGS for calculating Hessian Matrix
     def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r):
+        fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         # Store values for each dimension
         FnPlusMinus = np.zeros((problem.dim, 3)) 
         grad = np.zeros(problem.dim)
@@ -390,17 +401,16 @@ class STRONG(Solver):
                 x2[i] = x2[i] - FnPlusMinus[i,2]
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
-                problem.simulate(x1_solution, 1)
+                problem.simulate(x1_solution, r)
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 FnPlusMinus[i, 0] = fn1 # first column is f(x+h,y)
             x2_solution = self.create_new_solution(tuple(x2), problem)
             if BdsCheck[i] != 1:
-                problem.simulate(x2_solution, 1)
+                problem.simulate(x2_solution, r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 FnPlusMinus[i, 1] = fn2 # second column is f(x-h,y)
             
             # Calculate gradient
-            fn = -1 * problem.minmax[0] * new_solution.objectives_mean
             if BdsCheck[i] == 0:
                 grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i,2])
             elif BdsCheck[i] == 1:
@@ -544,4 +554,6 @@ class STRONG(Solver):
                             Hessian[j, i] = Hessian[i, j]
 
         return grad, Hessian
+
+
     
