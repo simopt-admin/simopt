@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Newsvendor Problem with Exogenous Stochastic Price &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Newsvendor Problem with Exogenous Stochastic Price</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="newsvendor-problem-with-exogenous-stochastic-price">
+<h1>Newsvendor Problem with Exogenous Stochastic Price<a class="headerlink" href="#newsvendor-problem-with-exogenous-stochastic-price" title="Permalink to this headline">¶</a></h1>
+<p><strong>Problem Description</strong></p>
+<p>Iron ore is traded on the spot market, facing an exogenous, stochastic price. There
+is enormous demand for iron, and so for the purposes of a small or medium-sized iron ore mine, we assume
+that any quantity of ore can be instantaneously sold at current market rates.</p>
+<p>Let there be <span class="math notranslate nohighlight">\(T\)</span> time periods (days), holding cost of <span class="math notranslate nohighlight">\(h\)</span> per unit, production cost of <span class="math notranslate nohighlight">\(c\)</span> per unit,
+maximum production per day of <span class="math notranslate nohighlight">\(m\)</span> units, and maximum holding capacity of <span class="math notranslate nohighlight">\(K\)</span> units. Let the iron ore market price for
+the day be <span class="math notranslate nohighlight">\(P_t\)</span>.</p>
+<p>Let the decision variables be <span class="math notranslate nohighlight">\(x = [x_1, x_2, x_3, x_4]\)</span>, where <span class="math notranslate nohighlight">\(x_1\)</span> is the price at which to begin production, <span class="math notranslate nohighlight">\(x_2\)</span>
+is the inventory level at which to cease production, <span class="math notranslate nohighlight">\(x_3\)</span> is the price at which to cease production, and <span class="math notranslate nohighlight">\(x_4\)</span> is
+the price at which to sell all current stock.</p>
+<p>The order of operations in the simulation is as follows:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Sample the market price, <span class="math notranslate nohighlight">\(P_t\)</span>. Let current stock be <span class="math notranslate nohighlight">\(s_t\)</span>.</p></li>
+<li><p>If production is already underway,</p></li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>if <span class="math notranslate nohighlight">\(P_t\)</span> ≤ <span class="math notranslate nohighlight">\(x_3\)</span> or <span class="math notranslate nohighlight">\(s_t\)</span> ≥ <span class="math notranslate nohighlight">\(x_2\)</span>, cease production.</p></li>
+<li><p>else, produce <span class="math notranslate nohighlight">\(min(m, K − s_t)\)</span> at cost <span class="math notranslate nohighlight">\(c\)</span> per unit.</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>If production is not currently underway, and if <span class="math notranslate nohighlight">\(P_t\)</span> ≥ <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(s_t\)</span> &lt; <span class="math notranslate nohighlight">\(x_2\)</span>, begin production.</p></li>
+<li><p>If <span class="math notranslate nohighlight">\(P_t\)</span> ≥ <span class="math notranslate nohighlight">\(x_4\)</span>, sell all stock (after production) at price <span class="math notranslate nohighlight">\(P_t\)</span>.</p></li>
+<li><p>Charge a holding cost of <span class="math notranslate nohighlight">\(h\)</span> per unit (after production and sales).</p></li>
+</ol>
+</div></blockquote>
+<p>The optimization problem is to maximize total revenue over the <span class="math notranslate nohighlight">\(T\)</span> time periods.</p>
+<p><strong>Recommended Parameter Settings:</strong> <span class="math notranslate nohighlight">\(x = [80, 7000, 40, 100]\)</span>.</p>
+<p>Let <span class="math notranslate nohighlight">\(P_t\)</span> be a meanreverting random walk, such that <span class="math notranslate nohighlight">\(P_t = \mbox{trunc}(P_t - 1 + N_t (\mu,\sigma))\)</span>,
+where <span class="math notranslate nohighlight">\(N_t\)</span> is a normal random variable with standard deviation <span class="math notranslate nohighlight">\(\sigma = 7.5\)</span> and mean <span class="math notranslate nohighlight">\(\mu_t = \mbox{sgn}(\mu_0 − P_t−1) * (| \mu_0 − P_t − 1 |)^{\frac{1}{4}}\)</span>, <span class="math notranslate nohighlight">\(\mu_0 = 100\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\mbox{trunc}(x) = \max(\min(x, 200), 0)\)</span> (trunc bounds its argument in [0,200]).</p>
+<p>Let <span class="math notranslate nohighlight">\(P_1 = \mu_0\)</span>.</p>
+<p><strong>Measurement of Time:</strong>  Number of simulation replications of length <span class="math notranslate nohighlight">\(T\)</span>.</p>
+<p><strong>Optimal Solutions:</strong> Unknown.</p>
+<p><strong>Known Structure:</strong> Unknown.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ironore copy.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Newsvendor Problem with Exogenous Stochastic Price</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

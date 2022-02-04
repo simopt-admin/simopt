@@ -12,6 +12,14 @@ models.cntnv module
    :undoc-members:
    :show-inheritance:
 
+models.dualsourcing module
+--------------------------
+
+.. automodule:: models.dualsourcing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.facilitysizing module
 ----------------------------
 
@@ -48,6 +56,14 @@ models.sscont module
 --------------------
 
 .. automodule:: models.sscont
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.tableallocation module
+-----------------------------
+
+.. automodule:: models.tableallocation
    :members:
    :undoc-members:
    :show-inheritance:
