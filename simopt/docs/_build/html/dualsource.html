@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Dual Sourcing System &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dual Sourcing System</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="dual-sourcing-system">
+<h1>Dual Sourcing System<a class="headerlink" href="#dual-sourcing-system" title="Permalink to this headline">¶</a></h1>
+<p><strong>Problem Description</strong></p>
+<p>This example is adapted from Veeraraghavan, S and Scheller-Wolf, A. Now or Later:
+A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations Research (4), 850- 864.</p>
+<p>Consider a single-stage, incapacitated, manufacturing location facing stochastic demand.
+The manufacturer can buy the material from a “regular” supplier at cost <span class="math notranslate nohighlight">\(c_r\)</span> per unit, or,
+if needed, she can get some or all of the material “expedited” at some premium cost <span class="math notranslate nohighlight">\(c_e\)</span>
+per unit with <span class="math notranslate nohighlight">\(c_e &gt; c_r\)</span>. Let the difference in cost be <span class="math notranslate nohighlight">\(c = c_e − c_r\)</span>.
+Regular orders arrive after <span class="math notranslate nohighlight">\(l_r\)</span> periods while expedited orders arrive after <span class="math notranslate nohighlight">\(l_e\)</span> periods with
+<span class="math notranslate nohighlight">\(l_e &lt; l_r\)</span>. Let the difference in lead times be <span class="math notranslate nohighlight">\(l = l_r − l_e ≥ 1\)</span>.</p>
+<p>If there is remaining on-hand inventory at the end of period <span class="math notranslate nohighlight">\(n\)</span> (after demand dn is satisfied),
+these items are carried over to the next period (i.e., <span class="math notranslate nohighlight">\(I_n+1 &gt; 0\)</span>) at a holding cost of <span class="math notranslate nohighlight">\(h\)</span> per unit.
+However, if there is a stock-out (i.e., <span class="math notranslate nohighlight">\(In + 1 &lt; 0\)</span>), there is a penalty cost <span class="math notranslate nohighlight">\(p\)</span> per unit
+of unsatisfied demand. Our goal is to minimize average holding, penalty and ordering costs.</p>
+<p>We will let the period <span class="math notranslate nohighlight">\(n\)</span> expediting order be based on the on-hand inventory plus the orders that
+will arrive within <span class="math notranslate nohighlight">\(l_e\)</span> periods (both regular and expedited). Regular orders that are due to arrive
+after <span class="math notranslate nohighlight">\(l_e\)</span> periods are not considered in expedited ordering decisions.
+The expedited order is placed to restore the expedited inventory position <span class="math notranslate nohighlight">\(IP_n^e\)</span>,
+to some target parameter level <span class="math notranslate nohighlight">\(z_e\)</span>. The regular order <span class="math notranslate nohighlight">\(X_n^r\)</span>, on the other hand,
+is based on the regular inventory position (sum of on-hand inventory and all outstanding orders,
+including the expedited order placed in the current period). Similarly, it tries to restore the regular
+inventory position <span class="math notranslate nohighlight">\(IP_n^r\)</span> to the target parameter <span class="math notranslate nohighlight">\(z_r\)</span>. Thus, under this model, we carry two inventory positions,
+one for regular orders and another for expedited orders.</p>
+<p><strong>Recommended Parameter Settings:</strong>
+One could use uniform, normal or exponential demands with mean 30 and Standard deviation 10.
+Lead times and holding, penalty and per unit costs can be adjusted as long as all conditions are satisfied.
+This simulation implements: <span class="math notranslate nohighlight">\(d_n ∼ Truncated Normal(30,10), c_e = $110, c_r = $100,l_e = 0,l_r = 2,h = $5,p = $495.\)</span></p>
+<p><strong>Starting Solution(s):</strong> <span class="math notranslate nohighlight">\(z_e = 50,z_r = 80\)</span>. If multiple solutions are needed use <span class="math notranslate nohighlight">\(z_e ∼ Uniform(40,60)\)</span>
+and <span class="math notranslate nohighlight">\(z_r ∼ Uniform(70,90)\)</span>.</p>
+<p><strong>Measurement of Time:</strong> Number of periods simulated.</p>
+<p><strong>Optimal Solutions:</strong> Unknown.</p>
+<p><strong>Known Structure:</strong> Unknown.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/dualsource.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dual Sourcing System</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
