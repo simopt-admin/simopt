@@ -69,4 +69,4 @@ Starting solution:
 
 Optimal solution:
 
-Optimal objective function value:
+Optimal objective function value: 
