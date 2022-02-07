@@ -1,17 +1,17 @@
 """
 Summary
 -------
-Simulate a M/M/1 queue.
+Simulate a G/G/1 queue.
 """
 import numpy as np
 
 from base import Model, Problem
 
 
-class MM1Queue(Model):
+class GG1Queue(Model):
     """
-    A model that simulates an M/M/1 queue with an Exponential(lambda)
-    interarrival time distribution and an Exponential(x) service time
+    A model that simulates an G/G/1 queue with distribution A
+    interarrival time distribution and a B_theta service time
     distribution. Returns
         - the average sojourn time
         - the average waiting time
@@ -43,8 +43,8 @@ class MM1Queue(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "MM1"
-        self.n_rngs = 2
+        self.name = "GG1"
+        self.n_rngs = 3
         self.n_responses = 2
         self.specifications = {
             "lambda": {
@@ -58,6 +58,11 @@ class MM1Queue(Model):
                                 distribution.",
                 "datatype": float,
                 "default": 3.0
+            },
+            "c": {
+                "description": "Number of Servers",
+                "datatype": int,
+                "default": 1
             },
             "warmup": {
                 "description": "Number of people as warmup before \
@@ -75,6 +80,7 @@ class MM1Queue(Model):
         self.check_factor_list = {
             "lambda": self.check_lambda,
             "mu": self.check_mu,
+            "c": self.check_c,
             "warmup": self.check_warmup,
             "people": self.check_people
         }
@@ -86,6 +92,9 @@ class MM1Queue(Model):
 
     def check_mu(self):
         return self.factors["mu"] > 0
+
+    def check_c(self):
+        return self.factors["c"] >= 1
 
     def check_warmup(self):
         return self.factors["warmup"] >= 0
@@ -120,13 +129,17 @@ class MM1Queue(Model):
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
         # Designate separate RNGs for interarrival and serivce times.
-        arrival_rng = rng_list[0]
+        interarrival_rng = rng_list[0]
         service_rng = rng_list[1]
-        # Generate all interarrival and service times up front.
-        arrival_times = ([arrival_rng.expovariate(self.factors["lambda"])
-                         for _ in range(total)])
-        service_times = ([service_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
+        patience_rng = rng_list[2]
+        # Generate all interarrival and service times up front. ###edit to reflect distributions
+        interarrival_times = ([interarrival_rng.expovariate(self.factors["lambda"]) for _ in range(total)])
+        service_times = ([service_rng.expovariate(self.factors["mu"]) for _ in range(total)])
+        patience_times = ([patience_rng.expovariate(self.factors["mu"]) for _ in range(total)])
+        # Initialize c empty service stations
+        serviceList = []
+        for i in range(0, self.factors["c"]):
+            serviceList.append(0)
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
         #     column 1 : service time;
@@ -139,7 +152,8 @@ class MM1Queue(Model):
         #     column 8 : IPA gradient of sojourn time w.r.t. lambda;
         #     column 9 : IPA gradient of waiting time w.r.t. lambda.
         cust_mat = np.zeros((total, 10))
-        cust_mat[:, 0] = np.cumsum(arrival_times)
+        arrival_times = np.cumsum(interarrival_times)
+        cust_mat[:, 0] = arrival_times
         cust_mat[:, 1] = service_times
         # Input entries for first customer's queueing experience.
         cust_mat[0, 2] = cust_mat[0, 0] + cust_mat[0, 1]
@@ -150,7 +164,39 @@ class MM1Queue(Model):
         cust_mat[0, 7] = 0
         cust_mat[0, 8] = 0
         cust_mat[0, 9] = 0
+        # A list (to be filled with customers) that represents the queue
+        customer = [interarrival_times[0], service_times[0], patience_times[0], arrival_times[0]]
+        queueList = []
+        queueList.append(customer)
+
         # Fill in entries for remaining customers' experiences.
+        for i in range(1, total):
+            
+            # Update service timers
+            serviceList = [x - interarrival_times[i] for x in serviceList]
+            temp = all(y>0 for y in serviceList)
+
+            # Update the state of the queue
+            while (temp==False and len(queueList) != 0):
+                index_min = serviceList.index(min(serviceList))
+                W.append(abs(round(N[i] - queueList[0].absolute_time + serviceList[index_min], 10)))
+                serviceList[index_min] = serviceList[index_min] + queueList[0].service_time
+                queueList.pop(0)
+                temp = all(y>0 for y in serviceList)
+            serviceList = [max(0, y) for y in serviceList]
+
+            # Construct the entering customer and place them in the queue
+            queueList.append(customer(interarrival_times[i], service_times[i], patience_times[i], arrival_times[i]))
+            
+            # Remove any customers that renege prior to the entering customer's arrival time
+            if (ab[i] != 0):
+                for a in queueList:
+                    if N[i] - a.absolute_time >= a.patience_threshold:
+                        a.service_time = 0
+        if end:
+            break;
+
+
         for i in range(1, total):
             cust_mat[i, 2] = (max(cust_mat[i, 0], cust_mat[i - 1, 2])
                               + cust_mat[i, 1])
@@ -188,14 +234,13 @@ class MM1Queue(Model):
         gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
         gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
         gradients["avg_waiting_time"]["lambda"] = grad_mean_waiting_time_lambda
-        print(cust_mat)
         return responses, gradients
 
 
 """
 Summary
 -------
-Minimize the mean sojourn time of an M/M/1 queue.
+Minimize the mean sojourn time of an G/G/1 queue.
 """
 
 
