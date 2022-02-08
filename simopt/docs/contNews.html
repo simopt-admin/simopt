@@ -1,0 +1,27 @@
+<h1 id="continuous-newsvendor-problem">Continuous Newsvendor Problem</h1>
+<p><strong>Problem Description</strong></p>
+<p>This problem was received from Dr. Eckman's SimOpt Library and the following is a description of a Continuous Version of the Newsvendor Problem. This example can be used for different situations, assuming that the same variables are being used as factors and the same responses are necessary. The object ordered in this example can be tentative and can be applied to different Newsvendor problems as long as the factors remain stagnant.</p>
+<p>In this particular problem, a vendor orders a fixed quantity of liquid, assigned random variable <span class="math inline"><em>x</em></span>, at the beginning of each working day to be sold to customers throughout the day. The quantity of liquid ordered has a cost to the vendor, <span class="math inline"><em>c</em></span>, and a price at which the vendor sells it to the customer, <span class="math inline"><em>s</em></span>. At the end of the day, if there is a quantity of liquid that has not been sold, it canpython be salvaged at a price, <span class="math inline"><em>w</em></span>. The demand each day can be determined by a Burr Type XII distribution, it is denoted by <span class="math inline"><em>D</em></span> and contains the parameters, alpha and beta. The Burr Type XII Distribution can have values that range anywhere from <span class="math inline">[0, ∞)</span> and it also has a cumulative distribution function that is represented by the equation, <span class="math inline"><em>F</em>(<em>x</em>)=1 − (1 − <em>x</em><sup><em>α</em></sup>)<sup>−<em>β</em></sup></span> where <span class="math inline"><em>x</em>, <em>α</em>,</span> and <span class="math inline"><em>β</em></span> are all positive. There is a simulation that can calculate random variates from the Burr Type XII distribution. Ultimately, the goal of this problem is to determine the quantity of <span class="math inline"><em>x</em></span> liquid that needs to be ordered to maximize the expected profit for the vendor. The assumptions made for the solution procedure for this problem are that the parameter values and the distribution of the demand (Burr Type XII) are unknown.</p>
+<hr />
+<dl>
+<dt><strong>Factors:</strong></dt>
+<dd><p><em>Cost</em> (<span class="math inline"><em>c</em></span>) ---&gt; The amount it costs to the newsvendor to purchase one unit volume of liquid. The default value for cost will be 5 dollars.</p>
+<p><em>Price</em> (<span class="math inline"><em>s</em></span>) ---&gt; The amount the newsvendor sells one unit volume of liquid for. The default value for price will be 9 dollars.</p>
+<p><em>Salvage Price</em> (<span class="math inline"><em>w</em></span>) ---&gt; At the end of each day, if there is liquid left over, each unit volume of liquid can be salvaged for a specific price. The default value for salvage price is 1 dollar.</p>
+<p><em>Alpha and Beta for Demand Distribution</em> (<span class="math inline"><em>α</em></span> and <span class="math inline"><em>β</em></span>) ---&gt; The Burr Type XII Distribution that is being used for demand has certain parameters denoted by alpha and beta. The default values for alpha and beta are 2 and 20, respectively.</p>
+</dd>
+</dl>
+<p><strong>Response:</strong></p>
+<blockquote>
+<p><em>Quantity of Liquid</em> (<span class="math inline"><em>x</em></span>) ---&gt; This will be the volume of liquid that needs to be ordered at the beginning of each day in order to maximize the expected profit.</p>
+<p><em>Default Profit</em> (<span class="math inline"><em>e</em></span>) ---&gt; This will be the maximum expected profit that correlates to the quantity of liquid ordered, x.</p>
+</blockquote>
+<p>Optimization Problem 1:</p>
+<p>Objective:</p>
+<p>Constraints:</p>
+<p>Decision Variables:</p>
+<p>Fixed Factor Values:</p>
+<p>Starting Solution:</p>
+<p>Optimal Solution:</p>
+<p>Optimal Objective Function Value:</p>
+<p>Optimization Problem 2:</p>
