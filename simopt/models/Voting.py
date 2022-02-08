@@ -8,11 +8,11 @@ import numpy as np
 from base import Model, Problem
 
 
-class FacilitySize(Model):
+class Voting(Model):
     """
-    A model that simulates a facilitysize problem with a
-    multi-variate normal distribution.
-    Returns the probability of violating demand in each scenario.
+    A model that simulates a voting problem with 
+    gamma distributions, 
+    Returns ...
 
     Attributes
     ----------
@@ -39,44 +39,76 @@ class FacilitySize(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "FACSIZE"
-        self.n_rngs = 1
-        self.n_responses = 3
+        self.name = "Voting"
+        self.n_rngs = 4
+        self.n_responses = 1
         self.specifications = {
-            "mean_vec": {
-                "description": "Location parameters of the multivariate normal distribution",
+            "mid_turn_per": {
+                "description": "midpoint turnout percentage for precinct i",
                 "datatype": list,
-                "default": [100, 100, 100]
+                "default": [0]
             },
-            "cov": {
-                "description": "Covariance of multivariate normal distribution.",
+            "turn_ran": {
+                "description": "turnout range specific to precinct i",
                 "datatype": list,
-                "default": [[2000, 1500, 500], [1500, 2000, 750], [500, 750, 2000]]
+                "default": [0]
             },
-            "capacity": {
-                "description": "Capacity.",
+            "reg_vote": {
+                "description": "number of registered voters in precinct i",
                 "datatype": list,
-                "default": [150, 300, 400]
+                "default": [0]
             },
-            "n_fac": {
-                "description": "The number of facilities.",
+            "mean_time2vote": {
+                "description": "The mean time for the gamma distributed time taken to vote",
                 "datatype": int,
-                "default": 3
+                "default": 7.5
+            },
+            "stdev_time2vote": {
+                "description": "The standard deviation for the gamma distributed time to vote",
+                "datatype": int,
+                "default": 2
+            },
+            "mean_repair": {
+                "description": "Voting machines are repaired according to a gamma distribution, this is the mean time, minutes",
+                "datatype": int,
+                "default": 60
+            },
+            "stdev_repair": {
+                "description": "standard deviation for gamma distribution for time to repair a machine, minutes",
+                "datatype": int,
+                "default": 20
+            },
+            "bd_prob": {
+                "description": "Probability at which the voting machines break down",
+                "datatype": float,
+                "default": .05
+            },
+            "n_prec":{
+                "description": "Number of precincts",
+                "datatype": int,
+                "default": 788
             }
         }
         self.check_factor_list = {
-            "mean_vec": self.check_mean_vec,
-            "cov": self.check_cov,
-            "capacity": self.check_capacity,
-            "n_fac": self.check_n_fac
+            "mid_turn_per": self.check_mid_turn_per,
+            "turn_ran": self.check_turn_ran,
+            "reg_vote": self.check_reg_vote,
+            "mean_time2vote": self.check_mean_time2vote,
+            "stdev_time2vote": self.check_stdev_time2vote,
+            "mean_repair": self.check_mean_repair,
+            "stdev_repair": self.check_stdev_repair,
+            "bd_prob": self.check_bd_prob
         }
         # Set factors of the simulation model.
+
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self):
+        #idk what this does^^ super
+
+    def check_mean_vec(self): #needs to be adj
         return np.all(self.factors["mean_vec"]) > 0
 
-    def check_cov(self):
+    def check_cov(self): #needs to be adj
         try:
             np.linalg.cholesky(np.matrix(self.factors["cov"]))
             return True
@@ -87,20 +119,18 @@ class FacilitySize(Model):
                 raise
         return
 
-    def check_capacity(self):
+    def check_capacity(self): #needs to be adj
         return len(self.factors["capacity"]) == self.factors["n_fac"]
 
-    def check_n_fac(self):
-        return self.factors["n_fac"] > 0
+    def check_n_spec(self): #need this for the other integer variables
+        return self.factors["n_spec"] > 0
 
     def check_simulatable_factors(self):
-        if len(self.factors["capacity"]) != self.factors["n_fac"]:
+        if len(self.factors["mid_turn_per"]) != self.factors["n_prec"]:
             return False
-        elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
+        elif len(self.factors["turn_ran"]) != self.factors["n_prec"]:
             return False
-        elif len(self.factors["cov"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["cov"][0]) != self.factors["n_fac"]:
+        elif len(self.factors["reg_vote"]) != self.factors["n_prec"]:
             return False
         else:
             return True
