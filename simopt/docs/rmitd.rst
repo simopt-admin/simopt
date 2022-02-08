@@ -4,6 +4,9 @@ Multi-Stage Revenue Management with Inter-Temporal Dependence
 This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
 at Stanford University.
 
+Problem Statment
+###########
+
 A businessman chooses to buy :math:`b > 0` units of capacity, paying :math:`c > 0` dollars per unit of capacity at :math:`t = 0`.
 During stage :math:`t (t = 1, . . . , T)` he observes demand :math:`D_t` for units at price :math:`p_t`, at which point, he must choose to
 sell :math:`x_t` units :math:`(0 ≤ x_t ≤ D_t)`, provided that the total number of units sold (accross all past periods) does not
@@ -30,10 +33,43 @@ that, if the number of units sold in all periods before :math:`t` is less than :
 .. image:: rmitd.png
   :alt: The example table has failed to display
   :width: 300
-  
+
 *Starting Solutions:* :math:`b` = 100, :math:`r_2` = 50, :math:`r_3 = 30`. If multiple solutions are needed, use :math:`r_2` ∼ Uniform(40,60) and
 :math:`r_3` ∼ Uniform(20,40).
 
 *Measurement of Time:* Number of periods
 
 *Optimal Solution:* Unknown
+
+Factors
+#########
+
+**Time Horizon(T):** Period of time that is considered
+
+**Prices:** Prices for each Period
+
+**Demand Mean(μ):** Mean demand for each period
+
+**Cost(c):** Cost per unit of capacity at :math:`t = 0`
+
+**Gamma Shape(k):** Shape parameter of gamma distribution
+
+**Gamma Scale(θ):** Scale parameter of gamma distribution
+
+**Initial Inventory(b):** Initial Inventory
+
+**Reservation Quantity(r):** Inventory to reserve going into periods :math:`2, 3, ..., T`.
+
+Responses
+#########
+
+**Revenue:** Total revenue of given model
+
+Objective Function
+#######
+
+Contraints
+#######
+
+
+

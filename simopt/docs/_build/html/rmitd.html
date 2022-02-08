@@ -42,6 +42,8 @@
 <h1>Multi-Stage Revenue Management with Inter-Temporal Dependence<a class="headerlink" href="#multi-stage-revenue-management-with-inter-temporal-dependence" title="Permalink to this headline">¶</a></h1>
 <p>This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
 at Stanford University.</p>
+<section id="problem-statment">
+<h2>Problem Statment<a class="headerlink" href="#problem-statment" title="Permalink to this headline">¶</a></h2>
 <p>A businessman chooses to buy <span class="math notranslate nohighlight">\(b &gt; 0\)</span> units of capacity, paying <span class="math notranslate nohighlight">\(c &gt; 0\)</span> dollars per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span>.
 During stage <span class="math notranslate nohighlight">\(t (t = 1, . . . , T)\)</span> he observes demand <span class="math notranslate nohighlight">\(D_t\)</span> for units at price <span class="math notranslate nohighlight">\(p_t\)</span>, at which point, he must choose to
 sell <span class="math notranslate nohighlight">\(x_t\)</span> units <span class="math notranslate nohighlight">\((0 ≤ x_t ≤ D_t)\)</span>, provided that the total number of units sold (accross all past periods) does not
@@ -60,11 +62,33 @@ future periods in order to maximize total revenue. In other words, we want to fi
 that, if the number of units sold in all periods before <span class="math notranslate nohighlight">\(t\)</span> is less than <span class="math notranslate nohighlight">\(b − r_t\)</span> (<span class="math notranslate nohighlight">\(r_t\)</span> units are reserved for periods
 <span class="math notranslate nohighlight">\(t, t + 1, . . . , T\)</span>), revenue is maximized.</p>
 <p><em>Recommended Parameters:</em> Take <span class="math notranslate nohighlight">\(c = $80, T = 3, k = θ = 1\)</span> and <span class="math notranslate nohighlight">\(μ_t, p_t\)</span> as follows:</p>
-<a class="reference internal image-reference" href="rmitd.pngbegin{center}end{center}"><img alt="The example table has failed to display" src="rmitd.pngbegin{center}end{center}" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="_images/rmitd.png"><img alt="The example table has failed to display" src="_images/rmitd.png" style="width: 300px;" /></a>
 <p><em>Starting Solutions:</em> <span class="math notranslate nohighlight">\(b\)</span> = 100, <span class="math notranslate nohighlight">\(r_2\)</span> = 50, <span class="math notranslate nohighlight">\(r_3 = 30\)</span>. If multiple solutions are needed, use <span class="math notranslate nohighlight">\(r_2\)</span> ∼ Uniform(40,60) and
 <span class="math notranslate nohighlight">\(r_3\)</span> ∼ Uniform(20,40).</p>
 <p><em>Measurement of Time:</em> Number of periods</p>
 <p><em>Optimal Solution:</em> Unknown</p>
+</section>
+<section id="factors">
+<h2>Factors<a class="headerlink" href="#factors" title="Permalink to this headline">¶</a></h2>
+<p><strong>Time Horizon:</strong> Period of time that is considered</p>
+<p><strong>Prices:</strong> Prices for each Period</p>
+<p><strong>Demand Mean:</strong> Mean demand for each period</p>
+<p><strong>Cost:</strong> Cost per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span></p>
+<p><a href="#id1"><span class="problematic" id="id2">**</span></a>Gamma Shape(k): Shape parameter of gamma distribution</p>
+<p><strong>Gamma Scale(theata):</strong> Scale parameter of gamma distribution</p>
+<p><strong>Initial Inventory:</strong> Initial Inventory</p>
+<p><strong>Reservation Quantity:</strong> Inventory to reserve going into periods <span class="math notranslate nohighlight">\(2, 3, ..., T\)</span>.</p>
+</section>
+<section id="responses">
+<h2>Responses<a class="headerlink" href="#responses" title="Permalink to this headline">¶</a></h2>
+<p><strong>Revenue:</strong> Total revenue of given model</p>
+</section>
+<section id="objective-function">
+<h2>Objective Function<a class="headerlink" href="#objective-function" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="contraints">
+<h2>Contraints<a class="headerlink" href="#contraints" title="Permalink to this headline">¶</a></h2>
+</section>
 </section>
 
 
@@ -74,6 +98,20 @@ that, if the number of units sold in all periods before <span class="math notran
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Multi-Stage Revenue Management with Inter-Temporal Dependence</a><ul>
+<li><a class="reference internal" href="#problem-statment">Problem Statment</a></li>
+<li><a class="reference internal" href="#factors">Factors</a></li>
+<li><a class="reference internal" href="#responses">Responses</a></li>
+<li><a class="reference internal" href="#objective-function">Objective Function</a></li>
+<li><a class="reference internal" href="#contraints">Contraints</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
