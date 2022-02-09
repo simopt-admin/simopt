@@ -14,7 +14,7 @@ Lastly, let
 
 The goal is to find \beta_0, \beta_1 and \beta_2 in order to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, i.e. 
 
-   #min :math:`(\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))`
+   min :math:`(\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))`
 
 where :math:`\Gamma` is the convenience matrix for :math:`\bar{f} (x)`. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
 If the simulation at each :math:`x_i` is done independently, then :math:`\Gamma` would be a diagonal matrix.
@@ -27,4 +27,13 @@ If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`
 
 *Measurement of Time:* Number of estimations of :math:`\bar{f} (x_i)` made.
 
+*Objective:*
+
+*Constraints:*
+
+*Decision Variables:*
+
+*Fixed Factor Value:*
+
 *Optimal Solution:* :math:`\beta_0 = \beta_2 = 0` and :math:`\beta_1 = 1`.
+

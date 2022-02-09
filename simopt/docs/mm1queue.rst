@@ -2,8 +2,6 @@
 Metamodeling of M/M/1 call center
 =======================
 
-This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
-
 Let :math:`\bar{f} (x_i)` be the average waiting time in a M/M/1 queue as determined through the simulation of :math:`t_i` arrivals when the utilization rate is :math:`x_i(x_i = \lambda / \mu)`, where :math:`\lambda`
 and :math:`\mu` are the arrival and service rates, respectively). Furthermore, let :math:`x` be the vector :math:`(x_1, x_2,...x_n)` of utilization rates at which the average waiting time is estimated.
 Lastly, let
@@ -27,13 +25,14 @@ If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`
 
 *Measurement of Time:* Number of estimations of :math:`\bar{f} (x_i)` made.
 
-*Objective:*
+*Objective:* Find \beta_0, \beta_1 and \beta_2 to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, with the analysis of the 
 
-*Constraints:*
+*Constraints:* The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.
 
-*Decision Variables:*
+*Decision Variables:* x is the decision variable in this M/M/1 queue Metamodeling problem
 
-*Fixed Factor Value:*
+*Fixed Factor Value:* Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.
 
 *Optimal Solution:* :math:`\beta_0 = \beta_2 = 0` and :math:`\beta_1 = 1`.
 
+This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
