@@ -23,7 +23,7 @@ Model Factors:
 
     * Default: <default value>
 
-* <factor2name>: <short description>
+* <factor3name>: <short description>
 
     * Default: <default value>
 
@@ -80,6 +80,10 @@ Starting Solution:
 * <dv1name>: <dv1initialvalue>
 
 * <dv2name>: <dv2initialvalue>
+
+Random Solutions: 
+------------------
+<description of how to generate random solutions>
 
 Optimal Solution:
 -----------------
