@@ -4,12 +4,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>base module &#8212; SimOpt 1.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -17,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="data_farming_base module" href="data_farming_base.html" />
-    <link rel="prev" title="simopt" href="modules.html" /> 
+    <link rel="prev" title="GUI module" href="GUI.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -32,7 +33,7 @@
           <a href="data_farming_base.html" title="data_farming_base module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="simopt"
+          <a href="GUI.html" title="GUI module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
@@ -45,28 +46,28 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-base">
+  <section id="module-base">
 <span id="base-module"></span><h1>base module<a class="headerlink" href="#module-base" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="summary">
+<section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
-<p>Provide base classes for solvers, problems, and oracles.</p>
-</div>
-<div class="section" id="listing">
+<p>Provide base classes for solvers, problems, and models.</p>
+</section>
+<section id="listing">
 <h2>Listing<a class="headerlink" href="#listing" title="Permalink to this headline">¶</a></h2>
 <p>Solver : class
 Problem : class
-Oracle : class
+Model : class
 Solution : class</p>
 <dl class="py class">
-<dt id="base.Oracle">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Oracle</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Base class to implement simulation oracles (models) featured in
+<dt class="sig sig-object py" id="base.Model">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class to implement simulation models (models) featured in
 simulation-optimization problems.</p>
 <dl class="py attribute">
-<dt id="base.Oracle.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#base.Oracle.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>name of oracle</p>
+<dt class="sig sig-object py" id="base.Model.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#base.Model.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>name of model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>string</p>
@@ -75,117 +76,117 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.n_rngs">
-<code class="sig-name descname"><span class="pre">n_rngs</span></code><a class="headerlink" href="#base.Oracle.n_rngs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.n_rngs">
+<span class="sig-name descname"><span class="pre">n_rngs</span></span><a class="headerlink" href="#base.Model.n_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of random-number generators used to run a simulation replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.n_responses">
-<code class="sig-name descname"><span class="pre">n_responses</span></code><a class="headerlink" href="#base.Oracle.n_responses" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.n_responses">
+<span class="sig-name descname"><span class="pre">n_responses</span></span><a class="headerlink" href="#base.Model.n_responses" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of responses (performance measures)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.Oracle.factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#base.Model.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors of the simulation model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.Oracle.specifications" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#base.Model.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Oracle.check_factor_list">
-<code class="sig-name descname"><span class="pre">check_factor_list</span></code><a class="headerlink" href="#base.Oracle.check_factor_list" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.check_factor_list">
+<span class="sig-name descname"><span class="pre">check_factor_list</span></span><a class="headerlink" href="#base.Model.check_factor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>switch case for checking factor simulatability</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified oracle factors</p>
+<dd class="field-odd"><p><strong>fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified model factors</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="base.Oracle.check_factor_datatype">
-<code class="sig-name descname"><span class="pre">check_factor_datatype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.check_factor_datatype">
+<span class="sig-name descname"><span class="pre">check_factor_datatype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a factor’s data type matches its specification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><strong>is_right_type</strong> – indicates if factor is of specified data type</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.check_simulatable_factor">
-<code class="sig-name descname"><span class="pre">check_simulatable_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_simulatable_factor" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.check_simulatable_factor">
+<span class="sig-name descname"><span class="pre">check_simulatable_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model.check_simulatable_factor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>factor_name</strong> (<em>string</em>) – name of factor for dictionary lookup (i.e., key)</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>is_simulatable</strong> – indicates if oracle specified by factors is simulatable</p>
+<dd class="field-even"><p><strong>is_simulatable</strong> – indicates if model specified by factors is simulatable</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.check_simulatable_factors">
-<code class="sig-name descname"><span class="pre">check_simulatable_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Model.check_simulatable_factors">
+<span class="sig-name descname"><span class="pre">check_simulatable_factors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Model.check_simulatable_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a simulation replication can be run with the given factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if oracle specified by factors is simulatable</p>
+<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if model specified by factors is simulatable</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Oracle.replicate">
-<code class="sig-name descname"><span class="pre">replicate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Oracle.replicate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simulate a single replication for the current oracle factors.</p>
+<dt class="sig sig-object py" id="base.Model.replicate">
+<span class="sig-name descname"><span class="pre">replicate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model.replicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a single replication for the current model factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – rngs for oracle to use when simulating a replication</p>
+<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – rngs for model to use when simulating a replication</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -200,13 +201,13 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="base.Problem">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Problem</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dt class="sig sig-object py" id="base.Problem">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
-<dt id="base.Problem.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#base.Problem.name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#base.Problem.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of problem</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -216,41 +217,41 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.dim">
-<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#base.Problem.dim" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><a class="headerlink" href="#base.Problem.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.n_objectives">
-<code class="sig-name descname"><span class="pre">n_objectives</span></code><a class="headerlink" href="#base.Problem.n_objectives" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.n_objectives">
+<span class="sig-name descname"><span class="pre">n_objectives</span></span><a class="headerlink" href="#base.Problem.n_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.n_stochastic_constraints">
-<code class="sig-name descname"><span class="pre">n_stochastic_constraints</span></code><a class="headerlink" href="#base.Problem.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.n_stochastic_constraints">
+<span class="sig-name descname"><span class="pre">n_stochastic_constraints</span></span><a class="headerlink" href="#base.Problem.n_stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.minmax">
-<code class="sig-name descname"><span class="pre">minmax</span></code><a class="headerlink" href="#base.Problem.minmax" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.minmax">
+<span class="sig-name descname"><span class="pre">minmax</span></span><a class="headerlink" href="#base.Problem.minmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicator of maximization (+1) or minimization (-1) for each objective</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -260,8 +261,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.constraint_type">
-<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#base.Problem.constraint_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.constraint_type">
+<span class="sig-name descname"><span class="pre">constraint_type</span></span><a class="headerlink" href="#base.Problem.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -274,8 +275,8 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.variable_type">
-<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#base.Problem.variable_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.variable_type">
+<span class="sig-name descname"><span class="pre">variable_type</span></span><a class="headerlink" href="#base.Problem.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -288,107 +289,107 @@ simulation-optimization problems.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.gradient_available">
-<code class="sig-name descname"><span class="pre">gradient_available</span></code><a class="headerlink" href="#base.Problem.gradient_available" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.lower_bounds">
+<span class="sig-name descname"><span class="pre">lower_bounds</span></span><a class="headerlink" href="#base.Problem.lower_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>lower bound for each decision variable</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base.Problem.upper_bounds">
+<span class="sig-name descname"><span class="pre">upper_bounds</span></span><a class="headerlink" href="#base.Problem.upper_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>upper bound for each decision variable</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base.Problem.gradient_available">
+<span class="sig-name descname"><span class="pre">gradient_available</span></span><a class="headerlink" href="#base.Problem.gradient_available" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is available</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.initial_solution">
-<code class="sig-name descname"><span class="pre">initial_solution</span></code><a class="headerlink" href="#base.Problem.initial_solution" title="Permalink to this definition">¶</a></dt>
-<dd><p>default initial solution from which solvers start</p>
+<dt class="sig sig-object py" id="base.Problem.optimal_value">
+<span class="sig-name descname"><span class="pre">optimal_value</span></span><a class="headerlink" href="#base.Problem.optimal_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimal objective function value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.budget">
-<code class="sig-name descname"><span class="pre">budget</span></code><a class="headerlink" href="#base.Problem.budget" title="Permalink to this definition">¶</a></dt>
-<dd><p>max number of replications (fn evals) for a solver to take</p>
+<dt class="sig sig-object py" id="base.Problem.optimal_solution">
+<span class="sig-name descname"><span class="pre">optimal_solution</span></span><a class="headerlink" href="#base.Problem.optimal_solution" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimal solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int &gt; 0</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.optimal_bound">
-<code class="sig-name descname"><span class="pre">optimal_bound</span></code><a class="headerlink" href="#base.Problem.optimal_bound" title="Permalink to this definition">¶</a></dt>
-<dd><p>bound on optimal objective function value</p>
+<dt class="sig sig-object py" id="base.Problem.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#base.Problem.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>associated simulation model that generates replications</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+<dd class="field-odd"><p>Model object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.optimal_solution">
-<code class="sig-name descname"><span class="pre">optimal_solution</span></code><a class="headerlink" href="#base.Problem.optimal_solution" title="Permalink to this definition">¶</a></dt>
-<dd><p>optimal solution (if known)</p>
+<dt class="sig sig-object py" id="base.Problem.model_default_factors">
+<span class="sig-name descname"><span class="pre">model_default_factors</span></span><a class="headerlink" href="#base.Problem.model_default_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>default values for overriding model-level default factors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.ref_optimal_solution">
-<code class="sig-name descname"><span class="pre">ref_optimal_solution</span></code><a class="headerlink" href="#base.Problem.ref_optimal_solution" title="Permalink to this definition">¶</a></dt>
-<dd><p>reference solution (in lieu of optimal)</p>
+<dt class="sig sig-object py" id="base.Problem.model_fixed_factors">
+<span class="sig-name descname"><span class="pre">model_fixed_factors</span></span><a class="headerlink" href="#base.Problem.model_fixed_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>combination of overriden model-level factors and defaults</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.oracle">
-<code class="sig-name descname"><span class="pre">oracle</span></code><a class="headerlink" href="#base.Problem.oracle" title="Permalink to this definition">¶</a></dt>
-<dd><p>associated simulation oracle that generates replications</p>
+<dt class="sig sig-object py" id="base.Problem.model_decision_factors">
+<span class="sig-name descname"><span class="pre">model_decision_factors</span></span><a class="headerlink" href="#base.Problem.model_decision_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>set of keys for factors that are decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Oracle object</p>
+<dd class="field-odd"><p>set of str</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.oracle_default_factors">
-<code class="sig-name descname"><span class="pre">oracle_default_factors</span></code><a class="headerlink" href="#base.Problem.oracle_default_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>default values for overriding oracle-level default factors</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="base.Problem.oracle_fixed_factors">
-<code class="sig-name descname"><span class="pre">oracle_fixed_factors</span></code><a class="headerlink" href="#base.Problem.oracle_fixed_factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>combination of overriden oracle-level factors and defaults</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="base.Problem.rng_list">
-<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#base.Problem.rng_list" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#base.Problem.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used to generate a random initial solution
 or a random problem instance</p>
 <dl class="field-list simple">
@@ -399,23 +400,31 @@ or a random problem instance</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.Problem.factors" title="Permalink to this definition">¶</a></dt>
-<dd><p>changeable factors of the problem</p>
+<dt class="sig sig-object py" id="base.Problem.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#base.Problem.factors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>changeable factors of the problem</dt><dd><dl class="simple">
+<dt>initial_solution<span class="classifier">tuple</span></dt><dd><p>default initial solution from which solvers start</p>
+</dd>
+<dt>budget<span class="classifier">int &gt; 0</span></dt><dd><p>max number of replications (fn evals) for a solver to take</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Problem.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.Problem.specifications" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#base.Problem.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -423,14 +432,14 @@ or a random problem instance</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified problem factors</p></li>
-<li><p><strong>oracle_fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – subset of user-specified non-decision factors to pass through to the oracle</p></li>
+<li><p><strong>fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified problem factors</p></li>
+<li><p><strong>model_fixed_factors</strong> (<em>dict</em>) – subset of user-specified non-decision factors to pass through to the model</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="base.Problem.attach_rngs">
-<code class="sig-name descname"><span class="pre">attach_rngs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.attach_rngs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.attach_rngs">
+<span class="sig-name descname"><span class="pre">attach_rngs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.attach_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach a list of random-number generators to the problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -441,30 +450,88 @@ or a random problem instance</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.check_deterministic_constraints">
-<code class="sig-name descname"><span class="pre">check_deterministic_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.check_budget">
+<span class="sig-name descname"><span class="pre">check_budget</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_budget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Problem.check_deterministic_constraints">
+<span class="sig-name descname"><span class="pre">check_deterministic_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_deterministic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a solution <cite>x</cite> satisfies the problem’s deterministic
 constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>tuple</em>) – vector of decision variables</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>satisfies</strong> – indicates if solution <cite>x</cite> satisfies the deterministic constraints.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.deterministic_objectives_and_gradients">
-<code class="sig-name descname"><span class="pre">deterministic_objectives_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.check_factor_datatype">
+<span class="sig-name descname"><span class="pre">check_factor_datatype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if a factor’s data type matches its specification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>factor_name</strong> (<em>string</em>) – string corresponding to name of factor to check</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>is_right_type</strong> – indicates if factor is of specified data type</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Problem.check_initial_solution">
+<span class="sig-name descname"><span class="pre">check_initial_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_initial_solution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Problem.check_problem_factor">
+<span class="sig-name descname"><span class="pre">check_problem_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_problem_factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the setting of a problem factor is permissible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>factor_name</strong> (<em>string</em>) – name of factor for dictionary lookup (i.e., key)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>is_permissible</strong> – indicates if problem factor is permissible</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Problem.check_problem_factors">
+<span class="sig-name descname"><span class="pre">check_problem_factors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.check_problem_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the joint settings of problem factors are permissible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if problem factors are permissible</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Problem.deterministic_objectives_and_gradients">
+<span class="sig-name descname"><span class="pre">deterministic_objectives_and_gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.deterministic_objectives_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of objectives for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>tuple</em>) – vector of decision variables</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -477,13 +544,13 @@ constraints.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.deterministic_stochastic_constraints_and_gradients">
-<code class="sig-name descname"><span class="pre">deterministic_stochastic_constraints_and_gradients</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.deterministic_stochastic_constraints_and_gradients">
+<span class="sig-name descname"><span class="pre">deterministic_stochastic_constraints_and_gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.deterministic_stochastic_constraints_and_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute deterministic components of stochastic constraints
 for a solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>tuple</em>) – vector of decision variables</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -498,8 +565,8 @@ stochastic constraints</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.factor_dict_to_vector">
-<code class="sig-name descname"><span class="pre">factor_dict_to_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.factor_dict_to_vector">
+<span class="sig-name descname"><span class="pre">factor_dict_to_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.factor_dict_to_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with factor keys to a vector
 of variables.</p>
 <dl class="field-list simple">
@@ -510,14 +577,14 @@ of variables.</p>
 <dd class="field-even"><p><strong>vector</strong> – vector of values associated with decision variables</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.get_random_solution">
-<code class="sig-name descname"><span class="pre">get_random_solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rand_sol_rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.get_random_solution" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.get_random_solution">
+<span class="sig-name descname"><span class="pre">get_random_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rand_sol_rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.get_random_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random solution for starting or restarting solvers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -527,14 +594,14 @@ of variables.</p>
 <dd class="field-even"><p><strong>x</strong> – vector of decision variables</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.response_dict_to_objectives">
-<code class="sig-name descname"><span class="pre">response_dict_to_objectives</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.response_dict_to_objectives">
+<span class="sig-name descname"><span class="pre">response_dict_to_objectives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.response_dict_to_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of objectives.</p>
 <dl class="field-list simple">
@@ -545,14 +612,14 @@ of objectives.</p>
 <dd class="field-even"><p><strong>objectives</strong> – vector of objectives</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.response_dict_to_stoch_constraints">
-<code class="sig-name descname"><span class="pre">response_dict_to_stoch_constraints</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.response_dict_to_stoch_constraints">
+<span class="sig-name descname"><span class="pre">response_dict_to_stoch_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.response_dict_to_stoch_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a dictionary with response keys to a vector
 of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dl class="field-list simple">
@@ -563,33 +630,33 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 <dd class="field-even"><p><strong>stoch_constraints</strong> – vector of LHSs of stochastic constraint</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.simulate">
-<code class="sig-name descname"><span class="pre">simulate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.simulate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.simulate">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.simulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate <cite>m</cite> i.i.d. replications at solution <cite>x</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>solution</strong> (<em>Solution object</em>) – solution to evalaute</p></li>
-<li><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of replications to simulate at <cite>x</cite></p></li>
+<li><p><strong>m</strong> (<em>int</em>) – number of replications to simulate at <cite>x</cite></p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.simulate_up_to">
-<code class="sig-name descname"><span class="pre">simulate_up_to</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solutions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.simulate_up_to" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.simulate_up_to">
+<span class="sig-name descname"><span class="pre">simulate_up_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solutions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.simulate_up_to" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a set of solutions up to a given number of replications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>solutions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.9)"><em>set</em></a>) – a set of base.Solution objects</p></li>
+<li><p><strong>solutions</strong> (<em>set</em>) – a set of base.Solution objects</p></li>
 <li><p><strong>n_reps</strong> (<em>int &gt; 0</em>) – common number of replications to simulate each solution up to</p></li>
 </ul>
 </dd>
@@ -597,12 +664,12 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Problem.vector_to_factor_dict">
-<code class="sig-name descname"><span class="pre">vector_to_factor_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Problem.vector_to_factor_dict">
+<span class="sig-name descname"><span class="pre">vector_to_factor_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem.vector_to_factor_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vector of variables to a dictionary with factor keys</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>vector</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of values associated with decision variables</p>
+<dd class="field-odd"><p><strong>vector</strong> (<em>tuple</em>) – vector of values associated with decision variables</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>factor_dict</strong> – dictionary with factor keys and associated values</p>
@@ -616,48 +683,48 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="base.Solution">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dt class="sig sig-object py" id="base.Solution">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for solutions represented as vectors of decision variables
 and dictionaries of decision factors.</p>
 <dl class="py attribute">
-<dt id="base.Solution.x">
-<code class="sig-name descname"><span class="pre">x</span></code><a class="headerlink" href="#base.Solution.x" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.x">
+<span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#base.Solution.x" title="Permalink to this definition">¶</a></dt>
 <dd><p>vector of decision variables</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.dim">
-<code class="sig-name descname"><span class="pre">dim</span></code><a class="headerlink" href="#base.Solution.dim" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><a class="headerlink" href="#base.Solution.dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of decision variables describing <cite>x</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.decision_factors">
-<code class="sig-name descname"><span class="pre">decision_factors</span></code><a class="headerlink" href="#base.Solution.decision_factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.decision_factors">
+<span class="sig-name descname"><span class="pre">decision_factors</span></span><a class="headerlink" href="#base.Solution.decision_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>decision factor names and values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.rng_list">
-<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#base.Solution.rng_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>rngs for oracle to use when running replications at the solution</p>
+<dt class="sig sig-object py" id="base.Solution.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#base.Solution.rng_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>rngs for model to use when running replications at the solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
@@ -666,30 +733,30 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.n_reps">
-<code class="sig-name descname"><span class="pre">n_reps</span></code><a class="headerlink" href="#base.Solution.n_reps" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.n_reps">
+<span class="sig-name descname"><span class="pre">n_reps</span></span><a class="headerlink" href="#base.Solution.n_reps" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of replications run at the solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.det_objectives">
-<code class="sig-name descname"><span class="pre">det_objectives</span></code><a class="headerlink" href="#base.Solution.det_objectives" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.det_objectives">
+<span class="sig-name descname"><span class="pre">det_objectives</span></span><a class="headerlink" href="#base.Solution.det_objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>deterministic components added to objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.det_objectives_gradients">
-<code class="sig-name descname"><span class="pre">det_objectives_gradients</span></code><a class="headerlink" href="#base.Solution.det_objectives_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.det_objectives_gradients">
+<span class="sig-name descname"><span class="pre">det_objectives_gradients</span></span><a class="headerlink" href="#base.Solution.det_objectives_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>gradients of deterministic components added to objectives</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -699,41 +766,41 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.det_stoch_constraints">
-<code class="sig-name descname"><span class="pre">det_stoch_constraints</span></code><a class="headerlink" href="#base.Solution.det_stoch_constraints" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.det_stoch_constraints">
+<span class="sig-name descname"><span class="pre">det_stoch_constraints</span></span><a class="headerlink" href="#base.Solution.det_stoch_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>deterministic components added to LHS of stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.det_stoch_constraints_gradients">
-<code class="sig-name descname"><span class="pre">det_stoch_constraints_gradients</span></code><a class="headerlink" href="#base.Solution.det_stoch_constraints_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.det_stoch_constraints_gradients">
+<span class="sig-name descname"><span class="pre">det_stoch_constraints_gradients</span></span><a class="headerlink" href="#base.Solution.det_stoch_constraints_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>gradients of deterministics components added to LHS stochastic constraints</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a> (# stochastic constraints x dimension)</p>
+<dd class="field-odd"><p>tuple (# stochastic constraints x dimension)</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.storage_size">
-<code class="sig-name descname"><span class="pre">storage_size</span></code><a class="headerlink" href="#base.Solution.storage_size" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.storage_size">
+<span class="sig-name descname"><span class="pre">storage_size</span></span><a class="headerlink" href="#base.Solution.storage_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>max number of replications that can be recorded in current storage</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.objectives">
-<code class="sig-name descname"><span class="pre">objectives</span></code><a class="headerlink" href="#base.Solution.objectives" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.objectives">
+<span class="sig-name descname"><span class="pre">objectives</span></span><a class="headerlink" href="#base.Solution.objectives" title="Permalink to this definition">¶</a></dt>
 <dd><p>objective(s) estimates from each replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -743,8 +810,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.objectives_gradients">
-<code class="sig-name descname"><span class="pre">objectives_gradients</span></code><a class="headerlink" href="#base.Solution.objectives_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.objectives_gradients">
+<span class="sig-name descname"><span class="pre">objectives_gradients</span></span><a class="headerlink" href="#base.Solution.objectives_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>gradient estimates of objective(s) from each replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -754,8 +821,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.stochastic_constraints">
-<code class="sig-name descname"><span class="pre">stochastic_constraints</span></code><a class="headerlink" href="#base.Solution.stochastic_constraints" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.stochastic_constraints">
+<span class="sig-name descname"><span class="pre">stochastic_constraints</span></span><a class="headerlink" href="#base.Solution.stochastic_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>stochastic constraint estimates from each replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -765,8 +832,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solution.stochastic_constraints_gradients">
-<code class="sig-name descname"><span class="pre">stochastic_constraints_gradients</span></code><a class="headerlink" href="#base.Solution.stochastic_constraints_gradients" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.stochastic_constraints_gradients">
+<span class="sig-name descname"><span class="pre">stochastic_constraints_gradients</span></span><a class="headerlink" href="#base.Solution.stochastic_constraints_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>gradient estimates of stochastic constraints from each replication</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -778,14 +845,14 @@ and dictionaries of decision factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p></li>
+<li><p><strong>x</strong> (<em>tuple</em>) – vector of decision variables</p></li>
 <li><p><strong>problem</strong> (<em>Problem object</em>) – problem to which x is a solution</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="base.Solution.attach_rngs">
-<code class="sig-name descname"><span class="pre">attach_rngs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.attach_rngs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.attach_rngs">
+<span class="sig-name descname"><span class="pre">attach_rngs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.attach_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach a list of random-number generators to the solution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -795,32 +862,32 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solution.pad_storage">
-<code class="sig-name descname"><span class="pre">pad_storage</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.pad_storage" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.pad_storage">
+<span class="sig-name descname"><span class="pre">pad_storage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.pad_storage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Append zeros to numpy arrays for summary statistics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – number of replications to simulate</p>
+<dd class="field-odd"><p><strong>m</strong> (<em>int</em>) – number of replications to simulate</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solution.recompute_summary_statistics">
-<code class="sig-name descname"><span class="pre">recompute_summary_statistics</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.recompute_summary_statistics" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solution.recompute_summary_statistics">
+<span class="sig-name descname"><span class="pre">recompute_summary_statistics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution.recompute_summary_statistics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Recompute summary statistics of the solution.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="base.Solver">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">base.</span></code><code class="sig-name descname"><span class="pre">Solver</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dt class="sig sig-object py" id="base.Solver">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class to implement simulation-optimization solvers.</p>
 <dl class="py attribute">
-<dt id="base.Solver.name">
-<code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#base.Solver.name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#base.Solver.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>name of solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -830,8 +897,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.objective_type">
-<code class="sig-name descname"><span class="pre">objective_type</span></code><a class="headerlink" href="#base.Solver.objective_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.objective_type">
+<span class="sig-name descname"><span class="pre">objective_type</span></span><a class="headerlink" href="#base.Solver.objective_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of objective types:</dt><dd><p>“single” or “multi”</p>
 </dd>
@@ -844,8 +911,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.constraint_type">
-<code class="sig-name descname"><span class="pre">constraint_type</span></code><a class="headerlink" href="#base.Solver.constraint_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.constraint_type">
+<span class="sig-name descname"><span class="pre">constraint_type</span></span><a class="headerlink" href="#base.Solver.constraint_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
 </dd>
@@ -858,8 +925,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.variable_type">
-<code class="sig-name descname"><span class="pre">variable_type</span></code><a class="headerlink" href="#base.Solver.variable_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.variable_type">
+<span class="sig-name descname"><span class="pre">variable_type</span></span><a class="headerlink" href="#base.Solver.variable_type" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
 </dd>
@@ -872,41 +939,41 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.gradient_needed">
-<code class="sig-name descname"><span class="pre">gradient_needed</span></code><a class="headerlink" href="#base.Solver.gradient_needed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.gradient_needed">
+<span class="sig-name descname"><span class="pre">gradient_needed</span></span><a class="headerlink" href="#base.Solver.gradient_needed" title="Permalink to this definition">¶</a></dt>
 <dd><p>indicates if gradient of objective function is needed</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.factors">
-<code class="sig-name descname"><span class="pre">factors</span></code><a class="headerlink" href="#base.Solver.factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#base.Solver.factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>changeable factors (i.e., parameters) of the solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.specifications">
-<code class="sig-name descname"><span class="pre">specifications</span></code><a class="headerlink" href="#base.Solver.specifications" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#base.Solver.specifications" title="Permalink to this definition">¶</a></dt>
 <dd><p>details of each factor (for GUI, data validation, and defaults)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.rng_list">
-<code class="sig-name descname"><span class="pre">rng_list</span></code><a class="headerlink" href="#base.Solver.rng_list" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#base.Solver.rng_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used for the solver’s internal purposes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -916,8 +983,8 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="base.Solver.solution_progenitor_rngs">
-<code class="sig-name descname"><span class="pre">solution_progenitor_rngs</span></code><a class="headerlink" href="#base.Solver.solution_progenitor_rngs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.solution_progenitor_rngs">
+<span class="sig-name descname"><span class="pre">solution_progenitor_rngs</span></span><a class="headerlink" href="#base.Solver.solution_progenitor_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of RNGs used as a baseline for simulating solutions</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -928,12 +995,12 @@ and dictionaries of decision factors.</p>
 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of user-specified solver factors</p>
+<dd class="field-odd"><p><strong>fixed_factors</strong> (<em>dict</em>) – dictionary of user-specified solver factors</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="base.Solver.attach_rngs">
-<code class="sig-name descname"><span class="pre">attach_rngs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.attach_rngs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.attach_rngs">
+<span class="sig-name descname"><span class="pre">attach_rngs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.attach_rngs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach a list of random-number generators to the solver.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -943,8 +1010,13 @@ and dictionaries of decision factors.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.check_factor_datatype">
-<code class="sig-name descname"><span class="pre">check_factor_datatype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.check_crn_across_solns">
+<span class="sig-name descname"><span class="pre">check_crn_across_solns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_crn_across_solns" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.Solver.check_factor_datatype">
+<span class="sig-name descname"><span class="pre">check_factor_datatype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_factor_datatype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if a factor’s data type matches its specification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -954,14 +1026,14 @@ and dictionaries of decision factors.</p>
 <dd class="field-even"><p><strong>is_right_type</strong> – indicates if factor is of specified data type</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.check_solver_factor">
-<code class="sig-name descname"><span class="pre">check_solver_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_solver_factor" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.check_solver_factor">
+<span class="sig-name descname"><span class="pre">check_solver_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_solver_factor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if the setting of a solver factor is permissible.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -971,36 +1043,35 @@ and dictionaries of decision factors.</p>
 <dd class="field-even"><p><strong>is_permissible</strong> – indicates if solver factor is permissible</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.check_solver_factors">
-<code class="sig-name descname"><span class="pre">check_solver_factors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_solver_factors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.check_solver_factors">
+<span class="sig-name descname"><span class="pre">check_solver_factors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.check_solver_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine if the joint settings of solver factors are permissible.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><strong>is_simulatable</strong> – indicates if solver factors are permissible</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.create_new_solution">
-<code class="sig-name descname"><span class="pre">create_new_solution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.create_new_solution" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.create_new_solution">
+<span class="sig-name descname"><span class="pre">create_new_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.create_new_solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new solution object with attached rngs primed
 to simulate replications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a>) – vector of decision variables</p></li>
-<li><p><strong>problem</strong> (<em>base.Problem object</em>) – problem being solved by the solver</p></li>
-<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
+<li><p><strong>x</strong> (<em>tuple</em>) – vector of decision variables</p></li>
+<li><p><strong>problem</strong> (<em>base.Problem object</em>) – problem being solved by the solvers</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1013,8 +1084,8 @@ to simulate replications.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.rebase">
-<code class="sig-name descname"><span class="pre">rebase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.rebase" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.rebase">
+<span class="sig-name descname"><span class="pre">rebase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_reps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.rebase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rebase the progenitor rngs to start at a later subsubstream index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1024,15 +1095,12 @@ to simulate replications.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="base.Solver.solve">
-<code class="sig-name descname"><span class="pre">solve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crn_across_solns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.solve" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="base.Solver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver.solve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a single macroreplication of a solver on a problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>problem</strong> (<em>Problem object</em>) – simulation-optimization problem to solve</p></li>
-<li><p><strong>crn_across_solns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – indicates if CRN are used when simulating different solutions</p></li>
-</ul>
+<dd class="field-odd"><p><strong>problem</strong> (<em>Problem object</em>) – simulation-optimization problem to solve</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -1046,8 +1114,8 @@ to simulate replications.</p>
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -1066,8 +1134,8 @@ to simulate replications.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="previous chapter">simopt</a></p>
+  <p class="topless"><a href="GUI.html"
+                        title="previous chapter">GUI module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="data_farming_base.html"
                         title="next chapter">data_farming_base module</a></p>
@@ -1082,7 +1150,7 @@ to simulate replications.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -1105,7 +1173,7 @@ to simulate replications.</p>
           <a href="data_farming_base.html" title="data_farming_base module"
              >next</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="simopt"
+          <a href="GUI.html" title="GUI module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
@@ -1114,7 +1182,7 @@ to simulate replications.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
   </body>
 </html>

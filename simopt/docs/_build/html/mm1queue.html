@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Metamodeling of M/M/1 call center &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Metamodeling of M/M/1 call center</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="metamodeling-of-m-m-1-call-center">
+<h1>Metamodeling of M/M/1 call center<a class="headerlink" href="#metamodeling-of-m-m-1-call-center" title="Permalink to this headline">¶</a></h1>
+<p>This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.</p>
+<p>Let <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> be the average waiting time in a M/M/1 queue as determined through the simulation of <span class="math notranslate nohighlight">\(t_i\)</span> arrivals when the utilization rate is <span class="math notranslate nohighlight">\(x_i(x_i = \lambda / \mu)\)</span>, where <span class="math notranslate nohighlight">\(\lambda\)</span>
+and <span class="math notranslate nohighlight">\(\mu\)</span> are the arrival and service rates, respectively). Furthermore, let <span class="math notranslate nohighlight">\(x\)</span> be the vector <span class="math notranslate nohighlight">\((x_1, x_2,...x_n)\)</span> of utilization rates at which the average waiting time is estimated.
+Lastly, let</p>
+<blockquote>
+<div><p><span class="math notranslate nohighlight">\(\hat{f} (x) = (\beta_0 + \beta_1 * x + \beta_2 * x^2) / (1 - x)\)</span></p>
+</div></blockquote>
+<p>The goal is to find beta_0, beta_1 and beta_2 in order to approximate <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span> through <span class="math notranslate nohighlight">\(\hat{f} (x)\)</span> as accurately as possible, i.e.</p>
+<blockquote>
+<div><p>#min <span class="math notranslate nohighlight">\((\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))\)</span></p>
+</div></blockquote>
+<p>where <span class="math notranslate nohighlight">\(\Gamma\)</span> is the convenience matrix for <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span>. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
+If the simulation at each <span class="math notranslate nohighlight">\(x_i\)</span> is done independently, then <span class="math notranslate nohighlight">\(\Gamma\)</span> would be a diagonal matrix.</p>
+<p><em>Recommended Parameter Settings:</em> Use <span class="math notranslate nohighlight">\(n = 5\)</span> and <span class="math notranslate nohighlight">\(x = (0.5, 0.564, 0.706, 0.859, 0.950)\)</span>. Lastly, take <span class="math notranslate nohighlight">\(T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)\)</span> and estimate <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> independently for each <span class="math notranslate nohighlight">\(x_i\)</span>.</p>
+<p><em>Starting Solutions:</em> Take <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>, and <span class="math notranslate nohighlight">\(\beta_1 = \beta_2 = 0\)</span>.</p>
+<p>If multiple solutions are needed, take <span class="math notranslate nohighlight">\(\beta_0\)</span>, <span class="math notranslate nohighlight">\(\beta_1\)</span>, <span class="math notranslate nohighlight">\(\beta_2\)</span> uniformly distributed on [0,2].</p>
+<p><em>Measurement of Time:</em> Number of estimations of <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> made.</p>
+<p><em>Optimal Solution:</em> <span class="math notranslate nohighlight">\(\beta_0 = \beta_2 = 0\)</span> and <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mm1queue.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Metamodeling of M/M/1 call center</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

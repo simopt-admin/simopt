@@ -4,18 +4,18 @@ solvers package
 Submodules
 ----------
 
-solvers.randomsearch module
----------------------------
+solvers.astrodf module
+----------------------
 
-.. automodule:: solvers.randomsearch
+.. automodule:: solvers.astrodf
    :members:
    :undoc-members:
    :show-inheritance:
 
-solvers.simannealing module
+solvers.randomsearch module
 ---------------------------
 
-.. automodule:: solvers.simannealing
+.. automodule:: solvers.randomsearch
    :members:
    :undoc-members:
    :show-inheritance:
