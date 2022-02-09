@@ -66,6 +66,12 @@ class Throughput(Model):
                 "datatype": int,
                 "default": 2000
             },
+            "n": {
+                "description": "The number of the station \
+                                distribution.",
+                "datatype": int,
+                "default": 3
+            },
             "Time": {
                 "description": "Number of time required for the  \
                                 next 50 jobs",
@@ -77,6 +83,7 @@ class Throughput(Model):
             "lambda": self.check_lambda,
             "mu": self.check_mu,
             "warmup": self.check_warmup,
+            "n": self.check_n,
             "Time": self.check_time
         }
         # Set factors of the simulation model.
@@ -92,7 +99,10 @@ class Throughput(Model):
         return self.factors["warmup"] >= 0
 
     def check_time(self):
-        return self.factors["people"] >= 1
+        return self.factors["Time"] >= 1
+    
+    def check_n(self):
+        return self.factors["n"] >= 1
 
     def check_simulatable_factors(self):
         # demo for condition that queue must be stable
