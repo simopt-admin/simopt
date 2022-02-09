@@ -103,7 +103,7 @@ class Voting(Model):
 
         super().__init__(fixed_factors)
 
-        #idk what this does^^ super
+        #idk what this does^^ super <Kyle> It looks like is a prebuilt function that is being run, would have to look and see elsewhere in the package what it does
 
     def check_mean_vec(self): #needs to be adj
         return np.all(self.factors["mean_vec"]) > 0
@@ -147,22 +147,27 @@ class Voting(Model):
         Returns
         -------
         responses : dict
+            <LEGACY>
             performance measures of interest
             "stockout_flag" = a binary variable
                  0 : all facilities satisfy the demand
                  1 : at least one of the facilities did not satisfy the demand
             "n_fac_stockout" = the number of facilities which cannot satisfy the demand
             "n_cut" = the number of toal demand which cannot be satisfied
+            <NEW>
+            performance measures of intereest
+            
+            avg_TIS = mean of time waiting to vote
+            
+
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate RNG for demands.
-        demand_rng = rng_list[0]
-        stockout_flag = 0
-        n_fac_stockout = 0
-        n_cut = 0
+        T_rng = rng_list[0]
+        arr_rate_rng = rng_list[1]
         # Generate random demands at facilities from truncated multivariate normal distribution.
-        demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
+        turnout = self.factors["mid_turn_per"] + self.factors["turn_ran"]*T_rng.triangular( -1,1,0, factorized=False)   ##Not 100% sure how the randome triangular distribtuion works in this case
         while np.any(demand < 0):
             demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
         # Check for stockouts.
