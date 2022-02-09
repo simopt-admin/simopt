@@ -297,7 +297,7 @@ class MM1MinMeanSojournTime(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = MM1Queue(self.model_fixed_factors)
+        self.model = Throughput(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
