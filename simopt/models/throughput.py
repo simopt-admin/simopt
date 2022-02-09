@@ -49,8 +49,8 @@ class Throughput(Model):
         self.n_responses = 3
         self.specifications = {
             "lambda": {
-                "description": "Rate parameter of interarrival \
-                                time distribution.",
+                "description": "Parameter of the buffer allocation \
+                                distribution.",
                 "datatype": float,
                 "default": 1.5
             },
@@ -64,11 +64,11 @@ class Throughput(Model):
                 "description": "Number of people as warmup before \
                                 collecting statistics",
                 "datatype": int,
-                "default": 20
+                "default": 2000
             },
-            "people": {
-                "description": "Number of people from which to calculate \
-                                the average sojourn time",
+            "Time": {
+                "description": "Number of time required for the  \
+                                next 50 jobs",
                 "datatype": int,
                 "default": 50
             }
@@ -77,7 +77,7 @@ class Throughput(Model):
             "lambda": self.check_lambda,
             "mu": self.check_mu,
             "warmup": self.check_warmup,
-            "people": self.check_people
+            "Time": self.check_time
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -91,7 +91,7 @@ class Throughput(Model):
     def check_warmup(self):
         return self.factors["warmup"] >= 0
 
-    def check_people(self):
+    def check_time(self):
         return self.factors["people"] >= 1
 
     def check_simulatable_factors(self):
