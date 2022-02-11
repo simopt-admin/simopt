@@ -205,7 +205,23 @@ class NELDMD(Solver):
             orig_pt = p_high  # save the original point
             p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
                                                    tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
+            p_refl_copy = p_refl
             p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
+            # # Reflect next worst point if out of bounds
+            # if p_refl != p_refl_copy:  # out of bounds
+            #     next_idx = -2
+            #     while (p_refl != p_refl_copy) and (-next_idx <= len(sort_sol)):
+            #         print("next worst", next_idx)
+            #         p_next = sort_sol[next_idx]  # next worst point
+            #         p_cent = tuple(np.mean(tuple([s.x for s in list(np.append(sort_sol[0:-2], sort_sol[next_idx+1:]))]), axis=0))  # centroid for other pts
+            #         print("centroid", p_cent)   # DELETE
+            #         orig_pt = p_next  # save the original point
+            #         p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
+            #                                             tuple(self.factors["alpha"]* x for x in p_next.x)))  # reflection
+            #         p_refl_copy = p_refl
+            #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
+            #         next_idx += 1
+
             
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
@@ -402,7 +418,7 @@ class NELDMD(Solver):
         modified = list(map(lambda i, j: i + t*j, pt2, step))
         # Remove rounding error
         for i in range(col):
-            if abs(modified[i]) < 0.0000005:
+            if abs(modified[i]) < 0.00000005:
                 modified[i] = 0
         print("modified", modified, "pt", pt)   # DELETE
         return tuple(modified)
