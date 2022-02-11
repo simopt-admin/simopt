@@ -14,6 +14,7 @@ model_directory : dictionary
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.simannealing import SANE
+from solvers.neldmd import NELDMD
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -22,11 +23,13 @@ from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
+from models.ironore import IronOre, IronOreMaxRev
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
     "SANE": SANE,
+    "NELDMD": NELDMD,
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
@@ -36,7 +39,8 @@ problem_directory = {
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
     "DUALSOURCING-1": DualSourcingMinCost,
-    "TABLEALLOCATION-1": TableAllocationMaxRev
+    "TABLEALLOCATION-1": TableAllocationMaxRev,
+    "IRONORE-1": IronOreMaxRev
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -45,5 +49,7 @@ model_directory = {
     "RMITD": RMITD,
     "SSCONT": SSCont,
     "DUALSOURCING": DualSourcing,
-    "TABLEALLOCATION": TableAllocation
+    "TABLEALLOCATION": TableAllocation,
+    "IRONORE": IronOre,
+
 }

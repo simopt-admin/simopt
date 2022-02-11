@@ -357,8 +357,8 @@ class DualSourcingMinCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lowerbound = (0)
-        self.upperbound = (np.inf)
+        self.lower_bounds = (0,)
+        self.upper_bounds = (np.inf,)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
