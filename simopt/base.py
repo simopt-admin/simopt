@@ -14,6 +14,7 @@ Solution : class
 
 import numpy as np
 from copy import deepcopy
+from util import bi_dict, _replicate_wrapper
 
 
 from rng.mrg32k3a import MRG32k3a
@@ -620,9 +621,16 @@ class Model(object):
         # set factors of the simulation model
         # fill in missing factors with default values
         self.factors = fixed_factors
+        self.differentiable_factor_names = []
         for key in self.specifications:
+            if self.specifications[key]["datatype"] == float:
+                self.differentiable_factor_names.append(key)
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
+        self.bi_dict = bi_dict(self.response_names)
+                
+                
+        
 
     def __eq__(self, other):
         """
@@ -692,7 +700,7 @@ class Model(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def replicate(self, rng_list):
+    def _replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
 
@@ -710,6 +718,8 @@ class Model(object):
         """
         raise NotImplementedError
 
+    def replicate(self, rng_list, **kwargs):
+        return _replicate_wrapper(self, rng_list, **kwargs)
 
 class Solution(object):
     """

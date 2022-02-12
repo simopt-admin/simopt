@@ -19,9 +19,9 @@ start_fixed_s_ss_sss : method
 
 # Code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO).
 
-import numpy as np
+import autograd.numpy as np
 import random
-from math import log, ceil, sqrt, exp
+from autograd.numpy import log, ceil, sqrt, exp
 from copy import deepcopy
 
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
