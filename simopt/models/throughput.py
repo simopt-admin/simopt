@@ -15,9 +15,9 @@ class Throughput(Model):
     A model that simulates a working station with an n-stage flow line and a finite buffer storage, 
     an infinite number of jobs in front of Station. A single server at each station with 
     an Exponential(x) service time. Returns
-        - the amount of allocation of buffer
-        - the service rate
+
         - the time width between last 50 jobs 
+        - the throughput of the process
 
     Attributes
     ----------
@@ -45,7 +45,7 @@ class Throughput(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "Thput"
-        self.n_rngs = 2
+        self.n_rngs = 3
         self.n_responses = 3
         self.specifications = {
             "lambda": {
@@ -72,8 +72,8 @@ class Throughput(Model):
                 "datatype": int,
                 "default": 3
             },
-            "Time": {
-                "description": "Number of time required for the  \
+            "jobs": {
+                "description": "Number required for the  \
                                 next 50 jobs",
                 "datatype": int,
                 "default": 50
@@ -84,7 +84,7 @@ class Throughput(Model):
             "mu": self.check_mu,
             "warmup": self.check_warmup,
             "n": self.check_n,
-            "Time": self.check_time
+            "jobs": self.check_jobs
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -98,8 +98,8 @@ class Throughput(Model):
     def check_warmup(self):
         return self.factors["warmup"] >= 0
 
-    def check_time(self):
-        return self.factors["Time"] >= 1
+    def check_jobs(self):
+        return self.factors["jobs"] >= 1
     
     def check_n(self):
         return self.factors["n"] >= 1
@@ -130,13 +130,16 @@ class Throughput(Model):
         """
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
-        # Designate separate RNGs for interarrival and serivce times.
-        arrival_rng = rng_list[0]
-        service_rng = rng_list[1]
-        # Generate all interarrival and service times up front.
-        arrival_times = ([arrival_rng.expovariate(self.factors["lambda"])
+        # Designate separate RNGs for three stations' serivce times.
+        service1_rng = rng_list[0]
+        service2_rng = rng_list[1]
+        service3_rng = rng_list[2]
+        # Generate all service times up front.
+        service1_times = ([service1_rng.expovariate(self.factors["mu"])
                          for _ in range(total)])
-        service_times = ([service_rng.expovariate(self.factors["mu"])
+        service_times = ([service2_rng.expovariate(self.factors["mu"])
+                         for _ in range(total)])
+        service3_times = ([service3_rng.expovariate(self.factors["mu"])
                          for _ in range(total)])
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
