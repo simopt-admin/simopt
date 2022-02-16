@@ -116,6 +116,14 @@ models.tableallocation module
    :undoc-members:
    :show-inheritance:
 
+models.throughput module
+------------------------
+
+.. automodule:: models.throughput
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

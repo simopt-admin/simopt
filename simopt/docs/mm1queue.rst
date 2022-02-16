@@ -17,22 +17,38 @@ The goal is to find \beta_0, \beta_1 and \beta_2 in order to approximate :math:`
 where :math:`\Gamma` is the convenience matrix for :math:`\bar{f} (x)`. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
 If the simulation at each :math:`x_i` is done independently, then :math:`\Gamma` would be a diagonal matrix.
 
-*Recommended Parameter Settings:* Use :math:`n = 5` and :math:`x = (0.5, 0.564, 0.706, 0.859, 0.950)`. Lastly, take :math:`T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)` and estimate :math:`\bar{f} (x_i)` independently for each :math:`x_i`.
+This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
 
-*Starting Solutions:* Take :math:`\beta_1 = 1`, and :math:`\beta_1 = \beta_2 = 0`. 
+
+
+*Recommended Parameter Settings:* 
+    Use :math:`n = 5` and :math:`x = (0.5, 0.564, 0.706, 0.859, 0.950)`. Lastly, take :math:`T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)` and estimate :math:`\bar{f} (x_i)` independently for each :math:`x_i`.
+
+*Starting Solutions:* 
+    Take :math:`\beta_1 = 1`, and :math:`\beta_1 = \beta_2 = 0`. 
 
 If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`\beta_2` uniformly distributed on [0,2].
 
-*Measurement of Time:* Number of estimations of :math:`\bar{f} (x_i)` made.
+*Measurement of Time:*
+    Number of estimations of :math:`\bar{f} (x_i)` made.
 
-*Objective:* Find \beta_0, \beta_1 and \beta_2 to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, with the analysis of the 
+*Objective:*
+    Find \beta_0, \beta_1 and \beta_2 to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, with the analysis of the 
 
-*Constraints:* The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.
+*Constraints:* 
+    The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.
 
-*Decision Variables:* x is the decision variable in this M/M/1 queue Metamodeling problem
+*Decision Variables:* 
+    x is the decision variable in this M/M/1 queue Metamodeling problem
 
-*Fixed Factor Value:* Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.
+*Problem Factors:*
+    Inter-arrival time: Represents the arrival rates between entities.
+    The service time: Represents the service rate of each server in the M/M/1 Queueing station.
+    The number of stations: Represents the total number of stations in this model.
 
-*Optimal Solution:* :math:`\beta_0 = \beta_2 = 0` and :math:`\beta_1 = 1`.
 
-This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
+*Fixed Factor Value:* 
+    Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.
+
+*Optimal Solution:* 
+    :math:`\beta_0 = \beta_2 = 0` and :math:`\beta_1 = 1`.

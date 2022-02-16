@@ -40,7 +40,6 @@
             
   <section id="metamodeling-of-m-m-1-call-center">
 <h1>Metamodeling of M/M/1 call center<a class="headerlink" href="#metamodeling-of-m-m-1-call-center" title="Permalink to this headline">¶</a></h1>
-<p>This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.</p>
 <p>Let <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> be the average waiting time in a M/M/1 queue as determined through the simulation of <span class="math notranslate nohighlight">\(t_i\)</span> arrivals when the utilization rate is <span class="math notranslate nohighlight">\(x_i(x_i = \lambda / \mu)\)</span>, where <span class="math notranslate nohighlight">\(\lambda\)</span>
 and <span class="math notranslate nohighlight">\(\mu\)</span> are the arrival and service rates, respectively). Furthermore, let <span class="math notranslate nohighlight">\(x\)</span> be the vector <span class="math notranslate nohighlight">\((x_1, x_2,...x_n)\)</span> of utilization rates at which the average waiting time is estimated.
 Lastly, let</p>
@@ -53,15 +52,32 @@ Lastly, let</p>
 </div></blockquote>
 <p>where <span class="math notranslate nohighlight">\(\Gamma\)</span> is the convenience matrix for <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span>. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
 If the simulation at each <span class="math notranslate nohighlight">\(x_i\)</span> is done independently, then <span class="math notranslate nohighlight">\(\Gamma\)</span> would be a diagonal matrix.</p>
-<p><em>Recommended Parameter Settings:</em> Use <span class="math notranslate nohighlight">\(n = 5\)</span> and <span class="math notranslate nohighlight">\(x = (0.5, 0.564, 0.706, 0.859, 0.950)\)</span>. Lastly, take <span class="math notranslate nohighlight">\(T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)\)</span> and estimate <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> independently for each <span class="math notranslate nohighlight">\(x_i\)</span>.</p>
-<p><em>Starting Solutions:</em> Take <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>, and <span class="math notranslate nohighlight">\(\beta_1 = \beta_2 = 0\)</span>.</p>
+<p>This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.</p>
+<dl class="simple">
+<dt><em>Recommended Parameter Settings:</em></dt><dd><p>Use <span class="math notranslate nohighlight">\(n = 5\)</span> and <span class="math notranslate nohighlight">\(x = (0.5, 0.564, 0.706, 0.859, 0.950)\)</span>. Lastly, take <span class="math notranslate nohighlight">\(T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)\)</span> and estimate <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> independently for each <span class="math notranslate nohighlight">\(x_i\)</span>.</p>
+</dd>
+<dt><em>Starting Solutions:</em></dt><dd><p>Take <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>, and <span class="math notranslate nohighlight">\(\beta_1 = \beta_2 = 0\)</span>.</p>
+</dd>
+</dl>
 <p>If multiple solutions are needed, take <span class="math notranslate nohighlight">\(\beta_0\)</span>, <span class="math notranslate nohighlight">\(\beta_1\)</span>, <span class="math notranslate nohighlight">\(\beta_2\)</span> uniformly distributed on [0,2].</p>
-<p><em>Measurement of Time:</em> Number of estimations of <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> made.</p>
-<p><em>Objective:</em></p>
-<p><em>Constraints:</em></p>
-<p><em>Decision Variables:</em></p>
-<p><em>Fixed Factor Value:</em></p>
-<p><em>Optimal Solution:</em> <span class="math notranslate nohighlight">\(\beta_0 = \beta_2 = 0\)</span> and <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>.</p>
+<dl class="simple">
+<dt><em>Measurement of Time:</em></dt><dd><p>Number of estimations of <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> made.</p>
+</dd>
+<dt><em>Objective:</em></dt><dd><p>Find beta_0, beta_1 and beta_2 to approximate <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span> through <span class="math notranslate nohighlight">\(\hat{f} (x)\)</span> as accurately as possible, with the analysis of the</p>
+</dd>
+<dt><em>Constraints:</em></dt><dd><p>The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.</p>
+</dd>
+<dt><em>Decision Variables:</em></dt><dd><p>x is the decision variable in this M/M/1 queue Metamodeling problem</p>
+</dd>
+<dt><em>Problem Factors:</em></dt><dd><p>Inter-arrival time: Represents the arrival rates between entities.
+The service time: Represents the service rate of each server in the M/M/1 Queueing station.
+The number of stations: Represents the total number of stations in this model.</p>
+</dd>
+<dt><em>Fixed Factor Value:</em></dt><dd><p>Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.</p>
+</dd>
+<dt><em>Optimal Solution:</em></dt><dd><p><span class="math notranslate nohighlight">\(\beta_0 = \beta_2 = 0\)</span> and <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>.</p>
+</dd>
+</dl>
 </section>
 
 
