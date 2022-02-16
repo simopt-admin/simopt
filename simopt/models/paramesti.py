@@ -191,7 +191,7 @@ class ParamEstiMinLogLik(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0)
+        self.lower_bounds = (0.1, 0.1)
         self.upper_bounds = (10, 10)
         self.gradient_available = True
         self.model_default_factors = {}

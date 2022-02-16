@@ -13,6 +13,7 @@ model_directory : dictionary
 # import solvers
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
+from solvers.strong import STRONG
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -31,7 +32,8 @@ from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
-    "RNDSRCH": RandomSearch
+    "RNDSRCH": RandomSearch,
+    "STRONG": STRONG
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,

@@ -402,6 +402,9 @@ class STRONG(Solver):
                 if x2[i] - steph2 < problem.lower_bounds[i]:
                     steph2 = np.abs(x2[i] - problem.lower_bounds[i])
                 
+                print('steph1', steph1)
+                print('steph2', steph2)
+
                 # decide stepsize
                 if BdsCheck[i] == 0:   #central diff
                     FnPlusMinus[i, 2] = min(steph1, steph2)
@@ -413,6 +416,8 @@ class STRONG(Solver):
                 else:    # backward diff
                     FnPlusMinus[i, 2] = steph2
                     x2[i] = x2[i] - FnPlusMinus[i,2]
+                print('x1', x1)
+                print('x2', x2)
                 x1_solution = self.create_new_solution(tuple(x1), problem)
                 if BdsCheck[i] != -1:
                     problem.simulate_up_to([x1_solution], r)
