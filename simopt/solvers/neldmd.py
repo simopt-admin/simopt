@@ -171,6 +171,7 @@ class NELDMD(Solver):
         fn_var = np.empty(max_num_sol, dtype=object)
         # Track overall budget spent
         budget_spent = 0
+        r = self.factors["r"]  # FOR INCREASING REPLICATIONS
 
         # Start Solving
         # Evaluate solutions in initial structure
@@ -332,10 +333,12 @@ class NELDMD(Solver):
                 # Evaluate contraction point
                 p_cont= Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                problem.simulate(p_cont, self.factors["r"])
-                budget_spent += self.factors["r"]
+                problem.simulate(p_cont, r)  # FOR INCREASING REPLICATIONS
+                budget_spent += r  # FOR INCREASING REPLICATIONS
                 cont_fn_val = tuple([-1*x for x in problem.minmax])*p_cont.objectives_mean
                 cont_fn_var_val = p_cont.objectives_var
+                # Increase replications
+                r += self.factors["r"]  # FOR INCREASING REPLICATIONS
 
                 # Accept contraction
                 if cont_fn_val <= fn_high:
@@ -368,8 +371,8 @@ class NELDMD(Solver):
                         p_new = self.check_const(lower_bounds, upper_bounds, p_new, p_new2.x)
                         p_new= Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                        problem.simulate(p_new, self.factors["r"])
-                        budget_spent += self.factors["r"]
+                        problem.simulate(p_new, r)  # FOR INCREASING REPLICATIONS
+                        budget_spent += r  # FOR INCREASING REPLICATIONS
                         new_fn_val = tuple([-1*x for x in problem.minmax])*p_new.objectives_mean
                         new_fn_var_val = p_new.objectives_var
 
