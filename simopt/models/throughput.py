@@ -11,6 +11,7 @@ import math
 from base import Model, Problem
 
 
+
 class Throughput(Model):
     """
     A model that simulates a working station with an n-stage flow line and a finite buffer storage, 
@@ -144,90 +145,90 @@ class Throughput(Model):
         
         terminate = False
 
-    # For each part, track 4 quantities:
-    #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
-    #   - Time at which the part ends processing at Station 1.
-    #   - Time at which the part begins processing at Station 2
-    #   - Time at which the part ends processing at Station 2 (i.e., exits the system).
-    part_times = []
+        # For each part, track 4 quantities:
+        #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
+        #   - Time at which the part ends processing at Station 1.
+        #   - Time at which the part begins processing at Station 2
+        #   - Time at which the part ends processing at Station 2 (i.e., exits the system).
+        part_times = []
 
-    # Corresponds to first part    
-    part_number = 0
+        # Corresponds to first part    
+        part_number = 0
 
-    # Store these in a list of lists: outer level = each part, inner level = 4 values.
+        # Store these in a list of lists: outer level = each part, inner level = 4 values.
 
-    # When we encounter a part that enters the system after the end of the horizon,
-    # we terminate the simulation.
-    while not terminate:
+        # When we encounter a part that enters the system after the end of the horizon,
+        # we terminate the simulation.
+        while not terminate:
 
-        if part_number == 0:
-            # Record the first part's experience.
-            begin_proc_station1 = 0
-            end_proc_station1 = station1_ptime
-            begin_proc_station2 = station1_ptime
-            end_proc_station2 = station1_ptime + rng.expovariate(processing_rate)
-            parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
-            part_times.append(parts_experience)
-
-        else:
-            # Record the part's experience.
-
-            if part_number <= buffer_size + 1:
-                # If one of the first few parts, blocking is not possible.
-                # Part begins processing at first time when Station 1 ends processing of previous part
-                begin_proc_station1 = part_times[part_number - 1][1]
+            if part_number == 0:
+                # Record the first part's experience.
+                begin_proc_station1 = 0
+                end_proc_station1 = station1_ptime
+                begin_proc_station2 = station1_ptime
+                end_proc_station2 = station1_ptime + rng.expovariate(processing_rate)
+                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+                part_times.append(parts_experience)
 
             else:
-                # Part begins processing at first time when Station 1 ends processing of previous part
-                # AND becomes unblocked.
-                # Previous part completes service
-                #   = part_times[part_number - 1][1].
-                # Station 1 becomes unblocked when a part sufficiently in front of the current part
-                # starts processing at Station 2.            
-                #   = part_times[part_number - buffer_size - 1][2]
-                begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - buffer_size - 1][2])
+                # Record the part's experience.
 
-            # Part ends processing at Station 1 at first time when processing time is up.
-            end_proc_station1 = begin_proc_station1 + station1_ptime
+                if part_number <= buffer_size + 1:
+                    # If one of the first few parts, blocking is not possible.
+                    # Part begins processing at first time when Station 1 ends processing of previous part
+                    begin_proc_station1 = part_times[part_number - 1][1]
 
-            # Part begins processing at Station 2 when it finishes processing at Station 1 AND 
-            # previous part has completed processing at Station 2.
-            begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
+                else:
+                    # Part begins processing at first time when Station 1 ends processing of previous part
+                    # AND becomes unblocked.
+                    # Previous part completes service
+                    #   = part_times[part_number - 1][1].
+                    # Station 1 becomes unblocked when a part sufficiently in front of the current part
+                    # starts processing at Station 2.            
+                    #   = part_times[part_number - buffer_size - 1][2]
+                    begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - buffer_size - 1][2])
 
-            # Part ends processing at Station 2 when processing time is up
-            end_proc_station2 = begin_proc_station2 + rng.expovariate(processing_rate)
+                # Part ends processing at Station 1 at first time when processing time is up.
+                end_proc_station1 = begin_proc_station1 + station1_ptime
 
-            # Concatenate results
-            parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
-            part_times.append(parts_experience)
+                # Part begins processing at Station 2 when it finishes processing at Station 1 AND 
+                # previous part has completed processing at Station 2.
+                begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
 
-        # If we have passed the time horizon, terminate.
-        if parts_experience[0] > runlength:
-            terminate = True
+                # Part ends processing at Station 2 when processing time is up
+                end_proc_station2 = begin_proc_station2 + rng.expovariate(processing_rate)
 
-        # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
-        # print(f"Part {part_number}: {parts_experience}")
+                # Concatenate results
+                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+                part_times.append(parts_experience)
 
-        # Move on the next part.
-        part_number += 1
+            # If we have passed the time horizon, terminate.
+            if parts_experience[0] > runlength:
+                terminate = True
 
-    # Record summary statistics.
-    enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < runlength])
-    exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < runlength])
+            # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
+            # print(f"Part {part_number}: {parts_experience}")
 
-    # Calculate throughput.
-    throughput = np.sum(exit_times < runlength)
+            # Move on the next part.
+            part_number += 1
 
-    # Construct the WIP trajectory.
-    WIP_change_times = np.concatenate((enter_times, exit_times))
-    WIP_increments = np.concatenate((np.ones(len(enter_times)), -np.ones(len(exit_times))))
-    # (Sort the WIP change times and make corresponding swaps to the increments array.)
-    ordering = np.argsort(WIP_change_times)
-    WIP_times = np.sort(WIP_change_times)
-    sorted_WIP_increments = WIP_increments[ordering]
-    WIP_values = np.cumsum(sorted_WIP_increments)
-    
-    return WIP_values, WIP_times, throughput
+        # Record summary statistics.
+        enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < runlength])
+        exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < runlength])
+
+        # Calculate throughput.
+        throughput = np.sum(exit_times < runlength)
+
+        # Construct the WIP trajectory.
+        WIP_change_times = np.concatenate((enter_times, exit_times))
+        WIP_increments = np.concatenate((np.ones(len(enter_times)), -np.ones(len(exit_times))))
+        # (Sort the WIP change times and make corresponding swaps to the increments array.)
+        ordering = np.argsort(WIP_change_times)
+        WIP_times = np.sort(WIP_change_times)
+        sorted_WIP_increments = WIP_increments[ordering]
+        WIP_values = np.cumsum(sorted_WIP_increments)
+        
+        return WIP_values, WIP_times, throughput
 
 
 
