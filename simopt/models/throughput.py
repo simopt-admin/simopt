@@ -50,15 +50,27 @@ class Throughput(Model):
         self.n_rngs = 3
         self.n_responses = 3
         self.specifications = {
-            "lambda": {
+            "buffer": {
                 "description": "Parameter of the buffer allocation \
                                 distribution.",
                 "datatype": float,
                 "default": 1.5
             },
-            "mu": {
+            "processing_rate1": {
                 "description": "Rate parameter of service time \
-                                distribution.",
+                                for station 1.",
+                "datatype": float,
+                "default": 3.0
+            },
+            "processing_rate2": {
+                "description": "Rate parameter of service time \
+                                for station 2.",
+                "datatype": float,
+                "default": 3.0
+            },
+            "processing_rate3": {
+                "description": "Rate parameter of service time \
+                                for station 3.",
                 "datatype": float,
                 "default": 3.0
             },
@@ -82,7 +94,7 @@ class Throughput(Model):
             }
         }
         self.check_factor_list = {
-            "lambda": self.check_lambda,
+            "buffer": self.check_buffer,
             "mu": self.check_mu,
             "warmup": self.check_warmup,
             "n": self.check_n,
@@ -91,12 +103,18 @@ class Throughput(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_lambda(self):
-        return self.factors["lambda"] > 0
+    def check_buffer(self):
+        return self.factors["buffer"] > 0
 
     def check_mu(self):
-        return self.factors["mu"] > 0
+        return self.factors["processing_rate1"] > 0
 
+    def check_mu(self):
+        return self.factors["processing_rate2"] > 0
+
+    def check_mu(self):
+        return self.factors["processing_rate3"] > 0
+    
     def check_warmup(self):
         return self.factors["warmup"] >= 0
 
@@ -112,7 +130,7 @@ class Throughput(Model):
         return True
 
     
-    def replicate(rng, runlength, processing_rate):
+    def replicate(rng, runlength, processing_rate, self):
         """
         Simulate a single replication for the current model factors.
 
@@ -122,10 +140,16 @@ class Throughput(Model):
             rng for model to use when simulating a replication
         runlength : float
             how long (in hours) to run a single replication of the model
-        processing_rate : float
+        processing_rate1 : float
             rate parameter lambda for the exponential distribution used
-            to generate random processing times for three stations.
-
+            to generate random processing times for station 1.
+        processing_rate2 : float
+            rate parameter lambda for the exponential distribution used
+            to generate random processing times for station 2.
+        processing_rate2 : float
+            rate parameter lambda for the exponential distribution used
+            to generate random processing times for station 3.
+            
         Returns
         -------
         responses : dict
