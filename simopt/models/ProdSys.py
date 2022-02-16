@@ -69,7 +69,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [0,0,0,0,0,0]
+                "default": [200,0,0,0,0,0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges",
@@ -120,27 +120,27 @@ class ProdSys(Model):
         self.check_factor_list = {
             "num_products": self.check_num_products,
             "Interarrival_Time_mean": self.check_Interarrival_Time_mean,
+            "Interarrival_Time_StDev": self.check_Interarrival_Time_StDev,
             "product_batch_prob": self.check_product_batch_prob,
-            "discount_rate": self.check_discount_rate,
-            "rack_rate": self.check_rack_rate,
+            "num_machines": self.check_num_machines,
+            "num_nodes": self.check_num_nodes,
+
             "product_incidence": self.check_product_incidence,
             "time_limit": self.check_time_limit,
             "time_before": self.check_time_before,
             "runlength": self.check_runlength,
             "booking_limits": self.check_booking_limits
-            
-            "Interarrival_Time_StDev"
-            "num_machines"
-            "num_nodes"
-            "interm_product"
-            "routing_layout"
-            "machine_layout"
-            "processing_time_mean"
-            "processing_time_StDev"
-            "product_batch_prob"
-            "time_horizon"
-            "batch"
-            "n_sets"
+
+
+           # "interm_product"
+            #"routing_layout"
+           # "machine_layout"
+           # "processing_time_mean"
+           # "processing_time_StDev"
+           # "product_batch_prob"
+           # "time_horizon"
+           # "batch"
+           # "n_sets"
 
         }
         # Set factors of the simulation model.
@@ -158,11 +158,14 @@ class ProdSys(Model):
                 return False
         return len(self.factors["product_batch_prob"])== self.factors["num_products"]
 
-    def check_discount_rate(self):
-        return self.factors["discount_rate"] > 0
+    def check_Interarrival_Time_StDev(self):
+        return self.factors["Interarrival_Time_StDev"] > 0
 
-    def check_rack_rate(self):
-        return self.factors["rack_rate"] > 0
+    def check_num_machines(self):
+        return self.factors["num_machines"] > 0
+
+    def check_num_nodes(self):
+        return self.factors["num_nodes"] > 0
 
     def check_product_incidence(self):
         m, n = self.factors["product_incidence"].shape
