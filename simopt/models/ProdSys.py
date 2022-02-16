@@ -94,12 +94,7 @@ class ProdSys(Model):
             "processing_time_StDev": {
                 "description": "Normally distributed processing times matrix; standard deviation",
                 "datatype": list,
-                "default": [[0,1,1,0,0,0],
-                            [0,0,0,2,1,0],
-                            [0,0,0,0,1,1],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0]]
+                "default": [1,1,2,1,1,1]
             },
             "product_batch_prob": {
                 "description": "Batch order probabilities of product.  ",
