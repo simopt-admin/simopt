@@ -109,100 +109,125 @@ class Throughput(Model):
         # return self.factors["mu"] > self.factors["lambda"]
         return True
 
-    def replicate(self, rng_list):
+    
+    def replicate(rng, runlength, processing_rate):
         """
         Simulate a single replication for the current model factors.
 
         Arguments
         ---------
-        rng_list : list of rng.MRG32k3a objects
-            rngs for model to use when simulating a replication
+        rng : mrg32k3a.MRG32k3a
+            rng for model to use when simulating a replication
+        runlength : float
+            how long (in hours) to run a single replication of the model
+        processing_rate : float
+            rate parameter lambda for the exponential distribution used
+            to generate random processing times for three stations.
 
         Returns
         -------
         responses : dict
             performance measures of interest
-            "avg_sojourn_time" = average sojourn time
             "avg_waiting_time" = average waiting time
-            "frac_cust_wait" = fraction of customers who wait
-        gradients : dict of dicts
-            gradient estimates for each response
+        WIP_values : numpy array of ints
+            List of work-in-process (WIP) values as it changes.
+        WIP_times : numpy array of floats
+            List of times at which the WIP changes.
+        throughput : float
+            total number of parts produced
         """
-        # Calculate total number of arrivals to simulate.
-        total = self.factors["warmup"] + self.factors["people"]
-        # Designate separate RNGs for three stations' serivce times.
-        service1_rng = rng_list[0]
-        service2_rng = rng_list[1]
-        service3_rng = rng_list[2]
-        # Generate all service times up front.
-        service1_times = ([service1_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
-        service_times = ([service2_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
-        service3_times = ([service3_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
-        # Create matrix storing times and metrics for each customer:
-        #     column 0 : arrival time to queue;
-        #     column 1 : service time;
-        #     column 2 : service completion time;
-        #     column 3 : sojourn time;
-        #     column 4 : waiting time;
-        #     column 5 : number of customers in system at arrival;
-        #     column 6 : IPA gradient of sojourn time w.r.t. mu;
-        #     column 7 : IPA gradient of waiting time w.r.t. mu;
-        #     column 8 : IPA gradient of sojourn time w.r.t. lambda;
-        #     column 9 : IPA gradient of waiting time w.r.t. lambda.
-        cust_mat = np.zeros((total, 10))
-        cust_mat[:, 0] = np.cumsum(arrival_times)
-        cust_mat[:, 1] = service_times
-        # Input entries for first customer's queueing experience.
-        cust_mat[0, 2] = cust_mat[0, 0] + cust_mat[0, 1]
-        cust_mat[0, 3] = cust_mat[0, 1]
-        cust_mat[0, 4] = 0
-        cust_mat[0, 5] = 0
-        cust_mat[0, 6] = -cust_mat[0, 1] / self.factors["mu"]
-        cust_mat[0, 7] = 0
-        cust_mat[0, 8] = 0
-        cust_mat[0, 9] = 0
-        # Fill in entries for remaining customers' experiences.
-        for i in range(1, total):
-            cust_mat[i, 2] = (max(cust_mat[i, 0], cust_mat[i - 1, 2])
-                              + cust_mat[i, 1])
-            cust_mat[i, 3] = cust_mat[i, 2] - cust_mat[i, 0]
-            cust_mat[i, 4] = cust_mat[i, 3] - cust_mat[i, 1]
-            cust_mat[i, 5] = (sum(cust_mat[i - int(cust_mat[i - 1, 5]) - 1:i, 2]
-                                  > cust_mat[i, 0]))
-            cust_mat[i, 6] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i + 1, 1])
-                              / self.factors["mu"])
-            cust_mat[i, 7] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i, 1])
-                              / self.factors["mu"])
-            cust_mat[i, 8] = np.nan  # ... to be derived
-            cust_mat[i, 9] = np.nan  # ... to be derived
-        # Compute average sojourn time and its gradient.
-        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:, 3])
-        grad_mean_sojourn_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 6])
-        grad_mean_sojourn_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 8])
-        # Compute average waiting time and its gradient.
-        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"]:, 4])
-        grad_mean_waiting_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 7])
-        grad_mean_waiting_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 9])
-        # Compute fraction of customers who wait.
-        fraction_wait = np.mean(cust_mat[self.factors["warmup"]:, 5] > 0)
-        # Compose responses and gradients.
-        responses = {
-            "avg_sojourn_time": mean_sojourn_time,
-            "avg_waiting_time": mean_waiting_time,
-            "frac_cust_wait": fraction_wait
-        }
-        gradients = {response_key:
-                     {factor_key: np.nan for factor_key in self.specifications}
-                     for response_key in responses
-                     }
-        gradients["avg_sojourn_time"]["mu"] = grad_mean_sojourn_time_mu
-        gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
-        gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
-        gradients["avg_waiting_time"]["lambda"] = grad_mean_waiting_time_lambda
-        return responses, gradients
+        
+        service_rng = rng
+        station1_ptime = rng
+        buffer_size = rng
+        
+        terminate = False
+
+    # For each part, track 4 quantities:
+    #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
+    #   - Time at which the part ends processing at Station 1.
+    #   - Time at which the part begins processing at Station 2
+    #   - Time at which the part ends processing at Station 2 (i.e., exits the system).
+    part_times = []
+
+    # Corresponds to first part    
+    part_number = 0
+
+    # Store these in a list of lists: outer level = each part, inner level = 4 values.
+
+    # When we encounter a part that enters the system after the end of the horizon,
+    # we terminate the simulation.
+    while not terminate:
+
+        if part_number == 0:
+            # Record the first part's experience.
+            begin_proc_station1 = 0
+            end_proc_station1 = station1_ptime
+            begin_proc_station2 = station1_ptime
+            end_proc_station2 = station1_ptime + rng.expovariate(processing_rate)
+            parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+            part_times.append(parts_experience)
+
+        else:
+            # Record the part's experience.
+
+            if part_number <= buffer_size + 1:
+                # If one of the first few parts, blocking is not possible.
+                # Part begins processing at first time when Station 1 ends processing of previous part
+                begin_proc_station1 = part_times[part_number - 1][1]
+
+            else:
+                # Part begins processing at first time when Station 1 ends processing of previous part
+                # AND becomes unblocked.
+                # Previous part completes service
+                #   = part_times[part_number - 1][1].
+                # Station 1 becomes unblocked when a part sufficiently in front of the current part
+                # starts processing at Station 2.            
+                #   = part_times[part_number - buffer_size - 1][2]
+                begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - buffer_size - 1][2])
+
+            # Part ends processing at Station 1 at first time when processing time is up.
+            end_proc_station1 = begin_proc_station1 + station1_ptime
+
+            # Part begins processing at Station 2 when it finishes processing at Station 1 AND 
+            # previous part has completed processing at Station 2.
+            begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
+
+            # Part ends processing at Station 2 when processing time is up
+            end_proc_station2 = begin_proc_station2 + rng.expovariate(processing_rate)
+
+            # Concatenate results
+            parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+            part_times.append(parts_experience)
+
+        # If we have passed the time horizon, terminate.
+        if parts_experience[0] > runlength:
+            terminate = True
+
+        # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
+        # print(f"Part {part_number}: {parts_experience}")
+
+        # Move on the next part.
+        part_number += 1
+
+    # Record summary statistics.
+    enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < runlength])
+    exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < runlength])
+
+    # Calculate throughput.
+    throughput = np.sum(exit_times < runlength)
+
+    # Construct the WIP trajectory.
+    WIP_change_times = np.concatenate((enter_times, exit_times))
+    WIP_increments = np.concatenate((np.ones(len(enter_times)), -np.ones(len(exit_times))))
+    # (Sort the WIP change times and make corresponding swaps to the increments array.)
+    ordering = np.argsort(WIP_change_times)
+    WIP_times = np.sort(WIP_change_times)
+    sorted_WIP_increments = WIP_increments[ordering]
+    WIP_values = np.cumsum(sorted_WIP_increments)
+    
+    return WIP_values, WIP_times, throughput
+
 
 
 """
