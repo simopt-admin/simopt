@@ -43,20 +43,30 @@ class Voting(Model):
         self.n_rngs = 4
         self.n_responses = 1
         self.specifications = {
+            "mach_allocation": {
+                "description": "number of machines allocation for precinct i",
+                "datatype": list,
+                "default": [10,10,10,10,10]
+            },
+            "n_mach": {
+                "description": "max number of machines available",
+                "datatype": int,
+                "default": 50
+            },
             "mid_turn_per": {
                 "description": "midpoint turnout percentage for precinct i",
                 "datatype": list,
-                "default": [0]
+                "default": [.4,.2,.6,.3,.1]
             },
             "turn_ran": {
                 "description": "turnout range specific to precinct i",
                 "datatype": list,
-                "default": [0]
+                "default": [10,15,10,50,30]
             },
             "reg_vote": {
                 "description": "number of registered voters in precinct i",
                 "datatype": list,
-                "default": [0]
+                "default": [100,200,100,400,200]
             },
             "mean_time2vote": {
                 "description": "The mean time for the gamma distributed time taken to vote",
@@ -79,62 +89,60 @@ class Voting(Model):
                 "default": 20
             },
             "bd_prob": {
-                "description": "Probability at which the voting machines break down",
+                "description": "Probability at which the voting machines break down (bd)",
                 "datatype": float,
                 "default": .05
             },
             "n_prec":{
                 "description": "Number of precincts",
                 "datatype": int,
-                "default": 788
+                "default": 5
             }
         }
         self.check_factor_list = {
-            "mid_turn_per": self.check_mid_turn_per,
-            "turn_ran": self.check_turn_ran,
-            "reg_vote": self.check_reg_vote,
-            "mean_time2vote": self.check_mean_time2vote,
-            "stdev_time2vote": self.check_stdev_time2vote,
-            "mean_repair": self.check_mean_repair,
-            "stdev_repair": self.check_stdev_repair,
-            "bd_prob": self.check_bd_prob
+            "mach_allocation_amt": self.check_mach_allocation_amt,
+            "mach_allocation_len": self.check_mach_allocation_len,
+            "mid_turn_perc": self.check_mid_turn_perc,
+            "mid_turn_perc_len": self.check_mid_turn_perc_len,
+            "turn_ran_len": self.check_turn_ran_len,
+            "reg_vote_len": self.check_reg_vote_len,
+            "bd_prob_perc": self.check_bd_prob_perc
         }
         # Set factors of the simulation model.
+                                                                                # ASK ABOUT CHECK AND NON NEGATIVITY CONTRAINTS
 
         super().__init__(fixed_factors)
 
-        #idk what this does^^ super <Kyle> It looks like is a prebuilt function that is being run, would have to look and see elsewhere in the package what it does
+    def check_mach_allocation_amt(self): #Making sure that all machines are allocated and equal to max available
+        return sum(self.factors["mach_allocation"]) == self.factors["n_mach"] 
 
-    def check_mean_vec(self): #needs to be adj
-        return np.all(self.factors["mean_vec"]) > 0
+    def check_mach_allocation_len(self): #verifying that the length of the list matches number of precincts
+        return len(self.factors["mach_allocation"]) == self.factors["n_prec"]
 
-    def check_cov(self): #needs to be adj
-        try:
-            np.linalg.cholesky(np.matrix(self.factors["cov"]))
-            return True
-        except np.linalg.linalg.LinAlgError as err:
-            if 'Matrix is not positive definite' in err.message:
+    def check_mid_turn_perc(self): #veifying that all are percentages
+        for i in self.factors["mid_turn_perc"]:
+            if i < 0 and i > 1:
                 return False
-            else:
-                raise
+        return True
+        
+    def check_mid_turn_perc_len(self): #verifying that the length of the list matches number of precincts
+        #FILL CODE HERE
         return
 
-    def check_capacity(self): #needs to be adj
-        return len(self.factors["capacity"]) == self.factors["n_fac"]
+    def check_turn_ran_len(self): #verifying that the length of the list matches number of precincts
+        #FILL CODE HERE
+        return
 
-    def check_n_spec(self): #need this for the other integer variables
-        return self.factors["n_spec"] > 0
-
-    def check_simulatable_factors(self):
-        if len(self.factors["mid_turn_per"]) != self.factors["n_prec"]:
-            return False
-        elif len(self.factors["turn_ran"]) != self.factors["n_prec"]:
-            return False
-        elif len(self.factors["reg_vote"]) != self.factors["n_prec"]:
-            return False
-        else:
-            return True
-
+    def check_reg_vote_len(self): #verifying that the length of the list matches number of precincts
+        #FILL CODE HERE
+        return
+ 
+    def check_bd_prob_perc(self): #veifying that all are percentages
+        for i in self.factors["bd_prob_perc"]:
+            if i < 0 and i > 1:
+                return False
+        return True    
+        
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
@@ -159,6 +167,18 @@ class Voting(Model):
             
             avg_TIS = mean of time waiting to vote
             
+            <NEW>
+            "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
+            "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
+                                        ### DO WE NEED TO CALCULATE THIS FOR EACH VOTER OR JUST FOR THE MACHINE OR THE PRECINCT
+            
+            ##VERY CONFUSED DO WE DECIDE IF EACH IS BROKEN OR NOT OR DO PER PRECINCT, Etc.
+            "mach_bd" = binary variable, probability that the           
+                0 : The voting machine is broken down at start of day
+                1 : The voting machine does not break down for the day 
+
+            "repair_time" = the time that it will take for a machine to be repaired, gamma distributed
+            "arrival_rate" = rate of arrival to the voting location
 
         gradients : dict of dicts
             gradient estimates for each response
