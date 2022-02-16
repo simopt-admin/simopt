@@ -1,11 +1,8 @@
-Multi-Stage Revenue Management with Inter-Temporal Dependence
-=============================================================
+Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)
+==========================================
 
-This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
-at Stanford University.
-
-Problem Statment
-###########
+Description:
+------------
 
 A businessman chooses to buy :math:`b > 0` units of capacity, paying :math:`c > 0` dollars per unit of capacity at :math:`t = 0`.
 During stage :math:`t (t = 1, . . . , T)` he observes demand :math:`D_t` for units at price :math:`p_t`, at which point, he must choose to
@@ -28,48 +25,107 @@ future periods in order to maximize total revenue. In other words, we want to fi
 that, if the number of units sold in all periods before :math:`t` is less than :math:`b − r_t` (:math:`r_t` units are reserved for periods
 :math:`t, t + 1, . . . , T`), revenue is maximized.
 
-*Recommended Parameters:* Take :math:`c = $80, T = 3, k = θ = 1` and :math:`μ_t, p_t` as follows: 
 
-.. image:: rmitd.png
-  :alt: The example table has failed to display
-  :width: 300
+Model Factors:
+--------------
+* Time Horizon(T): Period of time that is considered
 
-*Starting Solutions:* :math:`b` = 100, :math:`r_2` = 50, :math:`r_3 = 30`. If multiple solutions are needed, use :math:`r_2` ∼ Uniform(40,60) and
-:math:`r_3` ∼ Uniform(20,40).
+    * Default: 3
 
-*Measurement of Time:* Number of periods
+* Prices: Prices for each Period
 
-*Optimal Solution:* Unknown
+    * Default: <default value>
 
-Factors
-#########
+* Demand Mean(μ): Mean demand for each period
 
-**Time Horizon(T):** Period of time that is considered
+    * Default: <default value>
 
-**Prices:** Prices for each Period
+* Cost(c): Cost per unit of capacity at :math:`t = 0`
 
-**Demand Mean(μ):** Mean demand for each period
+    * Default: 80
 
-**Cost(c):** Cost per unit of capacity at :math:`t = 0`
+* Gamma Shape(k): Shape parameter of gamma distribution
 
-**Gamma Shape(k):** Shape parameter of gamma distribution
+    * Default: :math:`1`
 
-**Gamma Scale(θ):** Scale parameter of gamma distribution
+* Gamma Scale(θ): Scale parameter of gamma distribution
 
-**Initial Inventory(b):** Initial Inventory
+    * Default: :math:`1`
 
-**Reservation Quantity(r):** Inventory to reserve going into periods :math:`2, 3, ..., T`.
+* Initial Inventory(b): Initial Inventory
 
-Responses
-#########
+    * Default: 100
 
-**Revenue:** Total revenue of given model
+* Reservation Quantity(r): Inventory to reserve going into periods :math:`2, 3, ..., T`.
 
-Objective Function
-#######
-
-Contraints
-#######
+    * Default: :math:`r_2` = 50, :math:`r_3 = 30`. If multiple solutions are needed, use :math:`r_2` ∼ Uniform(40,60) and :math:`r_3` ∼ Uniform(20,40).
 
 
+Respones:
+---------
+* Revenue: Total revenue of given model
+
+
+References:
+===========
+This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
+at Stanford University. <article name with full citation + hyperlink to journal/arxiv page> 
+
+
+
+Optimization Problem: <problem_name> (<problem_abbrev>)
+========================================================
+
+Decision Variables:
+-------------------
+* <dv1name that matches model factor name>
+* <dv2name that matches model factor name>
+
+Objectives:
+-----------
+<Description using response names. Use math if it is helpful.>
+
+Constraints:
+------------
+<Description using response names. Use math if it is helpful.>
+
+Problem Factors:
+----------------
+* <factor1name>: <short description>
+
+  * Default: <default value>
+  
+* <factor2name>: <short description>
+
+  * Default: <default value>
+
+Fixed Model Factors:
+--------------------
+* <factor1name>: <fixed value>
+
+* <factor2name>: <fixed value>
+
+Starting Solution: 
+------------------
+* <dv1name>: <dv1initialvalue>
+
+* <dv2name>: <dv2initialvalue>
+
+Random Solutions: 
+------------------
+<description of how to generate random solutions>
+
+Optimal Solution:
+-----------------
+<if known, otherwise unknown>
+
+Optimal Objective Function Value:
+---------------------------------
+<if known, otherwise unknown>
+
+
+Optimization Problem: <problem_name> (<problem_abbrev>)
+========================================================
+
+...
 

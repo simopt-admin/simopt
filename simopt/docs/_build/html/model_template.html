@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD) &#8212; SimOpt 1.0 documentation</title>
+    <title>Model: &lt;model_name&gt; (&lt;model_abbreviation&gt;) &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -29,7 +29,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: &lt;model_name&gt; (&lt;model_abbreviation&gt;)</a></li> 
       </ul>
     </div>  
 
@@ -38,84 +38,37 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="model-multi-stage-revenue-management-with-inter-temporal-dependence-rmitd">
-<h1>Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)<a class="headerlink" href="#model-multi-stage-revenue-management-with-inter-temporal-dependence-rmitd" title="Permalink to this headline">¶</a></h1>
+  <section id="model-model-name-model-abbreviation">
+<h1>Model: &lt;model_name&gt; (&lt;model_abbreviation&gt;)<a class="headerlink" href="#model-model-name-model-abbreviation" title="Permalink to this headline">¶</a></h1>
 <section id="description">
 <h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
-<p>A businessman chooses to buy <span class="math notranslate nohighlight">\(b &gt; 0\)</span> units of capacity, paying <span class="math notranslate nohighlight">\(c &gt; 0\)</span> dollars per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span>.
-During stage <span class="math notranslate nohighlight">\(t (t = 1, . . . , T)\)</span> he observes demand <span class="math notranslate nohighlight">\(D_t\)</span> for units at price <span class="math notranslate nohighlight">\(p_t\)</span>, at which point, he must choose to
-sell <span class="math notranslate nohighlight">\(x_t\)</span> units <span class="math notranslate nohighlight">\((0 ≤ x_t ≤ D_t)\)</span>, provided that the total number of units sold (accross all past periods) does not
-exceed <span class="math notranslate nohighlight">\(b\)</span>.</p>
-<p>To better understand the initial capacity and selling decisions, consider the following: There is a large
-initial capacity <span class="math notranslate nohighlight">\(b\)</span> (units purchased). In period 1 the businessman receives a certain demand for units at low
-price <span class="math notranslate nohighlight">\(p_{low}\)</span>. The decision at period 1 is, esentially, choosing a number of units to be sold right now in order to
-reserve some units for customers arriving later because they will pay more for the product; The opportunity
-cost for each unit of capacity reserved is now <span class="math notranslate nohighlight">\(p_{low}\)</span>. Thus, in order to make a wise decision at period 1, the
-businessman must consider later demand.</p>
-<p>Assume that <span class="math notranslate nohighlight">\(D_t = μ_tXY_t\)</span> where <span class="math notranslate nohighlight">\(X\)</span> has a gamma distribution with parameters <span class="math notranslate nohighlight">\(k &gt; 0\)</span> and <span class="math notranslate nohighlight">\(θ &gt; 0\)</span> such that
-it has mean <span class="math notranslate nohighlight">\(kθ = 1\)</span> and standard deviation <span class="math notranslate nohighlight">\({\sqrt{k}}θ = 1/ {\sqrt{k}}. Y_1, . . . , Y_T\)</span> are i.i.d. exponential with mean 1 and
-<span class="math notranslate nohighlight">\(μ_t\)</span> are positive constants (<span class="math notranslate nohighlight">\(\forall\:t\)</span>).</p>
-<p>Our goal is to calculate how many units should purchased (<span class="math notranslate nohighlight">\(b\)</span>) and how many units should be reserved for
-future periods in order to maximize total revenue. In other words, we want to find b and <span class="math notranslate nohighlight">\(r_t, t = 2, . . . , T\)</span> so
-that, if the number of units sold in all periods before <span class="math notranslate nohighlight">\(t\)</span> is less than <span class="math notranslate nohighlight">\(b − r_t\)</span> (<span class="math notranslate nohighlight">\(r_t\)</span> units are reserved for periods
-<span class="math notranslate nohighlight">\(t, t + 1, . . . , T\)</span>), revenue is maximized.</p>
+<p>&lt;A paragraph describing the stochastic model. Use math if it is helpful.&gt;</p>
+<p>Sample math… <span class="math notranslate nohighlight">\(S = 1500\)</span></p>
+<p>Sample math…</p>
+<div class="math notranslate nohighlight">
+\[\frac{ \sum_{t=0}^{N}f(t,k) }{N}\]</div>
 </section>
 <section id="model-factors">
 <h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>Time Horizon(T): Period of time that is considered</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 3</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Prices: Prices for each Period</p>
+<li><p>&lt;factor1name&gt;: &lt;short description&gt;</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: &lt;default value&gt;</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Demand Mean(μ): Mean demand for each period</p>
+<li><p>&lt;factor2name&gt;: &lt;short description&gt;</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: &lt;default value&gt;</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Cost(c): Cost per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span></p>
+<li><p>&lt;factor3name&gt;: &lt;short description&gt;</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 80</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Gamma Shape(k): Shape parameter of gamma distribution</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: <span class="math notranslate nohighlight">\(1\)</span></p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Gamma Scale(θ): Scale parameter of gamma distribution</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: <span class="math notranslate nohighlight">\(1\)</span></p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Initial Inventory(b): Initial Inventory</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 100</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Reservation Quantity(r): Inventory to reserve going into periods <span class="math notranslate nohighlight">\(2, 3, ..., T\)</span>.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: <span class="math notranslate nohighlight">\(r_2\)</span> = 50, <span class="math notranslate nohighlight">\(r_3 = 30\)</span>. If multiple solutions are needed, use <span class="math notranslate nohighlight">\(r_2\)</span> ∼ Uniform(40,60) and <span class="math notranslate nohighlight">\(r_3\)</span> ∼ Uniform(20,40).</p></li>
+<li><p>Default: &lt;default value&gt;</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -124,14 +77,15 @@ that, if the number of units sold in all periods before <span class="math notran
 <section id="respones">
 <h2>Respones:<a class="headerlink" href="#respones" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Revenue: Total revenue of given model</p></li>
+<li><p>&lt;response1name&gt;: &lt;short description&gt;</p></li>
+<li><p>&lt;response2name&gt;: &lt;short description&gt;</p></li>
+<li><p>&lt;response3name&gt;: &lt;short description&gt;</p></li>
 </ul>
 </section>
 </section>
 <section id="references">
 <h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
-<p>This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
-at Stanford University. &lt;article name with full citation + hyperlink to journal/arxiv page&gt;</p>
+<p>This model is adapted from the article &lt;article name with full citation + hyperlink to journal/arxiv page&gt;</p>
 </section>
 <section id="optimization-problem-problem-name-problem-abbrev">
 <h1>Optimization Problem: &lt;problem_name&gt; (&lt;problem_abbrev&gt;)<a class="headerlink" href="#optimization-problem-problem-name-problem-abbrev" title="Permalink to this headline">¶</a></h1>
@@ -207,7 +161,7 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
   <div>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
-<li><a class="reference internal" href="#">Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)</a><ul>
+<li><a class="reference internal" href="#">Model: &lt;model_name&gt; (&lt;model_abbreviation&gt;)</a><ul>
 <li><a class="reference internal" href="#description">Description:</a></li>
 <li><a class="reference internal" href="#model-factors">Model Factors:</a></li>
 <li><a class="reference internal" href="#respones">Respones:</a></li>
@@ -233,7 +187,7 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/rmitd.rst.txt"
+      <li><a href="_sources/model_template.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -261,7 +215,7 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: &lt;model_name&gt; (&lt;model_abbreviation&gt;)</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
