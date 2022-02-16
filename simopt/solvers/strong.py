@@ -101,6 +101,11 @@ class STRONG(Solver):
                 "description": "the constant of expanding the trust region",
                 "datatype": float,
                 "default": 1.11
+            },
+            "lambda": {
+                "description": "multiplicative factor for r",
+                "datatype": int,
+                "default": 2
             }
         }
         self.check_factor_list = {
@@ -169,9 +174,9 @@ class STRONG(Solver):
             if delta_T > delta_threshold:
                 # step 1: build the linear model
                 NumOfEval = 2 * problem.dim - np.sum(BdsCheck != 0)
-                grad, Hessian = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r)
-                expended_budget += NumOfEval * r
-                # print(grad, Hessian)
+                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r, NumOfEval, expended_budget)
+                # expended_budget += NumOfEval * r
+                # print(grad)
 
                 # step 2: solve the subproblem
                 # Cauchy reduction
@@ -233,8 +238,8 @@ class STRONG(Solver):
                 else:
                     NumOfEval = problem.dim **2 + problem.dim - math.factorial(n_onbound) / (math.factorial(2), math.factorial(n_onbound - 2))
                 # step1 Build the quadratic model
-                grad, Hessian = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, r)
-                expended_budget += NumOfEval * r
+                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, r, NumOfEval, expended_budget)
+                # expended_budget += NumOfEval * r
                 # step2 Solve the subproblem
                 # Cauchy reduction
                 candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T)
@@ -270,8 +275,8 @@ class STRONG(Solver):
                         if expended_budget > problem.factors["budget"]: 
                             break
                         # step1 Build the quadratic model
-                        G, H = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r)
-                        expended_budget += NumOfEval * (sub_counter + 1) * r
+                        G, H, expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r, NumOfEval, expended_budget)
+                        # expended_budget += NumOfEval * (sub_counter + 1) * r
                         # step2 determine the new inner solution based on the accumulated design matrix X
                         if np.matmul(np.matmul(G, H), G) <= 0:
                             tau = 1
@@ -350,6 +355,7 @@ class STRONG(Solver):
                 r = int(np.ceil(1.01 * r))
         for i in recommended_solns:
             print(i.x)
+        print('final budget', expended_budget)
         return recommended_solns, intermediate_budgets
     
     ##Finding the Cauchy Point
@@ -364,196 +370,210 @@ class STRONG(Solver):
                 tau = 1
         G = np.reshape(G, (1, problem.dim))[0]
         candidate_x = new_x - tau * delta_T * G / norm(G)
-        print(candidate_x)
         return candidate_x
 
     # Finite difference for calculating gradients and BFGS for calculating Hessian Matrix
-    def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r):
+    def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r, NumOfEval, expended_budget):
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         # Store values for each dimension
         FnPlusMinus = np.zeros((problem.dim, 3)) 
         grad = np.zeros(problem.dim)
         Hessian = np.zeros((problem.dim, problem.dim))
 
-        for i in range(problem.dim):
-            # initialization
-            x1 = list(new_x)
-            x2 = list(new_x)
-            steph1 = delta_T # forward stepsize
-            steph2 = delta_T # backward stepsize
-            
-            # check variable bounds
-            if x1[i] + steph1 > problem.upper_bounds[i]:
-                steph1 = np.abs(problem.upper_bounds[i] - x1[i])
-            if x2[i] - steph2 < problem.lower_bounds[i]:
-                steph2 = np.abs(x2[i] - problem.lower_bounds[i])
-            
-            # decide stepsize
-            if BdsCheck[i] == 0:   #central diff
-                FnPlusMinus[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
-            elif BdsCheck[i] == 1:    # forward diff
-                FnPlusMinus[i, 2] = steph1
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
-            else:    # backward diff
-                FnPlusMinus[i, 2] = steph2
-                x2[i] = x2[i] - FnPlusMinus[i,2]
-            x1_solution = self.create_new_solution(tuple(x1), problem)
-            if BdsCheck[i] != -1:
-                problem.simulate(x1_solution, r)
-                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
-                FnPlusMinus[i, 0] = fn1 # first column is f(x+h,y)
-            x2_solution = self.create_new_solution(tuple(x2), problem)
-            if BdsCheck[i] != 1:
-                problem.simulate(x2_solution, r)
-                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
-                FnPlusMinus[i, 1] = fn2 # second column is f(x-h,y)
-            
-            # Calculate gradient
-            if BdsCheck[i] == 0:
-                grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i,2])
-            elif BdsCheck[i] == 1:
-                grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
-            elif BdsCheck[i] == -1:
-                grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-        
-        if stage == 2:
-            # diagonal in Hessian
+        cnt = 0
+        while (np.all((grad == 0))):
+            cnt += 1
+            if (cnt > 1):
+                print('count', cnt)
+            # if expended_budget > problem.factors['budget']:
+            #     print(expended_budget)
+            #     raise ValueError('Not enough budget to resolve zero gradient.')
+
             for i in range(problem.dim):
-                if BdsCheck[i] == 0:
-                    Hessian[i, i] = (FnPlusMinus[i, 0] - 2 * fn + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
-                elif BdsCheck[i] == 1:
-                    x3 = list(new_x)
-                    x3[i] = x3[i] + FnPlusMinus[i, 2] / 2
-                    x3_solution = self.create_new_solution(tuple(x3), problem)
-                    # check budget
-                    problem.simulate(x3_solution, r)
-                    fn3 = -1 * problem.minmax[0] * x3_solution.objectives_mean
-                    Hessian[i, i] = 4 * (FnPlusMinus[i, 1] - 2 * fn3 + fn) / (FnPlusMinus[i, 2]**2)
-                elif BdsCheck[i] == -1:
-                    x4 = list(new_x)
-                    x4[i] = x4[i] - FnPlusMinus[i, 2] / 2
-                    x4_solution = self.create_new_solution(tuple(x4), problem)
-                    # check budget
-                    problem.simulate(x4_solution, r)
-                    fn4 = -1 * problem.minmax[0] * x4_solution.objectives_mean
-                    Hessian[i, i] = 4 * (fn - 2 * fn4 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
+                # initialization
+                x1 = list(new_x)
+                x2 = list(new_x)
+                steph1 = delta_T # forward stepsize
+                steph2 = delta_T # backward stepsize
                 
-                # upper triangle in Hessian
-                for j in range(i + 1, problem.dim):
-                    if BdsCheck[i]**2 + BdsCheck[j]**2 == 0: # neither x nor y on boundary
-                        # f(x+h,y+k)
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + FnPlusMinus[i, 2]
-                        x5[j] = x5[j] + FnPlusMinus[j, 2]
-                        x5_solution = self.create_new_solution(tuple(x5), problem)
-                        # check budget
-                        problem.simulate(x5_solution, r)
-                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        # f(x-h,y-k)
-                        x6 = list(new_x)
-                        x6[i] = x6[i] - FnPlusMinus[i, 2]
-                        x6[j] = x6[j] - FnPlusMinus[j, 2]
-                        x6_solution = self.create_new_solution(tuple(x5), problem)
-                        # check budget
-                        problem.simulate(x6_solution , r)
-                        fn6 = -1 * problem.minmax[0] * x6_solution .objectives_mean
-                        # compute second order gradient
-                        Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + 2 * fn - FnPlusMinus[i, 1] - FnPlusMinus[j, 1] + fn6) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j ,2])
-                        Hessian[j, i] = Hessian[i, j]
-                    elif BdsCheck[j] == 0: # x on boundary, y not
-                        # f(x+/-h,y+k)
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + BdsCheck[i] * FnPlusMinus[i, 2]
-                        x5[j] = x5[j] + FnPlusMinus[j, 2]
-                        x5_solution = self.create_new_solution(tuple(x5), problem)
-                        # check budget
-                        problem.simulate(x5_solution, r)
-                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        # f(x+/-h,y-k)
-                        x6 = list(new_x)
-                        x6[i] = x6[i] + BdsCheck[i] * FnPlusMinus[i, 2]
-                        x6[j] = x6[j] - FnPlusMinus[j, 2]
-                        x6_solution = self.create_new_solution(tuple(x6), problem)
-                        # check budget
-                        problem.simulate(x6_solution, r)
-                        fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
-                        # compute second order gradient
-                        Hessian[i, j] = (fn5 - FnPlusMinus[j, 0] - fn6 + FnPlusMinus[j, 1]) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j, 2] * BdsCheck[i])
-                        Hessian[j, i] = Hessian[i, j]
-                    elif BdsCheck[i] == 0: # y on boundary, x not
-                        # f(x+h,y+/-k)
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + FnPlusMinus[i, 2]
-                        x5[j] = x5[j] + BdsCheck[j] * FnPlusMinus[j, 2]
-                        x5_solution = self.create_new_solution(tuple(x5), problem)                        
-                        # check budget
-                        problem.simulate(x5_solution, r)
-                        fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        # f(x-h,y+/-k)
-                        x6 = list(new_x)
-                        x6[i] = x6[i] + FnPlusMinus[i, 2]
-                        x6[j] = x6[j] + BdsCheck[j] * FnPlusMinus[j, 2]
-                        x6_solution = self.create_new_solution(tuple(x6), problem) 
-                        # check budget
-                        problem.simulate(x6_solution, r)
-                        fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
-                        # compute second order gradient
-                        Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - fn6 + FnPlusMinus[i, 1])/(2*FnPlusMinus[i, 2]*FnPlusMinus[j, 2]*BdsCheck[j])
-                        Hessian[j, i] = Hessian[i, j]
+                # check variable bounds
+                if x1[i] + steph1 > problem.upper_bounds[i]:
+                    steph1 = np.abs(problem.upper_bounds[i] - x1[i])
+                if x2[i] - steph2 < problem.lower_bounds[i]:
+                    steph2 = np.abs(x2[i] - problem.lower_bounds[i])
+                
+                # decide stepsize
+                if BdsCheck[i] == 0:   #central diff
+                    FnPlusMinus[i, 2] = min(steph1, steph2)
+                    x1[i] = x1[i] + FnPlusMinus[i, 2]
+                    x2[i] = x2[i] - FnPlusMinus[i, 2]
+                elif BdsCheck[i] == 1:    # forward diff
+                    FnPlusMinus[i, 2] = steph1
+                    x1[i] = x1[i] + FnPlusMinus[i, 2]
+                else:    # backward diff
+                    FnPlusMinus[i, 2] = steph2
+                    x2[i] = x2[i] - FnPlusMinus[i,2]
+                x1_solution = self.create_new_solution(tuple(x1), problem)
+                if BdsCheck[i] != -1:
+                    problem.simulate_up_to([x1_solution], r)
+                    fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
+                    FnPlusMinus[i, 0] = fn1 # first column is f(x+h,y)
+                x2_solution = self.create_new_solution(tuple(x2), problem)
+                if BdsCheck[i] != 1:
+                    problem.simulate_up_to([x2_solution], r)
+                    fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
+                    FnPlusMinus[i, 1] = fn2 # second column is f(x-h,y)
+                
+                # Calculate gradient
+                if BdsCheck[i] == 0:
+                    grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i,2])
+                elif BdsCheck[i] == 1:
+                    grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
+                elif BdsCheck[i] == -1:
+                    grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
+            
+            if stage == 2:
+                # diagonal in Hessian
+                for i in range(problem.dim):
+                    if BdsCheck[i] == 0:
+                        Hessian[i, i] = (FnPlusMinus[i, 0] - 2 * fn + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
                     elif BdsCheck[i] == 1:
-                        if BdsCheck[j] == 1:
+                        x3 = list(new_x)
+                        x3[i] = x3[i] + FnPlusMinus[i, 2] / 2
+                        x3_solution = self.create_new_solution(tuple(x3), problem)
+                        # check budget
+                        problem.simulate_up_to([x3_solution], r)
+                        fn3 = -1 * problem.minmax[0] * x3_solution.objectives_mean
+                        Hessian[i, i] = 4 * (FnPlusMinus[i, 1] - 2 * fn3 + fn) / (FnPlusMinus[i, 2]**2)
+                    elif BdsCheck[i] == -1:
+                        x4 = list(new_x)
+                        x4[i] = x4[i] - FnPlusMinus[i, 2] / 2
+                        x4_solution = self.create_new_solution(tuple(x4), problem)
+                        # check budget
+                        problem.simulate_up_to([x4_solution], r)
+                        fn4 = -1 * problem.minmax[0] * x4_solution.objectives_mean
+                        Hessian[i, i] = 4 * (fn - 2 * fn4 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]**2)
+                    
+                    # upper triangle in Hessian
+                    for j in range(i + 1, problem.dim):
+                        if BdsCheck[i]**2 + BdsCheck[j]**2 == 0: # neither x nor y on boundary
                             # f(x+h,y+k)
                             x5 = list(new_x)
                             x5[i] = x5[i] + FnPlusMinus[i, 2]
                             x5[j] = x5[j] + FnPlusMinus[j, 2]
-                            x5_solution = self.create_new_solution(tuple(x5), problem) 
-                            #check budget
-                            problem.simulate(x5_solution, r)
+                            x5_solution = self.create_new_solution(tuple(x5), problem)
+                            # check budget
+                            problem.simulate_up_to([x5_solution], r)
                             fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                            # f(x-h,y-k)
+                            x6 = list(new_x)
+                            x6[i] = x6[i] - FnPlusMinus[i, 2]
+                            x6[j] = x6[j] - FnPlusMinus[j, 2]
+                            x6_solution = self.create_new_solution(tuple(x5), problem)
+                            # check budget
+                            problem.simulate_up_to([x6_solution] , r)
+                            fn6 = -1 * problem.minmax[0] * x6_solution .objectives_mean
                             # compute second order gradient
-                            Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + fn)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                            Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + 2 * fn - FnPlusMinus[i, 1] - FnPlusMinus[j, 1] + fn6) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j ,2])
                             Hessian[j, i] = Hessian[i, j]
-                        else:
-                            # f(x+h,y-k)
+                        elif BdsCheck[j] == 0: # x on boundary, y not
+                            # f(x+/-h,y+k)
+                            x5 = list(new_x)
+                            x5[i] = x5[i] + BdsCheck[i] * FnPlusMinus[i, 2]
+                            x5[j] = x5[j] + FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem)
+                            # check budget
+                            problem.simulate_up_to([x5_solution], r)
+                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                            # f(x+/-h,y-k)
+                            x6 = list(new_x)
+                            x6[i] = x6[i] + BdsCheck[i] * FnPlusMinus[i, 2]
+                            x6[j] = x6[j] - FnPlusMinus[j, 2]
+                            x6_solution = self.create_new_solution(tuple(x6), problem)
+                            # check budget
+                            problem.simulate_up_to([x6_solution], r)
+                            fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
+                            # compute second order gradient
+                            Hessian[i, j] = (fn5 - FnPlusMinus[j, 0] - fn6 + FnPlusMinus[j, 1]) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j, 2] * BdsCheck[i])
+                            Hessian[j, i] = Hessian[i, j]
+                        elif BdsCheck[i] == 0: # y on boundary, x not
+                            # f(x+h,y+/-k)
                             x5 = list(new_x)
                             x5[i] = x5[i] + FnPlusMinus[i, 2]
-                            x5[j] = x5[j] - FnPlusMinus[j, 2]
-                            x5_solution = self.create_new_solution(tuple(x5), problem) 
-                            #check budget
-                            problem.simulate(x5_solution, r)
+                            x5[j] = x5[j] + BdsCheck[j] * FnPlusMinus[j, 2]
+                            x5_solution = self.create_new_solution(tuple(x5), problem)                        
+                            # check budget
+                            problem.simulate_up_to([x5_solution], r)
                             fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                            # f(x-h,y+/-k)
+                            x6 = list(new_x)
+                            x6[i] = x6[i] + FnPlusMinus[i, 2]
+                            x6[j] = x6[j] + BdsCheck[j] * FnPlusMinus[j, 2]
+                            x6_solution = self.create_new_solution(tuple(x6), problem) 
+                            # check budget
+                            problem.simulate_up_to([x6_solution], r)
+                            fn6 = -1 * problem.minmax[0] * x6_solution.objectives_mean
                             # compute second order gradient
-                            Hessian[i, j] = (FnPlusMinus[i, 0] - fn5 - fn + FnPlusMinus[j, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                            Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - fn6 + FnPlusMinus[i, 1])/(2*FnPlusMinus[i, 2]*FnPlusMinus[j, 2]*BdsCheck[j])
                             Hessian[j, i] = Hessian[i, j]
-                    elif BdsCheck[i] == -1:
-                        if BdsCheck[j] == 1:
-                            # f(x-h,y+k)
-                            x5 = list(new_x)
-                            x5[i] = x5[i] - FnPlusMinus[i, 2]
-                            x5[j] = x5[j] + FnPlusMinus[j, 2]
-                            x5_solution = self.create_new_solution(tuple(x5), problem) 
-                            #check budget
-                            problem.simulate(x5_solution, r)
-                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
-                            # compute second order gradient
-                            Hessian[i, j] = (FnPlusMinus[j, 0] - fn - fn5 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
-                            Hessian[j, i] = Hessian[i, j]
-                        else:
-                            # f(x-h,y-k)
-                            x5 = list(new_x)
-                            x5[i] = x5[i] - FnPlusMinus[i, 2]
-                            x5[j] = x5[j] - FnPlusMinus[j, 2]
-                            x5_solution = self.create_new_solution(tuple(x5), problem) 
-                            #check budget
-                            problem.simulate(x5_solution, r)
-                            fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
-                            # compute second order gradient
-                            Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
-                            Hessian[j, i] = Hessian[i, j]
+                        elif BdsCheck[i] == 1:
+                            if BdsCheck[j] == 1:
+                                # f(x+h,y+k)
+                                x5 = list(new_x)
+                                x5[i] = x5[i] + FnPlusMinus[i, 2]
+                                x5[j] = x5[j] + FnPlusMinus[j, 2]
+                                x5_solution = self.create_new_solution(tuple(x5), problem) 
+                                #check budget
+                                problem.simulate_up_to([x5_solution], r)
+                                fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                                # compute second order gradient
+                                Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + fn)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                                Hessian[j, i] = Hessian[i, j]
+                            else:
+                                # f(x+h,y-k)
+                                x5 = list(new_x)
+                                x5[i] = x5[i] + FnPlusMinus[i, 2]
+                                x5[j] = x5[j] - FnPlusMinus[j, 2]
+                                x5_solution = self.create_new_solution(tuple(x5), problem) 
+                                #check budget
+                                problem.simulate_up_to([x5_solution], r)
+                                fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                                # compute second order gradient
+                                Hessian[i, j] = (FnPlusMinus[i, 0] - fn5 - fn + FnPlusMinus[j, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                                Hessian[j, i] = Hessian[i, j]
+                        elif BdsCheck[i] == -1:
+                            if BdsCheck[j] == 1:
+                                # f(x-h,y+k)
+                                x5 = list(new_x)
+                                x5[i] = x5[i] - FnPlusMinus[i, 2]
+                                x5[j] = x5[j] + FnPlusMinus[j, 2]
+                                x5_solution = self.create_new_solution(tuple(x5), problem) 
+                                #check budget
+                                problem.simulate_up_to([x5_solution], r)
+                                fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                                # compute second order gradient
+                                Hessian[i, j] = (FnPlusMinus[j, 0] - fn - fn5 + FnPlusMinus[i, 1])/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                                Hessian[j, i] = Hessian[i, j]
+                            else:
+                                # f(x-h,y-k)
+                                x5 = list(new_x)
+                                x5[i] = x5[i] - FnPlusMinus[i, 2]
+                                x5[j] = x5[j] - FnPlusMinus[j, 2]
+                                x5_solution = self.create_new_solution(tuple(x5), problem) 
+                                #check budget
+                                problem.simulate_up_to([x5_solution], r)
+                                fn5 = -1 * problem.minmax[0] * x5_solution.objectives_mean
+                                # compute second order gradient
+                                Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
+                                Hessian[j, i] = Hessian[i, j]
+            # add budget after each loop                    
+            expended_budget += NumOfEval * r
+            r = self.factors['lambda'] * r
+        print('expended_budget', expended_budget)
+        return grad, Hessian, expended_budget
+    
 
-        return grad, Hessian
+
 
 
     

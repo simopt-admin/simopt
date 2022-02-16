@@ -13,8 +13,6 @@ model_directory : dictionary
 # import solvers
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
-from solvers.simannealing import SANE
-from solvers.strong import STRONG
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -23,13 +21,17 @@ from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
 from models.ironore import IronOre, IronOreMaxRev
 from models.dynamnews import DynamNews, DynamNewsMaxProfit
-from models.vehicleroute import VehicleRoute, VehicleRouteMinDist
+from models.dualsourcing import DualSourcing, DualSourcingMinCost
+from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
+from models.chessmm import ChessMatchmaking, ChessAvgDifference
+from models.san import SAN, SANLongestPath
+from models.hotel import Hotel, HotelRevenue
+from models.tableallocation import TableAllocation, TableAllocationMaxRev
+from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
-    "RNDSRCH": RandomSearch,
-    "SANE": SANE,
-    "STRONG": STRONG,
+    "RNDSRCH": RandomSearch
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
@@ -40,7 +42,14 @@ problem_directory = {
     "SSCONT-1": SSContMinCost,
     "IRONORE-1": IronOreMaxRev,
     "DYNAMNEWS-1": DynamNewsMaxProfit,
-    "VEHROUTE-1": VehicleRouteMinDist
+    "DUALSOURCING-1": DualSourcingMinCost,
+    "CONTAM-1": ContaminationTotalCostDisc,
+    "CONTAM-2": ContaminationTotalCostCont,
+    "CHESS-1": ChessAvgDifference,
+    "SAN-1": SANLongestPath,
+    "HOTEL-1": HotelRevenue,
+    "TABLEALLOCATION-1": TableAllocationMaxRev,
+    "PARAMESTI-1": ParamEstiMinLogLik
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -50,5 +59,11 @@ model_directory = {
     "SSCONT": SSCont,
     "IRONORE": IronOre,
     "DYNAMNEWS": DynamNews,
-    "VEHROUTE": VehicleRoute
+    "DUALSOURCING": DualSourcing,
+    "CONTAM": Contamination,
+    "CHESS": ChessMatchmaking,
+    "SAN": SAN,
+    "HOTEL": Hotel,
+    "TABLEALLOCATION": TableAllocation,
+    "PARAMESTI": ParameterEstimation
 }
