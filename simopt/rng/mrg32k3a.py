@@ -367,6 +367,27 @@ class MRG32k3a(random.Random):
             n = max(ceil(lmbda + sqrt(lmbda)*z - 0.5), 0)
         return n
 
+    def gumbelvariate(self, mu, beta):
+        """Generate a gumbel random variate.
+
+        Parameters
+        ---------
+        mu : 'float'
+            location of the mode of the gumbel distribution from which to
+            generate.
+        beta : 'float'
+            scale parameter of the gumbel distribution from which to
+            generate.
+            
+        Returns
+        -------
+        'float'
+            a gumbel random variate from the specified distribution.
+        """
+        u = self.random()
+        q = mu - beta * np.log(-np.log(u))
+        return q
+
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.
         Streams are of length 2**141.

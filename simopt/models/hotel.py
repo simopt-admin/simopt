@@ -4,7 +4,6 @@ Summary
 Simulate expected revenue for a hotel.
 """
 import numpy as np
-from scipy import special
 
 from base import Model, Problem
 
@@ -43,48 +42,48 @@ class Hotel(Model):
         self.n_responses = 1
         self.specifications = {
             "num_products": {
-                "description": "Number of products.",
+                "description": "Number of products: (rate, length of stay).",
                 "datatype": int,
                 "default": 56
             },
             "lambda": {
                 "description": "Arrival rates for each product.",
                 "datatype": list,
-                "default": ((1/168)*np.array([1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, .25, .25, 
-                                    1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, 1, 1,
-                                    2, 2, 3, 3, 2, 2, 1, 1, 1, 1, 2, 2, 3, 3, 
-                                    2, 2, 1, 1, 2, 2, 3, 3, 1, 1, 2, 2, 1, 1])).tolist()
+                "default": ((1 / 168) * np.array([1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, .25, .25,
+                                                  1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, 1, 1,
+                                                  2, 2, 3, 3, 2, 2, 1, 1, 1, 1, 2, 2, 3, 3,
+                                                  2, 2, 1, 1, 2, 2, 3, 3, 1, 1, 2, 2, 1, 1])).tolist()
             },
-            "C": {
+            "num_rooms": {
                 "description": "Hotel capacity.",
                 "datatype": int,
                 "default": 100
             },
-            "pd": {
+            "discount_rate": {
                 "description": "Discount rate.",
                 "datatype": int,
                 "default": 100
             },
-            "pf": {
-                "description": "Rack rate.",
+            "rack_rate": {
+                "description": "Rack rate (full price).",
                 "datatype": int,
                 "default": 200
             },
-            "A": {
+            "product_incidence": {
                 "description": "Incidence matrix",
                 "datatype": list,
-                "default": [[1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0],
-                            [0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0],
-                            [0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0],
-                            [0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0],
-                            [0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0],
-                            [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	0,	0,	0,	0,	1,	1,	1,	1,	0,	0,	1,	1,	1,	1,	1,	1,	1,	1,	0,	0],
-                            [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	1,	1,	0,	0,	1,	1,	1,	1]]
+                "default": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1]]
             },
             "time_limit": {
                 "description": "Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).",
                 "datatype": list,
-                "default": np.concatenate((27*np.ones(14), 51*np.ones(12), 75*np.ones(10), 99*np.ones(8), 123*np.ones(6), 144*np.ones(4), 168*np.ones(2)), axis=None).tolist()
+                "default": np.concatenate((27 * np.ones(14), 51 * np.ones(12), 75 * np.ones(10), 99 * np.ones(8), 123 * np.ones(6), 144 * np.ones(4), 168 * np.ones(2)), axis=None).tolist()
             },
             "time_before": {
                 "description": "Hours before t=0 to start running (e.g. 168 means start at time -168).",
@@ -92,12 +91,12 @@ class Hotel(Model):
                 "default": 168
             },
             "runlength": {
-                "description": "Runlength of a day.",
+                "description": "Runlength of simulation (in hours) after t=0.",
                 "datatype": int,
                 "default": 168
             },
-            "b": {
-                "description": "Initial solution of booking limits.",
+            "booking_limits": {
+                "description": "Booking limits.",
                 "datatype": tuple,
                 "default": tuple([100 for _ in range(56)])
             }
@@ -105,43 +104,42 @@ class Hotel(Model):
         self.check_factor_list = {
             "num_products": self.check_num_products,
             "lambda": self.check_lambda,
-            "C": self.check_C,
-            "pd": self.check_pd,
-            "pf": self.check_pf,
-            "A": self.check_A,
+            "num_rooms": self.check_num_rooms,
+            "discount_rate": self.check_discount_rate,
+            "rack_rate": self.check_rack_rate,
+            "product_incidence": self.check_product_incidence,
             "time_limit": self.check_time_limit,
             "time_before": self.check_time_before,
             "runlength": self.check_runlength,
-            "b": self.check_b
+            "booking_limits": self.check_booking_limits
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     def check_num_products(self):
         return self.factors["num_products"] > 0
-    
     def check_lambda(self):
         for i in self.factors["lambda"]:
             if i <= 0:
                 return False
         return len(self.factors["lambda"]) == self.factors["num_products"]
 
-    def check_C(self):
-        return self.factors["C"] > 0
+    def check_num_rooms(self):
+        return self.factors["num_rooms"] > 0
 
-    def check_pd(self):
-        return self.factors["pd"] > 0
+    def check_discount_rate(self):
+        return self.factors["discount_rate"] > 0
 
-    def check_pf(self):
-        return self.factors["pf"] > 0
+    def check_rack_rate(self):
+        return self.factors["rack_rate"] > 0
 
-    def check_A(self):
-        m, n = self.factors["A"].shape
+    def check_product_incidence(self):
+        m, n = self.factors["product_incidence"].shape
         for i in range(m):
             for j in range(n):
-                if self.factors["A"][i, j] <= 0:
+                if self.factors["product_incidence"][i, j] <= 0:
                     return False
-        return m*n == self.factors["num_products"]
+        return m * n == self.factors["num_products"]
 
     def check_time_limit(self):
         for i in self.factors["time_limit"]:
@@ -154,12 +152,12 @@ class Hotel(Model):
 
     def check_runlength(self):
         return self.factors["runlength"] > 0
-      
-    def check_b(self):
-        for i in list(self.factors["b"]):
-            if i <= 0 or i > self.factors["C"]:
+
+    def check_booking_limits(self):
+        for i in list(self.factors["booking_limits"]):
+            if i <= 0 or i > self.factors["num_rooms"]:
                 return False
-        return len(self.factors["b"]) == self.factors["num_products"]
+        return len(self.factors["booking_limits"]) == self.factors["num_products"]
 
     def replicate(self, rng_list):
         """
@@ -182,25 +180,24 @@ class Hotel(Model):
         arr_rng = rng_list[0]
 
         total_revenue = 0
-        b = list(self.factors["b"])
-        A = np.array(self.factors["A"])
-        # Vector of next arrival time per product
+        b = list(self.factors["booking_limits"])
+        A = np.array(self.factors["product_incidence"])
+        # Vector of next arrival time per product.
+        # (Starts at time = -1*time_before, e.g., t = -168.)
         arrival = np.zeros(self.factors["num_products"]) - self.factors["time_before"]
-        # Upper bound on number of arrivals over the time period
-        arr_bound = 10*round(168*np.sum(self.factors["lambda"]))
+        # Upper bound on number of arrivals over the time period.
+        arr_bound = 10 * round(168 * np.sum(self.factors["lambda"]))
         arr_time = np.zeros((self.factors["num_products"], arr_bound))
-        # Index of which arrival time to use next for each product
+        # Index of which arrival time to use next for each product.
         a = np.zeros(self.factors["num_products"], dtype=int)
-
+        # Generate all interarrival times in advance.
         for i in range(self.factors["num_products"]):
             arr_time[i] = np.array([arr_rng.expovariate(self.factors["lambda"][i]) for _ in range(arr_bound)])
-        
-        # Generate first arrivals
+        # Extract first arrivals.
         for i in range(self.factors["num_products"]):
             arrival[i] = arrival[i] + arr_time[i, a[i]]
             a[i] = 1
-
-        min_time = 0  # keeps track of minimum time of the orders not yet received
+        min_time = 0  # Keeps track of minimum time of the orders not yet received.
         while min_time <= self.factors["runlength"]:
             min_time = self.factors["runlength"] + 1
             for i in range(self.factors["num_products"]):
@@ -210,23 +207,22 @@ class Hotel(Model):
             if min_time > self.factors["runlength"]:
                 break
             if b[min_idx] > 0:
-                if min_idx % 2 == 0: # pf
-                    total_revenue += sum(self.factors["pf"] * A[:,min_idx])
-                else: # pd
-                    total_revenue += sum(self.factors["pd"] * A[:,min_idx])
+                if min_idx % 2 == 0:  # Rack_rate.
+                    total_revenue += sum(self.factors["rack_rate"] * A[:, min_idx])
+                else:  # Discount_rate.
+                    total_revenue += sum(self.factors["discount_rate"] * A[:, min_idx])
+                # Reduce the inventory of products sharing the same resource.
                 for i in range(self.factors["num_products"]):
-                    if np.dot(A[:,i].T, A[:,min_idx]) >= 1:
+                    if np.dot(A[:, i].T, A[:, min_idx]) >= 1:
                         if b[i] != 0:
                             b[i] -= 1
             arrival[min_idx] += arr_time[min_idx, a[min_idx]]
             a[min_idx] = a[min_idx] + 1
-
         # Compose responses and gradients.
-        responses = {
-          'revenue': total_revenue
-        }
-        gradients = {}
+        responses = {"revenue": total_revenue}
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
+
 
 """
 Summary
@@ -305,19 +301,19 @@ class HotelRevenue(Problem):
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
-        self.constraint_type = "unconstrained"
-        self.variable_type = "continuous"
+        self.constraint_type = "box"
+        self.variable_type = "discrete"
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"b"}
+        self.model_decision_factors = {"booking_limits"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple([100 for _ in range(56)])
+                "default": tuple([0 for _ in range(56)])
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -325,18 +321,16 @@ class HotelRevenue(Problem):
                 "default": 100
             }
         }
-
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
-
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = Hotel(self.model_fixed_factors)
         self.dim = self.model.factors["num_products"]
         self.lower_bounds = tuple(np.zeros(self.dim))
-        self.upper_bounds = tuple(self.model.factors["C"]*np.ones(self.dim))
+        self.upper_bounds = tuple(self.model.factors["num_rooms"] * np.ones(self.dim))
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
@@ -351,7 +345,6 @@ class HotelRevenue(Problem):
             return False
         else:
             return True
-
 
     def vector_to_factor_dict(self, vector):
         """
@@ -368,7 +361,7 @@ class HotelRevenue(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "b": vector[:]
+            "booking_limits": vector[:]
         }
         return factor_dict
 
@@ -387,7 +380,7 @@ class HotelRevenue(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["b"])
+        vector = tuple(factor_dict["booking_limits"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -443,7 +436,7 @@ class HotelRevenue(Problem):
             vector of gradients of deterministic components of stochastic constraints
         """
         det_stoch_constraints = None
-        det_stoch_constraints_gradients = (0) # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
@@ -463,7 +456,7 @@ class HotelRevenue(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = None
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -496,5 +489,5 @@ class HotelRevenue(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([(rand_sol_rng.random())*self.model.factors["C"] for _ in range(self.dim)]) # U(0, 100)
+        x = tuple([rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)])
         return x

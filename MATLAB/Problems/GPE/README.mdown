@@ -4,7 +4,7 @@
 
 Find parameters for the best-fitting distribution.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/GPE/ParameterEstimation-Gamma.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/MATLAB/Problems/GPE/ParameterEstimation-Gamma.pdf).
 
 ### Properties
 

@@ -4,7 +4,7 @@
 
 Choose the reorder quantity that minimizes the expected long-run average cost (fixed/variable ordering cost + holding cost).
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/EOQ/EconomicOrderQuantity.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/MATLAB/Problems/EOQ/EconomicOrderQuantity.pdf).
 
 ### Properties
 
@@ -12,7 +12,7 @@ For full details, see the [documentation](https://github.com/simopt-admin/simopt
 
 **Constraints Class:** Variable bounds (nonnegativity).
 
-**Optimal Solutions:** Known. See the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/EOQ/EconomicOrderQuantity.pdf).
+**Optimal Solutions:** Known. See the [documentation](https://github.com/simopt-admin/simopt/tree/master/MATLAB/Problems/EOQ/EconomicOrderQuantity.pdf).
 
 **Known Structure:** The objective function is strictly convex and differentiable.
  
