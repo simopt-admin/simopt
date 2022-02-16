@@ -69,7 +69,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [1, 1,1,1,1,1]
+                "default": [0,0,0,0,0,0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges",
@@ -119,8 +119,8 @@ class ProdSys(Model):
         }
         self.check_factor_list = {
             "num_products": self.check_num_products,
-            "lambda": self.check_lambda,
-            "num_rooms": self.check_num_rooms,
+            "Interarrival_Time_mean": self.check_Interarrival_Time_mean,
+            "product_batch_prob": self.check_product_batch_prob,
             "discount_rate": self.check_discount_rate,
             "rack_rate": self.check_rack_rate,
             "product_incidence": self.check_product_incidence,
@@ -135,14 +135,17 @@ class ProdSys(Model):
     def check_num_products(self):
         return self.factors["num_products"] > 0
 
-    def check_lambda(self):
-        for i in self.factors["lambda"]:
+    def check_Interarrival_Time_mean(self):
+        for i in self.factors["Interarrival_Time_mean"]:
             if i <= 0:
                 return False
-        return len(self.factors["lambda"]) == self.factors["num_products"]
+        return len(self.factors["Interarrival_Time_mean"])>0
 
-    def check_num_rooms(self):
-        return self.factors["num_rooms"] > 0
+    def check_product_batch_prob(self):
+        for i in self.factors["product_batch_prob"]:
+            if i <= 0:
+                return False
+        return len(self.factors["product_batch_prob"])== self.factors["num_products"]
 
     def check_discount_rate(self):
         return self.factors["discount_rate"] > 0
@@ -189,7 +192,8 @@ class ProdSys(Model):
         -------
         responses : dict
             performance measures of interest
-            "revenue" = expected revenue
+            "lead_time" = time to produce each product
+            "service_level" = percentage of products returned on time 
         gradients : dict of dicts
             gradient estimates for each response
         """
