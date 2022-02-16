@@ -128,6 +128,20 @@ class ProdSys(Model):
             "time_before": self.check_time_before,
             "runlength": self.check_runlength,
             "booking_limits": self.check_booking_limits
+            
+            "Interarrival_Time_StDev"
+            "num_machines"
+            "num_nodes"
+            "interm_product"
+            "routing_layout"
+            "machine_layout"
+            "processing_time_mean"
+            "processing_time_StDev"
+            "product_batch_prob"
+            "time_horizon"
+            "batch"
+            "n_sets"
+
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -136,10 +150,7 @@ class ProdSys(Model):
         return self.factors["num_products"] > 0
 
     def check_Interarrival_Time_mean(self):
-        for i in self.factors["Interarrival_Time_mean"]:
-            if i <= 0:
-                return False
-        return len(self.factors["Interarrival_Time_mean"])>0
+        return len(self.factors["Interarrival_Time_mean"]) > 0
 
     def check_product_batch_prob(self):
         for i in self.factors["product_batch_prob"]:
