@@ -162,7 +162,7 @@ class NELDMD(Solver):
         for i in range(1, n_pts):
             rand_x = problem.get_random_solution(self.rng_list[1])
             sol.append(self.create_new_solution(rand_x, problem))
-        print("initial sol", [i.x for i in sol])   # DELETE
+        # print("initial sol", [i.x for i in sol])   # DELETE
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
@@ -197,7 +197,7 @@ class NELDMD(Solver):
         while budget_spent <= problem.factors["budget"]:
             loop += 1    # DELETE
             print("loop", loop)   # DELETE
-            print([i.x for i in sort_sol])   # DELETE
+            # print([i.x for i in sort_sol])   # DELETE
             # Reflect worse point
             p_high = sort_sol[-1]  # current worst point
             p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
@@ -222,6 +222,20 @@ class NELDMD(Solver):
             #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
             #         next_idx += 1
 
+            # Reflect less
+            if p_refl != p_refl_copy:  # out of bounds
+                print("reflect less")  # DELETE
+                while p_refl != p_refl_copy:
+
+                    # Attempt contraction or shrinking
+                    p_refl2 = p_high
+                    p_refl = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
+                                                        tuple((1-self.factors["betap"])* x for x in p_cent)))
+                    p_refl_copy = p_refl
+                    p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, p_refl2.x)
+                    # print('bound: copy', p_refl_copy)  # DELETE
+                    # print('bound: refl', p_refl)  # DELETE
+
             
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
@@ -237,10 +251,10 @@ class NELDMD(Solver):
             fn_sec = sort_fn_val[-2]  # current 2nd worst z
             fn_high = sort_fn_val[-1]  # worst z from unreflected structure
 
-            print("sort_fn_val", sort_fn_val)   # DELETE
-            print("best", fn_low)   # DELETE
-            print("-2", fn_sec)     # DELETE
-            print("refl", refl_fn_val)   # DELETE
+            # print("sort_fn_val", sort_fn_val)   # DELETE
+            # print("best", fn_low)   # DELETE
+            # print("-2", fn_sec)     # DELETE
+            # print("refl", refl_fn_val)   # DELETE
 
             # Check if accept reflection
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
