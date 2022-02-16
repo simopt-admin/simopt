@@ -72,22 +72,24 @@ class ProdSys(Model):
                 "default": [1, 1,1]
             },
             "routing_layout": {
-                "description": "Layout matrix",
+                "description": "Layout matrix, list of edges",
                 "datatype": list,
-                "default": [[1, 1,0,1,0,0],
-                            [1,1,0,0,1,0],
-                            [1,0,1,0,1,0],
-                            [1,0,1,0,0,1]]
+                "default": [[1,2],
+                            [1,3],
+                            [2,4],
+                            [2,5],
+                            [3,5],
+                            [3,6]]
+            },
+            "machine_layout": {
+                "description": "List of machines, each element is the index for the machine that processes the task on each edge",
+                "datatype": list,
+                "default": [1,2,2,2,1,1]
             },
             "processing_time_mean": {
-                "description": "Normally distributed processing times matrix; mean",
+                "description": "Normally distributed processing times list; each element is the mean for the processing time distribution associated with the task on each edge",
                 "datatype": list,
-                "default": [[0,4,3,0,0,0],
-                            [0,0,0,5,4,0],
-                            [0,0,0,0,4,3],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0]]
+                "default": [4,3,5,4,4,3]
             },
             "processing_time_StDev": {
                 "description": "Normally distributed processing times matrix; standard deviation",
