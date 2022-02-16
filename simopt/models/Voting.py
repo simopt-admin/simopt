@@ -154,19 +154,7 @@ class Voting(Model):
 
         Returns
         -------
-        responses : dict
-            <LEGACY>
-            performance measures of interest
-            "stockout_flag" = a binary variable
-                 0 : all facilities satisfy the demand
-                 1 : at least one of the facilities did not satisfy the demand
-            "n_fac_stockout" = the number of facilities which cannot satisfy the demand
-            "n_cut" = the number of toal demand which cannot be satisfied
-            <NEW>
-            performance measures of intereest
-            
-            avg_TIS = mean of time waiting to vote
-            
+        responses : dict          
             <NEW>
             "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
             "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
