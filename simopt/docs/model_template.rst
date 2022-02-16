@@ -13,6 +13,10 @@ Sample math...
 
    \frac{ \sum_{t=0}^{N}f(t,k) }{N}
 
+Sources of Randomness:
+----------------------
+<The number and nature of sources of randomness.>
+
 Model Factors:
 --------------
 * <factor1name>: <short description>
