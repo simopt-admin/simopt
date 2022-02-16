@@ -408,7 +408,9 @@ class FacilitySizingTotalCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)
+        # Check box constraints.
+        box_feasible = super().check_deterministic_constraints(x)
+        return box_feasible
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -687,7 +689,12 @@ class FacilitySizingMaxService(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"])
+        # Check budget constraint.
+        budget_feasible = np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"]
+        # Check box constraints.
+        box_feasible = super().check_deterministic_constraints(x)
+        return budget_feasible * box_feasible
+
 
     def get_random_solution(self, rand_sol_rng):
         """
