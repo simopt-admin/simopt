@@ -6,6 +6,7 @@ A detailed description of the problem can be found `here `
 
 """
 import numpy as np
+import math
 
 from base import Model, Problem
 
