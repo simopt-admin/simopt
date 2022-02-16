@@ -20,22 +20,6 @@ solvers.randomsearch module
    :undoc-members:
    :show-inheritance:
 
-solvers.simannealing module
----------------------------
-
-.. automodule:: solvers.simannealing
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-solvers.strong module
----------------------
-
-.. automodule:: solvers.strong
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

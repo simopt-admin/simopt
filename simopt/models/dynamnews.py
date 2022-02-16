@@ -1,7 +1,7 @@
 """
 Summary
 -------
-Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution
+Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution.
 """
 import numpy as np
 
@@ -11,7 +11,8 @@ from base import Model, Problem
 class DynamNews(Model):
     """
     A model that simulates a day's worth of sales for a newsvendor
-    with dynamic consumer substitution. Returns the profit.
+    with dynamic consumer substitution. Returns the profit and the
+    number of products that stock out.
 
     Attributes
     ----------
@@ -77,7 +78,7 @@ class DynamNews(Model):
                 "description": "Cost of products",
                 "datatype": list,
                 "default": [5, 5]
-            },
+            }
         }
         self.check_factor_list = {
             "num_prod": self.check_num_prod,
@@ -108,12 +109,12 @@ class DynamNews(Model):
 
     def check_price(self):
         return all(np.array(self.factors["price"]) >= 0) & (len(self.factors["price"]) == self.factors["num_prod"])
-    
+
     def check_cost(self):
         return all(np.array(self.factors["cost"]) >= 0) & (len(self.factors["cost"]) == self.factors["num_prod"])
 
     def check_simulatable_factors(self):
-        return all(np.subtract(self.factors["price"],self.factors["cost"]) >= 0)
+        return all(np.subtract(self.factors["price"], self.factors["cost"]) >= 0)
 
     def replicate(self, rng_list):
         """
@@ -131,14 +132,14 @@ class DynamNews(Model):
             "profit" = profit in this scenario
             "n_prod_stockout" = number of products which are out of stock
         """
-        # Designate random number generator for generating a Gumbel random variable
+        # Designate random number generator for generating a Gumbel random variable.
         Gumbel_rng = rng_list[0]
         # Compute Gumbel rvs for the utility of the products.
         gumbel = np.zeros(((self.factors["num_customer"], self.factors["num_prod"])))
         for t in range(self.factors["num_customer"]):
             for j in range(self.factors["num_prod"]):
                 gumbel[t][j] = Gumbel_rng.gumbelvariate(-self.factors["mu"] * np.euler_gamma, self.factors["mu"])
-        # Compute utility for each product and each customer
+        # Compute utility for each product and each customer.
         utility = np.zeros((self.factors["num_customer"], self.factors["num_prod"] + 1))
         for t in range(self.factors["num_customer"]):
             for j in range(self.factors["num_prod"] + 1):
@@ -150,7 +151,6 @@ class DynamNews(Model):
         # Initialize inventory.
         inventory = np.copy(self.factors["init_level"])
         itembought = np.zeros(self.factors["num_customer"])
-        stockout = np.zeros(self.factors["num_prod"])
 
         # Loop through customers
         for t in range(self.factors["num_customer"]):
@@ -258,8 +258,6 @@ class DynamNewsMaxProfit(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
@@ -277,8 +275,7 @@ class DynamNewsMaxProfit(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
-            },
-            
+            }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -288,6 +285,8 @@ class DynamNewsMaxProfit(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = DynamNews(self.model_fixed_factors)
         self.dim = self.model.factors["num_prod"]
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -435,5 +434,5 @@ class DynamNewsMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([10 * rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])
         return x

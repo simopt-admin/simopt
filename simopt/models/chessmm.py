@@ -1,19 +1,19 @@
 """
 Summary
 -------
-Simulate 2 dimentional gamma variables.
+Simulate matching of arriving chess players.
 """
 import numpy as np
-import math
+from scipy import special
 
 from base import Model, Problem
 
 
-class ParameterEstimation(Model):
+class ChessMatchmaking(Model):
     """
-    An model that simulates MLE estimators for a two-dimensional gamma variable.
-    Returns the 2-D vector x_star that maximizes the probability of seeing
-    parameters x in 2-D gamma probability density function.
+    A model that simulates a matchmaking problem with a
+    Elo (truncated normal) distribution of players and Poisson arrivals.
+    Returns the average difference between matched players.
 
     Attributes
     ----------
@@ -37,45 +37,63 @@ class ParameterEstimation(Model):
 
     See also
     --------
-    base.model
+    base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "PARAMESTI"
+        self.name = "CHESS"
         self.n_rngs = 2
-        self.n_responses = 1
+        self.n_responses = 2
         self.specifications = {
-            "xstar": {
-                "description": "x^*, the unknown parameter that maximizes g(x).",
-                "datatype": list,
-                "default": [2, 5]
+            "elo_mean": {
+                "description": "Mean of normal distribution for Elo rating.",
+                "datatype": float,
+                "default": 1200.0
             },
-            "x": {
-                "description": "x, variable in pdf.",
-                "datatype": list,
-                "default": [1, 1]
+            "elo_sd": {
+                "description": "Standard deviation of normal distribution for Elo rating.",
+                "datatype": float,
+                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+            },
+            "poisson_rate": {
+                "description": "Rate of Poisson process for player arrivals.",
+                "datatype": float,
+                "default": 1.0
+            },
+            "num_players": {
+                "description": "Number of players.",
+                "datatype": int,
+                "default": 1000
+            },
+            "allowable_diff": {
+                "description": "Maximum allowable difference between Elo ratings.",
+                "datatype": float,
+                "default": 150.0
             }
         }
         self.check_factor_list = {
-            "xstar": self.check_xstar,
-            "x": self.check_x
+            "elo_mean": self.check_elo_mean,
+            "elo_sd": self.check_elo_sd,
+            "poisson_rate": self.check_poisson_rate,
+            "num_players": self.check_num_players,
+            "allowable_diff": self.check_allowable_diff
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_xstar(self):
-        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
+    def check_elo_mean(self):
+        return self.factors["elo_mean"] > 0
 
-    def check_x(self):
-        return all(x_i > 0 for x_i in self.factors["x"])
+    def check_elo_sd(self):
+        return self.factors["elo_sd"] > 0
 
-    def check_simulatable_factors(self):
-        # Check for dimension of x and xstar.
-        if len(self.factors["x"]) != 2:
-            return False
-        elif len(self.factors["xstar"]) != 2:
-            return False
-        else:
-            return True
+    def check_poisson_rate(self):
+        return self.factors["poisson_rate"] > 0
+
+    def check_num_players(self):
+        return self.factors["num_players"] > 0
+
+    def check_allowable_diff(self):
+        return self.factors["allowable_diff"] > 0
 
     def replicate(self, rng_list):
         """
@@ -90,21 +108,45 @@ class ParameterEstimation(Model):
         -------
         responses : dict
             performance measures of interest
-            "loglik" = the corresponding loglikelihood
+            "avg_diff" = the average Elo difference between all pairs
+            "avg_wait_time" = the average waiting time
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate separate random number generators.
-        # Outputs will be coupled when generating Y_j's.
-        y2_rng = rng_list[0]
-        y1_rng = rng_list[1]
-        # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
-        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
-        # Compute Log Likelihood
-        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
+        elo_rng = rng_list[0]
+        arrival_rng = rng_list[1]
+        # Initialize statistics.
+        # Incoming players are initialized with a wait time of 0.
+        wait_times = np.zeros(self.factors["num_players"])
+        waiting_players = []
+        total_diff = 0
+        elo_diffs = []
+        # Simulate arrival and matching and players.
+        for player in range(self.factors["num_players"]):
+            # Generate interarrival time of the player.
+            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
+            # Generate rating of the player via acceptance/rejection (not truncation).
+            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            while player_rating < 0 or player_rating > 2400:
+                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            # Attempt to match the incoming player with waiting players in FIFO manner.
+            old_total = total_diff
+            for p in range(len(waiting_players)):
+                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                    total_diff += abs(player_rating - waiting_players[p])
+                    elo_diffs.append(abs(player_rating - waiting_players[p]))
+                    del waiting_players[p]
+                    break
+                else:
+                    wait_times[p] += time
+            # If incoming player is not matched, add them to the waiting pool.
+            if old_total == total_diff:
+                waiting_players.append(player_rating)
         # Compose responses and gradients.
-        responses = {'loglik': loglik}
+        responses = {"avg_diff": np.mean(elo_diffs),
+                     "avg_wait_time": np.mean(wait_times)
+                     }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -112,11 +154,12 @@ class ParameterEstimation(Model):
 """
 Summary
 -------
-Minimize the log likelihood of 2-D gamma random variable.
+Minimize the expected Elo difference between all pairs of matched
+players subject to the expected waiting time being sufficiently small.
 """
 
 
-class ParamEstiMinLogLik(Problem):
+class ChessAvgDifference(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -148,7 +191,7 @@ class ParamEstiMinLogLik(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    model : model object
+    model : Model object
         associated simulation model that generates replications
     model_default_factors : dict
         default values for overriding model-level default factors
@@ -183,41 +226,50 @@ class ParamEstiMinLogLik(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="PARAMESTI-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CHESS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 2
+        self.dim = 1
         self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
+        self.n_stochastic_constraints = 1
+        self.minmax = (-1,)
+        self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0)
-        self.upper_bounds = (10, 10)
-        self.gradient_available = True
+        self.lower_bounds = (0,)
+        self.upper_bounds = (2400,)
+        self.gradient_available = False
+        self.optimal_value = None
+        self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"x"}
+        self.model_decision_factors = {"allowable_diff"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
-                "datatype": list,
-                "default": (1, 1)
+                "datatype": tuple,
+                "default": (150,)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
+            },
+            "upper_time": {
+                "description": "Upper bound on wait time.",
+                "datatype": float,
+                "default": 5.0
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "upper_time": self.check_upper_time,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ParameterEstimation(self.model_fixed_factors)
-        self.optimal_solution = list(self.model.factors["xstar"])
-        self.optimal_value = None
+        self.model = ChessMatchmaking(self.model_fixed_factors)
+
+    def check_upper_time(self):
+        return self.factors["upper_time"] > 0
 
     def vector_to_factor_dict(self, vector):
         """
@@ -234,7 +286,7 @@ class ParamEstiMinLogLik(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "x": vector[:]
+            "allowable_diff": vector[0]
         }
         return factor_dict
 
@@ -253,7 +305,7 @@ class ParamEstiMinLogLik(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["x"])
+        vector = (factor_dict["allowable_diff"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -271,8 +323,46 @@ class ParamEstiMinLogLik(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["loglik"],)
+        objectives = (response_dict["avg_diff"],)
         return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] >= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : tuple
+            vector of LHSs of stochastic constraint
+        """
+        stoch_constraints = (-1 * response_dict["avg_wait_time"],)
+        return stoch_constraints
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = (self.factors["upper_time"],)
+        det_stoch_constraints_gradients = ((0,),)
+        return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
         """
@@ -291,7 +381,7 @@ class ParamEstiMinLogLik(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0, 0),)
+        det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -308,7 +398,7 @@ class ParamEstiMinLogLik(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return True
+        return x >= 0
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -324,5 +414,5 @@ class ParamEstiMinLogLik(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
+        x = (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)
         return x

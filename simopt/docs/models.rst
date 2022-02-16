@@ -4,10 +4,34 @@ models package
 Submodules
 ----------
 
+models.chessmm module
+---------------------
+
+.. automodule:: models.chessmm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.cntnv module
 -------------------
 
 .. automodule:: models.cntnv
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.contam module
+--------------------
+
+.. automodule:: models.contam
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.dualsourcing module
+--------------------------
+
+.. automodule:: models.dualsourcing
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,18 +52,18 @@ models.facilitysizing module
    :undoc-members:
    :show-inheritance:
 
-models.ironore module
----------------------
+models.hotel module
+-------------------
 
-.. automodule:: models.ironore
+.. automodule:: models.hotel
    :members:
    :undoc-members:
    :show-inheritance:
 
-models.mainopt module
+models.ironore module
 ---------------------
 
-.. automodule:: models.mainopt
+.. automodule:: models.ironore
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,10 +76,26 @@ models.mm1queue module
    :undoc-members:
    :show-inheritance:
 
+models.paramesti module
+-----------------------
+
+.. automodule:: models.paramesti
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.rmitd module
 -------------------
 
 .. automodule:: models.rmitd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.san module
+-----------------
+
+.. automodule:: models.san
    :members:
    :undoc-members:
    :show-inheritance:
@@ -68,10 +108,10 @@ models.sscont module
    :undoc-members:
    :show-inheritance:
 
-models.vehicleroute module
---------------------------
+models.tableallocation module
+-----------------------------
 
-.. automodule:: models.vehicleroute
+.. automodule:: models.tableallocation
    :members:
    :undoc-members:
    :show-inheritance:

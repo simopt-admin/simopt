@@ -1,20 +1,18 @@
 """
 Summary
 -------
-Simulate multiple periods of production and sales for an iron ore inventory problem.
+Simulate multiple periods of arrival and seating at a restaurant.
 """
 import numpy as np
-import math
 
 from base import Model, Problem
 
 
-class IronOre(Model):
+class TableAllocation(Model):
     """
-    A model that simulates multiple periods of production and sales for an
-    inventory problem with stochastic price determined by a mean-reverting
-    random walk. Returns total profit, fraction of days producing iron, and
-    mean stock.
+    A model that simulates a table capacity allocation problem at a restaurant
+    with a homogenous Poisson arrvial process and exponential service times.
+    Returns expected maximum revenue.
 
     Attributes
     ----------
@@ -31,148 +29,117 @@ class IronOre(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Parameters
     ----------
     fixed_factors : dict
         fixed_factors of the simulation model
+
+        ``n_hours``
+            Number of hours to simulate (`int`)
+        ``capacity``
+            Maximum total capacity (`int`)
+        ``table_cap``
+            Capacity of each type of table (`int`)
+        ``lambda``
+            Average number of arrivals per hour (`flt`)
+        ``service_time_means``
+            Mean service time in minutes (`flt`)
+        ``table_revenue``
+            Per table revenue earned (`flt`)
+        ``num_tables``
+            Number of tables of each capacity (`int`)
 
     See also
     --------
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "IRONORE"
-        self.n_rngs = 1
-        self.n_responses = 3
+        self.name = "TABLEALLOCATION"
+        self.n_rngs = 3
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
-            "mean_price": {
-                "description": "Mean iron ore price per unit.",
+            "n_hours": {
+                "description": "Number of hours to simulate.",
                 "datatype": float,
-                "default": 100.0
-            },
-            "max_price": {
-                "description": "Maximum iron ore price per unit.",
-                "datatype": float,
-                "default": 200.0
-            },
-            "min_price": {
-                "description": "Minimum iron ore price per unit.",
-                "datatype": float,
-                "default": 0.0
+                "default": 5.0
             },
             "capacity": {
-                "description": "Maximum holding capacity.",
+                "description": "Maximum capacity of restaurant.",
                 "datatype": int,
-                "default": 10000
+                "default": 80
             },
-            "st_dev": {
-                "description": "Standard deviation of random walk steps for price.",
-                "datatype": float,
-                "default": 7.5
+            "table_cap": {
+                "description": "Seating capacity of each type of table.",
+                "datatype": list,
+                "default": [2, 4, 6, 8]
             },
-            "holding_cost": {
-                "description": "Holding cost per unit per period.",
-                "datatype": float,
-                "default": 1.0
+            "lambda": {
+                "description": "Average number of arrivals per hour.",
+                "datatype": list,
+                "default": [3, 6, 3, 3, 2, 4 / 3, 6 / 5, 1]
             },
-            "prod_cost": {
-                "description": "Production cost per unit.",
-                "datatype": float,
-                "default": 100.0
+            "service_time_means": {
+                "description": "Mean service time (in minutes).",
+                "datatype": list,
+                "default": [20, 25, 30, 35, 40, 45, 50, 60]
             },
-            "max_prod_perday": {
-                "description": "Maximum units produced per day.",
-                "datatype": int,
-                "default": 100
+            "table_revenue": {
+                "description": "Revenue earned for each group size.",
+                "datatype": list,
+                "default": [15, 30, 45, 60, 75, 90, 105, 120]
             },
-            "price_prod": {
-                "description": "Price level to start production.",
-                "datatype": float,
-                "default": 80.0
-            },
-            "inven_stop": {
-                "description": "Inventory level to cease production.",
-                "datatype": int,
-                "default": 7000
-            },
-            "price_stop": {
-                "description": "Price level to stop production.",
-                "datatype": float,
-                "default": 40
-            },
-            "price_sell": {
-                "description": "Price level to sell all stock.",
-                "datatype": float,
-                "default": 100
-            },
-            "n_days": {
-                "description": "Number of days to simulate.",
-                "datatype": int,
-                "default": 365
+            "num_tables": {
+                "description": "Number of tables of each capacity.",
+                "datatype": list,
+                "default": [10, 5, 4, 2]
             }
         }
-
         self.check_factor_list = {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
+            "n_hours": self.check_n_hours,
             "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
-            "n_days": self.check_n_days,
+            "table_cap": self.check_table_cap,
+            "lambda": self.check_lambda,
+            "service_time_means": self.check_service_time_means,
+            "table_revenue": self.check_table_revenue,
+            "num_tables": self.check_num_tables
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self):
-        return self.factors["mean_price"] > 0
-
-    def check_max_price(self):
-        return self.factors["max_price"] > 0
-
-    def check_min_price(self):
-        return self.factors["min_price"] >= 0
+    def check_n_hours(self):
+        return self.factors["n_hours"] > 0
 
     def check_capacity(self):
-        return self.factors["capacity"] >= 0
+        return self.factors["capacity"] > 0
 
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
+    def check_table_cap(self):
+        return self.factors["table_cap"] > [0, 0, 0, 0]
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+    def check_lambda(self):
+        return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
-    def check_prod_cost(self):
-        return self.factors["prod_cost"] > 0
+    def check_service_time_means(self):
+        return self.factors["service_time_means"] > [0] * max(self.factors["table_cap"])
 
-    def check_max_prod_perday(self):
-        return self.factors["max_prod_perday"] > 0
+    def check_table_revenue(self):
+        return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
 
-    def check_price_prod(self):
-        return self.factors["price_prod"] > 0
-
-    def check_inven_stop(self):
-        return self.factors["inven_stop"] > 0
-
-    def check_price_stop(self):
-        return self.factors["price_stop"] > 0
-
-    def check_price_sell(self):
-        return self.factors["price_sell"] > 0
-
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
+    def check_num_tables(self):
+        return self.factors["num_tables"] >= [0, 0, 0, 0]
 
     def check_simulatable_factors(self):
-        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
+        if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
+            return False
+        elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
+            return False
+        elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]):
+            return False
+        elif len(self.factors["service_time_means"]) != len(self.factors["table_revenue"]):
+            return False
+        else:
+            return True
 
     def replicate(self, rng_list):
         """
@@ -187,67 +154,55 @@ class IronOre(Model):
         -------
         responses : dict
             performance measures of interest
-            "total_profit" = The total profit over the time period
-            "frac_producing" = The fraction of days spent producing iron ore
-            "mean_stock" = The average stocks over the time period
-        """
-        # Designate random number generators.
-        price_rng = rng_list[0]
-        # Initialize quantities to track:
-        #   - Market price in each period (Pt).
-        #   - Starting stock in each period.
-        #   - Ending stock in each period.
-        #   - Profit in each period.
-        #   - Whether producing or not in each period.
-        #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        profit = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
 
-        # Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ)).
-            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4).
-            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
-            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val * mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
-            # If production is underway...
-            if producing[day] == 1:
-                # ... cease production if price goes too low or inventory is too high.
-                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
-                    producing[day] = 0
-                else:
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # If production is not currently underway...
-            else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
-                    producing[day] = 1
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # Sell if price is high enough.
-            if (mkt_price[day] >= self.factors["price_sell"]):
-                profit[day] = profit[day] + stock[day] * mkt_price[day]
-                stock[day] = 0
-            # Charge holding cost.
-            profit[day] = profit[day] - stock[day] * self.factors["holding_cost"]
-            # Calculate starting quantities for next period.
-            if day < self.factors["n_days"] - 1:
-                profit[day + 1] = profit[day]
-                stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day]
-                producing[day + 1] = producing[day]
+            ``total_revenue``
+                Total revenue earned over the simulation period.
+            ``service_rate``
+                Fraction of customer arrivals that are seated.
+
+        """
+        # Designate separate random number generators.
+        arrival_rng = rng_list[0]
+        group_size_rng = rng_list[1]
+        service_rng = rng_list[2]
+        # Track total revenue.
+        total_rev = 0
+        # Track table availability.
+        # (i,j) is the time that jth table of size i becomes available.
+        table_avail = np.zeros((4, max(self.factors["num_tables"])))
+        # Generate total number of arrivals in the period
+        n_arrivals = arrival_rng.poissonvariate(round(self.factors["n_hours"] * sum(self.factors["lambda"])))
+        # Generate arrival times in minutes
+        arrival_times = 60 * np.sort([arrival_rng.uniform(0, self.factors["n_hours"]) for _ in range(n_arrivals)])
+        # Track seating rate
+        found = np.zeros(n_arrivals)
+        # Pass through all arrivals of groups to the restaurants.
+        for n in range(n_arrivals):
+            # Determine group size.
+            group_size = group_size_rng.choices(population=range(1, max(self.factors["table_cap"]) + 1), weights=self.factors["lambda"])[0]
+            # Find smallest table size to start search.
+            table_size_idx = 0
+            while self.factors["table_cap"][table_size_idx] < group_size:
+                table_size_idx = table_size_idx + 1
+            # Find smallest available table.
+            for k in range(table_size_idx, len(self.factors["num_tables"])):
+                for j in range(self.factors["num_tables"][k]):
+                    # Check if table is currently available.
+                    if table_avail[k, j] < arrival_times[n]:
+                        found[n] = 1
+                        break
+                if found[n] == 1:
+                    break
+            if found[n] == 1:
+                # Sample service time.
+                service_time = service_rng.expovariate(lambd=1 / self.factors["service_time_means"][group_size - 1])
+                # Update table availability.
+                table_avail[k, j] = table_avail[k, j] + service_time
+                # Update revenue.
+                total_rev = total_rev + self.factors["table_revenue"][group_size - 1]
         # Calculate responses from simulation data.
-        responses = {"total_profit": profit[self.factors["n_days"] - 1],
-                     "frac_producing": np.mean(producing),
-                     "mean_stock": np.mean(stock)
+        responses = {"total_revenue": total_rev,
+                     "service_rate": sum(found) / len(found)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -256,13 +211,13 @@ class IronOre(Model):
 """
 Summary
 -------
-Maximize the expected total profit for iron ore inventory system.
+Maximize the total expected revenue for a restaurant operation.
 """
 
 
-class IronOreMaxRev(Problem):
+class TableAllocationMaxRev(Problem):
     """
-    Class to make iron ore inventory simulation-optimization problems.
+    Class to make table allocation simulation-optimization problems.
 
     Attributes
     ----------
@@ -321,27 +276,27 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="TABLEALLOCATION-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 4
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
-        self.constraint_type = "box"
+        self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lower_bounds = (0, 0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf)
+        self.lowerbound = ([0, 0, 0, 0])
+        self.upperbound = ([np.inf, np.inf, np.inf, np.inf])
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"price_prod", "inven_stop", "price_stop", "price_sell"}
+        self.model_decision_factors = {"num_tables"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (80, 7000, 40, 100)
+                "default": (10, 5, 4, 2)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -355,7 +310,7 @@ class IronOreMaxRev(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = IronOre(self.model_fixed_factors)
+        self.model = TableAllocation(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -372,10 +327,7 @@ class IronOreMaxRev(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "price_prod": vector[0],
-            "inven_stop": vector[1],
-            "price_stop": vector[2],
-            "price_sell": vector[3],
+            "num_tables": vector[:]
         }
         return factor_dict
 
@@ -394,7 +346,7 @@ class IronOreMaxRev(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["price_prod"], factor_dict["inven_stop"], factor_dict["price_stop"], factor_dict["price_sell"])
+        vector = (factor_dict["num_tables"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -412,7 +364,7 @@ class IronOreMaxRev(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_profit"],)
+        objectives = (response_dict["total_revenue"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -450,7 +402,7 @@ class IronOreMaxRev(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0, 0, 0, 0),)
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -490,7 +442,7 @@ class IronOreMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0 and x[2] >= 0 and x[3] >= 0)
+        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"], x)) <= self.model_fixed_factors["capacity"])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -506,5 +458,14 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-        return x
+        # Add new tables of random size to the restaurant until the capacity is reached.
+        allocated = 0
+        num_tables = [0, 0, 0, 0]
+        while allocated < self.model_fixed_factors["capacity"]:
+            table = rand_sol_rng.randint(0, len(self.model_fixed_factors["table_cap"]) - 1)
+            if self.model_fixed_factors["table_cap"][table] <= (self.model_fixed_factors["capacity"] - allocated):
+                num_tables[table] = num_tables[table] + 1
+                allocated = allocated + self.model_fixed_factors["table_cap"][table]
+            elif self.model_fixed_factors["table_cap"][0] > (self.model_fixed_factors["capacity"] - allocated):
+                break
+        return tuple(num_tables)

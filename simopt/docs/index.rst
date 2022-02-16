@@ -12,7 +12,21 @@ For the purposes of this site, we define simulation as a very general technique 
 
 The paper  `Pasupathy and Henderson (2006) <https://www.informs-sim.org/wsc06papers/028.pdf>`_ explains the original motivation for the testbed, and the follow-up paper `Pasupathy and Henderson (2011) <https://www.informs-sim.org/wsc11papers/363.pdf>`_ describes an earlier interface for MATLAB implementations of problems and solvers. The paper `Dong et al. (2017) <https://www.informs-sim.org/wsc17papers/includes/files/179.pdf>`_  conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance. The recent Winter Simulation Conference paper `Eckman et al. (2019) <https://www.informs-sim.org/wsc19papers/374.pdf>`_ describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.
 
-The `Oracle Library <oracles.html>`_ contains the simulation logic to simulate a variety of systems. The `Problem Library <problems.html>`_ builds upon the Oracle Library and contains a variety of SO test problems. The `Solver Library <solvers.html>`_ provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  `here <instructions.html>`_.
+The `models <models.html>`_ library contains the simulation logic to simulate a variety of systems and SO test problems built around these models. The `solvers <solvers.html>`_ library provides users with the latest SO solvers to solve different types of SO problems. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers.
+
+The source code consists of the following modules:
+
+* The `base.py <base.html>`_ module contains class definitions for models, problems, and solvers.
+
+* The `wrapper_base.py <wrapper_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
+
+* The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data-farming experiments.
+
+* The `directory.py <directory.html>`_ module contains a listing of models, problems, and solvers in the library.
+
+The `rng <rng.html>`_ folder contains the source code for the MRG32k3a random number generator used throughout SimOpt.
+
+The experiments folder contains empty folders for storing data and plots produced by running experiments.
 
 Getting Started
 ----------------
