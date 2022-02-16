@@ -1,7 +1,7 @@
 """
 Summary
 -------
-Simulate contamination rates.
+Simulate contamination rates. A detailed description of the problem can be found `here <https://simopt.readthedocs.io/en/latest/contam.html>`
 """
 import numpy as np
 
@@ -40,6 +40,7 @@ class Contamination(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
+        
         self.name = "CONTAM"
         self.n_rngs = 2
         self.n_responses = 1
