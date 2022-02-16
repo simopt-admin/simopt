@@ -61,8 +61,8 @@ class ProdSys(Model):
                 "datatype": int,
                 "default": 2
             },
-            "num_nodes": {
-                "description": "Number of nodes",
+            "num_edges": {
+                "description": "Number of edges",
                 "datatype": int,
                 "default": 6
             },
@@ -123,24 +123,20 @@ class ProdSys(Model):
             "Interarrival_Time_StDev": self.check_Interarrival_Time_StDev,
             "product_batch_prob": self.check_product_batch_prob,
             "num_machines": self.check_num_machines,
-            "num_nodes": self.check_num_nodes,
+            "num_edges": self.check_num_edges,
+            "interm_product": self.check_interm_product,
+            "n_sets": self.check_n_sets,
+            "machine_layout": self.check_machine_layout,
+            "batch": self.check_batch,
+            "time_horizon": self.check_time_horizon
 
-            "product_incidence": self.check_product_incidence,
-            "time_limit": self.check_time_limit,
-            "time_before": self.check_time_before,
-            "runlength": self.check_runlength,
-            "booking_limits": self.check_booking_limits
 
-
-           # "interm_product"
             #"routing_layout"
            # "machine_layout"
            # "processing_time_mean"
            # "processing_time_StDev"
            # "product_batch_prob"
            # "time_horizon"
-           # "batch"
-           # "n_sets"
 
         }
         # Set factors of the simulation model.
@@ -152,40 +148,37 @@ class ProdSys(Model):
     def check_Interarrival_Time_mean(self):
         return len(self.factors["Interarrival_Time_mean"]) > 0
 
+    def check_Interarrival_Time_StDev(self):
+        return self.factors["Interarrival_Time_StDev"] > 0
+
     def check_product_batch_prob(self):
         for i in self.factors["product_batch_prob"]:
             if i <= 0:
                 return False
-        return len(self.factors["product_batch_prob"])== self.factors["num_products"]
-
-    def check_Interarrival_Time_StDev(self):
-        return self.factors["Interarrival_Time_StDev"] > 0
+        return len(self.factors["product_batch_prob"])== self.factors["num_products"] and sum(self.factors["product_batch_prob"]) == 1
 
     def check_num_machines(self):
         return self.factors["num_machines"] > 0
 
-    def check_num_nodes(self):
-        return self.factors["num_nodes"] > 0
+    def check_num_edges(self):
+        return self.factors["num_edges"] > 0
 
-    def check_product_incidence(self):
-        m, n = self.factors["product_incidence"].shape
-        for i in range(m):
-            for j in range(n):
-                if self.factors["product_incidence"][i, j] <= 0:
-                    return False
-        return m * n == self.factors["num_products"]
+    def check_interm_product(self):
+        return sum(self.factors["interm_product"]) == self.factors["n_sets"] and len(self.factors["interm_product"]) == self.factors["num_edges"]
 
-    def check_time_limit(self):
-        for i in self.factors["time_limit"]:
-            if i <= 0:
-                return False
-        return len(self.factors["time_limit"]) == self.factors["num_products"]
+    def check_n_sets(self):
+        return self.factors["num_sets"] >= 0
 
-    def check_time_before(self):
-        return self.factors["time_before"] > 0
+    def check_machine_layout(self):
+        return len(self.factors["machine_layout"]) == "num_edges"
 
-    def check_runlength(self):
-        return self.factors["runlength"] > 0
+    def check_batch(self):
+        return self.factors["batch"] > 0
+
+    def check_time_horizon(self):
+        return self.factors["time_horizon"] > 0
+
+
 
     def check_booking_limits(self):
         for i in list(self.factors["booking_limits"]):
