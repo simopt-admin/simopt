@@ -67,9 +67,9 @@ class ProdSys(Model):
                 "default": 6
             },
             "interm_product": {
-                "description": "Product quantities to be processed ahead of time. ",
+                "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [1, 1,1]
+                "default": [1, 1,1,1,1,1]
             },
             "routing_layout": {
                 "description": "Layout matrix",
@@ -92,12 +92,7 @@ class ProdSys(Model):
             "processing_time_StDev": {
                 "description": "Normally distributed processing times matrix; standard deviation",
                 "datatype": list,
-                "default": [[0,1,1,0,0,0],
-                            [0,0,0,2,1,0],
-                            [0,0,0,0,1,1],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0],
-                            [0,0,0,0,0,0]]
+                "default": [1,1,2,1,1,1]
             },
             "product_batch_prob": {
                 "description": "Batch order probabilities of product.  ",
