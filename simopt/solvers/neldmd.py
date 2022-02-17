@@ -223,26 +223,61 @@ class NELDMD(Solver):
             #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
             #         next_idx += 1
 
-            # Reflect less
+            # # Reflect less
+            # if p_refl != p_refl_copy:  # out of bounds
+            #     print("reflect less")  # DELETE
+            #     while p_refl != p_refl_copy:
+
+            #         # Attempt contraction or shrinking
+            #         p_refl2 = p_high
+            #         p_refl = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
+            #                                             tuple((1-self.factors["betap"])* x for x in p_refl_copy)))
+            #         p_refl_copy = p_refl
+            #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, p_refl2.x)
+            #         # r += self.factors["r"]  # FOR INCREASING REPLICATIONS (change)
+            #         # print('bound: copy', p_refl_copy)  # DELETE
+            #         # print('bound: refl', p_refl)  # DELETE
+
+            # Shrink towards best
             if p_refl != p_refl_copy:  # out of bounds
-                print("reflect less")  # DELETE
+                print("shrink")  # DELETE
                 while p_refl != p_refl_copy:
+                    p_low = sort_sol[0]
+                    for i in range(1, len(sort_sol)):
+                        p_new2 = p_low
+                        p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"]* x for x in sort_sol[i].x), 
+                                                        tuple((1-self.factors["delta"])* x for x in p_low.x)))
+                        p_new = self.check_const(lower_bounds, upper_bounds, p_new, p_new2.x)
+                        p_new= Solution(p_new, problem)
+                        p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                        problem.simulate(p_new, r)  # FOR INCREASING REPLICATIONS
+                        budget_spent += r  # FOR INCREASING REPLICATIONS
+                        new_fn_val = tuple([-1*x for x in problem.minmax])*p_new.objectives_mean
+                        new_fn_var_val = p_new.objectives_var
+                        
+                        # Update sort_sol
+                        sort_sol[i] = p_new  # p_new replaces pi
+                        sort_fn_val[i] = new_fn_val
+                        sort_fn_var_val[i] = new_fn_var_val
 
-                    # Attempt contraction or shrinking
-                    p_refl2 = p_high
-                    p_refl = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
-                                                        tuple((1-self.factors["betap"])* x for x in p_cent)))
+                    # Sort & end updating
+                    sort_fn_val, sort_fn_var_val, sort_sol = self.sort_and_end_update(sort_fn_val, sort_fn_var_val, sort_sol)
+
+                    p_high = sort_sol[-1]  # current worst point
+                    p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
+                    print("centroid", p_cent)   # DELETE
+                    orig_pt = p_high  # save the original point
+                    p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
+                                                        tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
                     p_refl_copy = p_refl
-                    p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, p_refl2.x)
-                    # print('bound: copy', p_refl_copy)  # DELETE
-                    # print('bound: refl', p_refl)  # DELETE
+                    p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
 
-            
+
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-            problem.simulate(p_refl, self.factors["r"])   # STUCK HERE when solution is lb for chessmm (min)
-            budget_spent += self.factors["r"]
+            problem.simulate(p_refl, r)   # STUCK HERE when solution is lb for chessmm (min)
+            budget_spent += r
             refl_fn_val = tuple([-1*x for x in problem.minmax])*p_refl.objectives_mean
             refl_fn_var_val = p_refl.objectives_var
             
@@ -280,8 +315,8 @@ class NELDMD(Solver):
                 # Evaluate expansion point
                 p_exp= Solution(p_exp, problem)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                problem.simulate(p_exp, self.factors["r"])
-                budget_spent += self.factors["r"]
+                problem.simulate(p_exp, r)
+                budget_spent += r
                 exp_fn_val = tuple([-1*x for x in problem.minmax])*p_exp.objectives_mean
                 exp_fn_var_val = p_exp.objectives_var
 
@@ -338,7 +373,7 @@ class NELDMD(Solver):
                 cont_fn_val = tuple([-1*x for x in problem.minmax])*p_cont.objectives_mean
                 cont_fn_var_val = p_cont.objectives_var
                 # Increase replications
-                r += self.factors["r"]  # FOR INCREASING REPLICATIONS
+                # r += self.factors["r"]  # FOR INCREASING REPLICATIONS
 
                 # Accept contraction
                 if cont_fn_val <= fn_high:
@@ -427,15 +462,15 @@ class NELDMD(Solver):
         step = tuple(map(lambda i, j: i - j, pt, pt2))
         tmax = np.ones(col)
         for i in range(col):
-            if step[i] > 0 and ub != None:
+            if step[i] > 0 and ub != None:  # move pt to ub
                 tmax[i] = (ub[i] - pt2[i]) / step[i]
-            elif step[i] < 0 and lb != None:
+            elif step[i] < 0 and lb != None:  # move pt to lb
                 tmax[i] = (lb[i] - pt2[i]) / step[i]
         t = min(1, min(tmax))
         modified = list(map(lambda i, j: i + t*j, pt2, step))
         # Remove rounding error
         for i in range(col):
-            if abs(modified[i]) < 0.00000005:
+            if abs(modified[i]) < self.factors["sensitivity"]:
                 modified[i] = 0
         print("modified", modified, "pt", pt)   # DELETE
         return tuple(modified)
