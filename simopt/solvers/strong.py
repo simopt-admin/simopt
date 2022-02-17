@@ -385,9 +385,6 @@ class STRONG(Solver):
             cnt += 1
             if (cnt > 1):
                 print('count', cnt)
-            # if expended_budget > problem.factors['budget']:
-            #     print(expended_budget)
-            #     raise ValueError('Not enough budget to resolve zero gradient.')
 
             for i in range(problem.dim):
                 # initialization
@@ -402,8 +399,8 @@ class STRONG(Solver):
                 if x2[i] - steph2 < problem.lower_bounds[i]:
                     steph2 = np.abs(x2[i] - problem.lower_bounds[i])
                 
-                print('steph1', steph1)
-                print('steph2', steph2)
+                # print('steph1', steph1)
+                # print('steph2', steph2)
 
                 # decide stepsize
                 if BdsCheck[i] == 0:   #central diff
@@ -416,8 +413,8 @@ class STRONG(Solver):
                 else:    # backward diff
                     FnPlusMinus[i, 2] = steph2
                     x2[i] = x2[i] - FnPlusMinus[i,2]
-                print('x1', x1)
-                print('x2', x2)
+                # print('x1', x1)
+                # print('x2', x2)
                 x1_solution = self.create_new_solution(tuple(x1), problem)
                 if BdsCheck[i] != -1:
                     problem.simulate_up_to([x1_solution], r)
@@ -571,7 +568,8 @@ class STRONG(Solver):
                                 # compute second order gradient
                                 Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                                 Hessian[j, i] = Hessian[i, j]
-            # add budget after each loop                    
+            # add budget after each loop
+            print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
         print('expended_budget', expended_budget)
