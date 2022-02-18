@@ -13,23 +13,25 @@ model_directory : dictionary
 # import solvers
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
-from solvers.simannealing import SANE
-from solvers.neldmd import NELDMD
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
 from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
-from models.dualsourcing import DualSourcing, DualSourcingMinCost
-from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.ironore import IronOre, IronOreMaxRev
+from models.dynamnews import DynamNews, DynamNewsMaxProfit
+from models.dualsourcing import DualSourcing, DualSourcingMinCost
+from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
+from models.chessmm import ChessMatchmaking, ChessAvgDifference
+from models.san import SAN, SANLongestPath
+from models.hotel import Hotel, HotelRevenue
+from models.tableallocation import TableAllocation, TableAllocationMaxRev
+from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
-    "RNDSRCH": RandomSearch,
-    "SANE": SANE,
-    "NELDMD": NELDMD,
+    "RNDSRCH": RandomSearch
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
@@ -38,9 +40,16 @@ problem_directory = {
     "FACSIZE-2": FacilitySizingMaxService,
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
+    "IRONORE-1": IronOreMaxRev,
+    "DYNAMNEWS-1": DynamNewsMaxProfit,
     "DUALSOURCING-1": DualSourcingMinCost,
+    "CONTAM-1": ContaminationTotalCostDisc,
+    "CONTAM-2": ContaminationTotalCostCont,
+    "CHESS-1": ChessAvgDifference,
+    "SAN-1": SANLongestPath,
+    "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
-    "IRONORE-1": IronOreMaxRev
+    "PARAMESTI-1": ParamEstiMinLogLik
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -48,8 +57,13 @@ model_directory = {
     "FACSIZE": FacilitySize,
     "RMITD": RMITD,
     "SSCONT": SSCont,
-    "DUALSOURCING": DualSourcing,
-    "TABLEALLOCATION": TableAllocation,
     "IRONORE": IronOre,
-
+    "DYNAMNEWS": DynamNews,
+    "DUALSOURCING": DualSourcing,
+    "CONTAM": Contamination,
+    "CHESS": ChessMatchmaking,
+    "SAN": SAN,
+    "HOTEL": Hotel,
+    "TABLEALLOCATION": TableAllocation,
+    "PARAMESTI": ParameterEstimation
 }
