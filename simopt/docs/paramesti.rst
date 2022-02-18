@@ -3,7 +3,7 @@ Model: Parameter Estimation (paramesti)
 
 Description:
 ------------
-A model that simulates MLE estimators for a two-dimentinal :math:`\beta` variable.
+A model that simulates MLE estimators for a two-dimentinal :math:`{\\beta}`  variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
     parameters x in 2-D beta probability density function.
 
