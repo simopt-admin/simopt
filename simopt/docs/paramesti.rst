@@ -1,103 +1,86 @@
-Model: Parameter Estimation (paramesti)
+Model: Parameter Estimation (PARAMESTI)
 ==========================================
 
 Description:
 ------------
-A model that simulates MLE estimators for a two-dimentinal :math:`{\\beta}`  variable.
+A model that simulates MLE estimators for a two-dimentinal gamma  variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
-    parameters x in 2-D beta probability density function.
+    parameters x in 2-D beta probability density function f(y, x).
 
-
-.. math::
-
-   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
 
 Sources of Randomness:
 ----------------------
-<The number and nature of sources of randomness.>
+y is a 2-D vector that contributes randomness. Both elements of y are gamma random variables.
 
 Model Factors:
 --------------
-* <factor1name>: <short description>
+* x_star: the unknown 2-D parameter that maximizes g(x).
 
-    * Default: <default value>
+    * Default: [2, 5]
 
-* <factor2name>: <short description>
+* x: a 2-D variable in the probability density function.
 
-    * Default: <default value>
-
-* <factor3name>: <short description>
-
-    * Default: <default value>
+    * Default: [1, 1]
 
 Respones:
 ---------
-* <response1name>: <short description>
-
-* <response2name>: <short description>
-
-* <response3name>: <short description>
+* loglik: log likelihood of the pdf.
 
 
 References:
 ===========
-This model is adapted from the article <article name with full citation + hyperlink to journal/arxiv page> 
+This model is designed by Raghu Pasupathy (Virginia Tech) and Shane G. Henderson (Cornell) in 2007.
 
 
 
 
-Optimization Problem: <problem_name> (<problem_abbrev>)
+Optimization Problem: Minimize Log Likelihood (ParamEstiMinLogLik)
 ========================================================
 
 Decision Variables:
 -------------------
-* <dv1name that matches model factor name>
-* <dv2name that matches model factor name>
+* x_star
 
 Objectives:
 -----------
-<Description using response names. Use math if it is helpful.>
+Minimize the log likelihood of 2-D gamma random variable.
 
 Constraints:
 ------------
-<Description using response names. Use math if it is helpful.>
+x is in the square [0.1, 10] × [0.1, 10].
 
 Problem Factors:
 ----------------
-* <factor1name>: <short description>
+* initial_solution: initial solution
 
-  * Default: <default value>
+  * Default: [1, 1]
   
-* <factor2name>: <short description>
+* budget: Maximum number of replications for a solver to take.
 
-  * Default: <default value>
+  * Default: 1000
 
 Fixed Model Factors:
 --------------------
-* <factor1name>: <fixed value>
+* x_star: the unknown 2-D parameter that maximizes g(x).
 
-* <factor2name>: <fixed value>
+    * Default: [2, 5]
+
+* x: a 2-D variable in the probability density function.
+
+    * Default: [1, 1]
 
 Starting Solution: 
 ------------------
-* <dv1name>: <dv1initialvalue>
-
-* <dv2name>: <dv2initialvalue>
+* x_star: [2, 5]
 
 Random Solutions: 
 ------------------
-<description of how to generate random solutions>
+Generate i.i.d. uniformly in the square [0.1, 10] × [0.1, 10].
 
 Optimal Solution:
 -----------------
-<if known, otherwise unknown>
+x_star = [2, 5]
 
 Optimal Objective Function Value:
 ---------------------------------
-<if known, otherwise unknown>
-
-
-Optimization Problem: <problem_name> (<problem_abbrev>)
-========================================================
-
-...
+Unknown

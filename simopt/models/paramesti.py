@@ -11,7 +11,7 @@ from base import Model, Problem
 
 class ParameterEstimation(Model):
     """
-    A model that simulates MLE estimators for a two-dimentinal beta variable.
+    A model that simulates MLE estimators for a two-dimentinal gamma variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
     parameters x in 2-D beta probability density function.
 
@@ -191,7 +191,7 @@ class ParamEstiMinLogLik(Problem):
         self.minmax = (+1,)
         self.constraint_type = "deterministic" ###?
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0)
+        self.lower_bounds = (0.1, 0.1)
         self.upper_bounds = (10, 10)   ###?
         self.gradient_available = True
         self.optimal_value = None
@@ -356,7 +356,7 @@ class ParamEstiMinLogLik(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 10)
+        return np.all(x >= 0.1) & np.all(x <= 10)
 
     def get_random_solution(self, rand_sol_rng):
         """
