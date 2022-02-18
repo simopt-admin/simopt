@@ -11,7 +11,7 @@ from base import Model, Problem
 
 class ParameterEstimation(Model):
     """
-    An model that simulates MLE estimators for a two-dimentinal beta variable.
+    A model that simulates MLE estimators for a two-dimentinal beta variable.
     Returns the 2-D vector x_star that maximizes the probability of seeing
     parameters x in 2-D beta probability density function.
 
