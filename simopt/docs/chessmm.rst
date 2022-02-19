@@ -1,9 +1,8 @@
+Model: Chess Matchmaking Optimization (CHESS)
+==========================================
 
-Chess Matchmaking Optimization
-==============================
-
-Original author of this problem is Bryan Chong (March 15, 2015).
-
+Description:
+------------
 Chess players are rated using the Elo rating system, which assigns a (non-unique)
 number to each player based on their level of skill. The problem considered here
 has to do with optimizing online chess matchmaking, such that players are matched
@@ -17,23 +16,96 @@ unmatched player with Elo rating within :math:`x` of the first player's Elo rati
 are matched. If not, then the player waits for an opponent with an appropriate Elo
 rating to arrive.
 
-The optimization problem is thus to minimize the average Elo difference between all
-pairs of matched players, such that the average waiting time is :math:`\leq \delta`.
-
-*Recommended Parameter Settings:* To create the Elo distribution, first generate
-a normal distribution with mean :math:`1200` and standard deviation :math:`\frac{1200}{\sqrt(2)*\text{erfcinv}(\frac{1}{50})}`,
+Sources of Randomness:
+----------------------
+1. To create the Elo distribution, first generatea normal distribution with mean
+:math:`1200` and standard deviation :math:`\frac{1200}{\sqrt(2)*\text{erfcinv}(\frac{1}{50})}`,
 where erfcinv is the inverse complementary error function. This results in a distribution
 where the 1st percentile is at :math:`0`, and the 99th percentile is at :math:`2400`.
 Next, truncate the distribution at :math:`0` and :math:`2400`.
+2. Stationary Poisson process with rate :math:`\lambda` for arrivals.
 
-Let :math:`N = 10000`, :math:`\delta = 5` minutes, and :math:`\lambda = 1` minute.
+Model Factors:
+--------------
+* elo_mean: Mean of normal distribution for Elo rating.
 
-*Starting Solution(s):* Let :math:`x = 150`. If multiple starting solutions are required,
-first draw :math:`x` from a normal distribution with mean :math:`150` and standard
+    * Default: 1200.0
+
+* elo_sd: Standard deviation of normal distribution for Elo rating.
+
+    * Default: 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+
+* poisson_rate: Rate of Poisson process for player arrivals.
+
+    * Default: 1.0
+
+* num_players: Number of players.
+
+    * Default: 10000
+
+* allowable_diff: Maximum allowable difference between Elo ratings.
+
+    * Default: 150.0
+
+Respones:
+---------
+* avg_diff: The average Elo difference between all pairs.
+
+* avg_wait_time: The average waiting time.
+
+References:
+===========
+Original author of this problem is Bryan Chong (March 15, 2015).
+
+
+
+
+Optimization Problem: ChessAvgDifference (CHESS-1)
+========================================================
+
+Decision Variables:
+-------------------
+* allowable_diff
+
+Objectives:
+-----------
+Minimize the average Elo difference between all pairs of matched players.
+
+Constraints:
+------------
+The average waiting time is :math:`\leq \delta`.
+
+Problem Factors:
+----------------
+* initial_solution: Initial solution.
+
+  * Default: (150,)
+  
+* budget: Max # of replications for a solver to take.
+
+  * Default: 1000
+  
+* upper_time: Upper bound on wait time.
+
+  * Default: 5.0
+
+Fixed Model Factors:
+--------------------
+* n/a
+
+Starting Solution: 
+------------------
+* initial_solution: (150,)
+
+Random Solutions: 
+------------------
+First draw :math:`x` from a normal distribution with mean :math:`150` and standard
 deviation :math:`50`, then set :math:`x = \max(x, 30)`.
 
-*Measurement of Time:* Number of replications of :math:`N` generated players.
+Optimal Solution:
+-----------------
+Unknown
 
-*Optimal Solution:* Unknown.
-
-*Known Structure:* Unknown.
+Optimal Objective Function Value:
+---------------------------------
+Unknown
