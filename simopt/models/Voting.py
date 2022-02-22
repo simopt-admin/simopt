@@ -93,6 +93,11 @@ class Voting(Model):
                 "datatype": float,
                 "default": .05
             },
+            "hours": {
+                "description": "number of hours open to vote",
+                "datatype": float,
+                "default": 13.0
+            },
             "n_prec":{
                 "description": "Number of precincts",
                 "datatype": int,
@@ -171,26 +176,60 @@ class Voting(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # Designate RNG for demands.
-        T_rng = rng_list[0]
-        arr_rate_rng = rng_list[1]
-        # Generate random demands at facilities from truncated multivariate normal distribution.
-        turnout = self.factors["mid_turn_per"] + self.factors["turn_ran"]*T_rng.triangular( -1,1,0, factorized=False)   ##Not 100% sure how the randome triangular distribtuion works in this case
-        while np.any(demand < 0):
-            demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
-        # Check for stockouts.
-        for i in range(self.factors["n_fac"]):
-            if demand[i] > self.factors["capacity"][i]:
-                n_fac_stockout = n_fac_stockout + 1
-                stockout_flag = 1
-                n_cut += demand[i] - self.factors["capacity"][i]
+        #                      self.factors["mid_turn_per"]
+        
+        for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
+            mach_delay = []
+            for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
+                n = 1
+                p = self.factors["bd_prob"]         #Default is .05
+                if np.random.binomial(n,p) == 1:    #Determining if the machine will be borken down to start day
+                    t = random.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
+                else:
+                    t = 0
+                mach_delay.append(t)
+                    #ti = ai + bi*T
+           
+            t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * random.triangular(-1,1,0)
+
+            
+
+            p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
+            
+
+            arr_times = []
+            t = expovariate(p_lamda)              #initial arrival
+            while t <= self.factors["hours"]*60:      
+                arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
+                t = expovariate(p_lamda) + t
+
+            voting_times = []
+            for i in range(len(arr_times)):
+                voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+            
+
+            #Starting machine availablility, numbers represent at what time the machine BECOMES available
+            available = []        
+            for i in range(self.factors["mach_allocation"][i]):
+                if mach_delay[i] == 0:
+                    available.append(0)     #1 means it is available
+                else:
+                    available.append(mach_delay[i])     #time that machine becomes available
+
+            t = 0   
+            votes = 
+            wait_time = []      #going to collect all wait times of voters
+            while votes <= len(arr_times): 
+                #start iterating by times, break for the smallest next time
+
+            
+
+
         # Compose responses and gradients.
         responses = {'stockout_flag': stockout_flag,
                      'n_fac_stockout': n_fac_stockout,
                      'n_cut': n_cut}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        return responses, gradients
-
+        return responses
 
 """
 Summary
