@@ -73,3 +73,120 @@ where
 **References**
 
 .. [#f1] Mahajan, S., & van Ryzin, G. (2001). *Stocking Retail Assortments under Dynamic Consumer Substitution*. Operations Research, 49(3), 334-351.
+
+Model: Newsvendor under dynamic consumer substitution (DynamNews)
+==========================================
+
+Description:
+------------
+In the newsvendor problem under dynamic consumer substitution, the retailer sells :math:`n` substitutable
+products :math:`j = 1, \ldots, n`, each with price :math:`p^j` and cost :math:`c^j` . The only decision variable is the vector of initial
+inventory levels :math:`x = (x_1, \ldots, x_n)`.
+
+The newsvendor problem considered here differs from the classical newsvendor problem in that the 
+demand is not given by a predetermined distribution, but depends on the initial inventory levels :math:`x` as
+well. The customers :math:`t = 1, \ldots, T` arrive in order and each can choose one product that is in-stock when
+he/she arrives, namely any element in :math:`S(x_t) = \{j : x^j_t > 0\} \cup \{0\}` where :math:`0` denotes the no-purchase
+option.
+
+Each customer :math:`t` assigns a utility :math:`U^j_t` to option :math:`j = 0, \ldots, n`, and thus :math:`U_t = (U^0_t, U^1_t, \ldots, U^n_t)` is his/her
+vector of utilities. Note that :math:`U^j_t` is the utility of product :math:`j` net of the price :math:`p^j`, and therefore could be 
+negative. Since the *no-purchase* option :math:`0` incurs neither utility nor cost, one can assume :math:`U^0_t = 0`.
+Customer :math:`t` maximizes his/her utility by making the choice
+
+.. math::
+  d(x_t,U_t) = \argmax_{j\in S(x_t)} U^j_t
+
+
+| Let :math:`\omega = \{U_t : t = 1, \ldots, T\}`denote the sample path, and assume that `\omega` follows the probability distribution :math:`P`. We consider a one-period inventory model and assume :math:`P(T < +\infty) = 1`.
+| The retailer knows the probability measure :math:`P`, and his/her objective is to choose :math:`x` that maximizes total expected profit.
+
+Sources of Randomness:
+----------------------
+The utility of the products follow the Gumbel distribution. There is one source of randomness.
+
+Model Factors:
+--------------
+* <factor1name>: <short description>
+
+    * Default: <default value>
+
+* <factor2name>: <short description>
+
+    * Default: <default value>
+
+* <factor3name>: <short description>
+
+    * Default: <default value>
+
+Respones:
+---------
+* <response1name>: <short description>
+
+* <response2name>: <short description>
+
+* <response3name>: <short description>
+
+
+References:
+===========
+This model is adapted from the article <article name with full citation + hyperlink to journal/arxiv page> 
+
+
+
+
+Optimization Problem: <problem_name> (<problem_abbrev>)
+========================================================
+
+Decision Variables:
+-------------------
+* <dv1name that matches model factor name>
+* <dv2name that matches model factor name>
+
+Objectives:
+-----------
+<Description using response names. Use math if it is helpful.>
+
+Constraints:
+------------
+<Description using response names. Use math if it is helpful.>
+
+Problem Factors:
+----------------
+* <factor1name>: <short description>
+
+  * Default: <default value>
+  
+* <factor2name>: <short description>
+
+  * Default: <default value>
+
+Fixed Model Factors:
+--------------------
+* <factor1name>: <fixed value>
+
+* <factor2name>: <fixed value>
+
+Starting Solution: 
+------------------
+* <dv1name>: <dv1initialvalue>
+
+* <dv2name>: <dv2initialvalue>
+
+Random Solutions: 
+------------------
+<description of how to generate random solutions>
+
+Optimal Solution:
+-----------------
+<if known, otherwise unknown>
+
+Optimal Objective Function Value:
+---------------------------------
+<if known, otherwise unknown>
+
+
+Optimization Problem: <problem_name> (<problem_abbrev>)
+========================================================
+
+...

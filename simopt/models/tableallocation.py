@@ -284,8 +284,8 @@ class TableAllocationMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lowerbound = ([0, 0, 0, 0])
-        self.upperbound = ([np.inf, np.inf, np.inf, np.inf])
+        self.lower_bounds = (0, 0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
