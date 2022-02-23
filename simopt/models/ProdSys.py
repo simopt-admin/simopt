@@ -164,6 +164,9 @@ class ProdSys(Model):
         return self.factors["num_edges"] > 0
 
     def check_interm_product(self):
+        for i in self.factors["interm_products"]:
+            if i <= 0:
+                return False
         return sum(self.factors["interm_product"]) == self.factors["n_sets"] and len(self.factors["interm_product"]) == self.factors["num_edges"]
 
     def check_n_sets(self):
@@ -204,52 +207,85 @@ class ProdSys(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # Designate separate random number generators.
-        arr_rng = rng_list[0]
 
-        total_revenue = 0
-        b = list(self.factors["booking_limits"])
-        A = np.array(self.factors["product_incidence"])
+        m1_TimeLeft = [] # time left for each job in machine 1
+        m2_TimeLeft = [] # time left for each job in machine 2
+        m1_Jobs = [] # jobs left for each job in machine 1
+        m2_Jobs = [] # jobs left for each job in machine 2
+
+        node_product = self.factors["interm_product"]
+
+        product = random.choices(np.arange(1,self.factors(["num_products"])), weights = self.factors["product_batch_prob"], k = 1)
+        order_arrival_time = np.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
+
+        end_nodes = {1:4, 
+                    2:5, 
+                    3:6} # node 6 is product type 3's ending node
+
+        #check_node = node_product[]
+        def check_node(node_product, end_nodes, product):
+            node = end_nodes[product]
+            inventory = node_product[node-1]
+
+        
+
+
+    
+
+ #       mean = self.factors["processing_time_mean"][i]
+ #       std = self.factors["processing_time_Stdev"][i]
+ #       processing_time.append(np.random.normal(loc=mean, scale=std))
+
+
+        
+
+
+        # Designate separate random number generators.
+#        arr_rng = rng_list[0]
+#
+#        total_revenue = 0
+#        b = list(self.factors["booking_limits"])
+#        A = np.array(self.factors["product_incidence"])
         # Vector of next arrival time per product.
         # (Starts at time = -1*time_before, e.g., t = -168.)
-        arrival = np.zeros(self.factors["num_products"]) - self.factors["time_before"]
+#        arrival = np.zeros(self.factors["num_products"]) - self.factors["time_before"]
         # Upper bound on number of arrivals over the time period.
-        arr_bound = 10 * round(168 * np.sum(self.factors["lambda"]))
-        arr_time = np.zeros((self.factors["num_products"], arr_bound))
-        # Index of which arrival time to use next for each product.
-        a = np.zeros(self.factors["num_products"], dtype=int)
-        # Generate all interarrival times in advance.
-        for i in range(self.factors["num_products"]):
-            arr_time[i] = np.array([arr_rng.expovariate(self.factors["lambda"][i]) for _ in range(arr_bound)])
-        # Extract first arrivals.
-        for i in range(self.factors["num_products"]):
-            arrival[i] = arrival[i] + arr_time[i, a[i]]
-            a[i] = 1
-        min_time = 0  # Keeps track of minimum time of the orders not yet received.
-        while min_time <= self.factors["runlength"]:
-            min_time = self.factors["runlength"] + 1
-            for i in range(self.factors["num_products"]):
-                if ((arrival[i] < min_time) and (arrival[i] <= self.factors["time_limit"][i])):
-                    min_time = arrival[i]
-                    min_idx = i
-            if min_time > self.factors["runlength"]:
-                break
-            if b[min_idx] > 0:
-                if min_idx % 2 == 0:  # Rack_rate.
-                    total_revenue += sum(self.factors["rack_rate"] * A[:, min_idx])
-                else:  # Discount_rate.
-                    total_revenue += sum(self.factors["discount_rate"] * A[:, min_idx])
-                # Reduce the inventory of products sharing the same resource.
-                for i in range(self.factors["num_products"]):
-                    if np.dot(A[:, i].T, A[:, min_idx]) >= 1:
-                        if b[i] != 0:
-                            b[i] -= 1
-            arrival[min_idx] += arr_time[min_idx, a[min_idx]]
-            a[min_idx] = a[min_idx] + 1
+#        arr_bound = 10 * round(168 * np.sum(self.factors["lambda"]))
+  #      arr_time = np.zeros((self.factors["num_products"], arr_bound))
+  #      # Index of which arrival time to use next for each product.
+  #      a = np.zeros(self.factors["num_products"], dtype=int)
+  #      # Generate all interarrival times in advance.
+ #       for i in range(self.factors["num_products"]):
+#            arr_time[i] = np.array([arr_rng.expovariate(self.factors["lambda"][i]) for _ in range(arr_bound)])
+      # Extract first arrivals.
+  #      for i in range(self.factors["num_products"]):
+ #           arrival[i] = arrival[i] + arr_time[i, a[i]]
+ #           a[i] = 1
+ #       min_time = 0  # Keeps track of minimum time of the orders not yet received.
+ #       while min_time <= self.factors["runlength"]:
+ #           min_time = self.factors["runlength"] + 1
+    #        for i in range(self.factors["num_products"]):
+    #            if ((arrival[i] < min_time) and (arrival[i] <= self.factors["time_limit"][i])):
+   #                 min_time = arrival[i]
+  #                  min_idx = i
+  #          if min_time > self.factors["runlength"]:
+  #              break
+  #          if b[min_idx] > 0:
+  #              if min_idx % 2 == 0:  # Rack_rate.
+  #                  total_revenue += sum(self.factors["rack_rate"] * A[:, min_idx])
+  #              else:  # Discount_rate.
+ #                   total_revenue += sum(self.factors["discount_rate"] * A[:, min_idx])
+ #               # Reduce the inventory of products sharing the same resource.
+ #               for i in range(self.factors["num_products"]):
+ #                   if np.dot(A[:, i].T, A[:, min_idx]) >= 1:
+ #                       if b[i] != 0:
+ #                           b[i] -= 1
+ #           arrival[min_idx] += arr_time[min_idx, a[min_idx]]
+ #           a[min_idx] = a[min_idx] + 1
         # Compose responses and gradients.
-        responses = {"revenue": total_revenue}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        return responses, gradients
+ #       responses = {"revenue": total_revenue}
+ #       gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+ #       return responses, gradients
 
 
 """
