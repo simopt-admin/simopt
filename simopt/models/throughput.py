@@ -142,7 +142,7 @@ class Throughput(Model):
         total = self.factors["warmup"] + self.factors["people"]
         
         terminate = False
-        service_rng = rng_list[1]
+        service_rng = rng_list[2]
         service_times = ([service_rng.expovariate(self.factors["processing_rate"])
                          for _ in range(total)])
         
@@ -150,7 +150,9 @@ class Throughput(Model):
         #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
         #   - Time at which the part ends processing at Station 1.
         #   - Time at which the part begins processing at Station 2
-        #   - Time at which the part ends processing at Station 2 (i.e., exits the system).
+        #   - Time at which the part ends processing at Station 2 
+        #   - Time at which the part begins processing at Station 3
+        #   - Time at which the part ends processing at Station 3 (i.e., exits the system).
         part_times = []
 
         # Corresponds to first part    
@@ -200,9 +202,17 @@ class Throughput(Model):
 
                 # Part ends processing at Station 2 when processing time is up
                 end_proc_station2 = begin_proc_station2 + service_times
+                
+                # Part begins processing at Station 3 when when it finished processing at Station 2 AND
+                # previous part has completed processing at Station3
+                begin_proc_station3 = max(end_proc_station1, part_times[part_number - 1][3])
+                
+                # Part end processing at Station 3 when processing time is up
+                end_proc_station3 = begin_proc_station2 + service_times
+
 
                 # Concatenate results
-                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
                 part_times.append(parts_experience)
 
             # If we have passed the time horizon, terminate.
@@ -242,7 +252,7 @@ Calculated WIP, Time, and throughput. Maximimze throughput
 """
 
 
-class MM1MinMeanSojournTime(Problem):
+class throughputMaximize(Problem):
     """
     Base class to implement simulation-optimization problems.
 
