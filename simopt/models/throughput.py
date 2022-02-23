@@ -146,7 +146,7 @@ class Throughput(Model):
         service_times = ([service_rng.expovariate(self.factors["processing_rate"])
                          for _ in range(total)])
         
-        # For each part, track 4 quantities:
+        # For each part, track 6 quantities:
         #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
         #   - Time at which the part ends processing at Station 1.
         #   - Time at which the part begins processing at Station 2
@@ -483,6 +483,9 @@ class throughputMaximize(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
+        buffer_feasible = super().check_deterministic_constraints(x)
+        servicetime_feasible = super().check_deterministic_constraints(x)
+        
         return x[0] > 0
 
     def get_random_solution(self, rand_sol_rng):
