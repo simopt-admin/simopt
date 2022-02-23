@@ -105,45 +105,68 @@ class Voting(Model):
             }
         }
         self.check_factor_list = {
-            "mach_allocation_amt": self.check_mach_allocation_amt,
-            "mach_allocation_len": self.check_mach_allocation_len,
-            "mid_turn_perc": self.check_mid_turn_perc,
-            "mid_turn_perc_len": self.check_mid_turn_perc_len,
-            "turn_ran_len": self.check_turn_ran_len,
-            "reg_vote_len": self.check_reg_vote_len,
-            "bd_prob_perc": self.check_bd_prob_perc
+            "mach_allocation": self.check_mach_allocation,
+            "n_mach": self.check_n_mach,
+            "mid_turn_per": self.check_mid_turn_per,
+            "turn_ran": self.check_turn_ran,
+            "reg_vote": self.check_reg_vote,
+            "mean_time2vote": self.check_mean_time2vote,
+            "stdev_time2vote": self.check_stdev_time2vote,
+            "mean_repair": self.check_mean_repair,
+            "stdev_repair": self.check_stdev_repair,
+            "bd_prob": self.check_bd_prob,
+            "hours": self.check_hours,
+            "n_prec": self.check_n_prec
         }
         # Set factors of the simulation model.
                                                                                 # ASK ABOUT CHECK AND NON NEGATIVITY CONTRAINTS
 
         super().__init__(fixed_factors)
 
-    def check_mach_allocation_amt(self): #Making sure that all machines are allocated and equal to max available
+    def check_mach_allocation(self): #Making sure that all machines are allocated and equal to max available
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"] 
 
-    def check_mach_allocation_len(self): #verifying that the length of the list matches number of precincts
-        return len(self.factors["mach_allocation"]) == self.factors["n_prec"]
+    def check_n_mach(self): #verifying that the machines are positive values
+        return self.facotrs["n_mach"] > 0 
 
-    def check_mid_turn_perc(self): #veifying that all are percentages
+    def check_n_prec(self): #verifying that precinct number is positive
+        return self.facotrs["n_prec"] > 0 
+
+    def check_mid_turn_per(self): #veifying that all are percentages
         for i in self.factors["mid_turn_perc"]:
             if i < 0 and i > 1:
                 return False
         return True
-        
-    def check_mid_turn_perc_len(self): #verifying that the length of the list matches number of precincts
-        #FILL CODE HERE
-        return
 
-    def check_turn_ran_len(self): #verifying that the length of the list matches number of precincts
-        #FILL CODE HERE
-        return
+    def check_mean_time2vote(self):
+        return self.facotrs["mean_time2vote"] > 0 
 
-    def check_reg_vote_len(self): #verifying that the length of the list matches number of precincts
-        #FILL CODE HERE
-        return
- 
-    def check_bd_prob_perc(self): #veifying that all are percentages
-        for i in self.factors["bd_prob_perc"]:
+    def check_stdev_time2vote(self):
+        return self.facotrs["stdev_time2vote"] > 0 
+
+    def check_mean_repair(self):
+        return self.facotrs["mean_repair"] > 0 
+
+    def check_stdev_repair(self):
+        return self.facotrs["stdev_repair"] > 0 
+    
+    def check_hours(self):
+        return self.facotrs["mean_hours"] > 0 
+
+    def check_simulatable_factors(self): #all lists have indeces for number of precincts
+        if len(self.factors["turn_ran"]) != self.factors["n_fac"]:
+            return False
+        elif len(self.factors["reg_vote"]) != self.factors["n_fac"]:
+            return False
+        elif len(self.factors["mid_turn_per"]) != self.factors["n_fac"]:
+            return False
+        elif len(self.factors["mach_allocation"]) != self.factors["n_fac"]:
+            return False
+        else:
+            return True
+
+    def check_bd_prob(self): #veifying breakdown is a probability
+        for i in self.factors["bd_prob"]:
             if i < 0 and i > 1:
                 return False
         return True    
@@ -204,21 +227,41 @@ class Voting(Model):
                 t = expovariate(p_lamda) + t
 
             voting_times = []
+            wait_time = [] 
             for i in range(len(arr_times)):
-                voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+                wait_time.append(0)
+                voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
+                    ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
             
-
-            #Starting machine availablility, numbers represent at what time the machine BECOMES available
-            available = []        
+            available = []
             for i in range(self.factors["mach_allocation"][i]):
                 if mach_delay[i] == 0:
                     available.append(0)     #1 means it is available
-                else:
-                    available.append(mach_delay[i])     #time that machine becomes available
+                else: #Starting machine availablility, numbers represent at what time the machine BECOMES available
+                    available.append(mach_delay[i])   
+            x = 0 #this is the person we are currently attending to
+            
+            for i in range(self.factors("hours")*60): #this is the loop that will go through the day
+                for j in range(len(available)):
+                    if available[j] == 0:
+                        if i >= arr_times[x] and i-1 < arr_times[x]:
+                            available[j] == voting_times[x]
+                            x+=1
+                    else:
+                        if available[j] >=1:
+                            available[j] = available[j] - 1
+                        else:
+                            available[j] == 0
+                for j in range(len(arr_times)): #should make the wait times
+                    if i >= arr_times[j]:
+                        wait_time[j] += 1
+
+
+       #time that machine becomes available
 
             t = 0   
             votes = 
-            wait_time = []      #going to collect all wait times of voters
+        #going to collect all wait times of voters
             while votes <= len(arr_times): 
                 #start iterating by times, break for the smallest next time
 

@@ -3,6 +3,7 @@ Continuous Newsvendor Problem
 ===================================================
 
 **Problem Description**
+-----------------------
 
 This problem was received from Dr. Eckman's SimOpt Library and the following is a description of a Continuous Version
 of the Newsvendor Problem. This example can be used for different situations, assuming that the same variables are being 
@@ -21,37 +22,56 @@ quantity of :math:`x` liquid that needs to be ordered to maximize the expected p
 the solution procedure for this problem are that the parameter values and the distribution of the demand (Burr Type XII) 
 are unknown. 
 
-==================================================
+**Sources of Randomness:**
+--------------------------
+
+There is one source of randomness in this problem and it is used to calculate the daily demand. The daily demand has a Burr Type XII
+distribution from :math:`[0,∞)` and it also has a cumulative distribution function that is represented by the equation, :math:`F(x) = 1 - (1-x^α)^{-β}` 
+where :math:`x, α,` and :math:`β` are all positive.
+
+**Decision Variable:**
+----------------------
+
+*Fixed Quantity Ordered* (:math:`x`) - The purpose of this model is to determine the amount of liquid, :math:`x` to order at the beginning of each
+day in order to maximize the profit for the newsvendor. 
 
 **Factors:**
- *Cost* (:math:`c`) ---> The amount it costs to the newsvendor to purchase one unit volume of liquid. The default value for cost will be 5 dollars.
+------------
+ *Cost* (:math:`c`) - The amount it costs to the newsvendor to purchase one unit volume of liquid. The default value for cost will be 5 dollars.
 
- *Price* (:math:`s`) ---> The amount the newsvendor sells one unit volume of liquid for. The default value for price will be 9 dollars. 
+ *Price* (:math:`s`) - The amount the newsvendor sells one unit volume of liquid for. The default value for price will be 9 dollars. 
 
- *Salvage Price* (:math:`w`) ---> At the end of each day, if there is liquid left over, each unit volume of liquid can be salvaged for a specific price. The default value for salvage price is 1 dollar. 
+ *Salvage Price* (:math:`w`) - At the end of each day, if there is liquid left over, each unit volume of liquid can be salvaged for a specific price. The default value for salvage price is 1 dollar. 
 
  *Alpha and Beta for Demand Distribution* (:math:`α` and :math:`β`) ---> The Burr Type XII Distribution that is being used for demand has certain parameters denoted by alpha and beta. The default values for alpha and beta are 2 and 20, respectively.
 
 **Response:**
+-------------
+ *Quantity of Liquid* (:math:`x`) - This will be the volume of liquid that needs to be ordered at the beginning of each day in order to maximize the expected profit. 
 
- *Quantity of Liquid* (:math:`x`) ---> This will be the volume of liquid that needs to be ordered at the beginning of each day in order to maximize the expected profit. 
+ *Default Profit* (:math:`e`) - This will be the maximum expected profit that correlates to the quantity of liquid ordered, x.
 
- *Default Profit* (:math:`e`) ---> This will be the maximum expected profit that correlates to the quantity of liquid ordered, x.
+**Problem Factors:**
+*Budget* - Amount of money that the newsvendor has to spend, shown as a vector. 
 
-Optimization Problem 1:
+**Fixed Model Factors**
+*Purchase Price* - The price that the liquid is purchased at is 5 dollars.
+*Sales Price* - The price that the liquid is sold for is 9 dollars.
+*Salvage Price* - The price that the liquid can be salvaged at is 1 dollar.
+*Burr_c* - The alpha constant for the Burr random distribution is set to 2
+*Burr_k* - The beta constant for the Burr random distribution is set to 20
 
-Objective: 
+**Starting Solution**
 
-Constraints: 
+No starting solution
 
-Decision Variables: 
+Random Solutions: 
 
-Fixed Factor Values: 
+Optimal Solution: 
 
-Starting Solution:
+Optimal Objective Function Value:
 
 Optimal Solution:
 
 Optimal Objective Function Value:
 
-Optimization Problem 2: 
