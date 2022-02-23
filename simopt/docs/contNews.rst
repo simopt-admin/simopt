@@ -63,15 +63,13 @@ day in order to maximize the profit for the newsvendor.
 
 **Starting Solution**
 
-No starting solution
+Starting Solution = 0
 
-Random Solutions: 
+**Optimal Solution**
+Global minimum at :math:`x* = (1/((1-r^)^{1/β})-1)^{1/α}`
+The optimal solution is :math:`x*` = 0.1878
+The maximum expected profit is 0.4635
 
-Optimal Solution: 
+**Optimal Objective Function Value**
 
-Optimal Objective Function Value:
-
-Optimal Solution:
-
-Optimal Objective Function Value:
 
