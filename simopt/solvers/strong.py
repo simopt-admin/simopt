@@ -5,6 +5,7 @@ STRONG
 A trust-region-based algorithm that fits first- or second-order models through function evaluations taken within
 a neighborhood of the incumbent solution.
 """
+from types import new_class
 from base import Solver
 from numpy.linalg import inv
 from numpy.linalg import norm
@@ -62,10 +63,15 @@ class STRONG(Solver):
                 "datatype": bool,
                 "default": True
             },
+            "n0": {
+                "description": "Initial sample size",
+                "datatype": int,
+                "default": 3
+            },
             "r": {
                 "description": "Number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 2
             },
             "sensitivity": {
                 "description": "shrinking scale for VarBds",
@@ -145,6 +151,7 @@ class STRONG(Solver):
         delta_threshold = self.factors["delta_threshold"]
 
         # default values
+        n0 = self.factors["n0"]
         r = self.factors["r"]
         delta_T = self.factors["delta_T"]
         eta_0 = self.factors["eta_0"]
@@ -153,20 +160,26 @@ class STRONG(Solver):
         gamma_2 = self.factors["gamma_2"]
         k = 0
 
+        # shrink the bounds to prevent floating errors
+        lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
+        upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+
+
         # Start with the initial solution
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
-        problem.simulate(new_solution, r)
-        expended_budget += r
+        problem.simulate(new_solution, n0)
+        expended_budget += n0
         best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+
         while expended_budget < problem.factors["budget"]: 
             k += 1
             # check variable bounds
-            forward = [int(new_x[i] == problem.lower_bounds[i]) for i in range(problem.dim)]
-            backward = [int(new_x[i] == problem.upper_bounds[i]) for i in range(problem.dim)]
+            forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
+            backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff
             BdsCheck = np.subtract(forward, backward)
 
@@ -174,19 +187,18 @@ class STRONG(Solver):
             if delta_T > delta_threshold:
                 # step 1: build the linear model
                 NumOfEval = 2 * problem.dim - np.sum(BdsCheck != 0)
-                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r, NumOfEval, expended_budget)
-                # expended_budget += NumOfEval * r
-                # print(grad)
+                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 1, problem, r, NumOfEval, expended_budget, lower_bound, upper_bound)
 
                 # step 2: solve the subproblem
                 # Cauchy reduction
-                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T)
+                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T, lower_bound, upper_bound)
+                print('candidate_x', candidate_x)
 
                 for i in range(problem.dim):
-                    if candidate_x[i] < problem.lower_bounds[i]:
-                        candidate_x[i] = problem.lower_bounds[i] + 0.01
-                    elif candidate_x[i] > problem.upper_bounds[i]:
-                        candidate_x[i] = problem.upper_bounds[i] - 0.01
+                    if candidate_x[i] < lower_bound[i]:
+                        candidate_x[i] = lower_bound[i] + 0.01
+                    elif candidate_x[i] > upper_bound[i]:
+                        candidate_x[i] = upper_bound[i] - 0.01
 
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
                 # step 3: compute the ratio
@@ -211,8 +223,7 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    > problem.minmax * best_solution.objectives_mean):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -223,8 +234,7 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    > problem.minmax * best_solution.objectives_mean):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -238,17 +248,11 @@ class STRONG(Solver):
                 else:
                     NumOfEval = problem.dim **2 + problem.dim - math.factorial(n_onbound) / (math.factorial(2), math.factorial(n_onbound - 2))
                 # step1 Build the quadratic model
-                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, r, NumOfEval, expended_budget)
+                grad, Hessian,expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, r, NumOfEval, expended_budget, lower_bound, upper_bound)
                 # expended_budget += NumOfEval * r
                 # step2 Solve the subproblem
                 # Cauchy reduction
-                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T)
-
-                for i in range(problem.dim):
-                    if candidate_x[i] < problem.lower_bounds[i]:
-                        candidate_x[i] = problem.lower_bounds[i] + 0.01
-                    elif candidate_x[i] > problem.upper_bounds[i]:
-                        candidate_x[i] = problem.upper_bounds[i] - 0.01
+                candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T, lower_bound, upper_bound)
 
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
                 # step 3: compute the ratio
@@ -275,22 +279,10 @@ class STRONG(Solver):
                         if expended_budget > problem.factors["budget"]: 
                             break
                         # step1 Build the quadratic model
-                        G, H, expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r, NumOfEval, expended_budget)
+                        G, H, expended_budget = self.finite_diff(new_x, new_solution, delta_T, BdsCheck, 2, problem, (sub_counter + 1) * r, NumOfEval, expended_budget, lower_bound, upper_bound)
                         # expended_budget += NumOfEval * (sub_counter + 1) * r
                         # step2 determine the new inner solution based on the accumulated design matrix X
-                        if np.matmul(np.matmul(G, H), G) <= 0:
-                            tau = 1
-                        else:
-                            tau = min(1, norm(G) ** 3 / (delta_T * np.matmul(np.matmul(G, H), G)))
-
-                        G = np.reshape(G, (1, problem.dim))[0]
-                        try_x = new_x - tau * delta_T * G / norm(G)
-
-                        for i in range(problem.dim):
-                            if try_x[i] < problem.lower_bounds[i]:
-                                try_x[i] = problem.lower_bounds[i] + 0.01
-                            elif try_x[i] > problem.upper_bounds[i]:
-                                try_x[i] = problem.upper_bounds[i] - 0.01
+                        try_x = self.Cauchy_point(G, H, new_x, problem, delta_T, lower_bound, upper_bound)
                         try_solution = self.create_new_solution(tuple(try_x), problem)
                         # step 3
                         problem.simulate(try_solution, int(r + np.ceil(sub_counter**1.01)))
@@ -324,8 +316,7 @@ class STRONG(Solver):
                     new_x = result_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    > problem.minmax * best_solution.objectives_mean):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -335,8 +326,7 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    > problem.minmax * best_solution.objectives_mean):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -347,8 +337,7 @@ class STRONG(Solver):
                     new_x = candidate_x
                     # Update incumbent best solution
                     if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    > problem.minmax * best_solution.objectives_mean):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
@@ -359,21 +348,40 @@ class STRONG(Solver):
         return recommended_solns, intermediate_budgets
     
     ##Finding the Cauchy Point
-    def Cauchy_point(self, G, H, new_x, problem, delta_T):
-        Q = np.matmul(np.matmul(G, H), G)
-        if Q <= 0:
+    def Cauchy_point(self, grad, Hessian, new_x, problem, delta_T, lower_bound, upper_bound):
+        if np.dot(np.matmul(grad, Hessian), grad) <= 0:
             tau = 1
         else:
-            if (norm(G))**3/(delta_T*Q) <1:
-                tau = (norm(G))**3/(delta_T * Q)
-            else:
-                tau = 1
-        G = np.reshape(G, (1, problem.dim))[0]
-        candidate_x = new_x - tau * delta_T * G / norm(G)
-        return candidate_x
+            tau = min(1, norm(grad) ** 3 / (delta_T * np.dot(np.matmul(grad, Hessian), grad)))
+        grad = np.reshape(grad, (1, problem.dim))[0]
+        candidate_x = new_x - tau * delta_T * grad / norm(grad)
+        Cauchy_x = self.Check_Cons(candidate_x, new_x, lower_bound, upper_bound)
+        return Cauchy_x
+
+    # Check the feasibility of the Cauchy point and update the point accordingly
+    def Check_Cons(self, candidate_x, new_x, lower_bound, upper_bound):
+        # the current step
+        stepV = np.subtract(candidate_x, new_x)
+        # form a matrix to determine the possible stepsize
+        tmaxV = np.ones((2, len(candidate_x)))
+        for i in range(0, len(candidate_x)):
+            if stepV[i] > 0:
+                tmaxV[0, i] = (upper_bound[i] - new_x[i]) / stepV[i]
+            elif stepV[i] < 0:
+                tmaxV[1, i] = (lower_bound[i] - new_x[i]) / stepV[i]
+        # find the minimum stepsize
+        t2 = tmaxV.min()
+        # calculate the modified x
+        modified_x = new_x + t2 * stepV
+        #rounding error
+        for i in range(0, len(candidate_x)):
+            if modified_x[i] < 0 and modified_x[i] > -0.00000005:
+                modified_x[i] = 0
+        return modified_x
+
 
     # Finite difference for calculating gradients and BFGS for calculating Hessian Matrix
-    def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r, NumOfEval, expended_budget):
+    def finite_diff(self, new_x, new_solution, delta_T, BdsCheck, stage, problem, r, NumOfEval, expended_budget, lower_bound, upper_bound):
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         # Store values for each dimension
         FnPlusMinus = np.zeros((problem.dim, 3)) 
@@ -385,6 +393,7 @@ class STRONG(Solver):
             cnt += 1
             if (cnt > 1):
                 print('count', cnt)
+        # if True:
 
             for i in range(problem.dim):
                 # initialization
@@ -394,10 +403,10 @@ class STRONG(Solver):
                 steph2 = delta_T # backward stepsize
                 
                 # check variable bounds
-                if x1[i] + steph1 > problem.upper_bounds[i]:
-                    steph1 = np.abs(problem.upper_bounds[i] - x1[i])
-                if x2[i] - steph2 < problem.lower_bounds[i]:
-                    steph2 = np.abs(x2[i] - problem.lower_bounds[i])
+                if x1[i] + steph1 > upper_bound[i]:
+                    steph1 = np.abs(upper_bound[i] - x1[i])
+                if x2[i] - steph2 < lower_bound[i]:
+                    steph2 = np.abs(x2[i] - lower_bound[i])
                 
                 # print('steph1', steph1)
                 # print('steph2', steph2)
@@ -413,8 +422,10 @@ class STRONG(Solver):
                 else:    # backward diff
                     FnPlusMinus[i, 2] = steph2
                     x2[i] = x2[i] - FnPlusMinus[i,2]
+
                 # print('x1', x1)
                 # print('x2', x2)
+
                 x1_solution = self.create_new_solution(tuple(x1), problem)
                 if BdsCheck[i] != -1:
                     problem.simulate_up_to([x1_solution], r)
@@ -433,7 +444,7 @@ class STRONG(Solver):
                     grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
                 elif BdsCheck[i] == -1:
                     grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-            
+                            
             if stage == 2:
                 # diagonal in Hessian
                 for i in range(problem.dim):
@@ -569,7 +580,7 @@ class STRONG(Solver):
                                 Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                                 Hessian[j, i] = Hessian[i, j]
             # add budget after each loop
-            print('gradient', grad)                    
+            # print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
         print('expended_budget', expended_budget)

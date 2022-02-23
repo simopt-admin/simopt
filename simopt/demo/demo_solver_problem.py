@@ -23,7 +23,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # These names are strings and should match those input to directory.py.
 # Ex:
 solver_name = "STRONG"  # Random search solver
-problem_name = "TABLEALLOCATION-1"  # Continuous newsvendor problem
+problem_name = "IRONORE-1"  # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -62,9 +62,9 @@ myexperiment.run(n_macroreps=10)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=20)
+myexperiment.post_replicate(n_postreps=200)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=20)
+post_normalize([myexperiment], n_postreps_init_opt=200)
 
 print("Plotting results.")
 # Produce basic plots of the solver on the problem

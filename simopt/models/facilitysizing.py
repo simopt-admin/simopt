@@ -526,7 +526,7 @@ class FacilitySizingMaxService(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100000
+                "default": 1000
             },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",

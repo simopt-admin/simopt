@@ -319,7 +319,7 @@ class HotelRevenue(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 1000
             }
         }
         self.check_factor_list = {
