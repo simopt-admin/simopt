@@ -54,12 +54,16 @@ day in order to maximize the profit for the newsvendor.
 **Problem Factors:**
 *Budget* - Amount of money that the newsvendor has to spend, shown as a vector. 
 
-**Fixed Model Factors**
+**Model Default Factors**
 *Purchase Price* - The price that the liquid is purchased at is 5 dollars.
 *Sales Price* - The price that the liquid is sold for is 9 dollars.
 *Salvage Price* - The price that the liquid can be salvaged at is 1 dollar.
 *Burr_c* - The alpha constant for the Burr random distribution is set to 2
 *Burr_k* - The beta constant for the Burr random distribution is set to 20
+
+**Fixed Model Factors**
+
+Empty
 
 **Starting Solution**
 
