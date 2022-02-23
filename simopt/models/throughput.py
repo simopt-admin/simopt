@@ -238,7 +238,7 @@ class Throughput(Model):
 """
 Summary
 -------
-Calculated WIP, Time, and throughput.
+Calculated WIP, Time, and throughput. Maximimze throughput
 """
 
 
@@ -306,21 +306,21 @@ class MM1MinMeanSojournTime(Problem):
     def __init__(self, name="throughput", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.minmax = (-1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
+        self.n_objectives = 3
+        self.n_stochastic_constraints = 2
+        self.minmax = (+1,)
+        self.constraint_type = "deterministic"
+        self.variable_type = "mixed"
         self.lower_bounds = (0,)
         self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (2.75,)
         self.model_default_factors = {
-            "warmup": 50,
-            "people": 200
+            "warmup": 2000,
+            "people": 50
         }
-        self.model_decision_variables = {"mu"}
+        self.model_decision_variables = {"processing_rate"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -357,7 +357,7 @@ class MM1MinMeanSojournTime(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "mu": vector[0]
+            "processing_rate": vector[0]
         }
         return factor_dict
 
@@ -376,7 +376,7 @@ class MM1MinMeanSojournTime(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["mu"],)
+        vector = (factor_dict["processing_rate"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -394,7 +394,7 @@ class MM1MinMeanSojournTime(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["avg_sojourn_time"],)
+        objectives = (response_dict["throughput"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
