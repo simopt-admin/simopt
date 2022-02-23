@@ -17,6 +17,12 @@ The goal is to find \beta_0, \beta_1 and \beta_2 in order to approximate :math:`
 where :math:`\Gamma` is the convenience matrix for :math:`\bar{f} (x)`. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
 If the simulation at each :math:`x_i` is done independently, then :math:`\Gamma` would be a diagonal matrix.
 
+*Model Factors:*
+    warmup: Represents the number of people as warmup before collecting statistics
+    people: Represents the number of people from which to calculate the average sojourn time.
+
+*Response:*
+    The average waiting time in this M/M/1 queue determined by equation provided above.
 
 
 This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
@@ -48,10 +54,8 @@ If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`
     Warmup : Represents the number of people as warmup before collecting statistics.
 
 *Fixed Model Factors:* 
-    Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.
+    Empty
 
-*Response:*
-    The average waiting time in this M/M/1 queue determined by equation provided above.
 
 *Measurement of Time:*
     Number of estimations of :math:`\bar{f} (x_i)` made.
