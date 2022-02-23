@@ -56,21 +56,9 @@ class Throughput(Model):
                 "datatype": float,
                 "default": 1.5
             },
-            "processing_rate1": {
-                "description": "Rate parameter of service time \
-                                for station 1.",
-                "datatype": float,
-                "default": 3.0
-            },
-            "processing_rate2": {
-                "description": "Rate parameter of service time \
-                                for station 2.",
-                "datatype": float,
-                "default": 3.0
-            },
-            "processing_rate3": {
-                "description": "Rate parameter of service time \
-                                for station 3.",
+            "processing_rate": {
+                "description": "rate parameter lambda for the exponential distribution used \
+                                to generate random processing times for 3 stations.",
                 "datatype": float,
                 "default": 3.0
             },
@@ -95,7 +83,7 @@ class Throughput(Model):
         }
         self.check_factor_list = {
             "buffer": self.check_buffer,
-            "mu": self.check_mu,
+            "processing_rate": self.check_processing_rate,
             "warmup": self.check_warmup,
             "n": self.check_n,
             "jobs": self.check_jobs
@@ -107,13 +95,7 @@ class Throughput(Model):
         return self.factors["buffer"] > 0
 
     def check_mu(self):
-        return self.factors["processing_rate1"] > 0
-
-    def check_mu(self):
-        return self.factors["processing_rate2"] > 0
-
-    def check_mu(self):
-        return self.factors["processing_rate3"] > 0
+        return self.factors["processing_rate"] > 0
     
     def check_warmup(self):
         return self.factors["warmup"] >= 0
@@ -126,35 +108,28 @@ class Throughput(Model):
 
     def check_simulatable_factors(self):
         # demo for condition that queue must be stable
-        # return self.factors["mu"] > self.factors["lambda"]
+        # return self.factors["processing_rate"] > self.factors["buffer"]
         return True
 
     
-    def replicate(rng, runlength, processing_rate, self):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
 
         Arguments
         ---------
-        rng : mrg32k3a.MRG32k3a
+        rng_list : list of mrg32k3a.MRG32k3a
             rng for model to use when simulating a replication
         runlength : float
             how long (in hours) to run a single replication of the model
-        processing_rate1 : float
+        processing_rate : float
             rate parameter lambda for the exponential distribution used
-            to generate random processing times for station 1.
-        processing_rate2 : float
-            rate parameter lambda for the exponential distribution used
-            to generate random processing times for station 2.
-        processing_rate2 : float
-            rate parameter lambda for the exponential distribution used
-            to generate random processing times for station 3.
+            to generate random processing times for three stations.
+
             
         Returns
         -------
-        responses : dict
-            performance measures of interest
-            "avg_waiting_time" = average waiting time
+
         WIP_values : numpy array of ints
             List of work-in-process (WIP) values as it changes.
         WIP_times : numpy array of floats
@@ -163,12 +138,14 @@ class Throughput(Model):
             total number of parts produced
         """
         
-        service_rng = rng
-        station1_ptime = rng
-        buffer_size = rng
+        # Calculate total number of arrivals to simulate.
+        total = self.factors["warmup"] + self.factors["people"]
         
         terminate = False
-
+        service_rng = rng_list[1]
+        service_times = ([service_rng.expovariate(self.factors["processing_rate"])
+                         for _ in range(total)])
+        
         # For each part, track 4 quantities:
         #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
         #   - Time at which the part ends processing at Station 1.
@@ -188,16 +165,18 @@ class Throughput(Model):
             if part_number == 0:
                 # Record the first part's experience.
                 begin_proc_station1 = 0
-                end_proc_station1 = station1_ptime
-                begin_proc_station2 = station1_ptime
-                end_proc_station2 = station1_ptime + rng.expovariate(processing_rate)
-                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
+                end_proc_station1 = service_times
+                begin_proc_station2 = service_times
+                end_proc_station2 = service_times + service_times
+                begin_proc_station3 = service_times + service_times
+                end_proc_station3 = service_times + service_times + service_times
+                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
                 part_times.append(parts_experience)
 
             else:
                 # Record the part's experience.
 
-                if part_number <= buffer_size + 1:
+                if part_number <= self.factors["buffer"] + 1:
                     # If one of the first few parts, blocking is not possible.
                     # Part begins processing at first time when Station 1 ends processing of previous part
                     begin_proc_station1 = part_times[part_number - 1][1]
@@ -210,24 +189,24 @@ class Throughput(Model):
                     # Station 1 becomes unblocked when a part sufficiently in front of the current part
                     # starts processing at Station 2.            
                     #   = part_times[part_number - buffer_size - 1][2]
-                    begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - buffer_size - 1][2])
+                    begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - self.factors["buffer"] - 1][2])
 
                 # Part ends processing at Station 1 at first time when processing time is up.
-                end_proc_station1 = begin_proc_station1 + station1_ptime
+                end_proc_station1 = begin_proc_station1 + service_times
 
                 # Part begins processing at Station 2 when it finishes processing at Station 1 AND 
                 # previous part has completed processing at Station 2.
                 begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
 
                 # Part ends processing at Station 2 when processing time is up
-                end_proc_station2 = begin_proc_station2 + rng.expovariate(processing_rate)
+                end_proc_station2 = begin_proc_station2 + service_times
 
                 # Concatenate results
                 parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2]
                 part_times.append(parts_experience)
 
             # If we have passed the time horizon, terminate.
-            if parts_experience[0] > runlength:
+            if parts_experience[0] > self.factors["runlength"]:
                 terminate = True
 
             # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
@@ -237,11 +216,11 @@ class Throughput(Model):
             part_number += 1
 
         # Record summary statistics.
-        enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < runlength])
-        exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < runlength])
+        enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < self.factors["runlength"]])
+        exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < self.factors["runlength"]])
 
         # Calculate throughput.
-        throughput = np.sum(exit_times < runlength)
+        throughput = np.sum(exit_times < self.factors["runlength"])
 
         # Construct the WIP trajectory.
         WIP_change_times = np.concatenate((enter_times, exit_times))
@@ -259,7 +238,7 @@ class Throughput(Model):
 """
 Summary
 -------
-Minimize the mean sojourn time of an M/M/1 queue.
+Calculated WIP, Time, and throughput.
 """
 
 
@@ -324,7 +303,7 @@ class MM1MinMeanSojournTime(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="MM1-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="throughput", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1

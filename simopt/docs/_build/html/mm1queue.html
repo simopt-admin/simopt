@@ -56,24 +56,27 @@ If the simulation at each <span class="math notranslate nohighlight">\(x_i\)</sp
 <dl class="simple">
 <dt><em>Recommended Parameter Settings:</em></dt><dd><p>Use <span class="math notranslate nohighlight">\(n = 5\)</span> and <span class="math notranslate nohighlight">\(x = (0.5, 0.564, 0.706, 0.859, 0.950)\)</span>. Lastly, take <span class="math notranslate nohighlight">\(T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)\)</span> and estimate <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> independently for each <span class="math notranslate nohighlight">\(x_i\)</span>.</p>
 </dd>
-<dt><em>Starting Solutions:</em></dt><dd><p>Take <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>, and <span class="math notranslate nohighlight">\(\beta_1 = \beta_2 = 0\)</span>.</p>
-</dd>
 </dl>
 <p>If multiple solutions are needed, take <span class="math notranslate nohighlight">\(\beta_0\)</span>, <span class="math notranslate nohighlight">\(\beta_1\)</span>, <span class="math notranslate nohighlight">\(\beta_2\)</span> uniformly distributed on [0,2].</p>
 <dl class="simple">
-<dt><em>Measurement of Time:</em></dt><dd><p>Number of estimations of <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> made.</p>
+<dt><em>Decision Variables:</em></dt><dd><p>The utilization rate x is the decision variable in this M/M/1 queue Metamodeling problem</p>
 </dd>
-<dt><em>Objective:</em></dt><dd><p>Find beta_0, beta_1 and beta_2 to approximate <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span> through <span class="math notranslate nohighlight">\(\hat{f} (x)\)</span> as accurately as possible, with the analysis of the</p>
+<dt><em>Objective:</em></dt><dd><p>Find beta_0, beta_1 and beta_2 to approximate <span class="math notranslate nohighlight">\(\bar{f} (x)\)</span> through <span class="math notranslate nohighlight">\(\hat{f} (x)\)</span> as accurately as possible, with the analysis of the relation between
+utilization rate and waiting time.</p>
 </dd>
 <dt><em>Constraints:</em></dt><dd><p>The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.</p>
-</dd>
-<dt><em>Decision Variables:</em></dt><dd><p>x is the decision variable in this M/M/1 queue Metamodeling problem</p>
 </dd>
 <dt><em>Problem Factors:</em></dt><dd><p>Inter-arrival time: Represents the arrival rates between entities.
 The service time: Represents the service rate of each server in the M/M/1 Queueing station.
 The number of stations: Represents the total number of stations in this model.</p>
 </dd>
-<dt><em>Fixed Factor Value:</em></dt><dd><p>Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.</p>
+<dt><em>Fixed Model Factors:</em></dt><dd><p>Parameter setting with n = 5 and x = (0.5, 0.564, 0.706, 0.859, 0.950). The parameter of warm up period.</p>
+</dd>
+<dt><em>Response:</em></dt><dd><p>The average waiting time in this M/M/1 queue determined by equation provided above.</p>
+</dd>
+<dt><em>Measurement of Time:</em></dt><dd><p>Number of estimations of <span class="math notranslate nohighlight">\(\bar{f} (x_i)\)</span> made.</p>
+</dd>
+<dt><em>Starting Solutions:</em></dt><dd><p>Take <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>, and <span class="math notranslate nohighlight">\(\beta_1 = \beta_2 = 0\)</span>.</p>
 </dd>
 <dt><em>Optimal Solution:</em></dt><dd><p><span class="math notranslate nohighlight">\(\beta_0 = \beta_2 = 0\)</span> and <span class="math notranslate nohighlight">\(\beta_1 = 1\)</span>.</p>
 </dd>

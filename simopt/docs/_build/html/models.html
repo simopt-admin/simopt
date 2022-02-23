@@ -8918,13 +8918,13 @@ an Exponential(x) service time. Returns</p>
 <p><a class="reference internal" href="base.html#base.Model" title="base.Model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Model</span></code></a></p>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="models.throughput.Throughput.check_jobs">
-<span class="sig-name descname"><span class="pre">check_jobs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.check_jobs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="models.throughput.Throughput.check_buffer">
+<span class="sig-name descname"><span class="pre">check_buffer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.check_buffer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="models.throughput.Throughput.check_lambda">
-<span class="sig-name descname"><span class="pre">check_lambda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.check_lambda" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="models.throughput.Throughput.check_jobs">
+<span class="sig-name descname"><span class="pre">check_jobs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.check_jobs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -8958,19 +8958,28 @@ an Exponential(x) service time. Returns</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="models.throughput.Throughput.replicate">
-<span class="sig-name descname"><span class="pre">replicate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.replicate" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">replicate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runlength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processing_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.throughput.Throughput.replicate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate a single replication for the current model factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>rng_list</strong> (<em>list of rng.MRG32k3a objects</em>) – rngs for model to use when simulating a replication</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng</strong> (<a class="reference internal" href="rng.html#rng.mrg32k3a.MRG32k3a" title="rng.mrg32k3a.MRG32k3a"><em>mrg32k3a.MRG32k3a</em></a>) – rng for model to use when simulating a replication</p></li>
+<li><p><strong>runlength</strong> (<em>float</em>) – how long (in hours) to run a single replication of the model</p></li>
+<li><p><strong>processing_rate1</strong> (<em>float</em>) – rate parameter lambda for the exponential distribution used
+to generate random processing times for station 1.</p></li>
+<li><p><strong>processing_rate2</strong> (<em>float</em>) – rate parameter lambda for the exponential distribution used
+to generate random processing times for station 2.</p></li>
+<li><p><strong>processing_rate2</strong> – rate parameter lambda for the exponential distribution used
+to generate random processing times for station 3.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>responses</strong> (<em>dict</em>) – performance measures of interest
-“avg_sojourn_time” = average sojourn time
-“avg_waiting_time” = average waiting time
-“frac_cust_wait” = fraction of customers who wait</p></li>
-<li><p><strong>gradients</strong> (<em>dict of dicts</em>) – gradient estimates for each response</p></li>
+“avg_waiting_time” = average waiting time</p></li>
+<li><p><strong>WIP_values</strong> (<em>numpy array of ints</em>) – List of work-in-process (WIP) values as it changes.</p></li>
+<li><p><strong>WIP_times</strong> (<em>numpy array of floats</em>) – List of times at which the WIP changes.</p></li>
+<li><p><strong>throughput</strong> (<em>float</em>) – total number of parts produced</p></li>
 </ul>
 </p>
 </dd>
