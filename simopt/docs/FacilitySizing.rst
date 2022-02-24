@@ -83,7 +83,7 @@ Optimization Problem: FacilitySizingTotalCost (Problem) (facilitysizing)
 
 Decision Variables:
 -------------------
-* :math:`x`: inventory at each facility 
+* :math:`x`:inventory at each facility 
 * :math:`capacity` 
 
 Objectives:
