@@ -216,17 +216,33 @@ class ProdSys(Model):
         for i in range(len(self.factors["routing_layout"])):
             edge_time[i] = ([self.factors["processing_time_mean"], self.factors["processing_time_StDev"]])
 
-        node_product = self.factors["interm_product"]
-
+        node_product = self.factors["interm_product"] 
+        
+        ############# Random numbers generated matrix ##########
+        
+        # generate list of random machine processing times for # of machines
+        
+        # generate and attach random order inter-arrival times (if sum is less than time horizon)
+        
+        # generate and attach random product type 
+        
+      
         product = random.choices(np.arange(1,self.factors(["num_products"])), weights = self.factors["product_batch_prob"], k = 1)
         order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
-
-        end_nodes = {1:4, 
-                    2:5, 
-                    3:6} # node 6 is product type 3's ending node
+        
+        
+        ###############
+        
+        end_nodes = [4,5,6] # list of end nodes for order of product type(list index+1)
+        
 
         print(check_node(node_product, end_nodes, product,self.factors["routing_layout"]))
-
+        
+        
+        
+        ########### Find end node for product type ############
+        
+        # return end node/corresponding possible routes
     def check_node(node_product, end_nodes, product, routing):
         node = end_nodes[product]
         inventory = node_product[node-1]
@@ -239,5 +255,13 @@ class ProdSys(Model):
                     break
         return inventory, node
 
+    
+    ######### Optimal path fucntion ########
+    
+    # get possible paths 
+    
+    # add processing time and keep track of minimum sum
+    
+    # return sequence and total process time
 
 
