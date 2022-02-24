@@ -38,7 +38,6 @@ class ProdSys(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "ProdSys"
-        self.n_rngs = 3
         self.n_responses = 2
         self.specifications = {
             "num_products": {
@@ -117,6 +116,8 @@ class ProdSys(Model):
                 "default": 200
             },
         }
+        self.n_rngs = self.factors["num_machines"] + 2
+        
         self.check_factor_list = {
             "num_products": self.check_num_products,
             "Interarrival_Time_mean": self.check_Interarrival_Time_mean,
@@ -183,12 +184,6 @@ class ProdSys(Model):
 
 
 
-    def check_booking_limits(self):
-        for i in list(self.factors["booking_limits"]):
-            if i <= 0 or i > self.factors["num_rooms"]:
-                return False
-        return len(self.factors["booking_limits"]) == self.factors["num_products"]
-
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
@@ -208,8 +203,10 @@ class ProdSys(Model):
             gradient estimates for each response
         """
         import random
-        import numpy as np
-        
+        # Designate RNG for demands.       
+        order_arrival_time_rng = rng_list[0]
+
+
         m1_TimeLeft = [] # time left for each job in machine 1
         m2_TimeLeft = [] # time left for each job in machine 2
         m1_Jobs = [] # jobs left for each job in machine 1
@@ -217,12 +214,12 @@ class ProdSys(Model):
 
         edge_time = {}
         for i in range(len(self.factors["routing_layout"])):
-            edge_time[i] = self.factors["processing_time_mean"],
+            edge_time[i] = ([self.factors["processing_time_mean"], self.factors["processing_time_StDev"]])
 
         node_product = self.factors["interm_product"]
 
         product = random.choices(np.arange(1,self.factors(["num_products"])), weights = self.factors["product_batch_prob"], k = 1)
-        order_arrival_time = np.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
+        order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
 
         end_nodes = {1:4, 
                     2:5, 
@@ -230,18 +227,17 @@ class ProdSys(Model):
 
         print(check_node(node_product, end_nodes, product,self.factors["routing_layout"]))
 
-        #check_node = node_product[]
-
-def check_node(node_product, end_nodes, product, routing):
-    node = end_nodes[product]
-    inventory = node_product[node-1]
-    for i in range(len(routing)):
-        if routing[i][1] == node:
-            node = routing[i][0]
-            inventory = node_product[node-1]
-            if inventory != 0:
-                break
-    return inventory, node
+    def check_node(node_product, end_nodes, product, routing):
+        node = end_nodes[product]
+        inventory = node_product[node-1]
+        #if inventory = 0:
+        for i in range(len(routing)):
+            if routing[i][1] == node:
+                node = routing[i][0]
+                inventory = node_product[node-1]
+                if inventory != 0:
+                    break
+        return inventory, node
 
 
 
