@@ -192,15 +192,8 @@ class STRONG(Solver):
                 # step 2: solve the subproblem
                 # Cauchy reduction
                 candidate_x = self.Cauchy_point(grad, Hessian, new_x, problem, delta_T, lower_bound, upper_bound)
-                print('candidate_x', candidate_x)
-
-                for i in range(problem.dim):
-                    if candidate_x[i] < lower_bound[i]:
-                        candidate_x[i] = lower_bound[i] + 0.01
-                    elif candidate_x[i] > upper_bound[i]:
-                        candidate_x[i] = upper_bound[i] - 0.01
-
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+
                 # step 3: compute the ratio
                 # Use r simulated observations to estimate g_new
                 problem.simulate(candidate_solution, r)
@@ -407,9 +400,6 @@ class STRONG(Solver):
                     steph1 = np.abs(upper_bound[i] - x1[i])
                 if x2[i] - steph2 < lower_bound[i]:
                     steph2 = np.abs(x2[i] - lower_bound[i])
-                
-                # print('steph1', steph1)
-                # print('steph2', steph2)
 
                 # decide stepsize
                 if BdsCheck[i] == 0:   #central diff
@@ -422,9 +412,6 @@ class STRONG(Solver):
                 else:    # backward diff
                     FnPlusMinus[i, 2] = steph2
                     x2[i] = x2[i] - FnPlusMinus[i,2]
-
-                # print('x1', x1)
-                # print('x2', x2)
 
                 x1_solution = self.create_new_solution(tuple(x1), problem)
                 if BdsCheck[i] != -1:
@@ -580,7 +567,7 @@ class STRONG(Solver):
                                 Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                                 Hessian[j, i] = Hessian[i, j]
             # add budget after each loop
-            # print('gradient', grad)                    
+            print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
         print('expended_budget', expended_budget)
