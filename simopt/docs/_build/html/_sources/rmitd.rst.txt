@@ -34,11 +34,11 @@ Model Factors:
 
 * Prices: Prices for each Period
 
-    * Default: <default value>
+    * Default: Reference Table 1
 
 * Demand Mean(μ): Mean demand for each period
 
-    * Default: <default value>
+    * Default: Reference Table 1
 
 * Cost(c): Cost per unit of capacity at :math:`t = 0`
 
@@ -64,6 +64,31 @@ Model Factors:
 Respones:
 ---------
 * Revenue: Total revenue of given model
+
+
+.. list-table:: Table 1
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Period
+     - 1
+     - 2
+     - 3
+   * - Price (:math:`p_t`)
+     - 100
+     - 300
+     - 400
+   * - Mean Demand (:math:`\mu_t`)
+     - 50
+     - 20
+     - 30
+
+============================ =====  ======  ======
+Period                       1      2       3  
+============================ =====  ======  ====== 
+Price (:math:`p_t`)          100    300     400
+Mean Demand (:math:`\mu_t`)  50     20      30
+---------------------------- -----  ------  ------
 
 
 References:
