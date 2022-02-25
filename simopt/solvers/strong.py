@@ -66,12 +66,12 @@ class STRONG(Solver):
             "n0": {
                 "description": "Initial sample size",
                 "datatype": int,
-                "default": 3
+                "default": 30
             },
             "r": {
                 "description": "Number of replications taken at each solution",
                 "datatype": int,
-                "default": 2
+                "default": 30
             },
             "sensitivity": {
                 "description": "shrinking scale for VarBds",
