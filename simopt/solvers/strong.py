@@ -66,12 +66,12 @@ class STRONG(Solver):
             "n0": {
                 "description": "Initial sample size",
                 "datatype": int,
-                "default": 30
+                "default": 3
             },
             "r": {
                 "description": "Number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 2
             },
             "sensitivity": {
                 "description": "shrinking scale for VarBds",
@@ -370,6 +370,7 @@ class STRONG(Solver):
         for i in range(0, len(candidate_x)):
             if modified_x[i] < 0 and modified_x[i] > -0.00000005:
                 modified_x[i] = 0
+        print('candidate_x', modified_x)
         return modified_x
 
 
@@ -567,7 +568,7 @@ class STRONG(Solver):
                                 Hessian[i, j] = (fn - FnPlusMinus[j, 1] - FnPlusMinus[i, 1] + fn5)/(FnPlusMinus[i, 2]*FnPlusMinus[j, 2])
                                 Hessian[j, i] = Hessian[i, j]
             # add budget after each loop
-            print('gradient', grad)                    
+            # print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
         print('expended_budget', expended_budget)
