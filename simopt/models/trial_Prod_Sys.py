@@ -204,7 +204,7 @@ class ProdSys(Model):
         """
         import random
         # Designate RNG for demands.       
-        order_arrival_time_rng = rng_list[0]
+        #order_arrival_time_rng = rng_list[0]
 
 
         m1_TimeLeft = [] # time left for each job in machine 1
@@ -212,26 +212,41 @@ class ProdSys(Model):
         m1_Jobs = [] # jobs left for each job in machine 1
         m2_Jobs = [] # jobs left for each job in machine 2
 
-        edge_time = {}
-        for i in range(len(self.factors["routing_layout"])):
-            edge_time[i] = ([self.factors["processing_time_mean"], self.factors["processing_time_StDev"]])
+        #edge_time = []
+        #for i in range(len(self.factors["routing_layout"])):
+           # edge_time[i] = ([self.factors["processing_time_mean"], self.factors["processing_time_StDev"]])
 
         node_product = self.factors["interm_product"] 
         
-        ############# Random numbers generated matrix ##########
         
-        # generate list of random machine processing times for # of machines
         
-        # generate and attach random order inter-arrival times (if sum is less than time horizon)
-        
-        # generate and attach random product type 
-        
+        ############# List of Random Numbers Generated ##########
       
-        product = random.choices(np.arange(1,self.factors(["num_products"])), weights = self.factors["product_batch_prob"], k = 1)
-        order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
+        rng_list = []                                                                               # Empty list to rng machine processing times, 
+                                                                                                    # inter-arival times, and product type
+        for i=0 in range(num_machines -1):                                                          # Generate/attach random machine processing times for # of machines
+            rng_list.append(random.normalvariate([self.factors["processing_time_mean"][i], self.facotrs["processing_time_StDev"][i]))       
+           
+        #order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
+        orders_time = 0   
+        num_orders = 0
+        for i=0 in range(time_horizon):                                                             # Generate random order inter-arrival times 
+            order_arrival_time = random.normalvariate(self.factors["Interarrival_Time_mean"], self.factors["Interarrival_Time_StDev"])
+            orders_time += inter_arrival_time                                                       # Sum of arrival times
+                                                                                                                                                                               
+            if orders_time <= time_horizon:                                                         # Attach if sum is less than time horizon
+                rng_list.append(order_arrival_time)                                                 # Track number of orders
+                num_orders += 1
+            else: 
+                break                                                                                            
+                                                                                                             
+                                                                                                    # Generate/attach random product type      
+        product = random.choices(np.arange(1,self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
+        rng_list.append(product)
         
-        
-        ###############
+        ##########################################################
+                                                  
+                                                  
         
         end_nodes = [4,5,6] # list of end nodes for order of product type(list index+1)
         
