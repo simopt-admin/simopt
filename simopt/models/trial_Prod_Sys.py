@@ -220,9 +220,11 @@ class ProdSys(Model):
         ############# List of Random Numbers Generated ##########
       
         rng_list = []                                                                               # Empty list to rng machine processing times, 
-                                                                                                    # inter-arival times, and product type
+        arrival_times_rng = []                                                                      # Inter-arival times
+        product_orders_rng=[]                                                                       # Product type
+        machine_times_rng=[]
         for i=0 in range(num_machines):                                                             # Generate/attach random machine processing times for # of machines
-            rng_list.append(random.normalvariate([self.factors["processing_time_mean"][i], self.facotrs["processing_time_StDev"][i]))       
+            machine_times_rng.append(random.normalvariate([self.factors["processing_time_mean"][i], self.facotrs["processing_time_StDev"][i]))       
            
         #order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
         orders_time = 0   
@@ -232,14 +234,16 @@ class ProdSys(Model):
             orders_time += inter_arrival_time                                                       # Sum of arrival times
                                                                                                                                                                                
             if orders_time <= time_horizon:                                                         # Attach if sum is less than time horizon
-                rng_list.append(order_arrival_time)                                                 # Track number of orders
+                arrival_times_rng.append(order_arrival_time)                                        # Track number of orders
                 num_orders += 1
+                product = random.choices(np.arange(1,self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
+                product_orders_rng.append(product)
             else: 
                 break                                                                                            
-                                                                                                             
-                                                                                                    # Generate/attach random product type      
-        product = random.choices(np.arange(1,self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
-        rng_list.append(product)
+        
+        rng_list.append(machine_times_rng)
+        rng_list.append(arrival_times_rng)                                                            # Generate/attach random product type      
+        rng_list.append(product_orders_rng)
         
         ##########################################################
                                                   
@@ -254,20 +258,19 @@ class ProdSys(Model):
         ########### Find end node for product type #############
         
         # return end node and current/intermediate inventory at node
-        def check_node(node_product, end_nodes, product, routing):                                  # Replicate of intermediate product, list of end nodes, product type, routing_layout 
+        def check_node(node_product, end_nodes, product):                                  # Replicate of intermediate product, list of end nodes, product type, routing_layout 
             node = end_nodes[product-1]                                                             # Product's end node from list; (prod type-1) = position                                                  
             inventory = node_product[node-1]                                                        # Inventory at node from replicated list of intermediate product
-            #if inventory = 0:      
-            #for i in range(len(routing)):
-             #   if routing[i][1] == node:
-              #      node = routing[i][0]
-               #     inventory = node_product[node-1]
-                #    if inventory != 0:
-                 #       break
+            if inventory != 0:      
+                node_product[node-1] -= 10
+            else:
+                get_best_path()
             return node, inventory
-
-                
-
+        
+                                                           # time-left= [[13,12,14], [23,0,12]]
+        
+                                                           
+                                                           
         print(check_node(node_product, end_nodes, product,self.factors["routing_layout"]))
                                                   
     ######### Optimal path function #########
@@ -275,17 +278,18 @@ class ProdSys(Model):
         def get_nest_size(prod_seq):                                                                # Finds total length of (nested) list
             count = 0
             for elem in prod_seq:
-                if type(elem) == list:
+                if type(elem) == list: 
                     count += get_nest_size(elem)
                 else:
                     count +=1
             return count
-                                            
+                                            # [1,4] [1,2,2,2,1,1]
                                                   
         def get_proc_time(prod_seq, machine_layout, rng_list):                                      # Finds SINGLE path's total processing time.
             total_time = 0                                                                          
             for elem in prod_seq:                                                                   # For each element/edge in sequence
-                total_time += rng_list[(machine_layout[elem-1])-1]                                  # Add the respective machine's processing time from rng list
+                total_time += machine_times_rng[(machine_layout[elem-1])-1]                         # Add the respective machine's processing time from rng list
+                total_time += sum(time_left[machine_layout[elem-1]]                                 # **********
             return total_time                                                                       # Returns path's total processing time.
                     
                                                   
