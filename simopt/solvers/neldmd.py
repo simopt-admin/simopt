@@ -52,7 +52,7 @@ class NELDMD(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="NELDMD", fixed_factors={}):
+    def __init__(self, name="NELDMD", fixed_factors={}, params={"alpha":1., "gammap":2., "betap":0.5, "delta":0.5}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -72,22 +72,22 @@ class NELDMD(Solver):
             "alpha": {
                 "description": "reflection coefficient > 0",
                 "datatype": float,
-                "default": 1.
+                "default": params["alpha"]
             },
             "gammap": {
                 "description": "expansion coefficient > 1",
                 "datatype": float,
-                "default": 2.
+                "default": params["gammap"]
             },
             "betap": {
                 "description": "contraction coefficient > 0, < 1",
                 "datatype": float,
-                "default": 0.5
+                "default": params["betap"]
             },
             "delta": {
                 "description": "shrink factor > 0, < 1",
                 "datatype": float,
-                "default": 0.5
+                "default": params["delta"]
             },
             "sensitivity": {
                 "description": "shrinking scale for VarBds (bounds)",
@@ -159,10 +159,22 @@ class NELDMD(Solver):
         # Initial dim + 1 random points
         sol = []
         sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
-        for i in range(1, n_pts):
-            rand_x = problem.get_random_solution(self.rng_list[1])
-            sol.append(self.create_new_solution(rand_x, problem))
-        # print("initial sol", [i.x for i in sol])   # DELETE
+        if lower_bounds == None or upper_bounds != None:
+            for i in range(1, n_pts):
+                sol.append(self.create_new_solution(rand_x, problem))
+        else:  # Restrict starting shape/location
+            i = 1
+            lower_box = tuple([5*(x+0.1) for x in lower_bounds])
+            upper_box = tuple([0.75*(x) for x in upper_bounds])
+            if problem.minmax[0] == -1:  # closer to lower bound for min
+                upper_box = tuple([50*(x+0.1) for x in lower_bounds])
+            elif problem.minmax[0] == 1:  # closer to upper bound for max
+                lower_box = tuple([0.5*(x) for x in upper_bounds])
+            while i < n_pts:
+                rand_x = problem.get_random_solution(self.rng_list[1])
+                if rand_x >= lower_box and rand_x <= upper_box:
+                    sol.append(self.create_new_solution(rand_x, problem))
+                    i += 1
 
         # Initialize larger than necessary (extra point for end of budget)
         n_calls = np.zeros(max_num_sol)
@@ -171,7 +183,7 @@ class NELDMD(Solver):
         fn_var = np.empty(max_num_sol, dtype=object)
         # Track overall budget spent
         budget_spent = 0
-        r = self.factors["r"]  # FOR INCREASING REPLICATIONS
+        r = self.factors["r"]  # for increasing replications
 
         # Start Solving
         # Evaluate solutions in initial structure
@@ -194,53 +206,18 @@ class NELDMD(Solver):
 
         # Reflect worst and update sort_sol
         # Maximization problem is converted to minimization by -z
-        loop = 0   # DELETE
         while budget_spent <= problem.factors["budget"]:
-            loop += 1    # DELETE
-            print("loop", loop)   # DELETE
-            # print([i.x for i in sort_sol])   # DELETE
             # Reflect worse point
             p_high = sort_sol[-1]  # current worst point
             p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
-            print("centroid", p_cent)   # DELETE
             orig_pt = p_high  # save the original point
             p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
                                                    tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
             p_refl_copy = p_refl
             p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
-            # # Reflect next worst point if out of bounds
-            # if p_refl != p_refl_copy:  # out of bounds
-            #     next_idx = -2
-            #     while (p_refl != p_refl_copy) and (-next_idx <= len(sort_sol)):
-            #         print("next worst", next_idx)
-            #         p_next = sort_sol[next_idx]  # next worst point
-            #         p_cent = tuple(np.mean(tuple([s.x for s in list(np.append(sort_sol[0:-2], sort_sol[next_idx+1:]))]), axis=0))  # centroid for other pts
-            #         print("centroid", p_cent)   # DELETE
-            #         orig_pt = p_next  # save the original point
-            #         p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
-            #                                             tuple(self.factors["alpha"]* x for x in p_next.x)))  # reflection
-            #         p_refl_copy = p_refl
-            #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, orig_pt.x)
-            #         next_idx += 1
 
-            # # Reflect less
-            # if p_refl != p_refl_copy:  # out of bounds
-            #     print("reflect less")  # DELETE
-            #     while p_refl != p_refl_copy:
-
-            #         # Attempt contraction or shrinking
-            #         p_refl2 = p_high
-            #         p_refl = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"]* x for x in p_high.x), 
-            #                                             tuple((1-self.factors["betap"])* x for x in p_refl_copy)))
-            #         p_refl_copy = p_refl
-            #         p_refl = self.check_const(lower_bounds, upper_bounds, p_refl, p_refl2.x)
-            #         # r += self.factors["r"]  # FOR INCREASING REPLICATIONS (change)
-            #         # print('bound: copy', p_refl_copy)  # DELETE
-            #         # print('bound: refl', p_refl)  # DELETE
-
-            # Shrink towards best
-            if p_refl != p_refl_copy:  # out of bounds
-                print("shrink")  # DELETE
+            # Shrink towards best if out of bounds
+            if p_refl != p_refl_copy:
                 while p_refl != p_refl_copy:
                     p_low = sort_sol[0]
                     for i in range(1, len(sort_sol)):
@@ -250,8 +227,8 @@ class NELDMD(Solver):
                         p_new = self.check_const(lower_bounds, upper_bounds, p_new, p_new2.x)
                         p_new= Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                        problem.simulate(p_new, r)  # FOR INCREASING REPLICATIONS
-                        budget_spent += r  # FOR INCREASING REPLICATIONS
+                        problem.simulate(p_new, r)
+                        budget_spent += r
                         new_fn_val = tuple([-1*x for x in problem.minmax])*p_new.objectives_mean
                         new_fn_var_val = p_new.objectives_var
                         
@@ -265,7 +242,6 @@ class NELDMD(Solver):
 
                     p_high = sort_sol[-1]  # current worst point
                     p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # centroid for other pts
-                    print("centroid", p_cent)   # DELETE
                     orig_pt = p_high  # save the original point
                     p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"])* x for x in p_cent), 
                                                         tuple(self.factors["alpha"]* x for x in p_high.x)))  # reflection
@@ -276,7 +252,7 @@ class NELDMD(Solver):
             # Evaluate reflected point
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-            problem.simulate(p_refl, r)   # STUCK HERE when solution is lb for chessmm (min)
+            problem.simulate(p_refl, r)
             budget_spent += r
             refl_fn_val = tuple([-1*x for x in problem.minmax])*p_refl.objectives_mean
             refl_fn_var_val = p_refl.objectives_var
@@ -287,14 +263,8 @@ class NELDMD(Solver):
             fn_sec = sort_fn_val[-2]  # current 2nd worst z
             fn_high = sort_fn_val[-1]  # worst z from unreflected structure
 
-            # print("sort_fn_val", sort_fn_val)   # DELETE
-            # print("best", fn_low)   # DELETE
-            # print("-2", fn_sec)     # DELETE
-            # print("refl", refl_fn_val)   # DELETE
-
             # Check if accept reflection
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
-                print("accept reflection")   # DELETE
                 sort_sol[-1] = p_refl  # the new point replaces the previous worst
                 sort_fn_val[-1] = refl_fn_val
                 sort_fn_var_val[-1] = refl_fn_var_val
@@ -306,7 +276,6 @@ class NELDMD(Solver):
 
             # Check if accept expansion (of reflection in the same direction)
             elif refl_fn_val < fn_low:
-                print("accept expansion")   # DELETE
                 p_exp2 = p_refl
                 p_exp = tuple(map(lambda i, j: i + j, tuple(self.factors["gammap"]* x for x in p_refl.x), 
                                                       tuple((1-self.factors["gammap"])* x for x in p_cent)))
@@ -354,7 +323,6 @@ class NELDMD(Solver):
             
             # Check if accept contraction or shrink
             elif refl_fn_val > fn_sec:
-                print("accept contraction")   # DELETE
                 if refl_fn_val <= fn_high:
                     p_high = p_refl  # p_refl replaces p_high
                     fn_high = refl_fn_val  # replace fn_high
@@ -368,12 +336,10 @@ class NELDMD(Solver):
                 # Evaluate contraction point
                 p_cont= Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                problem.simulate(p_cont, r)  # FOR INCREASING REPLICATIONS
-                budget_spent += r  # FOR INCREASING REPLICATIONS
+                problem.simulate(p_cont, r)
+                budget_spent += r
                 cont_fn_val = tuple([-1*x for x in problem.minmax])*p_cont.objectives_mean
                 cont_fn_var_val = p_cont.objectives_var
-                # Increase replications
-                # r += self.factors["r"]  # FOR INCREASING REPLICATIONS
 
                 # Accept contraction
                 if cont_fn_val <= fn_high:
@@ -406,8 +372,8 @@ class NELDMD(Solver):
                         p_new = self.check_const(lower_bounds, upper_bounds, p_new, p_new2.x)
                         p_new= Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                        problem.simulate(p_new, r)  # FOR INCREASING REPLICATIONS
-                        budget_spent += r  # FOR INCREASING REPLICATIONS
+                        problem.simulate(p_new, r)
+                        budget_spent += r
                         new_fn_val = tuple([-1*x for x in problem.minmax])*p_new.objectives_mean
                         new_fn_var_val = p_new.objectives_var
 
@@ -445,6 +411,7 @@ class NELDMD(Solver):
 
         recommended_solns = list(A)
         intermediate_budgets = list(n_calls)
+        
         return recommended_solns, intermediate_budgets
 
 
@@ -472,5 +439,4 @@ class NELDMD(Solver):
         for i in range(col):
             if abs(modified[i]) < self.factors["sensitivity"]:
                 modified[i] = 0
-        print("modified", modified, "pt", pt)   # DELETE
         return tuple(modified)
