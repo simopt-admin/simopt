@@ -71,7 +71,7 @@ class ProdSys(Model):
                 "default": [200,0,0,0,0,0]
             },
             "routing_layout": {
-                "description": "Layout matrix, list of edges",
+                "description": "Layout matrix, list of edges sequences for each product type",
                 "datatype": list,
                 "default": [[1,2],
                             [1,3],
@@ -216,15 +216,12 @@ class ProdSys(Model):
         #for i in range(len(self.factors["routing_layout"])):
            # edge_time[i] = ([self.factors["processing_time_mean"], self.factors["processing_time_StDev"]])
 
-        node_product = self.factors["interm_product"] 
-        
-        
         
         ############# List of Random Numbers Generated ##########
       
         rng_list = []                                                                               # Empty list to rng machine processing times, 
                                                                                                     # inter-arival times, and product type
-        for i=0 in range(num_machines -1):                                                          # Generate/attach random machine processing times for # of machines
+        for i=0 in range(num_machines):                                                             # Generate/attach random machine processing times for # of machines
             rng_list.append(random.normalvariate([self.factors["processing_time_mean"][i], self.facotrs["processing_time_StDev"][i]))       
            
         #order_arrival_time = order_arrival_time_rng.random.normal(loc=self.factors["Interarrival_Time_mean"], scale = self.factors["Interarrival_Time_StDev"])
@@ -248,35 +245,67 @@ class ProdSys(Model):
                                                   
                                                   
         
-        end_nodes = [4,5,6] # list of end nodes for order of product type(list index+1)
+        end_nodes = [4,5,6] # list of end nodes for order of product type(list index+1)      
+        node_product = self.factors["interm_product"] 
+        edge_routes = [[1,3],                                                                       # Product 1 edge sequence
+                   [[1,4],[2,5]],                                                                   # Product 2 possible edge sequences
+                   [2,6]]                                                                           # Product 3 edge sequence
         
+        ########### Find end node for product type #############
+        
+        # return end node and current/intermediate inventory at node
+        def check_node(node_product, end_nodes, product, routing):                                  # Replicate of intermediate product, list of end nodes, product type, routing_layout 
+            node = end_nodes[product-1]                                                             # Product's end node from list; (prod type-1) = position                                                  
+            inventory = node_product[node-1]                                                        # Inventory at node from replicated list of intermediate product
+            #if inventory = 0:      
+            #for i in range(len(routing)):
+             #   if routing[i][1] == node:
+              #      node = routing[i][0]
+               #     inventory = node_product[node-1]
+                #    if inventory != 0:
+                 #       break
+            return node, inventory
+
+                
 
         print(check_node(node_product, end_nodes, product,self.factors["routing_layout"]))
-        
-        
-        
-        ########### Find end node for product type ############
-        
-        # return end node/corresponding possible routes
-    def check_node(node_product, end_nodes, product, routing):
-        node = end_nodes[product]
-        inventory = node_product[node-1]
-        #if inventory = 0:
-        for i in range(len(routing)):
-            if routing[i][1] == node:
-                node = routing[i][0]
-                inventory = node_product[node-1]
-                if inventory != 0:
-                    break
-        return inventory, node
+                                                  
+    ######### Optimal path function #########
+                                                  
+        def get_nest_size(prod_seq):                                                                # Finds total length of (nested) list
+            count = 0
+            for elem in prod_seq:
+                if type(elem) == list:
+                    count += get_nest_size(elem)
+                else:
+                    count +=1
+            return count
+                                            
+                                                  
+        def get_proc_time(prod_seq, machine_layout, rng_list):                                      # Finds SINGLE path's total processing time.
+            total_time = 0                                                                          
+            for elem in prod_seq:                                                                   # For each element/edge in sequence
+                total_time += rng_list[(machine_layout[elem-1])-1]                                  # Add the respective machine's processing time from rng list
+            return total_time                                                                       # Returns path's total processing time.
+                    
+                                                  
+                                                  
+        def get_best_path(prod_seq, machine_layout, rng_list)):                                     # Get optimal path from list of MULTIPLE sequences 
+            min_time = time_horizon                                                                 # Set min_time to max time 
+            for elem in prod_seq:                                                                   # For every sequence in the list of possible paths                                                                                              
+                    sum_time = get_proc_time(prod_seq[elem], machine_layout, rng_list)              # Sums up machine processing time for current sequence                       
+                    if sum_time < min_time:
+                        min_time = sum_time                                                         # Track minimum processing time possible
+                        seq = prod_seq[elem]                                                        # Sequence with smallest processing time       
+            return min_time, seq                                                                    # return sequence and total process time
+                                                  
 
+                                                  
+        if get_nest_size(edge_routes[product-1]) > num_products-1:                                  # If there are multiple paths; more total elements than number of required edges for a single path 
+            get_best_path(edge_routes[product-1], machine_layout, rng_list)                         # Find path with the minimum processing time 
+        else:
+            get_proc_time(edge_routes[product-1], machine_layout, rng_list)                         # Find total processing time of single path
+                                         
     
-    ######### Optimal path fucntion ########
-    
-    # get possible paths 
-    
-    # add processing time and keep track of minimum sum
-    
-    # return sequence and total process time
 
 
