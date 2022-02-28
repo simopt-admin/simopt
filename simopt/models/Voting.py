@@ -221,10 +221,10 @@ class Voting(Model):
             
 
             arr_times = []
-            t = expovariate(p_lamda)              #initial arrival
+            t = random.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
-                t = expovariate(p_lamda) + t
+                t = random.expovariate(p_lamda) + t #list is time at which each person arrives
 
             voting_times = []
             wait_time = [] 
@@ -240,7 +240,7 @@ class Voting(Model):
                 else: #Starting machine availablility, numbers represent at what time the machine BECOMES available
                     available.append(mach_delay[i])   
             x = 0 #this is the person we are currently attending to
-            
+            '''
             for i in range(self.factors("hours")*60): #this is the loop that will go through the day
                 for j in range(len(available)):
                     if available[j] == 0:
@@ -256,18 +256,15 @@ class Voting(Model):
                     if i >= arr_times[j]:
                         wait_time[j] += 1
 
+            '''
+
 
        #time that machine becomes available
-
-            t = 0   
-            votes = 
-        #going to collect all wait times of voters
-            while votes <= len(arr_times): 
-                #start iterating by times, break for the smallest next time
-
+        count = 0
+        while
             
-
-
+        #[next arrival, next available machine 1, next available machine 2, maching 3....]
+        
         # Compose responses and gradients.
         responses = {'stockout_flag': stockout_flag,
                      'n_fac_stockout': n_fac_stockout,
