@@ -233,6 +233,7 @@ class Voting(Model):
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
             
+            '''
             available = []
             for i in range(self.factors["mach_allocation"][i]):
                 if mach_delay[i] == 0:
@@ -240,7 +241,7 @@ class Voting(Model):
                 else: #Starting machine availablility, numbers represent at what time the machine BECOMES available
                     available.append(mach_delay[i])   
             x = 0 #this is the person we are currently attending to
-            '''
+            
             for i in range(self.factors("hours")*60): #this is the loop that will go through the day
                 for j in range(len(available)):
                     if available[j] == 0:
@@ -258,12 +259,26 @@ class Voting(Model):
 
             '''
 
-
-       #time that machine becomes available
-        count = 0
-        while
+         #[next arrival, next available machine 1, next available machine 2, maching 3....]
+      
+        votes = 0       #keeps track of # of votes that have been cast (entity exiting the system)
+        clock = arr_times[0]
+        next_event = []
+        next_event.append(arr_times[1]) #system starts at first arrival
+        queue = 1   #start with first entity entering the system
+        vote_index = []     # tells loop where to go in the index to get next rng for x machine or next arrival [next_arrival, machine 1, machine 2, ... machine n]
+        for a in mach_delay:            # gives the delay times for the events
+            next_event.append(a)
+            rng_index.append(0)
+        while votes <= len(range(arr_times)): #arrival times are caluclated for open period, this allows for it to finish after last arrival leave
+            if queue > 0 and min(next_event) > 0:
+                queue -= 1
+                vote_index[min(next_event)] = min(next_event) + 1       #very lost here 
+                
             
-        #[next arrival, next available machine 1, next available machine 2, maching 3....]
+
+
+
         
         # Compose responses and gradients.
         responses = {'stockout_flag': stockout_flag,
