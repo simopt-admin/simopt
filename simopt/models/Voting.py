@@ -224,10 +224,10 @@ class Voting(Model):
             
 
             arr_times = []
-            t = expovariate(p_lamda)              #initial arrival
+            t = random.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
-                t = expovariate(p_lamda) + t
+                t = random.expovariate(p_lamda) + t #list is time at which each person arrives
 
             for i in range(len())
 
@@ -238,6 +238,7 @@ class Voting(Model):
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
             
+            '''
             available = []
             for i in range(self.factors["mach_allocation"][i]):
                 if mach_delay[i] == 0:
@@ -261,18 +262,29 @@ class Voting(Model):
                     if i >= arr_times[j]:
                         wait_time[j] += 1
 
+            '''
 
-       #time that machine becomes available
-
-            t = 0   
-            votes = 
-        #going to collect all wait times of voters
-            while votes <= len(arr_times): 
-                #start iterating by times, break for the smallest next time
-
+         #[next arrival, next available machine 1, next available machine 2, maching 3....]
+      
+        votes = 0       #keeps track of # of votes that have been cast (entity exiting the system)
+        clock = arr_times[0]
+        next_event = []
+        next_event.append(arr_times[1]) #system starts at first arrival
+        queue = 1   #start with first entity entering the system
+        vote_index = []     # tells loop where to go in the index to get next rng for x machine or next arrival [next_arrival, machine 1, machine 2, ... machine n]
+        for a in mach_delay:            # gives the delay times for the events
+            next_event.append(a)
+            rng_index.append(0)
+        while votes <= len(range(arr_times)): #arrival times are caluclated for open period, this allows for it to finish after last arrival leave
+            if queue > 0 and min(next_event) > 0:
+                queue -= 1
+                vote_index[min(next_event)] = min(next_event) + 1       #very lost here 
+                
             
 
 
+
+        
         # Compose responses and gradients.
         responses = {'stockout_flag': stockout_flag,
                      'n_fac_stockout': n_fac_stockout,
