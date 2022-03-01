@@ -305,6 +305,46 @@ class Voting(Model):
                 queue -= 1
                 vote_index[min(next_event)] = min(next_event) + 1       #very lost here 
                 
+        #brainstorming? just foolin around
+        next_arrival = arr_times.pop()
+        k = 0 
+        '''
+       entity_dic = {
+            "arrival": 0, 
+            "voting_time": 0, 
+            "queue_time": 0
+        }
+        entities = []
+        entities.append(entity_dic)
+        ^^^^ if we decide to make a dictionary
+        '''
+        for i in range(len(mach_delay)):
+            if mach_delay[i]==0:
+                mach_delay[i] = -1
+        start = next_arrival is not None
+        while start:
+            used_machines = [machine for machine in mach_delay if machine != -1]
+            soonest_finito_machino = min(used_machines)
+            #while loop makes sure the arrival time of the person is less than when the next machine will finish
+            while next_arrival < soonest_finito_machino:
+                for i in range(len(mach_delay)):
+                    if mach_delay[i] == -1:
+                        mach_delay[i] = next_arrival + voting_times[k]
+                        k+=1
+                        next_arrival = arr_times.pop()
+                        break
+            # now we know the next significant event is a machine opening
+            # need to get the soonest finishing machine, make it finsish = -1, advance time and add next person... need dictionary
+            finito = min(mach_delay)
+            ind = mach_delay.index(finito)
+            mach_delay[ind] = -1
+            # now we need a queue where people are put into if there are no machines available and a way to track the amount of time they spend in the queue
+            # which would need to be done through a clock?
+        '''
+        thinking about dictionary
+        need a dictionary for every person: one entry for arrival time, voting time, and waiting time
+        list of dictionaries will have every entity's stats
+        '''
             
 
 
