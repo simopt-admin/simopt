@@ -232,7 +232,37 @@ class Voting(Model):
                 wait_time.append(0)
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+
+            #one for loop that goes over the course of the day
+            #for person in arr_tiimes
+            # see if there is an open machine
+            #machines = [-1 for i in range(num_machines)]
+            # indexof(-1) in machines, checks if there is a -1 in the list 
+            # if none open: add person to queue, so check queue before doing index, if person waiting then the person appended to queue and care about person at the front
+            # arr_times.pop()
+            '''
+            THE PLAN: 
+            each iteration of the loop advance value by min value of machine delay list
+            process first person 
+            add them to machine
+            check to see when machine finishes
+            add ppl to queue w arrival times < machine finish time
+            arr_time.pop()
+            while a=true
+            add person to machine
+            check when machine ends
             
+            we should use queue and dictionary
+            need to find soonest finishing machine change it to -1
+            
+            '''
+            #while person:
+            # check if open machine
+            # figure out voting_time maybe not in loop
+            # add person
+            #
+
+
             '''
             available = []
             for i in range(self.factors["mach_allocation"][i]):
