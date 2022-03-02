@@ -23,7 +23,7 @@ Starting Solutions: :math:`Xi = 1500`
 
 Sources of Randomness:
 ----------------------
-1 random demand vector :math: `ξ` follows a multivariate normal distribution and correlation coefficient :math:`ρi,j = 0.8` , :math:`i != j` .
+1 random demand vector :math:`ξ` follows a multivariate normal distribution and correlation coefficient :math:`ρi,j = 0.8` , :math:`i != j` .
 
 Model Factors:
 --------------
