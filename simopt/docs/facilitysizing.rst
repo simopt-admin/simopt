@@ -88,10 +88,10 @@ Constraints:
 Problem Factors:
 ----------------
 * epsilon: Maximum allowed probability of stocking out.
-  * Default: 0.05
+      * Default: 0.05
   
 * installation_costs: Cost to install a unit of capacity at each facility 
-  * Default: (1, 1, 1)
+      * Default: (1, 1, 1)
 
 Fixed Model Factors:
 --------------------
