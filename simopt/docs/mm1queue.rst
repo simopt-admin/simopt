@@ -41,8 +41,7 @@ If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`
     The utilization rate x is the decision variable in this M/M/1 queue Metamodeling problem
 
 *Objective:*
-    Find \beta_0, \beta_1 and \beta_2 to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, with the analysis of the relation between
-    utilization rate and waiting time.
+    The goal is to minimize the average sojourn time and cost with the increase of service rate.
 
 *Constraints:* 
     The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.
