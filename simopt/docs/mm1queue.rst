@@ -60,8 +60,8 @@ If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`
     Number of estimations of :math:`\bar{f} (x_i)` made.
 
 *Starting Solutions:* 
-    Take :math:`\beta_1 = 1`, and :math:`\beta_1 = \beta_2 = 0`. 
+    
 
 
 *Optimal Solution:* 
-    :math:`\beta_0 = \beta_2 = 0` and :math:`\beta_1 = 1`.
+    
