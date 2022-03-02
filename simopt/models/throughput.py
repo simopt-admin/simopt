@@ -143,9 +143,14 @@ class Throughput(Model):
         
         terminate = False
         service_rng = rng_list[2]
-        service_times = ([service_rng.expovariate(self.factors["processing_rate"])
-                         for _ in range(total)])
         
+        station_service = []
+        
+        for i in 3:
+            service_times = ([service_rng.expovariate(self.factors["processing_rate"])
+                         for _ in range(total)])
+            station_service[i] = service_times
+            
         # For each part, track 6 quantities:
         #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
         #   - Time at which the part ends processing at Station 1.
