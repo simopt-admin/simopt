@@ -1,4 +1,4 @@
-Model: FacilitySizing (facilitysizing)
+Model: Facility Sizing
 ==========================================
 
 Description:
@@ -7,24 +7,14 @@ Description:
 The facility-sizing problem is formulated as follows: :math:`m` facilities are to be installed, each with capacity
 :math:`xi ≥ 0, i = 1, . . . , m`. Then the random demand :math:`ξi` arrives at facility :math:`i`, with a known joint distribution
 of the random vector :math:`ξ = (ξ1, . . . , ξm)`.
-Our goal is to keep the cost of installation as well as the probability of violating demand low. 
-A realization of the demand, :math:`ξ = (ξ1, . . . , ξm)`, is said to be satisfied by the capacity :math:`x` if :math:`xi ≥ ξi, ∀i = 1, . . . , m`. 
-Thus the risk of failing to satisfy demand :math:`ξ = (ξ1, . . . , ξm)` is :math:`p(x) = P(ξ  x)`. Let :math:`epsilon ∈ [0, 1]` be a risk-level parameter, then we obtain the probabilistic constraint:
 
-:math:`P(ξ  x) ≤ epsilon`
-Meanwhile, the unit cost of installing facility i is :math:`ci`, and hence the total cost is :math:`h(x) = Pmi=1 cixi`. 
+A realization of the demand, :math:`ξ = (ξ1, . . . , ξm)`, is said to be satisfied by the capacity :math:`x` if :math:`xi ≥ ξi, ∀i = 1, . . . , m`. 
 
 The facility-sizing problem then can be formulated as
 min :math:`SUM cixi`
 
 s.t. :math:`P(ξ !<= x) ≤ epsilon`
 :math:`x ≥ 0`
-
-
-Recommended Parameter Settings: 
-
-Suppose there are :math:`m = 40` facilities and the per unit cost
-for each facility i is :math:`ci = 1`. The demand vector :math:`ξ` follows a multivariate normal distribution with mean10 and variance 1 for each component, and correlation coefficient :math:`ρi,j = 0.8` , :math:`i != j`. Furthermore, :math:`ξ` is truncated so that :math:`ξ ≥ 0`. :math:`epsilon = 5%`.
 
 
 Starting Solutions: :math:`Xi = 1500` 
@@ -81,9 +71,15 @@ This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Es
 Optimization Problem: FacilitySizingTotalCost (Problem) (facilitysizing)
 ========================================================
 
+Our goal is to keep the cost of installation as well as the probability of violating demand low. 
+
+Thus the risk of failing to satisfy demand :math:`ξ = (ξ1, . . . , ξm)` is :math:`p(x) = P(ξ  x)`. Let :math:`epsilon ∈ [0, 1]` be a risk-level parameter, then we obtain the probabilistic constraint:
+
+:math:`P(ξ  x) ≤ epsilon`
+Meanwhile, the unit cost of installing facility i is :math:`ci`, and hence the total cost is :math:`h(x) = Pmi=1 cixi`. 
+
 Decision Variables:
 -------------------
-* :math:`x`:inventory at each facility 
 * :math:`capacity` 
 
 Objectives:
