@@ -27,16 +27,16 @@ Sources of Randomness:
 
 Model Factors:
 --------------
-* mu: Location parameters if the multivariate normal distribution
+* :math:`mu`: Location parameters if the multivariate normal distribution
     * Default: [100,100,100]
 
-* sigma: Covariance of multivariate normal distribution
+* :math:`sigma`: Covariance of multivariate normal distribution
     * Default: [[2000, 1500, 500,], [1500, 2000, 750], [500, 750, 2000]]
 
-* Capacity: Facility's inventory capacity
+* :math:`Capacity`: Facility's inventory capacity
     * Default: [150, 300, 400]
 
-* n_facility: The number of facilities
+* :math:`n_facility`: The number of facilities
     * Default: 3
 
 
