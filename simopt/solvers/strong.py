@@ -66,12 +66,12 @@ class STRONG(Solver):
             "n0": {
                 "description": "Initial sample size",
                 "datatype": int,
-                "default": 3
+                "default": 10
             },
             "r": {
                 "description": "Number of replications taken at each solution",
                 "datatype": int,
-                "default": 2
+                "default": 10
             },
             "sensitivity": {
                 "description": "shrinking scale for VarBds",
@@ -382,13 +382,9 @@ class STRONG(Solver):
         grad = np.zeros(problem.dim)
         Hessian = np.zeros((problem.dim, problem.dim))
 
-        cnt = 0
         while (np.all((grad == 0))):
-            cnt += 1
-            if (cnt > 1):
-                print('count', cnt)
-        # if True:
-
+            if expended_budget >= problem.factors["budget"]:
+                break
             for i in range(problem.dim):
                 # initialization
                 x1 = list(new_x)
@@ -571,7 +567,7 @@ class STRONG(Solver):
             # print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
-        print('expended_budget', expended_budget)
+            print('expended_budget', expended_budget)
         return grad, Hessian, expended_budget
     
 
