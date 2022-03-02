@@ -23,52 +23,44 @@ Starting Solutions: :math:`Xi = 1500`
 
 Sources of Randomness:
 ----------------------
-1 random demand vector :math: `ξ` follows a multivariate normal distribution with mean
-10 and variance 1 for each component, and correlation coefficient :math:`ρi,j = 0.8` , :math:`i != j` .
+1 random demand vector :math: `ξ` follows a multivariate normal distribution and correlation coefficient :math:`ρi,j = 0.8` , :math:`i != j` .
 
 Model Factors:
 --------------
-* mean_vec: Location parameters if the multivariate normal distribution
-    * Dataype: list
+* mu: Location parameters if the multivariate normal distribution
     * Default: [100,100,100]
 
-* cov: Covariance of multivariate normal distribution
-    * Datatype: list
+* sigma: Covariance of multivariate normal distribution
     * Default: [[2000, 1500, 500,], [1500, 2000, 750], [500, 750, 2000]]
 
-* capacity: Capactiy
-    * Datatype: list
+* Capacity: Facility's inventory capacity
     * Default: [150, 300, 400]
 
-* n_fac: The number of facilities
-    * Datatype: integer
+* n_facility: The number of facilities
     * Default: 3
 
-* inventory: Inventory at a facility 
-    * Datatype: integer
-    * Default: 0
-    
+
 Respones:
 ---------
-* :math:`stockout_flag`: binary variable;
+* :math:`stockout_flag`:
                   0: all facilities satisfy the demand 
                            1: at least one of the facilities did not satisfy the demand
 
-* :math:`n_fac_stockout`: integer value;
+* :math:`n_stockout`:
                   the number of facilities which cannot satisfy the demand
 
-* :math:`n_cut`: integer value; 
+* :math:`n_cut`:
           the number of total demand which cannot satisfy the demand 
 
 
 References:
 ===========
-This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Estimating the Efficient Frontier of a Probabilistic Bicriteria Model. Proceedings of the 2009 Winter Simulation Conference. 
+This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Estimating the Efficient Frontier of a Probabilistic Bicriteria Model. Proceedings of the 2009 Winter Simulation Conference. https://www.informs-sim.org/wsc09papers/048.pdf
 
 
 
 
-Optimization Problem: FacilitySizingTotalCost (Problem) (facilitysizing)
+Optimization Problem: Minimize Total Cost (facilitysizing)
 ========================================================
 
 Our goal is to keep the cost of installation as well as the probability of violating demand low. 
@@ -91,23 +83,19 @@ Constraints:
 ------------
 1 stocahstic consraint: :math:`P(Stockout)` <= :math:`epsilon`
 1 deterministic constraints: :math:`x`
-1 box constraint: 0 < :math:`x` < infintiy
+1 box constraint: 0 < :math:`x` < infinity
 
 Problem Factors:
 ----------------
-* epsilon: maximum allowed probability of stocking out.
-* Datatype: float 
+* epsilon: Maximum allowed probability of stocking out.
   * Default: 0.05
   
 * installation_costs: Cost to install a unit of capacity at each facility 
-* Datatype: tuple
   * Default: (1, 1, 1)
 
 Fixed Model Factors:
 --------------------
-* meanA_vec: [100, 100, 100]
-
-* cov: [[2000, 1500, 500], [1500, 2000, 750], [500, 750,2000]]
+None
 
 Starting Solution: 
 ------------------
@@ -121,11 +109,11 @@ Random Solutions:
 
 Optimal Solution:
 -----------------
-<if known, otherwise unknown>
+None
 
 Optimal Objective Function Value:
 ---------------------------------
-<if known, otherwise unknown>
+None
 
 
 Optimization Problem: <problem_name> (<problem_abbrev>)
