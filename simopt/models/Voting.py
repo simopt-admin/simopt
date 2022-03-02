@@ -237,7 +237,37 @@ class Voting(Model):
                 wait_time.append(0)
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+
+            #one for loop that goes over the course of the day
+            #for person in arr_tiimes
+            # see if there is an open machine
+            #machines = [-1 for i in range(num_machines)]
+            # indexof(-1) in machines, checks if there is a -1 in the list 
+            # if none open: add person to queue, so check queue before doing index, if person waiting then the person appended to queue and care about person at the front
+            # arr_times.pop()
+            '''
+            THE PLAN: 
+            each iteration of the loop advance value by min value of machine delay list
+            process first person 
+            add them to machine
+            check to see when machine finishes
+            add ppl to queue w arrival times < machine finish time
+            arr_time.pop()
+            while a=true
+            add person to machine
+            check when machine ends
             
+            we should use queue and dictionary
+            need to find soonest finishing machine change it to -1
+            
+            '''
+            #while person:
+            # check if open machine
+            # figure out voting_time maybe not in loop
+            # add person
+            #
+
+
             '''
             available = []
             for i in range(self.factors["mach_allocation"][i]):
@@ -280,6 +310,65 @@ class Voting(Model):
                 queue -= 1
                 vote_index[min(next_event)] = min(next_event) + 1       #very lost here 
                 
+        #brainstorming? just foolin around
+
+        '''
+       entity_dic = {
+            "arrival": 0, 
+            "voting_time": 0, 
+            "queue_time": 0
+        }
+        entities = []
+        entities.append(entity_dic)
+        ^^^^ if we decide to make a dictionary
+        '''
+        next_arrival = arr_times.pop()
+        k = 0 
+        for i in range(len(mach_delay)):
+            if mach_delay[i]==0:
+                mach_delay[i] = -1
+        start = next_arrival is not None
+        clock_ind = 0
+        line_in_system = []
+        while start:
+            used_machines = [machine for machine in mach_delay if machine != -1]
+            soonest_finished_machine = min(used_machines)
+            if soonest_finished_machine is None:
+                for i in range(len(mach_delay)):                    
+                    mach_delay[i] = next_arrival + voting_times[k]
+                    k+=1
+                    next_arrival = arr_times.pop()
+            #while loop makes sure the arrival time of the person is less than when the next machine will finish
+            while next_arrival < soonest_finished_machine:
+                for i in range(len(mach_delay)):
+                    if mach_delay[i] == -1:
+                        counter+=1
+                        mach_delay[i] = next_arrival + voting_times[k]
+                        k+=1
+                        next_arrival = arr_times.pop()
+                        continue
+                line_in_system.append(next_arrival)
+                
+                        
+            # now we know the next significant event is a machine opening
+            # need to get the soonest finishing machine, make it finsish = -1, advance time and add next person... need dictionary
+            finito = min(mach_delay)
+            ind = mach_delay.index(finito)
+            mach_delay[ind] = -1
+            # now we need a queue where people are put into if there are no machines available and a way to track the amount of time they spend in the queue
+            # which would need to be done through a clock?
+            start = next_arrival is not None
+        '''
+        thikin about clock and figuring out waiting time...
+
+        we are going to need to do some subtraction:
+        
+        when a machine opens up:
+        12 min there are people in line
+        they got in line at their arrival time
+        subtract the time in the machine (voting time + arrival time) from the arrival time of the entity going in
+
+        '''
             
 
 
