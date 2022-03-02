@@ -72,7 +72,7 @@ Meanwhile, the unit cost of installing facility i is :math:`ci`, and hence the t
 
 Decision Variables:
 -------------------
-* :math:`capacity` 
+* :math:`Capacity` 
 
 Objectives:
 -----------
