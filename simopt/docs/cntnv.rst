@@ -7,7 +7,7 @@ In this particular problem, a vendor orders a fixed quantity of liquid, assigned
 each working day to be sold to customers throughout the day. The quantity of liquid ordered has a cost to the vendor,
 :math:`c`, and a price at which the vendor sells it to the customer, :math:`s`. At the end of the day, if there is a quantity of liquid
 that has not been sold, it can be salvaged at a price, :math:`w`. The demand each day can be determined by a Burr Type XII 
-distribution, it is denoted by :math:`D` and contains the parameters, alpha and beta. The Burr Type XII Distribution can have 
+distribution, it is denoted by :math:`D` and contains the parameters, :math:`α` and :math:`β`. The Burr Type XII Distribution can have 
 values that range anywhere from :math:`[0,∞)` and it also has a cumulative distribution function that is 
 represented by the equation, :math:`F(x) = 1 - (1-x^α)^{-β}` where :math: `x, α,` and :math:`β` are all positive. There is a simulation that can 
 calculate random variates from the Burr Type XII distribution. Ultimately, the goal of this problem is to determine the 
@@ -36,7 +36,7 @@ Responses:
 
 References: 
 
-This model is adapted from Dr. Eckman's
+This model is adapted from Dr. Eckman's SimOpt Problems Library, CtsNews Folder.
 
 Optimization Problem: Continuous Newsvendor
 ===========================================
