@@ -146,7 +146,7 @@ class Throughput(Model):
         
         station_service = []
         
-        for i in 3:
+        for i in range(3):
             service_times = ([service_rng.expovariate(self.factors["processing_rate"])
                          for _ in range(total)])
             station_service[i] = service_times
@@ -163,7 +163,7 @@ class Throughput(Model):
         # Corresponds to first part    
         part_number = 0
 
-        # Store these in a list of lists: outer level = each part, inner level = 4 values.
+        # Store these in a list of lists: outer level = each part, inner level = 6 values.
 
         # When we encounter a part that enters the system after the end of the horizon,
         # we terminate the simulation.
@@ -172,11 +172,11 @@ class Throughput(Model):
             if part_number == 0:
                 # Record the first part's experience.
                 begin_proc_station1 = 0
-                end_proc_station1 = service_times
-                begin_proc_station2 = service_times
-                end_proc_station2 = service_times + service_times
-                begin_proc_station3 = service_times + service_times
-                end_proc_station3 = service_times + service_times + service_times
+                end_proc_station1 = station_service[0]
+                begin_proc_station2 = station_service[0]
+                end_proc_station2 = station_service[0] + station_service[1]
+                begin_proc_station3 = station_service[0] + station_service[1]
+                end_proc_station3 = station_service[0] + station_service[1] + station_service[2]
                 parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
                 part_times.append(parts_experience)
 
@@ -232,10 +232,10 @@ class Throughput(Model):
 
         # Record summary statistics.
         enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < self.factors["runlength"]])
-        exit_times = np.array([parts_experience[3] for parts_experience in part_times if parts_experience[3] < self.factors["runlength"]])
+        exit_times = np.array([parts_experience[5] for parts_experience in part_times if parts_experience[5] < self.factors["runlength"]])
 
         # Calculate throughput.
-        throughput = np.sum(exit_times < self.factors["runlength"])
+        throughput = 50 / np.sum(exit_times < self.factors["runlength"])
 
         # Construct the WIP trajectory.
         WIP_change_times = np.concatenate((enter_times, exit_times))
@@ -491,7 +491,7 @@ class throughputMaximize(Problem):
         buffer_feasible = super().check_deterministic_constraints(x)
         servicetime_feasible = super().check_deterministic_constraints(x)
         
-        return x[0] > 0
+        return buffer_feasible, servicetime_feasible
 
     def get_random_solution(self, rand_sol_rng):
         """

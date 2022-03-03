@@ -6,6 +6,7 @@ sets up pseudorandom number generators, and runs one or more replications.
 
 import sys
 import os.path as o
+
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import random number generator.
@@ -15,7 +16,7 @@ from rng.mrg32k3a import MRG32k3a
 # Replace <filename> with name of .py file containing model class.
 # Replace <model_class_name> with name of model class.
 # Ex: from models.mm1queue import MM1Queue
-from models.<filename> import <model_class_name>
+from models.throughput import Throughput
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
@@ -27,7 +28,7 @@ fixed_factors = {}  # Resort to all default values.
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = <model_class_name>(fixed_factors)
+mymodel = Throughput(fixed_factors)
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
