@@ -1,12 +1,10 @@
+Model: Hotel Revenue Management (HOTEL)
+==========================================
 
-Hotel Revenue Management
-========================
-
-Most of the revenue for a hotel comes from guests staying in its rooms; since this
-resource is constrained by the capacity in each hotel, let it be :math:`C`, one goal
-may be to maximize expected revenue given the distribution of demands.
-
-Assume a given hotel has only two rates: rack rate and discount rate, which pay :math:`p_f`
+Description:
+------------
+Most of the revenue for a hotel comes from guests staying in its rooms. Assume a
+given hotel has only two rates: rack rate and discount rate, which pay :math:`p_f`
 and :math:`p_d` per night, respectively. Furthermore, let each different combination
 of length of stay, arrival date and rate paid be a "product" so that the following
 56 products are available to satisfy one week's worth of capacity (14 arriving Monday,
@@ -26,13 +24,13 @@ rate :math:`\lambda_i`, noting that orders for a Monday night stay stop arriving
 3 AM Tuesday night, for a Tuesday night stay at 3 AM Wednesday and so on.
 
 With this in mind, our goal is to find a set of booking limits (:math:`b_1, ..., b_{56}`)
-that maximizes expected revenue. Under this model, the booking limits are controls
+that maximizes an objective. Under this model, the booking limits are controls
 that limit the amount of capacity that can be sold to any particular product; i.e.,
 they represent the maximum number of requests of product :math:`i` we are willing to
 accept. We must note that the booking limits do not represent the number of rooms
 reserved for each product, rather, they represent the number of rooms available to
 this product and all products that use the same resources and have a higher booking limit.
-For example, if we have five products and all of them require the same resource (say
+For example, if we have five products and all of them require the same resource (say capacity
 :math:`C = 10`) and their corresponding booking limits are :math:`b_1 = 10, b_2 = 8,
 b_3 = 4, b_4 = 2, b_5 = 1`, we know we can only take 1 request for product 5, 2 requests
 for product 4 and so on. However, this **does not mean that 2 rooms will be saved**
@@ -92,16 +90,107 @@ at least one of the resources). For this small example, we have:
   :alt: The HOTEL matrix has failed to display
   :width: 300
 
-*Recommended Parameter Settings:* :math:`C = 100, p_d = 100, p_f = 200`. Take :math:`\lambda_i =
-\frac{1}{168}, \frac{2}{168}, \frac{3}{168}, \frac{2}{168}, \frac{1}{168}, \frac{0.5}{168},
-\frac{0.25}{168}` for 1-night, 2-night, ..., 7-night stay respectively.
+Sources of Randomness:
+----------------------
+1. Stationary Poisson process with rate :math:`\lambda_i` for arrivals of each product.
 
-*Starting Solution(s):* :math:`b_i = C`. If multiple solutions are needed, let each
-:math:`b_i` be distributed Uniformly :math:`(0,C)`.
+Model Factors:
+--------------
+* num_products: Number of products: (rate, length of stay).
 
-*Measurement of Time:* Start taking orders one week in advance of the start of simulation
-(:math:`t = -168` hours) up until Sunday night.
+    * Default: 56
 
-*Recommended Budgets:* None.
+* lambda: Arrival rates for each product.
 
-*Optimal Solution:* Unknown.
+    * Default: Take :math:`\lambda_i = \frac{1}{168}, \frac{2}{168}, \frac{3}{168}, \frac{2}{168}, \frac{1}{168}, \frac{0.5}{168}, \frac{0.25}{168}` for 1-night, 2-night, ..., 7-night stay respectively.
+
+* num_rooms: Hotel capacity.
+
+    * Default: 100
+
+* discount_rate: Discount rate.
+
+    * Default: 100
+
+* rack_rate: Rack rate (full price).
+
+    * Default: 200
+
+* product_incidence: Incidence matrix.
+
+    * Default: Let each row be a resource available and each column a product,
+    having a 1 in entry :math:`(i,j)` if product :math:`j` uses resource :math:`i`, and 0
+    otherwise.
+
+* time_limit: Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).
+
+    * Default: list of 14 27's, 12 51's, 10 75's, 8 99's, 6 123's, 4 144's, and 2 168's
+
+* time_before: Hours before t=0 to start running (e.g. 168 means start at time -168).
+
+    * Default: 168
+
+* runlength: Runlength of simulation (in hours) after t=0.
+
+    * Default: 168
+
+* booking_limits: Booking limits.
+
+    * Default: tuple of 56 100's
+
+Respones:
+---------
+* revenue: Expected revenue.
+
+
+References:
+===========
+n/a
+
+
+
+
+Optimization Problem: HotelRevenue (HOTEL-1)
+========================================================
+
+Decision Variables:
+-------------------
+* booking_limits
+
+Objectives:
+-----------
+Maximize the expected revenue.
+
+Constraints:
+------------
+Lower bounded by 0 and upper bounded by the total number of rooms.
+
+Problem Factors:
+----------------
+* initial_solution: Initial solution.
+
+  * Default: tuple([0 for _ in range(56)])
+  
+* budget: Max # of replications for a solver to take.
+
+  * Default: 10000
+
+Fixed Model Factors:
+--------------------
+* n/a
+
+Starting Solution: 
+------------------
+* initial_solution: tuple([0 for _ in range(56)])
+
+Random Solutions: 
+------------------
+Let each :math:`b_i` (element in tuple) be distributed Uniformly :math:`(0,C)`.
+
+Optimal Solution:
+-----------------
+Unknown
+
+Optimal Objective Function Value:
+---------------------------------
+Unknown
