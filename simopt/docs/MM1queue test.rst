@@ -1,13 +1,12 @@
-Model: <model_name> (<model_abbreviation>)
+Model: M/M/1 Queue
 ==========================================
 
 Description:
 ------------
-<A paragraph describing the stochastic model. Use math if it is helpful.>
-
-Sample math... :math:`S = 1500`
-
-Sample math... 
+This is the model simulates an M/M/1 queue with an Exponential
+interarrival time distribution and an Exponential service time
+distribution, The optimal objective is to minimize the average sojourn time 
+for each entities enter the stations. (M/M/1: A stochastic process Represents a flow system with a certain state space)
 
 .. math::
 
@@ -26,18 +25,14 @@ Model Factors:
 * people: Represents the number of people from which to calculate the average sojourn time.
 
     * Default: 200
-
-* <factor3name>: <short description>
-
-    * Default: <default value>
-
+  
 Respones:
 ---------
-* average sojourn time: <short description>
+* avg_sojourn_time: The average of sojourn time calculated using data stored in customers' matrix
 
-* the average waiting time: <short description>
+* avg_waiting_time: The average of waiting time calculated using data stored in customers' matrix
 
-* fraction of customers wait: <short description>
+* frac_cust_wait: The fraction of customers waiting
 
 
 References:
@@ -47,40 +42,45 @@ This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of 
 
 
 
-Optimization Problem: Since the model simulates an M/M/1 queue with an Exponential
-    interarrival time distribution and an Exponential service time
-    distribution, The optimal objective is to minimize the average sojourn time 
-    for each entities enter the stations. (<problem_abbrev>)
+
+Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
 ========================================================
+
 
 Decision Variables:
 -------------------
-* <dv1name that matches model factor name>
-* <dv2name that matches model factor name>
+* mu
+
 
 Objectives:
 -----------
-<Description using response names. Use math if it is helpful.>
+The goal is to minimize the average sojourn time of this M/M/1 Queue under certain cost and numbers of replications.
 
 Constraints:
 ------------
-<Description using response names. Use math if it is helpful.>
+No deterministic and stochastic constraints described.
 
 Problem Factors:
 ----------------
-* <factor1name>: <short description>
+* lambda: Rate parameter of interarrival time distribution between entities
 
-  * Default: <default value>
+  * Default: 1.5
   
-* <factor2name>: <short description>
+* mu: Rate parameter of service time distribution
 
-  * Default: <default value>
+  * Default: 3.0
+
+* warmup: Number of people as warmup before collecting statistics
+  
+  * Default: 20
+
+* people: Number of people from which to calculate the average sojourn time
+  
+  * Default: 50
 
 Fixed Model Factors:
 --------------------
-* <factor1name>: <fixed value>
-
-* <factor2name>: <fixed value>
+None
 
 Starting Solution: 
 ------------------
@@ -90,7 +90,7 @@ Starting Solution:
 
 Random Solutions: 
 ------------------
-<description of how to generate random solutions>
+Using random-number generator rng.MRG32k3a object to generate random solutions from starting or restarting solvers
 
 Optimal Solution:
 -----------------
@@ -101,7 +101,7 @@ Optimal Objective Function Value:
 <if known, otherwise unknown>
 
 
-Optimization Problem: <problem_name> (<problem_abbrev>)
+Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
 ========================================================
 
 ...
