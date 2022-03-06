@@ -2,8 +2,6 @@
 Summary
 -------
 Simulate a M/M/1 queue.
-A detailed description of the problem can be found `here `
-
 """
 import numpy as np
 
@@ -196,7 +194,7 @@ class MM1Queue(Model):
 """
 Summary
 -------
-Minimize the mean sojourn time of an M/M/1 queue.
+Minimize the mean sojourn time of an M/M/1 queue plus a cost term.
 """
 
 
@@ -265,7 +263,7 @@ class MM1MinMeanSojournTime(Problem):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1
+        self.n_stochastic_constraints = 0
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
@@ -273,12 +271,12 @@ class MM1MinMeanSojournTime(Problem):
         self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = None  # (2.75,)
+        self.optimal_solution = None
         self.model_default_factors = {
             "warmup": 50,
             "people": 200
         }
-        self.model_decision_variables = {"mu"}
+        self.model_decision_factors = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -290,6 +288,11 @@ class MM1MinMeanSojournTime(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
+            },
+            "cost": {
+                "description": "Cost to increase service rate by 1 unit.",
+                "datatype": float,
+                "default": 0.1
             }
         }
         self.check_factor_list = {
@@ -370,7 +373,7 @@ class MM1MinMeanSojournTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (response_dict["frac_cust_wait"],)
+        stoch_constraints = None
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
@@ -389,8 +392,8 @@ class MM1MinMeanSojournTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0.1 * (x[0]**2),)
-        det_objectives_gradients = ((0.2 * x[0],),)
+        det_objectives = (self.factors["cost"] * (x[0]**2),)
+        det_objectives_gradients = ((2 * self.factors["cost"] * x[0],),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -412,8 +415,8 @@ class MM1MinMeanSojournTime(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = (0.5,)
-        det_stoch_constraints_gradients = ((0,),)
+        det_stoch_constraints = None
+        det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
@@ -431,7 +434,9 @@ class MM1MinMeanSojournTime(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x[0] > 0
+        # Check box constraints.
+        box_feasible = super().check_deterministic_constraints(x)
+        return box_feasible
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -450,3 +455,4 @@ class MM1MinMeanSojournTime(Problem):
         # Generate an Exponential(rate = 1/3) r.v.
         x = (rand_sol_rng.expovariate(1 / 3),)
         return x
+
