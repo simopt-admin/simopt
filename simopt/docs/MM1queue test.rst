@@ -1,70 +1,3 @@
-
-Metamodeling of M/M/1 call center
-=======================
-
-Let :math:`\bar{f} (x_i)` be the average waiting time in a M/M/1 queue as determined through the simulation of :math:`t_i` arrivals when the utilization rate is :math:`x_i(x_i = \lambda / \mu)`, where :math:`\lambda`
-and :math:`\mu` are the arrival and service rates, respectively). Furthermore, let :math:`x` be the vector :math:`(x_1, x_2,...x_n)` of utilization rates at which the average waiting time is estimated.
-Lastly, let
-
-
-  :math:`\hat{f} (x) = (\beta_0 + \beta_1 * x + \beta_2 * x^2) / (1 - x)`
-
-
-The goal is to find \beta_0, \beta_1 and \beta_2 in order to approximate :math:`\bar{f} (x)` through :math:`\hat{f} (x)` as accurately as possible, i.e. 
-
-   min :math:`(\bar{f} (x) - \hat{f} (x)) \Gamma ^-1 (\bar{f} (x) - \hat{f} (x))`
-
-where :math:`\Gamma` is the convenience matrix for :math:`\bar{f} (x)`. It accounts for any correction, such as the use of common random numbers, in the estimation of the average waiting times through simulation.
-If the simulation at each :math:`x_i` is done independently, then :math:`\Gamma` would be a diagonal matrix.
-
-*Model Factors:*
-    warmup: Represents the number of people as warmup before collecting statistics
-    people: Represents the number of people from which to calculate the average sojourn time.
-
-*Response:*
-    The average waiting time in this M/M/1 queue determined by equation provided above.
-
-
-This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777.
-
-
-
-*Recommended Parameter Settings:* 
-    Use :math:`n = 5` and :math:`x = (0.5, 0.564, 0.706, 0.859, 0.950)`. Lastly, take :math:`T = 50000(0.007, 0.024, 0.064, 0.258, 0.647)` and estimate :math:`\bar{f} (x_i)` independently for each :math:`x_i`.
-
-
-If multiple solutions are needed, take :math:`\beta_0`, :math:`\beta_1`, :math:`\beta_2` uniformly distributed on [0,2].
-
-
-
-*Decision Variables:* 
-    The utilization rate x is the decision variable in this M/M/1 queue Metamodeling problem
-
-*Objective:*
-    The goal is to minimize the average sojourn time and cost with the increase of service rate.
-
-*Constraints:* 
-    The capacity of the simulated working station. The maximum and minimum of the inter-arrival time, station processing time.
-
-*Problem Factors:*
-    Inter-arrival time: Represents the arrival rates of each entity.
-    The service time: Represents the random service time of each server in the M/M/1 Queueing station.
-    The number of stations: Represents the total number of stations in this model.
-    Warmup : Represents the number of people as warmup before collecting statistics.
-
-*Fixed Model Factors:* 
-    Empty
-
-
-*Measurement of Time:*
-    Number of estimations of :math:`\bar{f} (x_i)` made.
-
-*Starting Solutions:* 
-    
-
-
-*Optimal Solution:* 
-    
 Model: <model_name> (<model_abbreviation>)
 ==========================================
 
@@ -86,13 +19,13 @@ Sources of Randomness:
 
 Model Factors:
 --------------
-* <factor1name>: <short description>
+* warmup: Represents the number of people as warmup before collecting statistics
 
-    * Default: <default value>
+    * Default: 50
 
-* <factor2name>: <short description>
+* people: Represents the number of people from which to calculate the average sojourn time.
 
-    * Default: <default value>
+    * Default: 200
 
 * <factor3name>: <short description>
 
@@ -100,21 +33,24 @@ Model Factors:
 
 Respones:
 ---------
-* <response1name>: <short description>
+* average sojourn time: <short description>
 
-* <response2name>: <short description>
+* the average waiting time: <short description>
 
-* <response3name>: <short description>
+* fraction of customers wait: <short description>
 
 
 References:
 ===========
-This model is adapted from the article <article name with full citation + hyperlink to journal/arxiv page> 
+This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777
 
 
 
 
-Optimization Problem: <problem_name> (<problem_abbrev>)
+Optimization Problem: Since the model simulates an M/M/1 queue with an Exponential
+    interarrival time distribution and an Exponential service time
+    distribution, The optimal objective is to minimize the average sojourn time 
+    for each entities enter the stations. (<problem_abbrev>)
 ========================================================
 
 Decision Variables:
