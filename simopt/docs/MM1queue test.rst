@@ -32,7 +32,7 @@ Respones:
 
 * avg_waiting_time: The average of waiting time calculated using data stored in customers' matrix
 
-* frac_cust_wait: The fraction of customers waiting
+* frac_cust_wait: The fraction of customers who are waiting
 
 
 References:
@@ -84,9 +84,7 @@ None
 
 Starting Solution: 
 ------------------
-* <dv1name>: <dv1initialvalue>
-
-* <dv2name>: <dv2initialvalue>
+* mu: 3.0
 
 Random Solutions: 
 ------------------
@@ -94,7 +92,10 @@ Using random-number generator rng.MRG32k3a object to generate random solutions f
 
 Optimal Solution:
 -----------------
-<if known, otherwise unknown>
+By running the demo_model test function, 
+the optimal response for average sojourn time is 0.58169
+the optimal response for average waiting time is 0.25554
+the optimal response for customers who are waiting is 0.48
 
 Optimal Objective Function Value:
 ---------------------------------
