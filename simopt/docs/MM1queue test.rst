@@ -14,7 +14,7 @@ for each entities enter the stations. (M/M/1: A stochastic process Represents a 
 
 Sources of Randomness:
 ----------------------
-<The number and nature of sources of randomness.>
+This model has assigned random generater to arrival rate lists and service rate lists.
 
 Model Factors:
 --------------
