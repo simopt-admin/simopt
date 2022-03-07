@@ -205,6 +205,15 @@ class Voting(Model):
         arrival_rng = rng_list[2]
         voting_rng = rng_list[3]
 
+
+        #Best plan: Object Orineted Programing 
+        #Def generating rngs
+            #Def calcualting machine delays
+            #Def calculating arrival times
+            #Def calculating voting times 
+        #Def calculating average wait time for precinct
+        #iterate through each precinct calling both functions
+
         for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
             mach_delay = []
             for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
@@ -218,11 +227,8 @@ class Voting(Model):
            
             t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * random.triangular(-1,1,0)
 
-            
-
             p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
             
-
             arr_times = []
             t = random.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
@@ -238,72 +244,50 @@ class Voting(Model):
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
 
-            '''
-            THE PLAN: 
-            each iteration of the loop advance value by min value of machine delay list
-            process first person 
-            add them to machine
-            check to see when machine finishes
-            add ppl to queue w arrival times < machine finish time
-            arr_time.pop()
-            while a=true
-            add person to machine
-            check when machine ends
-            
-            we should use queue and dictionary
-            need to find soonest finishing machine change it to -1
-            
-            '''
-            #while person:
-            # check if open machine
-            # figure out voting_time maybe not in loop
-            # add person
-            #
+
+        '''
+        Pseudo Code
+
+        Need all arrival times (nested list generated at beginning)
+        Need all vote times
+
+        Clock = 0 
+        Machine list = [First time when machine is avilable for each machine]
+            ex = [0,10,20,0,0]
+        Next Arrival from nested list
+        Waiting time list = []
+
+        Other counters 
+            list: voting time index
+            list: arrival time index
 
 
-            '''
-            available = []
-            for i in range(self.factors["mach_allocation"][i]):
-                if mach_delay[i] == 0:
-                    available.append(0)     #1 means it is available
-                else: #Starting machine availablility, numbers represent at what time the machine BECOMES available
-                    available.append(mach_delay[i])   
-            x = 0 #this is the person we are currently attending to
-            
-            for i in range(self.factors("hours")*60): #this is the loop that will go through the day
-                for j in range(len(available)):
-                    if available[j] == 0:
-                        if i >= arr_times[x] and i-1 < arr_times[x]:
-                            available[j] == voting_times[x]
-                            x+=1
-                    else:
-                        if available[j] >=1:
-                            available[j] = available[j] - 1
-                        else:
-                            available[j] == 0
-                for j in range(len(arr_times)): #should make the wait times
-                    if i >= arr_times[j]:
-                        wait_time[j] += 1
+        if machine available is before next arrival then
+            set clock to machine time
+            if line_queue is empty 
+                set clock to next arrival
+                set machine availablity to next arrival 
+                waiting_time.append(0) 
+                Go to next arrival index
+            else 
+                take index 0 from the list
+                calculate waiting time = clock - the value (which is its arrival time)
+                append the waiting time to list
+                machine time index should be updated = clock time + voting time rnd value
+                go to next voting time index 
 
-            '''
+        else (if next arrival is before machine available)
+            set clock to next arrival 
+            add arrival to queue (as its arrival time)
+            go to next arrival index
 
-         #[next arrival, next available machine 1, next available machine 2, maching 3....]
-      
-        votes = 0       #keeps track of # of votes that have been cast (entity exiting the system)
-        clock = arr_times[0]
-        next_event = []
-        next_event.append(arr_times[1]) #system starts at first arrival
-        queue = 1   #start with first entity entering the system
-        vote_index = []     # tells loop where to go in the index to get next rng for x machine or next arrival [next_arrival, machine 1, machine 2, ... machine n]
-        for a in mach_delay:            # gives the delay times for the events
-            next_event.append(a)
-            rng_index.append(0)
-        while votes <= len(range(arr_times)): #arrival times are caluclated for open period, this allows for it to finish after last arrival leave
-            if queue > 0 and min(next_event) > 0:
-                queue -= 1
-                vote_index[min(next_event)] = min(next_event) + 1       #very lost here 
-                
-        #brainstorming? just foolin around
+        '''
+        
+
+
+        '''
+        OLD CODE 
+
 
         k = 0 
         next_arrival = arr_times[k]
@@ -340,7 +324,7 @@ class Voting(Model):
             # which would need to be done through a clock?
             start = next_arrival is not None
             
-
+        '''
 
 
         
