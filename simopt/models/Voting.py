@@ -233,13 +233,6 @@ class Voting(Model):
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
 
-            #one for loop that goes over the course of the day
-            #for person in arr_tiimes
-            # see if there is an open machine
-            #machines = [-1 for i in range(num_machines)]
-            # indexof(-1) in machines, checks if there is a -1 in the list 
-            # if none open: add person to queue, so check queue before doing index, if person waiting then the person appended to queue and care about person at the front
-            # arr_times.pop()
             '''
             THE PLAN: 
             each iteration of the loop advance value by min value of machine delay list
@@ -307,27 +300,15 @@ class Voting(Model):
                 
         #brainstorming? just foolin around
 
-        '''
-       entity_dic = {
-            "arrival": 0, 
-            "voting_time": 0, 
-            "queue_time": 0
-        }
-        entities = []
-        entities.append(entity_dic)
-        ^^^^ if we decide to make a dictionary
-        '''
-        next_arrival = arr_times.pop()
         k = 0 
-        for i in range(len(mach_delay)):
-            if mach_delay[i]==0:
-                mach_delay[i] = -1
+        next_arrival = arr_times[k]
         start = next_arrival is not None
-        clock_ind = 0
         line_in_system = []
         while start:
-            used_machines = [machine for machine in mach_delay if machine != -1]
-            soonest_finished_machine = min(used_machines)
+            machines = [machine for machine in mach_delay]
+            soonest_finished_machine = min(machines)
+            while soonest_finished_machine <= next_arrival:
+                soonest_finished_machine
             if soonest_finished_machine is None:
                 for i in range(len(mach_delay)):                    
                     mach_delay[i] = next_arrival + voting_times[k]
@@ -353,17 +334,6 @@ class Voting(Model):
             # now we need a queue where people are put into if there are no machines available and a way to track the amount of time they spend in the queue
             # which would need to be done through a clock?
             start = next_arrival is not None
-        '''
-        thikin about clock and figuring out waiting time...
-
-        we are going to need to do some subtraction:
-        
-        when a machine opens up:
-        12 min there are people in line
-        they got in line at their arrival time
-        subtract the time in the machine (voting time + arrival time) from the arrival time of the entity going in
-
-        '''
             
 
 
