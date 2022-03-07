@@ -54,13 +54,13 @@ class Throughput(Model):
                 "description": "Parameter of the buffer allocation \
                                 distribution.",
                 "datatype": float,
-                "default": 1.5
+                "default": 10
             },
-            "processing_rate": {
+            "prate": {
                 "description": "rate parameter lambda for the exponential distribution used \
                                 to generate random processing times for 3 stations.",
                 "datatype": float,
-                "default": 3.0
+                "default": 10
             },
             "warmup": {
                 "description": "Number of people as warmup before \
@@ -83,7 +83,7 @@ class Throughput(Model):
         }
         self.check_factor_list = {
             "buffer": self.check_buffer,
-            "processing_rate": self.check_processing_rate,
+            "prate": self.check_prate,
             "warmup": self.check_warmup,
             "n": self.check_n,
             "jobs": self.check_jobs
@@ -95,7 +95,7 @@ class Throughput(Model):
         return self.factors["buffer"] > 0
 
     def check_mu(self):
-        return self.factors["processing_rate"] > 0
+        return self.factors["prate"] > 0
     
     def check_warmup(self):
         return self.factors["warmup"] >= 0
@@ -108,7 +108,7 @@ class Throughput(Model):
 
     def check_simulatable_factors(self):
         # demo for condition that queue must be stable
-        # return self.factors["processing_rate"] > self.factors["buffer"]
+        # return self.factors["prate"] > self.factors["buffer"]
         return True
 
     
@@ -122,7 +122,7 @@ class Throughput(Model):
             rng for model to use when simulating a replication
         runlength : float
             how long (in hours) to run a single replication of the model
-        processing_rate : float
+        prate : float
             rate parameter lambda for the exponential distribution used
             to generate random processing times for three stations.
 
@@ -136,18 +136,24 @@ class Throughput(Model):
             List of times at which the WIP changes.
         throughput : float
             total number of parts produced
+        Rate_L : numpy array of ints
+            List of service rate for throughput maximization.
+        Buffer_L : numpy array of ints
+            List of buffer allocation numbers for throughput maximization.
         """
         
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
         
         terminate = False
-        service_rng = rng_list[2]
-        
+        service_rng = rng_list[3]
         station_service = []
+        rate_list = [3]
+        buffer_list = [2]
         
+        # Assign three random generated service time to a list.
         for i in range(3):
-            service_times = ([service_rng.expovariate(self.factors["processing_rate"])
+            service_times = ([service_rng.expovariate(self.factors["prate"])
                          for _ in range(total)])
             station_service[i] = service_times
             
@@ -219,11 +225,15 @@ class Throughput(Model):
                 # Concatenate results
                 parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
                 part_times.append(parts_experience)
+            
+            rate_list.append(self.factor["prate"])
+            buffer_list.append(self.factor["buffer"])
 
             # If we have passed the time horizon, terminate.
             if parts_experience[0] > self.factors["runlength"]:
                 terminate = True
 
+            
             # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
             # print(f"Part {part_number}: {parts_experience}")
 
@@ -246,7 +256,7 @@ class Throughput(Model):
         sorted_WIP_increments = WIP_increments[ordering]
         WIP_values = np.cumsum(sorted_WIP_increments)
         
-        return WIP_values, WIP_times, throughput
+        return WIP_values, WIP_times, throughput, rate_list, buffer_list
 
 
 
@@ -335,7 +345,7 @@ class throughputMaximize(Problem):
             "warmup": 2000,
             "people": 50
         }
-        self.model_decision_variables = {"processing_rate"}
+        self.model_decision_variables = {"prate"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -372,7 +382,7 @@ class throughputMaximize(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "processing_rate": vector[0]
+            "prate": vector[0]
         }
         return factor_dict
 
@@ -391,7 +401,7 @@ class throughputMaximize(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["processing_rate"],)
+        vector = (factor_dict["prate"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):

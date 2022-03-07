@@ -3,10 +3,10 @@ Model: M/M/1 Queue
 
 Description:
 ------------
-This is the model simulates an M/M/1 queue with an Exponential
+This is a model simulates an M/M/1 queue with an Exponential
 interarrival time distribution and an Exponential service time
-distribution, The optimal objective is to minimize the average sojourn time 
-for each entities enter the stations. (M/M/1: A stochastic process Represents a flow system with a certain state space)
+distribution. The optimal objective is to minimize the average sojourn time 
+for each entities enter the stations. (M/M/1: A stochastic process Represents a customer flow system with a certain state space)
 
 .. math::
 
@@ -99,7 +99,7 @@ the optimal response for customers who are waiting is 0.48
 
 Optimal Objective Function Value:
 ---------------------------------
-<if known, otherwise unknown>
+The objective function value is 0.58169, which reflects the optimal minimized average sojourn time.
 
 
 Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
