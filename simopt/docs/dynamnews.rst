@@ -89,7 +89,7 @@ Decision Variables:
 Objectives:
 -----------
 Let :math:`\omega = \{U_t : t = 1, \ldots, T\}`denote the sample path, and assume that `\omega` follows the probability distribution :math:`P`. We consider a one-period inventory model and assume :math:`P(T < +\infty) = 1`.
-The retailer knows the probability measure :math:`P`, and his/her objective is to choose :math:`x` that maximizes total expected profit.
+The retailer knows the probability measure :math:`P`, and his/her objective is to choose :math:`x` that maximizes profit.
 
 Constraints:
 ------------
@@ -99,7 +99,7 @@ Problem Factors:
 ----------------
 * initial_solution: Initial solution from which solvers start.
 
-  * Default: (2, 3) or 
+  * Default: (2, 3) or :math:`(3, 3, \ldots, 3)`
   
 * budget: Max # of replications for a solver to take.
 
@@ -111,7 +111,7 @@ Fixed Model Factors:
 
 Starting Solution: 
 ------------------
-* initial_solution: (2, 3)
+* initial_solution: (2, 3) or :math:`(3, 3, \ldots, 3)`
 
 Random Solutions: 
 ------------------
