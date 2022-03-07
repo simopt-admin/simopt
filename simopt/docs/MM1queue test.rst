@@ -92,14 +92,15 @@ Using random-number generator rng.MRG32k3a object to generate random solutions f
 
 Optimal Solution:
 -----------------
-By running the demo_model test function, 
-the optimal response for average sojourn time is 0.58169
-the optimal response for average waiting time is 0.25554
-the optimal response for customers who are waiting is 0.48
+By running the demo_model test function, the optimal solutions are unknown. Analytical solutions are generated based on solvers are
+
+response for average sojourn time is 0.58169
+response for average waiting time is 0.25554
+response for customers who are waiting is 0.48
 
 Optimal Objective Function Value:
 ---------------------------------
-The objective function value is 0.58169, which reflects the optimal minimized average sojourn time.
+The objective function value is 0.58169, which reflects the average sojourn time but the optimal value is still unknown. 
 
 
 Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
