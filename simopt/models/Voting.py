@@ -200,13 +200,16 @@ class Voting(Model):
             gradient estimates for each response
         """
         #                      self.factors["mid_turn_per"]
-        
+        breakdown_rng = rng_list[0]
+        turnout_rng = rng_list[1]
+        arrival_rng = rng_list[2]
+        voting_rng = rng_list[3]
+
         for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
             mach_delay = []
             for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
-                n = 1
                 p = self.factors["bd_prob"]         #Default is .05
-                if np.random.binomial(n,p) == 1:    #Determining if the machine will be borken down to start day
+                if breakdown_rng.random.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
                     t = random.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
                 else:
                     t = 0
@@ -225,6 +228,8 @@ class Voting(Model):
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
                 t = random.expovariate(p_lamda) + t #list is time at which each person arrives
+
+            for i in range(len())
 
             voting_times = []
             wait_time = [] 

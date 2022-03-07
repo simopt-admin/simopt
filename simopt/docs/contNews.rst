@@ -43,7 +43,7 @@ day in order to maximize the profit for the newsvendor.
 
  *Salvage Price* (:math:`w`) - At the end of each day, if there is liquid left over, each unit volume of liquid can be salvaged for a specific price. The default value for salvage price is 1 dollar. 
 
- *Alpha and Beta for Demand Distribution* (:math:`α` and :math:`β`) ---> The Burr Type XII Distribution that is being used for demand has certain parameters denoted by alpha and beta. The default values for alpha and beta are 2 and 20, respectively.
+ *Alpha and Beta for Demand Distribution* (:math:`α` and :math:`β`) - The Burr Type XII Distribution that is being used for demand has certain parameters denoted by alpha and beta. The default values for alpha and beta are 2 and 20, respectively.
 
 **Response:**
 -------------
