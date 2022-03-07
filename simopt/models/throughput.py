@@ -94,7 +94,7 @@ class Throughput(Model):
     def check_buffer(self):
         return self.factors["buffer"] > 0
 
-    def check_mu(self):
+    def check_prate(self):
         return self.factors["prate"] > 0
     
     def check_warmup(self):
@@ -105,6 +105,7 @@ class Throughput(Model):
     
     def check_n(self):
         return self.factors["n"] >= 1
+    
 
     def check_simulatable_factors(self):
         # demo for condition that queue must be stable
@@ -353,11 +354,20 @@ class throughputMaximize(Problem):
                 "datatype": tuple,
                 "default": (5,)
             },
-            "budget": {
+            "Budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
             }
+            
+            "Buffer"{
+                
+            }
+            
+            "Rate"{
+                
+            }
+            
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
