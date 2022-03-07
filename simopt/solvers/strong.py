@@ -84,7 +84,7 @@ class STRONG(Solver):
                 "default": 1.2
             },
             "delta_T": {
-                "description": "the size of trust region",
+                "description": "initial size of trust region",
                 "datatype": float,
                 "default": 2
             },
@@ -109,23 +109,51 @@ class STRONG(Solver):
                 "default": 1.11
             },
             "lambda": {
-                "description": "multiplicative factor for r",
+                "description": "multiplicative factor for r within finite difference",
                 "datatype": int,
                 "default": 2
             }
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_r
+            "r": self.check_r,
+            "sensitivity": self.check_sensitivity,
+            "delta_threshold": self.check_delta_threshold,
+            "delta_T": self.check_delta_T,
+            "eta_0": self.check_eta_0,
+            "eta_1": self.check_eta_1,
+            "gamma_1": self.check_gamma_1,
+            "gamma_2": self.check_gamma_2,
+            "lambda": self.check_lambda
         }
         super().__init__(fixed_factors)
     
     def check_r(self):
         return self.factors["r"] > 0
-    '''
-    def check_solver_factors(self):
-        pass
-    '''
+    
+    def check_sensitivity(self):
+        return self.factors["sensitivity"] > 0
+    
+    def check_delta_threshold(self):
+        return self.factors["delta_threshold"] > 0 
+    
+    def check_delta_T(self):
+        return self.factors["delta_T"] > self.factors["delta_threshold"]
+    
+    def check_eta_0(self):
+        return self.factors["eta_0"] > 0 and self.factors["eta_0"] < 1
+    
+    def check_eta_1(self):
+        return self.factors["eta_1"] < 1 and self.factors["eta_1"] > self.factors["eta_0"]
+    
+    def check_gamma_1(self):
+        return self.factors["gamma_1"] > 0 and self.factors["gamma_1"] < 1
+    
+    def check_gamma_2(self):
+        return self.factors["gamma_2"] > 1
+    
+    def check_lambda(self):
+        return self.factors["lambda"] > 1
 
     def solve(self, problem):
         """

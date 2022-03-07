@@ -1,0 +1,75 @@
+Solver: Stochastic Trust-Region Response-Surface Method (STRONG)
+================================================================
+
+Description:
+------------
+<A paragraph describing the solver. Use math if it is helpful.>
+
+Sample math... :math:`S = 1500`
+
+Sample math... 
+
+.. math::
+
+   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
+
+Solver Factors:
+--------------
+* crn_across_solns: Use CRN across solutions?
+
+    * Default: True
+
+* n0: Initial sample size
+
+    * Default: 10
+
+* r: Number of replications taken at each solution
+
+    * Default: 10
+
+* sensitivity: shrinking scale for VarBds
+
+    * Default: 10**(-7)
+
+* delta_threshold: maximum value of the radius
+
+    * Default: 1.2
+
+* delta_T: initial size of trust region
+
+    * Default: 2
+
+* eta_0: the constant of accepting
+
+    * Default: 0.01
+
+* eta_1: the constant of more confident accepting
+
+    * Default: 0.3
+
+* gamma_1: the constant of shrinking the trust regionthe new solution
+
+    * Default: 0.9
+
+* gamma_2: the constant of expanding the trust region
+
+    * Default: 1.11
+
+* lambda: multiplicative factor for r within finite difference
+
+    * Default: 2
+
+Respones:
+---------
+* <response1name>: <short description>
+
+* <response2name>: <short description>
+
+* <response3name>: <short description>
+
+
+References:
+===========
+This solver is adapted from the article Kuo-Hao Chang, L. Jeff Hong, Hong Wan, (2013) Stochastic Trust-Region Response-Surface Method (STRONG)—A New
+Response-Surface Framework for Simulation Optimization. INFORMS Journal on Computing 25(2):230-243. https://doi.org/10.1287/ijoc.1120.0498
+
