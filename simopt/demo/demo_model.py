@@ -17,7 +17,7 @@ from rng.mrg32k3a import MRG32k3a
 # Ex: from models.mm1queue import MM1Queue
 from models.ironore import IronOre
 from models.dynamnews import DynamNews
-from models.vehicleroute import VehicleRoute
+from models.covid import COVID
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
@@ -40,7 +40,7 @@ fixed_factors = {} # Resort to all default values.
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = VehicleRoute(fixed_factors)
+mymodel = COVID(fixed_factors)
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
