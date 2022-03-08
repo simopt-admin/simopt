@@ -233,13 +233,14 @@ class Voting(Model):
 
             p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
             
-            arr_times = []
-            t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
-            while t <= self.factors["hours"]*60:      
-                arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
-                t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
+            arr_times = [[]] * self.factors["n_prec"]
 
-            for i in range(len())
+            
+            for i in range(len(self.factors("n_prec"))):
+                t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
+                while t <= self.factors["hours"]*60:      
+                    arr_times[i].append(t)                 #appends before so that the last arrival in list will be before voting closes
+                    t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
 
             voting_times = []
             for i in range(len(arr_times)):
