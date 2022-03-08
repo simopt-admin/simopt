@@ -176,11 +176,11 @@ class STRONG(Solver):
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
-        delta_threshold = self.factors["delta_threshold"]
 
         # default values
         n0 = self.factors["n0"]
         r = self.factors["r"]
+        delta_threshold = self.factors["delta_threshold"]
         delta_T = self.factors["delta_T"]
         eta_0 = self.factors["eta_0"]
         eta_1 = self.factors["eta_1"]
@@ -363,9 +363,9 @@ class STRONG(Solver):
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
                 r = int(np.ceil(1.01 * r))
-        for i in recommended_solns:
-            print(i.x)
-        print('final budget', expended_budget)
+        # for i in recommended_solns:
+        #     print(i.x)
+        # print('final budget', expended_budget)
         return recommended_solns, intermediate_budgets
     
     ##Finding the Cauchy Point
@@ -398,7 +398,7 @@ class STRONG(Solver):
         for i in range(0, len(candidate_x)):
             if modified_x[i] < 0 and modified_x[i] > -0.00000005:
                 modified_x[i] = 0
-        print('candidate_x', modified_x)
+        # print('candidate_x', modified_x)
         return modified_x
 
 
@@ -595,7 +595,7 @@ class STRONG(Solver):
             # print('gradient', grad)                    
             expended_budget += NumOfEval * r
             r = self.factors['lambda'] * r
-            print('expended_budget', expended_budget)
+            # print('expended_budget', expended_budget)
         return grad, Hessian, expended_budget
     
 
