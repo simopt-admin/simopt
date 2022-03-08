@@ -3,6 +3,7 @@ Summary
 -------
 Simulate demand at facilities.
 """
+from tkinter import END
 import numpy as np
 
 from base import Model, Problem
@@ -214,15 +215,18 @@ class Voting(Model):
         #Def calculating average wait time for precinct
         #iterate through each precinct calling both functions
 
+
+
+
         for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
-            mach_delay = []
+            mach_list = []
             for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
                 p = self.factors["bd_prob"]         #Default is .05
                 if breakdown_rng.random.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
                     t = random.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
                 else:
                     t = 0
-                mach_delay.append(t)
+                mach_list.append(t)
                     #ti = ai + bi*T
            
             t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * random.triangular(-1,1,0)
@@ -230,17 +234,15 @@ class Voting(Model):
             p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
             
             arr_times = []
-            t = random.expovariate(p_lamda)              #initial arrival
+            t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
-                t = random.expovariate(p_lamda) + t #list is time at which each person arrives
+                t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
 
             for i in range(len())
 
             voting_times = []
-            wait_time = [] 
             for i in range(len(arr_times)):
-                wait_time.append(0)
                 voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                     ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
 
@@ -266,7 +268,7 @@ class Voting(Model):
             set clock to machine time
             if line_queue is empty 
                 set clock to next arrival
-                set machine availablity to next arrival 
+                set machine availablity to next arrival  + vote time
                 waiting_time.append(0) 
                 Go to next arrival index
             else 
@@ -282,50 +284,40 @@ class Voting(Model):
             go to next arrival index
 
         '''
-        
-
-
-        '''
-        OLD CODE 
-
-
-        k = 0 
-        next_arrival = arr_times[k]
-        start = next_arrival is not None
-        line_in_system = []
-        while start:
-            machines = [machine for machine in mach_delay]
-            soonest_finished_machine = min(machines)
-            while soonest_finished_machine <= next_arrival:
-                soonest_finished_machine
-            if soonest_finished_machine is None:
-                for i in range(len(mach_delay)):                    
-                    mach_delay[i] = next_arrival + voting_times[k]
-                    k+=1
-                    next_arrival = arr_times.pop()
-            #while loop makes sure the arrival time of the person is less than when the next machine will finish
-            while next_arrival < soonest_finished_machine:
-                for i in range(len(mach_delay)):
-                    if mach_delay[i] == -1:
-                        counter+=1
-                        mach_delay[i] = next_arrival + voting_times[k]
-                        k+=1
-                        next_arrival = arr_times.pop()
-                        continue
-                line_in_system.append(next_arrival)
-                
-                        
-            # now we know the next significant event is a machine opening
-            # need to get the soonest finishing machine, make it finsish = -1, advance time and add next person... need dictionary
-            finito = min(mach_delay)
-            ind = mach_delay.index(finito)
-            mach_delay[ind] = -1
-            # now we need a queue where people are put into if there are no machines available and a way to track the amount of time they spend in the queue
-            # which would need to be done through a clock?
-            start = next_arrival is not None
+        queue = []
+        wait_times = []
+        clock = 0
+        vote_ind = 0
+        arr_ind = 0 
+        while len(wait_times) <= len(arr_times):
+            if min(mach_list) < arr_times[arr_ind]:
+                clock = min(mach_list)
+                if queue is np.empty:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                    clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
+                    mach_ind = mach_list.index(min(mach_list))
+                    mach_list[mach_ind] = clock + voting_times[vote_ind]
+                    vote_ind += 1
+                    arr_ind += 1
+                    wait_times.append(0)
+                elif queue is not np.empty:
+                    queue.append(arr_times[arr_ind]) #no clock update as there is not another event happenign just updated
+                    mach_ind = mach_list.index(min(mach_list))
+                    mach_list[mach_ind] = clock + voting_times[vote_ind]
+                    wait_times.append(clock - queue.pop(0)) #calulates the difference of when the entity entered the list and when it is now voting
+                    vote_ind +=1
+                    arr_ind += 1
+                else:
+                    print("error in replicate simulation loop 1")
+                    END
             
-        '''
+            elif arr_times[arr_ind] < min(mach_list):
+                clock = arr_times[arr_ind]
+                queue.append(arr_times[arr_ind])
+                arr_ind += 1
 
+            else:
+                print('error in replicate simulation loop 2')
+                END
 
         
         # Compose responses and gradients.
