@@ -149,11 +149,12 @@ class Throughput(Model):
         terminate = False
         service_rng = rng_list[1]
         station_service = []
+        
         rate_list = [3]
         buffer_list = [2]
         
         # Assign three random generated service time to a list.
-        for i in range(3):
+        for i in range(self.factor("n")):
             service_times = ([service_rng.expovariate(self.factors["prate"])
                          for _ in range(total)])
             station_service[i] = service_times
@@ -257,7 +258,7 @@ class Throughput(Model):
         sorted_WIP_increments = WIP_increments[ordering]
         WIP_values = np.cumsum(sorted_WIP_increments)
         
-        return WIP_values, WIP_times, throughput, rate_list, buffer_list
+        return WIP_values, WIP_times, throughput
 
 
 
