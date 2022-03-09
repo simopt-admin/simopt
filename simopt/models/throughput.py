@@ -144,7 +144,7 @@ class Throughput(Model):
         """
         
         # Calculate total number of arrivals to simulate.
-        total = self.factors["warmup"] + self.factors["people"]
+        total = self.factors["warmup"] + self.factors["jobs"]
         
         terminate = False
         service_rng = rng_list[3]
