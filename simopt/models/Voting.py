@@ -216,8 +216,8 @@ class Voting(Model):
         #iterate through each precinct calling both functions
 
 
-
-        for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
+        avg_prec_wait_time = []
+        for m in range(len(self.factors["n_prec"])):          #p is num of machines in that precinct
             mach_list = []
             for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
                 p = self.factors["bd_prob"]         #Default is .05
@@ -227,24 +227,59 @@ class Voting(Model):
                     t = 0
                 mach_list.append(t)
                     #ti = ai + bi*T
-           
+
             t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * turnout_rng.triangular(-1,1,0)
 
             p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
-            
-            arr_times = [[]] * self.factors["n_prec"]
+
+            arr_times = []
             t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
                 t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
 
-            voting_times = [[]] * self.factors["n_prec"]
+            voting_times = []
             for p in range(len(self.factors["n_prec"])):
                 for i in range(len(arr_times)):
-                    voting_times[p].append(voting_rng.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
+                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
                         ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+            queue = []
+            wait_times = []
+            clock = 0
+            vote_ind = 0
+            arr_ind = 0
+            while len(wait_times) <= len(arr_times):
+                if min(mach_list) < arr_times[arr_ind]:
+                    clock = min(mach_list)
+                    if queue is np.empty:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                        clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
+                        mach_ind = mach_list.index(min(mach_list))
+                        mach_list[mach_ind] = clock + voting_times[vote_ind]
+                        vote_ind += 1
+                        arr_ind += 1
+                        wait_times.append(0)
+                    elif queue is not np.empty:
+                        queue.append(arr_times[arr_ind]) #no clock update as there is not another event happenign just updated
+                        mach_ind = mach_list.index(min(mach_list))
+                        mach_list[mach_ind] = clock + voting_times[vote_ind]
+                        wait_times.append(clock - queue.pop(0)) #calulates the difference of when the entity entered the list and when it is now voting
+                        vote_ind +=1
+                        arr_ind += 1
+                    else:
+                        print("error in replicate simulation loop 1")
+                        END
 
+                elif arr_times[arr_ind] < min(mach_list):
+                    clock = arr_times[arr_ind]
+                    queue.append(arr_times[arr_ind])
+                    arr_ind += 1
 
+                else:
+                    print('error in replicate simulation loop 2')
+                    END
+        avg_prec_wait_time.append(sum(wait_times)/len(wait_times))
+        avg_wait_times = 0 
+        avg_wait_times = sum(avg_prec_wait_time)/len(avg_prec_wait_time)
         '''
         Pseudo Code
 
@@ -285,46 +320,10 @@ class Voting(Model):
         how is it going to skip???
 
         '''
-        queue = []
-        wait_times = []
-        clock = 0
-        vote_ind = 0
-        arr_ind = 0
-        while len(wait_times) <= len(arr_times):
-            if min(mach_list) < arr_times[arr_ind]:
-                clock = min(mach_list)
-                if queue is np.empty:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
-                    clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
-                    mach_ind = mach_list.index(min(mach_list))
-                    mach_list[mach_ind] = clock + voting_times[vote_ind]
-                    vote_ind += 1
-                    arr_ind += 1
-                    wait_times.append(0)
-                elif queue is not np.empty:
-                    queue.append(arr_times[arr_ind]) #no clock update as there is not another event happenign just updated
-                    mach_ind = mach_list.index(min(mach_list))
-                    mach_list[mach_ind] = clock + voting_times[vote_ind]
-                    wait_times.append(clock - queue.pop(0)) #calulates the difference of when the entity entered the list and when it is now voting
-                    vote_ind +=1
-                    arr_ind += 1
-                else:
-                    print("error in replicate simulation loop 1")
-                    END
-            
-            elif arr_times[arr_ind] < min(mach_list):
-                clock = arr_times[arr_ind]
-                queue.append(arr_times[arr_ind])
-                arr_ind += 1
-
-            else:
-                print('error in replicate simulation loop 2')
-                END
-
-        
         # Compose responses and gradients.
-        responses = {'stockout_flag': stockout_flag,
-                     'n_fac_stockout': n_fac_stockout,
-                     'n_cut': n_cut}
+        responses = {
+            'avg_wait_time': avg_wait_times
+        }
         return responses
 
 """
