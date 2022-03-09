@@ -217,35 +217,32 @@ class Voting(Model):
 
 
 
-
         for m in range(len(self.factors["mach_allocation"])):          #p is num of machines in that precinct
             mach_list = []
             for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
                 p = self.factors["bd_prob"]         #Default is .05
                 if breakdown_rng.random.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
-                    t = random.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
+                    t = breakdown_rng.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
                 else:
                     t = 0
                 mach_list.append(t)
                     #ti = ai + bi*T
            
-            t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * random.triangular(-1,1,0)
+            t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * turnout_rng.triangular(-1,1,0)
 
             p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
             
             arr_times = [[]] * self.factors["n_prec"]
+            t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
+            while t <= self.factors["hours"]*60:      
+                arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
+                t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
 
-            
-            for i in range(len(self.factors("n_prec"))):
-                t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
-                while t <= self.factors["hours"]*60:      
-                    arr_times[i].append(t)                 #appends before so that the last arrival in list will be before voting closes
-                    t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
-
-            voting_times = []
-            for i in range(len(arr_times)):
-                voting_times.append(random.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
-                    ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
+            voting_times = [[]] * self.factors["n_prec"]
+            for p in range(len(self.factors["n_prec"])):
+                for i in range(len(arr_times)):
+                    voting_times[p].append(voting_rng.gammavariate((self.factors["mean_time2vote"]^2)/(self.factors\
+                        ["stdev_time2vote"]^2),(self.factors["stdev_time2vote"]^2)/(self.factors["mean_time2vote"])))
 
 
         '''
@@ -284,12 +281,15 @@ class Voting(Model):
             add arrival to queue (as its arrival time)
             go to next arrival index
 
+
+        how is it going to skip???
+
         '''
         queue = []
         wait_times = []
         clock = 0
         vote_ind = 0
-        arr_ind = 0 
+        arr_ind = 0
         while len(wait_times) <= len(arr_times):
             if min(mach_list) < arr_times[arr_ind]:
                 clock = min(mach_list)
