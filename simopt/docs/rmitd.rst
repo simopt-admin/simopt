@@ -16,8 +16,6 @@ it has mean :math:`kθ = 1` and standard deviation :math:`{\sqrt{k}}θ = 1/ {\sq
 :math:`μ_t` are positive constants (:math:`\forall\:t`).
 
 
-
-
 Model Factors:
 --------------
 * Time Horizon (T): Period of time that is considered
@@ -96,19 +94,17 @@ Constraints:
 
 Problem Factors:
 ----------------
-* <factor1name>: <short description>
+* Initial Solution: Initial solution from which solvers start.
 
-  * Default: <default value>
+  * Default: (100, 50, 30)
   
-* <factor2name>: <short description>
+* Budget: Max # of replications for a solver to take.
 
-  * Default: <default value>
+  * Default: 10000
 
 Fixed Model Factors:
 --------------------
-* <factor1name>: <fixed value>
-
-* <factor2name>: <fixed value>
+* N/a
 
 Starting Solution: 
 ------------------
