@@ -358,15 +358,20 @@ class throughputMaximize(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
-            }
+            },
             
-            "Buffer"{
-                
-            }
+            "Buffer":{
+                "describtion": "Buffer Allocation for two stations",
+                "datatype": int,
+                "default": 10
+            },
             
-            "Rate"{
+            "Rate": {
+                "description": "Rate parameter for service time of three stations",
+                "datatype": float,
+                "default": 10.0
                 
-            }
+            },
             
         }
         self.check_factor_list = {
