@@ -147,7 +147,7 @@ class Throughput(Model):
         total = self.factors["warmup"] + self.factors["jobs"]
         
         terminate = False
-        service_rng = rng_list[3]
+        service_rng = rng_list[1]
         station_service = []
         rate_list = [3]
         buffer_list = [2]
