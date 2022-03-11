@@ -4,11 +4,10 @@ Summary
 Nelder-Mead
 The algorithm maintains a simplex of points that moves around the feasible 
 region according to certain geometric operations: reflection, expansion, 
-scontraction, and shrinking.
+contraction, and shrinking.
 """
 from base import Solution, Solver
 import numpy as np
-import math
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -52,10 +51,10 @@ class NELDMD(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="NELDMD", fixed_factors={}, params={"alpha":1., "gammap":2., "betap":0.5, "delta":0.5}):
+    def __init__(self, name="NELDMD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -72,25 +71,25 @@ class NELDMD(Solver):
             "alpha": {
                 "description": "reflection coefficient > 0",
                 "datatype": float,
-                "default": params["alpha"]
+                "default": 1.0
             },
             "gammap": {
                 "description": "expansion coefficient > 1",
                 "datatype": float,
-                "default": params["gammap"]
+                "default": 2.0
             },
             "betap": {
                 "description": "contraction coefficient > 0, < 1",
                 "datatype": float,
-                "default": params["betap"]
+                "default": 0.5
             },
             "delta": {
                 "description": "shrink factor > 0, < 1",
                 "datatype": float,
-                "default": params["delta"]
+                "default": 0.5
             },
             "sensitivity": {
-                "description": "shrinking scale for VarBds (bounds)",
+                "description": "shrinking scale for variable bounds",
                 "datatype": float,
                 "default": 10**(-7)
             }
@@ -140,6 +139,8 @@ class NELDMD(Solver):
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
         """
+        # Designate random number generator for random sampling.
+        get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
         # Check for sufficiently large budget
         if problem.factors["budget"] <  self.factors["r"]*n_pts:
@@ -148,29 +149,23 @@ class NELDMD(Solver):
         # Determine max number of solutions that can be sampled within budget
         max_num_sol = int(np.floor(problem.factors["budget"]/self.factors["r"]))
         # Shrink variable bounds to avoid floating errors
-        if problem.lower_bounds != None:
-            lower_bounds = tuple(map(lambda i: i + self.factors["sensitivity"], problem.lower_bounds))
-        else:
-            lower_bounds = None
-        if problem.upper_bounds != None:
-            upper_bounds = tuple(map(lambda i: i - self.factors["sensitivity"], problem.upper_bounds))
-        else:
-            upper_bounds = None
+        lower_bounds = tuple(map(lambda i: i + self.factors["sensitivity"], problem.lower_bounds))
+        upper_bounds = tuple(map(lambda i: i - self.factors["sensitivity"], problem.upper_bounds))
         # Initial dim + 1 random points
         sol = []
         sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
-        if lower_bounds == None or upper_bounds == None:
-            for i in range(1, n_pts):
-                rand_x = problem.get_random_solution(self.rng_list[1])
+        if lower_bounds == (-np.inf,)*problem.dim and upper_bounds == (np.inf,)*problem.dim:
+            for _ in range(1, n_pts):
+                rand_x = problem.get_random_solution(get_rand_soln_rng)
                 sol.append(self.create_new_solution(rand_x, problem))
         else:  # Restrict starting shape/location
-            i = 1
             lower_box = tuple([5*(x+0.1) for x in lower_bounds])
             upper_box = tuple([0.75*(x) for x in upper_bounds])
             if problem.minmax[0] == -1:  # closer to lower bound for min
                 upper_box = tuple([50*(x+0.1) for x in lower_bounds])
             elif problem.minmax[0] == 1:  # closer to upper bound for max
                 lower_box = tuple([0.5*(x) for x in upper_bounds])
+            i = 1
             while i < n_pts:
                 rand_x = problem.get_random_solution(self.rng_list[1])
                 if rand_x >= lower_box and rand_x <= upper_box:
