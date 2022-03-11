@@ -159,8 +159,9 @@ class NELDMD(Solver):
         # Initial dim + 1 random points
         sol = []
         sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
-        if lower_bounds == None or upper_bounds != None:
+        if lower_bounds == None or upper_bounds == None:
             for i in range(1, n_pts):
+                rand_x = problem.get_random_solution(self.rng_list[1])
                 sol.append(self.create_new_solution(rand_x, problem))
         else:  # Restrict starting shape/location
             i = 1
