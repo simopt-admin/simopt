@@ -1,0 +1,68 @@
+Solver: Nelder-Mead (NELDMD)
+==========================================
+
+Description:
+------------
+The algorithm maintains a simplex of points that moves around the feasible 
+region according to certain geometric operations: reflection, expansion, 
+scontraction, and shrinking.
+
+Modifications & Implementation:
+----------------------
+Initial (dimension + 1) points:
+Include the initial solution from the model. Generate the remaining points using the .get_random_solution() method provided by the model. If there are box constraints, the randomly generated points will be restricted to a smaller space towards the center away from the bounds. For minimization problems, this "space" will be closer to the lower bound, and for maximization problems, closer to the upper bound.
+
+Box constraints:
+Nelder-Mead checks for box constraints in the solver and modifies the parts of a solution that go out of bounds by setting them to their respective closest bound. For example, if a tentative solution is (2,4) and the upper bound is (3,3), then the point is modified to (2,3). Additionally, if the reflected point goes out of bounds, all the points will be shrinked towards the best point.
+
+Hyperparameters:
+There is an input called "params" that includes the model factors alpha, gammap, betap, and delta. The user has the option of assigning them different values than the defaults.
+
+
+Scope:
+----------------------
+* objective_type: single
+
+* constraint_type: deterministic
+
+* variable_type: continuous
+
+Model Factors:
+--------------
+* crn_across_solns: Use CRN across solutions?
+
+    * Default: True
+
+* r: Number of replications taken at each solution.
+
+    * Default: 30
+
+* alpha: Reflection coefficient > 0.
+
+    * Default: 1.0
+
+* gammap: Expansion coefficient > 1.
+
+    * Default: 2.0
+
+* betap: Contraction coefficient > 0, < 1.
+
+    * Default: 0.5
+
+* delta: Shrink factor > 0, < 1.
+
+    * Default: 0.5
+
+* sensitivity: Shrinking scale for bounds to avoid floating and/or rounding errors.
+
+    * Default: :math:`10^{-7}`
+
+
+References:
+===========
+This solver is adapted from the article "Nelder-Mead Simplex Modifications for Simulation Optimization" [1].
+MATLAB version of the code written by Anna Dong, Nellie Wu (2016).
+
+[1] Russell R. Barton, John S. Ivey, Jr., (1996)
+Nelder-Mead Simplex Modifications for Simulation
+Optimization. Management Science 42(7):954-973.
