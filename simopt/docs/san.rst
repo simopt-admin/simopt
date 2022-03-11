@@ -29,7 +29,7 @@ Model Factors:
 
     * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
-Respones:
+Responses:
 ---------
 * longest_path_length: Length/duration of the longest path.
 

@@ -138,7 +138,7 @@ Model Factors:
 
     * Default: tuple of 56 100's
 
-Respones:
+Responses:
 ---------
 * revenue: Expected revenue.
 

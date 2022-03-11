@@ -47,7 +47,7 @@ Model Factors:
 
     * Default: 150.0
 
-Respones:
+Responses:
 ---------
 * avg_diff: The average Elo difference between all pairs.
 
