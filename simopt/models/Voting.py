@@ -4,6 +4,7 @@ Summary
 Simulate demand at facilities.
 """
 from tkinter import END
+from turtle import end_fill
 import numpy as np
 
 from base import Model, Problem
@@ -123,53 +124,57 @@ class Voting(Model):
                                                                                 # ASK ABOUT CHECK AND NON NEGATIVITY CONTRAINTS
 
         super().__init__(fixed_factors)
+    def check_turn_ran(self):
+        return True
+
+    def check_reg_vote(self):
+        return True
 
     def check_mach_allocation(self): #Making sure that all machines are allocated and equal to max available
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"] 
 
     def check_n_mach(self): #verifying that the machines are positive values
-        return self.facotrs["n_mach"] > 0 
+        return self.factors["n_mach"] > 0 
 
     def check_n_prec(self): #verifying that precinct number is positive
-        return self.facotrs["n_prec"] > 0 
+        return self.factors["n_prec"] > 0 
 
     def check_mid_turn_per(self): #veifying that all are percentages
-        for i in self.factors["mid_turn_perc"]:
+        for i in self.factors["mid_turn_per"]:
             if i < 0 and i > 1:
                 return False
         return True
 
     def check_mean_time2vote(self):
-        return self.facotrs["mean_time2vote"] > 0 
+        return self.factors["mean_time2vote"] > 0 
 
     def check_stdev_time2vote(self):
-        return self.facotrs["stdev_time2vote"] > 0 
+        return self.factors["stdev_time2vote"] > 0 
 
     def check_mean_repair(self):
-        return self.facotrs["mean_repair"] > 0 
+        return self.factors["mean_repair"] > 0 
 
     def check_stdev_repair(self):
-        return self.facotrs["stdev_repair"] > 0 
+        return self.factors["stdev_repair"] > 0 
     
     def check_hours(self):
-        return self.facotrs["mean_hours"] > 0 
+        return self.factors["hours"] > 0 
 
     def check_simulatable_factors(self): #all lists have indeces for number of precincts
-        if len(self.factors["turn_ran"]) != self.factors["n_fac"]:
+        if len(self.factors["turn_ran"]) != self.factors["n_prec"]:
             return False
-        elif len(self.factors["reg_vote"]) != self.factors["n_fac"]:
+        elif len(self.factors["reg_vote"]) != self.factors["n_prec"]:
             return False
-        elif len(self.factors["mid_turn_per"]) != self.factors["n_fac"]:
+        elif len(self.factors["mid_turn_per"]) != self.factors["n_prec"]:
             return False
-        elif len(self.factors["mach_allocation"]) != self.factors["n_fac"]:
+        elif len(self.factors["mach_allocation"]) != self.factors["n_prec"]:
             return False
         else:
             return True
 
     def check_bd_prob(self): #veifying breakdown is a probability
-        for i in self.factors["bd_prob"]:
-            if i < 0 and i > 1:
-                return False
+        if self.factors["bd_prob"] < 0 or self.factors["bd_prob"] > 1:
+            return False
         return True    
         
     def replicate(self, rng_list):
@@ -216,27 +221,27 @@ class Voting(Model):
         #iterate through each precinct calling both functions
 
 
-        avg_prec_wait_time = []
-        for m in range(len(self.factors["n_prec"])):          #p is num of machines in that precinct
+        prec_sum_waittime = []
+        for m in range(self.factors["n_prec"]):          #p is num of machines in that precinct
             mach_list = []
-            for i in range(self.factors["mach_allocation"][i]):        #i is each individual machine in that precinct 
+            for i in range(len(self.factors["mach_allocation"])):        #i is each individual machine in that precinct 
                 p = self.factors["bd_prob"]         #Default is .05
-                if breakdown_rng.random.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
+                if breakdown_rng.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
                     t = breakdown_rng.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
                 else:
                     t = 0
                 mach_list.append(t)
                     #ti = ai + bi*T
 
-            t_i = self.factors["mid_turn_per"] + self.factors["turn_ran"] * turnout_rng.triangular(-1,1,0)
+            t_i = self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1,1,0)
 
-            p_lamda = (self.factors["reg_vote"] * t_i) / self.factors["hours"]
+            p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
 
             arr_times = []
-            t = arrival_rng.random.expovariate(p_lamda)              #initial arrival
+            t = arrival_rng.expovariate(p_lamda)              #initial arrival
             while t <= self.factors["hours"]*60:      
                 arr_times.append(t)                 #appends before so that the last arrival in list will be before voting closes
-                t = arrival_rng.random.expovariate(p_lamda) + t #list is time at which each person arrives
+                t = arrival_rng.expovariate(p_lamda) + t #list is time at which each person arrives
 
             voting_times = []
             for p in range(len(self.factors["n_prec"])):
@@ -277,9 +282,7 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-        avg_prec_wait_time.append(sum(wait_times)/len(wait_times))
-        avg_wait_times = 0 
-        avg_wait_times = sum(avg_prec_wait_time)/len(avg_prec_wait_time)
+        prec_sum_waittime.append.sum(wait_times)
         '''
         Pseudo Code
 
@@ -322,7 +325,7 @@ class Voting(Model):
         '''
         # Compose responses and gradients.
         responses = {
-            'avg_wait_time': avg_wait_times
+            'avg_wait_time': prec_sum_waittime
         }
         return responses
 
