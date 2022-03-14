@@ -184,15 +184,17 @@ class COVID(Model):
             "num_recovered" = number of infected individuals per day
         """
         # Designate random number generator for generating Poisson random variables.
-        poisson_exp_inf_rng = rng_list[0]
-        poisson_inf_sym_rng = rng_list[1]
-        poisson_sym_rng = rng_list[2]
-        binom_rng1 = rng_list[3]
-        binom_rng2 = rng_list[4]
-        binom_rng3 = rng_list[5]
-        binom_rng4 = rng_list[6]
-        binom_rng5 = rng_list[7]
-        binom_rng6 = rng_list[8]
+        poisson_numexp_rng = rng_list[0]
+
+        # poisson_exp_inf_rng = rng_list[0]
+        # poisson_inf_sym_rng = rng_list[1]
+        # poisson_sym_rng = rng_list[2]
+        # binom_rng1 = rng_list[3]
+        # binom_rng2 = rng_list[4]
+        # binom_rng3 = rng_list[5]
+        # binom_rng4 = rng_list[6]
+        # binom_rng5 = rng_list[7]
+        # binom_rng6 = rng_list[8]
         # binom_rng7 = rng_list[9]
         # Calculate the transmission rate
         t_rate = np.array(self.factors["inter_rate"]) * self.factors["p_trans"]
@@ -239,6 +241,7 @@ class COVID(Model):
 
             # generate number of exposed from the transmission matrix and update exposed and susceptible
             num_exp = np.ceil(np.multiply(np.multiply(t_rate, free_infectious),(susceptible[day, :]/(susceptible[day, :] + exposed[day, :] + free_infectious))))
+            num_exp = [min(poisson_numexp_rng.poissonvariate(num_exp[i]), susceptible[day, i]) for i in range(self.factors["num_groups"])]
             exposed[day, :] = np.add(exposed[day, :], num_exp)
             # free_exposed  = np.add(free_exposed, num_exp)
             susceptible[day, :] = np.subtract(susceptible[day, :], num_exp)
