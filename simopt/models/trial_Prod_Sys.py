@@ -338,7 +338,7 @@ import numpy as np
 
 routing_layout=[[1,2], [1,3],[2,4],[2,5],[3,5],[3,6]]
 num_edges = len(routing_layout)
-node_product = [200,0,0,0,0,0]
+node_product = [200,200,0,0,0,0]
 
 processing_time_mean = [4,3,5,4,4,3]
 processing_time_StDev= [1,1,2,1,1,1]
@@ -357,13 +357,12 @@ Interarrival_Time_StDev= 5.0
 product_batch_prob = [.5, .35, .15]
 
 #Generating random numbers for responses
-machine_times_rng = []
 for j in range(num_machines):
     list_initiator = []                                               # Generate/attach random machine processing times for # of machines
     for i in range(num_edges):
         if machine_layout[i] == j+1:
-            machine_times_rng = (random.normalvariate(processing_time_mean[i], processing_time_StDev[i]))
-            list_initiator.append(machine_times_rng)
+            parameters = [processing_time_mean[i], processing_time_StDev[i]]
+            list_initiator.append(parameters)
         else:
             list_initiator.append(0)
     rng_list[j] = list_initiator
@@ -391,14 +390,14 @@ print(rng_list)
 
 num_nodes = routing_layout[num_edges-1][1]
 end_nodes = []
-for i in range(3):
-    end_nodes.append(num_nodes-i) # list of end nodes for order of product type(list index+1)  
+for i in range(num_products): (end_nodes.append(num_nodes-i))
 end_nodes.reverse()
+
 print("")
 print("End Nodes: ", end_nodes)
 
 
-def check_node(node_product, end_nodes, product):                                           # Replicate of intermediate product, list of end nodes, product type, routing_layout 
+def check_node(node_product, end_nodes, product):           # Return inventory and corresponding node                                           # Replicate of intermediate product, list of end nodes, product type, routing_layout 
     node = end_nodes[product-1]                                                             # Product's end node from list; (prod type-1) = position                                                  
     inventory = node_product[node-1]                                                        # Inventory at node from replicated list of intermediate product
     if inventory != 0:      
@@ -417,10 +416,11 @@ def check_node(node_product, end_nodes, product):                               
 
     return inventory, possible_node
 
-def previous_node(num_nodes, node, possible_node):
+def previous_node(num_nodes, node, possible_node):          # Returns list of predecesors
     for i in range(num_nodes):       
         if node == routing_layout[i][1]:
             pre_node = routing_layout[i][0]
+            
             possible_node.append(pre_node)
     if ((len(possible_node)>0) and (not(1 in possible_node))):
         for element in possible_node:
@@ -429,9 +429,13 @@ def previous_node(num_nodes, node, possible_node):
             previous_node(num_nodes, element, possible_node)                   
     return(possible_node)
 
-def get_sequence(product):
-#    seq = []
-#    seq.append(end_nodes[product-1])
+def get_sequence(possible_node, product):
+#    possible_node = [2,3]
+#    for ws in possible_node:
+#        seq=[]
+#        while len(seq) < num_products
+#        seq.append(previous_node[ws])
+#    nodes = previous_node(num_nodes, end, possible_seq)
     end = end_nodes[product-1]
     possible_seq = []
     nodes = previous_node(num_nodes, end, possible_seq)
@@ -442,10 +446,12 @@ def get_sequence(product):
     
     if len(nodes)>num_products:
         seq = np.arange(len(nodes)/(num_products-1))
-        #for i in range(len(nodes)):
             
 def get_lead_time(end_nodes, product, rng_list):
     print("")
+
+def machine_process_time(rng_list,machine):
+    machine_times_rng = (random.normalvariate(processing_time_mean[i], processing_time_StDev[i]))
 
 #def get_proc_time(prod_seq, machine_layout, rng_list):                                      # Finds SINGLE path's total processing time.
 #    total_time = 0                                                                          
@@ -469,5 +475,6 @@ machine_time_left = []
 
 
 print("Available inventory and corresponding node: ", check_node(node_product, end_nodes, rng_list[2][0]))
-
-get_sequence(1)
+print("")
+get_sequence([2,3],2)
+print([[1,2,5], [1,3,5]])
