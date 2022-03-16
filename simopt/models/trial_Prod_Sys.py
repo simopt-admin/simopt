@@ -339,7 +339,6 @@ import numpy as np
 routing_layout=[[1,2], [1,3],[2,4],[2,5],[3,5],[3,6]]
 num_edges = len(routing_layout)
 node_product = [200,200,0,0,0,0]
-
 processing_time_mean = [4,3,5,4,4,3]
 processing_time_StDev= [1,1,2,1,1,1]
 
@@ -356,9 +355,10 @@ Interarrival_Time_StDev= 5.0
 
 product_batch_prob = [.5, .35, .15]
 
-#Generating random numbers for responses
-for j in range(num_machines):
-    list_initiator = []                                               # Generate/attach random machine processing times for # of machines
+# LIST RANDOM NUMBERS GENERATED 
+
+for j in range(num_machines):                        # Generate/attach random machine processing times for # of machines
+    list_initiator = []                          
     for i in range(num_edges):
         if machine_layout[i] == j+1:
             parameters = [processing_time_mean[i], processing_time_StDev[i]]
@@ -370,14 +370,14 @@ for j in range(num_machines):
 product_orders_rng = []
 arrival_times_rng = []
 
+
 orders_time = 0   
 num_orders = 0
-for i in range(time_horizon):                                               # Generate random order inter-arrival times
+for i in range(time_horizon):                        # Generate random order inter-arrival times
     order_arrival_time = random.normalvariate(Interarrival_Time_mean, Interarrival_Time_StDev)
-    orders_time += order_arrival_time                                      # Sum of arrival times
-                                                                                                                                                                       
-    if orders_time <= time_horizon:                                         # Attach if sum is less than time horizon
-        arrival_times_rng.append(orders_time)                                        # Track number of orders
+    orders_time += order_arrival_time                                                           # Sum of arrival times                                                                                                                                                                 
+    if orders_time <= time_horizon:                                                             # Attach if sum is less than time horizon
+        arrival_times_rng.append(orders_time)                                                   # Track number of orders
         num_orders += 1
         product = random.choices(np.arange(1,num_products+1), weights = product_batch_prob, k = 1)
         product_orders_rng.append(product[0])
@@ -397,11 +397,11 @@ print("")
 print("End Nodes: ", end_nodes)
 
 
-def check_node(node_product, end_nodes, product):           # Return inventory and corresponding node                                           # Replicate of intermediate product, list of end nodes, product type, routing_layout 
-    node = end_nodes[product-1]                                                             # Product's end node from list; (prod type-1) = position                                                  
-    inventory = node_product[node-1]                                                        # Inventory at node from replicated list of intermediate product
+def check_node(node_product, end_nodes, product):    # Return inventory and corresponding node  
+    node = end_nodes[product-1]                                                                 # Product's end node from list                                                
+    inventory = node_product[node-1]                                                            # Inventory at node from replicated list of intermediate product
     if inventory != 0:      
-        node_product[node-1] -= 10
+        node_product[node-1] -= 10                                                              # Updates inventory at end-node
         possible_node = node
     else:
         possible_node = []
@@ -416,7 +416,8 @@ def check_node(node_product, end_nodes, product):           # Return inventory a
 
     return inventory, possible_node
 
-def previous_node(num_nodes, node, possible_node):          # Returns list of predecesors
+
+def previous_node(num_nodes, node, possible_node):    # Returns list of predecesors
     for i in range(num_nodes):       
         if node == routing_layout[i][1]:
             pre_node = routing_layout[i][0]
@@ -429,19 +430,25 @@ def previous_node(num_nodes, node, possible_node):          # Returns list of pr
             previous_node(num_nodes, element, possible_node)                   
     return(possible_node)
 
-def get_sequence(possible_node, product):
-#    possible_node = [2,3]
-#    for ws in possible_node:
-#        seq=[]
-#        while len(seq) < num_products
-#        seq.append(previous_node[ws])
-#    nodes = previous_node(num_nodes, end, possible_seq)
+
+def get_sequence(product):           # Returns possible routing sequences with inventory
     end = end_nodes[product-1]
     possible_seq = []
     nodes = previous_node(num_nodes, end, possible_seq)
-
     nodes.reverse()
-    nodes.append(end)
+    nodes.append(end)                                               # List of predecesors
+    in_route = check_node(node_product, end_nodes, rng_list[2][0])  # List of nodes with inventory
+    invent_route = []                                               # Empty list for predecessors with inventory
+    routes = []                                                 # Empty list for routes of inventory and end node 
+    for i in in_route:
+        for j in nodes:
+            if i == j:
+                invent_route.append(j)
+            invent_route.append(end)
+        routes.append(invent_route)
+    return routes
+       
+
     print("Routing sequence for product ", product, ": ", nodes)
     
     if len(nodes)>num_products:
@@ -475,6 +482,28 @@ machine_time_left = []
 
 
 print("Available inventory and corresponding node: ", check_node(node_product, end_nodes, rng_list[2][0]))
-print("")
 get_sequence([2,3],2)
 print([[1,2,5], [1,3,5]])
+
+
+##################################################
+##################################################
+# For every order in rng_list[2]
+for elem in rng_list[2]: 
+# Get end node 
+# Find possible path(s)
+# Identify inventory node-location
+# Match & return route with inventory
+    invent_seq = get_seq(elem)
+    # Check fpr multiple sequences 
+    # Compare machine times & return shortest lead time & path
+
+    # Update Network
+        # Inventory @ nodes
+        # Machine jobs
+        # Order time in system
+    
+# Find Servie Level
+    # Count # orders/demand met
+
+num_orders = len(rng_list)
