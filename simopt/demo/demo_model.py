@@ -6,6 +6,8 @@ sets up pseudorandom number generators, and runs one or more replications.
 import numpy as np
 import sys
 import os.path as o
+import matplotlib.pyplot as plt
+
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import random number generator.
@@ -73,6 +75,13 @@ for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+
+plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'], color = 'green', label = 'num_infected')
+plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'], color = 'orange', label = 'num_exposed')
+plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'], color = 'blue', label = 'num_susceptible')
+plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'], color = 'red', label = 'num_recovered')
+plt.legend()
+plt.show()
 
 # import numpy as np
 # total_dist = []
