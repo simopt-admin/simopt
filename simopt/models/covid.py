@@ -80,7 +80,7 @@ class COVID(Model):
             "n": {
                 "description": "Number of days to simulate.",
                 "datatype": int,
-                "default": 70
+                "default": 100
             },
             "init_infect_percent": {
                 "description": "Initial proportion of infected.",
@@ -90,7 +90,7 @@ class COVID(Model):
             "freq":{
                 "description": "Testing frequency of each group.",
                 "datatype": tuple,
-                "default": (1/7, 1/7, 1/7)
+                "default": (3/7, 3/7, 3/7)
             },
             "asymp_rate":{
                 "description": "Percentage of asymptomatic among all the confirmed cases",
@@ -208,7 +208,11 @@ class COVID(Model):
         infectious = np.zeros((self.factors["n"], self.factors["num_groups"]))
         asymptomatic = np.zeros((self.factors["n"], self.factors["num_groups"]))
         symptomatic = np.zeros((self.factors["n"], self.factors["num_groups"]))
-        isolation = np.zeros((self.factors["n"], self.factors["num_groups"]))
+        isolation_exp = np.zeros((self.factors["n"], self.factors["num_groups"]))
+        isolation_inf = np.zeros((self.factors["n"], self.factors["num_groups"]))
+        isolation_symp = np.zeros((self.factors["n"], self.factors["num_groups"]))
+        isolation_asymp = np.zeros((self.factors["n"], self.factors["num_groups"]))
+
         recovered = np.zeros((self.factors["n"], self.factors["num_groups"]))
 
         # Initialize the performance measures of interest
@@ -230,7 +234,10 @@ class COVID(Model):
                 susceptible[day, :] += susceptible[day - 1, :]
                 exposed[day, :] += exposed[day- 1, :]
                 infectious[day, :] += infectious[day- 1, :]
-                isolation[day, :] += isolation[day- 1, :]
+                isolation_exp[day, :] += isolation_exp[day- 1, :]
+                isolation_asymp[day, :] += isolation_asymp[day- 1, :]
+                isolation_symp[day, :] += isolation_symp[day- 1, :]
+                isolation_inf[day, :] += isolation_inf[day- 1, :]
                 asymptomatic[day, :] += asymptomatic[day- 1, :]
                 symptomatic[day, :] += symptomatic[day- 1, :]
                 recovered[day, :] += recovered[day- 1, :]
@@ -241,21 +248,20 @@ class COVID(Model):
             tested_out_free_symp = []
             tested_out_free_asymp = []
             for g in range(self.factors["num_groups"]):
-                tested_out_free_exp.append(binom_test_rng.binomialvariate(exposed[day][g].astype(int), self.factors["freq"][g]))
-                tested_out_free_inf.append(binom_test_rng.binomialvariate(infectious[day][g].astype(int), self.factors["freq"][g]))
-                tested_out_free_symp.append(binom_test_rng.binomialvariate(symptomatic[day][g].astype(int), self.factors["freq"][g]))
-                tested_out_free_asymp.append(binom_test_rng.binomialvariate(asymptomatic[day][g].astype(int), self.factors["freq"][g]))
+                tested_out_free_exp.append(binom_test_rng.binomialvariate((exposed[day][g] - isolation_exp[day][g]).astype(int), self.factors["freq"][g]))
+                tested_out_free_inf.append(binom_test_rng.binomialvariate((infectious[day][g] - isolation_inf[day][g]).astype(int), self.factors["freq"][g]))
+                tested_out_free_symp.append(binom_test_rng.binomialvariate((symptomatic[day][g] -isolation_symp[day][g]).astype(int), self.factors["freq"][g]))
+                tested_out_free_asymp.append(binom_test_rng.binomialvariate((asymptomatic[day][g] - isolation_asymp[day][g]).astype(int), self.factors["freq"][g]))
 
-            exposed[day, :] -= tested_out_free_exp
-            infectious[day, :] -= tested_out_free_inf
-            symptomatic[day, :] -= tested_out_free_symp
-            asymptomatic[day, :] -= tested_out_free_asymp
-            isolation[day, :] += np.array(tested_out_free_exp) + np.array(tested_out_free_inf) + np.array(tested_out_free_symp) + np.array(tested_out_free_asymp)
+            # update people in isolation
+            isolation_exp[day, :] += np.array(tested_out_free_exp)
+            isolation_inf[day, :] += np.array(tested_out_free_inf)
+            isolation_symp[day, :] += np.array(tested_out_free_symp)
+            isolation_asymp[day, :] += np.array(tested_out_free_asymp)
 
             # generate number of exposed from the transmission matrix and update exposed and susceptible
             num_exp = np.multiply(np.multiply(t_rate, (infectious[day, :] + symptomatic[day, :] + asymptomatic[day, :])),(susceptible[day, :]/(susceptible[day, :] + exposed[day, :] + infectious[day, :] + symptomatic[day, :] + asymptomatic[day, :] + recovered[day, :])))
-            # num_exp = [min(poisson_numexp_rng.poissonvariate(num_exp[i]), susceptible[day, i]) for i in range(self.factors["num_groups"])]
-            num_exp = [poisson_numexp_rng.poissonvariate(num_exp[i]) for i in range(self.factors["num_groups"])]
+            num_exp = [min(poisson_numexp_rng.poissonvariate(num_exp[i]), susceptible[day, i]) for i in range(self.factors["num_groups"])]
 
             exposed[day, :] = np.add(exposed[day, :], num_exp)
             susceptible[day, :] = np.subtract(susceptible[day, :], num_exp)
@@ -277,7 +283,7 @@ class COVID(Model):
                 num_symp = np.subtract(num_exp, np.array(num_asymp))
                 symptomatic[day + inf_days+exp_days , :] = np.add(symptomatic[day + inf_days+exp_days, :], num_symp)
                 asymptomatic[day + inf_days+exp_days, :] = np.add(asymptomatic[day + inf_days+exp_days, :], num_asymp)
-                infectious[day + inf_days+exp_days, :] = np.subtract(infectious[day + inf_days, :], num_exp)
+                infectious[day + inf_days+exp_days, :] = np.subtract(infectious[day + inf_days+ exp_days, :], num_exp)
 
             # generate number of days remaining in symptomatic or asymtomatic state, update recovered, symptomatic and asymptomatic
             asym_sym_days = min(poisson_sym_rng.poissonvariate(self.factors["lamb_sym"]), 20)
@@ -288,11 +294,15 @@ class COVID(Model):
 
             # Update isolation to recovered
             if day + self.factors["iso_day"] < self.factors["n"]: 
-                recovered[day + self.factors["iso_day"], :] += np.array(tested_out_free_exp) + np.array(tested_out_free_inf) + np.array(tested_out_free_symp) + np.array(tested_out_free_asymp)
-                isolation[day + self.factors["iso_day"], :] -= np.array(tested_out_free_exp) + np.array(tested_out_free_inf) + np.array(tested_out_free_symp) + np.array(tested_out_free_asymp)
+                # recovered[day + self.factors["iso_day"], :] += np.array(tested_out_free_exp) + np.array(tested_out_free_inf) + np.array(tested_out_free_symp) + np.array(tested_out_free_asymp)
+                isolation_exp[day + self.factors["iso_day"], :] -= np.array(tested_out_free_exp)
+                isolation_inf[day + self.factors["iso_day"], :] -= np.array(tested_out_free_inf)
+                isolation_symp[day + self.factors["iso_day"], :] -= np.array(tested_out_free_symp) 
+                isolation_asymp[day + self.factors["iso_day"], :] -= np.array(tested_out_free_asymp)
                 
             
             print('day', day)
+            # print('tested_out_exp', tested_out_free_exp)
             print('new exposed', num_exp)
             print('exposed', exposed[day, :])
             print('day + inf_days', day + inf_days)
@@ -301,15 +311,15 @@ class COVID(Model):
             print('num_asymp', num_asymp)
             print('asymptomatic', asymptomatic[day, :])
             print('symptomatic', symptomatic[day, :])
-            print('isolation', isolation[day, :])
+            print('isolation', isolation_asymp[day, :] + isolation_exp[day,:]+isolation_inf[day,:]+isolation_symp[day,:])
             print('susceptible', susceptible[day, :])
             print('recovered', recovered[day, :])
 
             # update performance measures
-            num_exposed[day] = np.sum(exposed[day, :])
+            num_exposed[day] = np.sum(exposed[day, :] - isolation_exp[day,:])
             num_susceptible[day] =np.sum(susceptible[day, :])
             num_recovered[day] =np.sum(recovered[day, :])
-            num_infected[day] = np.sum(infectious[day, :]) + np.sum(asymptomatic[day, :]) + np.sum(symptomatic[day, :])
+            num_infected[day] = np.sum(infectious[day, :] - isolation_inf[day,:]) + np.sum(asymptomatic[day, :]-isolation_asymp[day, :]) + np.sum(symptomatic[day, :] - isolation_symp[day,:])
 
         # Compose responses and gradients.
         responses = {"num_infected": num_infected, "num_exposed": num_exposed, "num_susceptible": num_susceptible, "num_recovered": num_recovered}

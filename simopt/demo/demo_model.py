@@ -81,7 +81,7 @@ plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'], color = '
 plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'], color = 'blue', label = 'num_susceptible')
 plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'], color = 'red', label = 'num_recovered')
 plt.legend()
-plt.show()
+plt.savefig('seir.png')
 
 # import numpy as np
 # total_dist = []
