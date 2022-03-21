@@ -176,7 +176,6 @@ class NELDMD(Solver):
             direction = problem.minmax[0]
             for i in range(problem.dim):
                 distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
-                print(distance)
                 new_pt = list(problem.factors["initial_solution"])
                 new_pt[i] += direction*distance
                 # Try opposite direction if out of bounds.
@@ -188,7 +187,6 @@ class NELDMD(Solver):
                         new_pt[i] = self.lower_bounds[i]
                     else:
                         new_pt[i] = self.upper_bounds[i]
-                print(new_pt)
                 sol.append(self.create_new_solution(new_pt, problem))
 
         # Initialize lists to track budget and best solutions.
