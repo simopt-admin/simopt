@@ -12,8 +12,8 @@ from base import Model, Problem
 
 class Voting(Model):
     """
-    A model that simulates a voting problem with 
-    gamma distributions, 
+    A model that simulates a day of voting operations in multiple precincts
+
     Returns ...
 
     Attributes
@@ -125,10 +125,10 @@ class Voting(Model):
 
         super().__init__(fixed_factors)
     def check_turn_ran(self):
-        return True
+        return self.factors["turn_ran"] > 0
 
     def check_reg_vote(self):
-        return True
+        return self.factors["reg_vote"]>0
 
     def check_mach_allocation(self): #Making sure that all machines are allocated and equal to max available
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"] 
@@ -176,7 +176,7 @@ class Voting(Model):
         if self.factors["bd_prob"] < 0 or self.factors["bd_prob"] > 1:
             return False
         return True    
-        
+
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
@@ -278,7 +278,7 @@ class Voting(Model):
                     clock = arr_times[arr_ind]
                     queue.append(arr_times[arr_ind])
                     arr_ind += 1
-
+# 
                 else:
                     print('error in replicate simulation loop 2')
                     END
