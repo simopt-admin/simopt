@@ -148,13 +148,16 @@ class Throughput(Model):
         
         terminate = False
         service_rng = rng_list[1]
+        
+        # station service is a list of service time
         station_service = []
         
-        rate_list = [3]
+        # rate list is a list consist of different rate for n stations
+        rate_list = [self.factors["n"]]
         buffer_list = [2]
         
-        # Assign three random generated service time to a list.
-        for i in range(self.factor("n")):
+        # Assign random generated service time to the station service list.
+        for i in range(self.factors("n")):
             service_times = ([service_rng.expovariate(self.factors["prate"])
                          for _ in range(total)])
             station_service[i] = service_times
@@ -163,7 +166,7 @@ class Throughput(Model):
         #   - Time at which the part begins processing at Station 1 (i.e., enters the system).
         #   - Time at which the part ends processing at Station 1.
         #   - Time at which the part begins processing at Station 2
-        #   - Time at which the part ends processing at Station 2 
+        #   - Time at which the part ends processing at Station 2  
         #   - Time at which the part begins processing at Station 3
         #   - Time at which the part ends processing at Station 3 (i.e., exits the system).
         part_times = []
@@ -171,6 +174,12 @@ class Throughput(Model):
         # Corresponds to first part    
         part_number = 0
 
+        #create the lists of parts experience with begin time and end time, I would like to implement two lists and for loops to 
+        #assign i from 0 upto n to count the time. Instead of hardcoding it. 
+        
+        begin_proc_station = []
+        end_proc_station = []
+        
         # Store these in a list of lists: outer level = each part, inner level = 6 values.
 
         # When we encounter a part that enters the system after the end of the horizon,
