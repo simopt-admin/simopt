@@ -22,44 +22,49 @@ it has mean :math:`kθ = 1` and standard deviation :math:`{\sqrt{k}}θ = 1/ {\sq
 :math:` Y_1, . . . , Y_T` are i.i.d. exponential with mean 1 and 
 :math:`μ_t` are positive constants for all :math:`t`.
 
+Sources of Randomness:
+----------------------
+Two sources of randomness are used to generate the :math:`X`s and :math:`Y`s that
+form demands.
 
 Model Factors:
 --------------
-* Time Horizon (T): Period of time that is considered
+* Time Horizon (T): Period of time that is considered.
 
     * Default: 3
 
-* Prices: Prices for each period
+* Prices: Prices for each period.
 
     * Default: (100, 300, 400)
 
-* Demand Mean (μ): Mean demand for each period
+* Demand Mean (μ): Mean demand for each period.
 
     * Default: (50, 20, 30)
 
-* Cost (c): Cost per unit of capacity at :math:`t = 0`
+* Cost (c): Cost per unit of capacity at :math:`t = 0`.
 
     * Default: 80
 
-* Gamma Shape (k): Shape parameter of gamma distribution
+* Gamma Shape (k): Shape parameter of gamma distribution.
 
     * Default: 1
 
-* Gamma Scale (θ): Scale parameter of gamma distribution
+* Gamma Scale (θ): Scale parameter of gamma distribution.
 
     * Default: 1
 
-* Initial Inventory (b): Initial inventory
+* Initial Inventory (b): Initial inventory.
 
     * Default: 100
 
 * Reservation Quantity (r): Inventory to reserve going into periods :math:`2, 3, ..., T`.
 
-    * Default: :math:`r_2` = 50, :math:`r_3 = 30`. 
+    * Default: :math:`r_2 = 50`, :math:`r_3 = 30`. 
 
 
-Respones:
----------
+Responses:
+----------
+
 * Revenue: Total revenue of given model
 
 References:
@@ -91,10 +96,6 @@ The reserve quantities are decreasing and less than the initial capacity, i.e.,
 
 Problem Factors:
 ----------------
-
-* Initial Solution: Initial solution from which solvers start.
-
-  * Default: (100, 50, 30)
   
 * Budget: Max # of replications for a solver to take.
 
@@ -102,6 +103,7 @@ Problem Factors:
 
 Fixed Model Factors:
 --------------------
+
 * N/A
 
 Starting Solution: 

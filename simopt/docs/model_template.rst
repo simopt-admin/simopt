@@ -31,7 +31,7 @@ Model Factors:
 
     * Default: <default value>
 
-Respones:
+Responses:
 ---------
 * <response1name>: <short description>
 
