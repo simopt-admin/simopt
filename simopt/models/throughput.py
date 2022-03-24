@@ -187,6 +187,7 @@ class Throughput(Model):
         while not terminate:
 
             if part_number == 0:
+                        
                 # Record the first part's experience.
                 begin_proc_station1 = 0
                 end_proc_station1 = station_service[0]
