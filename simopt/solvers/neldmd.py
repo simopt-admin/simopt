@@ -52,7 +52,7 @@ class NELDMD(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="NELDMD", fixed_factors={}, params={"alpha": 1., "gammap": 2., "betap": 0.5, "delta": 0.5}):
+    def __init__(self, name="NELDMD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -72,22 +72,22 @@ class NELDMD(Solver):
             "alpha": {
                 "description": "reflection coefficient > 0",
                 "datatype": float,
-                "default": params["alpha"]
+                "default": 1.
             },
             "gammap": {
                 "description": "expansion coefficient > 1",
                 "datatype": float,
-                "default": params["gammap"]
+                "default": 2.
             },
             "betap": {
                 "description": "contraction coefficient > 0, < 1",
                 "datatype": float,
-                "default": params["betap"]
+                "default": 0.5
             },
             "delta": {
                 "description": "shrink factor > 0, < 1",
                 "datatype": float,
-                "default": params["delta"]
+                "default": 0.5
             },
             "sensitivity": {
                 "description": "shrinking scale for bounds",
@@ -157,18 +157,18 @@ class NELDMD(Solver):
             print('Budget is too small for a good quality run of Nelder-Mead.')
             return
         # Shrink variable bounds to avoid floating errors.
-        if problem.lower_bounds is not None and problem.lower_bounds != -np.inf:
+        if problem.lower_bounds is not None and problem.lower_bounds != (-np.inf,) * problem.dim:
             self.lower_bounds = tuple(map(lambda i: i + self.factors["sensitivity"], problem.lower_bounds))
         else:
             self.lower_bounds = None
-        if problem.upper_bounds is not None and problem.upper_bounds != np.inf:
+        if problem.upper_bounds is not None and problem.upper_bounds != (np.inf,) * problem.dim:
             self.upper_bounds = tuple(map(lambda i: i - self.factors["sensitivity"], problem.upper_bounds))
         else:
             self.upper_bounds = None
         # Initial dim + 1 points.
         sol = []
         sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
-        if self.lower_bounds == (-np.inf,)*problem.dim and self.upper_bounds == (np.inf,)*problem.dim:
+        if self.lower_bounds is None or self.upper_bounds is None:
             for _ in range(1, n_pts):
                 rand_x = problem.get_random_solution(get_rand_soln_rng)
                 sol.append(self.create_new_solution(rand_x, problem))
