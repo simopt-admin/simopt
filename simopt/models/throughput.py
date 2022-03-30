@@ -147,7 +147,7 @@ class Throughput(Model):
         total = self.factors["warmup"] + self.factors["jobs"]
         
         terminate = False
-        service_rng = rng_list[1]
+        service_rng = rng_list[0]
         
         # station service is a list of service time
         station_service = []
@@ -157,7 +157,7 @@ class Throughput(Model):
         buffer_list = [2]
         
         # Assign random generated service time to the station service list.
-        for i in range(self.factors("n")):
+        for i in range(self.factors["n"]):
             service_times = ([service_rng.expovariate(self.factors["prate"])
                          for _ in range(total)])
             station_service[i] = service_times
