@@ -74,6 +74,6 @@ Optimal Solution:
 Global minimum at :math:`x* = (1/((1-r^)^{1/β})-1)^{1/α}`
 The optimal solution is :math:`x*` = 0.1878
 
-:Optimal Objective Function Value:
+Optimal Objective Function Value:
 The maximum expected profit is 0.4635
 
