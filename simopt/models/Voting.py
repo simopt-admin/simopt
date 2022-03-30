@@ -9,7 +9,6 @@ import numpy as np
 
 from base import Model, Problem
 
-
 class Voting(Model):
     """
     A model that simulates a day of voting operations in multiple precincts
@@ -71,17 +70,17 @@ class Voting(Model):
                 "default": [100,200,100,400,200]
             },
             "mean_time2vote": {
-                "description": "The mean time for the gamma distributed time taken to vote",
+                "description": "the mean time for the gamma distributed time taken to vote",
                 "datatype": int,
                 "default": 7.5
             },
             "stdev_time2vote": {
-                "description": "The standard deviation for the gamma distributed time to vote",
+                "description": "the standard deviation for the gamma distributed time to vote",
                 "datatype": int,
                 "default": 2
             },
             "mean_repair": {
-                "description": "Voting machines are repaired according to a gamma distribution, this is the mean time, minutes",
+                "description": "voting machines are repaired according to a gamma distribution, this is the mean time, minutes",
                 "datatype": int,
                 "default": 60
             },
@@ -91,7 +90,7 @@ class Voting(Model):
                 "default": 20
             },
             "bd_prob": {
-                "description": "Probability at which the voting machines break down (bd)",
+                "description": "probability at which the voting machines break down (bd)",
                 "datatype": float,
                 "default": .05
             },
@@ -101,7 +100,7 @@ class Voting(Model):
                 "default": 13.0
             },
             "n_prec":{
-                "description": "Number of precincts",
+                "description": "number of precincts",
                 "datatype": int,
                 "default": 5
             }
@@ -131,6 +130,9 @@ class Voting(Model):
         return self.factors["reg_vote"]>0
 
     def check_mach_allocation(self): #Making sure that all machines are allocated and equal to max available
+        for i in self.factors["mach_allocation"]:
+            if self.factors["mach_allocation"][i] < 0:
+                return False
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"] 
 
     def check_n_mach(self): #verifying that the machines are positive values
@@ -141,7 +143,7 @@ class Voting(Model):
 
     def check_mid_turn_per(self): #veifying that all are percentages
         for i in self.factors["mid_turn_per"]:
-            if i < 0 and i > 1:
+            if i < 0 or i > 1:
                 return False
         return True
 
@@ -221,7 +223,7 @@ class Voting(Model):
         #iterate through each precinct calling both functions
 
 
-        prec_sum_waittime = []
+        prec_avg_waittime = []
         for m in range(self.factors["n_prec"]):          #p is num of machines in that precinct
             mach_list = []
             for i in range(len(self.factors["mach_allocation"])):        #i is each individual machine in that precinct 
@@ -256,14 +258,14 @@ class Voting(Model):
             while len(wait_times) <= len(arr_times):
                 if min(mach_list) < arr_times[arr_ind]:
                     clock = min(mach_list)
-                    if queue is np.empty:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                    if queue == []:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
                         clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
                         vote_ind += 1
                         arr_ind += 1
                         wait_times.append(0)
-                    elif queue is not np.empty:
+                    elif len(queue) > 0:
                         queue.append(arr_times[arr_ind]) #no clock update as there is not another event happenign just updated
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
@@ -282,7 +284,7 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-        prec_sum_waittime.append.sum(wait_times)
+        prec_avg_waittime.append.mean(wait_times)
         '''
         Pseudo Code
 
@@ -325,7 +327,7 @@ class Voting(Model):
         '''
         # Compose responses and gradients.
         responses = {
-            'avg_wait_time': prec_sum_waittime
+            'avg_wait_time': prec_avg_waittime
         }
         return responses
 
