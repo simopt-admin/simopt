@@ -818,7 +818,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             print("At least two experiments have different numbers of macro-replications.")
         # Check if experiment has been post-replicated and with common number of postreps.
         if getattr(experiment, "n_postreps", None) is None:
-            print(f"The experiment of {experiment.solver_name} on {experiment.problem_name} has not been post-replicated.")
+            print(f"The experiment of {experiment.solver.name} on {experiment.problem.name} has not been post-replicated.")
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
