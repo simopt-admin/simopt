@@ -20,7 +20,7 @@ from base import Solution
 # # Replace <filename> with name of .py file containing problem class.
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: from models.cntnv import CntNVMaxProfit
-from models.covid import CovidMinInfect
+from models.covid_individual import CovidMinInfect
 
 
 # Fix factors of problem. Specify a dictionary of factors.
@@ -51,7 +51,7 @@ myproblem = CovidMinInfect(fixed_factors= fixed_factors)
 #     x = (3,)
 # x = (2,3)
 # x = 3 * np.ones(10)
-x = (1, 0, 0, 0, 0, 2, 0, 0 ,0 ,0, 3, 0, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0)
+x = (1/7, 1/7, 1/7)
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 

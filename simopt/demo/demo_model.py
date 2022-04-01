@@ -19,7 +19,7 @@ from rng.mrg32k3a import MRG32k3a
 # Ex: from models.mm1queue import MM1Queue
 from models.ironore import IronOre
 from models.dynamnews import DynamNews
-from models.covid import COVID
+from models.covid_individual import COVID
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
