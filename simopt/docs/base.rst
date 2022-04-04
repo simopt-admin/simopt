@@ -2,6 +2,6 @@ base module
 ===========
 
 .. automodule:: base
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

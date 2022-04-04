@@ -339,7 +339,7 @@ facilities subject to a chance constraint on stockout probability.
 """
 
 
-class FacilitySizingTotalCost(Problem):
+class MinVotingMaxWaitTime(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -404,55 +404,42 @@ class FacilitySizingTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
+        self.dim = 5
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
-        self.gradient_available = True
+        self.variable_type = "discrete"
+        self.lower_bounds = (1, 1, 1, 1, 1)
+        self.upper_bounds = (46, 46, 46, 46, 46)
+        self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  # (185, 185, 185)
+        self.optimal_solution = None  
         self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
+        self.model_decision_factors = {"mach_allocation"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (300, 300, 300)
+                "default": (10,10,10,10,10)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
-            },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1, 1, 1)
-            },
-            "epsilon": {
-                "description": "Maximum allowed probability of stocking out.",
-                "datatype": float,
-                "default": 0.05
-            }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
+        self.model = MinVotingMaxWaitTime(self.model_fixed_factors)
 
-    def check_installation_costs(self):
+    def check_installation_costs(self):                                                 #Probably delete
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
             return False
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
@@ -460,7 +447,7 @@ class FacilitySizingTotalCost(Problem):
         else:
             return True
 
-    def check_epsilon(self):
+    def check_epsilon(self):                                                            #Probably delete
         return 0 <= self.factors["epsilon"] <= 1
 
     def vector_to_factor_dict(self, vector):
@@ -478,7 +465,7 @@ class FacilitySizingTotalCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "capacity": vector[:]
+            "mach_allocation": vector[:]
         }
         return factor_dict
 
@@ -497,7 +484,7 @@ class FacilitySizingTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["capacity"])
+        vector = tuple(factor_dict["mach_allocation"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
