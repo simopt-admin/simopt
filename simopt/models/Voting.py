@@ -8,6 +8,7 @@ from turtle import end_fill
 import numpy as np
 
 from base import Model, Problem
+import math as math
 
 class Voting(Model):
     """
@@ -255,32 +256,49 @@ class Voting(Model):
             clock = 0
             vote_ind = 0
             arr_ind = 0
+            mach_ind = 0
             while len(wait_times) <= len(arr_times):
-                if min(mach_list) < arr_times[arr_ind]:
+                if min(mach_list) <= arr_times[arr_ind]:
                     clock = min(mach_list)
-                    if queue == []:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                    if len(queue) > 0:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
                         clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
                         vote_ind += 1
                         arr_ind += 1
-                        wait_times.append(0)
-                    elif len(queue) > 0:
-                        queue.append(arr_times[arr_ind]) #no clock update as there is not another event happenign just updated
+                        wait_times.append(clock - queue.pop(0))
+                    elif len(queue) == 0:
                         mach_ind = mach_list.index(min(mach_list))
-                        mach_list[mach_ind] = clock + voting_times[vote_ind]
-                        wait_times.append(clock - queue.pop(0)) #calulates the difference of when the entity entered the list and when it is now voting
-                        vote_ind +=1
-                        arr_ind += 1
+                        mach_list[mach_ind] = math.inf
                     else:
                         print("error in replicate simulation loop 1")
                         END
-
                 elif arr_times[arr_ind] < min(mach_list):
                     clock = arr_times[arr_ind]
-                    queue.append(arr_times[arr_ind])
-                    arr_ind += 1
-# 
+                    if len(queue) == 0:
+                        for i in range(len(mach_list)):
+                            if mach_list[i] == math.inf:
+                                mach_ind = i
+                                break
+                            elif mach_list[i] != math.inf:
+                                mach_ind = -1
+                        if mach_ind >= 0:
+                            mach_list[mach_ind] = clock + voting_times[vote_ind]
+                            wait_times.append(0)
+                            vote_ind += 1
+                            arr_ind += 1
+                        elif mach_ind == -1: #no infinity values in list
+                            queue.append(clock)
+                        else:
+                            print("error in loop queue is empty arrival times less than machine list")
+                            END
+                    elif len(queue) > 0:
+                        queue.append(clock)
+                        arr_ind += 1
+                    else:
+                        print("error in simulation loop 1, arrival times less than machine list")
+                        END
+
                 else:
                     print('error in replicate simulation loop 2')
                     END
