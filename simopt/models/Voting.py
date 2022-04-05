@@ -424,21 +424,21 @@ class MinVotingMaxWaitTime(Problem):
     """
     def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = #refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
+         #refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
         self.n_objectives = 1
         self.n_stochastic_constraints = 1       #how many stochastic constraints are available to be determined, since only one is # of machines is deterministic there are none here =0
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lower_bounds = (1, 1, 1, 1, 1)                 #should be after we define self.dim
-        self.upper_bounds = (46, 46, 46, 46, 46)            #use 1's and then use infinities
+                         #should be after we define self.dim
+        self.upper_bounds = (math.inf, math.inf, math.inf, math.inf, math.inf)            #use 1's and then use infinities
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None  
         self.model_default_factors = {}
         self.model_decision_factors = {"mach_allocation"}
         self.factors = fixed_factors
-        self.specifications = {
+        self.specifications = { 
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
@@ -453,9 +453,15 @@ class MinVotingMaxWaitTime(Problem):
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
+        }
         super().__init__(fixed_factors, model_fixed_factors)                        #this is where the model is actaully created
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = MinVotingMaxWaitTime(self.model_fixed_factors) #dont need to change this?              
+        self.model = MinVotingMaxWaitTime(self.model_fixed_factors) #dont need to change this?
+        self.dim = self.model.factors["n_prec"] 
+        self.lower_bounds = ()     
+        for i in range(self.dim): # can we do this??
+            self.upper_bounds.append(math.inf)
+            self.lower_bounds.append(1)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -509,7 +515,8 @@ class MinVotingMaxWaitTime(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (0,)  #need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
+        
+        objectives = (max(response_dict["avg_wait_time"]), )  #need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -527,7 +534,7 @@ class MinVotingMaxWaitTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (-response_dict["stockout_flag"],)      #can set to none 
+        stoch_constraints = None    #can set to none 
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -546,8 +553,8 @@ class MinVotingMaxWaitTime(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (self.factors["epsilon"],)              #can set to none
-        det_stoch_constraints_gradients = ((0,),)
+        det_stoch_constraints = None           #can set to none
+        det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
@@ -566,8 +573,8 @@ class MinVotingMaxWaitTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.dot(self.factors["installation_costs"], x),)       #can set to none, if there was a cost penalty then this could be use
-        det_objectives_gradients = ((self.factors["installation_costs"],),)
+        det_objectives = None       #can set to none, if there was a cost penalty then this could be use
+        det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
