@@ -482,6 +482,7 @@ class throughputMaximize(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
+        # No specific objective and gradients.
         det_objectives = (0.1 * (x[0]**2),)
         det_objectives_gradients = ((0.2 * x[0],),)
         return det_objectives, det_objectives_gradients
@@ -524,6 +525,8 @@ class throughputMaximize(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
+        # need to put two constraints of B and R in it and return True or False.
+        
         buffer_feasible = super().check_deterministic_constraints(x)
         servicetime_feasible = super().check_deterministic_constraints(x)
         
