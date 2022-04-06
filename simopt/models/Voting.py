@@ -542,7 +542,7 @@ class MinVotingMaxWaitTime(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)            #self.model.factors["n_machines"] >= sum(x)
+        return np.all(sum(x) >= self.model.factors["n_machines"])            #self.model.factors["n_machines"] >= sum(x)
 
     def get_random_solution(self, rand_sol_rng):
         """
