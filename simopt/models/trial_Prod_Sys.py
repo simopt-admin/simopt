@@ -129,10 +129,10 @@ class ProdSys(Model):
             "num_machines": self.check_num_machines,
             "num_edges": self.check_num_edges,
             "interm_product": self.check_interm_product,
-            "n_sets": self.check_n_sets,
-            "machine_layout": self.check_machine_layout,
-            "batch": self.check_batch,
-            "time_horizon": self.check_time_horizon
+            #"n_sets": self.check_n_sets,
+            # "machine_layout": self.check_machine_layout,
+            # "batch": self.check_batch,
+            # "time_horizon": self.check_time_horizon
            #"routing_layout"
            # "machine_layout"
            # "processing_time_mean"
@@ -170,17 +170,17 @@ class ProdSys(Model):
                 return False
         return sum(self.factors["interm_product"]) == self.factors["n_sets"] and len(self.factors["interm_product"]) == self.factors["num_edges"]
 
-    def check_n_sets(self):
-        return self.factors["num_sets"] >= 0
+    # def check_n_sets(self):
+    #     return self.factors["num_sets"] >= 0
 
-    def check_machine_layout(self):
-        return len(self.factors["machine_layout"]) == "num_edges"
+    # def check_machine_layout(self):
+    #     return len(self.factors["machine_layout"]) == "num_edges"
 
-    def check_batch(self):
-        return self.factors["batch"] > 0
+    # def check_batch(self):
+    #     return self.factors["batch"] > 0
 
-    def check_time_horizon(self):
-        return self.factors["time_horizon"] > 0
+    # def check_time_horizon(self):
+    #     return self.factors["time_horizon"] > 0
 
     def replicate(self, rng_list):
         """
@@ -293,12 +293,11 @@ class ProdSys(Model):
             print("optimal edges: ", optimal_edges)
             for elem in optimal_edges:
                 machines.append(self.factors["machine_layout"][elem])
-
             print("time: ", optimal_time)
             for i in range(len(machines)):
                 for j in range(len(self.factors["machine_layout"])):
                     if self.factors["machine_layout"][j] == machines[i]:
-                        edge_time[j] = optimal_time[i]
+                        edge_time[j] =  optimal_time[i]
             print("machines ", machines)
             network_time.append(sum(optimal_time))
 
@@ -341,19 +340,55 @@ class ProdSys(Model):
         network_time = []
         edge_time = np.zeros(len(self.factors["machine_layout"]))
         
+
         for i in range(3):
             product = rng_list[2][i]
             print("Product: ", product)
+
+
             update_time(product)
+
+
             print("")
             print("edges time: ",edge_time)
             print("")
+        
+        leadtime = []
+        clock = rng_list[3][0]
+        i = 0
+        tot_time = 0
+        product = rng_list[2][0]
+        print("Product: ", product)
+        update_time(product)
+        print("")
+        print("edges time: ",edge_time)
+        
+        while len(leadtime) <= len(rng_list[2]):
+            i += 1
+            print("Clock: ", clock)
+            print(max(edge_time))
+            print(rng_list[3][i])
+            
+            if max(edge_time) > rng_list[3][i]:
+                clock = max(edge_time)
+                print("here")
+            else:
+                clock = rng_list[3][i]
+                product = rng_list[2][i]
+                print("Product: ", product)
+                update_time(product)
+                print("")
+                print("edges time: ",edge_time)
+                print("")
+                print("CL", clock)
+            if i == 5:
+                break
 
         print(network_time)
         num_edges = len(self.factors["routing_layout"])
         node_product = self.factors["interm_product"]
         rng_list = [0, 0, 0, 0]    # FIX THIS
-        product = 1
+        product = 1 
 
         def get_lead_time(end_nodes, product, rng_list):
             print("")
