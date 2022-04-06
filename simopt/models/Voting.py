@@ -222,7 +222,7 @@ class Voting(Model):
                 if breakdown_rng.choices([0,1], [1-p,p]) == 1:    #Determining if the machine will be borken down to start day
                     t = breakdown_rng.gammavariate((self.factors["mean_repair"]^2)/(self.factors["stdev_repair"]^2),(self.factors["stdev_repair"]^2)/(self.factors["mean_repair"])) #Determines wait time for broken machine in minutes
                 else:
-                    t = 0
+                    t = math.inf
                 mach_list.append(t)
                     #ti = ai + bi*T
 
@@ -293,6 +293,7 @@ class Voting(Model):
                     print('error in replicate simulation loop 2')
                     END
         prec_avg_waittime.append.mean(wait_times)
+        #add response for pecentage of voters who did not wait
         
         # Compose responses and gradients.
         responses = {
