@@ -18,7 +18,7 @@ Include the initial solution from the model. Generate the remaining points using
 Box constraints:
 Nelder-Mead checks for box constraints in the solver and modifies the parts of a solution that go out of bounds by setting them to their respective closest bound. For example, if a tentative solution is (2,4) and the upper bound is (3,3), then the point is modified to (2,3). Additionally, if the reflected point goes out of bounds, all the points will be shrinked towards the best point.
 
-Attributes:
+Scope:
 ----------------------
 * objective_type: single
 
@@ -26,7 +26,7 @@ Attributes:
 
 * variable_type: continuous
 
-Model Factors:
+Solver Factors:
 --------------
 * crn_across_solns: Use CRN across solutions?
 
