@@ -7,6 +7,9 @@ The algorithm maintains a simplex of points that moves around the feasible
 region according to certain geometric operations: reflection, expansion, 
 scontraction, and shrinking.
 
+A detailed description of the solver can be found 
+`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
+
 Modifications & Implementation:
 ----------------------
 Initial (dimension + 1) points:
