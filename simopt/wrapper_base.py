@@ -29,6 +29,7 @@ plot_solvability_cdfs : function
 plot_area_scatterplots : function
 plot_solvability_profiles : function
 plot_terminal_progress : function
+plot_terminal_scatterplots : function
 setup_plot : function
 save_plot : function
 MetaExperiment : class
@@ -1518,7 +1519,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
         save_plot(solver_name="SOLVER SET",
                   problem_name="PROBLEM SET",
-                  plot_type="area_scatterplot",
+                  plot_type="area",
                   normalize=True
                   )
     else:
@@ -1566,7 +1567,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
             save_plot(solver_name=experiment.solver.name,
                       problem_name="PROBLEM SET",
-                      plot_type="area_scatterplot",
+                      plot_type="area",
                       normalize=True
                       )
 
@@ -1889,6 +1890,67 @@ def plot_terminal_progress(experiments, plot_type, normalize=True, all_in_one=Tr
                       )
 
 
+def plot_terminal_scatterplots(experiments, all_in_one=True):
+    """
+    Plot a scatter plot of mean and standard deviation of terminal progress.
+    Either one plot for each solver or one plot for all solvers.
+
+    Parameters
+    ----------
+    experiments : list of list of wrapper_base.Experiment objects
+        experiments used to produce plots
+    all_in_one : bool
+        plot curves together or separately
+    """
+    # Set up plot.
+    n_solvers = len(experiments)
+    n_problems = len(experiments[0])
+    if all_in_one:
+        marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
+        setup_plot(plot_type="terminal_scatter",
+                   solver_name="SOLVER SET",
+                   problem_name="PROBLEM SET"
+                   )
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
+        solver_curve_handles = []
+        for solver_idx in range(n_solvers):
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                color_str = "C" + str(solver_idx)
+                marker_str = marker_list[solver_idx % len(marker_list)]  # Cycle through list of marker types.
+                # Plot mean and standard deviation of terminal progress.
+                terminals = [curve.y_vals[-1] for curve in experiment.progress_curves]
+                mean_estimator = np.mean(terminals)
+                std_dev_estimator = np.std(terminals, ddof=1)
+                handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
+            solver_curve_handles.append(handle)
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        save_plot(solver_name="SOLVER SET",
+                  problem_name="PROBLEM SET",
+                  plot_type="terminal_scatter",
+                  normalize=True
+                  )
+    else:
+        for solver_idx in range(n_solvers):
+            ref_experiment = experiments[solver_idx][0]
+            setup_plot(plot_type="terminal_scatter",
+                       solver_name=ref_experiment.solver.name,
+                       problem_name="PROBLEM SET"
+                       )
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                # Plot mean and standard deviation of terminal progress.
+                terminals = [curve.y_vals[-1] for curve in experiment.progress_curves]
+                mean_estimator = np.mean(terminals)
+                std_dev_estimator = np.std(terminals, ddof=1)
+                handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
+            save_plot(solver_name=experiment.solver.name,
+                      problem_name="PROBLEM SET",
+                      plot_type="terminal_scatter",
+                      normalize=True
+                      )
+
+
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
     """
     Create new figure. Add labels to plot and reformat axes.
@@ -1908,6 +1970,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
             "area" : area scatterplot
             "box" : box plot of terminal progress
             "violin" : violin plot of terminal progress
+            "terminal_scatter" : scatterplot of mean and std dev of terminal progress
     solver_name : string
         name of solver
     problem_name : string
@@ -1983,6 +2046,12 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
             title = f"{solver_name} on {problem_name}\n Terminal Progress"
         else:
             title = f"{solver_name} on {problem_name}\n Terminal Objective"
+    elif plot_type == "terminal_scatter":
+        plt.xlabel("Mean Terminal Progress", size=14)
+        plt.ylabel("Std Dev of Terminal Progress")
+        plt.xlim((0, 1))
+        plt.ylim((0, 0.5))
+        title = f"{solver_name}\nTerminal Progress"
     plt.title(title, size=14)
 
 
@@ -2007,6 +2076,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
             "diff_cdf_solvability" : difference of cdf solvability profiles
             "diff_quantile_solvability" : difference of quantile solvability profiles
             "area" : area scatterplot
+            "terminal_scatter" : scatterplot of mean and std dev of terminal progress
     normalize : Boolean
         normalize progress curves w.r.t. optimality gaps?
     extra : float (or list of floats)
@@ -2035,6 +2105,8 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "terminal_box"
     elif plot_type == "violin":
         plot_name = "terminal_violin"
+    elif plot_type == "terminal_scatter":
+        plot_name = "terminal_scatter"
     if not normalize:
         plot_name = plot_name + "_unnorm"
     path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
