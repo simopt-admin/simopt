@@ -3,6 +3,7 @@ Summary
 -------
 Simulate demand at facilities.
 """
+from multiprocessing.connection import wait
 from tkinter import END
 from turtle import end_fill
 import numpy as np
@@ -193,20 +194,9 @@ class Voting(Model):
         -------
         responses : dict          
             <NEW>
-            "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
-            "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
-                                        ### DO WE NEED TO CALCULATE THIS FOR EACH VOTER OR JUST FOR THE MACHINE OR THE PRECINCT
-            
-            ##VERY CONFUSED DO WE DECIDE IF EACH IS BROKEN OR NOT OR DO PER PRECINCT, Etc.
-            "mach_bd" = binary variable, probability that the           
-                0 : The voting machine is broken down at start of day
-                1 : The voting machine does not break down for the day 
-
-            "repair_time" = the time that it will take for a machine to be repaired, gamma distributed
-            "arrival_rate" = rate of arrival to the voting location
-
-        gradients : dict of dicts
-            gradient estimates for each response
+            "prec_avg_waittime" = all the wait times of voters from each precinct 
+            "perc_no_waittime" = The percentage of voters who had a 0 min wait time to vote
+           
         """
         #                      self.factors["mid_turn_per"]
         breakdown_rng = rng_list[0]
@@ -215,6 +205,8 @@ class Voting(Model):
         voting_rng = rng_list[3]
 
         prec_avg_waittime = []
+        perc_no_waittime = []
+
         for m in range(self.factors["n_prec"]):          #p is num of machines in that precinct
             mach_list = []
             for i in range(len(self.factors["mach_allocation"])):        #i is each individual machine in that precinct 
@@ -292,12 +284,14 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-        prec_avg_waittime.append.mean(wait_times)
-        #add response for pecentage of voters who did not wait
+        
+        prec_avg_waittime.append(wait_times) 
+        perc_no_waittime.append(wait_times.count(0) / len(wait_times))
         
         # Compose responses and gradients.
         responses = {
-            'avg_wait_time': prec_avg_waittime
+            'avg_wait_time': prec_avg_waittime,
+            'perc_no_waittime': perc_no_waittime
         }
         return responses
 
