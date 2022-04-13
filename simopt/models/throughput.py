@@ -213,7 +213,8 @@ class Throughput(Model):
                         t += station_service[i]
                         end_proc_station.append(t)
                         k += 1
-                    
+                
+                
                 #begin_proc_station1 = 0
                 #end_proc_station1 = station_service[0]
                 #begin_proc_station2 = station_service[0]
@@ -399,13 +400,13 @@ class throughputMaximize(Problem):
             "Buffer":{
                 "describtion": "Buffer Allocation for two stations",
                 "datatype": int,
-                "default": 10
+                "default": 20
             },
             
             "Rate": {
                 "description": "Rate parameter for service time of three stations",
-                "datatype": float,
-                "default": 10.0
+                "datatype": int,
+                "default": 20
                 
             },
             
@@ -554,6 +555,9 @@ class throughputMaximize(Problem):
         
         buffer_feasible = super().check_deterministic_constraints(x)
         servicetime_feasible = super().check_deterministic_constraints(x)
+        
+        np.sum( "rate list") < self.factors["Rate"]
+        np.sum( "buffer list") < self.factors["Buffer"]
         
         return buffer_feasible, servicetime_feasible
 
