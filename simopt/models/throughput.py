@@ -215,6 +215,14 @@ class Throughput(Model):
                         k += 1
                 
                 
+                parts_experience = []
+                for i in range(self.factor["n"]):
+                    
+                    parts_experience.append(begin_proc_station[i])
+                    parts_experience.append(end_proc_station[i])
+                
+                part_times.append(parts_experience)
+                
                 #begin_proc_station1 = 0
                 #end_proc_station1 = station_service[0]
                 #begin_proc_station2 = station_service[0]
