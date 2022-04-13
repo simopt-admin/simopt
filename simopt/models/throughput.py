@@ -5,6 +5,7 @@ Simulate throughput maximizaion.
 A detailed description of the problem can be found `here `
 
 """
+from re import T
 import numpy as np
 import math
 
@@ -180,6 +181,11 @@ class Throughput(Model):
         begin_proc_station = []
         end_proc_station = []
         
+        
+        k = 0
+        #service time added for assigning to each stations' begin time lists.
+        t = 0
+        
         # Store these in a list of lists: outer level = each part, inner level = 6 values.
 
         # When we encounter a part that enters the system after the end of the horizon,
@@ -189,14 +195,33 @@ class Throughput(Model):
             if part_number == 0:
                         
                 # Record the first part's experience.
-                begin_proc_station1 = 0
-                end_proc_station1 = station_service[0]
-                begin_proc_station2 = station_service[0]
-                end_proc_station2 = station_service[0] + station_service[1]
-                begin_proc_station3 = station_service[0] + station_service[1]
-                end_proc_station3 = station_service[0] + station_service[1] + station_service[2]
-                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
-                part_times.append(parts_experience)
+                for i in range(self.factors["n"]):
+                    
+                    if i == 0:
+                        begin_proc_station.append(0)
+                    else:
+                        while k < i:
+                            t += station_service[i - 1]
+                            begin_proc_station.append(t)
+                            k += 1
+                k = 0
+                t = 0
+                
+                for i in range(self.factors["n"]):
+                    
+                    while k < i+1:
+                        t += station_service[i]
+                        end_proc_station.append(t)
+                        k += 1
+                    
+                #begin_proc_station1 = 0
+                #end_proc_station1 = station_service[0]
+                #begin_proc_station2 = station_service[0]
+                #end_proc_station2 = station_service[0] + station_service[1]
+                #begin_proc_station3 = station_service[0] + station_service[1]
+                #end_proc_station3 = station_service[0] + station_service[1] + station_service[2]
+                #parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
+                #part_times.append(parts_experience)
 
             else:
                 # Record the part's experience.
