@@ -483,8 +483,8 @@ class throughputMaximize(Problem):
             vector of gradients of deterministic components of objectives
         """
         # No specific objective and gradients.
-        det_objectives = (0.1 * (x[0]**2),)
-        det_objectives_gradients = ((0.2 * x[0],),)
+        det_objectives = None
+        det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -544,8 +544,12 @@ class throughputMaximize(Problem):
         Returns
         -------
         x : tuple
-            vector of decision variables
+            vector of buffer lists
+            
+        y : tuple
+            vector of rate lists
         """
+        
         # Generate an Exponential(rate = 1/3) r.v.
         x = (rand_sol_rng.expovariate(1 / 3),)
         return x
