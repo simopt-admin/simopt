@@ -29,6 +29,7 @@ from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
+from models.covid_individual import COVID, CovidMinInfect
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -51,7 +52,8 @@ problem_directory = {
     "SAN-1": SANLongestPath,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
-    "PARAMESTI-1": ParamEstiMinLogLik
+    "PARAMESTI-1": ParamEstiMinLogLik,
+    "COVID-1": CovidMinInfect
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -67,5 +69,6 @@ model_directory = {
     "SAN": SAN,
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
-    "PARAMESTI": ParameterEstimation
+    "PARAMESTI": ParameterEstimation,
+    "COVID": COVID
 }

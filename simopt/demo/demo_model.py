@@ -76,12 +76,24 @@ for outerkey in gradients:
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
-plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'], color = 'green', label = 'num_infected')
-plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'], color = 'orange', label = 'num_exposed')
-plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'], color = 'blue', label = 'num_susceptible')
-plt.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'], color = 'red', label = 'num_recovered')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'num_infected')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'num_exposed')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'num_susceptible')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'num_recovered')
 plt.legend()
 plt.savefig('seir.png')
+
+for i in range(mymodel.factors["num_groups"]):
+    fig1, ax1 = plt.subplots()
+    figlabel = 'num_infected in group '+str(i)
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = figlabel)
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = figlabel)
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = figlabel)
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = figlabel)
+    ax1.legend()
+    fig1.savefig('seir_group'+str(i)+'.png')
+
+
 
 # import numpy as np
 # total_dist = []
