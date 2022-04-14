@@ -120,20 +120,22 @@ class RNDSAN(Model):
         exp_rng = rng_list[0]
 
         # Topological sort.
-        graph = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
+        graph_in = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
+        graph_out = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
         for a in self.factors["arcs"]:
-            graph[a[0]].add(a[1])
-        indegrees = [len(graph[n]) for n in range(1, self.factors["num_nodes"]+1)]
+            graph_in[a[1]].add(a[0])
+            graph_out[a[0]].add(a[1])
+        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"]+1)]
+        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
         queue = []
         topo_order = []
         for n in range(self.factors["num_nodes"]):
             if indegrees[n] == 0:
                 queue.append(n+1)
-                topo_order.append(n+1)
         while len(queue) != 0:
             u = queue.pop(0)
             topo_order.append(u)
-            for n in graph[u]:
+            for n in graph_out[u]:
                 indegrees[n-1] -= 1
                 if indegrees[n-1] == 0:
                     queue.append(n)
@@ -143,15 +145,17 @@ class RNDSAN(Model):
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
             arc_length[str(self.factors["arcs"][i])] = -exp_rng.expovariate(1/thetas[i])
+        print(arc_length)
 
         # Initialize.
         T = np.zeros(self.factors["num_nodes"])
         # Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
 
         for i in range(1, self.factors["num_nodes"]):
-            for j in graph[i]:
-                if T[j-1] > T[i-1] + arc_length[str((i,j))]:
-                    T[j-1] = T[i-1] + arc_length[str((i,j))]
+            vi = topo_order[i-1]
+            for j in graph_out[vi]:
+                if T[j-1] > T[vi-1] + arc_length[str((vi,j))]:
+                    T[j-1] = T[vi-1] + arc_length[str((vi,j))]
 
         longest_path = -T[self.factors["num_nodes"]-1]
         # longest_path_gradient = Tderiv[8, :]
