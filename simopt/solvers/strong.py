@@ -385,10 +385,6 @@ class STRONG(Solver):
         t2 = tmaxV.min()
         # Calculate the modified x.
         modified_x = new_x + t2 * stepV
-        # Rounding error.
-        for i in range(0, len(candidate_x)):
-            if modified_x[i] < 0 and modified_x[i] > -0.00000005:
-                modified_x[i] = 0
         return modified_x
 
     # Finite difference for calculating gradients and BFGS for calculating Hessian matrix.
