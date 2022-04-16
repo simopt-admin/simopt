@@ -147,7 +147,7 @@ class ASTRODF(Solver):
             "kappa_select": {
                 "description": "fixed kappa or dynamic kappa? True: fixed kappa, False: dynamic kappa",
                 "datatype": bool,
-                "default": False
+                "default": True
             },
             "criticality_step": {
                 "description": "True: skip contraction loop if not near critical region, False: always run contraction loop",
@@ -385,6 +385,7 @@ class ASTRODF(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         delta_k = delta
+        kappa_tilde = 1
 
         while expended_budget < problem.factors["budget"] * 0.01:
 
@@ -400,11 +401,13 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.determine_kappa_tilde(k, fn, sig2):
-                        kappa_tilde = fn/(delta**2)
-                        print(fn)
-                        print(kappa_tilde)
-                        break
+                    if kappa_select == False:
+                        if sample_size >= self.determine_kappa_tilde(k, fn, sig2):
+                            kappa_tilde = fn/(delta**2)
+                            break
+                    else:
+                        if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
+                            break
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta_k, k, problem, expended_budget, kappa_select, kappa_tilde, new_solution)
             if solver_select == True:
