@@ -408,6 +408,7 @@ class ASTRODF(Solver):
                     else:
                         if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
                             break
+                print(kappa_tilde)
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta_k, k, problem, expended_budget, kappa_select, kappa_tilde, new_solution)
             if solver_select == True:
@@ -592,6 +593,7 @@ class ASTRODF(Solver):
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
+                    print(sample_size)
                     break
 
             # calculate success ratio
