@@ -592,7 +592,6 @@ class ASTRODF(Solver):
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
-                    print(sample_size)
                     break
 
             # calculate success ratio
