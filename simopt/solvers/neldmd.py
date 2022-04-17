@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class NELDMD(Solver):
+class NelderMead(Solver):
     """
     REFERENCE
     Russell R. Barton, John S. Ivey, Jr., (1996)
@@ -55,7 +55,7 @@ class NELDMD(Solver):
     def __init__(self, name="NELDMD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -97,7 +97,7 @@ class NELDMD(Solver):
             "initial_spread": {
                 "description": "fraction of the distance between bounds used to select initial points",
                 "datatype": float,
-                "default": 1/10
+                "default": 1 / 10
             }
         }
         self.check_factor_list = {
@@ -153,7 +153,7 @@ class NELDMD(Solver):
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
         # Check for sufficiently large budget.
-        if problem.factors["budget"] < self.factors["r"]*n_pts:
+        if problem.factors["budget"] < self.factors["r"] * n_pts:
             print('Budget is too small for a good quality run of Nelder-Mead.')
             return
         # Shrink variable bounds to avoid floating errors.
@@ -173,17 +173,16 @@ class NELDMD(Solver):
                 rand_x = problem.get_random_solution(get_rand_soln_rng)
                 sol.append(self.create_new_solution(rand_x, problem))
         else:  # Restrict starting shape/location.
-            direction = problem.minmax[0]
             for i in range(problem.dim):
                 distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
                 new_pt = list(problem.factors["initial_solution"])
-                new_pt[i] += direction*distance
+                new_pt[i] += distance
                 # Try opposite direction if out of bounds.
                 if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-                    new_pt[i] -= 2*direction*distance
+                    new_pt[i] -= 2 * distance
                 # Set to bound if neither direction works.
                 if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-                    if direction == -1:
+                    if problem.minmax[i] == -1:
                         new_pt[i] = self.lower_bounds[i]
                     else:
                         new_pt[i] = self.upper_bounds[i]
@@ -207,10 +206,9 @@ class NELDMD(Solver):
         # Sort solutions by obj function estimate.
         sort_sol = self.sort_and_end_update(problem, sol)
 
-        # Reflect worst and update sort_sol.
-        # Maximization problem is converted to minimization by -z.
+        # Maximization problem is converted to minimization by using minmax.
         while budget_spent <= problem.factors["budget"]:
-            # Reflect worse point.
+            # Reflect worst and update sort_sol.
             p_high = sort_sol[-1]  # Current worst point.
             p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # Centroid for other pts.
             orig_pt = p_high  # Save the original point.
@@ -226,7 +224,7 @@ class NELDMD(Solver):
                     for i in range(1, len(sort_sol)):
                         p_new2 = p_low
                         p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
-                                          tuple((1-self.factors["delta"]) * i for i in p_low.x)))
+                                          tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
                         p_new = self.check_const(p_new, p_new2.x)
                         p_new = Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
@@ -252,13 +250,13 @@ class NELDMD(Solver):
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
             problem.simulate(p_refl, r)
             budget_spent += r
-            refl_fn_val = tuple([-1*i for i in problem.minmax])*p_refl.objectives_mean
+            refl_fn_val = tuple([-1 * i for i in problem.minmax]) * p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
             p_low = sort_sol[0]  # Current best pt.
-            fn_low = tuple([-1*i for i in problem.minmax])*sort_sol[0].objectives_mean
-            fn_sec = tuple([-1*i for i in problem.minmax])*sort_sol[-2].objectives_mean  # Current 2nd worst z.
-            fn_high = tuple([-1*i for i in problem.minmax])*sort_sol[-1].objectives_mean  # Worst z from unreflected structure.
+            fn_low = tuple([-1 * i for i in problem.minmax]) * sort_sol[0].objectives_mean
+            fn_sec = tuple([-1 * i for i in problem.minmax]) * sort_sol[-2].objectives_mean  # Current 2nd worst obj fn.
+            fn_high = tuple([-1 * i for i in problem.minmax]) * sort_sol[-1].objectives_mean  # Worst obj fn from unreflected structure.
 
             # Check if accept reflection.
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
@@ -273,7 +271,7 @@ class NELDMD(Solver):
             elif refl_fn_val < fn_low:
                 p_exp2 = p_refl
                 p_exp = tuple(map(lambda i, j: i + j, tuple(self.factors["gammap"] * i for i in p_refl.x),
-                                  tuple((1-self.factors["gammap"]) * i for i in p_cent)))
+                                  tuple((1 - self.factors["gammap"]) * i for i in p_cent)))
                 p_exp = self.check_const(p_exp, p_exp2.x)
 
                 # Evaluate expansion point.
@@ -281,7 +279,7 @@ class NELDMD(Solver):
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_exp, r)
                 budget_spent += r
-                exp_fn_val = tuple([-1*i for i in problem.minmax])*p_exp.objectives_mean
+                exp_fn_val = tuple([-1 * i for i in problem.minmax]) * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
                 if exp_fn_val < fn_low:
@@ -314,7 +312,7 @@ class NELDMD(Solver):
                 # Attempt contraction or shrinking.
                 p_cont2 = p_high
                 p_cont = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"] * i for i in p_high.x),
-                                   tuple((1-self.factors["betap"]) * i for i in p_cent)))
+                                   tuple((1 - self.factors["betap"]) * i for i in p_cent)))
                 p_cont = self.check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
@@ -322,7 +320,7 @@ class NELDMD(Solver):
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_cont, r)
                 budget_spent += r
-                cont_fn_val = tuple([-1*i for i in problem.minmax])*p_cont.objectives_mean
+                cont_fn_val = tuple([-1 * i for i in problem.minmax]) * p_cont.objectives_mean
 
                 # Accept contraction.
                 if cont_fn_val <= fn_high:
@@ -346,13 +344,13 @@ class NELDMD(Solver):
                     for i in range(1, len(sort_sol)):
                         p_new2 = p_low
                         p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
-                                          tuple((1-self.factors["delta"]) * i for i in p_low.x)))
+                                          tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
                         p_new = self.check_const(p_new, p_new2.x)
                         p_new = Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         problem.simulate(p_new, r)
                         budget_spent += r
-                        new_fn_val = tuple([-1*i for i in problem.minmax])*p_new.objectives_mean
+                        new_fn_val = tuple([-1 * i for i in problem.minmax]) * p_new.objectives_mean
 
                         # Check for new best.
                         if new_fn_val <= fn_low:
@@ -374,7 +372,7 @@ class NELDMD(Solver):
     # HELPER FUNCTIONS
 
     def sort_and_end_update(self, problem, sol):
-        sort_sol = sorted(sol, key=lambda s: tuple([-1*i for i in problem.minmax])*s.objectives_mean)
+        sort_sol = sorted(sol, key=lambda s: tuple([-1 * i for i in problem.minmax]) * s.objectives_mean)
         return sort_sol
 
     # Check & modify (if needed) the new point based on bounds.
@@ -388,7 +386,7 @@ class NELDMD(Solver):
             elif step[i] < 0 and self.lower_bounds is not None:  # Move pt to lb.
                 tmax[i] = (self.lower_bounds[i] - pt2[i]) / step[i]
         t = min(1, min(tmax))
-        modified = list(map(lambda i, j: i + t*j, pt2, step))
+        modified = list(map(lambda i, j: i + t * j, pt2, step))
         # Remove rounding error.
         for i in range(col):
             if abs(modified[i]) < self.factors["sensitivity"]:
