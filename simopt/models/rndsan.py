@@ -145,7 +145,6 @@ class RNDSAN(Model):
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
             arc_length[str(self.factors["arcs"][i])] = -exp_rng.expovariate(1/thetas[i])
-        print(arc_length)
 
         # Initialize.
         T = np.zeros(self.factors["num_nodes"])
