@@ -40,8 +40,7 @@ for i in range(20):
                                     solver_rename=solver_rename,
                                     problem_rename=problem_rename,
                                     solver_fixed_factors=solver_fixed_factors,
-                                    problem_fixed_factors=problem_fixed_factors,
-                                    model_fixed_factors=model_fixed_factors
+                                    problem_fixed_factors=problem_fixed_factors
                                     )
         # Run experiment with M = 10.
         new_experiment.run(n_macroreps=10)
@@ -54,8 +53,7 @@ for i in range(20):
                                 problem_name="SAN-1",
                                 problem_rename=problem_rename,
                                 solver_fixed_factors=solver_fixed_factors,
-                                problem_fixed_factors=problem_fixed_factors,
-                                model_fixed_factors=model_fixed_factors
+                                problem_fixed_factors=problem_fixed_factors
                                 )
     # Run experiment with M = 10.
     new_experiment.run(n_macroreps=10)
@@ -76,35 +74,32 @@ experiments = []
 
 # Load .pickle files of past results.
 # Load all experiments for a given solver, for all solvers.
-for i in range(20):
+
+for rs_ss in rs_sample_sizes:
     solver_rename = f"RNDSRCH_ss={rs_ss}"
     experiments_same_solver = []
-    for sd in st_devs:
-        for hc in holding_costs:
-            for inv in inven_stops:
-                problem_rename = f"SAN-1_rc={all_random_costs[i]}"
-                file_name = f"{solver_rename}_on_{problem_rename}"
-                # Load experiment.
-                new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-                # Rename problem and solver to produce nicer plot labels.
-                new_experiment.solver.name = f"Random Search {rs_ss}"
-                new_experiment.problem.name = f"SAN-1 with rc={all_random_costs[i]}}"
-                experiments_same_solver.append(new_experiment)
+    for i in range(20):
+        problem_rename = f"SAN-1_rc={all_random_costs[i]}"
+        file_name = f"{solver_rename}_on_{problem_rename}"
+        # Load experiment.
+        new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+        # Rename problem and solver to produce nicer plot labels.
+        new_experiment.solver.name = f"Random Search {rs_ss}"
+        new_experiment.problem.name = f"SAN-1 with rc={all_random_costs[i]}"
+        experiments_same_solver.append(new_experiment)
     experiments.append(experiments_same_solver)
 
 solver_rename = "ASTRODF"
 experiments_same_solver = []
-for sd in st_devs:
-        for hc in holding_costs:
-            for inv in inven_stops:
-                problem_rename = f"SAN-1_rc={all_random_costs[i]}"
-                file_name = f"{solver_rename}_on_{problem_rename}"
-                # Load experiment.
-                new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-                # Rename problem and solver to produce nicer plot labels.
-                new_experiment.solver.name = "ASTRO-DF"
-                new_experiment.problem.name = f"SAN-1 with rc={all_random_costs[i]}}"
-                experiments_same_solver.append(new_experiment)
+for i in range(20):
+    problem_rename = f"SAN-1_rc={all_random_costs[i]}"
+    file_name = f"{solver_rename}_on_{problem_rename}"
+    # Load experiment.
+    new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+    # Rename problem and solver to produce nicer plot labels.
+    new_experiment.solver.name = "ASTRO-DF"
+    new_experiment.problem.name = f"SAN-1 with rc={all_random_costs[i]}"
+    experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
 
@@ -118,7 +113,7 @@ plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw
 plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=0.1, beta=0.5, all_in_one=True, plot_CIs=True, print_max_hw=True)
                           
-for i in range(n_problems+1):
+for i in range(n_problems):
     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="quantile", beta=0.9, all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
