@@ -20,7 +20,7 @@ from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
 from models.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
 from models.rmitd import RMITD, RMITDMaxRevenue
 from models.sscont import SSCont, SSContMinCost
-from models.ironore import IronOre, IronOreMaxRev
+from models.ironore import IronOre, IronOreMaxRev, IronOreMaxRevCnt
 from models.dynamnews import DynamNews, DynamNewsMaxProfit
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
 from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
@@ -43,6 +43,7 @@ problem_directory = {
     "RMITD-1": RMITDMaxRevenue,
     "SSCONT-1": SSContMinCost,
     "IRONORE-1": IronOreMaxRev,
+    "IRONORECONT-1": IronOreMaxRevCnt,
     "DYNAMNEWS-1": DynamNewsMaxProfit,
     "DUALSOURCING-1": DualSourcingMinCost,
     "CONTAM-1": ContaminationTotalCostDisc,
