@@ -55,7 +55,7 @@ class ASTRODF(Solver):
     def __init__(self, name="ASTRODF", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -67,7 +67,7 @@ class ASTRODF(Solver):
             "delta_max": {
                 "description": "maximum value of the trust-region radius",
                 "datatype": float,
-                "default": 200
+                "default": 200.0
             },
             "eta_1": {
                 "description": "threshhold for any success at all",
@@ -114,13 +114,8 @@ class ASTRODF(Solver):
                 "datatype": int,
                 "default": 10
             },
-            "c1_lambda": {
-                "description": "minimum sample size coefficient 1",
-                "datatype": float,
-                "default": 0.1
-            },
-            "c2_lambda": {
-                "description": "minimum sample size coefficient 2",
+            "c_lambda": {
+                "description": "minimum sample size coefficient",
                 "datatype": float,
                 "default": 0.1
             },
@@ -128,16 +123,6 @@ class ASTRODF(Solver):
                 "description": "minimum sample size exponent",
                 "datatype": float,
                 "default": 0.00001 ## less means faster increase at the beginning
-            },
-            "kappa_inner": {
-                "description": "adaptive sampling constant in inner loop",
-                "datatype": float,
-                "default": 1
-            },
-            "kappa_outer": {
-                "description": "adaptive sampling constant in outer loop",
-                "datatype": float,
-                "default": 1
             },
             "solver_select": {
                 "description": "subproblem solver with Cauchy point or the built-in solver? True: Cauchy point, False: built-in solver",
@@ -172,8 +157,7 @@ class ASTRODF(Solver):
             "w": self.check_w,
             "beta": self.check_beta,
             "mu": self.check_mu,
-            "c1_lambda": self.check_c1_lambda,
-            "c2_lambda": self.check_c2_lambda,
+            "c_lambda": self.check_c_lambda,
             "epsilon_lambda": self.check_epsilon_lambda,
             "kappa_inner": self.check_kappa_inner,
             "kappa_outer": self.check_kappa_outer,
@@ -211,11 +195,8 @@ class ASTRODF(Solver):
     def check_mu(self):
         return self.factors["mu"] > 0
 
-    def check_c1_lambda(self):
-        return self.factors["c1_lambda"] > 0
-
-    def check_c2_lambda(self):
-        return self.factors["c2_lambda"] > 0
+    def check_c_lambda(self):
+        return self.factors["c_lambda"] > 0
 
     def check_epsilon_lambda(self):
         return self.factors["epsilon_lambda"] > 0
@@ -241,8 +222,7 @@ class ASTRODF(Solver):
         return np.matmul(X, q)
 
     def samplesize(self, k, sig2, delta, io, kappa_select, kappa_tilde):
-        c1_lambda = self.factors["c1_lambda"]
-        c2_lambda = self.factors["c2_lambda"]
+        c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
 
         if kappa_select == True:
@@ -253,18 +233,17 @@ class ASTRODF(Solver):
         else:
             kappa = kappa_tilde
 
-        lambda_k = (4 + c1_lambda) * max(math.log(k+ c2_lambda, 10) ** (1 + epsilon_lambda),1)
+        lambda_k = (4 + c_lambda) * max(math.log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
         # compute sample size
         N_k = math.ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         ## for later: could we normalize f's before computing sig2?
         return N_k
 
     def determine_kappa_tilde(self, k, fn, sig2):
-        c1_lambda = self.factors["c1_lambda"]
-        c2_lambda = self.factors["c2_lambda"]
+        c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
 
-        lambda_k = (4 + c1_lambda) * max(math.log(k+ c2_lambda, 10) ** (1 + epsilon_lambda),1)
+        lambda_k = (4 + c_lambda) * max(math.log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
         # compute sample size
         N_k = math.ceil(max(lambda_k, lambda_k * sig2 / (fn ** 2)))
 
