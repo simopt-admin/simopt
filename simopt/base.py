@@ -315,7 +315,12 @@ class Problem(object):
             return False
 
     def check_initial_solution(self):
-        return self.check_deterministic_constraints(x=self.factors["initial_solution"])
+        if len(self.factors["initial_solution"]) != self.dim:
+            return False
+        elif not self.check_deterministic_constraints(x=self.factors["initial_solution"]):
+            return False
+        else:
+            return True
 
     def check_budget(self):
         return self.factors["budget"] > 0
@@ -507,7 +512,8 @@ class Problem(object):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return True
+        # Check box constraints.
+        return bool(np.prod([self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx] for idx in range(len(x))]))
 
     def get_random_solution(self, rand_sol_rng):
         """

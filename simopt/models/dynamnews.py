@@ -1,19 +1,18 @@
 """
 Summary
 -------
-Simulate a day's worth of sales for a newsvendor.
-A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`_.
+Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution.
 """
 import numpy as np
 
 from base import Model, Problem
 
 
-class CntNV(Model):
+class DynamNews(Model):
     """
     A model that simulates a day's worth of sales for a newsvendor
-    with a Burr Type XII demand distribution. Returns the profit, after
-    accounting for order costs and salvage.
+    with dynamic consumer substitution. Returns the profit and the
+    number of products that stock out.
 
     Attributes
     ----------
@@ -40,75 +39,82 @@ class CntNV(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "CNTNEWS"
+        self.name = "DYNAMNEWS"
         self.n_rngs = 1
-        self.n_responses = 1
+        self.n_responses = 2
         self.factors = fixed_factors
         self.specifications = {
-            "purchase_price": {
-                "description": "Purchasing Cost per unit",
-                "datatype": float,
-                "default": 5.0
+            "num_prod": {
+                "description": "Number of Products",
+                "datatype": int,
+                "default": 2
             },
-            "sales_price": {
-                "description": "Sales Price per unit",
-                "datatype": float,
-                "default": 9.0
+            "num_customer": {
+                "description": "Number of Customers",
+                "datatype": int,
+                "default": 5
             },
-            "salvage_price": {
-                "description": "Salvage cost per unit",
+            "c_utility": {
+                "description": "Constant of each product's utility",
+                "datatype": list,
+                "default": [1.0, 1.0]
+            },
+            "mu": {
+                "description": "Mu for calculating Gumbel random variable",
                 "datatype": float,
                 "default": 1.0
             },
-            "order_quantity": {
-                "description": "Order quantity",
-                "datatype": float,  # or int
-                "default": 0.5
+            "init_level": {
+                "description": "Initial inventory level",
+                "datatype": list,
+                "default": [2, 3]
             },
-            "Burr_c": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 2.0
+            "price": {
+                "description": "Sell price of products",
+                "datatype": list,
+                "default": [9, 9]
             },
-            "Burr_k": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 20.0
+            "cost": {
+                "description": "Cost of products",
+                "datatype": list,
+                "default": [5, 5]
             }
         }
         self.check_factor_list = {
-            "purchase_price": self.check_purchase_price,
-            "sales_price": self.check_sales_price,
-            "salvage_price": self.check_salvage_price,
-            "order_quantity": self.check_order_quantity,
-            "Burr_c": self.check_Burr_c,
-            "Burr_k": self.check_Burr_k
+            "num_prod": self.check_num_prod,
+            "num_customer": self.check_num_customer,
+            "c_utility": self.check_c_utility,
+            "mu": self.check_mu,
+            "init_level": self.check_init_level,
+            "price": self.check_price,
+            "cost": self.check_cost
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_purchase_price(self):
-        return self.factors["purchase_price"] > 0
+    def check_num_prod(self):
+        return self.factors["num_prod"] > 0
 
-    def check_sales_price(self):
-        return self.factors["sales_price"] > 0
+    def check_num_customer(self):
+        return self.factors["num_customer"] > 0
 
-    def check_salvage_price(self):
-        return self.factors["salvage_price"] > 0
+    def check_c_utility(self):
+        return len(self.factors["c_utility"]) == self.factors["num_prod"]
 
-    def check_order_quantity(self):
-        return self.factors["order_quantity"] > 0
+    def check_init_level(self):
+        return all(np.array(self.factors["init_level"]) >= 0) & (len(self.factors["init_level"]) == self.factors["num_prod"])
 
-    def check_Burr_c(self):
-        return self.factors["Burr_c"] > 0
+    def check_mu(self):
+        return True
 
-    def check_Burr_k(self):
-        return self.factors["Burr_k"] > 0
+    def check_price(self):
+        return all(np.array(self.factors["price"]) >= 0) & (len(self.factors["price"]) == self.factors["num_prod"])
+
+    def check_cost(self):
+        return all(np.array(self.factors["cost"]) >= 0) & (len(self.factors["cost"]) == self.factors["num_prod"])
 
     def check_simulatable_factors(self):
-        return (self.factors["salvage_price"]
-                < self.factors["purchase_price"]
-                < self.factors["sales_price"])
+        return all(np.subtract(self.factors["price"], self.factors["cost"]) >= 0)
 
     def replicate(self, rng_list):
         """
@@ -124,43 +130,52 @@ class CntNV(Model):
         responses : dict
             performance measures of interest
             "profit" = profit in this scenario
-            "stockout_qty" = amount by which demand exceeded supply
-            "stockout" = was there unmet demand? (Y/N)
+            "n_prod_stockout" = number of products which are out of stock
         """
-        # Designate random number generator for demand variability.
-        demand_rng = rng_list[0]
-        # Generate random demand according to Burr Type XII distribution.
-        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
-        base = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)
-        exponent = (1 / self.factors["Burr_c"])
-        demand = base**exponent
+        # Designate random number generator for generating a Gumbel random variable.
+        Gumbel_rng = rng_list[0]
+        # Compute Gumbel rvs for the utility of the products.
+        gumbel = np.zeros(((self.factors["num_customer"], self.factors["num_prod"])))
+        for t in range(self.factors["num_customer"]):
+            for j in range(self.factors["num_prod"]):
+                gumbel[t][j] = Gumbel_rng.gumbelvariate(-self.factors["mu"] * np.euler_gamma, self.factors["mu"])
+        # Compute utility for each product and each customer.
+        utility = np.zeros((self.factors["num_customer"], self.factors["num_prod"] + 1))
+        for t in range(self.factors["num_customer"]):
+            for j in range(self.factors["num_prod"] + 1):
+                if j == 0:
+                    utility[t][j] = 0
+                else:
+                    utility[t][j] = self.factors["c_utility"][j - 1] + gumbel[t][j - 1]
+
+        # Initialize inventory.
+        inventory = np.copy(self.factors["init_level"])
+        itembought = np.zeros(self.factors["num_customer"])
+
+        # Loop through customers
+        for t in range(self.factors["num_customer"]):
+            instock = np.where(inventory > 0)[0]
+            # Initialize the purchase option to be no-purchase.
+            itembought[t] = 0
+            # Assign the purchase option to be the product that maximizes the utility.
+            for j in instock:
+                if utility[t][j + 1] > utility[t][int(itembought[t])]:
+                    itembought[t] = j + 1
+            if itembought[t] != 0:
+                inventory[int(itembought[t] - 1)] -= 1
+
         # Calculate profit.
-        order_cost = (self.factors["purchase_price"]
-                      * self.factors["order_quantity"])
-        sales_revenue = (min(demand, self.factors["order_quantity"])
-                         * self.factors["sales_price"])
-        salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
-                           * self.factors["salvage_price"])
-        profit = sales_revenue + salvage_revenue - order_cost
-        stockout_qty = max(demand - self.factors["order_quantity"], 0)
-        stockout = int(stockout_qty > 0)
-        # Calculate gradient of profit w.r.t. order quantity.
-        if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["sales_price"]
-                                          - self.factors["purchase_price"])
-        elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["salvage_price"]
-                                          - self.factors["purchase_price"])
-        else:
-            grad_profit_order_quantity = np.nan
+        numsold = self.factors["init_level"] - inventory
+        revenue = numsold * np.array(self.factors["price"])
+        cost = self.factors["init_level"] * np.array(self.factors["cost"])
+        profit = revenue - cost
+
         # Compose responses and gradients.
-        responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
+        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0)}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
                      }
-        gradients["profit"]["order_quantity"] = grad_profit_order_quantity
         return responses, gradients
 
 
@@ -171,7 +186,7 @@ Maximize the expected profit for the continuous newsvendor problem.
 """
 
 
-class CntNVMaxProfit(Problem):
+class DynamNewsMaxProfit(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -236,33 +251,25 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CNTNEWS-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="DYNAMNEWS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 1
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (np.inf,)
+        self.variable_type = "discrete"
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
-        self.model_default_factors = {
-            "purchase_price": 5.0,
-            "sales_price": 9.0,
-            "salvage_price": 1.0,
-            "Burr_c": 2.0,
-            "Burr_k": 20.0
-            }
-        self.model_decision_factors = {"order_quantity"}
+        self.optimal_solution = None
+        self.model_default_factors = {}
+        self.model_fixed_factors = {}
+        self.model_decision_factors = {"init_level"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (0,)
+                "default": (2, 3)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -276,7 +283,10 @@ class CntNVMaxProfit(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = CntNV(self.model_fixed_factors)
+        self.model = DynamNews(self.model_fixed_factors)
+        self.dim = self.model.factors["num_prod"]
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -293,7 +303,7 @@ class CntNVMaxProfit(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "order_quantity": vector[0]
+            "init_level": vector[:]
         }
         return factor_dict
 
@@ -312,7 +322,7 @@ class CntNVMaxProfit(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["order_quantity"],)
+        vector = tuple(factor_dict["init_level"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -408,7 +418,7 @@ class CntNVMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x[0] > 0
+        return np.all(x > 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -424,6 +434,5 @@ class CntNVMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1) r.v.
-        x = (rand_sol_rng.expovariate(1),)
+        x = tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])
         return x

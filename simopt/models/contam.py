@@ -1,18 +1,19 @@
 """
 Summary
 -------
-Simulate demand at facilities.
+Simulate contamination rates.
 """
 import numpy as np
 
 from base import Model, Problem
 
 
-class FacilitySize(Model):
+class Contamination(Model):
     """
-    A model that simulates a facilitysize problem with a
-    multi-variate normal distribution.
-    Returns the probability of violating demand in each scenario.
+    A model that simulates a contamination problem with a
+    beta distribution.
+    Returns the probability of violating contamination upper limit
+    in each level of supply chain.
 
     Attributes
     ----------
@@ -39,68 +40,94 @@ class FacilitySize(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "FACSIZE"
-        self.n_rngs = 1
-        self.n_responses = 3
+        self.name = "CONTAM"
+        self.n_rngs = 2
+        self.n_responses = 1
         self.specifications = {
-            "mean_vec": {
-                "description": "Location parameters of the multivariate normal distribution",
-                "datatype": list,
-                "default": [100, 100, 100]
+            "contam_rate_alpha": {
+                "description": "Alpha parameter of beta distribution for growth rate of contamination at each stage.",
+                "datatype": float,
+                "default": 1.0
             },
-            "cov": {
-                "description": "Covariance of multivariate normal distribution.",
-                "datatype": list,
-                "default": [[2000, 1500, 500], [1500, 2000, 750], [500, 750, 2000]]
+            "contam_rate_beta": {
+                "description": "Beta parameter of beta distribution for growth rate of contamination at each stage.",
+                "datatype": float,
+                "default": 17 / 3
             },
-            "capacity": {
-                "description": "Capacity.",
-                "datatype": list,
-                "default": [150, 300, 400]
+            "restore_rate_alpha": {
+                "description": "Alpha parameter of beta distribution for rate that contamination decreases by after prevention effort.",
+                "datatype": float,
+                "default": 1.0
             },
-            "n_fac": {
-                "description": "The number of facilities.",
+            "restore_rate_beta": {
+                "description": "Beta parameter of beta distribution for rate that contamination decreases by after prevention effort.",
+                "datatype": float,
+                "default": 3 / 7
+            },
+            "initial_rate_alpha": {
+                "description": "Alpha parameter of beta distribution for initial contamination fraction.",
+                "datatype": float,
+                "default": 1.0
+            },
+            "initial_rate_beta": {
+                "description": "Beta parameter of beta distribution for initial contamination fraction.",
+                "datatype": float,
+                "default": 30.0
+            },
+            "stages": {
+                "description": "Stage of food supply chain.",
                 "datatype": int,
-                "default": 3
+                "default": 5
+            },
+            "prev_decision": {
+                "description": "Prevention decision.",
+                "datatype": tuple,
+                "default": (0, 0, 0, 0, 0)
             }
         }
         self.check_factor_list = {
-            "mean_vec": self.check_mean_vec,
-            "cov": self.check_cov,
-            "capacity": self.check_capacity,
-            "n_fac": self.check_n_fac
+            "contam_rate_alpha": self.check_contam_rate_alpha,
+            "contam_rate_beta": self.check_contam_rate_beta,
+            "restore_rate_alpha": self.check_restore_rate_alpha,
+            "restore_rate_beta": self.check_restore_rate_beta,
+            "initial_rate_alpha": self.check_initial_rate_alpha,
+            "initial_rate_beta": self.check_initial_rate_beta,
+            "stages": self.check_stages,
+            "prev_decision": self.check_prev_decision
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self):
-        return np.all(self.factors["mean_vec"]) > 0
+    def check_contam_rate_alpha(self):
+        return self.factors["contam_rate_alpha"] > 0
 
-    def check_cov(self):
-        try:
-            np.linalg.cholesky(np.matrix(self.factors["cov"]))
-            return True
-        except np.linalg.linalg.LinAlgError as err:
-            if 'Matrix is not positive definite' in err.message:
-                return False
-            else:
-                raise
-        return
+    def check_contam_rate_beta(self):
+        return self.factors["contam_rate_beta"] > 0
 
-    def check_capacity(self):
-        return len(self.factors["capacity"]) == self.factors["n_fac"]
+    def check_restore_rate_alpha(self):
+        return self.factors["restore_rate_alpha"] > 0
 
-    def check_n_fac(self):
-        return self.factors["n_fac"] > 0
+    def check_restore_rate_beta(self):
+        return self.factors["restore_rate_beta"] > 0
+
+    def check_initial_rate_alpha(self):
+        return self.factors["initial_rate_alpha"] > 0
+
+    def check_initial_rate_beta(self):
+        return self.factors["initial_rate_beta"] > 0
+
+    def check_prev_cost(self):
+        return all(cost > 0 for cost in self.factors["prev_cost"])
+
+    def check_stages(self):
+        return self.factors["stages"] > 0
+
+    def check_prev_decision(self):
+        return all(u >= 0 & u <= 1 for u in self.factors["prev_decision"])
 
     def check_simulatable_factors(self):
-        if len(self.factors["capacity"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["cov"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["cov"][0]) != self.factors["n_fac"]:
+        # Check for matching number of stages.
+        if len(self.factors["prev_decision"]) != self.factors["stages"]:
             return False
         else:
             return True
@@ -118,33 +145,24 @@ class FacilitySize(Model):
         -------
         responses : dict
             performance measures of interest
-            "stockout_flag" = a binary variable
-                 0 : all facilities satisfy the demand
-                 1 : at least one of the facilities did not satisfy the demand
-            "n_fac_stockout" = the number of facilities which cannot satisfy the demand
-            "n_cut" = the number of toal demand which cannot be satisfied
+            "level" = a list of contamination levels over time
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # Designate RNG for demands.
-        demand_rng = rng_list[0]
-        stockout_flag = 0
-        n_fac_stockout = 0
-        n_cut = 0
-        # Generate random demands at facilities from truncated multivariate normal distribution.
-        demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
-        while np.any(demand < 0):
-            demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
-        # Check for stockouts.
-        for i in range(self.factors["n_fac"]):
-            if demand[i] > self.factors["capacity"][i]:
-                n_fac_stockout = n_fac_stockout + 1
-                stockout_flag = 1
-                n_cut += demand[i] - self.factors["capacity"][i]
+        # Designate separate random number generators.
+        # Outputs will be coupled when generating demand.
+        contam_rng = rng_list[0]
+        restore_rng = rng_list[1]
+        # Generate rates with beta distribution.
+        X = np.zeros(self.factors["stages"])
+        X[0] = restore_rng.betavariate(alpha=self.factors["initial_rate_alpha"], beta=self.factors["initial_rate_beta"])
+        u = self.factors["prev_decision"]
+        for i in range(1, self.factors["stages"]):
+            c = contam_rng.betavariate(alpha=self.factors["contam_rate_alpha"], beta=self.factors["contam_rate_beta"])
+            r = restore_rng.betavariate(alpha=self.factors["restore_rate_alpha"], beta=self.factors["restore_rate_beta"])
+            X[i] = c * (1 - u[i]) * (1 - X[i - 1]) + (1 - r * u[i]) * X[i - 1]
         # Compose responses and gradients.
-        responses = {'stockout_flag': stockout_flag,
-                     'n_fac_stockout': n_fac_stockout,
-                     'n_cut': n_cut}
+        responses = {'level': X}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -152,12 +170,11 @@ class FacilitySize(Model):
 """
 Summary
 -------
-Minimize the (deterministic) total cost of installing capacity at
-facilities subject to a chance constraint on stockout probability.
+Minimize the (deterministic) total cost of prevention efforts.
 """
 
 
-class FacilitySizingTotalCost(Problem):
+class ContaminationTotalCostDisc(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -195,17 +212,19 @@ class FacilitySizingTotalCost(Problem):
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : tuple
+            initial_solution : list
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            prev_cost : list
+                cost of prevention
+            upper_thres : float > 0
+                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -222,64 +241,78 @@ class FacilitySizingTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CONTAM-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
-        self.gradient_available = True
+        self.variable_type = "discrete"
+        self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  # (185, 185, 185)
+        self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
+        self.model_decision_factors = {"prev_decision"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (300, 300, 300)
+                "default": (1, 1, 1, 1, 1)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
             },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1, 1, 1)
+            "prev_cost": {
+                "description": "Cost of prevention.",
+                "datatype": list,
+                "default": [1, 1, 1, 1, 1]
             },
-            "epsilon": {
-                "description": "Maximum allowed probability of stocking out.",
-                "datatype": float,
-                "default": 0.05
+            "error_prob": {
+                "description": "Error probability.",
+                "datatype": list,
+                "default": [0.2, 0.2, 0.2, 0.2, 0.2]
+            },
+            "upper_thres": {
+                "description": "Upper limit of amount of contamination.",
+                "datatype": list,
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon
+            "prev_cost": self.check_prev_cost,
+            "error_prob": self.check_error_prob,
+            "upper_thres": self.check_upper_thres,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
+        self.model = Contamination(self.model_fixed_factors)
+        self.dim = self.model.factors["stages"]
+        self.n_stochastic_constraints = self.model.factors["stages"]
+        self.lower_bounds = (0,) * self.model.factors["stages"]
+        self.upper_bounds = (1,) * self.model.factors["stages"]
 
-    def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
+    def check_prev_cost(self):
+        if len(self.factors["prev_cost"]) != self.dim:
             return False
-        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
+        elif any([elem < 0 for elem in self.factors["prev_cost"]]):
             return False
         else:
             return True
 
-    def check_epsilon(self):
-        return 0 <= self.factors["epsilon"] <= 1
+    def check_error_prob(self):
+        if len(self.factors["error_prob"]) != self.dim:
+            return False
+        elif all(error < 0 for error in self.factors["error_prob"]):
+            return False
+        else:
+            return True
+
+    def check_upper_thres(self):
+        return len(self.factors["upper_thres"]) == self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -296,7 +329,7 @@ class FacilitySizingTotalCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "capacity": vector[:]
+            "prev_decision": vector[:]
         }
         return factor_dict
 
@@ -315,7 +348,7 @@ class FacilitySizingTotalCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["capacity"])
+        vector = tuple(factor_dict["prev_decision"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -351,7 +384,7 @@ class FacilitySizingTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = (-response_dict["stockout_flag"],)
+        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -370,7 +403,7 @@ class FacilitySizingTotalCost(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = (self.factors["epsilon"],)
+        det_stoch_constraints = tuple(-np.ones(self.dim) + self.factors["error_prob"])
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
@@ -390,8 +423,8 @@ class FacilitySizingTotalCost(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.dot(self.factors["installation_costs"], x),)
-        det_objectives_gradients = ((self.factors["installation_costs"],),)
+        det_objectives = (np.dot(self.factors["prev_cost"], x),)
+        det_objectives_gradients = ((self.factors["prev_cost"],),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -408,9 +441,7 @@ class FacilitySizingTotalCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return box_feasible
+        return np.all(x >= 0) & np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -426,19 +457,11 @@ class FacilitySizingTotalCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300*rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.randint(0, 1) for _ in range(self.dim)])
         return x
 
 
-"""
-Summary
--------
-Maximize the probability of not stocking out subject to a budget
-constraint on the total cost of installing capacity.
-"""
-
-
-class FacilitySizingMaxService(Problem):
+class ContaminationTotalCostCont(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -476,17 +499,19 @@ class FacilitySizingMaxService(Problem):
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : tuple
+            initial_solution : list
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            prev_cost : list
+                cost of prevention
+            upper_thres : float > 0
+                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -503,64 +528,97 @@ class FacilitySizingMaxService(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-2", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CONTAM-2", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
         self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "deterministic"
+        self.minmax = (-1,)
+        self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  # (175, 179, 143)
+        self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
+        self.model_decision_factors = {"prev_decision"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (100, 100, 100)
+                "default": (1, 1, 1, 1, 1)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
             },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1, 1, 1)
+            "prev_cost": {
+                "description": "Cost of prevention.",
+                "datatype": list,
+                "default": [1, 1, 1, 1, 1]
             },
-            "installation_budget": {
-                "description": "Total budget for installation costs.",
-                "datatype": float,
-                "default": 500.0
+            "error_prob": {
+                "description": "Error probability.",
+                "datatype": list,
+                "default": [0.2, 0.2, 0.2, 0.2, 0.2]
+            },
+            "upper_thres": {
+                "description": "Upper limit of amount of contamination.",
+                "datatype": list,
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "installation_budget": self.check_installation_budget
+            "prev_cost": self.check_prev_cost,
+            "error_prob": self.check_error_prob,
+            "upper_thres": self.check_upper_thres,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
+        self.model = Contamination(self.model_fixed_factors)
+        self.dim = self.model.factors["stages"]
+        self.n_stochastic_constraints = self.model.factors["stages"]
+        self.lower_bounds = (0,) * self.model.factors["stages"]
+        self.upper_bounds = (1,) * self.model.factors["stages"]
 
-    def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
+    def check_initial_solution(self):
+        if len(self.factors["initial_solution"]) != self.dim:
             return False
-        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
+        elif all(u < 0 or u > 1 for u in self.factors["initial_solution"]):
             return False
         else:
             return True
 
-    def check_installation_budget(self):
-        return self.factors["installation_budget"] > 0
+    def check_prev_cost(self):
+        if len(self.factors["prev_cost"]) != self.dim:
+            return False
+        elif any([elem < 0 for elem in self.factors["prev_cost"]]):
+            return False
+        else:
+            return True
+
+    def check_budget(self):
+        return self.factors["budget"] > 0
+
+    def check_error_prob(self):
+        if len(self.factors["error_prob"]) != self.dim:
+            return False
+        elif all(error < 0 for error in self.factors["error_prob"]):
+            return False
+        else:
+            return True
+
+    def check_upper_thres(self):
+        return len(self.factors["upper_thres"]) == self.dim
+
+    def check_simulatable_factors(self):
+        if len(self.lower_bounds) != self.dim:
+            return False
+        elif len(self.upper_bounds) != self.dim:
+            return False
+        else:
+            return True
 
     def vector_to_factor_dict(self, vector):
         """
@@ -577,7 +635,7 @@ class FacilitySizingMaxService(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "capacity": vector[:]
+            "prev_decision": vector[:]
         }
         return factor_dict
 
@@ -596,7 +654,7 @@ class FacilitySizingMaxService(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["capacity"])
+        vector = tuple(factor_dict["prev_decision"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -614,7 +672,7 @@ class FacilitySizingMaxService(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (1 - response_dict["stockout_flag"],)
+        objectives = (0,)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -632,28 +690,8 @@ class FacilitySizingMaxService(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"])
         return stoch_constraints
-
-    def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0, 0),)
-        return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
         """
@@ -671,9 +709,29 @@ class FacilitySizingMaxService(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = tuple(-np.ones(self.dim) + self.factors["error_prob"])
+        det_stoch_constraints_gradients = ((0,),)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (np.dot(self.factors["prev_cost"], x),)
+        det_objectives_gradients = ((self.factors["prev_cost"],),)
+        return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
         """
@@ -689,12 +747,7 @@ class FacilitySizingMaxService(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        # Check budget constraint.
-        budget_feasible = np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"]
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return budget_feasible * box_feasible
-
+        return np.all(x >= 0) & np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -710,10 +763,5 @@ class FacilitySizingMaxService(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate random solution using acceptable/rejection.
-        # TO DO: More efficiently sample uniformly from the simplex.
-        while True:
-            x = tuple([self.factors["installation_budget"]*rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x):
-                break
+        x = tuple([rand_sol_rng.random() for _ in range(self.dim)])
         return x

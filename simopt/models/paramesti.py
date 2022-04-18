@@ -1,21 +1,19 @@
 """
 Summary
 -------
-Simulate a multi-stage revenue management system with inter-temporal dependence.
-A detailed description of the model/problem can be found 
-`here <https://simopt.readthedocs.io/en/latest/rmitd.html>`_.
-
+Simulate 2 dimentional gamma variables.
 """
 import numpy as np
+import math
 
 from base import Model, Problem
 
 
-class RMITD(Model):
+class ParameterEstimation(Model):
     """
-    A model that simulates a multi-stage revenue management system with
-    inter-temporal dependence.
-    Returns the total revenue.
+    An model that simulates MLE estimators for a two-dimensional gamma variable.
+    Returns the 2-D vector x_star that maximizes the probability of seeing
+    parameters x in 2-D gamma probability density function.
 
     Attributes
     ----------
@@ -39,107 +37,42 @@ class RMITD(Model):
 
     See also
     --------
-    base.Model
+    base.model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "RMITD"
+        self.name = "PARAMESTI"
         self.n_rngs = 2
         self.n_responses = 1
         self.specifications = {
-            "time_horizon": {
-                "description": "Time horizon.",
-                "datatype": int,
-                "default": 3
-            },
-            "prices": {
-                "description": "Prices for each period.",
+            "xstar": {
+                "description": "x^*, the unknown parameter that maximizes g(x).",
                 "datatype": list,
-                "default": [100, 300, 400]
+                "default": [2, 5]
             },
-            "demand_means": {
-                "description": "Mean demand for each period.",
+            "x": {
+                "description": "x, variable in pdf.",
                 "datatype": list,
-                "default": [50, 20, 30]
-            },
-            "cost": {
-                "description": "Cost per unit of capacity at t = 0.",
-                "datatype": float,
-                "default": 80.0
-            },
-            "gamma_shape": {
-                "description": "Shape parameter of gamma distribution.",
-                "datatype": float,
-                "default": 1.0
-            },
-            "gamma_scale": {
-                "description": "Scale parameter of gamma distribution.",
-                "datatype": float,
-                "default": 1.0
-            },
-            "initial_inventory": {
-                "description": "Initial inventory.",
-                "datatype": int,
-                "default": 100
-            },
-            "reservation_qtys": {
-                "description": "Inventory to reserve going into periods 2, 3, ..., T.",
-                "datatype": list,
-                "default": [50, 30]
+                "default": [1, 1]
             }
         }
         self.check_factor_list = {
-            "time_horizon": self.check_time_horizon,
-            "prices": self.check_prices,
-            "demand_means": self.check_demand_means,
-            "cost": self.check_cost,
-            "gamma_shape": self.check_gamma_shape,
-            "gamma_scale": self.check_gamma_scale,
-            "initial_inventory": self.check_initial_inventory,
-            "reservation_qtys": self.check_reservation_qtys
+            "xstar": self.check_xstar,
+            "x": self.check_x
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_time_horizon(self):
-        return self.factors["time_horizon"] > 0
+    def check_xstar(self):
+        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
 
-    def check_prices(self):
-        return all(price > 0 for price in self.factors["prices"])
-
-    def check_demand_means(self):
-        return all(demand_mean > 0 for demand_mean in self.factors["demand_means"])
-
-    def check_cost(self):
-        return self.factors["cost"] > 0
-
-    def check_gamma_shape(self):
-        return self.factors["gamma_shape"] > 0
-
-    def check_gamma_scale(self):
-        return self.factors["gamma_scale"] > 0
-
-    def check_initial_inventory(self):
-        return self.factors["initial_inventory"] > 0
-
-    def check_reservation_qtys(self):
-        return all(reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"])
+    def check_x(self):
+        return all(x_i > 0 for x_i in self.factors["x"])
 
     def check_simulatable_factors(self):
-        # Check for matching number of periods.
-        if len(self.factors["prices"]) != self.factors["time_horizon"]:
+        # Check for dimension of x and xstar.
+        if len(self.factors["x"]) != 2:
             return False
-        elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
-            return False
-        elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
-            return False
-        # Check that first reservation level is less than initial inventory.
-        elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
-            return False
-        # Check for non-increasing reservation levels.
-        elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
-            return False
-        # Check that gamma_shape*gamma_scale = 1.
-        elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
+        elif len(self.factors["xstar"]) != 2:
             return False
         else:
             return True
@@ -157,35 +90,21 @@ class RMITD(Model):
         -------
         responses : dict
             performance measures of interest
-            "revenue" = total revenue
+            "loglik" = the corresponding loglikelihood
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate separate random number generators.
-        # Outputs will be coupled when generating demand.
-        X_rng = rng_list[0]
-        Y_rng = rng_list[1]
-        # Generate X and Y (to use for computing demand).
-        # random.gammavariate takes two inputs: alpha and beta.
-        #     alpha = k = gamma_shape
-        #     beta = 1/theta = 1/gamma_scale
-        X = X_rng.gammavariate(alpha=self.factors["gamma_shape"], beta=1./self.factors["gamma_scale"])
-        Y = [Y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])]
-        # Track inventory over time horizon.
-        remaining_inventory = self.factors["initial_inventory"]
-        # Append "no reservations" for decision-making in final period.
-        reservations = self.factors["reservation_qtys"]
-        reservations.append(0)
-        # Simulate over the time horizon and calculate the realized revenue.
-        revenue = 0
-        for period in range(self.factors["time_horizon"]):
-            demand = self.factors["demand_means"][period]*X*Y[period]
-            sell = min(max(remaining_inventory-reservations[period], 0), demand)
-            remaining_inventory = remaining_inventory - sell
-            revenue += sell*self.factors["prices"][period]
-        revenue -= self.factors["cost"]*self.factors["initial_inventory"]
+        # Outputs will be coupled when generating Y_j's.
+        y2_rng = rng_list[0]
+        y1_rng = rng_list[1]
+        # Generate y1 and y2 from specified gamma distributions.
+        y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
+        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
+        # Compute Log Likelihood
+        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
         # Compose responses and gradients.
-        responses = {"revenue": revenue}
+        responses = {'loglik': loglik}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -193,12 +112,11 @@ class RMITD(Model):
 """
 Summary
 -------
-Maximize the total revenue of a multi-stage revenue management
-with inter-temporal dependence problem.
+Minimize the log likelihood of 2-D gamma random variable.
 """
 
 
-class RMITDMaxRevenue(Problem):
+class ParamEstiMinLogLik(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -230,23 +148,25 @@ class RMITDMaxRevenue(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    model : Model object
+    model : model object
         associated simulation model that generates replications
     model_default_factors : dict
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : tuple
+            initial_solution : list
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            prev_cost : list
+                cost of prevention
+            upper_thres : float > 0
+                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -256,39 +176,37 @@ class RMITDMaxRevenue(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    model_fixed_factors : dict
+    model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="RMITD-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="PARAMESTI-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
+        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
-        self.constraint_type = "deterministic"
-        self.variable_type = "discrete"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None  # (90, 50, 0)
+        self.constraint_type = "box"
+        self.variable_type = "continuous"
+        self.lower_bounds = (0, 0)
+        self.upper_bounds = (10, 10)
+        self.gradient_available = True
         self.model_default_factors = {}
-        self.model_decision_factors = {"initial_inventory", "reservation_qtys"}
+        self.model_decision_factors = {"x"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (100, 50, 30)
+                "description": "Initial solution.",
+                "datatype": list,
+                "default": (1, 1)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             }
         }
         self.check_factor_list = {
@@ -297,7 +215,9 @@ class RMITDMaxRevenue(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = RMITD(self.model_fixed_factors)
+        self.model = ParameterEstimation(self.model_fixed_factors)
+        self.optimal_solution = list(self.model.factors["xstar"])
+        self.optimal_value = None
 
     def vector_to_factor_dict(self, vector):
         """
@@ -314,8 +234,7 @@ class RMITDMaxRevenue(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "initial_inventory": vector[0],
-            "reservation_qtys": list(vector[0:])
+            "x": vector[:]
         }
         return factor_dict
 
@@ -334,7 +253,7 @@ class RMITDMaxRevenue(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["initial_inventory"],) + tuple(factor_dict["reservation_qtys"])
+        vector = tuple(factor_dict["x"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -352,8 +271,28 @@ class RMITDMaxRevenue(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["revenue"],)
+        objectives = (response_dict["loglik"],)
         return objectives
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (0,)
+        det_objectives_gradients = ((0, 0),)
+        return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
         """
@@ -369,7 +308,7 @@ class RMITDMaxRevenue(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
+        return True
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -385,9 +324,5 @@ class RMITDMaxRevenue(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate random solution using acceptable/rejection.
-        while True:
-            x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x):
-                break
+        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
         return x

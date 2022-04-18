@@ -1,19 +1,19 @@
 """
 Summary
 -------
-Simulate a day's worth of sales for a newsvendor.
-A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`_.
+Simulate matching of arriving chess players.
 """
 import numpy as np
+from scipy import special
 
 from base import Model, Problem
 
 
-class CntNV(Model):
+class ChessMatchmaking(Model):
     """
-    A model that simulates a day's worth of sales for a newsvendor
-    with a Burr Type XII demand distribution. Returns the profit, after
-    accounting for order costs and salvage.
+    A model that simulates a matchmaking problem with a
+    Elo (truncated normal) distribution of players and Poisson arrivals.
+    Returns the average difference between matched players.
 
     Attributes
     ----------
@@ -26,89 +26,74 @@ class CntNV(Model):
     factors : dict
         changeable factors of the simulation model
     specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+        details of each factor (for GUI and data validation)
     check_factor_list : dict
         switch case for checking factor simulatability
 
     Arguments
     ---------
-    fixed_factors : dict
-        fixed_factors of the simulation model
+    fixed_factors : nested dict
+        fixed factors of the simulation model
 
     See also
     --------
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "CNTNEWS"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.factors = fixed_factors
+        self.name = "CHESS"
+        self.n_rngs = 2
+        self.n_responses = 2
         self.specifications = {
-            "purchase_price": {
-                "description": "Purchasing Cost per unit",
+            "elo_mean": {
+                "description": "Mean of normal distribution for Elo rating.",
                 "datatype": float,
-                "default": 5.0
+                "default": 1200.0
             },
-            "sales_price": {
-                "description": "Sales Price per unit",
+            "elo_sd": {
+                "description": "Standard deviation of normal distribution for Elo rating.",
                 "datatype": float,
-                "default": 9.0
+                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
             },
-            "salvage_price": {
-                "description": "Salvage cost per unit",
+            "poisson_rate": {
+                "description": "Rate of Poisson process for player arrivals.",
                 "datatype": float,
                 "default": 1.0
             },
-            "order_quantity": {
-                "description": "Order quantity",
-                "datatype": float,  # or int
-                "default": 0.5
+            "num_players": {
+                "description": "Number of players.",
+                "datatype": int,
+                "default": 1000
             },
-            "Burr_c": {
-                "description": "Burr Type XII cdf shape parameter",
+            "allowable_diff": {
+                "description": "Maximum allowable difference between Elo ratings.",
                 "datatype": float,
-                "default": 2.0
-            },
-            "Burr_k": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 20.0
+                "default": 150.0
             }
         }
         self.check_factor_list = {
-            "purchase_price": self.check_purchase_price,
-            "sales_price": self.check_sales_price,
-            "salvage_price": self.check_salvage_price,
-            "order_quantity": self.check_order_quantity,
-            "Burr_c": self.check_Burr_c,
-            "Burr_k": self.check_Burr_k
+            "elo_mean": self.check_elo_mean,
+            "elo_sd": self.check_elo_sd,
+            "poisson_rate": self.check_poisson_rate,
+            "num_players": self.check_num_players,
+            "allowable_diff": self.check_allowable_diff
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_purchase_price(self):
-        return self.factors["purchase_price"] > 0
+    def check_elo_mean(self):
+        return self.factors["elo_mean"] > 0
 
-    def check_sales_price(self):
-        return self.factors["sales_price"] > 0
+    def check_elo_sd(self):
+        return self.factors["elo_sd"] > 0
 
-    def check_salvage_price(self):
-        return self.factors["salvage_price"] > 0
+    def check_poisson_rate(self):
+        return self.factors["poisson_rate"] > 0
 
-    def check_order_quantity(self):
-        return self.factors["order_quantity"] > 0
+    def check_num_players(self):
+        return self.factors["num_players"] > 0
 
-    def check_Burr_c(self):
-        return self.factors["Burr_c"] > 0
-
-    def check_Burr_k(self):
-        return self.factors["Burr_k"] > 0
-
-    def check_simulatable_factors(self):
-        return (self.factors["salvage_price"]
-                < self.factors["purchase_price"]
-                < self.factors["sales_price"])
+    def check_allowable_diff(self):
+        return self.factors["allowable_diff"] > 0
 
     def replicate(self, rng_list):
         """
@@ -123,55 +108,58 @@ class CntNV(Model):
         -------
         responses : dict
             performance measures of interest
-            "profit" = profit in this scenario
-            "stockout_qty" = amount by which demand exceeded supply
-            "stockout" = was there unmet demand? (Y/N)
+            "avg_diff" = the average Elo difference between all pairs
+            "avg_wait_time" = the average waiting time
+        gradients : dict of dicts
+            gradient estimates for each response
         """
-        # Designate random number generator for demand variability.
-        demand_rng = rng_list[0]
-        # Generate random demand according to Burr Type XII distribution.
-        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
-        base = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)
-        exponent = (1 / self.factors["Burr_c"])
-        demand = base**exponent
-        # Calculate profit.
-        order_cost = (self.factors["purchase_price"]
-                      * self.factors["order_quantity"])
-        sales_revenue = (min(demand, self.factors["order_quantity"])
-                         * self.factors["sales_price"])
-        salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
-                           * self.factors["salvage_price"])
-        profit = sales_revenue + salvage_revenue - order_cost
-        stockout_qty = max(demand - self.factors["order_quantity"], 0)
-        stockout = int(stockout_qty > 0)
-        # Calculate gradient of profit w.r.t. order quantity.
-        if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["sales_price"]
-                                          - self.factors["purchase_price"])
-        elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["salvage_price"]
-                                          - self.factors["purchase_price"])
-        else:
-            grad_profit_order_quantity = np.nan
+        # Designate separate random number generators.
+        elo_rng = rng_list[0]
+        arrival_rng = rng_list[1]
+        # Initialize statistics.
+        # Incoming players are initialized with a wait time of 0.
+        wait_times = np.zeros(self.factors["num_players"])
+        waiting_players = []
+        total_diff = 0
+        elo_diffs = []
+        # Simulate arrival and matching and players.
+        for player in range(self.factors["num_players"]):
+            # Generate interarrival time of the player.
+            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
+            # Generate rating of the player via acceptance/rejection (not truncation).
+            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            while player_rating < 0 or player_rating > 2400:
+                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            # Attempt to match the incoming player with waiting players in FIFO manner.
+            old_total = total_diff
+            for p in range(len(waiting_players)):
+                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                    total_diff += abs(player_rating - waiting_players[p])
+                    elo_diffs.append(abs(player_rating - waiting_players[p]))
+                    del waiting_players[p]
+                    break
+                else:
+                    wait_times[p] += time
+            # If incoming player is not matched, add them to the waiting pool.
+            if old_total == total_diff:
+                waiting_players.append(player_rating)
         # Compose responses and gradients.
-        responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
-        gradients = {response_key:
-                     {factor_key: np.nan for factor_key in self.specifications}
-                     for response_key in responses
+        responses = {"avg_diff": np.mean(elo_diffs),
+                     "avg_wait_time": np.mean(wait_times)
                      }
-        gradients["profit"]["order_quantity"] = grad_profit_order_quantity
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
 
 """
 Summary
 -------
-Maximize the expected profit for the continuous newsvendor problem.
+Minimize the expected Elo difference between all pairs of matched
+players subject to the expected waiting time being sufficiently small.
 """
 
 
-class CntNVMaxProfit(Problem):
+class ChessAvgDifference(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -209,17 +197,19 @@ class CntNVMaxProfit(Problem):
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
     rng_list : list of rng.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : tuple
+            initial_solution : list
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            prev_cost : list
+                cost of prevention
+            upper_thres : float > 0
+                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -236,47 +226,50 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CNTNEWS-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CHESS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
+        self.n_stochastic_constraints = 1
+        self.minmax = (-1,)
+        self.constraint_type = "stochastic"
         self.variable_type = "continuous"
         self.lower_bounds = (0,)
-        self.upper_bounds = (np.inf,)
-        self.gradient_available = True
+        self.upper_bounds = (2400,)
+        self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
-        self.model_default_factors = {
-            "purchase_price": 5.0,
-            "sales_price": 9.0,
-            "salvage_price": 1.0,
-            "Burr_c": 2.0,
-            "Burr_k": 20.0
-            }
-        self.model_decision_factors = {"order_quantity"}
+        self.optimal_solution = None
+        self.model_default_factors = {}
+        self.model_decision_factors = {"allowable_diff"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (0,)
+                "default": (150,)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
+            },
+            "upper_time": {
+                "description": "Upper bound on wait time.",
+                "datatype": float,
+                "default": 5.0
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "upper_time": self.check_upper_time,
         }
         super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = CntNV(self.model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = ChessMatchmaking(self.model_fixed_factors)
+
+    def check_upper_time(self):
+        return self.factors["upper_time"] > 0
 
     def vector_to_factor_dict(self, vector):
         """
@@ -293,7 +286,7 @@ class CntNVMaxProfit(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "order_quantity": vector[0]
+            "allowable_diff": vector[0]
         }
         return factor_dict
 
@@ -312,7 +305,7 @@ class CntNVMaxProfit(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["order_quantity"],)
+        vector = (factor_dict["allowable_diff"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -330,7 +323,7 @@ class CntNVMaxProfit(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["profit"],)
+        objectives = (response_dict["avg_diff"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -348,8 +341,28 @@ class CntNVMaxProfit(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = (-1 * response_dict["avg_wait_time"],)
         return stoch_constraints
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = (self.factors["upper_time"],)
+        det_stoch_constraints_gradients = ((0,),)
+        return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
         """
@@ -368,35 +381,12 @@ class CntNVMaxProfit(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
-
-    def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
-        return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
         """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Arguments
         ---------
@@ -408,7 +398,7 @@ class CntNVMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x[0] > 0
+        return x >= 0
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -424,6 +414,5 @@ class CntNVMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1) r.v.
-        x = (rand_sol_rng.expovariate(1),)
+        x = (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)
         return x
