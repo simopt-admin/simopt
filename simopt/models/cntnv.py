@@ -261,7 +261,7 @@ class CntNVMaxProfit(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (0.05,)
+                "default": (0.01,)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",

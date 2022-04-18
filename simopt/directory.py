@@ -14,6 +14,7 @@ model_directory : dictionary
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.strong import STRONG
+from solvers.neldmd import NelderMead
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -34,7 +35,8 @@ from models.covid_individual import COVID, CovidMinInfect
 solver_directory = {
     "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
-    "STRONG": STRONG
+    "STRONG": STRONG,
+    "NELDMD": NelderMead
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,

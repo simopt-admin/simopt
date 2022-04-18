@@ -70,35 +70,47 @@ print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():
     print(f"\t {key} is {value}.")
-print("\n Gradients:")
-for outerkey in gradients:
-    print(f"\tFor the response {outerkey}:")
-    for innerkey, value in gradients[outerkey].items():
-        print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+# print("\n Gradients:")
+# for outerkey in gradients:
+#     print(f"\tFor the response {outerkey}:")
+#     for innerkey, value in gradients[outerkey].items():
+#         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
 
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'num_infected')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'num_exposed')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'num_susceptible')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'num_recovered')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'Infected')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'Exposed')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'Susceptible')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'Recovered')
+plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_isolation'], axis = 1), color = 'purple', label = 'Isolation')
 plt.legend()
-plt.savefig('seir.png')
+plt.xlabel('Number of simulation days')
+plt.ylabel('Population')
+plt.yticks(np.arange(0, int(max(np.sum(responses['num_susceptible'], axis = 1))), 2000))
+# # plt.ylim(0, 1000)
+
+# plt.savefig('seir_no_test.png', bbox_inches = 'tight')
+
+
+# --------------------------------------------------
+# plt.figure()
+# f, axes = plt.subplots(2,1)
+# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'Infected')
+# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'Exposed')
+# axes[0].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'Susceptible')
+# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'Recovered')
+# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_isolation'], axis = 1), color = 'purple', label = 'Isolation')
+# axes[0].legend()
+# axes[1].legend()
+# axes[0].set_ylabel('Population')
+# axes[1].set_xlabel('Number of simulation days')
+# axes[1].set_ylabel('Population')
+plt.savefig('seir.png', bbox_inches = 'tight')
 
 for i in range(mymodel.factors["num_groups"]):
     fig1, ax1 = plt.subplots()
-    figlabel = 'num_infected in group '+str(i)
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = figlabel)
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = figlabel)
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = figlabel)
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = figlabel)
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = 'num_infected in group '+str(i))
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = 'num_exposed in group '+str(i))
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = 'num_susceptible in group '+str(i))
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = 'num_recovered in group '+str(i))  
+    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_isolation'][:,i], color = 'purple', label = 'num_isolation in group '+str(i))
     ax1.legend()
-    fig1.savefig('seir_group'+str(i)+'.png')
-
-
-
-# import numpy as np
-# total_dist = []
-# for _ in range(1000):
-#     responses, gradients = mymodel.replicate(rng_list)
-#     total_dist.append(responses["total_dist"])
-
-# print(np.mean(total_dist))
+    fig1.savefig('seir_group'+str(i)+'.png', bbox_inches = 'tight')
