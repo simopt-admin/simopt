@@ -50,7 +50,7 @@ myexperiment.post_replicate(n_postreps=200)
 post_normalize([myexperiment], n_postreps_init_opt=200)
 
 print("Plotting results.")
-# Produce basic plots of the solver on the problem
+# Produce basic plots of the solver on the problem.
 plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
 plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
 plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)

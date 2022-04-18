@@ -7,6 +7,9 @@ The algorithm maintains a simplex of points that moves around the feasible
 region according to certain geometric operations: reflection, expansion, 
 scontraction, and shrinking.
 
+A detailed description of the solver can be found 
+`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
+
 Modifications & Implementation:
 ----------------------
 Initial (dimension + 1) points:
@@ -15,7 +18,7 @@ Include the initial solution from the model. Generate the remaining points using
 Box constraints:
 Nelder-Mead checks for box constraints in the solver and modifies the parts of a solution that go out of bounds by setting them to their respective closest bound. For example, if a tentative solution is (2,4) and the upper bound is (3,3), then the point is modified to (2,3). Additionally, if the reflected point goes out of bounds, all the points will be shrinked towards the best point.
 
-Attributes:
+Scope:
 ----------------------
 * objective_type: single
 
@@ -23,7 +26,7 @@ Attributes:
 
 * variable_type: continuous
 
-Model Factors:
+Solver Factors:
 --------------
 * crn_across_solns: Use CRN across solutions?
 
