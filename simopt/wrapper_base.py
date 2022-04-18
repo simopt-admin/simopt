@@ -1775,8 +1775,12 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                   plot_type=plot_type,
                                   normalize=True,
                                   extra=[solve_tol, beta]
+<<<<<<< Updated upstream
                                   ))
     return file_list          
+=======
+                                  )
+>>>>>>> Stashed changes
 
 
 def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
