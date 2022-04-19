@@ -51,7 +51,8 @@ myproblem = CovidMinInfect(fixed_factors= fixed_factors)
 #     x = (3,)
 # x = (2,3)
 # x = 3 * np.ones(10)
-x = (1/7, 1/7, 1/7)
+x = (0.1774432756724305, 0.5065309266462998, 0.7125438096022961)
+print('max testing number:', np.sum(np.dot(myproblem.model.factors["group_size"][g],x[g]) for g in range(myproblem.dim)))
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 

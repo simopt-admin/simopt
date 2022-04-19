@@ -38,6 +38,8 @@ PROBLEM = "CNTNEWS-1"
 PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
+# PROBLEM = "SAN-1"
+# PROBLEM_FULL_NAME = "Stochastic Activity Network"
 
 # Temporarily store experiments on the same problem for post-normalization.
 experiments_same_problem = []
@@ -56,11 +58,11 @@ new_experiment.post_replicate(n_postreps=100)
 experiments_same_problem.append(new_experiment)
 
 # Setup and run ASTRO-DF.
-solver_fixed_factors = {"delta_max": 200.0}
-new_experiment = Experiment(solver_name="ASTRODF",
-                            problem_name=PROBLEM,
-                            solver_fixed_factors=solver_fixed_factors
-                            )
+# solver_fixed_factors = {"delta_max": 200.0}
+# new_experiment = Experiment(solver_name="ASTRODF",
+#                             problem_name=PROBLEM,
+#                             solver_fixed_factors=solver_fixed_factors
+#                             )
 # Run experiment with M = 10.
 new_experiment.run(n_macroreps=10)
 # Post replicate experiment with N = 100.
@@ -113,18 +115,18 @@ new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
-# Load ASTRO-DF results.
-solver_rename = "ASTRODF"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "ASTRO-DF"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load ASTRO-DF results.
+# solver_rename = "ASTRODF"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "ASTRO-DF"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
 # Load NELDMD results.
 solver_rename = "NELDMD"
@@ -187,7 +189,8 @@ plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in r
                      beta=0.9,
                      all_in_one=True,
                      plot_CIs=True,
-                     print_max_hw=False
+                     print_max_hw=False,
+                     normalize=False
                      )
 
 # # Plot 0.9-quantile progress curves from all solvers on one problem. Problem instance 22.
@@ -243,23 +246,23 @@ plot_solvability_profiles(experiments=experiments,
 
 # Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
 # Reference solver = ASTRO-DF.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="diff_cdf_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          ref_solver="ASTRO-DF"
-                          )
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="diff_cdf_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           ref_solver="ASTRO-DF"
+#                           )
 
-# Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
-# Reference solver = ASTRO-DF.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="diff_quantile_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          beta=0.5,
-                          ref_solver="ASTRO-DF"
-                          )
+# # Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
+# # Reference solver = ASTRO-DF.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="diff_quantile_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           beta=0.5,
+#                           ref_solver="ASTRO-DF"
+#                           )

@@ -51,16 +51,19 @@ print(f"Results will be stored as {file_name_path}.")
 
 # Initialize an instance of the experiment class.
 # myexperiment = Experiment(solver_name, problem_name)
-
-fixed_factors = {"lam": 100000}
+sols = []
+fixed_factors = {"lam": 10}
 myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors)
-
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=10)
-
+myexperiment.run(n_macroreps= 20)
 print(myexperiment.all_recommended_xs)
+for rep in myexperiment.all_recommended_xs:
+    for i in rep:
+        if i not in sols:
+            sols.append(i)
+
 with open('covid_res.txt', 'w') as f:
-    for item in myexperiment.all_recommended_xs:
+    for item in sols:
         f.write("%s\n" % item)
 
 # If the solver runs have already been performed, uncomment the

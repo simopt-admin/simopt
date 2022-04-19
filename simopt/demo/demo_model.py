@@ -85,9 +85,9 @@ plt.legend()
 plt.xlabel('Number of simulation days')
 plt.ylabel('Population')
 plt.yticks(np.arange(0, int(max(np.sum(responses['num_susceptible'], axis = 1))), 2000))
-# # plt.ylim(0, 1000)
+# plt.ylim(0, 1000)
 
-# plt.savefig('seir_no_test.png', bbox_inches = 'tight')
+plt.savefig('seir_no_test.png', bbox_inches = 'tight')
 
 
 # --------------------------------------------------
@@ -103,14 +103,14 @@ plt.yticks(np.arange(0, int(max(np.sum(responses['num_susceptible'], axis = 1)))
 # axes[0].set_ylabel('Population')
 # axes[1].set_xlabel('Number of simulation days')
 # axes[1].set_ylabel('Population')
-plt.savefig('seir.png', bbox_inches = 'tight')
+# plt.savefig('seir.png', bbox_inches = 'tight')
 
-for i in range(mymodel.factors["num_groups"]):
-    fig1, ax1 = plt.subplots()
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = 'num_infected in group '+str(i))
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = 'num_exposed in group '+str(i))
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = 'num_susceptible in group '+str(i))
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = 'num_recovered in group '+str(i))  
-    ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_isolation'][:,i], color = 'purple', label = 'num_isolation in group '+str(i))
-    ax1.legend()
-    fig1.savefig('seir_group'+str(i)+'.png', bbox_inches = 'tight')
+# for i in range(mymodel.factors["num_groups"]):
+#     fig1, ax1 = plt.subplots()
+#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = 'num_infected in group '+str(i))
+#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = 'num_exposed in group '+str(i))
+#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = 'num_susceptible in group '+str(i))
+#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = 'num_recovered in group '+str(i))  
+#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_isolation'][:,i], color = 'purple', label = 'num_isolation in group '+str(i))
+#     ax1.legend()
+#     fig1.savefig('seir_group'+str(i)+'.png', bbox_inches = 'tight')

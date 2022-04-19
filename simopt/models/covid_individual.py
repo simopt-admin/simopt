@@ -90,7 +90,7 @@ class COVID(Model):
             "freq":{
                 "description": "Testing frequency of each group.",
                 "datatype": tuple,
-                "default": (1/7, 1/7, 1/7)
+                "default": (0/7, 0/7, 0/7)
             },
             "asymp_rate":{
                 "description": "Fraction of asymptomatic among all the confirmed cases",
@@ -469,7 +469,7 @@ class CovidMinInfect(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 300
             },
             "testing_cap": {
                 "description": "Daily testing capacity",
@@ -479,7 +479,7 @@ class CovidMinInfect(Problem):
             "lam": {
                 "description": "Multiplier for the constraint in the penalty function",
                 "datatype": int,
-                "default": 2
+                "default": 100000
             },
         }
         self.check_factor_list = {
@@ -590,7 +590,8 @@ class CovidMinInfect(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (self.factors["lam"] * (np.max(np.sum(np.dot(self.model.factors["group_size"][g],x[g]) for g in range(self.dim)) - self.factors["testing_cap"]))**2,)
+        # det_objectives = (self.factors["lam"] * (np.max(np.sum(np.dot(self.model.factors["group_size"][g],x[g]) for g in range(self.dim)) - self.factors["testing_cap"]))**2,)
+        det_objectives = ((0,),)
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
@@ -632,6 +633,7 @@ class CovidMinInfect(Problem):
             indicates if solution `x` satisfies the deterministic constraints.
         """
         return (np.sum(np.dot(self.model.factors["group_size"][g],x[g]) for g in range(self.dim)) <= self.factors["testing_cap"])
+        # return np.all(x >= 0)
 
     def get_random_solution(self, rand_sol_rng):
         """

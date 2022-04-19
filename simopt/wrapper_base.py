@@ -1298,7 +1298,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="best")
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize)
         save_plot(solver_name="SOLVER SET",
