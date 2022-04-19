@@ -4,6 +4,14 @@ models package
 Submodules
 ----------
 
+models.EmergencyRoom module
+---------------------------
+
+.. automodule:: models.EmergencyRoom
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.Voting module
 --------------------
 
