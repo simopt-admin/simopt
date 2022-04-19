@@ -287,7 +287,6 @@ class Voting(Model):
                             END
                     elif len(queue) > 0:
                         queue.append(clock)
-                        arr_ind += 1
                     else:
                         print("error in simulation loop 1, arrival times less than machine list")
                         END
