@@ -129,16 +129,17 @@ class ProdSys(Model):
             "num_machines": self.check_num_machines,
             "num_edges": self.check_num_edges,
             "interm_product": self.check_interm_product,
-            #"n_sets": self.check_n_sets,
-            # "machine_layout": self.check_machine_layout,
-            # "batch": self.check_batch,
-            # "time_horizon": self.check_time_horizon
-           #"routing_layout"
-           # "machine_layout"
-           # "processing_time_mean"
-           # "processing_time_StDev"
-           # "product_batch_prob"
-           # "time_horizon"
+            
+            "n_sets": self.check_n_sets,
+            "machine_layout": self.check_machine_layout,
+            "batch": self.check_batch,
+            "time_horizon": self.check_time_horizon,
+            "routing_layout": self.check_routing_layout,
+            "machine_layout": self.check_machine_layout,
+            "processing_time_mean": self.check_processing_time_mean,
+            "processing_time_StDev": self.check_processing_time_StDev,
+            "product_batch_prob": self.check_product_batch_prob,
+            "time_horizon": self.check_time_horizon
         }
         
         # Set factors of the simulation model.
@@ -169,18 +170,32 @@ class ProdSys(Model):
             if i < 0:
                 return False
         return sum(self.factors["interm_product"]) == self.factors["n_sets"] and len(self.factors["interm_product"]) == self.factors["num_edges"]
+    def check_routing_layout(self):
+        if len(self.factors["routing_layout"]) != self.factors["num_edges"]:
+           return False
+        end_nodes = []
+        num_nodes = self.factors["routing_layout"][self.factors["num_edges"]-1][1]
+        for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
+        return len(end_nodes) != self.factors["num_products"]
+        return True
 
-    # def check_n_sets(self):
-    #     return self.factors["num_sets"] >= 0
+    def check_n_sets(self):
+        return self.factors["n_sets"] >= 0
 
-    # def check_machine_layout(self):
-    #     return len(self.factors["machine_layout"]) == "num_edges"
+    def check_machine_layout(self):
+        return len(self.factors["machine_layout"]) == "num_edges"
 
-    # def check_batch(self):
-    #     return self.factors["batch"] > 0
+    def check_batch(self):
+        return self.factors["batch"] > 0
 
-    # def check_time_horizon(self):
-    #     return self.factors["time_horizon"] > 0
+    def check_time_horizon(self):
+        return self.factors["time_horizon"] > 0
+
+    def check_processing_time_mean(self):
+        return len(self.factors["processing_time_mean"]) == self.factors["num_edges"]
+
+    def check_processing_time_StDev(self):
+        return len(self.factors["processing_time_StDev"]) == self.factors["num_edges"]
 
     def replicate(self, rng_list):
         """
@@ -248,6 +263,14 @@ class ProdSys(Model):
             if len(nodes)>num_products:
                 seq = np.arange(len(nodes)/(num_products-1))
         '''
+        def edge_route(nodes):
+            edges = []
+            for i in range(len(self.factors["routing_layout"])):
+                for j in range(len(nodes)):
+                    if self.factors["routing_layout"][i][0] == nodes[j] and self.factors["routing_layout"][i][1] == nodes[j+1]:
+                        edges.append(i)
+            return(edges)
+        
         def get_sequence(product):
             end = end_nodes[product-1]
             possible_seq = []
@@ -257,14 +280,15 @@ class ProdSys(Model):
             if len(nodes)>1+self.factors["num_products"]:
                 seq = np.arange(len(nodes)/(self.factors["num_products"]-1))
                 nodes = [[1, 2, 5], [1, 3, 5]]
-            return nodes
+            if type(nodes[0]) == list:
+                edges = []
+                for i in range(len(nodes)):
+                    edges.append(edge_route(nodes[i]))
+            else:
+                edges = edge_route(nodes)
+            return edges
 
-        def get_sequence_time(seq):
-            edges = []
-            for i in range(len(self.factors["routing_layout"])):
-                for j in range(len(seq)):
-                    if self.factors["routing_layout"][i][0] == seq[j] and self.factors["routing_layout"][i][1] == seq[j+1]:
-                        edges.append(i)
+        def get_sequence_time(edges):
             total_time = 0
             order_time = []
             for i in edges:
@@ -274,19 +298,28 @@ class ProdSys(Model):
                 sum_order_time = sum(order_time)
             print(order_time, sum_order_time)
             return(edges, order_time)
-
-        def update_time(prod):
+        
+        def get_min_time(seq):
             min_time = self.factors["time_horizon"]
+            optimal_edges = []
+            print("seq", seq)
+            for i in range(len(seq)):
+                time = []
+                for j in seq[i]:
+                    print("j", j, self.factors["processing_time_mean"][j])
+                    time.append(self.factors["processing_time_mean"][j])
+                if sum(time) < min_time:
+                    min_time = sum(time)
+                    optimal_edges = seq[i]
+            print("optimal edgessss: ", optimal_edges)
+            return optimal_edges
+        
+        def update_time(prod):
             invent, invent_seq = check_node(node_product, end_nodes, prod)
             seq = get_sequence(prod)
             if type(seq[0]) == list:
-                min_time = self.factors["time_horizon"]
-                for i in range(len(seq)):
-                    edges, time = get_sequence_time(seq[i])
-                    if sum(time) < min_time:
-                        min_time = sum(time)
-                        optimal_time = time
-                        optimal_edges = edges
+                optimal_edges = get_min_time(seq)
+                optimal_edges, optimal_time = get_sequence_time(optimal_edges)
             else:
                 optimal_edges, optimal_time = get_sequence_time(seq)
             machines = []
@@ -306,8 +339,8 @@ class ProdSys(Model):
         # LIST RANDOM NUMBERS GENERATED
         for j in range(self.factors["num_machines"]):                   # Generate/attach random machine processing times for # of machines
             list_initiator = []                          
-            for i in range(num_edges):
-                if self.factors("machine_layout")[i] == j+1:
+            for i in range(self.factors["num_edges"]):
+                if self.factors["machine_layout"][i] == j+1:
                     parameters = [self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i]]
                     list_initiator.append(parameters)
                 else:
@@ -315,6 +348,8 @@ class ProdSys(Model):
             rng_list[j] = list_initiator
         product_orders_rng = []
         arrival_times_rng = []
+
+        node_product = self.factors["interm_product"]
 
         orders_time = 0   
         num_orders = 0
@@ -333,7 +368,7 @@ class ProdSys(Model):
         print(rng_list)
         print("")
         # CREATING END NODE LIST
-        num_nodes = self.factors["routing_layout"][num_edges-1][1]
+        num_nodes = self.factors["routing_layout"][self.factors["num_edges"]-1][1]
         end_nodes = []
         for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
         end_nodes.reverse()
@@ -345,9 +380,7 @@ class ProdSys(Model):
             product = rng_list[2][i]
             print("Product: ", product)
 
-
             update_time(product)
-
 
             print("")
             print("edges time: ",edge_time)
@@ -362,7 +395,7 @@ class ProdSys(Model):
         update_time(product)
         print("")
         print("edges time: ",edge_time)
-        
+
         while len(leadtime) <= len(rng_list[2]):
             i += 1
             print("Clock: ", clock)
@@ -380,13 +413,10 @@ class ProdSys(Model):
                 print("")
                 print("edges time: ",edge_time)
                 print("")
-                print("CL", clock)
             if i == 5:
                 break
 
         print(network_time)
-        num_edges = len(self.factors["routing_layout"])
-        node_product = self.factors["interm_product"]
         rng_list = [0, 0, 0, 0]    # FIX THIS
         product = 1 
 

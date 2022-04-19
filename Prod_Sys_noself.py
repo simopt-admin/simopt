@@ -165,6 +165,7 @@ print("")
 num_nodes = routing_layout[num_edges-1][1]
 end_nodes = []
 for i in range(num_products): (end_nodes.append(num_nodes-i))
+print(end_nodes)
 end_nodes.reverse()
 network_time = []
 edge_time = np.zeros(len(machine_layout))
@@ -207,3 +208,13 @@ product = 1
 
 def get_lead_time(end_nodes, product, rng_list):
     print("")
+
+print("")
+print("")
+x = [[1, 2],
+                            [1, 3],
+                            [2, 4],
+                            [2, 5],
+                            [3, 5],
+                            [3, 6]]
+print(len(x))
