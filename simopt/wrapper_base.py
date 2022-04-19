@@ -785,10 +785,15 @@ def read_experiment_results(file_name_path):
         experiment = pickle.load(file)
     return experiment
 
+def log_experiment_results(self):
+    """
+    Read in the experiment results and generate readable txt file
+    """
+
 
 def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None):
     """
-    Construct objective curves and (normalized) progress curves
+    Construct objective curves and lf(normalized) progress curves
     for a collection of experiments on a given problem.
 
     Parameters

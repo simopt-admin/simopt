@@ -190,7 +190,7 @@ class Throughput(Model):
 
         # When we encounter a part that enters the system after the end of the horizon,
         # we terminate the simulation.
-        while not terminate:
+        while part_number < 50:
 
             if part_number == 0:
                         
@@ -289,9 +289,6 @@ class Throughput(Model):
             rate_list.append(self.factor["prate"])
             buffer_list.append(self.factor["buffer"])
 
-            # If we have passed the time horizon, terminate.
-            if parts_experience[0] > self.factors["runlength"]:
-                terminate = True
 
             
             # IF YOU WANT TO TRACK THE PER-PART STATISTICS, UNCOMMENT THIS.
@@ -578,8 +575,8 @@ class throughputMaximize(Problem):
         buffer_feasible = super().check_deterministic_constraints(x)
         servicetime_feasible = super().check_deterministic_constraints(x)
         
-        np.sum( "rate list") < self.factors["Rate"]
-        np.sum( "buffer list") < self.factors["Buffer"]
+        np.sum(self.factors["rate list"]) < self.factors["Rate"]
+        np.sum(self.factors["buffer list"]) < self.factors["Buffer"]
         
         return buffer_feasible, servicetime_feasible
 
