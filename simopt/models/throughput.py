@@ -158,7 +158,7 @@ class Throughput(Model):
         buffer_list = [2]
         
         # Assign random generated service time to the station service list.
-        for i in range(self.factors["n"]):
+        for i in range(self.factors["n"] - 1):
             service_times = ([service_rng.expovariate(self.factors["prate"])
                          for _ in range(total)])
             station_service[i] = service_times
@@ -195,7 +195,7 @@ class Throughput(Model):
             if part_number == 0:
                         
                 # Record the first part's experience.
-                for i in range(self.factors["n"]):
+                for i in range(self.factors["n"] - 1):
                     
                     if i == 0:
                         begin_proc_station.append(0)
@@ -207,7 +207,7 @@ class Throughput(Model):
                 k = 0
                 t = 0
                 
-                for i in range(self.factors["n"]):
+                for i in range(self.factors["n"] - 1):
                     
                     while k < i+1:
                         t += station_service[i]
@@ -216,7 +216,7 @@ class Throughput(Model):
                 
                 
                 parts_experience = []
-                for i in range(self.factor["n"]):
+                for i in range(self.factor["n"] - 1):
                     
                     parts_experience.append(begin_proc_station[i])
                     parts_experience.append(end_proc_station[i])
@@ -238,7 +238,7 @@ class Throughput(Model):
                 if part_number <= self.factors["buffer"] + 1:
                     # If one of the first few parts, blocking is not possible.
                     # Part begins processing at first time when Station 1 ends processing of previous part
-                    begin_proc_station1 = part_times[part_number - 1][1]
+                    begin_proc_station[0] = part_times[part_number - 1][1]
 
                 else:
                     # Part begins processing at first time when Station 1 ends processing of previous part
@@ -248,29 +248,43 @@ class Throughput(Model):
                     # Station 1 becomes unblocked when a part sufficiently in front of the current part
                     # starts processing at Station 2.            
                     #   = part_times[part_number - buffer_size - 1][2]
-                    begin_proc_station1 = max(part_times[part_number - 1][1], part_times[part_number - self.factors["buffer"] - 1][2])
+                    begin_proc_station[0] = max(part_times[part_number - 1][1], part_times[part_number - self.factors["buffer"] - 1][2])
 
                 # Part ends processing at Station 1 at first time when processing time is up.
-                end_proc_station1 = begin_proc_station1 + service_times
+                
+                for i in range(self.factors["n"]):
 
+                    end_proc_station[i] = begin_proc_station[i] + service_times
+                    begin_proc_station[i+1] = max(end_proc_station[i], part_times[part_number - 1][self.factors["n"]])
+                    
+                end_proc_station[self.factors["n"]-1] = begin_proc_station[self.factors["n"] - 2] + service_times
+                
+                #end_proc_station[0] = begin_proc_station[0] + service_times
                 # Part begins processing at Station 2 when it finishes processing at Station 1 AND 
                 # previous part has completed processing at Station 2.
-                begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
+                #begin_proc_station2 = max(end_proc_station1, part_times[part_number - 1][3])
 
                 # Part ends processing at Station 2 when processing time is up
-                end_proc_station2 = begin_proc_station2 + service_times
+                #end_proc_station2 = begin_proc_station2 + service_times
                 
                 # Part begins processing at Station 3 when when it finished processing at Station 2 AND
                 # previous part has completed processing at Station3
-                begin_proc_station3 = max(end_proc_station1, part_times[part_number - 1][3])
+                #begin_proc_station3 = max(end_proc_station1, part_times[part_number - 1][3])
                 
                 # Part end processing at Station 3 when processing time is up
-                end_proc_station3 = begin_proc_station2 + service_times
+                #end_proc_station3 = begin_proc_station2 + service_times
 
 
                 # Concatenate results
-                parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
+                
+                for i in range(self.factors["n"] - 1):
+                    
+                    parts_experience.append(begin_proc_station[i])
+                    parts_experience.append(end_proc_station[i])
+                    
                 part_times.append(parts_experience)
+
+                #parts_experience = [begin_proc_station1, end_proc_station1, begin_proc_station2, end_proc_station2, begin_proc_station3, end_proc_station3]
             
             rate_list.append(self.factor["prate"])
             buffer_list.append(self.factor["buffer"])
@@ -288,7 +302,7 @@ class Throughput(Model):
 
         # Record summary statistics.
         enter_times = np.array([parts_experience[0] for parts_experience in part_times if parts_experience[0] < self.factors["runlength"]])
-        exit_times = np.array([parts_experience[5] for parts_experience in part_times if parts_experience[5] < self.factors["runlength"]])
+        exit_times = np.array([parts_experience[self.factors["n"] * 2 - 1] for parts_experience in part_times if parts_experience[self.factors["n"] * 2 - 1] < self.factors["runlength"]])
 
         # Calculate throughput.
         throughput = 50 / np.sum(exit_times < self.factors["runlength"])
