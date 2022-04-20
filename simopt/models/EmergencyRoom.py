@@ -6,7 +6,7 @@ Simulate demand at facilities.
 import numpy as np
 
 from base import Model, Problem
-
+import math as math
 
 class EmergencyRoom(Model):
     """
@@ -70,7 +70,7 @@ class EmergencyRoom(Model):
             "st_reception": {
                 "description": "Exponential distribution parameter for reception service time.",
                 "datatype": float,
-                "default": 1/7.5
+                "default": 7.5
             },
             "st_labtests_min": {
                 "description": "Service time minimum for triangular distribution of lab tests.",
@@ -90,17 +90,17 @@ class EmergencyRoom(Model):
             "st_er": {
                 "description": "Exponential distribution parameter for emergency room service time.",
                 "datatype": float,
-                "default": 1/90
+                "default": 90
             },
             "st_exam": {
                 "description": "Exponential distribution parameter for examination room service time.",
                 "datatype": float,
-                "default": 1/15
+                "default": 15
             },
             "st_reexam": {
                 "description": "Exponential distribution parameter for re-examination process service time.",
                 "datatype": float,
-                "default": 1/9
+                "default": 9
             },
             "st_tr_min": {
                 "description": "Service time minimum for triangular distribution of treatments.",
@@ -352,16 +352,70 @@ class EmergencyRoom(Model):
                 arrival_times.append(t)
                 t += arrivals_rng.expovariate(self.factors["walkin_rates"][11])
 
-        t = arrivals_rng.expovariate(self.factors["walkin_rates"][0])
+        t = arrivals_rng.expovariate(self.factors["amb_arr"])
 
         while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:
             arrival_amb.append(t)
-            t += amb_rng.expovariate(1/self.factors["amb_arr"])
-        
-        wait_times = []
+            t += amb_rng.expovariate(self.factors["amb_arr"])
 
-        #wait times for receptionist
-        while len(wait_times) <= len(arrival_times):
+        reception_time = []
+        t = reception_rng.expovariate(self.factors["st_reception"])
+
+        for i in range(arrival_times):
+            reception_time.append(t)
+            t += reception_rng.expovariate(self.factors["st_reception"])
+
+        wait_times_rec = []
+        receptionists = []
+        arr_ind = 0
+
+        for i in range(self.factors["employee_allocations"][0]):
+            receptionists.append(math.inf)
+        clock_rec = 0
+        rec_ind = 0
+        rec_queue = []
+
+        while len(wait_times_rec) <= len(arrival_times):  #wait times for receptionist
+            if min(receptionists) <= arrival_times[arr_ind]:
+                clock_rec = receptionists[rec_ind]
+                if len(rec_queue) > 0:
+                    clock_rec = arrival_times[arr_ind]
+                    rec_ind = receptionists.index(min(receptionists))
+                    receptionists[rec_ind] = clock_rec + reception_time[arr_ind]
+                    wait_times_rec.append(clock_rec - rec_queue.pop(0))
+                    arr_ind += 1
+                elif len(rec_queue) == 0:
+                    rec_ind = receptionists.index(min(receptionists))
+                    receptionists[rec_ind] = math.inf
+                else:
+                    print("Error in receptionist loop")
+
+            elif min(receptionists) > arrival_times[arr_ind]:
+                clock_rec = arrival_times[arr_ind]
+                if rec_queue == 0:
+                    for i in range(len(receptionists)):
+                        if receptionists[i] == math.inf:
+                            rec_ind = i
+                        elif receptionists[i] != math.inf:
+                            rec_ind = -1
+                        else:
+                            print("Error in receptionist loop")
+                    if rec_ind >= 0:
+                        receptionists[rec_ind] = clock_rec + reception_time[arr_ind]
+                        wait_times_rec.append(0)
+                        arr_ind += 1
+                    elif rec_ind == -1:
+                        rec_queue.append(clock_rec)
+                    else:
+                        print("Error in receptionist loop")
+                elif rec_queue > 0:
+                    rec_queue.append(clock_rec)
+                else:
+                    print("Error in receptionist loop")
+
+        walkin_system = []
+        for i in range(len(wait_times_rec)):
+            walkin_system[i] = arrival_times[i] + wait_times_rec[i]
 
 
         #generating the wait times for each patient

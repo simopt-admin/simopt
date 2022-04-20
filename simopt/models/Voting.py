@@ -253,8 +253,8 @@ class Voting(Model):
             while len(wait_times) <= len(arr_times):
                 if min(mach_list) <= arr_times[arr_ind]:
                     clock = min(mach_list)
-                    if len(queue) > 0:           #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
-                        clock = arr_times[arr_ind]                      #updates since we are also moving to the next event here to 
+                    if len(queue) > 0:  #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                        clock = arr_times[arr_ind]  #updates since we are also moving to the next event here to 
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
                         vote_ind += 1
@@ -287,7 +287,6 @@ class Voting(Model):
                             END
                     elif len(queue) > 0:
                         queue.append(clock)
-                        arr_ind += 1
                     else:
                         print("error in simulation loop 1, arrival times less than machine list")
                         END
