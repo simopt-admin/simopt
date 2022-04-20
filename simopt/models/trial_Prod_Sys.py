@@ -334,6 +334,7 @@ class ProdSys(Model):
             seq = get_sequence(prod, invent_seq)
             print(invent, invent_seq)
             check = 0
+            
             if type(seq[0]) == list:
                 for j in range(len(machines_qeue)-1): 
                     if machines_qeue[j] == machines_qeue[j+1] : check += 1
