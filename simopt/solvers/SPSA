@@ -127,10 +127,27 @@ class SPSA(solver):
 
         Returns
         -------
-        recommended_solns : list of Solution objects
-            list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
-            list of intermediate budgets when recommended solutions changes
+        Anncalls : Array
+            An array (size = 'NumSoln' X 1) of budget expended
+        A : Array
+             An array (size = 'NumSoln' X 'dim') of solutions returned by solver
+        AFnMean : Array
+            An array (size = 'NumSoln' X 1) of estimates of expected objective function value
+        AFnVar : Array 
+            An array of variances corresponding to the objective function at A 
+            Equals NaN if solution is infeasible
+        AFnGrad : Array
+            An array of gradient estimates at A; not reported
+        AFnGradCov : Array 
+            An array of gradient covariance matrices at A; not reported
+        AConstraint : Vector
+            A vector of constraint function estimators; not applicable
+        AConstraintCov : Arrary
+            An array of covariance matrices corresponding to the constraint function at A; not applicable
+        AConstraintGrad : Array
+            An array of constraint gradient estimators at A; not applicable
+        AConstraintGradCov: Array
+            An array of covariance matrices of constraint gradient estimators at A; not applicable
         """
         recommended_solns = []
         intermediate_budgets = []
@@ -138,3 +155,28 @@ class SPSA(solver):
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Sequentially generate random solutions and simulate them.
+        while expended_budget < problem.factors["budget"]:
+            if expended_budget == 0:
+                # Start at initial solution and record as best.
+                new_x = problem.factors["initial_solution"]
+                new_solution = self.create_new_solution(new_x, problem)
+                best_solution = new_solution
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+            else:
+                # Identify new solution to simulate.
+                new_x = problem.get_random_solution(find_next_soln_rng)
+                new_solution = self.create_new_solution(new_x, problem)
+            # Simulate new solution and update budget.
+            problem.simulate(new_solution, self.factors["sample_size"])
+            expended_budget += self.factors["sample_size"]
+            # Check for improvement relative to incumbent best solution.
+            # Also check for feasibility w.r.t. stochastic constraints.
+            if (problem.minmax * new_solution.objectives_mean
+                    > problem.minmax * best_solution.objectives_mean and
+                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                # If better, record incumbent solution as best.
+                best_solution = new_solution
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+        return recommended_solns, intermediate_budgets
