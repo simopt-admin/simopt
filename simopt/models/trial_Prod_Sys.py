@@ -300,40 +300,57 @@ class ProdSys(Model):
                 #sum_order_time = sum(order_time)
             return(edges, order_time)
         
-        def get_min_time(seq):
+        def get_min_time(seq,t):
+            print(seq)
+            print(machines_qeue)
             min_time = self.factors["time_horizon"]
             optimal_edges = []
-            for i in range(len(seq)):
-                time = []
-                for j in seq[i]:
-                    time.append(self.factors["processing_time_mean"][j])
-                if sum(time) < min_time:
-                    min_time = sum(time)
-                    optimal_edges = seq[i]
+            if t == len(machines_qeue): 
+                print("HERE")
+                for i in range(len(seq)):
+                    time = []
+                    for j in seq[i]:
+                        time.append(self.factors["processing_time_mean"][j])
+                    if sum(time) < min_time:
+                        min_time = sum(time)
+                        optimal_edges = seq[i]
+            else: 
+                for i in range(len(seq)):
+                    time = []
+                    for j in seq[i]:
+                        time.append(edge_time[j])
+                    if sum(time) < min_time:
+                        min_time = sum(time)
+                        optimal_edges = seq[i]
+
             return optimal_edges
         
         def update_time(prod):
             invent, invent_seq = check_node(node_product, end_nodes, prod)
             seq = get_sequence(prod)
+            check = 0
             if type(seq[0]) == list:
-                optimal_edges = get_min_time(seq)
+                for j in machines_qeue: 
+                    if j == float('inf') : check += 1
+                print(check)
+                optimal_edges = get_min_time(seq,check)
                 optimal_edges, optimal_time = get_sequence_time(optimal_edges)
-            else:
-                optimal_edges, optimal_time = get_sequence_time(seq)
+            else: optimal_edges, optimal_time = get_sequence_time(seq)
+            
             machines = []
             print("optimal edges: ", optimal_edges)
-            for elem in optimal_edges:
-                machines.append(self.factors["machine_layout"][elem])
+            for elem in optimal_edges: machines.append(self.factors["machine_layout"][elem])
             print("time: ", optimal_time)
             for i in range(len(machines)):
                 for j in range(len(self.factors["machine_layout"])):
-                    if self.factors["machine_layout"][j] == machines[i]:
-                        edge_time[j] =  optimal_time[i]
+                    if self.factors["machine_layout"][j] == machines[i]: edge_time[j] =  optimal_time[i]
+            
             print("machines ", machines)
             for i in machines: machines_qeue[i-1] += optimal_time[i-1]
-            print("Machine Queu:", machines_qeue)
+            
+            print("Machine Qeue:", machines_qeue)
             network_time.append(sum(optimal_time))
-            return(optimal_time)
+            return(machines_qeue[-1])
         
         # MAIN CODE
         # LIST RANDOM NUMBERS GENERATED
@@ -366,7 +383,7 @@ class ProdSys(Model):
         rng_list[-2] = product_orders_rng
         rng_list[-1] = arrival_times_rng
         
-        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464, 
+        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464, 
 372.01710375272273, 401.3857848259946, 434.2295472258132, 466.42519331866515, 486.70798518555915, 516.3478106441862, 544.4080471479766, 562.9793019943288, 587.4876637499182]]
         print("")
         print(rng_list)
@@ -379,44 +396,46 @@ class ProdSys(Model):
         
         network_time = []
         edge_time = [0] *len(self.factors["machine_layout"])
-        machines_qeue = [0] *(self.factors["num_machines"])
+        machines_qeue = [float('inf')] *(self.factors["num_machines"])
         # for i in range(self.factors["num_machines"]): machines_qeue.append([])
         # machines_qeue = [[]] * 2
         leadtime = []
-        clock = rng_list[3][0]
-        for i in range(len(machines_qeue)): machines_qeue[i] = clock
+        clock = 0
+        for i in range(len(machines_qeue)): machines_qeue[i] = float('inf')
         i = 0
-        product = rng_list[2][0]
-        print("Product: ", product)
-        lead = update_time(product)
-        leadtime.append(lead)
-        print("")
-        print("edges time: ",edge_time)
-
-        while len(leadtime) <= len(rng_list[2]):
-            i += 1
+        # product = rng_list[2][0]
+        # print("Product: ", product, "arrives at: ", clock)
+        # lead = update_time(product)
+        # leadtime.append(lead)
+        # print("LEAD TIME: ", leadtime)
+        # print("")
+        #while len(leadtime) <= len(rng_list[2]) or i < 5:
+        for j in range(15):
             print("Clock: ", clock)
             next_inqeue = min(machines_qeue)
-            print("machine qeue: ", machines_qeue)
+            print("machine queu: ", machines_qeue)
             ind = machines_qeue.index(next_inqeue)
-            print(next_inqeue)
+            print("Next in qeue: " , next_inqeue)
+            
             if next_inqeue < rng_list[3][i] or next_inqeue != float("inf"):
                 clock = next_inqeue
                 machines_qeue[ind]= float("inf")
             else:
                 clock = rng_list[3][i]
                 product = rng_list[2][i]
-                # print("Product: ", product)
-                # update_time(product)
-                # print("")
-                # print("edges time: ",edge_time)
-                # print("")
+                for k in range(len(machines_qeue)): machines_qeue[k] = clock
+                print("Product: ", product, "arrives at: ", clock)
+                lead = update_time(product)
+                leadtime.append(lead - rng_list[3][i])
+                print("LEAD TIME: ", leadtime)
+                print("Edges: ", edge_time)
+                print("")
+                i += 1
             if i == 5:
                 break
 
         print(network_time)
-        rng_list = [0, 0, 0, 0]    # FIX THIS
-        product = 1 
+
 
         def get_lead_time(end_nodes, product, rng_list):
             print("")

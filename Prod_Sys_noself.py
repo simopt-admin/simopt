@@ -230,13 +230,25 @@ print(machines_qeue)
 # machines_qeue = [[],[]]
 # print(machines_qeue)
 
-optimal_time = [3.1,4.2]
-for i in machines:
-    print(machines_qeue[i-1], i-1)
-    print(optimal_time[i-1])
-    machines_qeue[i-1] += optimal_time[i-1]
-    print("Machine Queu:", machines_qeue)
-next_inqeue = min(machines_qeue)
-ind = machines_qeue.index(next_inqeue)
+# optimal_time = [3.1,4.2]
+# for i in machines:
+#     print(machines_qeue[i-1], i-1)
+#     print(optimal_time[i-1])
+#     machines_qeue[i-1] += optimal_time[i-1]
+#     print("Machine Queu:", machines_qeue)
+# next_inqeue = min(machines_qeue)
+# ind = machines_qeue.index(next_inqeue)
 
-print(ind)
+# print(ind)
+
+seq = [[0, 3], [1, 4]]
+optimal_edges = []
+machines_qeue = [33.233644869332984, 36.448758534336314]
+edges = []
+for i in range(len(seq)):
+    time = []
+    for j in seq[i]:
+        time.append(self.factors["processing_time_mean"][j])
+    if sum(time) < min_time:
+        min_time = sum(time)
+        optimal_edges = seq[i]
