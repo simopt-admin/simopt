@@ -3,6 +3,7 @@ Summary
 -------
 Simulate expected revenue for a hotel.
 """
+from platform import machine
 import numpy as np
 
 from base import Model, Problem
@@ -291,27 +292,24 @@ class ProdSys(Model):
         def get_sequence_time(edges):
             total_time = 0
             order_time = []
+            time = 0
             for i in edges:
-                time = random.normalvariate(self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i])
-                print("random time ", time)
-                order_time.append(time + edge_time[i])
-                sum_order_time = sum(order_time)
-            print(order_time, sum_order_time)
+                time += random.normalvariate(self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i])
+#                print("Random Time: ", time, "with average: ", self.factors["processing_time_mean"][i], "and std: ", self.factors["processing_time_StDev"][i])
+                order_time.append(time)
+                #sum_order_time = sum(order_time)
             return(edges, order_time)
         
         def get_min_time(seq):
             min_time = self.factors["time_horizon"]
             optimal_edges = []
-            print("seq", seq)
             for i in range(len(seq)):
                 time = []
                 for j in seq[i]:
-                    print("j", j, self.factors["processing_time_mean"][j])
                     time.append(self.factors["processing_time_mean"][j])
                 if sum(time) < min_time:
                     min_time = sum(time)
                     optimal_edges = seq[i]
-            print("optimal edgessss: ", optimal_edges)
             return optimal_edges
         
         def update_time(prod):
@@ -332,10 +330,12 @@ class ProdSys(Model):
                     if self.factors["machine_layout"][j] == machines[i]:
                         edge_time[j] =  optimal_time[i]
             print("machines ", machines)
+            for i in machines: machines_qeue[i-1] += optimal_time[i-1]
+            print("Machine Queu:", machines_qeue)
             network_time.append(sum(optimal_time))
-
+            return(optimal_time)
+        
         # MAIN CODE
-
         # LIST RANDOM NUMBERS GENERATED
         for j in range(self.factors["num_machines"]):                   # Generate/attach random machine processing times for # of machines
             list_initiator = []                          
@@ -365,6 +365,10 @@ class ProdSys(Model):
                 break
         rng_list[-2] = product_orders_rng
         rng_list[-1] = arrival_times_rng
+        
+        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464, 
+372.01710375272273, 401.3857848259946, 434.2295472258132, 466.42519331866515, 486.70798518555915, 516.3478106441862, 544.4080471479766, 562.9793019943288, 587.4876637499182]]
+        print("")
         print(rng_list)
         print("")
         # CREATING END NODE LIST
@@ -372,47 +376,41 @@ class ProdSys(Model):
         end_nodes = []
         for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
         end_nodes.reverse()
+        
         network_time = []
-        edge_time = np.zeros(len(self.factors["machine_layout"]))
-        
-
-        for i in range(3):
-            product = rng_list[2][i]
-            print("Product: ", product)
-
-            update_time(product)
-
-            print("")
-            print("edges time: ",edge_time)
-            print("")
-        
+        edge_time = [0] *len(self.factors["machine_layout"])
+        machines_qeue = [0] *(self.factors["num_machines"])
+        # for i in range(self.factors["num_machines"]): machines_qeue.append([])
+        # machines_qeue = [[]] * 2
         leadtime = []
         clock = rng_list[3][0]
+        for i in range(len(machines_qeue)): machines_qeue[i] = clock
         i = 0
-        tot_time = 0
         product = rng_list[2][0]
         print("Product: ", product)
-        update_time(product)
+        lead = update_time(product)
+        leadtime.append(lead)
         print("")
         print("edges time: ",edge_time)
 
         while len(leadtime) <= len(rng_list[2]):
             i += 1
             print("Clock: ", clock)
-            print(max(edge_time))
-            print(rng_list[3][i])
-            
-            if max(edge_time) > rng_list[3][i]:
-                clock = max(edge_time)
-                print("here")
+            next_inqeue = min(machines_qeue)
+            print("machine qeue: ", machines_qeue)
+            ind = machines_qeue.index(next_inqeue)
+            print(next_inqeue)
+            if next_inqeue < rng_list[3][i] or next_inqeue != float("inf"):
+                clock = next_inqeue
+                machines_qeue[ind]= float("inf")
             else:
                 clock = rng_list[3][i]
                 product = rng_list[2][i]
-                print("Product: ", product)
-                update_time(product)
-                print("")
-                print("edges time: ",edge_time)
-                print("")
+                # print("Product: ", product)
+                # update_time(product)
+                # print("")
+                # print("edges time: ",edge_time)
+                # print("")
             if i == 5:
                 break
 
@@ -447,7 +445,7 @@ class ProdSys(Model):
         ##################################################
         ##################################################
         # For every order in rng_list[2]
-        for elem in rng_list[2]:
+        #for elem in rng_list[2]:
             # Get end node 
             # Find possible path(s)
             # Identify inventory node-location
@@ -466,4 +464,4 @@ class ProdSys(Model):
             # Find Servie Level
             # Count # orders/demand met
 
-        num_orders = len(rng_list)
+        #num_orders = len(rng_list)
