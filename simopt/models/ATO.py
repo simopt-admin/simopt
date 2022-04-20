@@ -119,14 +119,13 @@ class ATO(Model):
         self.check_factor_list = {
             "num_products": self.check_num_products,
             "lambda": self.check_lambda,
-            "num_rooms": self.check_num_items,
-            "discount_rate": self.check_item_cost,
-            "rack_rate": self.check_item_cost,
-            "product_incidence": self.check_item_cap,
-            "time_limit": self.check_process_time,
-            "time_before": self.check_product_req,
-            "runlength": self.warm_up_time,
-            "booking_limits": self.run_time
+            "num_items": self.check_num_items,
+            "item_cost": self.check_item_cost,
+            "item_cap": self.check_item_cap,
+            "process_time": self.check_process_time,
+            "product_req": self.check_product_req,
+            "warm_up_time": self.warm_up_time,
+            "run_time": self.run_time
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -144,19 +143,24 @@ class ATO(Model):
         return self.factors["num_items"] > 0
 
     def check_item_cost(self):
-        return self.factors["item_cost"] > 0
+        for i in self.factors["item_cost"]:
+            for j in self.factors["item_cost"][i]:
+                if j <= 0:
+                    return False
+        return len(self.factors["item_cost"]) == self.factors["num_items"]
 
     def check_item_cap(self):
-        return self.factors["item_cap"] > 0
+        for i in self.factors["item_cap"]:
+            if i <= 0:
+                return False
+        return len(self.factors["item_cap"]) == self.factors["num_items"]
 
     def check_process_time(self):
-        return self.factors["process_time"] > 0
-        # m, n = self.factors["product_incidence"].shape
-        # for i in range(m):
-        #     for j in range(n):
-        #         if self.factors["product_incidence"][i, j] <= 0:
-        #             return False
-        # return m * n == self.factors["num_products"]
+        for i in self.factors["process_time"]:
+            for j in self.factors["process_time"][i]:
+                if j <= 0:
+                    return False
+        return len(self.factors["process_time"]) == self.factors["num_items"]
 
     def check_product_req(self):
         for i in self.factors["product_req"]:
@@ -165,22 +169,12 @@ class ATO(Model):
         if len(self.factors["product_req"]) != self.factors["num_products"]:
             return False
         return len(self.factors["product_req"] == self.factors["num_products"])
-        # for i in self.factors["time_limit"]:
-        #     if i <= 0:
-        #         return False
-        # return len(self.factors["time_limit"]) == self.factors["num_products"]
 
     def check_warm_up_time(self):
         return self.factors["warm_up_time"] > 0
 
     def check_run_time(self):
         return self.factors["run_time"] > 0
-
-    def check_booking_limits(self):
-        for i in list(self.factors["booking_limits"]):
-            if i <= 0 or i > self.factors["num_rooms"]:
-                return False
-        return len(self.factors["booking_limits"]) == self.factors["num_products"]
 
     def replicate(self, rng_list):
         """
@@ -199,12 +193,57 @@ class ATO(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        
         # Designate separate random number generators.
         arr_rng = rng_list[0]
 
         total_revenue = 0
-        b = list(self.factors["booking_limits"])
-        A = np.array(self.factors["product_incidence"])
+        total_holding = 0
+        item_invent = self.factors["item_cap"]
+
+        # Generate orders/product type arrivals (IS EACH ORDER OF ONLY ONE TYPE OF PRODUCT?)
+
+        # Find items needed for product 
+        def product_items(product):
+            needed_items = list(product_req(product-1))
+            return needed_items
+
+        # Verify order 
+        def verified_items(needed_items, item_invent):
+            stock_items = []
+            # Check key items are in stock
+                # If order can be completed
+                # Return list of available items 
+            for i in range(6):
+                if needed_items[i] == 1:
+                    if item_invent[i] >= needed_items[i]:
+                        stock_items.append(1)
+                    else:
+                        return False
+                else:
+                    stock_items.append(0)
+            for i in range(6, self.factors["num_items"], 1):
+                if needed_items[i] == 1:
+                    if invent_items[i] >= needed_items[i]:
+                        stock_items.append(1)
+                    else:
+                        stock_items.append(0)
+                else:
+                    stock_items.append(0)
+            
+            return stock_items
+
+
+        # Assemble with key items & available non-key items
+            # Update list of quantity of items (type) sold
+            # Update inventory 
+            # Update holding cost 
+            # Update profit
+
+        # Replenish item 
+            # Generate production time for every item in list of available items for replenishment
+            # Update time lapse/clock
+
         # Vector of next arrival time per product.
         # (Starts at time = -1*time_before, e.g., t = -168.)
         arrival = np.zeros(self.factors["num_products"]) - self.factors["time_before"]
