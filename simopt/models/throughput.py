@@ -5,6 +5,7 @@ Simulate throughput maximizaion.
 A detailed description of the problem can be found `here `
 
 """
+from pickle import TRUE
 from re import T
 import numpy as np
 import math
@@ -564,6 +565,8 @@ class throughputMaximize(Problem):
         ---------
         x : tuple
             vector of decision variables
+        rate_list_feasible : boolean
+        
 
         Returns
         -------
@@ -575,10 +578,13 @@ class throughputMaximize(Problem):
         buffer_feasible = super().check_deterministic_constraints(x)
         servicetime_feasible = super().check_deterministic_constraints(x)
         
-        np.sum(self.factors["rate list"]) < self.factors["Rate"]
-        np.sum(self.factors["buffer list"]) < self.factors["Buffer"]
+        if np.sum(self.factors["rate list"]) < self.factors["Rate"]:
+            rate_list_feasible = TRUE
+            
+        if np.sum(self.factors["buffer list"]) < self.factors["Buffer"]:
+            buffer_list_feasible = TRUE
         
-        return buffer_feasible, servicetime_feasible
+        return rate_list_feasible, buffer_list_feasible
 
     def get_random_solution(self, rand_sol_rng):
         """
