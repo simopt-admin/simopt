@@ -71,7 +71,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [200, 0, 0, 0, 0, 0]
+                "default": [200, 100, 0, 0, 0, 0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges sequences for each product type",
@@ -271,8 +271,11 @@ class ProdSys(Model):
                     if self.factors["routing_layout"][i][0] == nodes[j] and self.factors["routing_layout"][i][1] == nodes[j+1]:
                         edges.append(i)
             return(edges)
-        
-        def get_sequence(product):
+        # def move_forward(product, invent_seq):
+        #     if len(invent_seq) == 1:
+
+
+        def get_sequence(product, invent_seq):
             end = end_nodes[product-1]
             possible_seq = []
             nodes = previous_node(num_nodes, end, possible_seq)
@@ -281,12 +284,14 @@ class ProdSys(Model):
             if len(nodes)>1+self.factors["num_products"]:
                 seq = np.arange(len(nodes)/(self.factors["num_products"]-1))
                 nodes = [[1, 2, 5], [1, 3, 5]]
+            
             if type(nodes[0]) == list:
                 edges = []
                 for i in range(len(nodes)):
                     edges.append(edge_route(nodes[i]))
             else:
                 edges = edge_route(nodes)
+            
             return edges
 
         def get_sequence_time(edges):
@@ -305,8 +310,7 @@ class ProdSys(Model):
             print(machines_qeue)
             min_time = self.factors["time_horizon"]
             optimal_edges = []
-            if t == len(machines_qeue): 
-                print("HERE")
+            if t == len(machines_qeue)-1: 
                 for i in range(len(seq)):
                     time = []
                     for j in seq[i]:
@@ -327,12 +331,13 @@ class ProdSys(Model):
         
         def update_time(prod):
             invent, invent_seq = check_node(node_product, end_nodes, prod)
-            seq = get_sequence(prod)
+            seq = get_sequence(prod, invent_seq)
+            print(invent, invent_seq)
             check = 0
             if type(seq[0]) == list:
-                for j in machines_qeue: 
-                    if j == float('inf') : check += 1
-                print(check)
+                for j in range(len(machines_qeue)-1): 
+                    if machines_qeue[j] == machines_qeue[j+1] : check += 1
+                print("CHECK",check)
                 optimal_edges = get_min_time(seq,check)
                 optimal_edges, optimal_time = get_sequence_time(optimal_edges)
             else: optimal_edges, optimal_time = get_sequence_time(seq)
@@ -346,7 +351,10 @@ class ProdSys(Model):
                     if self.factors["machine_layout"][j] == machines[i]: edge_time[j] =  optimal_time[i]
             
             print("machines ", machines)
-            for i in machines: machines_qeue[i-1] += optimal_time[i-1]
+            j = 0
+            for i in machines: 
+                machines_qeue[i-1]+= optimal_time[j]
+                j += 1
             
             print("Machine Qeue:", machines_qeue)
             network_time.append(sum(optimal_time))
