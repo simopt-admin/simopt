@@ -1,0 +1,11 @@
+""" 
+Summary
+
+Simultaneous perturbation stochastic approximation (SPSA) is an algorithmic method for optimizing systems with multiple unknown parameters.
+
+"""
+
+from base import Solver
+
+class SPSA(solver):
+    

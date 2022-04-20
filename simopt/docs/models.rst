@@ -4,6 +4,14 @@ models package
 Submodules
 ----------
 
+models.Voting module
+--------------------
+
+.. automodule:: models.Voting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.chessmm module
 ---------------------
 

@@ -42,80 +42,70 @@
 <h1>Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)<a class="headerlink" href="#model-multi-stage-revenue-management-with-inter-temporal-dependence-rmitd" title="Permalink to this headline">¶</a></h1>
 <section id="description">
 <h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
-<p>A businessman chooses to buy <span class="math notranslate nohighlight">\(b &gt; 0\)</span> units of capacity, paying <span class="math notranslate nohighlight">\(c &gt; 0\)</span> dollars per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span>.
-During stage <span class="math notranslate nohighlight">\(t (t = 1, . . . , T)\)</span> he observes demand <span class="math notranslate nohighlight">\(D_t\)</span> for units at price <span class="math notranslate nohighlight">\(p_t\)</span>, at which point, he must choose to
-sell <span class="math notranslate nohighlight">\(x_t\)</span> units <span class="math notranslate nohighlight">\((0 ≤ x_t ≤ D_t)\)</span>, provided that the total number of units sold (accross all past periods) does not
-exceed <span class="math notranslate nohighlight">\(b\)</span>.</p>
 <p>To better understand the initial capacity and selling decisions, consider the following: There is a large
 initial capacity <span class="math notranslate nohighlight">\(b\)</span> (units purchased). In period 1 the businessman receives a certain demand for units at low
-price <span class="math notranslate nohighlight">\(p_{low}\)</span>. The decision at period 1 is, esentially, choosing a number of units to be sold right now in order to
+price <span class="math notranslate nohighlight">\(p_{low}\)</span>. The decision at period 1 is, essentially, choosing a number of units to be sold right now in order to
 reserve some units for customers arriving later because they will pay more for the product; The opportunity
 cost for each unit of capacity reserved is now <span class="math notranslate nohighlight">\(p_{low}\)</span>. Thus, in order to make a wise decision at period 1, the
 businessman must consider later demand.</p>
 <p>Assume that <span class="math notranslate nohighlight">\(D_t = μ_tXY_t\)</span> where <span class="math notranslate nohighlight">\(X\)</span> has a gamma distribution with parameters <span class="math notranslate nohighlight">\(k &gt; 0\)</span> and <span class="math notranslate nohighlight">\(θ &gt; 0\)</span> such that
 it has mean <span class="math notranslate nohighlight">\(kθ = 1\)</span> and standard deviation <span class="math notranslate nohighlight">\({\sqrt{k}}θ = 1/ {\sqrt{k}}. Y_1, . . . , Y_T\)</span> are i.i.d. exponential with mean 1 and
 <span class="math notranslate nohighlight">\(μ_t\)</span> are positive constants (<span class="math notranslate nohighlight">\(\forall\:t\)</span>).</p>
-<p>Our goal is to calculate how many units should purchased (<span class="math notranslate nohighlight">\(b\)</span>) and how many units should be reserved for
-future periods in order to maximize total revenue. In other words, we want to find b and <span class="math notranslate nohighlight">\(r_t, t = 2, . . . , T\)</span> so
-that, if the number of units sold in all periods before <span class="math notranslate nohighlight">\(t\)</span> is less than <span class="math notranslate nohighlight">\(b − r_t\)</span> (<span class="math notranslate nohighlight">\(r_t\)</span> units are reserved for periods
-<span class="math notranslate nohighlight">\(t, t + 1, . . . , T\)</span>), revenue is maximized.</p>
 </section>
 <section id="model-factors">
 <h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>Time Horizon(T): Period of time that is considered</p>
+<li><p>Time Horizon (T): Period of time that is considered</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: 3</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Prices: Prices for each Period</p>
+<li><p>Prices: Prices for each period</p>
+<blockquote>
+<div><p>Default: &lt;100, 300, 400&gt;</p>
+</div></blockquote>
+</li>
+<li><p>Demand Mean (μ): Mean demand for each period</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: Reference Table 1</p></li>
+<li><p>Default: &lt;50, 20, 30&gt;</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Demand Mean(μ): Mean demand for each period</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: Reference Table 1</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>Cost(c): Cost per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span></p>
+<li><p>Cost (c): Cost per unit of capacity at <span class="math notranslate nohighlight">\(t = 0\)</span></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: 80</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Gamma Shape(k): Shape parameter of gamma distribution</p>
+<li><p>Gamma Shape (k): Shape parameter of gamma distribution</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: <span class="math notranslate nohighlight">\(1\)</span></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Gamma Scale(θ): Scale parameter of gamma distribution</p>
+<li><p>Gamma Scale (θ): Scale parameter of gamma distribution</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: <span class="math notranslate nohighlight">\(1\)</span></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Initial Inventory(b): Initial Inventory</p>
+<li><p>Initial Inventory (b): Initial inventory</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Default: 100</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Reservation Quantity(r): Inventory to reserve going into periods <span class="math notranslate nohighlight">\(2, 3, ..., T\)</span>.</p>
+<li><p>Reservation Quantity (r): Inventory to reserve going into periods <span class="math notranslate nohighlight">\(2, 3, ..., T\)</span>.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: <span class="math notranslate nohighlight">\(r_2\)</span> = 50, <span class="math notranslate nohighlight">\(r_3 = 30\)</span>. If multiple solutions are needed, use <span class="math notranslate nohighlight">\(r_2\)</span> ∼ Uniform(40,60) and <span class="math notranslate nohighlight">\(r_3\)</span> ∼ Uniform(20,40).</p></li>
+<li><p>Default: <span class="math notranslate nohighlight">\(r_2\)</span> = 50, <span class="math notranslate nohighlight">\(r_3 = 30\)</span>.</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -126,38 +116,50 @@ that, if the number of units sold in all periods before <span class="math notran
 <ul class="simple">
 <li><p>Revenue: Total revenue of given model</p></li>
 </ul>
+</section>
+</section>
+<section id="references">
+<h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
 <p>This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
-at Stanford University. &lt;article name with full citation + hyperlink to journal/arxiv page&gt;</p>
+at Stanford University. (<a class="reference external" href="https://ee.stanford.edu/~harris/">https://ee.stanford.edu/~harris/</a>)</p>
 </section>
-</section>
-<section id="optimization-problem-problem-name-problem-abbrev">
-<h1>Optimization Problem: &lt;problem_name&gt; (&lt;problem_abbrev&gt;)<a class="headerlink" href="#optimization-problem-problem-name-problem-abbrev" title="Permalink to this headline">¶</a></h1>
+<section id="optimization-problem-maimize-total-revenue-mtr">
+<h1>Optimization Problem: &lt;Maimize Total Revenue&gt; (MTR)<a class="headerlink" href="#optimization-problem-maimize-total-revenue-mtr" title="Permalink to this headline">¶</a></h1>
 <section id="decision-variables">
 <h2>Decision Variables:<a class="headerlink" href="#decision-variables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>&lt;dv1name that matches model factor name&gt;</p></li>
-<li><p>&lt;dv2name that matches model factor name&gt;</p></li>
+<li><p>Initial Inventory (b)</p></li>
+<li><p>Reservation Quantity (<span class="math notranslate nohighlight">\(r_t\)</span>)</p></li>
 </ul>
 </section>
 <section id="objectives">
 <h2>Objectives:<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
-<p>&lt;Description using response names. Use math if it is helpful.&gt;</p>
+<p>Our goal is to calculate how many units should purchased (<span class="math notranslate nohighlight">\(b\)</span>) and how many units should be reserved for
+future periods in order to maximize total revenue. In other words, we want to find b and <span class="math notranslate nohighlight">\(r_t, t = 2, . . . , T\)</span> so
+that, if the number of units sold in all periods before <span class="math notranslate nohighlight">\(t\)</span> is less than <span class="math notranslate nohighlight">\(b − r_t\)</span> (<span class="math notranslate nohighlight">\(r_t\)</span> units are reserved for periods
+<span class="math notranslate nohighlight">\(t, t + 1, . . . , T\)</span>), revenue is maximized.</p>
 </section>
 <section id="constraints">
 <h2>Constraints:<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
-<p>&lt;Description using response names. Use math if it is helpful.&gt;</p>
+<ul class="simple">
+<li><p>Gamma Shape (k) &gt; 0</p></li>
+<li><p>Gamma Scale (θ) &gt; 0</p></li>
+<li><p>Initial Inventory (b) &gt; 0</p></li>
+<li><p>Cost (c) &gt; 0</p></li>
+<li><p><span class="math notranslate nohighlight">\(0 ≤ x_t ≤ D_t\)</span></p></li>
+</ul>
 </section>
 <section id="problem-factors">
 <h2>Problem Factors:<a class="headerlink" href="#problem-factors" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>&lt;factor1name&gt;: &lt;short description&gt;</p>
+<li><p>Initial Solution: Initial solution from which solvers start.</p>
 <ul>
-<li><p>Default: &lt;default value&gt;</p></li>
+<li><p>Default: (100, 50, 30)</p></li>
 </ul>
 </li>
-<li><p>&lt;factor2name&gt;: &lt;short description&gt;</p>
+<li><p>Budget: Max # of replications for a solver to take.</p>
 <ul>
-<li><p>Default: &lt;default value&gt;</p></li>
+<li><p>Default: 10000</p></li>
 </ul>
 </li>
 </ul>
@@ -165,33 +167,29 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
 <section id="fixed-model-factors">
 <h2>Fixed Model Factors:<a class="headerlink" href="#fixed-model-factors" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>&lt;factor1name&gt;: &lt;fixed value&gt;</p></li>
-<li><p>&lt;factor2name&gt;: &lt;fixed value&gt;</p></li>
+<li><p>N/a</p></li>
 </ul>
 </section>
 <section id="starting-solution">
 <h2>Starting Solution:<a class="headerlink" href="#starting-solution" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>&lt;dv1name&gt;: &lt;dv1initialvalue&gt;</p></li>
-<li><p>&lt;dv2name&gt;: &lt;dv2initialvalue&gt;</p></li>
+<li><p><span class="math notranslate nohighlight">\(b = 100\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(r_2 = 50\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(r_3 = 30\)</span></p></li>
 </ul>
 </section>
 <section id="random-solutions">
 <h2>Random Solutions:<a class="headerlink" href="#random-solutions" title="Permalink to this headline">¶</a></h2>
-<p>&lt;description of how to generate random solutions&gt;</p>
+<p>If multiple solutions are needed for Reservation Quantity (r), use <span class="math notranslate nohighlight">\(r_2\)</span> ∼ Uniform(40,60) and <span class="math notranslate nohighlight">\(r_3\)</span> ∼ Uniform(20,40).</p>
 </section>
 <section id="optimal-solution">
 <h2>Optimal Solution:<a class="headerlink" href="#optimal-solution" title="Permalink to this headline">¶</a></h2>
-<p>&lt;if known, otherwise unknown&gt;</p>
+<p>Unknown</p>
 </section>
 <section id="optimal-objective-function-value">
 <h2>Optimal Objective Function Value:<a class="headerlink" href="#optimal-objective-function-value" title="Permalink to this headline">¶</a></h2>
-<p>&lt;if known, otherwise unknown&gt;</p>
+<p>Unknown</p>
 </section>
-</section>
-<section id="id1">
-<h1>Optimization Problem: &lt;problem_name&gt; (&lt;problem_abbrev&gt;)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>…</p>
 </section>
 
 
@@ -210,7 +208,8 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
 <li><a class="reference internal" href="#respones">Respones:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#optimization-problem-problem-name-problem-abbrev">Optimization Problem: &lt;problem_name&gt; (&lt;problem_abbrev&gt;)</a><ul>
+<li><a class="reference internal" href="#references">References:</a></li>
+<li><a class="reference internal" href="#optimization-problem-maimize-total-revenue-mtr">Optimization Problem: &lt;Maimize Total Revenue&gt; (MTR)</a><ul>
 <li><a class="reference internal" href="#decision-variables">Decision Variables:</a></li>
 <li><a class="reference internal" href="#objectives">Objectives:</a></li>
 <li><a class="reference internal" href="#constraints">Constraints:</a></li>
@@ -222,7 +221,6 @@ at Stanford University. &lt;article name with full citation + hyperlink to journ
 <li><a class="reference internal" href="#optimal-objective-function-value">Optimal Objective Function Value:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id1">Optimization Problem: &lt;problem_name&gt; (&lt;problem_abbrev&gt;)</a></li>
 </ul>
 
   </div>
