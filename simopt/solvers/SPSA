@@ -8,4 +8,133 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithmic meth
 from base import Solver
 
 class SPSA(solver):
-    
+    """
+    Simultaneous perturbation stochastic approximation (SPSA) is an algorithmic method for optimizing systems with multiple unknown parameters.
+    ----------
+    name : string
+        name of solver
+    objective_type : string
+        description of objective types:
+            "single" or "multi"
+    constraint_type : string
+        description of constraints types:
+            "unconstrained", "box", "deterministic", "stochastic"
+    variable_type : string
+        description of variable types:
+            "discrete", "continuous", "mixed"
+    gradient_needed : bool
+        indicates if gradient of objective function is needed
+    factors : dict
+        changeable factors (i.e., parameters) of the solver
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+    rng_list : list of rng.MRG32k3a objects
+        list of RNGs used for the solver's internal purposes
+    Arguments
+    ---------
+    name : str
+        user-specified name for solver
+    fixed_factors : dict
+        fixed_factors of the solver
+    See also
+    --------
+    base.Solver
+    """
+    def __init__(self, name="SPSA", fixed_factors={}):
+            self.name = name
+            self.objective_type = "single"                  ### Need to update these
+            self.constraint_type = "stochastic"
+            self.variable_type = "mixed"
+            self.gradient_needed = False
+            self.specifications = {
+                "sensititvity": {
+                    "description": "shrinking scale for VarBds",
+                    "datatype": float,
+                    "default": 10^(-7)
+                },
+                "alpha": {
+                    "description": "Non negative coefficient",
+                    "datatype": float,
+                    "default": 0.602
+                },
+                "gamma": {
+                    "description": "Non negative coefficient",
+                    "datatype": float,
+                    "default": 0.101
+                },
+                "step": {
+                    "description": "The initial desired magnitude of change in the theta elements",
+                    "datatype": float,
+                    "default": 0.1
+                },
+                "gavg": {
+                    "description": "How many averaged SP gradients will be used per iteration?",
+                    "datatype": float,
+                    "default": 1
+                },
+                "r": {
+                    "description": "Number of replications takes at each solution",
+                    "datatype": int,
+                    "default": 30
+                },
+                "NL": {
+                    "description": "How many loss function evaluations do you want to use in this gain calculation?",
+                    "datatype": int,
+                    "default": 2
+                }
+            }
+            self.check_factor_list = {
+                "sensititvity": self.check_sensititvity,
+                "alpha": self.check_alpha,
+                "gamma": self.check_gamma,
+                "step": self.check_step,
+                "gavg": self.check_gavg,
+                "r": self.check_r,
+                "NL": self.check_NL
+            }
+            super().__init__(fixed_factors)
+
+    def check_sensititvity(self):
+        return self.factors["sensititvity"] > 0
+
+    def check_alpha(self):
+        return self.factors["alpha"] > 0
+
+    def gamma(self):
+        return self.factors["check_gamma"] > 0
+
+    def step(self):
+        return self.factors["check_step"] > 0
+
+    def check_gavg(self):
+        return self.factors["gavg"] > 0
+
+    def check_r(self):
+        return self.factors["r"] > 0
+
+    def check_NL(self):
+        return self.factors["NL"] > 0
+
+    def solve(self, problem):
+        """
+        Run a single macroreplication of a solver on a problem.
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        
+>>      Should I have anything else in this section?
+
+        Returns
+        -------
+        recommended_solns : list of Solution objects
+            list of solutions recommended throughout the budget
+        intermediate_budgets : list of ints
+            list of intermediate budgets when recommended solutions changes
+        """
+        recommended_solns = []
+        intermediate_budgets = []
+        expended_budget = 0
+        # Designate random number generator for random sampling.
+        find_next_soln_rng = self.rng_list[1]
+        # Sequentially generate random solutions and simulate them.
