@@ -217,97 +217,100 @@ class ProdSys(Model):
         """
         import random
         
-        def previous_node(num_nodes, node, possible_node):    # Returns list of predecesors
-            for i in range(num_nodes):       
-                if node == self.factors["routing_layout"][i][1]:
-                    pre_node = self.factors["routing_layout"][i][0]
-                    possible_node.append(pre_node)
-            if ((len(possible_node)>0) and (not(1 in possible_node))):
-                for element in possible_node:
-                    if pre_node == 1:
-                        break
-                    previous_node(num_nodes, element, possible_node)                   
-            return(possible_node)
-           
-        def check_node(node_product, end_nodes, product):                                               # Return inventory and corresponding node  
-            node = end_nodes[product-1]                                                                 # Product's end node from list                                                
-            inventory = node_product[node-1]                                                            # Inventory at node from replicated list of intermediate product
-            if inventory != 0:                                                                          # Updates inventory at end-node
-                possible_node = node
+        def previous_node(node, possible_node, check):    # Returns pre node
+            pre_node = 0
+            i = False
+            j = self.factors["num_edges"]
+            t = 0
+            if check == 0:
+                while i == False:
+                    if node == self.factors["routing_layout"][j-1][1]:
+                        pre_node = self.factors["routing_layout"][j-1][0]
+                        i = True
+                    j -= 1  
             else:
-                possible_node = []
-                previous_node(num_nodes, node, possible_node)
-                length= len(possible_node)
-                for i in reversed(range(length)):
-                    inventory = node_product[possible_node[i-1]-1]
-                    if inventory == 0:
-                        possible_node.remove(possible_node[i-1])
-            return inventory, possible_node
-        '''
-        def get_sequence(product):           # Returns possible routing sequences with inventory
-            end = end_nodes[product-1]
-            possible_seq = []
-            nodes = previous_node(num_nodes, end, possible_seq)
-            nodes.reverse()
-            nodes.append(end)                                               # List of predecesors
-            in_route = check_node(node_product, end_nodes, rng_list[2][0])  # List of nodes with inventory
-            invent_route = []                                               # Empty list for predecessors with inventory
-            routes = []                                                 # Empty list for routes of inventory and end node 
-            for i in in_route:
-                for j in nodes:
-                    if i == j:
-                        invent_route.append(j)
-                    invent_route.append(end)
-                routes.append(invent_route)
-            return routes
-            print("Routing sequence for product ", product, ": ", nodes)
-            if len(nodes)>num_products:
-                seq = np.arange(len(nodes)/(num_products-1))
-        '''
+                t = 1
+                while t == check:
+                    if node == self.factors["routing_layout"][j-t][1]:
+                        t += 1
+                        pre_node = self.factors["routing_layout"][j-t][0]
+                    j -= 1  
+            return(pre_node)
+           
+        def check_node(product):                                               # Return inventory and corresponding node    
+            i = False 
+            node = end_nodes[product-1]
+            possible_node = []                                                                 # Product's end node from list                                                
+            k =0                                       # Inventory at node from replicated list of intermediate product
+            if product != 1 and product != self.factors["num_products"]:
+                check = 0
+                for j in range(num_nodes):
+                    if self.factors["routing_layout"][j][1] == node:
+                        check += 1
+                
+                for j in range(check):
+                    node = end_nodes[product-1]                                                                 # Product's end node from list                                                
+                    inventory = node_product[node-1]  
+                    lst_nodes = [node]
+                    while inventory == 0 or i == False:
+                        if previous_node(node,possible_node,0) == 1 and j != 0:
+                            if node_product[node-1] == 0:
+                                lst_nodes.append(1)
+                                break
+                            else:
+                                node_product[node-1] -= 10
+                                break
+                        node = previous_node(node, lst_nodes,j)
+                        inventory = node_product[node-1]
+                        if inventory != 0:
+                            i = True
+                            node_product[node-1] -= 10
+                        lst_nodes.append(node)
+                        if k == 5: break
+                        k+=1
+                    lst_nodes.reverse()
+                    possible_node.append(lst_nodes)
+            else:
+                inventory = node_product[node-1] 
+                possible_node = [node]
+                while inventory == 0 and i == False:
+                    node = previous_node(node, possible_node,0)
+                    inventory = node_product[node-1]
+                    if inventory != 0:
+                        i = True
+                        node_product[node-1] -= 10
+                    possible_node.append(node)
+                possible_node.reverse()
+            print("Inventory: ", node_product)
+            return(possible_node)
+
         def edge_route(nodes):
             edges = []
             for i in range(len(self.factors["routing_layout"])):
-                for j in range(len(nodes)):
+                for j in range(len(nodes)-1):
                     if self.factors["routing_layout"][i][0] == nodes[j] and self.factors["routing_layout"][i][1] == nodes[j+1]:
                         edges.append(i)
             return(edges)
-        # def move_forward(product, invent_seq):
-        #     if len(invent_seq) == 1:
 
-
-        def get_sequence(product, invent_seq):
-            end = end_nodes[product-1]
-            possible_seq = []
-            nodes = previous_node(num_nodes, end, possible_seq)
-            nodes.reverse()
-            nodes.append(end)
-            if len(nodes)>1+self.factors["num_products"]:
-                seq = np.arange(len(nodes)/(self.factors["num_products"]-1))
-                nodes = [[1, 2, 5], [1, 3, 5]]
-            
+        def get_sequence(prod):
+            nodes = check_node(prod)
             if type(nodes[0]) == list:
                 edges = []
                 for i in range(len(nodes)):
                     edges.append(edge_route(nodes[i]))
             else:
                 edges = edge_route(nodes)
-            
             return edges
 
         def get_sequence_time(edges):
-            total_time = 0
             order_time = []
             time = 0
             for i in edges:
                 time += random.normalvariate(self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i])
-#                print("Random Time: ", time, "with average: ", self.factors["processing_time_mean"][i], "and std: ", self.factors["processing_time_StDev"][i])
                 order_time.append(time)
-                #sum_order_time = sum(order_time)
             return(edges, order_time)
         
         def get_min_time(seq,t):
-            print(seq)
-            print(machines_qeue)
             min_time = self.factors["time_horizon"]
             optimal_edges = []
             if t == len(machines_qeue)-1: 
@@ -330,23 +333,20 @@ class ProdSys(Model):
             return optimal_edges
         
         def update_time(prod):
-            invent, invent_seq = check_node(node_product, end_nodes, prod)
-            seq = get_sequence(prod, invent_seq)
-            print(invent, invent_seq)
+            seq = get_sequence(prod)
             check = 0
             
             if type(seq[0]) == list:
                 for j in range(len(machines_qeue)-1): 
                     if machines_qeue[j] == machines_qeue[j+1] : check += 1
-                print("CHECK",check)
                 optimal_edges = get_min_time(seq,check)
                 optimal_edges, optimal_time = get_sequence_time(optimal_edges)
             else: optimal_edges, optimal_time = get_sequence_time(seq)
             
             machines = []
-            print("optimal edges: ", optimal_edges)
+            # print("optimal edges: ", optimal_edges)
             for elem in optimal_edges: machines.append(self.factors["machine_layout"][elem])
-            print("time: ", optimal_time)
+            # print("time: ", optimal_time)
             for i in range(len(machines)):
                 for j in range(len(self.factors["machine_layout"])):
                     if self.factors["machine_layout"][j] == machines[i]: edge_time[j] =  optimal_time[i]
@@ -359,7 +359,7 @@ class ProdSys(Model):
             
             print("Machine Qeue:", machines_qeue)
             network_time.append(sum(optimal_time))
-            return(machines_qeue[-1])
+            return(machines_qeue[machines[-1]-1])
         
         # MAIN CODE
         # LIST RANDOM NUMBERS GENERATED
@@ -402,24 +402,16 @@ class ProdSys(Model):
         end_nodes = []
         for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
         end_nodes.reverse()
-        
+
         network_time = []
         edge_time = [0] *len(self.factors["machine_layout"])
         machines_qeue = [float('inf')] *(self.factors["num_machines"])
-        # for i in range(self.factors["num_machines"]): machines_qeue.append([])
-        # machines_qeue = [[]] * 2
         leadtime = []
         clock = 0
         for i in range(len(machines_qeue)): machines_qeue[i] = float('inf')
         i = 0
-        # product = rng_list[2][0]
-        # print("Product: ", product, "arrives at: ", clock)
-        # lead = update_time(product)
-        # leadtime.append(lead)
-        # print("LEAD TIME: ", leadtime)
-        # print("")
-        #while len(leadtime) <= len(rng_list[2]) or i < 5:
         for j in range(15):
+            print("")
             print("Clock: ", clock)
             next_inqeue = min(machines_qeue)
             print("machine queu: ", machines_qeue)
@@ -436,60 +428,9 @@ class ProdSys(Model):
                 print("Product: ", product, "arrives at: ", clock)
                 lead = update_time(product)
                 leadtime.append(lead - rng_list[3][i])
-                print("LEAD TIME: ", leadtime)
-                print("Edges: ", edge_time)
-                print("")
+                # print("LEAD TIME: ", leadtime)
+                # print("Edges: ", edge_time)
+                # print("")
                 i += 1
             if i == 5:
                 break
-
-        print(network_time)
-
-
-        def get_lead_time(end_nodes, product, rng_list):
-            print("")
-
-
-
-        #def get_proc_time(prod_seq, machine_layout, rng_list):                                      # Finds SINGLE path's total processing time.
-        #    total_time = 0                                                                          
-        #    for elem in prod_seq:                                                                   # For each element/edge in sequence
-        #        total_time += machine_times_rng[(machine_layout[elem-1])-1]                         # Add the respective machine's processing time from rng list
-        #        total_time += sum(time_left[machine_layout[elem-1]]                                 # **********
-        #    return total_time                                                                       # Returns path's total processing time.
-        #            
-        #                                          
-        #                                          
-        #def get_best_path(prod_seq, machine_layout, rng_list)):                                     # Get optimal path from list of MULTIPLE sequences 
-        #    min_time = self.factors["time_horizon"]                                                                 # Set min_time to max time 
-        #    for elem in prod_seq:                                                                   # For every sequence in the list of possible paths                                                                                              
-        #            sum_time = get_proc_time(prod_seq[elem], machine_layout, rng_list)              # Sums up machine processing time for current sequence                       
-        #            if sum_time < min_time:
-        #                min_time = sum_time                                                         # Track minimum processing time possible
-        #                seq = prod_seq[elem]                                                        # Sequence with smallest processing time       
-        #    return min_time, seq                                                                    # return sequence and total process time
-        #                                  
-
-        ##################################################
-        ##################################################
-        # For every order in rng_list[2]
-        #for elem in rng_list[2]:
-            # Get end node 
-            # Find possible path(s)
-            # Identify inventory node-location
-            # Match & return route with inventory
-            ''' 
-            invent_seq = get_sequence(elem)
-            '''
-            # Check fpr multiple sequences 
-            # Compare machine times & return shortest lead time & path
-
-            # Update Network
-                # Inventory @ nodes
-                # Machine jobs
-                # Order time in system
-            
-            # Find Servie Level
-            # Count # orders/demand met
-
-        #num_orders = len(rng_list)
