@@ -188,7 +188,6 @@ class MM1Queue(Model):
         gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
         gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
         gradients["avg_waiting_time"]["lambda"] = grad_mean_waiting_time_lambda
-        print(cust_mat)
         return responses, gradients
 
 
@@ -277,7 +276,7 @@ class MM1MinMeanSojournTime(Problem):
             "warmup": 50,
             "people": 200
         }
-        self.model_decision_variables = {"mu"}
+        self.model_decision_factors = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

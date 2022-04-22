@@ -1,22 +1,20 @@
 """
 Summary
 -------
-Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
+Simulate multiple periods of production and sales for an iron ore inventory problem.
 """
 import numpy as np
-
 import math
-
-import scipy.stats as scs
 
 from base import Model, Problem
 
 
-class DualSourcing(Model):
+class IronOre(Model):
     """
-    An model that simulates multiple periods of ordering and sales for a single-staged, 
-    dual sourcing inventory problem with stochastic demand. Returns average holding cost, 
-    average penalty cost, and average ordering cost per period.
+    A model that simulates multiple periods of production and sales for an
+    inventory problem with stochastic price determined by a mean-reverting
+    random walk. Returns total profit, fraction of days producing iron, and
+    mean stock.
 
     Attributes
     ----------
@@ -33,180 +31,148 @@ class DualSourcing(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Parameters
+    Arguments
     ----------
     fixed_factors : dict
         fixed_factors of the simulation model
-
-        ``n_days``
-            Number of days to simulate (`int`)
-        ``initial_inv``
-            Initial inventory (`int`)
-        ``cost_reg``
-            Regular ordering cost per unit (`flt`)
-        ``cost_exp``
-            Expedited ordering cost per unit (`flt`)
-        ``lead_reg``
-            Lead time for regular orders in days (`int`)
-        ``lead_exp``
-            Lead time for expedited orders in days (`int`)
-        ``holding_cost``
-            Holding cost per unit per period (`flt`)
-        ``penalty_cost``
-            Penalty cost per unit per period for backlogging(`flt`)
-        ``distribution``
-            Demand distribution (`str`)
-        ``st_dev``
-            Standard deviation of demand distribution (`flt`)
-        ``mu``
-            Mean of demand distribution (`flt`)
-        ``order_level_reg``
-            Order-up-to level for regular orders (`int`)
-        ``order_level_exp``
-            Order-up-to level for expedited orders (`int`)
-
 
     See also
     --------
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "DUALSOURCING"
+        self.name = "IRONORE"
         self.n_rngs = 1
         self.n_responses = 3
         self.factors = fixed_factors
         self.specifications = {
-
-            "n_days": {
-                "description": "Number of days to simulate.",
-                "datatype": int,
-                "default": 1000
-            },
-            "initial_inv": {
-                "description": "Initial inventory.",
-                "datatype": int,
-                "default": 40
-            },
-            "cost_reg": {
-                "description": "Regular ordering cost per unit.",
+            "mean_price": {
+                "description": "Mean iron ore price per unit.",
                 "datatype": float,
-                "default": 100.00
+                "default": 100.0
             },
-            "cost_exp": {
-                "description": "Expedited ordering cost per unit.",
+            "max_price": {
+                "description": "Maximum iron ore price per unit.",
                 "datatype": float,
-                "default": 110.00
+                "default": 200.0
             },
-            "lead_reg": {
-                "description": "Lead time for regular orders in days.",
-                "datatype": int,
-                "default": 2
+            "min_price": {
+                "description": "Minimum iron ore price per unit.",
+                "datatype": float,
+                "default": 0.0
             },
-            "lead_exp": {
-                "description": "Lead time for expedited orders in days.",
+            "capacity": {
+                "description": "Maximum holding capacity.",
                 "datatype": int,
-                "default": 0
+                "default": 10000
+            },
+            "st_dev": {
+                "description": "Standard deviation of random walk steps for price.",
+                "datatype": float,
+                "default": 7.5
             },
             "holding_cost": {
                 "description": "Holding cost per unit per period.",
                 "datatype": float,
-                "default": 5.00
+                "default": 1.0
             },
-            "penalty_cost": {
-                "description": "Penalty cost per unit per period for backlogging.",
+            "prod_cost": {
+                "description": "Production cost per unit.",
                 "datatype": float,
-                "default": 495.00
+                "default": 100.0
             },
-            "distribution": {
-                "description": "Demand distribution.",
-                "datatype": str,
-                "default": 'Normal'
-            },
-            "st_dev": {
-                "description": "Standard deviation of demand distribution.",
-                "datatype": float,
-                "default": 10.0
-            },
-            "mu": {
-                "description": "Mean of demand distribution.",
-                "datatype": float,
-                "default": 30.0
-            },
-            "order_level_reg": {
-                "description": "Order-up-to level for regular orders.",
+            "max_prod_perday": {
+                "description": "Maximum units produced per day.",
                 "datatype": int,
-                "default": 80
+                "default": 100
             },
-            "order_level_exp": {
-                "description": "Order-up-to level for expedited orders.",
+            "price_prod": {
+                "description": "Price level to start production.",
+                "datatype": float,
+                "default": 80.0
+            },
+            "inven_stop": {
+                "description": "Inventory level to cease production.",
                 "datatype": int,
-                "default": 50
+                "default": 7000
             },
-            
-
+            "price_stop": {
+                "description": "Price level to stop production.",
+                "datatype": float,
+                "default": 40
+            },
+            "price_sell": {
+                "description": "Price level to sell all stock.",
+                "datatype": float,
+                "default": 100
+            },
+            "n_days": {
+                "description": "Number of days to simulate.",
+                "datatype": int,
+                "default": 365
+            }
         }
 
         self.check_factor_list = {
-            "n_days": self.check_n_days,
-            "initial_inv": self.check_initial_inv,
-            "cost_reg": self.check_cost_reg,
-            "cost_exp": self.check_cost_exp,
-            "lead_reg": self.check_lead_reg,
-            "lead_exp": self.check_lead_exp,
-            "holding_cost": self.check_holding_cost,
-            "penalty_cost": self.check_penalty_cost,
-            "distribution": self.check_distribution,
+            "mean_price": self.check_mean_price,
+            "max_price": self.check_max_price,
+            "min_price": self.check_min_price,
+            "capacity": self.check_capacity,
             "st_dev": self.check_st_dev,
-            "mu": self.check_mu,
-            "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp,
-            
+            "holding_cost": self.check_holding_cost,
+            "prod_cost": self.check_prod_cost,
+            "max_prod_perday": self.check_max_prod_perday,
+            "price_prod": self.check_price_prod,
+            "inven_stop": self.check_inven_stop,
+            "price_stop": self.check_price_stop,
+            "price_sell": self.check_price_sell,
+            "n_days": self.check_n_days,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
-    
-    def check_initial_inv(self):
-        return self.factors["initial_inv"] >= 0
+    def check_mean_price(self):
+        return self.factors["mean_price"] > 0
 
-    def check_cost_reg(self):
-        return self.factors["cost_reg"] > 0
+    def check_max_price(self):
+        return self.factors["max_price"] > 0
 
-    def check_cost_exp(self):
-        return self.factors["cost_exp"] > 0
+    def check_min_price(self):
+        return self.factors["min_price"] >= 0
 
-    def check_lead_reg(self):
-        return self.factors["lead_reg"] >= 0
-    
-    def check_lead_exp(self):
-        return self.factors["lead_exp"] >= 0
+    def check_capacity(self):
+        return self.factors["capacity"] >= 0
+
+    def check_st_dev(self):
+        return self.factors["st_dev"] > 0
 
     def check_holding_cost(self):
         return self.factors["holding_cost"] > 0
 
-    def check_penalty_cost(self):
-        return self.factors["penalty_cost"] > 0
+    def check_prod_cost(self):
+        return self.factors["prod_cost"] > 0
 
-    def check_distribution(self):
-        return self.factors["distribution"] in ('Normal', 'Uniform','Exponential')
-    
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
+    def check_max_prod_perday(self):
+        return self.factors["max_prod_perday"] > 0
 
-    def check_mu(self):
-        return self.factors["mu"] > 0
+    def check_price_prod(self):
+        return self.factors["price_prod"] > 0
 
-    def check_order_level_reg(self):
-        return self.factors["order_level_reg"] >= 0
+    def check_inven_stop(self):
+        return self.factors["inven_stop"] > 0
 
-    def check_order_level_exp(self):
-        return self.factors["order_level_exp"] >= 0
+    def check_price_stop(self):
+        return self.factors["price_stop"] > 0
+
+    def check_price_sell(self):
+        return self.factors["price_sell"] > 0
+
+    def check_n_days(self):
+        return self.factors["n_days"] >= 1
 
     def check_simulatable_factors(self):
-        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_exp"])
+        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
 
     def replicate(self, rng_list):
         """
@@ -221,61 +187,67 @@ class DualSourcing(Model):
         -------
         responses : dict
             performance measures of interest
-
-            ``average_holding_cost``
-                The average holding cost over the time period
-            ``average_penalty_cost``
-                The average penalty cost over the time period
-            ``average_ordering_cost``
-                The average ordering cost over the time period
+            "total_profit" = The total profit over the time period
+            "frac_producing" = The fraction of days spent producing iron ore
+            "mean_stock" = The average stocks over the time period
         """
         # Designate random number generators.
         price_rng = rng_list[0]
-        #vectors of regular orders to be received in periods n through n+lr-1
-        orders_reg = np.zeros(self.factors["lead_reg"])
-        #vectors of expedited orders to be received in periods n through n+le-1
-        orders_exp = np.zeros(self.factors["lead_exp"])
-#        print('orders_exp' + str(orders_exp))
-#        print('orders_reg' + str(orders_reg))
-        #generate demand
-        if self.factors['distribution'] == 'Normal':
-            demand = np.rint(scs.truncnorm.rvs(0, np.inf, loc=self.factors['mu'], scale=self.factors['st_dev'], size=self.factors['n_days'])).astype(int)
-        #track total expenses
-        total_holding_cost = np.zeros(self.factors["n_days"])
-        total_penalty_cost = np.zeros(self.factors["n_days"])
-        total_ordering_cost = np.zeros(self.factors["n_days"])
-        inv = self.factors["initial_inv"]
+        # Initialize quantities to track:
+        #   - Market price in each period (Pt).
+        #   - Starting stock in each period.
+        #   - Ending stock in each period.
+        #   - Profit in each period.
+        #   - Whether producing or not in each period.
+        #   - Production in each period.
+        mkt_price = np.zeros(self.factors["n_days"])
+        mkt_price[0] = self.factors["mean_price"]
+        stock = np.zeros(self.factors["n_days"])
+        profit = np.zeros(self.factors["n_days"])
+        producing = np.zeros(self.factors["n_days"])
+        prod = np.zeros(self.factors["n_days"])
 
-        #Run simulation over time horizon.
-        for day in range(self.factors["n_days"]):
-            #Calculate inventory positions
-            inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
-#            print('inv_position_exp' + str(inv_position_exp))
-            inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
-#            print('inv_position_reg' + str(inv_position_reg))
-            #Place orders if needed
-#            print(max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_exp = np.append(orders_exp, max(0,round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]] ))
- #           print('orders_exp' + str(orders_exp))
- #           print('orders_reg' + str(orders_reg))
-            #Charge ordering cost
-            total_ordering_cost[day] =  self.factors['cost_exp']*orders_exp[self.factors['lead_exp']] + self.factors['cost_reg']*orders_reg[self.factors['lead_reg']]
-            #Orders arrive, update on-hand inventory
-            inv = inv + orders_exp[0] + orders_reg[0]
-            orders_exp = np.delete(orders_exp,0)
-            orders_reg = np.delete(orders_reg,0)
-            #Satisfy or backorder demand
-            dn = max(0,demand[day])
-            inv = inv - dn
-            total_penalty_cost[day] = -1*self.factors['penalty_cost']*min(0,inv)
-            #Charge holding cost
-            total_holding_cost[day] = self.factors['holding_cost']*max(0,inv)
-
+        # Run simulation over time horizon.
+        for day in range(1, self.factors["n_days"]):
+            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ)).
+            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4).
+            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
+            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
+            mean_move = mean_val * mean_dir
+            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
+            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
+            # If production is underway...
+            if producing[day] == 1:
+                # ... cease production if price goes too low or inventory is too high.
+                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
+                    producing[day] = 0
+                else:
+                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
+                    stock[day] = stock[day] + prod[day]
+                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
+            # If production is not currently underway...
+            else:
+                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
+                    producing[day] = 1
+                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
+                    stock[day] = stock[day] + prod[day]
+                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
+            # Sell if price is high enough.
+            if (mkt_price[day] >= self.factors["price_sell"]):
+                profit[day] = profit[day] + stock[day] * mkt_price[day]
+                stock[day] = 0
+            # Charge holding cost.
+            profit[day] = profit[day] - stock[day] * self.factors["holding_cost"]
+            # Calculate starting quantities for next period.
+            if day < self.factors["n_days"] - 1:
+                profit[day + 1] = profit[day]
+                stock[day + 1] = stock[day]
+                mkt_price[day + 1] = mkt_price[day]
+                producing[day + 1] = producing[day]
         # Calculate responses from simulation data.
-        responses = {"average_ordering_cost": np.mean(total_ordering_cost),
-                     "average_penalty_cost": np.mean(total_penalty_cost),
-                     "average_holding_cost": np.mean(total_holding_cost)
+        responses = {"total_profit": profit[self.factors["n_days"] - 1],
+                     "frac_producing": np.mean(producing),
+                     "mean_stock": np.mean(stock)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -284,13 +256,13 @@ class DualSourcing(Model):
 """
 Summary
 -------
-Minimize the expected total cost for dual-sourcing inventory system.
+Maximize the expected total profit for iron ore inventory system.
 """
 
 
-class DualSourcingMinCost(Problem):
+class IronOreMaxRev(Problem):
     """
-    Class to make dual-sourcing inventory simulation-optimization problems.
+    Class to make iron ore inventory simulation-optimization problems.
 
     Attributes
     ----------
@@ -349,27 +321,27 @@ class DualSourcingMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DUALSOURCING-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 2
+        self.dim = 4
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
+        self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
-        self.lower_bounds = (0, 0)
-        self.upper_bounds = (np.inf, np.inf)
+        self.lower_bounds = (0, 0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"order_level_exp", "order_level_reg"}
+        self.model_decision_factors = {"price_prod", "inven_stop", "price_stop", "price_sell"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (50,80)
+                "default": (80, 7000, 40, 100)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -383,7 +355,7 @@ class DualSourcingMinCost(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = DualSourcing(self.model_fixed_factors)
+        self.model = IronOre(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
         """
@@ -400,8 +372,10 @@ class DualSourcingMinCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "order_level_exp": vector[0],
-            "order_level_reg": vector[1]
+            "price_prod": vector[0],
+            "inven_stop": vector[1],
+            "price_stop": vector[2],
+            "price_sell": vector[3],
         }
         return factor_dict
 
@@ -420,7 +394,7 @@ class DualSourcingMinCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["order_level_exp"], factor_dict["order_level_reg"])
+        vector = (factor_dict["price_prod"], factor_dict["inven_stop"], factor_dict["price_stop"], factor_dict["price_sell"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -438,7 +412,7 @@ class DualSourcingMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["average_ordering_cost"] + response_dict["average_penalty_cost"] + response_dict["average_holding_cost"],)
+        objectives = (response_dict["total_profit"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -476,7 +450,7 @@ class DualSourcingMinCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0, 0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -516,7 +490,7 @@ class DualSourcingMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return (x[2] >= x[0] and x[3] >= x[2])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -532,5 +506,5 @@ class DualSourcingMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
+        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
         return x
