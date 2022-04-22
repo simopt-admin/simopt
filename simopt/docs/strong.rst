@@ -87,14 +87,6 @@ Solver Factors:
 
     * Default: 2
 
-Respones:
----------
-* <response1name>: <short description>
-
-* <response2name>: <short description>
-
-* <response3name>: <short description>
-
 
 References:
 ===========
