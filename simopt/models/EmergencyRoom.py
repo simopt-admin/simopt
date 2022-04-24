@@ -435,14 +435,121 @@ class EmergencyRoom(Model):
                 system.append(arrival_amb[counter2])
                 counter2 += 1
             else:
-                print("Error in system list configuration.")
+                print("Error in system list configuration.")  # need to mark er and walk in list
 
-        #generating the wait times for each patient
-        #amb does not go to receptionist, everything else the same 
-        #wait time can not exceed two hours
+        # exam room
+        # need extra tests?
+        # need treatment?
+        # major or minor?
+        test_wt = []
+        t = 0
+        for i in range(system):  # i is each individual 
+                p = self.factors["prob_extra"]  # Prob of needing tests is 50%
+                if lab_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs extra test
+                    t = lab_rng.triangular(self.factors["st_tr_min"], self.factors["st_tr_max"], self.factors["st_tr_mode"])  # Determines wait time for broken machine in minutes
+                else:
+                    t = 0
+                test_wt.append(t)
+        exam_wt = []
+        for i in range(system):  # i is each individual 
+                t = exam_rng.expovariate(self.factors["st_exam"])
+                exam_wt.append(t)
+        reexam_wt = []
+        for i in range(system):  # i is each individual
+                if test_wt[i] > 0:
+                    t = reExam_rng.expovariate(self.factors["st_reexam"])
+                else:
+                    t = 0
+                reexam_wt.append(t)
+        
+        for i in range(system):  # i is each individual 
+                p = self.factors["prob_extra"]  # Prob of needing tests is 50%
+                if lab_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs extra test
+                    t = lab_rng.triangular(self.factors["st_tr_min"], self.factors["st_tr_max"], self.factors["st_tr_mode"])  # Determines time for lab test
+                else:
+                    t = 0
+                test_wt.append(t)
 
-        # Compose responses and gradients.
-        responses = {'stockout_flag': stockout_flag,
+        treatment = []  # what do i use here? for choices same with the next major minor
+        for i in range(system):  # i is each individual 
+                p = self.factors["prob_treatmentneeded"]  # Prob of needing treatment, 80%
+                if er_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
+                    t = 1  # Treatment needed
+                else:
+                    t = 0  # No treatment needed
+                treatment.append(t)
+
+        major_minor = []
+        for i in range(system):  # i is each individual 
+                p = self.factors["prob_majorinjury"]  # Prob of needing treatment, 80%
+                if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if major injury
+                    t =  er_rng.expovariate(self.factors["st_er"]) # Major injury
+                else:
+                    t = treatment_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])  # Minor injury
+                major_minor.append(t)
+        # go to exam room with x doctors (first queue), if extra tests go to extra tests with x technicians (second queue)
+        # reexam process if they got extra tests (cant do it again)
+        # emergency room or treatment room and nurse depending on which one... third queue
+        # if someone goes out of exam queue they either go to extra tests or next queue if queue empty they go if not go into 
+
+        system_waittime = []
+        doctors = []
+        lab_techs = []
+        er_nurse = []
+        treat_nurse = []
+
+        for i in range(self.factors["employee_allocations"][1]):
+            doctors.append(math.inf)
+        for i in range(self.factors["employee_allocations"][2]):
+            lab_techs.append(math.inf)
+        for i in range(self.factors["employee_allocations"][3]):
+            er_nurse.append(math.inf)
+        for i in range(self.factors["employee_allocations"][4]):
+            treat_nurse.append(math.inf)
+        
+        sys_ind = 0
+        doc_queue = []
+        while len(system_waittime) < len(system):
+            if min(doctors) <= system[sys_ind]:
+                if min(doctors) <= min(lab_techs):
+                    if 
+                clock = doctors[sys_ind]
+                if len(doc_queue) > 0:
+                    clock = system[sys_ind]
+                    doc_ind = doctors.index(min(doctors))
+                    doctors[doc_ind] = clock + reception_time[arr_ind]
+                    wait_times_rec.append(clock_rec - rec_queue.pop(0))
+                    arr_ind += 1
+                elif len(rec_queue) == 0:
+                    rec_ind = receptionists.index(min(receptionists))
+                    receptionists[rec_ind] = math.inf
+                else:
+                    print("Error in receptionist loop")
+
+            elif min(receptionists) > arrival_times[arr_ind]:
+                clock_rec = arrival_times[arr_ind]
+                if rec_queue == 0:
+                    for i in range(len(receptionists)):
+                        if receptionists[i] == math.inf:
+                            rec_ind = i
+                        elif receptionists[i] != math.inf:
+                            rec_ind = -1
+                        else:
+                            print("Error in receptionist loop")
+                    if rec_ind >= 0:
+                        receptionists[rec_ind] = clock_rec + reception_time[arr_ind]
+                        wait_times_rec.append(0)
+                        arr_ind += 1
+                    elif rec_ind == -1:
+                        rec_queue.append(clock_rec)
+                    else:
+                        print("Error in receptionist loop")
+                elif rec_queue > 0:
+                    rec_queue.append(clock_rec)
+                else:
+                    print("Error in receptionist loop")
+
+        responses = {'stockout_flag': stockout_flag,  # Compose responses and gradients.
                      'n_fac_stockout': n_fac_stockout,
                      'n_cut': n_cut}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
