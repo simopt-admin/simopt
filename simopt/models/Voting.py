@@ -3,15 +3,16 @@ Summary
 -------
 Simulate demand at facilities.
 """
-from multiprocessing.connection import wait
+
 from tkinter import END
-from turtle import end_fill
+
 import numpy as np
 
 from base import Model, Problem
 import math as math
 
 class Voting(Model):
+
 
     """
     A model that simulates a day of voting operations in multiple precincts
@@ -53,8 +54,8 @@ class Voting(Model):
                 "default": [10, 10, 10, 10, 10]
             },
             "n_mach": {
-                "description": "max number of machines available", 
-                "datatype": int, 
+                "description": "max number of machines available",
+                "datatype": int,
                 "default": 50
             },
             "mid_turn_per": {
@@ -123,8 +124,6 @@ class Voting(Model):
             "n_prec": self.check_n_prec
         }
         # Set factors of the simulation model.
-
-
         super().__init__(fixed_factors)
 
     def check_turn_ran(self):
@@ -133,19 +132,19 @@ class Voting(Model):
     def check_reg_vote(self):
         return self.factors["reg_vote"] > 0
 
-    def check_mach_allocation(self):  #Making sure that all machines are allocated and equal to max available
+    def check_mach_allocation(self):  # Making sure that all machines are allocated and equal to max available
         for i in self.factors["mach_allocation"]:
             if self.factors["mach_allocation"][i] < 0:
                 return False
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"]
 
-    def check_n_mach(self):  #verifying that the machines are positive values
+    def check_n_mach(self):  # verifying that the machines are positive values
         return self.factors["n_mach"] > 0
 
-    def check_n_prec(self):  #verifying that precinct number is positive
+    def check_n_prec(self):  # verifying that precinct number is positive
         return self.factors["n_prec"] > 0
 
-    def check_mid_turn_per(self):  #veifying that all are percentages
+    def check_mid_turn_per(self):  # veifying that all are percentages
         for i in self.factors["mid_turn_per"]:
             if i < 0 or i > 1:
                 return False
@@ -162,11 +161,11 @@ class Voting(Model):
 
     def check_stdev_repair(self):
         return self.factors["stdev_repair"] > 0
-    
+
     def check_hours(self):
         return self.factors["hours"] > 0
 
-    def check_simulatable_factors(self):  #all lists have indeces for number of precincts
+    def check_simulatable_factors(self):  # all lists have indeces for number of precincts
         if len(self.factors["turn_ran"]) != self.factors["n_prec"]:
             return False
         elif len(self.factors["reg_vote"]) != self.factors["n_prec"]:
@@ -178,7 +177,7 @@ class Voting(Model):
         else:
             return True
 
-    def check_bd_prob(self):  #veifying breakdown is a probability
+    def check_bd_prob(self):  # veifying breakdown is a probability
         if self.factors["bd_prob"] < 0 or self.factors["bd_prob"] > 1:
             return False
         return True
@@ -198,9 +197,7 @@ class Voting(Model):
             <NEW>
             "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
             "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
-                                        ### DO WE NEED TO CALCULATE THIS FOR EACH VOTER OR JUST FOR THE MACHINE OR THE PRECINCT
-            
-            ##VERY CONFUSED DO WE DECIDE IF EACH IS BROKEN OR NOT OR DO PER PRECINCT, Etc.
+
             "mach_bd" = binary variable, probability that the           
                 0 : The voting machine is broken down at start of day
                 1 : The voting machine does not break down for the day 
@@ -218,13 +215,13 @@ class Voting(Model):
         voting_rng = rng_list[3]
         prec_avg_waittime = []
         perc_no_waittime = []
-        
-        for m in range(self.factors["n_prec"]):  #p is num of machines in that precinct
+
+        for m in range(self.factors["n_prec"]):  # p is num of machines in that precinct
             mach_list = []
-            for i in range(len(self.factors["mach_allocation"])):  #i is each individual machine in that precinct 
-                p = self.factors["bd_prob"]  #Default is .05
-                if breakdown_rng.choices([0, 1], [1-p, p]) == 1:  #Determining if the machine will be borken down to start day
-                    t = breakdown_rng.gammavariate((self.factors["mean_repair"] ^ 2) / (self.factors["stdev_repair"] ^ 2), (self.factors["stdev_repair"] ^ 2) / (self.factors["mean_repair"]))  #Determines wait time for broken machine in minutes
+            for i in range(len(self.factors["mach_allocation"])):  # i is each individual machine in that precinct 
+                p = self.factors["bd_prob"]  # Default is .05
+                if breakdown_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if the machine will be borken down to start day
+                    t = breakdown_rng.gammavariate((self.factors["mean_repair"] ^ 2) / (self.factors["stdev_repair"] ^ 2), (self.factors["stdev_repair"] ^ 2) / (self.factors["mean_repair"]))  # Determines wait time for broken machine in minutes
                 else:
                     t = math.inf
                 mach_list.append(t)
@@ -234,16 +231,15 @@ class Voting(Model):
             p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
 
             arr_times = []
-            t = arrival_rng.expovariate(p_lamda)  #initial arrival
+            t = arrival_rng.expovariate(p_lamda)  # initial arrival
             while t <= self.factors["hours"] * 60:
-                arr_times.append(t)  #appends before so that the last arrival in list will be before voting closes
-                t = arrival_rng.expovariate(p_lamda) + t  #list is time at which each person arrives
+                arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
+                t = arrival_rng.expovariate(p_lamda) + t  # list is time at which each person arrives
 
             voting_times = []
             for p in range(len(self.factors["n_prec"])):
                 for i in range(len(arr_times)):
-                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ^ 2) / (self.factors\
-                        ["stdev_time2vote"] ^ 2), (self.factors["stdev_time2vote"] ^ 2)/(self.factors["mean_time2vote"])))
+                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ^ 2) / (self.factors["stdev_time2vote"] ^ 2), (self.factors["stdev_time2vote"] ^ 2) / (self.factors["mean_time2vote"])))
             queue = []
             wait_times = []
             clock = 0
@@ -253,8 +249,8 @@ class Voting(Model):
             while len(wait_times) <= len(arr_times):
                 if min(mach_list) <= arr_times[arr_ind]:
                     clock = min(mach_list)
-                    if len(queue) > 0:  #logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
-                        clock = arr_times[arr_ind]  #updates since we are also moving to the next event here to 
+                    if len(queue) > 0:  # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                        clock = arr_times[arr_ind]  # updates since we are also moving to the next event here to
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
                         vote_ind += 1
@@ -280,7 +276,7 @@ class Voting(Model):
                             wait_times.append(0)
                             vote_ind += 1
                             arr_ind += 1
-                        elif mach_ind == -1:  #no infinity values in list
+                        elif mach_ind == -1:  # no infinity values in list
                             queue.append(clock)
                         else:
                             print("error in loop queue is empty arrival times less than machine list")
@@ -296,7 +292,6 @@ class Voting(Model):
                     END
         prec_avg_waittime.append.mean(wait_times)
         perc_no_waittime.append(wait_times.count(0) / len(wait_times))
-        #Compose responses and gradients.
 
         responses = {
             'avg_wait_time': prec_avg_waittime,
@@ -378,13 +373,13 @@ class MinVotingMaxWaitTime(Problem):
     base.Problem
     """
     def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
-        self.name = name  #refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
+        self.name = name  # refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1  #how many stochastic constraints are available to be determined, since only one is # of machines is deterministic there are none here =0
+        self.n_stochastic_constraints = 1 
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
-        self.variable_type = "discrete"  #should be after we define self.dim
-        self.upper_bounds = (math.inf, math.inf, math.inf, math.inf, math.inf)  #use 1's and then use infinities
+        self.variable_type = "discrete" 
+        self.upper_bounds = (math.inf, math.inf, math.inf, math.inf, math.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -401,7 +396,7 @@ class MinVotingMaxWaitTime(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
-        }
+            }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -412,7 +407,7 @@ class MinVotingMaxWaitTime(Problem):
         self.model = MinVotingMaxWaitTime(self.model_fixed_factors)
         self.dim = self.model.factors["n_prec"]
         self.lower_bounds = ()
-        for i in range(self.dim):  #can we do this??
+        for i in range(self.dim):  # can we do this??
             self.upper_bounds.append(math.inf)
             self.lower_bounds.append(1)
 
@@ -469,7 +464,7 @@ class MinVotingMaxWaitTime(Problem):
             vector of objectives
         """
         
-        objectives = (max(response_dict["avg_wait_time"]), )  #need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
+        objectives = (max(response_dict["avg_wait_time"]), )  # need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -487,7 +482,7 @@ class MinVotingMaxWaitTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None  #can set to none 
+        stoch_constraints = None  # can set to none 
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -506,7 +501,7 @@ class MinVotingMaxWaitTime(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None  #can set to none
+        det_stoch_constraints = None  # can set to none
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
@@ -526,7 +521,7 @@ class MinVotingMaxWaitTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = None  #can set to none, if there was a cost penalty then this could be use
+        det_objectives = None  # can set to none, if there was a cost penalty then this could be use
         det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
@@ -544,7 +539,7 @@ class MinVotingMaxWaitTime(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(sum(x) >= self.model.factors["n_machines"])  #self.model.factors["n_machines"] >= sum(x)
+        return np.all(sum(x) >= self.model.factors["n_machines"])  # self.model.factors["n_machines"] >= sum(x)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -560,5 +555,5 @@ class MinVotingMaxWaitTime(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])  #natalia will have the code for this, a little more tricky 
+        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])  # natalia will have the code for this, a little more tricky 
         return x

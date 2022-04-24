@@ -314,7 +314,7 @@ class EmergencyRoom(Model):
         # Generate random arrival times at facilities from truncated multivariate normal distribution.
         t = arrivals_rng.expovariate(self.factors["walkin_rates"][0])
 
-        while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:
+        while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:  #non stationary poisson process, so this is wrong but could make a function 
             if t <= 120:
                 arrival_times.append(t)
                 t += arrivals_rng.expovariate(self.factors["walkin_rates"][0])
@@ -413,10 +413,29 @@ class EmergencyRoom(Model):
                 else:
                     print("Error in receptionist loop")
 
-        walkin_system = []
+        post_rec = []
         for i in range(len(wait_times_rec)):
-            walkin_system[i] = arrival_times[i] + wait_times_rec[i]
+            post_rec[i] = arrival_times[i] + wait_times_rec[i]
 
+        system = []
+        counter1 = 0
+        counter2 = 0
+
+        while len(system) < (len(post_rec) + len(arrival_amb)):
+            if post_rec[counter1] <= arrival_amb[counter2] and counter1 != len(post_rec) and counter2 != len(arrival_amb):
+                system.append(post_rec[counter1])
+                counter1 += 1
+            elif post_rec[counter1] > arrival_amb[counter2] and counter1 != len(post_rec) and counter2 != len(arrival_amb):
+                system.append(arrival_amb[counter2])
+                counter2 += 1
+            elif counter2 == len(arrival_amb):
+                system.append(post_rec[counter1])
+                counter1 += 1
+            elif counter1 == len(post_rec):
+                system.append(arrival_amb[counter2])
+                counter2 += 1
+            else:
+                print("Error in system list configuration.")
 
         #generating the wait times for each patient
         #amb does not go to receptionist, everything else the same 
