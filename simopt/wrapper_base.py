@@ -1866,7 +1866,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
             terminal_values = [td for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
             terminal_data_dict = {"Solvers": solver_names, "Terminal": terminal_values}
             terminal_data_df = pd.DataFrame(terminal_data_dict)
-            sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, cut=0, inner="stick")
+            sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick")
             if normalize:
                 plt.ylabel("Terminal Progress")
             else:
@@ -1893,9 +1893,9 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
                 plt.xticks([1], labels=[experiment.solver.name])
             if plot_type == "violin":
                 solver_name_rep = [experiment.solver.name for td in terminal_data]
-                terminal_data_dict = {"Solvers": solver_name_rep, "Terminal": terminal_data}
+                terminal_data_dict = {"Solver": solver_name_rep, "Terminal": terminal_data}
                 terminal_data_df = pd.DataFrame(terminal_data_dict)
-                sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, cut=0, inner="stick")
+                sns.violinplot(x="Solver", y="Terminal", data=terminal_data_df, inner="stick")
             if normalize:
                 plt.ylabel("Terminal Progress")
             else:
