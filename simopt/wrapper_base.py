@@ -37,6 +37,8 @@ MetaExperiment : class
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 from numpy.core.defchararray import endswith
 from scipy.stats import norm
 import pickle
@@ -1821,7 +1823,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                   )
 
 
-def plot_terminal_progress(experiments, plot_type, normalize=True, all_in_one=True):
+def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True):
     """
     Plot individual or aggregate terminal progress for one or more solvers
     on a single problem.
@@ -1846,11 +1848,11 @@ def plot_terminal_progress(experiments, plot_type, normalize=True, all_in_one=Tr
     if all_in_one:
         ref_experiment = experiments[0]
         setup_plot(plot_type=plot_type,
-                   solver_name="SOLVER SET",
-                   problem_name=ref_experiment.problem.name,
-                   normalize=normalize,
-                   budget=ref_experiment.problem.factors["budget"]
-                   )
+                    solver_name="SOLVER SET",
+                    problem_name=ref_experiment.problem.name,
+                    normalize=normalize,
+                    budget=ref_experiment.problem.factors["budget"]
+                    )
         # solver_curve_handles = []
         if normalize:
             terminal_data = [[experiment.progress_curves[mrep].y_vals[-1] for mrep in range(experiment.n_macroreps)] for experiment in experiments]
@@ -1858,9 +1860,17 @@ def plot_terminal_progress(experiments, plot_type, normalize=True, all_in_one=Tr
             terminal_data = [[experiment.objective_curves[mrep].y_vals[-1] for mrep in range(experiment.n_macroreps)] for experiment in experiments]
         if plot_type == "box":
             plt.boxplot(terminal_data)  # showmeans=True, meanline=True, bootstrap=1000)
+            plt.xticks(range(1, n_experiments + 1), labels=[experiment.solver.name for experiment in experiments])
         if plot_type == "violin":
-            plt.violinplot(terminal_data, showmedians=True)  # quantiles = [[0.05, 0.95] for experiment in experiments]) # showmeans=True, #, quantiles=[0.05, 0.95])
-        plt.xticks(range(1, n_experiments + 1), labels=[experiment.solver.name for experiment in experiments])
+            solver_names = [experiments[exp_idx].solver.name for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
+            terminal_values = [td for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
+            terminal_data_dict = {"Solvers": solver_names, "Terminal": terminal_values}
+            terminal_data_df = pd.DataFrame(terminal_data_dict)
+            sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, cut=0, inner="stick")
+            if normalize:
+                plt.ylabel("Terminal Progress")
+            else:
+                plt.ylabel("Terminal Objective")
         save_plot(solver_name="SOLVER SET",
                   problem_name=ref_experiment.problem.name,
                   plot_type=plot_type,
@@ -1880,9 +1890,16 @@ def plot_terminal_progress(experiments, plot_type, normalize=True, all_in_one=Tr
                 terminal_data = [experiment.objective_curves[mrep].y_vals[-1] for mrep in range(experiment.n_macroreps)]
             if plot_type == "box":
                 plt.boxplot(terminal_data)
+                plt.xticks([1], labels=[experiment.solver.name])
             if plot_type == "violin":
-                plt.violinplot(terminal_data)
-            plt.xticks([1], labels=[experiment.solver.name])
+                solver_name_rep = [experiment.solver.name for td in terminal_data]
+                terminal_data_dict = {"Solvers": solver_name_rep, "Terminal": terminal_data}
+                terminal_data_df = pd.DataFrame(terminal_data_dict)
+                sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, cut=0, inner="stick")
+            if normalize:
+                plt.ylabel("Terminal Progress")
+            else:
+                plt.ylabel("Terminal Objective")
             save_plot(solver_name=experiment.solver.name,
                       problem_name=experiment.problem.name,
                       plot_type=plot_type,
@@ -2043,9 +2060,11 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     elif plot_type == "box" or plot_type == "violin":
         plt.xlabel("Solvers")
         if normalize:
-            title = f"{solver_name} on {problem_name}\n Terminal Progress"
+            plt.ylabel("Terminal Progress")
+            title = f"{solver_name} on {problem_name}"
         else:
-            title = f"{solver_name} on {problem_name}\n Terminal Objective"
+            plt.ylabel("Terminal Objective")
+            title = f"{solver_name} on {problem_name}"
     elif plot_type == "terminal_scatter":
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")

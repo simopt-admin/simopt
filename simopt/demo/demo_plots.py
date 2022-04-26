@@ -13,7 +13,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 from wrapper_base import Experiment, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
 
 solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
-problem_names = {"CNTNEWS-1", "SAN-1"}
+problem_names = {"SAN-1"} # CNTNEWS-1"} #, "SAN-1"}
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 # solver_name = <solver_name>
@@ -49,20 +49,21 @@ for problem_name in problem_names:
 # Re-compile problem-solver results.
 myexperiments = []
 for solver_name in solver_names:
-    solver_experiments = []
+    #solver_experiments = []
     for problem_name in problem_names:
         file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
         myexperiment = read_experiment_results(file_name_path)
-        solver_experiments.append(myexperiment)
-    myexperiments.append(solver_experiments)
+    myexperiments.append(myexperiment)
+#    solver_experiments.append(myexperiment)
+    # myexperiments.append(solver_experiments)
 
 print("Plotting results.")
 # Produce basic plots.
-# plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=False)
-# plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=True)
-# plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=False)
-# plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=True)
-plot_terminal_scatterplots(experiments = myexperiments, all_in_one=False)
+plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=False)
+plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=True)
+plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=False, all_in_one=False)
+plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=True)
+#plot_terminal_scatterplots(experiments = myexperiments, all_in_one=False)
 
 # Plots will be saved in the folder experiments/plots.
 print("Finished. Plots can be found in experiments/plots folder.")
