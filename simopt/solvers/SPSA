@@ -73,7 +73,7 @@ class SPSA(solver):
                     "default": 1
                 },
                 "r": {
-                    "description": "Number of replications takes at each solution",
+                    "description": "Number of replications takes at each solution",   #increased r means more accurate gradient
                     "datatype": int,
                     "default": 30
                 },
@@ -127,6 +127,12 @@ class SPSA(solver):
 
         Returns
         -------
+        Reccomended_solutions
+
+        Intermediate_budgets 
+        
+        #loss function is embedded in the solution object
+        
         Anncalls : Array
             An array (size = 'NumSoln' X 1) of budget expended
         A : Array
@@ -153,14 +159,14 @@ class SPSA(solver):
         intermediate_budgets = []
         expended_budget = 0
         # Designate random number generator for random sampling.
-        find_next_soln_rng = self.rng_list[1]
+        find_next_soln_rng = self.rng_list[2] #the rng list is automatically integrated into the .random class
         # Sequentially generate random solutions and simulate them.
         while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
-                new_x = problem.factors["initial_solution"]
-                new_solution = self.create_new_solution(new_x, problem)
-                best_solution = new_solution
+                new_x = problem.factors["initial_solution"] #CRNs = Common Random Numbers, not what is used here, need a specic RN Stream #3, Look at line 97 on RandSearch
+                new_solution = self.create_new_solution(new_x, problem) #function of a solver super class under base.py
+                best_solution = new_solution                            #Can use random.choices([-1,1], .5,.5)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
@@ -168,7 +174,7 @@ class SPSA(solver):
                 new_x = problem.get_random_solution(find_next_soln_rng)
                 new_solution = self.create_new_solution(new_x, problem)
             # Simulate new solution and update budget.
-            problem.simulate(new_solution, self.factors["sample_size"])
+            problem.simulate(new_solution, self.factors["sample_size"])     #change sample size to r
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
