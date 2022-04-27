@@ -388,6 +388,28 @@ class MRG32k3a(random.Random):
         q = mu - beta * np.log(-np.log(u))
         return q
 
+    def generating_random_vectors(self):
+        """
+        Generate a vector with a specified number (n_factors)
+        of random factors that sum up to a specified number (sum).
+        """
+        sum = 4
+        n_factors = 2
+
+        x = [0]
+        for i in range(n_factors - 1):
+            random_num = random.randint(1, sum - 1)
+            while random_num in x:
+                random_num = random.randint(1, sum - 1)
+            x.append(random_num)
+        x.append(sum)
+        x = np.sort(x)
+        y = []
+        for i in range(1, n_factors + 1):
+            num = x[i] - x[i-1]
+            y.append(num)
+        print(y)
+
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.
         Streams are of length 2**141.
