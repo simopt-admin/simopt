@@ -11,7 +11,7 @@ from base import Model, Problem
 
 class ProdSys(Model):
     """
-    A model that simulates a 
+    A model that simulates a
     production system with a normally distribute demand.
 
     Attributes
@@ -67,6 +67,11 @@ class ProdSys(Model):
                 "description": "Number of edges",
                 "datatype": int,
                 "default": 6
+            },
+            "total_inventory": {
+                "description": "total inventory",
+                "datatype": int,
+                "default": 200
             },
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
@@ -130,19 +135,15 @@ class ProdSys(Model):
             "num_machines": self.check_num_machines,
             "num_edges": self.check_num_edges,
             "interm_product": self.check_interm_product,
-            
             "n_sets": self.check_n_sets,
-            "machine_layout": self.check_machine_layout,
             "batch": self.check_batch,
             "time_horizon": self.check_time_horizon,
             "routing_layout": self.check_routing_layout,
             "machine_layout": self.check_machine_layout,
             "processing_time_mean": self.check_processing_time_mean,
             "processing_time_StDev": self.check_processing_time_StDev,
-            "product_batch_prob": self.check_product_batch_prob,
-            "time_horizon": self.check_time_horizon
+            "total_inventory": self.check_total_inventory
         }
-        
         # Set factors of the simulation model.
 
     def check_num_products(self):
@@ -158,7 +159,7 @@ class ProdSys(Model):
         for i in self.factors["product_batch_prob"]:
             if i <= 0:
                 return False
-        return len(self.factors["product_batch_prob"])== self.factors["num_products"] and sum(self.factors["product_batch_prob"]) == 1
+        return len(self.factors["product_batch_prob"]) == self.factors["num_products"] and sum(self.factors["product_batch_prob"]) == 1
 
     def check_num_machines(self):
         return self.factors["num_machines"] > 0
@@ -171,9 +172,10 @@ class ProdSys(Model):
             if i < 0:
                 return False
         return sum(self.factors["interm_product"]) == self.factors["n_sets"] and len(self.factors["interm_product"]) == self.factors["num_edges"]
+
     def check_routing_layout(self):
         if len(self.factors["routing_layout"]) != self.factors["num_edges"]:
-           return False
+            return False
         end_nodes = []
         num_nodes = self.factors["routing_layout"][self.factors["num_edges"]-1][1]
         for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
@@ -198,6 +200,9 @@ class ProdSys(Model):
     def check_processing_time_StDev(self):
         return len(self.factors["processing_time_StDev"]) == self.factors["num_edges"]
 
+    def check_total_inventory(self):
+        return(sum(self.factors["interm_product"]) == self.factors["total_inventory"])
+
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
@@ -211,13 +216,13 @@ class ProdSys(Model):
         responses : dict
             performance measures of interest
             "lead_time" = time to produce each product
-            "service_level" = percentage of products returned on time 
+            "service_level" = percentage of products returned on time
         gradients : dict of dicts
             gradient estimates for each response
         """
         import random
-        
-        def previous_node(node, possible_node, check):    # Returns pre node
+
+        def previous_node(node, check):    # Returns pre node
             pre_node = 0
             i = False
             j = self.factors["num_edges"]
@@ -227,58 +232,52 @@ class ProdSys(Model):
                     if node == self.factors["routing_layout"][j-1][1]:
                         pre_node = self.factors["routing_layout"][j-1][0]
                         i = True
-                    j -= 1  
+                    j -= 1
             else:
                 t = 1
                 while t == check:
                     if node == self.factors["routing_layout"][j-t][1]:
                         t += 1
                         pre_node = self.factors["routing_layout"][j-t][0]
-                    j -= 1  
+                    j -= 1
             return(pre_node)
-           
-        def check_node(product):                                               # Return inventory and corresponding node    
-            i = False 
+
+        def check_node(product):                    # Return inventory and corresponding node
+            i = False
             node = end_nodes[product-1]
-            possible_node = []                                                                 # Product's end node from list                                                
+            possible_node = []                                                                 # Product's end node from list
             k =0                                       # Inventory at node from replicated list of intermediate product
             if product != 1 and product != self.factors["num_products"]:
                 check = 0
                 for j in range(num_nodes):
                     if self.factors["routing_layout"][j][1] == node:
                         check += 1
-                
                 for j in range(check):
-                    node = end_nodes[product-1]                                                                 # Product's end node from list                                                
+                    node = end_nodes[product-1]                                                  # Product's end node from list
                     inventory = node_product[node-1]  
                     lst_nodes = [node]
                     while inventory == 0 or i == False:
-                        if previous_node(node,possible_node,0) == 1 and j != 0:
+                        if previous_node(node, 0) == 1 and j != 0:
                             if node_product[node-1] == 0:
                                 lst_nodes.append(1)
                                 break
-                            else:
-                                node_product[node-1] -= 10
-                                break
-                        node = previous_node(node, lst_nodes,j)
+                            else: break
+                        node = previous_node(node, j)
                         inventory = node_product[node-1]
-                        if inventory != 0:
-                            i = True
-                            node_product[node-1] -= 10
+                        if inventory != 0: i = True
                         lst_nodes.append(node)
                         if k == 5: break
                         k+=1
                     lst_nodes.reverse()
                     possible_node.append(lst_nodes)
             else:
-                inventory = node_product[node-1] 
+                inventory = node_product[node-1]
                 possible_node = [node]
                 while inventory == 0 and i == False:
-                    node = previous_node(node, possible_node,0)
+                    node = previous_node(node, 0)
                     inventory = node_product[node-1]
                     if inventory != 0:
                         i = True
-                        node_product[node-1] -= 10
                     possible_node.append(node)
                 possible_node.reverse()
             print("Inventory: ", node_product)
@@ -309,62 +308,64 @@ class ProdSys(Model):
                 time += random.normalvariate(self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i])
                 order_time.append(time)
             return(edges, order_time)
-        
-        def get_min_time(seq,t):
-            min_time = self.factors["time_horizon"]
-            optimal_edges = []
-            if t == len(machines_qeue)-1: 
-                for i in range(len(seq)):
-                    time = []
-                    for j in seq[i]:
-                        time.append(self.factors["processing_time_mean"][j])
-                    if sum(time) < min_time:
-                        min_time = sum(time)
-                        optimal_edges = seq[i]
-            else: 
-                for i in range(len(seq)):
-                    time = []
-                    for j in seq[i]:
-                        time.append(edge_time[j])
-                    if sum(time) < min_time:
-                        min_time = sum(time)
-                        optimal_edges = seq[i]
 
+        def get_min_seq(seq):
+            current_q = [machines_qeue[k][-1] for k in range(len(machines_qeue))]
+            min_seq = float('inf')
+            for elem in seq:
+                total_time = 0
+                for i in range(len(elem)):
+                    total_time += self.factors["processing_time_mean"][elem[i]]
+                    mach = self.factors["machine_layout"][elem[i]]
+                    if current_q[mach-1] == float('inf'):
+                        total_time += 0
+                    else: total_time += current_q[mach-1]
+                if total_time < min_seq:
+                    min_seq = total_time
+                    optimal_edges = elem
+            print("optimal edges: ", optimal_edges)
             return optimal_edges
-        
+
         def update_time(prod):
             seq = get_sequence(prod)
             check = 0
-            
             if type(seq[0]) == list:
-                for j in range(len(machines_qeue)-1): 
-                    if machines_qeue[j] == machines_qeue[j+1] : check += 1
-                optimal_edges = get_min_time(seq,check)
+                optimal_edges = get_min_seq(seq)
                 optimal_edges, optimal_time = get_sequence_time(optimal_edges)
             else: optimal_edges, optimal_time = get_sequence_time(seq)
-            
+            print(optimal_edges)
             machines = []
-            # print("optimal edges: ", optimal_edges)
             for elem in optimal_edges: machines.append(self.factors["machine_layout"][elem])
-            # print("time: ", optimal_time)
             for i in range(len(machines)):
                 for j in range(len(self.factors["machine_layout"])):
-                    if self.factors["machine_layout"][j] == machines[i]: edge_time[j] =  optimal_time[i]
-            
+                    if self.factors["machine_layout"][j] == machines[i]: edge_time[j] = optimal_time[i]
+            nodes = []
+            for j in optimal_edges:
+                nodes.append(self.factors["routing_layout"][j][0])
+            node_product[nodes[0]-1] -= 10
+            print("node_product: ", node_product)
             print("machines ", machines)
-            j = 0
-            for i in machines: 
-                machines_qeue[i-1]+= optimal_time[j]
-                j += 1
-            
+            count = 0
+            new_lst2 = [machines_qeue[k][-1] for k in range(len(machines_qeue))]
+            for k in new_lst2:
+                if k == float('inf'): count += 1
+            print(optimal_time)
+            if count == len(new_lst2):
+                for i in machines:
+                    x = clock + optimal_time[i-2]
+                    machines_qeue[i-1] = [x]
+            lapse_order = [machines_qeue[k][-1] for k in range(len(machines_qeue))]
+            for elem in lapse_order:
+                if elem == float('inf'): lapse_order.remove(elem)
+            print("Lapse order", lapse_order)
+            finish_time.append(max(lapse_order))
             print("Machine Qeue:", machines_qeue)
-            network_time.append(sum(optimal_time))
-            return(machines_qeue[machines[-1]-1])
-        
+            # network_time.append(sum(optimal_time))
+
         # MAIN CODE
         # LIST RANDOM NUMBERS GENERATED
         for j in range(self.factors["num_machines"]):                   # Generate/attach random machine processing times for # of machines
-            list_initiator = []                          
+            list_initiator = []
             for i in range(self.factors["num_edges"]):
                 if self.factors["machine_layout"][i] == j+1:
                     parameters = [self.factors["processing_time_mean"][i], self.factors["processing_time_StDev"][i]]
@@ -377,60 +378,62 @@ class ProdSys(Model):
 
         node_product = self.factors["interm_product"]
 
-        orders_time = 0   
+        orders_time = 0
         num_orders = 0
         for i in range(self.factors["time_horizon"]):                        # Generate random order inter-arrival times
             order_arrival_time = random.normalvariate(self.factors["Interarrival_Time_mean"], self.factors["Interarrival_Time_StDev"])
-            orders_time += order_arrival_time                                                           # Sum of arrival times                                                                                                                                                                 
+            orders_time += order_arrival_time                                                      # Sum of arrival times
             if orders_time <= self.factors["time_horizon"]:                                                             # Attach if sum is less than time horizon
                 arrival_times_rng.append(orders_time)                                                   # Track number of orders
                 num_orders += 1
-                product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
+                product = random.choices(np.arange(1, self.factors["num_products"] + 1), weights=self.factors["product_batch_prob"], k=1)
                 product_orders_rng.append(product[0])
-            else: 
-                break
+            else: break
         rng_list[-2] = product_orders_rng
         rng_list[-1] = arrival_times_rng
-        
-        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464, 
-372.01710375272273, 401.3857848259946, 434.2295472258132, 466.42519331866515, 486.70798518555915, 516.3478106441862, 544.4080471479766, 562.9793019943288, 587.4876637499182]]
+        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464,
+        372.01710375272273, 401.3857848259946, 434.2295472258132, 466.42519331866515, 486.70798518555915, 516.3478106441862, 544.4080471479766, 562.9793019943288, 587.4876637499182]]
         print("")
         print(rng_list)
         print("")
         # CREATING END NODE LIST
         num_nodes = self.factors["routing_layout"][self.factors["num_edges"]-1][1]
         end_nodes = []
-        for i in range(self.factors["num_products"]): (end_nodes.append(num_nodes-i))
+        for i in range(self.factors["num_products"]):
+            (end_nodes.append(num_nodes-i))
         end_nodes.reverse()
-
-        network_time = []
-        edge_time = [0] *len(self.factors["machine_layout"])
-        machines_qeue = [float('inf')] *(self.factors["num_machines"])
-        leadtime = []
+        edge_time = [0] * len(self.factors["machine_layout"])
+        machines_qeue = [[0]] * 2
+        for i in range(len(machines_qeue)): machines_qeue[i][0] = float('inf')
+        finish_time = []
         clock = 0
-        for i in range(len(machines_qeue)): machines_qeue[i] = float('inf')
         i = 0
         for j in range(15):
             print("")
             print("Clock: ", clock)
-            next_inqeue = min(machines_qeue)
+            print(machines_qeue)
+            new_lst = [machines_qeue[k][-1] for k in range(len(machines_qeue))]
+            next_inqeue = min(new_lst)
             print("machine queu: ", machines_qeue)
-            ind = machines_qeue.index(next_inqeue)
-            print("Next in qeue: " , next_inqeue)
-            
+            ind = new_lst.index(next_inqeue)
+            print("Next in qeue: ", next_inqeue)
+
             if next_inqeue < rng_list[3][i] or next_inqeue != float("inf"):
                 clock = next_inqeue
-                machines_qeue[ind]= float("inf")
+                machines_qeue[ind].remove(next_inqeue)
+                if machines_qeue[ind] == []:
+                    machines_qeue[ind].append(float("inf"))
             else:
                 clock = rng_list[3][i]
                 product = rng_list[2][i]
-                for k in range(len(machines_qeue)): machines_qeue[k] = clock
                 print("Product: ", product, "arrives at: ", clock)
-                lead = update_time(product)
-                leadtime.append(lead - rng_list[3][i])
+                update_time(product)
                 # print("LEAD TIME: ", leadtime)
                 # print("Edges: ", edge_time)
                 # print("")
                 i += 1
-            if i == 5:
-                break
+        print("Finish Time: ", finish_time)
+        lead_times = []
+        for k in range(len(finish_time)):
+            lead_times.append(finish_time[k]-rng_list[3][k])
+        print("Lead Times:", lead_times)

@@ -253,87 +253,95 @@
 #         min_time = sum(time)
 #         optimal_edges = seq[i]
 
-routing_layout = [[1, 2],
-                [1, 3],
-                [2, 4],
-                [2, 5],
-                [3, 5],
-                [3, 6]]
-num_nodes = 6
-end_nodes = [4,5,6]
-num_products = 3
-num_edges = 6
-node_product = [200,100,100,0,0,0]
+# routing_layout = [[1, 2],
+#                 [1, 3],
+#                 [2, 4],
+#                 [2, 5],
+#                 [3, 5],
+#                 [3, 6]]
+# num_nodes = 6
+# end_nodes = [4,5,6]
+# num_products = 3
+# num_edges = 6
+# node_product = [200,100,100,0,0,0]
 
-def previous_node(node, possible_node, check):    # Returns pre node
-    pre_node = 0
-    i = False
-    j = num_edges
-    t = 0
-    if check == 0:
-        while i == False:
-            if node == routing_layout[j-1][1]:
-                pre_node = routing_layout[j-1][0]
-                i = True
-            j -= 1  
-    else:
-        t = 1
-        while t == check:
-            if node == routing_layout[j-t][1]:
-                t += 1
-                pre_node = routing_layout[j-t][0]
-            j -= 1  
-    return(pre_node)
+# def previous_node(node, possible_node, check):    # Returns pre node
+#     pre_node = 0
+#     i = False
+#     j = num_edges
+#     t = 0
+#     if check == 0:
+#         while i == False:
+#             if node == routing_layout[j-1][1]:
+#                 pre_node = routing_layout[j-1][0]
+#                 i = True
+#             j -= 1  
+#     else:
+#         t = 1
+#         while t == check:
+#             if node == routing_layout[j-t][1]:
+#                 t += 1
+#                 pre_node = routing_layout[j-t][0]
+#             j -= 1  
+#     return(pre_node)
 
-def check_node(product):                                               # Return inventory and corresponding node    
-    i = False 
-    node = end_nodes[product-1]
-    possible_node = []                                                                 # Product's end node from list                                                
-    k =0                                       # Inventory at node from replicated list of intermediate product
-    if product != 1 and product != num_products:
-        check = 0
-        for j in range(num_nodes):
-            if routing_layout[j][1] == node:
-                check += 1
+# def check_node(product):                                               # Return inventory and corresponding node    
+#     i = False 
+#     node = end_nodes[product-1]
+#     possible_node = []                                                                 # Product's end node from list                                                
+#     k =0                                       # Inventory at node from replicated list of intermediate product
+#     if product != 1 and product != num_products:
+#         check = 0
+#         for j in range(num_nodes):
+#             if routing_layout[j][1] == node:
+#                 check += 1
         
-        for j in range(check):
-            node = end_nodes[product-1]                                                                 # Product's end node from list                                                
-            inventory = node_product[node-1]  
-            lst_nodes = [node]
-            while inventory == 0 or i == False:
-                if previous_node(node,possible_node,0) == 1 and j != 0:
-                    if node_product[node-1] == 0:
-                        lst_nodes.append(1)
-                        break
-                    else:
-                        break
-                print("haha",node)
-                node = previous_node(node, lst_nodes,j)
-                inventory = node_product[node-1]
-                if inventory != 0:
-                    i = True
-                lst_nodes.append(node)
-                if k == 5: break
-                k+=1
-                print(node)
+#         for j in range(check):
+#             node = end_nodes[product-1]                                                                 # Product's end node from list                                                
+#             inventory = node_product[node-1]  
+#             lst_nodes = [node]
+#             while inventory == 0 or i == False:
+#                 if previous_node(node,possible_node,0) == 1 and j != 0:
+#                     if node_product[node-1] == 0:
+#                         lst_nodes.append(1)
+#                         break
+#                     else:
+#                         break
+#                 print("haha",node)
+#                 node = previous_node(node, lst_nodes,j)
+#                 inventory = node_product[node-1]
+#                 if inventory != 0:
+#                     i = True
+#                 lst_nodes.append(node)
+#                 if k == 5: break
+#                 k+=1
+#                 print(node)
 
-            possible_node.append(lst_nodes)
-    else:
-        inventory = node_product[node-1] 
-        print(inventory) 
-        possible_node = [node]
-        while inventory == 0 and i == False:
-            node = previous_node(node, possible_node,0)
-            inventory = node_product[node-1]
-            if inventory != 0:
-                i = True
-            possible_node.append(node)
+#             possible_node.append(lst_nodes)
+#     else:
+#         inventory = node_product[node-1] 
+#         print(inventory) 
+#         possible_node = [node]
+#         while inventory == 0 and i == False:
+#             node = previous_node(node, possible_node,0)
+#             inventory = node_product[node-1]
+#             if inventory != 0:
+#                 i = True
+#             possible_node.append(node)
         
-    print(possible_node)
+#     print(possible_node)
 
 
 
 
-possible_node =[]
-check_node(product = 2)
-
+# possible_node =[]
+# check_node(product = 2)
+machines_qeue = [[float('inf')],[ float('inf')]]
+new_lst = [machines_qeue[k][-1] for k in range(len(machines_qeue))]
+next_inqeue = min(new_lst)
+print("machine queu: ", machines_qeue)
+ind = new_lst.index(next_inqeue)
+print("Next in qeue: " , next_inqeue)
+clock = next_inqeue
+machines_qeue[ind].remove(next_inqeue)
+if machines_qeue[ind] == []: machines_qeue[ind].append(float("inf"))
