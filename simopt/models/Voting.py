@@ -11,8 +11,8 @@ import numpy as np
 from base import Model, Problem
 import math as math
 
-class Voting(Model):
 
+class Voting(Model):
 
     """
     A model that simulates a day of voting operations in multiple precincts
@@ -45,7 +45,7 @@ class Voting(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "Voting"
-        self.n_rngs = 4
+        self.n_rngs = 5
         self.n_responses = 1
         self.specifications = {
             "mach_allocation": {
@@ -127,13 +127,13 @@ class Voting(Model):
         super().__init__(fixed_factors)
 
     def check_turn_ran(self):
-        return self.factors["turn_ran"] > 0
+        return len(self.factors["turn_ran"]) > 0
 
     def check_reg_vote(self):
-        return self.factors["reg_vote"] > 0
+        return len(self.factors["reg_vote"]) > 0
 
     def check_mach_allocation(self):  # Making sure that all machines are allocated and equal to max available
-        for i in self.factors["mach_allocation"]:
+        for i in range(len(self.factors["mach_allocation"])):
             if self.factors["mach_allocation"][i] < 0:
                 return False
         return sum(self.factors["mach_allocation"]) == self.factors["n_mach"]
@@ -193,14 +193,14 @@ class Voting(Model):
 
         Returns
         -------
-        responses : dict          
+        responses : dict
             <NEW>
             "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
             "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
 
-            "mach_bd" = binary variable, probability that the           
+            "mach_bd" = binary variable, probability that the
                 0 : The voting machine is broken down at start of day
-                1 : The voting machine does not break down for the day 
+                1 : The voting machine does not break down for the day
 
             "repair_time" = the time that it will take for a machine to be repaired, gamma distributed
             "arrival_rate" = rate of arrival to the voting location
@@ -213,14 +213,15 @@ class Voting(Model):
         turnout_rng = rng_list[1]
         arrival_rng = rng_list[2]
         voting_rng = rng_list[3]
+        choices_rng = rng_list[4]
         prec_avg_waittime = []
         perc_no_waittime = []
 
         for m in range(self.factors["n_prec"]):  # p is num of machines in that precinct
             mach_list = []
-            for i in range(len(self.factors["mach_allocation"])):  # i is each individual machine in that precinct 
+            for i in range(len(self.factors["mach_allocation"])):  # i is each individual machine in that precinct
                 p = self.factors["bd_prob"]  # Default is .05
-                if breakdown_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if the machine will be borken down to start day
+                if choices_rng.choices([0, 1], [1 - p, p]) == 1:  # Determining if the machine will be borken down to start day
                     t = breakdown_rng.gammavariate((self.factors["mean_repair"] ^ 2) / (self.factors["stdev_repair"] ^ 2), (self.factors["stdev_repair"] ^ 2) / (self.factors["mean_repair"]))  # Determines wait time for broken machine in minutes
                 else:
                     t = math.inf
@@ -308,6 +309,7 @@ facilities subject to a chance constraint on stockout probability.
 
 class MinVotingMaxWaitTime(Problem):
 
+
     """
     Base class to implement simulation-optimization problems.
 
@@ -375,10 +377,10 @@ class MinVotingMaxWaitTime(Problem):
     def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
         self.name = name  # refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1 
+        self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
-        self.variable_type = "discrete" 
+        self.variable_type = "discrete"
         self.upper_bounds = (math.inf, math.inf, math.inf, math.inf, math.inf)
         self.gradient_available = False
         self.optimal_value = None
@@ -463,7 +465,7 @@ class MinVotingMaxWaitTime(Problem):
         objectives : tuple
             vector of objectives
         """
-        
+
         objectives = (max(response_dict["avg_wait_time"]), )  # need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
         return objectives
 
@@ -482,7 +484,7 @@ class MinVotingMaxWaitTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None  # can set to none 
+        stoch_constraints = None  # can set to none
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -555,5 +557,5 @@ class MinVotingMaxWaitTime(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])  # natalia will have the code for this, a little more tricky 
+        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])  # natalia will have the code for this, a little more tricky
         return x

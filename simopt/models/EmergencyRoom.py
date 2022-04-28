@@ -3,6 +3,7 @@ Summary
 -------
 Simulate demand at facilities.
 """
+from re import L
 import numpy as np
 
 from base import Model, Problem
@@ -306,7 +307,7 @@ class EmergencyRoom(Model):
         reExam_rng = rng_list[4]
         treatment_rng = rng_list[5]
         er_rng = rng_list[6]
-        uniform_rng = rng_list[7]
+
         amb_rng = rng_list[8]
 
         arrival_times = []
@@ -361,21 +362,22 @@ class EmergencyRoom(Model):
         reception_time = []
         t = reception_rng.expovariate(self.factors["st_reception"])
 
-        for i in range(arrival_times):
+        for i in range(arrival_times):  # time that people are in reception
             reception_time.append(t)
-            t += reception_rng.expovariate(self.factors["st_reception"])
+            t = reception_rng.expovariate(self.factors["st_reception"])
 
         wait_times_rec = []
         receptionists = []
         arr_ind = 0
 
-        for i in range(self.factors["employee_allocations"][0]):
+        for i in range(self.factors["employee_allocations"][0]):  # create a list that has indeces for every receptionist
             receptionists.append(math.inf)
+
         clock_rec = 0
         rec_ind = 0
         rec_queue = []
 
-        while len(wait_times_rec) <= len(arrival_times):  #wait times for receptionist
+        while len(wait_times_rec) <= len(arrival_times):  # wait times for receptionist
             if min(receptionists) <= arrival_times[arr_ind]:
                 clock_rec = receptionists[rec_ind]
                 if len(rec_queue) > 0:
@@ -414,14 +416,14 @@ class EmergencyRoom(Model):
                     print("Error in receptionist loop")
 
         post_rec = []
-        for i in range(len(wait_times_rec)):
+        for i in range(len(wait_times_rec)):  # when patients are done with receptionists
             post_rec[i] = arrival_times[i] + wait_times_rec[i]
 
         system = []
         counter1 = 0
         counter2 = 0
 
-        while len(system) < (len(post_rec) + len(arrival_amb)):
+        while len(system) < (len(post_rec) + len(arrival_amb)):  # making list for entire system before patients go into exam room
             if post_rec[counter1] <= arrival_amb[counter2] and counter1 != len(post_rec) and counter2 != len(arrival_amb):
                 system.append(post_rec[counter1])
                 counter1 += 1
@@ -461,14 +463,6 @@ class EmergencyRoom(Model):
                 else:
                     t = 0
                 reexam_wt.append(t)
-        
-        for i in range(system):  # i is each individual 
-                p = self.factors["prob_extra"]  # Prob of needing tests is 50%
-                if lab_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs extra test
-                    t = lab_rng.triangular(self.factors["st_tr_min"], self.factors["st_tr_max"], self.factors["st_tr_mode"])  # Determines time for lab test
-                else:
-                    t = 0
-                test_wt.append(t)
 
         treatment = []  # what do i use here? for choices same with the next major minor
         for i in range(system):  # i is each individual 
@@ -479,14 +473,18 @@ class EmergencyRoom(Model):
                     t = 0  # No treatment needed
                 treatment.append(t)
 
-        major_minor = []
+        major = []
+        minor = []
         for i in range(system):  # i is each individual 
                 p = self.factors["prob_majorinjury"]  # Prob of needing treatment, 80%
                 if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if major injury
                     t =  er_rng.expovariate(self.factors["st_er"]) # Major injury
+                    major.append(t)
+                    minor.append(0)
                 else:
                     t = treatment_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])  # Minor injury
-                major_minor.append(t)
+                    minor.append(t)
+                    major.append(0)
         # go to exam room with x doctors (first queue), if extra tests go to extra tests with x technicians (second queue)
         # reexam process if they got extra tests (cant do it again)
         # emergency room or treatment room and nurse depending on which one... third queue
@@ -506,48 +504,84 @@ class EmergencyRoom(Model):
             er_nurse.append(math.inf)
         for i in range(self.factors["employee_allocations"][4]):
             treat_nurse.append(math.inf)
-        
+        # !!!! need to change because some don't need treatment
         sys_ind = 0
+        doc_ind = 0
         doc_queue = []
-        while len(system_waittime) < len(system):
-            if min(doctors) <= system[sys_ind]:
-                if min(doctors) <= min(lab_techs):
-                    if 
-                clock = doctors[sys_ind]
-                if len(doc_queue) > 0:
-                    clock = system[sys_ind]
-                    doc_ind = doctors.index(min(doctors))
-                    doctors[doc_ind] = clock + reception_time[arr_ind]
-                    wait_times_rec.append(clock_rec - rec_queue.pop(0))
-                    arr_ind += 1
-                elif len(rec_queue) == 0:
-                    rec_ind = receptionists.index(min(receptionists))
-                    receptionists[rec_ind] = math.inf
-                else:
-                    print("Error in receptionist loop")
+        lab_tech_queue = []
+        minor_queue = []
+        major_queue = []
+        types = []
+        next_event = 0
+        for i in range(5):
+            types.append(0)
+        clock = 0
+        popped = 0
+        test_ind = 0
+        mm_ind = 0
 
-            elif min(receptionists) > arrival_times[arr_ind]:
-                clock_rec = arrival_times[arr_ind]
-                if rec_queue == 0:
-                    for i in range(len(receptionists)):
-                        if receptionists[i] == math.inf:
-                            rec_ind = i
-                        elif receptionists[i] != math.inf:
-                            rec_ind = -1
-                        else:
-                            print("Error in receptionist loop")
-                    if rec_ind >= 0:
-                        receptionists[rec_ind] = clock_rec + reception_time[arr_ind]
-                        wait_times_rec.append(0)
-                        arr_ind += 1
-                    elif rec_ind == -1:
-                        rec_queue.append(clock_rec)
-                    else:
-                        print("Error in receptionist loop")
-                elif rec_queue > 0:
-                    rec_queue.append(clock_rec)
-                else:
-                    print("Error in receptionist loop")
+        while len(system_waittime) < len(test_wt):
+            types[0] = system.index(min(system))
+            types[1] = doctors.index(min(doctors))
+            types[2] = lab_techs.index(min(lab_techs))
+            types[3] = er_nurse.index(min(er_nurse))
+            types[4] = treat_nurse.index(min(treat_nurse))
+            next_event = types.index(min(types))
+            if next_event == 0:
+                # if it is a reexam I need to get from different list... so cant use pop. need to index...
+                # if there is one that finishes from extra tests, need a way to mark it in queue... perhaps append into queue as -1?
+                # if -1 then go through the reexam list until i find a value above 0
+                if doc_queue > 0:
+                    doc_queue.append(system.pop(0))
+                elif doc_queue == 0:
+                    for i in range(len(doc_queue)):
+                        if doc_queue[i] == math.inf:
+                            doc_queue[i] = system.pop(0)
+                            popped = 1
+                            break
+                        elif doc_queue[i] > math.inf:
+                            popped = 0
+                    if popped == 0:
+                        doc_queue.append(system.pop(0))  # need wait time as well
+            elif next_event == 1:
+                # doctor opens up
+                # need index of who was in the queue to see if they are going to the lab techs or not
+                # if they do go to lab techs, put in queue or in lab tech
+                # otherwise 
+                # take index of next value... if 
+                if test_wt[test_ind] == 0:
+                    # go to er or treatment
+                    if major[mm_ind] == 0:
+                        # go to minor treatment
+                        if len(minor_queue) > 0:
+
+                    elif major[mm_ind] > 0:
+                        # greater than 0 means go to er
+                    doctors[types[next_event]] = math.inf
+                    test_ind += 1
+                elif test_wt[test_ind] > 0:
+                    if len(lab_tech_queue) > 0:
+                        lab_tech_queue.append(test_wt[test_ind])
+                        test_ind += 1
+                    elif len(lab_tech_queue) == 0:
+                        for i in range(len(lab_tech_queue)):
+                            if lab_tech_queue[i] == math.inf:
+                                lab_tech_queue[i] = test_wt[test_ind]
+                                test_ind += 1
+                                popped = 0
+                                break
+                            else:
+                                popped = -1
+                        if popped == -1:
+                            lab_tech_queue.append(test_wt[test_ind])
+                            test_ind += 1
+                    doctors[types[next_event]] = math.inf
+            elif next_event == 2:
+                # lab tech opens up
+
+            elif next_event == 3:
+            elif next_event == 4:
+
 
         responses = {'stockout_flag': stockout_flag,  # Compose responses and gradients.
                      'n_fac_stockout': n_fac_stockout,
