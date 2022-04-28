@@ -227,26 +227,27 @@ class Voting(Model):
                     t = math.inf
                 mach_list.append(t)
 
-            t_i = self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0)
+            t_i = self.factors["mid_turn_per"][m] + abs(self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
 
             p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
 
             arr_times = []
             t = arrival_rng.expovariate(p_lamda)  # initial arrival
-            while t <= self.factors["hours"] * 60:
+            print(p_lamda)
+            while t <= (self.factors["hours"] * 60):
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
-                t = arrival_rng.expovariate(p_lamda) + t  # list is time at which each person arrives
-
+                t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
             voting_times = []
-            for p in range(len(self.factors["n_prec"])):
+            for p in range(self.factors["n_prec"]):
                 for i in range(len(arr_times)):
-                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ^ 2) / (self.factors["stdev_time2vote"] ^ 2), (self.factors["stdev_time2vote"] ^ 2) / (self.factors["mean_time2vote"])))
+                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ** 2) / (self.factors["stdev_time2vote"] ** 2), (self.factors["stdev_time2vote"] ** 2) / (self.factors["mean_time2vote"])))
             queue = []
             wait_times = []
             clock = 0
             vote_ind = 0
             arr_ind = 0
             mach_ind = 0
+            print("before while loop")
             while len(wait_times) <= len(arr_times):
                 if min(mach_list) <= arr_times[arr_ind]:
                     clock = min(mach_list)
