@@ -236,7 +236,7 @@ class Voting(Model):
             print(p_lamda)
             while t <= (self.factors["hours"] * 60):
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
-                t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
+                t += arrival_rng.expovariate(1/p_lamda)  # list is time at which each person arrives
             voting_times = []
             for p in range(self.factors["n_prec"]):
                 for i in range(len(arr_times)):
@@ -258,33 +258,43 @@ class Voting(Model):
                         vote_ind += 1
                         arr_ind += 1
                         wait_times.append(clock - queue.pop(0))
+                        print("1")
                     elif len(queue) == 0:
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = math.inf
+                        print("2")
                     else:
                         print("error in replicate simulation loop 1")
                         END
                 elif arr_times[arr_ind] < min(mach_list):
+                    print("2.5")
                     clock = arr_times[arr_ind]
                     if len(queue) == 0:
+                        print("3")
                         for i in range(len(mach_list)):
                             if mach_list[i] == math.inf:
                                 mach_ind = i
+                                print("4")
                                 break
                             elif mach_list[i] != math.inf:
                                 mach_ind = -1
+                                print("5")
                         if mach_ind >= 0:
                             mach_list[mach_ind] = clock + voting_times[vote_ind]
                             wait_times.append(0)
                             vote_ind += 1
                             arr_ind += 1
+                            print("6")
                         elif mach_ind == -1:  # no infinity values in list
                             queue.append(clock)
+                            print("7")
                         else:
                             print("error in loop queue is empty arrival times less than machine list")
                             END
                     elif len(queue) > 0:
                         queue.append(clock)
+                        arr_ind += 1
+                        print("8")
                     else:
                         print("error in simulation loop 1, arrival times less than machine list")
                         END
