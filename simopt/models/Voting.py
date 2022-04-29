@@ -227,7 +227,7 @@ class Voting(Model):
                     t = math.inf
                 mach_list.append(t)
 
-            t_i = self.factors["mid_turn_per"][m] + abs(self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
+            t_i = abs(self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
 
             p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
 
