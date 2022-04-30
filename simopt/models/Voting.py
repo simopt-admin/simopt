@@ -4,6 +4,7 @@ Summary
 Simulate demand at facilities.
 """
 
+from re import L
 from tkinter import END
 
 import numpy as np
@@ -46,7 +47,7 @@ class Voting(Model):
     def __init__(self, fixed_factors={}):
         self.name = "Voting"
         self.n_rngs = 5
-        self.n_responses = 1
+        self.n_responses = 2
         self.specifications = {
             "mach_allocation": {
                 "description": "number of machines allocation for precinct i",
@@ -227,16 +228,15 @@ class Voting(Model):
                     t = math.inf
                 mach_list.append(t)
 
-            t_i = abs(self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
+            t_i = self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * abs(turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
 
             p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
 
             arr_times = []
             t = arrival_rng.expovariate(p_lamda)  # initial arrival
-            print(p_lamda)
             while t <= (self.factors["hours"] * 60):
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
-                t += arrival_rng.expovariate(1/p_lamda)  # list is time at which each person arrives
+                t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
             voting_times = []
             for p in range(self.factors["n_prec"]):
                 for i in range(len(arr_times)):
@@ -248,53 +248,44 @@ class Voting(Model):
             arr_ind = 0
             mach_ind = 0
             print("before while loop")
-            while len(wait_times) <= len(arr_times):
-                if min(mach_list) <= arr_times[arr_ind]:
+            while arr_ind < len(arr_times):  # problem here! changed this for now
+                if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
                     if len(queue) > 0:  # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
-                        clock = arr_times[arr_ind]  # updates since we are also moving to the next event here to
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = clock + voting_times[vote_ind]
                         vote_ind += 1
                         arr_ind += 1
                         wait_times.append(clock - queue.pop(0))
-                        print("1")
                     elif len(queue) == 0:
-                        mach_ind = mach_list.index(min(mach_list))
+                        mach_ind = mach_list.index(min(mach_list))  # this is wrong too
                         mach_list[mach_ind] = math.inf
-                        print("2")
                     else:
                         print("error in replicate simulation loop 1")
                         END
                 elif arr_times[arr_ind] < min(mach_list):
-                    print("2.5")
                     clock = arr_times[arr_ind]
                     if len(queue) == 0:
-                        print("3")
                         for i in range(len(mach_list)):
                             if mach_list[i] == math.inf:
                                 mach_ind = i
-                                print("4")
                                 break
                             elif mach_list[i] != math.inf:
                                 mach_ind = -1
-                                print("5")
                         if mach_ind >= 0:
                             mach_list[mach_ind] = clock + voting_times[vote_ind]
                             wait_times.append(0)
                             vote_ind += 1
                             arr_ind += 1
-                            print("6")
                         elif mach_ind == -1:  # no infinity values in list
                             queue.append(clock)
-                            print("7")
+                            arr_ind += 1
                         else:
                             print("error in loop queue is empty arrival times less than machine list")
                             END
                     elif len(queue) > 0:
                         queue.append(clock)
                         arr_ind += 1
-                        print("8")
                     else:
                         print("error in simulation loop 1, arrival times less than machine list")
                         END
@@ -302,13 +293,19 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-        prec_avg_waittime.append.mean(wait_times)
-        perc_no_waittime.append(wait_times.count(0) / len(wait_times))
-
+                print(len(wait_times))
+            print(len(arr_times))
+            sum = 0
+            for i in range(len(wait_times)):
+                sum += wait_times[i]
+            prec_avg_waittime.append(sum/len(wait_times))
+            perc_no_waittime.append(wait_times.count(0) / len(wait_times))
         responses = {
-            'avg_wait_time': prec_avg_waittime,
-            'perc_no_waittime': perc_no_waittime
+            "prec_avg_waittime": prec_avg_waittime,
+            "perc_no_waittime": perc_no_waittime
         }
+        for key, value in responses.items():
+            print(f"\t {key} is {value}.")
 
         return responses
 """
