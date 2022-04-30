@@ -55,7 +55,7 @@ class ASTRODF(Solver):
     def __init__(self, name="ASTRODF", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -87,12 +87,12 @@ class ASTRODF(Solver):
             "gamma_02": {
                 "description": "initial trust-region radius parameter tuning coefficient 2",
                 "datatype": float,
-                "default": 0.5
+                "default": 0.95
             },
             "gamma_1": {
                 "description": "very successful step trust-region radius increase",
                 "datatype": float,
-                "default": 1.5
+                "default": 1.05
             },
             "gamma_2": {
                 "description": "unsuccessful step trust-region radius decrease",
@@ -152,7 +152,7 @@ class ASTRODF(Solver):
             "criticality_step": {
                 "description": "True: skip contraction loop if not near critical region, False: always run contraction loop",
                 "datatype": bool,
-                "default": False
+                "default": True
             },
             "criticality_threshold": {
                 "description": "threshold on gradient norm indicating near-critical region",
@@ -307,6 +307,10 @@ class ASTRODF(Solver):
                         sig2 = new_solution.objectives_var
                         if sample_size >= self.samplesize(k, sig2, delta_k, 1, kappa_select, kappa_tilde):
                             break
+
+                        if sample_size  > 100:
+                            break
+
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
 
@@ -314,11 +318,13 @@ class ASTRODF(Solver):
 
             # construct the model and get the model coefficients
             q, grad, Hessian = self.coefficient(Z, fval, problem)
-
             if not criticality_step:
                 # check the condition and break
                 if norm(grad) > criticality_threshold:
                     break
+
+            if norm(grad) == 0:
+                break
 
             if delta_k <= mu * norm(grad):
                 break
@@ -361,6 +367,7 @@ class ASTRODF(Solver):
 
             Y.append(plus)
             Y.append(minus)
+
         return Y
 
     def parameter_tuning(self, delta, problem):
@@ -405,11 +412,16 @@ class ASTRODF(Solver):
                         if sample_size >= self.determine_kappa_tilde(k, fn, sig2):
                             kappa_tilde = fn/(delta**2)
                             break
+
+                        if sample_size  > 100:
+                            kappa_tilde = fn/(delta**2)
+                            break
                     else:
                         if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
                             break
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta_k, k, problem, expended_budget, kappa_select, kappa_tilde, new_solution)
+
             if solver_select == True:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
@@ -449,6 +461,10 @@ class ASTRODF(Solver):
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
                     break
+
+                if sample_size > 100:
+                    break
+
 
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
@@ -543,10 +559,9 @@ class ASTRODF(Solver):
 
         intermediate_budgets = (
                 intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * problem.factors[
-            "budget"] * 0.01).tolist()
+            "budget"] * 0.02).tolist()
         intermediate_budgets[0] = 0
         delta_k = delta
-
         while expended_budget < problem.factors["budget"]:
             k += 1
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x,
@@ -594,6 +609,9 @@ class ASTRODF(Solver):
                 if sample_size >= self.samplesize(k, sig2, delta_k, 0, kappa_select, kappa_tilde):
                     break
 
+                if sample_size > 100:
+                    break
+
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
 
@@ -624,5 +642,4 @@ class ASTRODF(Solver):
                 intermediate_budgets.append(expended_budget)
             else:
                 delta_k = min(gamma_2 * delta_k, delta_max)
-
         return recommended_solns, intermediate_budgets
