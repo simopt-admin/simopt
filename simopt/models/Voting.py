@@ -217,6 +217,7 @@ class Voting(Model):
         choices_rng = rng_list[4]
         prec_avg_waittime = []
         perc_no_waittime = []
+        rand_list = []
 
         for m in range(self.factors["n_prec"]):  # p is num of machines in that precinct
             mach_list = []
@@ -228,19 +229,18 @@ class Voting(Model):
                     t = math.inf
                 mach_list.append(t)
 
-            t_i = self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * abs(turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
+            t_i = abs(self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
 
-            p_lamda = (self.factors["reg_vote"][m] * t_i) / self.factors["hours"]
+            p_lamda = (self.factors["reg_vote"][m] * t_i) / (self.factors["hours"])
 
             arr_times = []
-            t = arrival_rng.expovariate(p_lamda)  # initial arrival
+            t = arrival_rng.expovariate(1/p_lamda)  # initial arrival, question here too
             while t <= (self.factors["hours"] * 60):
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
-                t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
+                t += arrival_rng.expovariate(1/p_lamda)  # list is time at which each person arrives
             voting_times = []
-            for p in range(self.factors["n_prec"]):
-                for i in range(len(arr_times)):
-                    voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ** 2) / (self.factors["stdev_time2vote"] ** 2), (self.factors["stdev_time2vote"] ** 2) / (self.factors["mean_time2vote"])))
+            for i in range(len(arr_times)):
+                voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ** 2) / (self.factors["stdev_time2vote"] ** 2), (self.factors["stdev_time2vote"] ** 2) / (self.factors["mean_time2vote"])))
             queue = []
             wait_times = []
             clock = 0
@@ -248,17 +248,18 @@ class Voting(Model):
             arr_ind = 0
             mach_ind = 0
             print("before while loop")
+            # i think the problem is when there are still people in the machines and we are at the end of the arrival list. the end of the day
             while arr_ind < len(arr_times):  # problem here! changed this for now
                 if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
                     if len(queue) > 0:  # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
                         mach_ind = mach_list.index(min(mach_list))
-                        mach_list[mach_ind] = clock + voting_times[vote_ind]
+                        next_queue = queue.pop(0)  # added this
+                        mach_list[mach_ind] = next_queue + voting_times[vote_ind]  # added this
                         vote_ind += 1
-                        arr_ind += 1
-                        wait_times.append(clock - queue.pop(0))
+                        wait_times.append(clock - next_queue)  # added this
                     elif len(queue) == 0:
-                        mach_ind = mach_list.index(min(mach_list))  # this is wrong too
+                        mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = math.inf
                     else:
                         print("error in replicate simulation loop 1")
@@ -293,8 +294,11 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-                print(len(wait_times))
-            print(len(arr_times))
+            if len(wait_times) == len(arr_times):
+                rand_list.append("True")
+            else:
+                rand_list.append(len(wait_times))
+                rand_list.append(len(arr_times))
             sum = 0
             for i in range(len(wait_times)):
                 sum += wait_times[i]
@@ -304,6 +308,7 @@ class Voting(Model):
             "prec_avg_waittime": prec_avg_waittime,
             "perc_no_waittime": perc_no_waittime
         }
+        print(rand_list)
         for key, value in responses.items():
             print(f"\t {key} is {value}.")
 
