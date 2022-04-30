@@ -3,15 +3,43 @@ Solver: Stochastic Trust-Region Response-Surface Method (STRONG)
 
 Description:
 ------------
-<A paragraph describing the solver. Use math if it is helpful.>
+The goal is to estimate the shape of the underlying response distribution, 
+through function evaluations taken within a neighborhood of the incumbent solution.
+STRONG has two stages in each iteration where a sub trust region is defined: 
+stage I optimizes a first-order polynomial, and stage II optimizes a second-order 
+polynomial. And if stage II fails to generate a good solution, we enter an 
+inner loop where value, gradient, and Hessian of the center point are further 
+calculated.
 
-Sample math... :math:`S = 1500`
 
-Sample math... 
+Modifications & Implementation:
+----------------------
+Process within a stage:
+We first find the Cauchy Point and the new solution in order to create a polynomial.
+Then, the solver either shrinks trust region size, or move center point while trust 
+regin size stays constant, or move center point while trust region enlarges.
 
-.. math::
+Helper functions:
+There are 3 helper functions in addition to the main algorithm. cauchy_point finds
+the Cauchy Point by using the gradient and Hessian matrix to find the steepest descent
+direction. check_cons checks the feasibility of the Cauchy point and update the 
+point accordingly. Lastly, finite_diff is used to calculate the finite difference
+for gradients and BFGS of the Hessian.
 
-   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
+Hyperparameters:
+The user has the option to assign different values than the defaults to the model 
+factors sensitivity, delta_threshold, delta_T, eta_0, eta_1, gamma_1, gamma_2, lambda 
+through fixed_factors.
+
+
+Scope:
+----------------------
+* objective_type: single
+
+* constraint_type: box
+
+* variable_type: discrete
+
 
 Solver Factors:
 --------------
@@ -59,17 +87,8 @@ Solver Factors:
 
     * Default: 2
 
-Respones:
----------
-* <response1name>: <short description>
-
-* <response2name>: <short description>
-
-* <response3name>: <short description>
-
 
 References:
 ===========
 This solver is adapted from the article Kuo-Hao Chang, L. Jeff Hong, Hong Wan, (2013) Stochastic Trust-Region Response-Surface Method (STRONG)—A New
 Response-Surface Framework for Simulation Optimization. INFORMS Journal on Computing 25(2):230-243. https://doi.org/10.1287/ijoc.1120.0498
-
