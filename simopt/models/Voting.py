@@ -234,10 +234,10 @@ class Voting(Model):
             p_lamda = (self.factors["reg_vote"][m] * t_i) / (self.factors["hours"])
 
             arr_times = []
-            t = arrival_rng.expovariate(1/p_lamda)  # initial arrival, question here too
+            t = arrival_rng.expovariate(p_lamda)  # initial arrival, question here too
             while t <= (self.factors["hours"] * 60):
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
-                t += arrival_rng.expovariate(1/p_lamda)  # list is time at which each person arrives
+                t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
             voting_times = []
             for i in range(len(arr_times)):
                 voting_times.append(voting_rng.gammavariate((self.factors["mean_time2vote"] ** 2) / (self.factors["stdev_time2vote"] ** 2), (self.factors["stdev_time2vote"] ** 2) / (self.factors["mean_time2vote"])))
@@ -294,11 +294,19 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
+            while len(queue) > 0:
+                clock = min(mach_list) # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                mach_ind = mach_list.index(min(mach_list))
+                next_queue = queue.pop(0)  # added this
+                mach_list[mach_ind] = next_queue + voting_times[vote_ind]  # added this
+                vote_ind += 1
+                wait_times.append(clock - next_queue)  # added this
             if len(wait_times) == len(arr_times):
                 rand_list.append("True")
             else:
                 rand_list.append(len(wait_times))
                 rand_list.append(len(arr_times))
+                rand_list.append(vote_ind)
             sum = 0
             for i in range(len(wait_times)):
                 sum += wait_times[i]
@@ -311,7 +319,7 @@ class Voting(Model):
         print(rand_list)
         for key, value in responses.items():
             print(f"\t {key} is {value}.")
-
+        print(len(queue))
         return responses
 """
 Summary
