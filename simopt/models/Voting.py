@@ -62,12 +62,12 @@ class Voting(Model):
             "mid_turn_per": {
                 "description": "midpoint turnout percentage for precinct i",
                 "datatype": list,
-                "default": [.4, .2, .6, .3, .1]
+                "default": [10, 15, 10, 50, 30]
             },
             "turn_ran": {
                 "description": "turnout range specific to precinct i",
                 "datatype": list,
-                "default": [10, 15, 10, 50, 30]
+                "default": [.4, .2, .6, .3, .1]
             },
             "reg_vote": {
                 "description": "number of registered voters in precinct i",
@@ -146,8 +146,8 @@ class Voting(Model):
         return self.factors["n_prec"] > 0
 
     def check_mid_turn_per(self):  # veifying that all are percentages
-        for i in self.factors["mid_turn_per"]:
-            if i < 0 or i > 1:
+        for i in range(len(self.factors["mid_turn_per"])):
+            if self.factors["mid_turn_per"][i] < self.factors["turn_ran"][i]:
                 return False
         return True
 
@@ -229,7 +229,7 @@ class Voting(Model):
                     t = math.inf
                 mach_list.append(t)
 
-            t_i = abs(self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0))  # ask Dr. Eckman about this!!
+            t_i = self.factors["mid_turn_per"][m] + self.factors["turn_ran"][m] * turnout_rng.triangular(-1, 1, 0)  # ask Dr. Eckman about this!!
 
             p_lamda = (self.factors["reg_vote"][m] * t_i) / (self.factors["hours"])
 
