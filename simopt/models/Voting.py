@@ -235,7 +235,7 @@ class Voting(Model):
 
             arr_times = []
             t = arrival_rng.expovariate(p_lamda)  # initial arrival, question here too
-            while t <= (self.factors["hours"] * 60):
+            while t <= (self.factors["hours"] * 60):  # question
                 arr_times.append(t)  # appends before so that the last arrival in list will be before voting closes
                 t += arrival_rng.expovariate(p_lamda)  # list is time at which each person arrives
             voting_times = []
@@ -247,8 +247,7 @@ class Voting(Model):
             vote_ind = 0
             arr_ind = 0
             mach_ind = 0
-            print("before while loop")
-            # i think the problem is when there are still people in the machines and we are at the end of the arrival list. the end of the day
+            print("before while loop")  # i think the problem is when there are still people in the machines and we are at the end of the arrival list. the end of the day
             while arr_ind < len(arr_times):  # problem here! changed this for now
                 if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
@@ -295,7 +294,7 @@ class Voting(Model):
                     print('error in replicate simulation loop 2')
                     END
             while len(queue) > 0:
-                clock = min(mach_list) # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                clock = min(mach_list)
                 mach_ind = mach_list.index(min(mach_list))
                 next_queue = queue.pop(0)  # added this
                 mach_list[mach_ind] = next_queue + voting_times[vote_ind]  # added this
@@ -311,7 +310,8 @@ class Voting(Model):
             for i in range(len(wait_times)):
                 sum += wait_times[i]
             prec_avg_waittime.append(sum/len(wait_times))
-            perc_no_waittime.append(wait_times.count(0) / len(wait_times))
+            perc_no_waittime.append((wait_times.count(0) / len(wait_times)) * 100)
+            print(len(queue))
         responses = {
             "prec_avg_waittime": prec_avg_waittime,
             "perc_no_waittime": perc_no_waittime
@@ -319,7 +319,7 @@ class Voting(Model):
         print(rand_list)
         for key, value in responses.items():
             print(f"\t {key} is {value}.")
-        print(len(queue))
+
         return responses
 """
 Summary
