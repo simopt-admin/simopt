@@ -586,7 +586,7 @@ class ASTRODF(Solver):
                 nlc = NonlinearConstraint(con_f, 0, delta_k)
                 solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
                 candidate_x = new_x + solve_subproblem.x
-            
+
             # projecting the solution back to the feasible region - TODO
             for i in range(problem.dim):
                 if candidate_x[i] <= problem.lower_bounds[i]:
@@ -608,6 +608,9 @@ class ASTRODF(Solver):
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.samplesize(problem.dim, k, sig2, delta_k, 0, kappa_select, kappa_tilde):
+                    break
+
+                if sample_size > 100:
                     break
 
                 if sample_size > 100:
