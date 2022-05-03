@@ -3,13 +3,12 @@ Solver: Stochastic Trust-Region Response-Surface Method (STRONG)
 
 Description:
 ------------
-The goal is to estimate the shape of the underlying response distribution, 
+The solver estimates the shape of the underlying response distribution, 
 through function evaluations taken within a neighborhood of the incumbent solution.
 STRONG has two stages in each iteration where a sub trust region is defined: 
 stage I optimizes a first-order polynomial, and stage II optimizes a second-order 
-polynomial. And if stage II fails to generate a good solution, we enter an 
-inner loop where value, gradient, and Hessian of the center point are further 
-calculated.
+polynomial. If stage II fails to generate a good solution, an inner loop is initiated 
+where value, gradient, and Hessian of the center point are further calculated.
 
 
 Modifications & Implementation:
@@ -23,13 +22,13 @@ Helper functions:
 There are 3 helper functions in addition to the main algorithm. cauchy_point finds
 the Cauchy Point by using the gradient and Hessian matrix to find the steepest descent
 direction. check_cons checks the feasibility of the Cauchy point and update the 
-point accordingly. Lastly, finite_diff is used to calculate the finite difference
-for gradients and BFGS of the Hessian.
+point accordingly. Lastly, finite_diff uses finite difference to estimate gradients and 
+BFGS to estimate Hessian matrix.
 
 Hyperparameters:
 The user has the option to assign different values than the defaults to the model 
-factors sensitivity, delta_threshold, delta_T, eta_0, eta_1, gamma_1, gamma_2, lambda 
-through fixed_factors.
+factors n0, n_r, sensitivity, delta_threshold, delta_T, eta_0, eta_1, gamma_1, 
+gamma_2, lambda, lambda_2 through changing fixed_factors.
 
 
 Scope:
@@ -38,7 +37,7 @@ Scope:
 
 * constraint_type: box
 
-* variable_type: discrete
+* variable_type: continuous
 
 
 Solver Factors:
@@ -51,7 +50,7 @@ Solver Factors:
 
     * Default: 10
 
-* r: Number of replications taken at each solution
+* n_r: Number of replications taken at each solution
 
     * Default: 10
 
@@ -83,10 +82,13 @@ Solver Factors:
 
     * Default: 1.11
 
-* lambda: multiplicative factor for r within finite difference
+* lambda: multiplicative factor for n_r within finite difference
 
     * Default: 2
 
+* lambda_2: magnifying factor for n_r in stage I and stage II
+
+    * Default: 1.01
 
 References:
 ===========

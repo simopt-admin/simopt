@@ -22,10 +22,10 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Specify the names of the solver and problem to test.
 # These names are strings and should match those input to directory.py.
 # Ex:
-solver_name = "RNDSRCH"  # Random search solver
-problem_name = "COVID-1" # Continuous newsvendor problem
-# solver_name = "ASTRODF"  # Random search solver
-# problem_name = "PARAMESTI-1" # Continuous newsvendor problem
+# solver_name = "RNDSRCH"  # Random search solver
+# problem_name = "COVID-1" # Continuous newsvendor problem
+solver_name = "STRONG"  # Random search solver
+problem_name = "PARAMESTI-1" # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -58,10 +58,10 @@ myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fix
 # Run a fixed number of macroreplications of the solver on the problem.
 myexperiment.run(n_macroreps=10)
 
-print(myexperiment.all_recommended_xs)
-with open('covid_res.txt', 'w') as f:
-    for item in myexperiment.all_recommended_xs:
-        f.write("%s\n" % item)
+# print(myexperiment.all_recommended_xs)
+# with open('covid_res.txt', 'w') as f:
+#     for item in myexperiment.all_recommended_xs:
+#         f.write("%s\n" % item)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)

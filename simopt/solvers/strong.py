@@ -111,6 +111,11 @@ class STRONG(Solver):
                 "description": "magnifying factor for n_r inside the finite difference function",
                 "datatype": int,
                 "default": 2
+            },
+            "lambda_2": {
+                "description": "magnifying factor for n_r in stage I and stage II",
+                "datatype": int,
+                "default": 1.01
             }
         }
         self.check_factor_list = {
@@ -252,7 +257,7 @@ class STRONG(Solver):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
-                n_r = int(np.ceil(1.01 * n_r))
+                n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
             # Stage II.
             # When trust region size is very small, use the quadratic design.
@@ -301,15 +306,15 @@ class STRONG(Solver):
                         try_solution = self.create_new_solution(tuple(try_x), problem)
 
                         # Step 3.
-                        problem.simulate(try_solution, int(n_r + np.ceil(sub_counter**1.01)))
-                        expended_budget += int(n_r + np.ceil(sub_counter**1.01))
+                        problem.simulate(try_solution, int(n_r + np.ceil(sub_counter**self.factors["lambda_2"])))
+                        expended_budget += int(n_r + np.ceil(sub_counter**self.factors["lambda_2"]))
                         g_b_new = -1 * problem.minmax[0] * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        problem.simulate(dummy_solution, int(np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)))
-                        expended_budget += int(np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01))
+                        problem.simulate(dummy_solution, int(np.ceil(sub_counter**self.factors["lambda_2"]) - np.ceil((sub_counter - 1)**self.factors["lambda_2"])))
+                        expended_budget += int(np.ceil(sub_counter**self.factors["lambda_2"]) - np.ceil((sub_counter - 1)**self.factors["lambda_2"]))
                         dummy = -1 * problem.minmax[0] * dummy_solution.objectives_mean
                         # Update g_old.
-                        g_b_old = (g_b_old * (n_r + np.ceil((sub_counter - 1)**1.01)) + (np.ceil(sub_counter**1.01) - np.ceil((sub_counter - 1)**1.01)) * dummy) / (n_r + np.ceil(sub_counter**1.01))
+                        g_b_old = (g_b_old * (n_r + np.ceil((sub_counter - 1)**self.factors["lambda_2"])) + (np.ceil(sub_counter**self.factors["lambda_2"]) - np.ceil((sub_counter - 1)**self.factors["lambda_2"])) * dummy) / (n_r + np.ceil(sub_counter**self.factors["lambda_2"]))
                         rr_new = g_b_old + np.matmul(np.subtract(try_x, new_x), G) + 0.5 * np.matmul(np.matmul(np.subtract(try_x, new_x), H), np.subtract(try_x, new_x))
                         rr_old = g_b_old
                         rrho = (g_b_old - g_b_new) / (rr_old - rr_new)
@@ -353,7 +358,7 @@ class STRONG(Solver):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
-                n_r = int(np.ceil(1.01 * n_r))
+                n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         return recommended_solns, intermediate_budgets
 
     # Finding the Cauchy Point.
