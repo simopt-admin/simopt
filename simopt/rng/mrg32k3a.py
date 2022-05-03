@@ -312,6 +312,28 @@ class MRG32k3a(random.Random):
         u = self.random()
         z = bsm(u)
         return mu + sigma*z
+    
+    def lognormalvariate(self, mu=0, sigma=1):
+        """Generate a Lognormal random variate.
+
+        Parameters
+        ----------
+        mu : 'float'
+            expected value of the lognormal distribution from which to
+            generate.
+        sigma : 'float'
+            standard deviation of the lognormal distribution from which to
+            generate.
+
+        Returns
+        -------
+        'float'
+            a lognormal random variate from the specified distribution.
+        """
+        u = self.random()
+        z = bsm(u)
+        return exp(log(mu ** 2 / sqrt(mu ** 2 + sigma ** 2)) + sqrt(log(1 + sigma ** 2 / mu ** 2))*z)
+
 
     def mvnormalvariate(self, mean_vec, cov, factorized=True):
         """Generate a normal random vector.
