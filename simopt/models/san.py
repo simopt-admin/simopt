@@ -438,5 +438,5 @@ class SANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0.01, 10) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.uniform(0.01, 100) for _ in range(self.dim)])
         return x

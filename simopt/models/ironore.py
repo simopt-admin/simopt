@@ -506,7 +506,8 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        x = (rand_sol_rng.lognormalvariate(80,1), rand_sol_rng.lognormalvariate(2000,1), rand_sol_rng.lognormalvariate(40,1), rand_sol_rng.lognormalvariate(100,1))
         return x
 
 """
@@ -585,7 +586,7 @@ class IronOreMaxRevCnt(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
+        self.lower_bounds = (0., 0., 0.)
         self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
@@ -761,5 +762,6 @@ class IronOreMaxRevCnt(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        x = (rand_sol_rng.lognormalvariate(80,1), rand_sol_rng.lognormalvariate(40,1), rand_sol_rng.lognormalvariate(100,1))
         return x

@@ -521,5 +521,6 @@ class SSContMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
+        # x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
+        x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
         return x
