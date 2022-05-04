@@ -10,7 +10,7 @@ into different groups with intra-group interaction matrix :math:`inter\_rate`. T
 transmissions per interaction. The transmission rate per individual can be calculated by multiplying 
 :math:`inter\_rate` by :math:`p\_trans`. The disease progression for each individual follows the following semi-Markov process:
 
-.. image:: covid_compartment.png
+.. image:: covid_compartments.png
   :width: 400
 
 After recovery, we assume that an individual cannot be reinfected. Once tested positive, the patient will be moved to isolated states 
