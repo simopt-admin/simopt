@@ -58,10 +58,43 @@ This section will explain how to add Experiments to the Experiments or MetaExper
 
 #### Creating an Experiment
 Instead of loading an existing Experiment, you can create one from the main page of the GUI:
-1. First, select a solver from the "Solver" dropdown list.
+1. First, select a solver from the "Solver" dropdown list. Each of the solvers contain an abbreviation for the type of problems the solver can handle.
 2. Change factors associated with the solver as necessary.
 3. All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors). If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
-4. Select a problem from the "Problem" dropdown list.
+4. Select a problem from the "Problem" dropdown list. Each problem contain an abbreviation that determines which type of solver it can work with. The letters in the abbreviation stand for: 
+<table>
+    <tr>
+      <th> Objective </th>
+      <th> Constraint </th>
+      <th> Variable </th>
+      <th> Gradient </th>
+    </tr>
+    <tr>
+      <td> Single (S) </td>
+      <td> Unconstrained (U) </td>
+      <td> Discrete (D) </td>
+      <td> Gradients Available (G) </td>
+    </tr>
+  <tr>
+      <td> Multi (M) </td>
+      <td> Box (B) </td>
+      <td> Continuous (C) </td>
+      <td> Gradients Not Available (NG) </td>
+    </tr>
+  <tr>
+      <td>  </td>
+      <td> Deterministic (D) </td>
+      <td> Mixed (M)  </td>
+      <td>  </td>
+    </tr>
+  <tr>
+      <td>  </td>
+      <td> Stochastic (S) </td>
+      <td> </td>
+      <td>  </td>
+    </tr>
+  
+</table>
 5. Change factors associated with the problem and model as necessary.
 6. All problems with unique factors must have unique names (no two problems can have the same name, but different factors). If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
 7. The number of macroreplications can be modified in the top-left corner. The default is 10 macroreplicatons.
