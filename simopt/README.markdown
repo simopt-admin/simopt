@@ -58,7 +58,7 @@ This section will explain how to add Experiments to the Experiments or MetaExper
 
 #### Creating an Experiment
 Instead of loading an existing Experiment, you can create one from the main page of the GUI:
-1. First, select a solver from the "Solver" dropdown list. Each of the solvers contain an abbreviation for the type of problems the solver can handle.
+1. First, select a solver from the "Solver" dropdown list. Each of the solvers contain an abbreviation for the type of problems the solver can handle. Once a solver is selected it will sort through the "Problems" and show only the problems that work with this solver. 
 2. Change factors associated with the solver as necessary.
 3. All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors). If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
 4. Select a problem from the "Problem" dropdown list. Each problem contain an abbreviation that determines which type of solver it can work with. The letters in the abbreviation stand for: 
@@ -132,7 +132,7 @@ Meta-Experiments are post-processed and post-normalized at the same time.
 The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem- solver pair from one Meta-Experiment can be plotted. (The ability to produce plots based on multiple problems *and* multiple solvers using the GUI is currently under development.) To return to the main page, click the red "x" in the top-left corner of the window.
 1. On the left side, select one or more problems from the problem list.
 2. Select solvers from the solver list.
-3. On the right side, select a plot type and adjust plot parameters and settings.
+3. On the right side, select a plot type and adjust plot parameters and settings. The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Box, Violin, and Terminal Scatter. 
 4. Click "Add."
 5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved at.
 6. To view one plot, click "View Plot," or all plots can be viewed together by clicking "See All Plots" at the bottom of the page.
