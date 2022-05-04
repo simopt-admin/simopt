@@ -1,71 +1,183 @@
-Optimization of COVID-19 Testing Frequency
-==================================================
+Model: COVID-19 Disease Progression and Testing Frequency (COVID)
+=================================================================
 
-**Problem Description**
-
+Description:
+------------
 COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
-regular survelliance testing to identify, isolate, and reduce disease spread. The population is divided 
-into three groups: undergraduate, graduate, and faculty/staff with interaction rates "inter_rate". 
-There is a probability of :math:`p\_trans` transmissions per interaction. The initial proportion of infected
-is :math:`init\_infect\_percent`. The disease progression for each individual is generated according to the following semi-Markov process:
+regular survelliance testing to identify, isolate, and reduce disease spread. 
+The initial proportion of infectedi s :math:`init\_infect\_percent`. The population is divided 
+into different groups with intra-group interaction matrix :math:`inter\_rate`. There is a probability of :math:`p\_trans` 
+transmissions per interaction. The transmission rate per individual can be calculated by multiplying 
+:math:`inter\_rate` by :math:`p\_trans`. The disease progression for each individual follows the following semi-Markov process:
 
-[insert digram from poster]
+.. image:: covid_compartment.png
+  :width: 400
 
-The number of days one takes to go from exposed to infectious is Poisson distributed with mean :math:`lamb\_exp\_inf`. 
-An infected individual has a :math:`asymp\_rate` chance of being asymptomatic. The number of 
-days one takes to go from infectious to symptom onset is Poisson distributed with mean :math:`lamb\_inf\_sym`.
-After recovery, we assume that one cannot be reinfected.
-
-We assume that a test has a false negative rate :math:`false\_neg` and a false positive rate :math:`false\_pos`.
-Once tested positive, the patient will be isolated for :math:`iso\_day` number of days and follow the same disease
-progression until recovery.
-
-The decision variables is :math:`freq`, the testing frequency for each group.
+After recovery, we assume that an individual cannot be reinfected. Once tested positive, the patient will be moved to isolated states 
+and follow the same disease progression.
 
 The simulation is generated as follows:
 
-  1. Generate number of people exposed on day n. 
+1. For each day in :math:`n` and for each group :math:`g`, generate newly exposed individuals.
 
-  2. For each individual in this group, generate their future disease progression and testing:
+2. For each newly exposed individual in group :math:`g`:
 
-    (a) 
-    
-    (b) 
+    (a) Generate :math:`exp\_days` number of days remaining in exposed.
 
-    (c)
+    (b) For each day in exposed, move to isolation exposed if tested positive.
 
-    (d)
+    (c) At the end of :math:`exp\_days`, move to infectious/isolation infectious
 
-    (e)
+    (d) Generate :math:`inf\_days` number of days remaining in infectious/isolation infectious.
 
-  3. 
+    (e) For each day in infectious, move to isolation infectious if tested positive.
+
+    (f) At the end of :math:`inf\_days`, move to symptomatic/asymptomatic/isolation (a)symptomatic.
+
+    (g) Generate :math:`symp\_asymp\_days` number of days remaining in symptomatic/asymptomatic/isolation (a)symptomatic.
+
+    (h) At the end of :math:`symp\_asymp\_days`, move to recovered.
 
 
-We will find the optimal testing frequency for each group which minimizes the total number of infections. 
+Sources of Randomness:
+----------------------
+There are six sources of randomness.
+
+1. The number of newly exposed individuals on each day follows a Poisson distribution with mean equal to transmission rate times
+number of free infected (infectious + symptomatic + asymptomatic) individuals times number of susceptible individuals.
+
+2. The number of days from exposed to infectious for each individual is Poisson distributed with mean :math:`lamb\_exp\_inf`.
+
+3. The number of days from infectious to symptomatic/asymptomatic for each individual is Poisson distributed with mean :math:`lamb\_inf\_sym`.
+
+4. The number of days from symptomatic/asymptomatic to recovered for each individual is Poisson distributed with mean :math:`lamb\_sym`.
+
+5. An individual in infectious state has a :math:`asymp\_rate` chance of being asymptomatic.
+
+6. An exposed/infectious/symptomatic/asymptomatic individual in group :math:`g` has a probability 
+:math:`freq_g` of being tested and moved to the isolated states.
+
+Model Factors:
+--------------
+* num_groups: Number of groups.
+
+    * Default: 3
+
+* n: Number of days to simulate.
+
+    * Default: 200
+
+* p_trans: Probability of transmission per interaction.
+
+    * Default: 0.018
+
+* inter_rate: Interaction rates between two groups per day
+
+    * Default: (10.58, 5, 2, 4, 6.37, 3, 6.9, 4, 2)
+
+* group_size: Size of each group.
+
+    * Default: (8123, 4921, 3598)
+
+* lamb_exp_inf: Mean number of days from exposed to infectious.
+
+    * Default: 2.0
+
+* lamb_inf_sym: Mean number of days from infectious to symptomatic.
+
+    * Default: 3.0
+
+* lamb_sym: Mean number of days from symptomatic/asymptomatic to recovered.
+
+    * Default: 12.0
+
+* init_infect_percent: Initial prevalance level.
+
+    * Default: (0.00200, 0.00121, 0.0008)
+
+* freq: Testing frequency of each group.
+
+    * Default: (0/7, 0/7, 0/7)
+
+* asymp_rate: Probability of being asymptomatic.
+
+    * Default: 0.35
+
+* false_neg: False negative rate.
+
+    * Default: 0.12
+
+Respones:
+---------
+* num_infected: Number of infected individuals per day
+
+* num_susceptible: Number of susceptible individuals per day
+
+* num_exposed: Number of exposed individuals per day
+
+* num_recovered: Number of recovered individuals per day
+
+* total_cases: Total number of infected individuals
+
+References:
+===========
+This model is adapted from the article Frazier, Peter I et al. “Modeling for COVID-19 college reopening decisions: Cornell, a case study.” Proceedings of the National Academy of Sciences of the United States of America vol. 119,2 (2022): e2112532119. doi:10.1073/pnas.2112532119
 
 
-**Recommended Parameter Settings:** 
 
-"inter_rate": (10.58, 5, 2, 4, 10.58, 3, 1, 2, 10.57)
+Optimization Problem: CovidMinInfect (COVID-1)
+========================================================
 
-"p_trans": 0.018
+Decision Variables:
+-------------------
+* freq
 
-"lamb_exp_inf": 2
+Objectives:
+-----------
+Find the optimal testing frequency for each group which minimizes the expected total number of infected individuals over time :math:`n`.
 
-"lamb_inf_sym": 3
 
-"asymp_rate": 0.35
+Constraints:
+------------
+The total number of tests per day should be smaller than testing_cap.
 
-"false_pos": 0
+Problem Factors:
+----------------
+* initial_solution: Initial solution from which solvers start.
 
-"false_neg": 0.12
+  * Default: (0/7, 0/7, 0/7)
+  
+* budget: Max # of replications for a solver to take.
 
-"iso_day": 12
+  * Default: 300
 
-**Starting Solutions:** (1/7, 1/7, 1/7)
+* testing_cap: Maxi testing capacity per day.
 
-**Measurement of Time:**  Number of simulation replications of length :math:`n`.
+  * Default: 7000
 
-**Optimal Solutions:** Unknown.
+* budget: Max # of replications for a solver to take
 
-**Known Structure:** Unknown.
+  * Default: 300
+
+
+Fixed Model Factors:
+--------------------
+* n/a
+
+
+Starting Solution: 
+------------------
+* initial_solution: (0/7, 0/7, 0/7)
+  
+
+Random Solutions: 
+------------------
+Sample each :math:`x_i` in a simplex.
+
+Optimal Solution:
+-----------------
+Unknown
+
+Optimal Objective Function Value:
+---------------------------------
+Unknown
