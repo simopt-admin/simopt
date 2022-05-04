@@ -5,10 +5,10 @@ Description:
 ------------
 COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
 regular survelliance testing to identify, isolate, and reduce disease spread. 
-The initial proportion of infectedi s :math:`init\_infect\_percent`. The population is divided 
-into different groups with intra-group interaction matrix :math:`inter\_rate`. There is a probability of :math:`p\_trans` 
+The initial proportion of infectedi s :math:`init_infect_percent`. The population is divided 
+into different groups with intra-group interaction matrix :math:`inter_rate`. There is a probability of :math:`p_trans` 
 transmissions per interaction. The transmission rate per individual can be calculated by multiplying 
-:math:`inter\_rate` by :math:`p\_trans`. The disease progression for each individual follows the following semi-Markov process:
+:math:`inter_rate` by :math:`p_trans`. The disease progression for each individual follows the following semi-Markov process:
 
 .. image:: covid_compartments.png
   :width: 400
@@ -22,21 +22,21 @@ The simulation is generated as follows:
 
 2. For each newly exposed individual in group :math:`g`:
 
-    (a) Generate :math:`exp\_days` number of days remaining in exposed.
+    (a) Generate :math:`exp_days` number of days remaining in exposed.
 
     (b) For each day in exposed, move to isolation exposed if tested positive.
 
-    (c) At the end of :math:`exp\_days`, move to infectious/isolation infectious
+    (c) At the end of :math:`exp_days`, move to infectious/isolation infectious
 
-    (d) Generate :math:`inf\_days` number of days remaining in infectious/isolation infectious.
+    (d) Generate :math:`inf_days` number of days remaining in infectious/isolation infectious.
 
     (e) For each day in infectious, move to isolation infectious if tested positive.
 
-    (f) At the end of :math:`inf\_days`, move to symptomatic/asymptomatic/isolation (a)symptomatic.
+    (f) At the end of :math:`inf_days`, move to symptomatic/asymptomatic/isolation (a)symptomatic.
 
-    (g) Generate :math:`symp\_asymp\_days` number of days remaining in symptomatic/asymptomatic/isolation (a)symptomatic.
+    (g) Generate :math:`symp_asymp_days` number of days remaining in symptomatic/asymptomatic/isolation (a)symptomatic.
 
-    (h) At the end of :math:`symp\_asymp\_days`, move to recovered.
+    (h) At the end of :math:`symp_asymp_days`, move to recovered.
 
 
 Sources of Randomness:
@@ -46,13 +46,13 @@ There are six sources of randomness.
 1. The number of newly exposed individuals on each day follows a Poisson distribution with mean equal to transmission rate times
 number of free infected (infectious + symptomatic + asymptomatic) individuals times number of susceptible individuals.
 
-2. The number of days from exposed to infectious for each individual is Poisson distributed with mean :math:`lamb\_exp\_inf`.
+2. The number of days from exposed to infectious for each individual is Poisson distributed with mean :math:`lamb_exp_inf`.
 
-3. The number of days from infectious to symptomatic/asymptomatic for each individual is Poisson distributed with mean :math:`lamb\_inf\_sym`.
+3. The number of days from infectious to symptomatic/asymptomatic for each individual is Poisson distributed with mean :math:`lamb_inf_sym`.
 
-4. The number of days from symptomatic/asymptomatic to recovered for each individual is Poisson distributed with mean :math:`lamb\_sym`.
+4. The number of days from symptomatic/asymptomatic to recovered for each individual is Poisson distributed with mean :math:`lamb_sym`.
 
-5. An individual in infectious state has a :math:`asymp\_rate` chance of being asymptomatic.
+5. An individual in infectious state has a :math:`asymp_rate` chance of being asymptomatic.
 
 6. An exposed/infectious/symptomatic/asymptomatic individual in group :math:`g` has a probability 
 :math:`freq_g` of being tested and moved to the isolated states.
