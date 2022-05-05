@@ -4,8 +4,9 @@ Model: COVID-19 Disease Progression and Testing Frequency (COVID)
 Description:
 ------------
 COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
-regular survelliance testing to identify, isolate, and reduce disease spread. 
-The initial proportion of infectedi s :math:`init_infect_percent`. The population is divided 
+regular survelliance testing to identify, isolate, and reduce disease spread. However, model can also
+be generalized and simulate the interaction among any given groups of people.
+The initial prevalance level of the disease is :math:`init_infect_percent`. The population is divided 
 into different groups with intra-group interaction matrix :math:`inter_rate`. There is a probability of :math:`p_trans` 
 transmissions per interaction. The transmission rate per individual can be calculated by multiplying 
 :math:`inter_rate` by :math:`p_trans`. The disease progression for each individual follows the following semi-Markov process:
