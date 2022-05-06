@@ -15,7 +15,7 @@ from rng.mrg32k3a import MRG32k3a
 # Replace <filename> with name of .py file containing model class.
 # Replace <model_class_name> with name of model class.
 # Ex: from models.mm1queue import MM1Queue
-from models.Voting import Voting
+from models.EmergencyRoom import EmergencyRoom
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.

@@ -292,7 +292,7 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
-            while len(queue) > 0:
+            while len(queue) > 0: # this empties the queue at the end of the day once we are done with all arrivals
                 clock = min(mach_list)
                 mach_ind = mach_list.index(min(mach_list))
                 next_queue = queue.pop(0)  # added this

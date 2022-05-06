@@ -519,7 +519,7 @@ class EmergencyRoom(Model):
         popped = 0
         test_ind = 0
         mm_ind = 0
-
+        
         while len(system_waittime) < len(test_wt):
             types[0] = system.index(min(system))
             types[1] = doctors.index(min(doctors))
