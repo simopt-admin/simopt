@@ -3,6 +3,7 @@ Summary
 -------
 Simulate demand at facilities.
 """
+from mmap import mmap
 from re import L
 import numpy as np
 
@@ -307,8 +308,9 @@ class EmergencyRoom(Model):
         reExam_rng = rng_list[4]
         treatment_rng = rng_list[5]
         er_rng = rng_list[6]
-
+        tr_rng = rng_list[7]
         amb_rng = rng_list[8]
+        mm_rng = rng_list[9]
 
         arrival_times = []
         arrival_amb = []
@@ -445,6 +447,23 @@ class EmergencyRoom(Model):
         # major or minor?
         test_wt = []
         t = 0
+        treatment = []
+        p2 = 0
+        # should I make two separate lists and add a 0 if not major and if major add a time
+        # this way in the while loop I look for 0 or time and according to which I send to the right nurse
+        for i in range(system):  # calculates whether someone needs treatment
+                p = self.factors["prob_treatmentneeded"]  # Prob of needing treatment, 80%
+                if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
+                    # determine if er or tr
+                    p2 = self.factors["prob_majorinjury"]
+                    if mm_rng.choices([0, 1], [1-p, p]) == 1: # major injury
+                        t = er_rng.expovariate(self.factors["st_er"])
+                    else: 
+                        t = tr_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])
+                else:
+                    t = 0  # No treatment needed
+                treatment.append(t)
+
         for i in range(system):  # i is each individual 
                 p = self.factors["prob_extra"]  # Prob of needing tests is 50%
                 if lab_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs extra test
@@ -464,27 +483,9 @@ class EmergencyRoom(Model):
                     t = 0
                 reexam_wt.append(t)
 
-        treatment = []  # what do i use here? for choices same with the next major minor
-        for i in range(system):  # i is each individual 
-                p = self.factors["prob_treatmentneeded"]  # Prob of needing treatment, 80%
-                if er_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
-                    t = 1  # Treatment needed
-                else:
-                    t = 0  # No treatment needed
-                treatment.append(t)
-
         major = []
         minor = []
-        for i in range(system):  # i is each individual 
-                p = self.factors["prob_majorinjury"]  # Prob of needing treatment, 80%
-                if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if major injury
-                    t =  er_rng.expovariate(self.factors["st_er"]) # Major injury
-                    major.append(t)
-                    minor.append(0)
-                else:
-                    t = treatment_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])  # Minor injury
-                    minor.append(t)
-                    major.append(0)
+        mm_ind = 0
         # go to exam room with x doctors (first queue), if extra tests go to extra tests with x technicians (second queue)
         # reexam process if they got extra tests (cant do it again)
         # emergency room or treatment room and nurse depending on which one... third queue
@@ -519,6 +520,7 @@ class EmergencyRoom(Model):
         popped = 0
         test_ind = 0
         mm_ind = 0
+        treat_ind = 0
         
         while len(system_waittime) < len(test_wt):
             types[0] = system.index(min(system))
@@ -539,7 +541,7 @@ class EmergencyRoom(Model):
                             doc_queue[i] = system.pop(0)
                             popped = 1
                             break
-                        elif doc_queue[i] > math.inf:
+                        elif doc_queue[i] != math.inf:
                             popped = 0
                     if popped == 0:
                         doc_queue.append(system.pop(0))  # need wait time as well
@@ -549,8 +551,14 @@ class EmergencyRoom(Model):
                 # if they do go to lab techs, put in queue or in lab tech
                 # otherwise 
                 # take index of next value... if 
+                # also may be one coming in from extra tests
+                # people leaving the doctors queue go to extra tests or go to get treatment! need to look at other lists to see where they go
                 if test_wt[test_ind] == 0:
-                    # go to er or treatment
+                    # need treatment?
+                    if treatment[treat_ind] == 0:
+                        # they go out of system
+                        # total wait time recorded
+                    elif
                     if major[mm_ind] == 0:
                         # go to minor treatment
                         if len(minor_queue) > 0:
