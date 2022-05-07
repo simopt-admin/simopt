@@ -195,13 +195,38 @@ class ATO(Model):
         """
         
         # Designate separate random number generators.
-        arr_rng = rng_list[0]
 
         total_revenue = 0
         total_holding = 0
         item_invent = self.factors["item_cap"]
 
-        # Generate orders/product type arrivals (IS EACH ORDER OF ONLY ONE TYPE OF PRODUCT?)
+        # Generate orders/product type arrivals 
+        
+        ## Order/Product-type probability of arrivals
+        tot = 0 
+        prod_probs = []                                                                             # List of product/order arrival probablities 
+        for i in range(self.factors["num_products"]): tot += self.factors["arrival_rates"][i]       # Sums up arrival rates
+        for j in self.factors["arrival_rates"]: prod_probs.append(self.facotrs["arrival_rates"][j]/tot)       
+
+        orders = []
+        orders_time = 0   
+        num_orders = 0
+        for i in range(self.factors["warm_up_time"] + self.factors["run_time"]):                        # Generate random orders
+            product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = prod_probs, k = 1)
+            orders.append(product[0])
+            order_arrival_time = (1/self.factors["lambda"][product[0]-1])                               # Order inter-arrival time
+            orders_time += order_arrival_time                                                           # Sum of arrival times                                                                                                                                                                 
+            
+            
+            ###############################
+            if orders_time <= self.factors["time_horizon"]:                                             # Attach if sum is less than time horizon
+                arrival_times_rng.append(orders_time)                                                   # Track number of orders
+                num_orders += 1
+                product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
+                product_orders_rng.append(product[0])
+            else: 
+                break
+    
 
         # Find items needed for product 
         def product_items(product):
@@ -244,46 +269,6 @@ class ATO(Model):
             # Generate production time for every item in list of available items for replenishment
             # Update time lapse/clock
 
-        # Vector of next arrival time per product.
-        # (Starts at time = -1*time_before, e.g., t = -168.)
-        arrival = np.zeros(self.factors["num_products"]) - self.factors["time_before"]
-        # Upper bound on number of arrivals over the time period.
-        arr_bound = 10 * round(168 * np.sum(self.factors["lambda"]))
-        arr_time = np.zeros((self.factors["num_products"], arr_bound))
-        # Index of which arrival time to use next for each product.
-        a = np.zeros(self.factors["num_products"], dtype=int)
-        # Generate all interarrival times in advance.
-        for i in range(self.factors["num_products"]):
-            arr_time[i] = np.array([arr_rng.expovariate(self.factors["lambda"][i]) for _ in range(arr_bound)])
-        # Extract first arrivals.
-        for i in range(self.factors["num_products"]):
-            arrival[i] = arrival[i] + arr_time[i, a[i]]
-            a[i] = 1
-        min_time = 0  # Keeps track of minimum time of the orders not yet received.
-        while min_time <= self.factors["runlength"]:
-            min_time = self.factors["runlength"] + 1
-            for i in range(self.factors["num_products"]):
-                if ((arrival[i] < min_time) and (arrival[i] <= self.factors["time_limit"][i])):
-                    min_time = arrival[i]
-                    min_idx = i
-            if min_time > self.factors["runlength"]:
-                break
-            if b[min_idx] > 0:
-                if min_idx % 2 == 0:  # Rack_rate.
-                    total_revenue += sum(self.factors["rack_rate"] * A[:, min_idx])
-                else:  # Discount_rate.
-                    total_revenue += sum(self.factors["discount_rate"] * A[:, min_idx])
-                # Reduce the inventory of products sharing the same resource.
-                for i in range(self.factors["num_products"]):
-                    if np.dot(A[:, i].T, A[:, min_idx]) >= 1:
-                        if b[i] != 0:
-                            b[i] -= 1
-            arrival[min_idx] += arr_time[min_idx, a[min_idx]]
-            a[min_idx] = a[min_idx] + 1
-        # Compose responses and gradients.
-        responses = {"revenue": total_revenue}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        return responses, gradients
 
 
 """
@@ -361,7 +346,7 @@ class ATOProfit(Problem):
     def __init__(self, name="HOTEL-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.n_objectives = 1
-        self.n_stochastic_constraints = 0
+        self.n_stochastic_constraints = 1
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "discrete"
@@ -369,7 +354,7 @@ class ATOProfit(Problem):
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"booking_limits"}
+        self.model_decision_factors = {"base_stock"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
@@ -380,7 +365,7 @@ class ATOProfit(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 70
             }
         }
         self.check_factor_list = {
