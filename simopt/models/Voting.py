@@ -248,6 +248,7 @@ class Voting(Model):
             arr_ind = 0
             mach_ind = 0  # i think the problem is when there are still people in the machines and we are at the end of the arrival list. the end of the day
             while arr_ind < len(arr_times):  # problem here! changed this for now
+
                 if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
                     if len(queue) > 0:  # if people in queue, take one out and put into a machine
@@ -300,6 +301,7 @@ class Voting(Model):
                 mach_list[mach_ind] = next_queue + voting_times[vote_ind]  # added this
                 vote_ind += 1
                 wait_times.append(clock - next_queue)  # added this
+
             if len(wait_times) == len(arr_times):
                 rand_list.append("True")
             else:

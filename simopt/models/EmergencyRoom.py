@@ -12,9 +12,9 @@ import math as math
 
 class EmergencyRoom(Model):
     """
-    A model that simulates a facilitysize problem with a
-    multi-variate normal distribution.
-    Returns the probability of violating demand in each scenario.
+    A model that simulates an emergency room within a hospital.
+    Returns the total cost and whether or not the average wait
+    time of critical patients exceeds a given amount of time.
 
     Attributes
     ----------
@@ -345,7 +345,7 @@ class EmergencyRoom(Model):
 
         t = arrivals_rng.expovariate(self.factors["amb_arr"])
         print("hello")
-        while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:
+        while t <= (self.factors["warm_period"]) * 60:
             arrival_amb.append(t)
             t += amb_rng.expovariate(self.factors["amb_arr"])
 
@@ -366,15 +366,16 @@ class EmergencyRoom(Model):
         clock_rec = 0
         rec_ind = 0
         rec_queue = []
+        next_queue = 0
         print("first")
         while arr_ind < len(arrival_times):  # wait times for receptionist
             if min(receptionists) <= arrival_times[arr_ind]:
-                clock_rec = receptionists[rec_ind]
+                clock_rec = min(receptionists)
                 if len(rec_queue) > 0:
-                    clock_rec = arrival_times[arr_ind]
                     rec_ind = receptionists.index(min(receptionists))
+                    next_queue = rec_queue.pop(0)
                     receptionists[rec_ind] = clock_rec + reception_time[arr_ind]
-                    wait_times_rec.append(clock_rec - rec_queue.pop(0))
+                    wait_times_rec.append(clock_rec - next_queue)
                     arr_ind += 1
                 elif len(rec_queue) == 0:
                     rec_ind = receptionists.index(min(receptionists))
@@ -398,13 +399,16 @@ class EmergencyRoom(Model):
                         arr_ind += 1
                     elif rec_ind == -1:
                         rec_queue.append(clock_rec)
+                        arr_ind += 1
                     else:
                         print("Error in receptionist loop")
                 elif len(rec_queue) > 0:
                     rec_queue.append(clock_rec)
+                    arr_ind += 1
                 else:
                     print("Error in receptionist loop. big L")
         print("dub")
+      
         while len(rec_queue) > 0: # this empties the queue at the end of the day once we are done with all arrivals
             clock_rec = min(receptionists)
             rec_ind = receptionists.index(min(receptionists))
@@ -416,28 +420,26 @@ class EmergencyRoom(Model):
         print("success")
         post_rec = []
         for i in range(len(wait_times_rec)):  # when patients are done with receptionists and what time they go into system with amb_arr
-            post_rec[i] = arrival_times[i] + wait_times_rec[i]
+            post_rec.append(arrival_times[i] + wait_times_rec[i])
 
-        system = []
-        counter1 = 0
-        counter2 = 0
+        system = post_rec + arrival_amb
+        system.sort() 
 
-        while len(system) < (len(post_rec) + len(arrival_amb)):  # making list for entire system before patients go into exam room
-            if post_rec[counter1] <= arrival_amb[counter2] and counter1 != len(post_rec) and counter2 != len(arrival_amb):
-                system.append(post_rec[counter1])
-                counter1 += 1
-            elif post_rec[counter1] > arrival_amb[counter2] and counter1 != len(post_rec) and counter2 != len(arrival_amb):
-                system.append(arrival_amb[counter2])
-                counter2 += 1
-            elif counter2 == len(arrival_amb):
-                system.append(post_rec[counter1])
-                counter1 += 1
-            elif counter1 == len(post_rec):
-                system.append(arrival_amb[counter2])
-                counter2 += 1
-            else:
-                print("Error in system list configuration.")  # need to mark er and walk in list to track time for er
-
+        # while len(system) < (len(post_rec) + len(arrival_amb)):  # making list for entire system before patients go into exam room
+        #     if post_rec[counter1] <= arrival_amb[counter2] and counter1 != (len(post_rec)-1) and counter2 != (len(arrival_amb)-1):
+        #         system.append(post_rec[counter1])
+        #         counter1 += 1
+        #     elif post_rec[counter1] > arrival_amb[counter2] and counter1 != (len(post_rec)-1) and counter2 != (len(arrival_amb)-1):
+        #         system.append(arrival_amb[counter2])
+        #         counter2 += 1
+        #     elif counter2 == (len(arrival_amb)-1):
+        #         system.append(post_rec[counter1])
+        #         counter1 += 1
+        #     elif counter1 == (len(post_rec)-1):
+        #         system.append(arrival_amb[counter2])
+        #         counter2 += 1
+        #     else:
+        #         print("Error in system list configuration.")  # need to mark er and walk in list to track time for er
         test_wt = []
         t = 0
         treatment = []
@@ -448,7 +450,7 @@ class EmergencyRoom(Model):
         t_minor = 0
         # should I make two separate lists and add a 0 if not major and if major add a time
         # this way in the while loop I look for 0 or time and according to which I send to the right nurse
-        for i in range(system):  # calculates whether someone needs treatment
+        for i in range(len(system)):  # calculates whether someone needs treatment
                 p = self.factors["prob_tn"]  # Prob of needing treatment, 80%
                 if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
                     # determine if er or tr
@@ -468,9 +470,9 @@ class EmergencyRoom(Model):
                 treatment.append(t)  # treatment list says whether or not they need treatment
                 major.append(t_major)  # if they need treatment, while loop whill check major and minor list to see who to go to
                 minor.append(t_minor)
-
+        print(major, minor, treatment)
         exam_wt = []
-        for i in range(system):  # i is each individual 
+        for i in range(len(system)):  # i is each individual 
                 t = exam_rng.expovariate(self.factors["st_exam"])
                 exam_wt.append(t)
         mm_ind = 0
@@ -487,7 +489,6 @@ class EmergencyRoom(Model):
         ind_q_doc = []
         for i in range(self.factors["employee_allocations"][1]):
             doctors.append(math.inf)
-            ind_q_doc.append(math.inf)
         for i in range(self.factors["employee_allocations"][2]):
             lab_techs.append(math.inf)
         for i in range(self.factors["employee_allocations"][3]):
@@ -519,8 +520,8 @@ class EmergencyRoom(Model):
         exam_ind = 0
         doc_wt = []
         treatment_wt = []
-        while len(system_waittime) < len(test_wt):
-            types[0] = system.index(min(system))
+        while len(system_waittime) < len(system):
+            types[0] = system[sys_ind]
             types[1] = doctors.index(min(doctors))
             types[2] = er_nurse.index(min(er_nurse))
             types[3] = treat_nurse.index(min(treat_nurse))
@@ -528,24 +529,21 @@ class EmergencyRoom(Model):
             if next_event == 0:  # next event is from the queue entering system, go to doctors in exam room
                 clock = system[sys_ind]
                 # need a way to mark someone as coming from the reexam so they don't go again, maybe append as -1 and the clock after?
-                if doc_queue > 0:
+                if len(doc_queue) > 0:
                     doc_queue.append(clock)
                 elif doc_queue == 0:
                     for i in range(len(doctors)):
                         if doctors[i] == math.inf:
-                            doctors[i] = clock + exam_wt
-                            ind_q_doc[i] = sys_ind
+                            doctors[i] = clock + exam_wt[sys_ind]
                             doc_wt.append(0)
                             popped = 1
                             break
                         elif doctors[i] != math.inf:
-                            popped = 0
-                    if popped == 0:
-                        doc_queue.append(clock)  # need wait time as well
+                            doc_queue.append(clock) # append time for 
                 sys_ind += 1
             elif next_event == 1:
                 clock = min(doctors)
-                if doc_queue > 0:
+                if len(doc_queue) > 0:
                     next_patient = doc_queue.pop(0)
                     doc_wt.append(clock - next_patient)
                     doc_ind = doctors.index(min(doctors))
@@ -554,6 +552,7 @@ class EmergencyRoom(Model):
                 elif doc_queue == 0:
                     doc_ind = doctors.index(min(doctors))
                     doctors[doc_ind] = math.inf
+                print(treat_ind)
                 if treatment[treat_ind] == 0:  # they don't need treatment
                         # they go out of system
                         treat_ind += 1
@@ -608,10 +607,13 @@ class EmergencyRoom(Model):
                 elif minor_queue > 0:
                     treat_nurse[treat_nurse.index(min(treat_nurse))] = minor_queue.pop(0)
 
+        print(len(treatment_wt),len(doc_wt),len(minor_queue),len(major_queue),len(doc_queue),len(test_wt))
 
-        responses = {'stockout_flag': stockout_flag,  # Compose responses and gradients.
-                     'n_fac_stockout': n_fac_stockout,
-                     'n_cut': n_cut}
+        total_cost = 0
+        avg_er_time = True
+        responses = {'total_cost': total_cost,  # Compose responses and gradients.
+                     'avg_er_time': avg_er_time
+                     }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 #need to generate amount of employees in a given sim
@@ -619,12 +621,13 @@ class EmergencyRoom(Model):
 """
 Summary
 -------
-Minimize the (deterministic) total cost of installing capacity at
-facilities subject to a chance constraint on stockout probability.
+Determine the total cost and average amount of time critical patients spend waiting in the hospital.
+Need to meet the constraints of the problem which include a certain amount of each different kind of employee 
+specified in factors and a specific amount of time specified by the hospital in factors.
 """
 
 
-class Average(Problem):
+class MinCost(Problem):
     """
     Base class to implement simulation-optimization problems.
 
