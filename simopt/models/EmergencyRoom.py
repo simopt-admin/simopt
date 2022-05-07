@@ -42,7 +42,7 @@ class EmergencyRoom(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "Emergency Room"
-        self.n_rngs = 7 # how many rngs?
+        self.n_rngs = 9 # how many rngs?
         self.n_responses = 1
         self.specifications = {
             "employee_allocations": {
@@ -130,7 +130,7 @@ class EmergencyRoom(Model):
                 "datatype": float,
                 "default": 0.5
             },
-            "prob_treatmentneeded": {
+            "prob_tn": {
                 "description": "Probability that treatment is needed.",
                 "datatype": float,
                 "default": 0.8
@@ -174,7 +174,7 @@ class EmergencyRoom(Model):
             "st_tr_max": self.check_st_tr_max,
             "walkin_rates": self.check_walkin_rates,
             "prob_extra": self.check_prob_extra,
-            "prob treatmentneeded": self.check_prob_treatmentneeded,
+            "prob_tn": self.check_prob_tn,
             "prob_majorinjury": self.check_prob_majorinjury,
             "warm_period": self.check_warm_period,
             "run_time": self.check_run_time,
@@ -187,7 +187,7 @@ class EmergencyRoom(Model):
             return False
         elif len(self.factors["employee_allocations"]) != len(self.factors["employee_min"]):
             return False
-        elif len(self.factors["employee_allocations"]) != len(self.factors["employee_employee_salaries"]):
+        elif len(self.factors["employee_allocations"]) != len(self.factors["employee_salaries"]):
             return False
         else:
             return True
@@ -227,28 +227,14 @@ class EmergencyRoom(Model):
         return self.factors["st_er"] > 0
 
     def check_st_exam(self):
-        return self.factors["st_labtests_exam"] > 0
+        return self.factors["st_exam"] > 0
 
     def check_n_fac(self):
         return self.factors["n_fac"] > 0
     
     def check_walkin_rates(self):
-        for i in range(len(self.factors["walkin_rates"])):
-            if self.factors["walkin_rates"][i] < 0:
-                return False
-        return len(self.factors(["walkin_rates"])) > 0
+        return np.all(self.factors["walkin_rates"]) > 0
 
-    def check_simulatable_factors(self):
-        if len(self.factors["capacity"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["cov"]) != self.factors["n_fac"]:
-            return False
-        elif len(self.factors["cov"][0]) != self.factors["n_fac"]:
-            return False
-        else:
-            return True
     def check_st_reexam(self):
         return self.factors["st_reexam"] > 0
 
@@ -264,14 +250,16 @@ class EmergencyRoom(Model):
     def check_prob_extra(self):
         return self.factors["prob_extra"] > 0
 
-    def check_prob_treatmentneeded(self):
-        return self.factors["prob_treatmentneeded"] > 0
+    def check_prob_tn(self):
+        if self.factors["prob_tn"] < 0 or self.factors["prob_tn"] > 1:
+            return False
+        return True
 
     def check_prob_majorinjury(self):
         return self.factors["prob_majorinjury"] > 0
 
     def check_warm_period(self):
-        return self.factors["prob_warm_period"] > 0
+        return self.factors["warm_period"] > 0
     
     def check_run_time(self):
         return self.factors["run_time"] > 0
@@ -305,19 +293,19 @@ class EmergencyRoom(Model):
         reception_rng = rng_list[1]
         lab_rng = rng_list[2]
         exam_rng = rng_list[3]
-        reExam_rng = rng_list[4]
+        mm_rng = rng_list[4]
         treatment_rng = rng_list[5]
         er_rng = rng_list[6]
         tr_rng = rng_list[7]
         amb_rng = rng_list[8]
-        mm_rng = rng_list[9]
+
 
         arrival_times = []
         arrival_amb = []
         # Generate random arrival times at facilities from truncated multivariate normal distribution.
         t = arrivals_rng.expovariate(self.factors["walkin_rates"][0])
 
-        while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:  #non stationary poisson process, so this is wrong but could make a function 
+        while t <= (self.factors["warm_period"]) * 60:  #non stationary poisson process, so this is wrong but could make a function 
             if t <= 120:
                 arrival_times.append(t)
                 t += arrivals_rng.expovariate(self.factors["walkin_rates"][0])
@@ -356,7 +344,7 @@ class EmergencyRoom(Model):
                 t += arrivals_rng.expovariate(self.factors["walkin_rates"][11])
 
         t = arrivals_rng.expovariate(self.factors["amb_arr"])
-
+        print("hello")
         while t <= (self.factors["run_time"] + self.factors["warm_period"]) * 60:
             arrival_amb.append(t)
             t += amb_rng.expovariate(self.factors["amb_arr"])
@@ -364,7 +352,7 @@ class EmergencyRoom(Model):
         reception_time = []
         t = reception_rng.expovariate(self.factors["st_reception"])
 
-        for i in range(arrival_times):  # time that people are in reception
+        for i in range(len(arrival_times)):  # time that people are in reception
             reception_time.append(t)
             t = reception_rng.expovariate(self.factors["st_reception"])
 
@@ -378,8 +366,8 @@ class EmergencyRoom(Model):
         clock_rec = 0
         rec_ind = 0
         rec_queue = []
-
-        while len(wait_times_rec) <= len(arrival_times):  # wait times for receptionist
+        print("first")
+        while arr_ind < len(arrival_times):  # wait times for receptionist
             if min(receptionists) <= arrival_times[arr_ind]:
                 clock_rec = receptionists[rec_ind]
                 if len(rec_queue) > 0:
@@ -396,7 +384,7 @@ class EmergencyRoom(Model):
 
             elif min(receptionists) > arrival_times[arr_ind]:
                 clock_rec = arrival_times[arr_ind]
-                if rec_queue == 0:
+                if len(rec_queue) == 0:
                     for i in range(len(receptionists)):
                         if receptionists[i] == math.inf:
                             rec_ind = i
@@ -412,13 +400,22 @@ class EmergencyRoom(Model):
                         rec_queue.append(clock_rec)
                     else:
                         print("Error in receptionist loop")
-                elif rec_queue > 0:
+                elif len(rec_queue) > 0:
                     rec_queue.append(clock_rec)
                 else:
-                    print("Error in receptionist loop")
+                    print("Error in receptionist loop. big L")
+        print("dub")
+        while len(rec_queue) > 0: # this empties the queue at the end of the day once we are done with all arrivals
+            clock_rec = min(receptionists)
+            rec_ind = receptionists.index(min(receptionists))
+            next_queue = rec_queue.pop(0)
+            receptionists[rec_ind] = next_queue + receptionists[rec_ind]
+            rec_ind += 1
+            wait_times_rec.append(clock - next_queue)  # need to add to wait time for receptionist
 
+        print("success")
         post_rec = []
-        for i in range(len(wait_times_rec)):  # when patients are done with receptionists
+        for i in range(len(wait_times_rec)):  # when patients are done with receptionists and what time they go into system with amb_arr
             post_rec[i] = arrival_times[i] + wait_times_rec[i]
 
         system = []
@@ -439,52 +436,43 @@ class EmergencyRoom(Model):
                 system.append(arrival_amb[counter2])
                 counter2 += 1
             else:
-                print("Error in system list configuration.")  # need to mark er and walk in list
+                print("Error in system list configuration.")  # need to mark er and walk in list to track time for er
 
-        # exam room
-        # need extra tests?
-        # need treatment?
-        # major or minor?
         test_wt = []
         t = 0
         treatment = []
         p2 = 0
+        major = []
+        minor = []
+        t_major = 0
+        t_minor = 0
         # should I make two separate lists and add a 0 if not major and if major add a time
         # this way in the while loop I look for 0 or time and according to which I send to the right nurse
         for i in range(system):  # calculates whether someone needs treatment
-                p = self.factors["prob_treatmentneeded"]  # Prob of needing treatment, 80%
+                p = self.factors["prob_tn"]  # Prob of needing treatment, 80%
                 if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
                     # determine if er or tr
                     p2 = self.factors["prob_majorinjury"]
-                    if mm_rng.choices([0, 1], [1-p, p]) == 1: # major injury
-                        t = er_rng.expovariate(self.factors["st_er"])
+                    if mm_rng.choices([0, 1], [1-p2, p2]) == 1: # major injury
+                        t_major = er_rng.expovariate(self.factors["st_er"])
+                        t_minor = 0
+                        t = 1
                     else: 
-                        t = tr_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])
+                        t_minor = tr_rng.triangular(self.factors["st_tr_min"],self.factors["st_tr_max"],self.factors["st_tr_mode"])
+                        t_major = 0
+                        t =1
                 else:
                     t = 0  # No treatment needed
-                treatment.append(t)
+                    t_major = 0
+                    t_minor = 0
+                treatment.append(t)  # treatment list says whether or not they need treatment
+                major.append(t_major)  # if they need treatment, while loop whill check major and minor list to see who to go to
+                minor.append(t_minor)
 
-        for i in range(system):  # i is each individual 
-                p = self.factors["prob_extra"]  # Prob of needing tests is 50%
-                if lab_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs extra test
-                    t = lab_rng.triangular(self.factors["st_tr_min"], self.factors["st_tr_max"], self.factors["st_tr_mode"])  # Determines wait time for broken machine in minutes
-                else:
-                    t = 0
-                test_wt.append(t)
         exam_wt = []
         for i in range(system):  # i is each individual 
                 t = exam_rng.expovariate(self.factors["st_exam"])
                 exam_wt.append(t)
-        reexam_wt = []
-        for i in range(system):  # i is each individual
-                if test_wt[i] > 0:
-                    t = reExam_rng.expovariate(self.factors["st_reexam"])
-                else:
-                    t = 0
-                reexam_wt.append(t)
-
-        major = []
-        minor = []
         mm_ind = 0
         # go to exam room with x doctors (first queue), if extra tests go to extra tests with x technicians (second queue)
         # reexam process if they got extra tests (cant do it again)
@@ -496,9 +484,10 @@ class EmergencyRoom(Model):
         lab_techs = []
         er_nurse = []
         treat_nurse = []
-
+        ind_q_doc = []
         for i in range(self.factors["employee_allocations"][1]):
             doctors.append(math.inf)
+            ind_q_doc.append(math.inf)
         for i in range(self.factors["employee_allocations"][2]):
             lab_techs.append(math.inf)
         for i in range(self.factors["employee_allocations"][3]):
@@ -509,86 +498,115 @@ class EmergencyRoom(Model):
         sys_ind = 0
         doc_ind = 0
         doc_queue = []
-        lab_tech_queue = []
         minor_queue = []
         major_queue = []
+        ind_queue = []
+        mi_ind_queue = []
+        ma_ind_queue = []
+        for i in range(len(system)):
+            minor.append(0)
+            major.append(0)
         types = []
         next_event = 0
         for i in range(5):
             types.append(0)
         clock = 0
         popped = 0
-        test_ind = 0
         mm_ind = 0
         treat_ind = 0
-        
+        next_patient = 0
+        re_exam_ind = 0
+        exam_ind = 0
+        doc_wt = []
+        treatment_wt = []
         while len(system_waittime) < len(test_wt):
             types[0] = system.index(min(system))
             types[1] = doctors.index(min(doctors))
-            types[2] = lab_techs.index(min(lab_techs))
-            types[3] = er_nurse.index(min(er_nurse))
-            types[4] = treat_nurse.index(min(treat_nurse))
+            types[2] = er_nurse.index(min(er_nurse))
+            types[3] = treat_nurse.index(min(treat_nurse))
             next_event = types.index(min(types))
-            if next_event == 0:
-                # if it is a reexam I need to get from different list... so cant use pop. need to index...
-                # if there is one that finishes from extra tests, need a way to mark it in queue... perhaps append into queue as -1?
-                # if -1 then go through the reexam list until i find a value above 0
+            if next_event == 0:  # next event is from the queue entering system, go to doctors in exam room
+                clock = system[sys_ind]
+                # need a way to mark someone as coming from the reexam so they don't go again, maybe append as -1 and the clock after?
                 if doc_queue > 0:
-                    doc_queue.append(system.pop(0))
+                    doc_queue.append(clock)
                 elif doc_queue == 0:
-                    for i in range(len(doc_queue)):
-                        if doc_queue[i] == math.inf:
-                            doc_queue[i] = system.pop(0)
+                    for i in range(len(doctors)):
+                        if doctors[i] == math.inf:
+                            doctors[i] = clock + exam_wt
+                            ind_q_doc[i] = sys_ind
+                            doc_wt.append(0)
                             popped = 1
                             break
-                        elif doc_queue[i] != math.inf:
+                        elif doctors[i] != math.inf:
                             popped = 0
                     if popped == 0:
-                        doc_queue.append(system.pop(0))  # need wait time as well
+                        doc_queue.append(clock)  # need wait time as well
+                sys_ind += 1
             elif next_event == 1:
-                # doctor opens up
-                # need index of who was in the queue to see if they are going to the lab techs or not
-                # if they do go to lab techs, put in queue or in lab tech
-                # otherwise 
-                # take index of next value... if 
-                # also may be one coming in from extra tests
-                # people leaving the doctors queue go to extra tests or go to get treatment! need to look at other lists to see where they go
-                if test_wt[test_ind] == 0:
-                    # need treatment?
-                    if treatment[treat_ind] == 0:
+                clock = min(doctors)
+                if doc_queue > 0:
+                    next_patient = doc_queue.pop(0)
+                    doc_wt.append(clock - next_patient)
+                    doc_ind = doctors.index(min(doctors))
+                    doctors[doc_ind] = next_patient + exam_wt[exam_ind]
+                    exam_ind += 1
+                elif doc_queue == 0:
+                    doc_ind = doctors.index(min(doctors))
+                    doctors[doc_ind] = math.inf
+                if treatment[treat_ind] == 0:  # they don't need treatment
                         # they go out of system
-                        # total wait time recorded
-                    elif
-                    if major[mm_ind] == 0:
-                        # go to minor treatment
-                        if len(minor_queue) > 0:
-
-                    elif major[mm_ind] > 0:
-                        # greater than 0 means go to er
-                    doctors[types[next_event]] = math.inf
-                    test_ind += 1
-                elif test_wt[test_ind] > 0:
-                    if len(lab_tech_queue) > 0:
-                        lab_tech_queue.append(test_wt[test_ind])
-                        test_ind += 1
-                    elif len(lab_tech_queue) == 0:
-                        for i in range(len(lab_tech_queue)):
-                            if lab_tech_queue[i] == math.inf:
-                                lab_tech_queue[i] = test_wt[test_ind]
-                                test_ind += 1
-                                popped = 0
-                                break
-                            else:
-                                popped = -1
-                        if popped == -1:
-                            lab_tech_queue.append(test_wt[test_ind])
-                            test_ind += 1
-                    doctors[types[next_event]] = math.inf
+                        treat_ind += 1
+                else:  # need to figure out if major or minor
+                    if major[treat_ind] > 0:
+                            # add to er nurse queue or to er nurse if open
+                        if major_queue > 0:
+                            major_queue.append(clock)  # should be clock
+                        elif major_queue == 0:
+                            for i in range(len(er_nurse)):
+                                if er_nurse[i] == math.inf:
+                                    er_nurse[i] = clock + major[treat_ind]
+                                    treatment_wt.append(0)
+                                    popped = 1
+                                    break
+                                elif er_nurse[i] != math.inf:
+                                    popped = 0
+                            if popped == 0:
+                                major_queue.append(clock)
+                        else:
+                            print("Error in major queue")
+                    elif minor[treat_ind] > 0:
+                        # add to tr nurse queue or to tr nurse if open
+                        if minor_queue > 0:
+                            minor_queue.append(clock)
+                        elif minor_queue == 0:
+                            for i in range(len(treat_nurse)):
+                                if treat_nurse[i] == math.inf:
+                                    treat_nurse[i] = clock + minor[treat_ind]
+                                    popped = 1
+                                    break
+                                elif treat_nurse[i] != math.inf:
+                                    popped = 0
+                            if popped == 0:
+                                minor_queue.append(clock)
+                    else:
+                        print("Error in major minor next event == 1")
+                    # need to make doctor available again with math.inf
             elif next_event == 2:
-                # lab tech opens up
-
+                # er nurse opens up
+                # take wait time and nurse is open
+                if major_queue == 0:
+                    er_nurse[er_nurse.index(min(er_nurse))] = math.inf
+                elif major_queue > 0:
+                    er_nurse[er_nurse.index(min(er_nurse))] = major_queue.pop(0)
+                
             elif next_event == 3:
-            elif next_event == 4:
+                # tr nurse opens up
+                # take wait time and nurse is open
+                if minor_queue == 0:
+                    treat_nurse[treat_nurse.index(min(treat_nurse))] = math.inf
+                elif minor_queue > 0:
+                    treat_nurse[treat_nurse.index(min(treat_nurse))] = minor_queue.pop(0)
 
 
         responses = {'stockout_flag': stockout_flag,  # Compose responses and gradients.
@@ -596,9 +614,8 @@ class EmergencyRoom(Model):
                      'n_cut': n_cut}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
-
-        #need to generate amount of employees in a given sim
-
+#need to generate amount of employees in a given sim
+# stochastic constraint average has to be less than 2 hours
 """
 Summary
 -------
@@ -607,7 +624,7 @@ facilities subject to a chance constraint on stockout probability.
 """
 
 
-class EmergencyRoom(Problem):
+class Average(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -718,7 +735,7 @@ class EmergencyRoom(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
+        self.model = EmergencyRoom(self.model_fixed_factors)
 
     def check_installation_costs(self):
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:

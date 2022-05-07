@@ -250,13 +250,13 @@ class Voting(Model):
             while arr_ind < len(arr_times):  # problem here! changed this for now
                 if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
-                    if len(queue) > 0:  # logic works here since the only next event can be an arrival as if mahcines finish there are no entities to enter them
+                    if len(queue) > 0:  # if people in queue, take one out and put into a machine
                         mach_ind = mach_list.index(min(mach_list))
-                        next_queue = queue.pop(0)  # added this
-                        mach_list[mach_ind] = next_queue + voting_times[vote_ind]  # added this
+                        next_queue = queue.pop(0)
+                        mach_list[mach_ind] = next_queue + voting_times[vote_ind]
                         vote_ind += 1
-                        wait_times.append(clock - next_queue)  # added this
-                    elif len(queue) == 0:
+                        wait_times.append(clock - next_queue)
+                    elif len(queue) == 0: # if queue is 0 mark as empty
                         mach_ind = mach_list.index(min(mach_list))
                         mach_list[mach_ind] = math.inf
                     else:
@@ -264,19 +264,19 @@ class Voting(Model):
                         END
                 elif arr_times[arr_ind] < min(mach_list):
                     clock = arr_times[arr_ind]
-                    if len(queue) == 0:
+                    if len(queue) == 0: # if queue is empty check to see if there are people in machines
                         for i in range(len(mach_list)):
                             if mach_list[i] == math.inf:
                                 mach_ind = i
                                 break
                             elif mach_list[i] != math.inf:
                                 mach_ind = -1
-                        if mach_ind >= 0:
+                        if mach_ind >= 0: # machine is open and place in machine
                             mach_list[mach_ind] = clock + voting_times[vote_ind]
                             wait_times.append(0)
                             vote_ind += 1
                             arr_ind += 1
-                        elif mach_ind == -1:  # no infinity values in list
+                        elif mach_ind == -1:  # no machines empty so append to queue
                             queue.append(clock)
                             arr_ind += 1
                         else:
@@ -292,6 +292,7 @@ class Voting(Model):
                 else:
                     print('error in replicate simulation loop 2')
                     END
+
             while len(queue) > 0: # this empties the queue at the end of the day once we are done with all arrivals
                 clock = min(mach_list)
                 mach_ind = mach_list.index(min(mach_list))
