@@ -223,7 +223,7 @@ class Voting(Model):
             mach_list = []
             for i in range(self.factors["mach_allocation"][m]):  # i is each individual machine in that precinct
                 p = self.factors["bd_prob"]  # Default is .05
-                if choices_rng.choices([0, 1], [1 - p, p]) == 1:  # Determining if the machine will be borken down to start day
+                if choices_rng.choices([0, 1], [1 - p, p]) == [1]:  # Determining if the machine will be borken down to start day
                     t = breakdown_rng.gammavariate((self.factors["mean_repair"] ^ 2) / (self.factors["stdev_repair"] ^ 2), (self.factors["stdev_repair"] ^ 2) / (self.factors["mean_repair"]))  # Determines wait time for broken machine in minutes
                 else:
                     t = math.inf
@@ -247,7 +247,7 @@ class Voting(Model):
             vote_ind = 0
             arr_ind = 0
             mach_ind = 0  # i think the problem is when there are still people in the machines and we are at the end of the arrival list. the end of the day
-            while arr_ind < len(arr_times):  # problem here! changed this for now
+            while arr_ind < len(arr_times):
 
                 if min(mach_list) <= arr_times[arr_ind]:  # arrival index greater than the arrival times length
                     clock = min(mach_list)
@@ -263,6 +263,7 @@ class Voting(Model):
                     else:
                         print("error in replicate simulation loop 1")
                         END
+
                 elif arr_times[arr_ind] < min(mach_list):
                     clock = arr_times[arr_ind]
                     if len(queue) == 0: # if queue is empty check to see if there are people in machines

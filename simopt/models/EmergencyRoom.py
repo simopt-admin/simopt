@@ -452,10 +452,10 @@ class EmergencyRoom(Model):
         # this way in the while loop I look for 0 or time and according to which I send to the right nurse
         for i in range(len(system)):  # calculates whether someone needs treatment
                 p = self.factors["prob_tn"]  # Prob of needing treatment, 80%
-                if treatment_rng.choices([0, 1], [1-p, p]) == 1:  # Determining if someone needs treatment
+                if treatment_rng.choices([0, 1], [1-p, p]) == [1]:  # Determining if someone needs treatment
                     # determine if er or tr
                     p2 = self.factors["prob_majorinjury"]
-                    if mm_rng.choices([0, 1], [1-p2, p2]) == 1: # major injury
+                    if mm_rng.choices([0, 1], [1-p2, p2]) == [1]: # major injury
                         t_major = er_rng.expovariate(self.factors["st_er"])
                         t_minor = 0
                         t = 1
@@ -470,7 +470,6 @@ class EmergencyRoom(Model):
                 treatment.append(t)  # treatment list says whether or not they need treatment
                 major.append(t_major)  # if they need treatment, while loop whill check major and minor list to see who to go to
                 minor.append(t_minor)
-        print(major, minor, treatment)
         exam_wt = []
         for i in range(len(system)):  # i is each individual 
                 t = exam_rng.expovariate(self.factors["st_exam"])
@@ -552,7 +551,7 @@ class EmergencyRoom(Model):
                 elif doc_queue == 0:
                     doc_ind = doctors.index(min(doctors))
                     doctors[doc_ind] = math.inf
-                print(treat_ind)
+                # print(treat_ind)
                 if treatment[treat_ind] == 0:  # they don't need treatment
                         # they go out of system
                         treat_ind += 1
