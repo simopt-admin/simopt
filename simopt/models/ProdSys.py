@@ -561,7 +561,7 @@ class ProdSys(Problem):
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"CHANGE"}
+        self.model_decision_factors = {"interm_product"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {

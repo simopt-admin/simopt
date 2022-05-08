@@ -395,6 +395,7 @@ class MRG32k3a(random.Random):
         If zeros in the vector are wanted, with_zero == True. 
         On the other hand, if zeros are not wanted, with_zero == False.
         """
+        
         if with_zero is False:
             x = [0]
             for i in range(n_elements - 1):
