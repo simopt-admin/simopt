@@ -313,16 +313,16 @@ class MRG32k3a(random.Random):
         z = bsm(u)
         return mu + sigma*z
     
-    def lognormalvariate(self, mu=0, sigma=1):
-        """Generate a Lognormal random variate.
+    def lognormalvariate(self, lq=10, uq=200):
+        """Generate a Lognormal random variate using 2.5% and 97.5% quantiles
 
         Parameters
         ----------
-        mu : 'float'
-            expected value of the lognormal distribution from which to
+        lq : 'float'
+            2.5% quantile of the lognormal distribution from which to
             generate.
-        sigma : 'float'
-            standard deviation of the lognormal distribution from which to
+        uq : 'float'
+            97.5% quantile of the lognormal distribution from which to
             generate.
 
         Returns
@@ -330,9 +330,10 @@ class MRG32k3a(random.Random):
         'float'
             a lognormal random variate from the specified distribution.
         """
-        u = self.random()
-        z = bsm(u)
-        return exp(log(mu ** 2 / sqrt(mu ** 2 + sigma ** 2)) + sqrt(log(1 + sigma ** 2 / mu ** 2))*z)
+        mu = (log(lq)+log(uq))/2
+        sigma = (log(uq)-mu)/1.96
+        x = self.normalvariate(mu, sigma)
+        return exp(x)
 
 
     def mvnormalvariate(self, mean_vec, cov, factorized=True):
