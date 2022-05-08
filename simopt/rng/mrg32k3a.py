@@ -391,11 +391,11 @@ class MRG32k3a(random.Random):
     def integer_random_vectors_from_simplex(self, summation, n_elements, with_zero):
         """
         Generate a vector with a specified number (n_elements)
-        of random elements that sum up to a specified number (summation).
+        of random integer elements that sum up to a specified number (summation).
         If zeros in the vector are wanted, with_zero == True. 
         On the other hand, if zeros are not wanted, with_zero == False.
         """
-        
+
         if with_zero is False:
             x = [0]
             for i in range(n_elements - 1):
@@ -409,7 +409,6 @@ class MRG32k3a(random.Random):
             for i in range(1, n_elements + 1):
                 num = x[i] - x[i-1]
                 y.append(num)
-            return(y)
         elif with_zero is True:
             summation += n_elements
             for j in range(5000):
@@ -426,6 +425,48 @@ class MRG32k3a(random.Random):
                     num = x[i] - x[i-1]
                     num -= 1
                     y.append(num)
+        return(y)
+
+    def continuous_random_vectors_from_simplex(self, summation, n_elements, exact):
+        """
+        Generate a vector with a specified number (n_elements)
+        of random continuous elements that sum up to a specified number (summation).
+        If elements need to sum EXACTLY to summation, exact == True.
+        On the other hand, if elements needs to sum up to less than or equal to summation
+        exact == False.
+        """
+        x = []
+        
+        if exact == True:
+            v = [[0, 0, 0, 0, 0], [summation, 0, 0, 0, 0], [0, summation, 0, 0, 0], [0, 0, summation, 0, 0], [0, 0, 0, summation, 0], [0, 0, 0, 0, summation]]
+            for i in range(n_elements):
+                random_num = random.uniform(0,1)
+                x.append(random_num)
+            x.append(0)
+            x.append(1)
+            x = np.sort(x)
+
+            y = []
+            for i in range(0, n_elements + 1):
+                num = x[i] - x[i-1]
+                y.append(num)
+
+            z = []
+            for i in range(len(y)):
+                z.append([element * y[i] for element in v[i]])
+            random_vector = np.sum(z, 0)
+        elif exact != False:
+            for i in range(n_elements - 1):
+                random_num = random.uniform(0,1)
+                x.append(random_num)
+            x.append(0)
+            x.append(1)
+            x = np.sort(x)
+            random_vector = []
+            for i in range(1, n_elements + 1):
+                num = x[i] - x[i-1]
+                random_vector.append(num * summation)
+        return(random_vector)
 
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.
