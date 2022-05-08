@@ -566,31 +566,47 @@ class ProdSys(Problem):
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
-                "datatype": tuple,
-                "default": tuple([0 for _ in range(56)])
+                "datatype": list,
+                "default": [200, 0, 0, 0, 0, 0]
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 10000
+            },
+            "alpha": {
+                "description": "risk level parameter",
+                "datatype": float,
+                "default": 0.10
+            },
+            "min_sslevel": {
+                "description": "minimum tolerable service level",
+                "datatype": float,
+                "default": 0.5
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "alpha": self.check_alpha,
+            "min_sslevel": self.check_min_sslevel
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = ProdSys(self.model_fixed_factors)
         self.dim = self.model.factors["num_products"]
-        self.lower_bounds = tuple(np.zeros(self.dim))
-        self.upper_bounds = tuple(self.model.factors["num_rooms"] * np.ones(self.dim))
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
 
     def check_budget(self):
         return self.factors["budget"] > 0
+
+    def check_alpha(self):
+        return len(self.factors["alpha"]) > 0
+
+    def check_min_sslevel(self):
+        return self.factors["min_sslevel"] > 0 and self.factors["min_sslevel"] <= 1 
 
     def check_simulatable_factors(self):
         if len(self.lower_bounds) != self.dim:
@@ -615,7 +631,7 @@ class ProdSys(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "booking_limits": vector[:]
+            "interm_product": vector[:]
         }
         return factor_dict
 
@@ -634,7 +650,7 @@ class ProdSys(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["booking_limits"])
+        vector = tuple(factor_dict["interm_product"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -652,7 +668,7 @@ class ProdSys(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["revenue"],)
+        objectives = (response_dict["avg_leadtime"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -694,7 +710,7 @@ class ProdSys(Problem):
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
-        """ #CORRECT
+        """
         Compute deterministic components of objectives for a solution `x`.
 
         Arguments
@@ -714,7 +730,7 @@ class ProdSys(Problem):
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
-        """ #Check total invent
+        """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Arguments
@@ -727,6 +743,7 @@ class ProdSys(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
+        ProdSys.check_total_inventory(self)
         return True
 
     def get_random_solution(self, rand_sol_rng):
@@ -743,5 +760,5 @@ class ProdSys(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.randint(0, self.model.factors["total_inventory"]) for _ in range(self.dim)])
         return x
