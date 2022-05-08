@@ -58,10 +58,43 @@ This section will explain how to add Experiments to the Experiments or MetaExper
 
 #### Creating an Experiment
 Instead of loading an existing Experiment, you can create one from the main page of the GUI:
-1. First, select a solver from the "Solver" dropdown list.
+1. First, select a solver from the "Solver" dropdown list. Each of the solvers contain an abbreviation for the type of problems the solver can handle. Once a solver is selected it will sort through the "Problems" and show only the problems that work with this solver. 
 2. Change factors associated with the solver as necessary.
 3. All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors). If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
-4. Select a problem from the "Problem" dropdown list.
+4. Select a problem from the "Problem" dropdown list. Each problem contain an abbreviation that determines which type of solver it can work with. The letters in the abbreviation stand for: 
+<table>
+    <tr>
+      <th> Objective </th>
+      <th> Constraint </th>
+      <th> Variable </th>
+      <th> Gradient </th>
+    </tr>
+    <tr>
+      <td> Single (S) </td>
+      <td> Unconstrained (U) </td>
+      <td> Discrete (D) </td>
+      <td> Gradients Available (G) </td>
+    </tr>
+  <tr>
+      <td> Multi (M) </td>
+      <td> Box (B) </td>
+      <td> Continuous (C) </td>
+      <td> Gradients Not Available (NG) </td>
+    </tr>
+  <tr>
+      <td>  </td>
+      <td> Deterministic (D) </td>
+      <td> Mixed (M)  </td>
+      <td>  </td>
+    </tr>
+  <tr>
+      <td>  </td>
+      <td> Stochastic (S) </td>
+      <td> </td>
+      <td>  </td>
+    </tr>
+  
+</table>
 5. Change factors associated with the problem and model as necessary.
 6. All problems with unique factors must have unique names (no two problems can have the same name, but different factors). If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
 7. The number of macroreplications can be modified in the top-left corner. The default is 10 macroreplicatons.
@@ -99,7 +132,9 @@ Meta-Experiments are post-processed and post-normalized at the same time.
 The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem- solver pair from one Meta-Experiment can be plotted. (The ability to produce plots based on multiple problems *and* multiple solvers using the GUI is currently under development.) To return to the main page, click the red "x" in the top-left corner of the window.
 1. On the left side, select one or more problems from the problem list.
 2. Select solvers from the solver list.
-3. On the right side, select a plot type and adjust plot parameters and settings.
+3. On the right side, select a plot type and adjust plot parameters and settings. 
+There are 3 plot settings for all plots: Confident Intervals, Plot Together, and Print Max HW. 
+The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Box, Violin, and Terminal Scatter. 
 4. Click "Add."
 5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved at.
 6. To view one plot, click "View Plot," or all plots can be viewed together by clicking "See All Plots" at the bottom of the page.

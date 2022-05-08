@@ -173,17 +173,16 @@ class NelderMead(Solver):
                 rand_x = problem.get_random_solution(get_rand_soln_rng)
                 sol.append(self.create_new_solution(rand_x, problem))
         else:  # Restrict starting shape/location.
-            direction = problem.minmax[0]
             for i in range(problem.dim):
                 distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
                 new_pt = list(problem.factors["initial_solution"])
-                new_pt[i] += direction * distance
+                new_pt[i] += distance
                 # Try opposite direction if out of bounds.
                 if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-                    new_pt[i] -= 2 * direction * distance
+                    new_pt[i] -= 2 * distance
                 # Set to bound if neither direction works.
                 if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-                    if direction == -1:
+                    if problem.minmax[i] == -1:
                         new_pt[i] = self.lower_bounds[i]
                     else:
                         new_pt[i] = self.upper_bounds[i]
