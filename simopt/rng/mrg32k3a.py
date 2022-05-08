@@ -388,27 +388,43 @@ class MRG32k3a(random.Random):
         q = mu - beta * np.log(-np.log(u))
         return q
 
-    def generating_random_vectors(self):
+    def integer_random_vectors_from_simplex(self, summation, n_elements, with_zero):
         """
-        Generate a vector with a specified number (n_factors)
-        of random factors that sum up to a specified number (sum).
+        Generate a vector with a specified number (n_elements)
+        of random elements that sum up to a specified number (summation).
+        If zeros in the vector are wanted, with_zero == True. 
+        On the other hand, if zeros are not wanted, with_zero == False.
         """
-        sum = 4
-        n_factors = 2
-
-        x = [0]
-        for i in range(n_factors - 1):
-            random_num = random.randint(1, sum - 1)
-            while random_num in x:
-                random_num = random.randint(1, sum - 1)
-            x.append(random_num)
-        x.append(sum)
-        x = np.sort(x)
-        y = []
-        for i in range(1, n_factors + 1):
-            num = x[i] - x[i-1]
-            y.append(num)
-        print(y)
+        if with_zero is False:
+            x = [0]
+            for i in range(n_elements - 1):
+                random_num = random.randint(1, summation - 1)
+                while random_num in x:
+                    random_num = random.randint(1, summation - 1)
+                x.append(random_num)
+            x.append(summation)
+            x = np.sort(x)
+            y = []
+            for i in range(1, n_elements + 1):
+                num = x[i] - x[i-1]
+                y.append(num)
+            return(y)
+        elif with_zero is True:
+            summation += n_elements
+            for j in range(5000):
+                x = [0]
+                for i in range(n_elements - 1):
+                    random_num = random.randint(1, summation - 1)
+                    while random_num in x:
+                        random_num = random.randint(1, summation - 1)
+                    x.append(random_num)
+                x.append(summation)
+                x = np.sort(x)
+                y = []
+                for i in range(1, n_elements + 1):
+                    num = x[i] - x[i-1]
+                    num -= 1
+                    y.append(num)
 
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.

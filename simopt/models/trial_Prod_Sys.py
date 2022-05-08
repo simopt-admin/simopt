@@ -76,7 +76,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [100, 10, 0, 0, 0, 0]
+                "default": [200, 0, 0, 0, 0, 0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges sequences for each product type",
@@ -228,19 +228,22 @@ class ProdSys(Model):
             i = False
             j = self.factors["num_edges"]
             t = 0
-            if check == 0:
-                while i is False:
-                    if node == self.factors["routing_layout"][j-1][1]:
-                        pre_node = self.factors["routing_layout"][j-1][0]
-                        i = True
-                    j -= 1
+            if node == 1:
+                pre_node = 0
             else:
-                t = 1
-                while t == check:
-                    if node == self.factors["routing_layout"][j-t][1]:
-                        t += 1
-                        pre_node = self.factors["routing_layout"][j-t][0]
-                    j -= 1
+                if check == 0:
+                    while i is False:
+                        if node == self.factors["routing_layout"][j-1][1]:
+                            pre_node = self.factors["routing_layout"][j-1][0]
+                            i = True
+                        j -= 1
+                else:
+                    t = 1
+                    while t == check:
+                        if node == self.factors["routing_layout"][j-t][1]:
+                            t += 1
+                            pre_node = self.factors["routing_layout"][j-t][0]
+                        j -= 1
             return(pre_node)
 
         def check_node(product):                    # Return inventory and corresponding node
@@ -265,25 +268,28 @@ class ProdSys(Model):
                             else:
                                 break
                         node = previous_node(node, j)
+                        if node == 0:
+                            possible_node = float('inf')
+                            break
                         inventory = node_product[node-1]
                         if inventory != 0:
                             i = True
                         lst_nodes.append(node)
-                        if k == 5:
-                            break
-                        k += 1
                     lst_nodes.reverse()
-                    possible_node.append(lst_nodes)
+                    if possible_node != float('inf'): possible_node.append(lst_nodes)
             else:
                 inventory = node_product[node-1]
                 possible_node = [node]
                 while inventory == 0 and i is False:
                     node = previous_node(node, 0)
+                    if node == 0:
+                        possible_node = float('inf')
+                        break
                     inventory = node_product[node-1]
                     if inventory != 0:
                         i = True
                     possible_node.append(node)
-                possible_node.reverse()
+                if possible_node != float('inf'): possible_node.reverse()
             print("Inventory: ", node_product)
             return(possible_node)
 
@@ -297,7 +303,9 @@ class ProdSys(Model):
 
         def get_sequence(prod):
             nodes = check_node(prod)
-            if type(nodes[0]) == list:
+            if nodes == float('inf'):
+                edges = [float('inf')]
+            elif type(nodes[0]) == list:
                 edges = []
                 for i in range(len(nodes)):
                     edges.append(edge_route(nodes[i]))
@@ -333,39 +341,42 @@ class ProdSys(Model):
 
         def update_time(prod):
             seq = get_sequence(prod)
-            if type(seq[0]) == list:
-                optimal_edges = get_min_seq(seq)
-                optimal_edges, optimal_time = get_sequence_time(optimal_edges)
-            else:
-                optimal_edges, optimal_time = get_sequence_time(seq)
-            machines = []
-            for elem in optimal_edges:
-                machines.append(self.factors["machine_layout"][elem])
-            for i in range(len(machines)):
-                for j in range(len(self.factors["machine_layout"])):
-                    if self.factors["machine_layout"][j] == machines[i]:
-                        edge_time[j] = optimal_time[i]
-            nodes = []
-            for j in optimal_edges:
-                nodes.append(self.factors["routing_layout"][j][0])
-            node_product[nodes[0]-1] -= 10
-            count = 0
-            new_lst2 = [machines_q[k][-1] for k in range(len(machines_q))]
-            for k in new_lst2:
-                if k == float('inf'):
-                    count += 1
-            if count == len(new_lst2):
-                for i in machines:
-                    x = clock + optimal_time[i-2]
-                    machines_q[i-1] = [x]
-            lapse_order = [machines_q[k][-1] for k in range(len(machines_q))]
-            for elem in lapse_order:
-                if elem == float('inf'):
-                    lapse_order.remove(elem)
-            print("Lapse order", lapse_order)
-            finish_time.append(max(lapse_order))
-            print("Machine Queue:", machines_q)
-            # network_time.append(sum(optimal_time))
+            if seq == [float('inf')]:
+                finish_time.append(float('inf'))
+            else: 
+                if type(seq[0]) == list:
+                    optimal_edges = get_min_seq(seq)
+                    optimal_edges, optimal_time = get_sequence_time(optimal_edges)
+                else:
+                    optimal_edges, optimal_time = get_sequence_time(seq)
+                machines = []
+                for elem in optimal_edges:
+                    machines.append(self.factors["machine_layout"][elem])
+                for i in range(len(machines)):
+                    for j in range(len(self.factors["machine_layout"])):
+                        if self.factors["machine_layout"][j] == machines[i]:
+                            edge_time[j] = optimal_time[i]
+                nodes = []
+                for j in optimal_edges:
+                    nodes.append(self.factors["routing_layout"][j][0])
+                node_product[nodes[0]-1] -= 10
+                count = 0
+                new_lst2 = [machines_q[k][-1] for k in range(len(machines_q))]
+                for k in new_lst2:
+                    if k == float('inf'):
+                        count += 1
+                if count == len(new_lst2):
+                    for i in machines:
+                        x = clock + optimal_time[i-2]
+                        machines_q[i-1] = [x]
+                lapse_order = [machines_q[k][-1] for k in range(len(machines_q))]
+                for elem in lapse_order:
+                    if elem == float('inf'):
+                        lapse_order.remove(elem)
+                print("Lapse order", lapse_order)
+                finish_time.append(max(lapse_order))
+                print("Machine Queue:", machines_q)
+                # network_time.append(sum(optimal_time))
 
         # MAIN CODE
         # LIST RANDOM NUMBERS GENERATED

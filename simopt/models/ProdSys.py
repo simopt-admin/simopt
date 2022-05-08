@@ -1,13 +1,13 @@
 """
 Summary
 -------
-------------*
+A model that finds the optimal inventory placement
+that will minimize expected lead time, while satisfying
+service level with high probability.
 """
 
 import numpy as np
-
 from base import Model, Problem
-
 
 class ProdSys(Model):
     """
@@ -76,7 +76,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [100, 10, 0, 0, 0, 0]
+                "default": [200, 0, 0, 0, 0, 0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges sequences for each product type",
@@ -228,19 +228,22 @@ class ProdSys(Model):
             i = False
             j = self.factors["num_edges"]
             t = 0
-            if check == 0:
-                while i is False:
-                    if node == self.factors["routing_layout"][j-1][1]:
-                        pre_node = self.factors["routing_layout"][j-1][0]
-                        i = True
-                    j -= 1
+            if node == 1:
+                pre_node = 0
             else:
-                t = 1
-                while t == check:
-                    if node == self.factors["routing_layout"][j-t][1]:
-                        t += 1
-                        pre_node = self.factors["routing_layout"][j-t][0]
-                    j -= 1
+                if check == 0:
+                    while i is False:
+                        if node == self.factors["routing_layout"][j-1][1]:
+                            pre_node = self.factors["routing_layout"][j-1][0]
+                            i = True
+                        j -= 1
+                else:
+                    t = 1
+                    while t == check:
+                        if node == self.factors["routing_layout"][j-t][1]:
+                            t += 1
+                            pre_node = self.factors["routing_layout"][j-t][0]
+                        j -= 1
             return(pre_node)
 
         def check_node(product):                    # Return inventory and corresponding node
@@ -265,25 +268,28 @@ class ProdSys(Model):
                             else:
                                 break
                         node = previous_node(node, j)
+                        if node == 0:
+                            possible_node = float('inf')
+                            break
                         inventory = node_product[node-1]
                         if inventory != 0:
                             i = True
                         lst_nodes.append(node)
-                        if k == 5:
-                            break
-                        k += 1
                     lst_nodes.reverse()
-                    possible_node.append(lst_nodes)
+                    if possible_node != float('inf'): possible_node.append(lst_nodes)
             else:
                 inventory = node_product[node-1]
                 possible_node = [node]
                 while inventory == 0 and i is False:
                     node = previous_node(node, 0)
+                    if node == 0:
+                        possible_node = float('inf')
+                        break
                     inventory = node_product[node-1]
                     if inventory != 0:
                         i = True
                     possible_node.append(node)
-                possible_node.reverse()
+                if possible_node != float('inf'): possible_node.reverse()
             print("Inventory: ", node_product)
             return(possible_node)
 
@@ -297,7 +303,9 @@ class ProdSys(Model):
 
         def get_sequence(prod):
             nodes = check_node(prod)
-            if type(nodes[0]) == list:
+            if nodes == float('inf'):
+                edges = [float('inf')]
+            elif type(nodes[0]) == list:
                 edges = []
                 for i in range(len(nodes)):
                     edges.append(edge_route(nodes[i]))
@@ -333,39 +341,43 @@ class ProdSys(Model):
 
         def update_time(prod):
             seq = get_sequence(prod)
-            if type(seq[0]) == list:
-                optimal_edges = get_min_seq(seq)
-                optimal_edges, optimal_time = get_sequence_time(optimal_edges)
-            else:
-                optimal_edges, optimal_time = get_sequence_time(seq)
-            machines = []
-            for elem in optimal_edges:
-                machines.append(self.factors["machine_layout"][elem])
-            for i in range(len(machines)):
-                for j in range(len(self.factors["machine_layout"])):
-                    if self.factors["machine_layout"][j] == machines[i]:
-                        edge_time[j] = optimal_time[i]
-            nodes = []
-            for j in optimal_edges:
-                nodes.append(self.factors["routing_layout"][j][0])
-            node_product[nodes[0]-1] -= 10
-            count = 0
-            new_lst2 = [machines_q[k][-1] for k in range(len(machines_q))]
-            for k in new_lst2:
-                if k == float('inf'):
-                    count += 1
-            if count == len(new_lst2):
-                for i in machines:
-                    x = clock + optimal_time[i-2]
-                    machines_q[i-1] = [x]
-            lapse_order = [machines_q[k][-1] for k in range(len(machines_q))]
-            for elem in lapse_order:
-                if elem == float('inf'):
-                    lapse_order.remove(elem)
-            print("Lapse order", lapse_order)
-            finish_time.append(max(lapse_order))
-            print("Machine Queue:", machines_q)
-            # network_time.append(sum(optimal_time))
+            if seq == [float('inf')]:
+                finish_time.append(float('inf'))
+            else: 
+                if type(seq[0]) == list:
+                    optimal_edges = get_min_seq(seq)
+                    optimal_edges, optimal_time = get_sequence_time(optimal_edges)
+                else:
+                    optimal_edges, optimal_time = get_sequence_time(seq)
+                machines = []
+                for elem in optimal_edges:
+                    machines.append(self.factors["machine_layout"][elem])
+                for i in range(len(machines)):
+                    for j in range(len(self.factors["machine_layout"])):
+                        if self.factors["machine_layout"][j] == machines[i]:
+                            edge_time[j] = optimal_time[i]
+                nodes = []
+                for j in optimal_edges:
+                    nodes.append(self.factors["routing_layout"][j][0])
+                node_product[nodes[0]-1] -= 10
+                count = 0
+                new_lst2 = [machines_q[k][-1] for k in range(len(machines_q))]
+                for k in new_lst2:
+                    if k == float('inf'):
+                        count += 1
+                if count == len(new_lst2):
+                    for i in machines:
+                        x = clock + optimal_time[i-2]
+                        machines_q[i-1] = [x]
+                lapse_order = [machines_q[k][-1] for k in range(len(machines_q))]
+                for elem in lapse_order:
+                    if elem == float('inf'):
+                        lapse_order.remove(elem)
+                print("Lapse order", lapse_order)
+                finish_time.append(max(lapse_order))
+                lead_times.append(finish_time[-1]-arrival_time)
+                print("Machine Queue:", machines_q)
+                # network_time.append(sum(optimal_time))
 
         # MAIN CODE
         # LIST RANDOM NUMBERS GENERATED
@@ -415,9 +427,10 @@ class ProdSys(Model):
         for i in range(len(machines_q)):
             machines_q[i][0] = float('inf')
         finish_time = []
+        lead_times = []
         clock = 0
         i = 0
-        for j in range(15):
+        while len(finish_time) != len(rng_list[3]):
             print("")
             print("Clock: ", clock)
             new_lst = [machines_q[k][-1] for k in range(len(machines_q))]
@@ -438,21 +451,29 @@ class ProdSys(Model):
                 clock = rng_list[3][i]
                 product = rng_list[2][i]
                 print("Product: ", product, "arrives at: ", clock)
+                arrival_time = clock
                 update_time(product)
                 i += 1
         print("")
         print("Finish Time: ", finish_time)
-        lead_times = []
-        for k in range(len(finish_time)):
-            lead_times.append(finish_time[k]-rng_list[3][k])
         print("")
         print("Lead Times:", lead_times)
         print("")
 
- #       Compose responses and gradients.
- #       responses = {"revenue": total_revenue}
- #       gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
- #       return responses, gradients
+        sum_leadtime = 0
+        sum_sslevel = 0
+        for j in range(len(lead_times)):
+            if lead_times[j] != float('inf'):
+                sum_leadtime += lead_times[j]
+                sum_sslevel += 1
+        avg_ldtime = sum_leadtime / sum_sslevel
+        avg_sslevel = sum_sslevel / len(lead_times)
+        print(avg_ldtime)
+        print(avg_sslevel)
+       # Compose responses and gradients.
+        responses = {"avg_leadtime": avg_ldtime, "avg_servicelevel": avg_sslevel}
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        return responses, gradients
 
 
 """
@@ -462,263 +483,263 @@ Maximize the expected revenue.
 """
 
 
-class ProdSys(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+# class ProdSys(Problem):
+#     """
+#     Base class to implement simulation-optimization problems.
 
-    Attributes
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of rng.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : list
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+#     Attributes
+#     ----------
+#     name : string
+#         name of problem
+#     dim : int
+#         number of decision variables
+#     n_objectives : int
+#         number of objectives
+#     n_stochastic_constraints : int
+#         number of stochastic constraints
+#     minmax : tuple of int (+/- 1)
+#         indicator of maximization (+1) or minimization (-1) for each objective
+#     constraint_type : string
+#         description of constraints types:
+#             "unconstrained", "box", "deterministic", "stochastic"
+#     variable_type : string
+#         description of variable types:
+#             "discrete", "continuous", "mixed"
+#     lower_bounds : tuple
+#         lower bound for each decision variable
+#     upper_bounds : tuple
+#         upper bound for each decision variable
+#     gradient_available : bool
+#         indicates if gradient of objective function is available
+#     optimal_value : float
+#         optimal objective function value
+#     optimal_solution : tuple
+#         optimal solution
+#     model : Model object
+#         associated simulation model that generates replications
+#     model_default_factors : dict
+#         default values for overriding model-level default factors
+#     model_fixed_factors : dict
+#         combination of overriden model-level factors and defaults
+#     model_decision_factors : set of str
+#         set of keys for factors that are decision variables
+#     rng_list : list of rng.MRG32k3a objects
+#         list of RNGs used to generate a random initial solution
+#         or a random problem instance
+#     factors : dict
+#         changeable factors of the problem
+#             initial_solution : list
+#                 default initial solution from which solvers start
+#             budget : int > 0
+#                 max number of replications (fn evals) for a solver to take
+#     specifications : dict
+#         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+#     Arguments
+#     ---------
+#     name : str
+#         user-specified name for problem
+#     fixed_factors : dict
+#         dictionary of user-specified problem factors
+#     model_fixed factors : dict
+#         subset of user-specified non-decision factors to pass through to the model
 
-    See also
-    --------
-    base.Problem
-    """
-    def __init__(self, name="HOTEL-1", fixed_factors={}, model_fixed_factors={}):
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
-        self.variable_type = "discrete"
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"booking_limits"}
-        self.factors = fixed_factors
-        self.specifications = {
-            "initial_solution": {
-                "description": "Initial solution.",
-                "datatype": tuple,
-                "default": tuple([0 for _ in range(56)])
-            },
-            "budget": {
-                "description": "Max # of replications for a solver to take.",
-                "datatype": int,
-                "default": 100
-            }
-        }
-        self.check_factor_list = {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
-        }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = Hotel(self.model_fixed_factors)
-        self.dim = self.model.factors["num_products"]
-        self.lower_bounds = tuple(np.zeros(self.dim))
-        self.upper_bounds = tuple(self.model.factors["num_rooms"] * np.ones(self.dim))
+#     See also
+#     --------
+#     base.Problem
+#     """
+#     def __init__(self, name="ProdSys", fixed_factors={}, model_fixed_factors={}):
+#         self.name = name
+#         self.n_objectives = 1
+#         self.n_stochastic_constraints = 1
+#         self.minmax = (-1,)
+#         self.constraint_type = "deterministic"
+#         self.variable_type = "discrete"
+#         self.gradient_available = False
+#         self.optimal_value = None
+#         self.optimal_solution = None
+#         self.model_default_factors = {}
+#         self.model_decision_factors = {"booking_limits"}
+#         self.factors = fixed_factors
+#         self.specifications = {
+#             "initial_solution": {
+#                 "description": "Initial solution.",
+#                 "datatype": tuple,
+#                 "default": tuple([0 for _ in range(56)])
+#             },
+#             "budget": {
+#                 "description": "Max # of replications for a solver to take.",
+#                 "datatype": int,
+#                 "default": 100
+#             }
+#         }
+#         self.check_factor_list = {
+#             "initial_solution": self.check_initial_solution,
+#             "budget": self.check_budget
+#         }
+#         super().__init__(fixed_factors, model_fixed_factors)
+#         # Instantiate model with fixed factors and over-riden defaults.
+#         self.model = ProdSys(self.model_fixed_factors)
+#         self.dim = self.model.factors["num_products"]
+#         self.lower_bounds = tuple(np.zeros(self.dim))
+#         self.upper_bounds = tuple(self.model.factors["num_rooms"] * np.ones(self.dim))
 
-    def check_initial_solution(self):
-        return len(self.factors["initial_solution"]) == self.dim
+#     def check_initial_solution(self):
+#         return len(self.factors["initial_solution"]) == self.dim
 
-    def check_budget(self):
-        return self.factors["budget"] > 0
+#     def check_budget(self):
+#         return self.factors["budget"] > 0
 
-    def check_simulatable_factors(self):
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
+#     def check_simulatable_factors(self):
+#         if len(self.lower_bounds) != self.dim:
+#             return False
+#         elif len(self.upper_bounds) != self.dim:
+#             return False
+#         else:
+#             return True
 
-    def vector_to_factor_dict(self, vector):
-        """
-        Convert a vector of variables to a dictionary with factor keys
+#     def vector_to_factor_dict(self, vector):
+#         """
+#         Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
+#         Arguments
+#         ---------
+#         vector : tuple
+#             vector of values associated with decision variables
 
-        Returns
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {
-            "booking_limits": vector[:]
-        }
-        return factor_dict
+#         Returns
+#         -------
+#         factor_dict : dictionary
+#             dictionary with factor keys and associated values
+#         """
+#         factor_dict = {
+#             "booking_limits": vector[:]
+#         }
+#         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+#     def factor_dict_to_vector(self, factor_dict):
+#         """
+#         Convert a dictionary with factor keys to a vector
+#         of variables.
 
-        Arguments
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
+#         Arguments
+#         ---------
+#         factor_dict : dictionary
+#             dictionary with factor keys and associated values
 
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["booking_limits"])
-        return vector
+#         Returns
+#         -------
+#         vector : tuple
+#             vector of values associated with decision variables
+#         """
+#         vector = tuple(factor_dict["booking_limits"])
+#         return vector
 
-    def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+#     def response_dict_to_objectives(self, response_dict):
+#         """
+#         Convert a dictionary with response keys to a vector
+#         of objectives.
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
+#         Arguments
+#         ---------
+#         response_dict : dictionary
+#             dictionary with response keys and associated values
 
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["revenue"],)
-        return objectives
+#         Returns
+#         -------
+#         objectives : tuple
+#             vector of objectives
+#         """
+#         objectives = (response_dict["revenue"],)
+#         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+#     def response_dict_to_stoch_constraints(self, response_dict):
+#         """
+#         Convert a dictionary with response keys to a vector
+#         of left-hand sides of stochastic constraints: E[Y] >= 0
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
+#         Arguments
+#         ---------
+#         response_dict : dictionary
+#             dictionary with response keys and associated values
 
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = None
-        return stoch_constraints
+#         Returns
+#         -------
+#         stoch_constraints : tuple
+#             vector of LHSs of stochastic constraint
+#         """
+#         stoch_constraints = None
+#         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+#     def deterministic_stochastic_constraints_and_gradients(self, x):
+#         """
+#         Compute deterministic components of stochastic constraints for a solution `x`.
 
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
+#         Arguments
+#         ---------
+#         x : tuple
+#             vector of decision variables
 
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
-        """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
-        return det_stoch_constraints, det_stoch_constraints_gradients
+#         Returns
+#         -------
+#         det_stoch_constraints : tuple
+#             vector of deterministic components of stochastic constraints
+#         det_stoch_constraints_gradients : tuple
+#             vector of gradients of deterministic components of stochastic constraints
+#         """
+#         det_stoch_constraints = None
+#         det_stoch_constraints_gradients = None
+#         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
+#     def deterministic_objectives_and_gradients(self, x):
+#         """ #CORRECT
+#         Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
+#         Arguments
+#         ---------
+#         x : tuple
+#             vector of decision variables
 
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,) * self.dim,)
-        return det_objectives, det_objectives_gradients
+#         Returns
+#         -------
+#         det_objectives : tuple
+#             vector of deterministic components of objectives
+#         det_objectives_gradients : tuple
+#             vector of gradients of deterministic components of objectives
+#         """
+#         det_objectives = (0,)
+#         det_objectives_gradients = ((0,) * self.dim,)
+#         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+#     def check_deterministic_constraints(self, x):
+#         """ #Check total invent
+#         Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
+#         Arguments
+#         ---------
+#         x : tuple
+#             vector of decision variables
 
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        return True
+#         Returns
+#         -------
+#         satisfies : bool
+#             indicates if solution `x` satisfies the deterministic constraints.
+#         """
+#         return True
 
-    def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
+#     def get_random_solution(self, rand_sol_rng):
+#         """
+#         Generate a random solution for starting or restarting solvers.
 
-        Arguments
-        ---------
-        rand_sol_rng : rng.MRG32k3a object
-            random-number generator used to sample a new random solution
+#         Arguments
+#         ---------
+#         rand_sol_rng : rng.MRG32k3a object
+#             random-number generator used to sample a new random solution
 
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        x = tuple([rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)])
-        return x
+#         Returns
+#         -------
+#         x : tuple
+#             vector of decision variables
+#         """
+#         x = tuple([rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)])
+#         return x
