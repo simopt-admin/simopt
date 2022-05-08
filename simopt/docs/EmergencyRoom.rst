@@ -44,6 +44,7 @@ Model Factors:
 Responses:
 
  *Total Cost* - We want to minimize the total amount spent on hiring receptionists, doctors, nurses, and technicians while also satisfying all constraints.
+ *Average Waiting Time* - The average waiting time for those who came in through an ambulance needs to be below 2 hours
 
 References: 
 
