@@ -8,6 +8,7 @@ import numpy as np
 from base import Model, Problem
 
 
+
 class ATO(Model):
     """
     A model that simulates the assembly operation of a production system with constant Poisson arrival rates.
@@ -60,29 +61,27 @@ class ATO(Model):
                 "datatype": int,
                 "default": 8
             },
-            "item_cost": {
-                "description": "Items' profit per item sold and holding cost per unit time per item in inventory.",
-                "datatype": list,
-                "default": [[1,2]
-                            [2,2],
-                            [3,2],
-                            [4,2],
-                            [5,2],
-                            [6,2],
-                            [7,2],
-                            [8,2]]
+            "item_revenue": {
+                "description": "Items' profit per item sold, per item in inventory.",
+                "datatype": tuple,
+                "default": (1, 2, 3, 4, 5, 6, 7, 8)
+            },
+            "item_holding": {
+                "description": "Items' holding cost per unit time, per item in inventory.",
+                "datatype": tuple,
+                "default": (2, 2, 2, 2, 2, 2, 2, 2)
             },
             "item_cap": {
                 "description": "Items' inventory capacity.",
                 "datatype": list,
-                "default": ([[20]
+                "default": [[20]
                             [20],
                             [20],
                             [20],
                             [20],
                             [20],
                             [20],
-                            [20]])
+                            [20]]
             },
             "process_time": {
                 "description": "Production time for each item type; normally distributed mean and standard deviation (mu, sigma).",
@@ -97,7 +96,7 @@ class ATO(Model):
                             [0.40, 0.06]]
             },
            "product_req": {
-                "description": "Required item types/quantity for each product type.",
+                "description": "Bill of materials; required item types/quantity for each product type.",
                 "datatype": list,
                 "default": [[1, 0, 0, 1, 0, 1, 1, 0],
                             [1, 0, 0, 0, 1, 1, 1, 0],
@@ -115,17 +114,24 @@ class ATO(Model):
                 "datatype": int,
                 "default": 50
             },
+            "key_items": {
+                "description": "Number of key-items (columns).",
+                "datatype": int,
+                "default": 6
+            }
         }
         self.check_factor_list = {
             "num_products": self.check_num_products,
             "lambda": self.check_lambda,
             "num_items": self.check_num_items,
-            "item_cost": self.check_item_cost,
+            "item_revenue": self.check_item_revenue,
+            "item_holding": self.check_item_holding,
             "item_cap": self.check_item_cap,
             "process_time": self.check_process_time,
             "product_req": self.check_product_req,
-            "warm_up_time": self.warm_up_time,
-            "run_time": self.run_time
+            "warm_up_time": self.check_warm_up_time,
+            "run_time": self.check_run_time,
+            "key_items": self.check_key_items
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -142,12 +148,15 @@ class ATO(Model):
     def check_num_items(self):
         return self.factors["num_items"] > 0
 
-    def check_item_cost(self):
-        for i in self.factors["item_cost"]:
-            for j in self.factors["item_cost"][i]:
-                if j <= 0:
-                    return False
-        return len(self.factors["item_cost"]) == self.factors["num_items"]
+    def check_item_revenue(self):
+        for a in self.factors["item_revenue"]: 
+            if a < 1: return False 
+        return len(self.factors["item_revenue"]) == self.factors["num_items"]
+
+    def check_item_holding(self):
+        for a in self.factors["item_holding"]: 
+            if a < 1: return False 
+        return len(self.factors["item_holding"]) == self.factors["num_items"]
 
     def check_item_cap(self):
         for i in self.factors["item_cap"]:
@@ -175,6 +184,9 @@ class ATO(Model):
 
     def check_run_time(self):
         return self.factors["run_time"] > 0
+    
+    def check_key_items(self):
+        return self.factors["key_items"] > 0 and self.factors["key_items"] < self.factors["num_items"]
 
     def replicate(self, rng_list):
         """
@@ -193,53 +205,79 @@ class ATO(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # Find items needed for product 
+        import random
+
+        # Find BOM - items needed for product 
         def product_items(product):
             needed_items = list(self.factors["product_req"][(product-1)])
             return needed_items
 
         # Verify order 
-        def verified_items(needed_items, item_invent):
+        def verified_items(product, item_invent):
+            BOM = product_items(product)
             stock_items = []
             # Check key items are in stock
                 # If order can be completed
                 # Return list of available items 
-            for i in range(6):
-                if needed_items[i] == 1:
-                    if item_invent[i] >= needed_items[i]:
+            for i in range(self.factors["key_items]"]):
+                if BOM[i] == 1:
+                    if item_invent[i] >= BOM[i]:
                         stock_items.append(1)
                     else:
                         return False
                         break
                 else:
                     stock_items.append(0)
-            for i in range(6, self.factors["num_items"], 1):
-                if needed_items[i] == 1:
-                    if invent_items[i] >= needed_items[i]:
+            for i in range(self.factors["key_items"], self.factors["num_items"], 1):
+                if BOM[i] == 1:
+                    if item_invent[i] >= BOM[i]:
                         stock_items.append(1)
                     else:
                         stock_items.append(0)
                 else:
                     stock_items.append(0)
-            
-            return stock_items
+            return np.array(stock_items)
 
 
         # Assemble with key items & available non-key items
+        def assemble(stock_items, item_invent, items_sold, total_holding):
             # Update list of quantity of items (type) sold
-            # Update inventory 
-            # Update holding cost 
-            # Update profit
+            ###
+            # for item in stock_items: 
+            #     if item > 0:                                                                # For each item in product's BOM 
+            #         item_invent[item] -= 1                                                   
+            #         items_sold[item] +=1                                                    
+            #     else: 
+            #         next
+            # for i in range(self.factors["num_items"]):                                       
+            #    total_holding =+ [element * 2 for element in item_invent]  
+            ###
+            item_invent = np.subtract(item_invent, stock_items)                              # Updates inventory 
+            items_sold = np.add(items_sold , stock_items)                                    # Updates sales list of items
+            total_holding += np.dot(item_invent, self.factors["item_holding"])               # Updates holding cost 
+            total_revenue = np.dot(items_sold, self.factors["item_revenue"])                 # Calculates total sales
+            return item_invent, items_sold, total_holding, total_revenue
 
-        # Replenish item 
-            # Generate production time for every item in list of available items for replenishment
-            # Update time lapse/clock
+
+
+        # Replenish item demands 
+        def replenish(product, machine_q):
+            process = []
+            BOM = product_items(product)
+            for i in range(BOM):
+                if BOM[i] > 0:
+                    time = random.normalvariate(self.factors["process_time"][i,0], self.factors["process_time"][i,1])
+                    process.append(time)
+                else: 
+                    process.append(0)
+            
 
 
 
         total_revenue = 0
         total_holding = 0
-        item_invent = self.factors["item_cap"]
+        item_invent = np.array(self.factors["item_cap"])                                     # Array of items in inventory 
+        items_sold = np.zeros((self.factors["num_items"],), dtype=int)                       # Array of items sold
         # Generate orders/product type arrivals 
         ## Order/Product-type probability of arrivals
         tot = 0 
@@ -247,16 +285,24 @@ class ATO(Model):
         for i in range(self.factors["num_products"]): tot += self.factors["lambda"][i]       # Sums up arrival rates
         for j in self.factors["lambda"]: prod_probs.append((self.factors["lambda"][j])/tot)       
         ## Produce for time horizon 
+        num_machines = self.factors["num_items"]                                             # Number of machines producing a single type of item
+        machine_q = [[0]] * num_machines                                                     # Machine processing queues
+        for i in range (len(machines_q)):
+            machines_q[i][0] = float('inf')
         orders = []                                                                          # List of in stock orders
-        orders_time = 0                                                                      # Sum of processing times 
+        orders_time = 0
+        clock = 0                                                                      # Sum of processing times 
         num_orders = 0                                                                  
-        while orders_time < ((self.factors["warm_up_time"] + self.factors["run_time"])):
-            
+        while clock < ((self.factors["warm_up_time"] + self.factors["run_time"])):
             product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = prod_probs, k = 1)
-            verified_items(product_items(product), item_invent)
-            orders.append(product[0])
-            order_arrival_time = (1/self.factors["lambda"][product[0]-1])                    # Order inter-arrival time
-            orders_time += order_arrival_time                                                # Sum of arrival times                                                                                                                                                                 
+            in_stock = verified_items(product, item_invent)                   # Product's key items list if stocked
+            if in_stock == False:                                                            # Key items out-of-stock
+                replenish = product_items(product)                                           # List needed items (including non-key)
+                # for item in replenish: if item > 1: item += 1                                # Order
+            else:
+                orders.append(product[0])
+                order_arrival_time = (1/self.factors["lambda"][product[0]-1])                    # Order inter-arrival time
+                orders_time += order_arrival_time                                                # Sum of arrival times                                                                                                                                                                 
                 
                 
                 ###############################
