@@ -193,44 +193,9 @@ class ATO(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        
-        # Designate separate random number generators.
-
-        total_revenue = 0
-        total_holding = 0
-        item_invent = self.factors["item_cap"]
-
-        # Generate orders/product type arrivals 
-        
-        ## Order/Product-type probability of arrivals
-        tot = 0 
-        prod_probs = []                                                                             # List of product/order arrival probablities 
-        for i in range(self.factors["num_products"]): tot += self.factors["arrival_rates"][i]       # Sums up arrival rates
-        for j in self.factors["arrival_rates"]: prod_probs.append(self.facotrs["arrival_rates"][j]/tot)       
-
-        orders = []
-        orders_time = 0   
-        num_orders = 0
-        for i in range(self.factors["warm_up_time"] + self.factors["run_time"]):                        # Generate random orders
-            product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = prod_probs, k = 1)
-            orders.append(product[0])
-            order_arrival_time = (1/self.factors["lambda"][product[0]-1])                               # Order inter-arrival time
-            orders_time += order_arrival_time                                                           # Sum of arrival times                                                                                                                                                                 
-            
-            
-            ###############################
-            if orders_time <= self.factors["time_horizon"]:                                             # Attach if sum is less than time horizon
-                arrival_times_rng.append(orders_time)                                                   # Track number of orders
-                num_orders += 1
-                product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
-                product_orders_rng.append(product[0])
-            else: 
-                break
-    
-
         # Find items needed for product 
         def product_items(product):
-            needed_items = list(product_req(product-1))
+            needed_items = list(self.factors["product_req"][(product-1)])
             return needed_items
 
         # Verify order 
@@ -245,6 +210,7 @@ class ATO(Model):
                         stock_items.append(1)
                     else:
                         return False
+                        break
                 else:
                     stock_items.append(0)
             for i in range(6, self.factors["num_items"], 1):
@@ -268,6 +234,40 @@ class ATO(Model):
         # Replenish item 
             # Generate production time for every item in list of available items for replenishment
             # Update time lapse/clock
+
+
+
+        total_revenue = 0
+        total_holding = 0
+        item_invent = self.factors["item_cap"]
+        # Generate orders/product type arrivals 
+        ## Order/Product-type probability of arrivals
+        tot = 0 
+        prod_probs = []                                                                      # List of product/order arrival probablities 
+        for i in range(self.factors["num_products"]): tot += self.factors["lambda"][i]       # Sums up arrival rates
+        for j in self.factors["lambda"]: prod_probs.append((self.factors["lambda"][j])/tot)       
+        ## Produce for time horizon 
+        orders = []                                                                          # List of in stock orders
+        orders_time = 0                                                                      # Sum of processing times 
+        num_orders = 0                                                                  
+        while orders_time < ((self.factors["warm_up_time"] + self.factors["run_time"])):
+            
+            product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = prod_probs, k = 1)
+            verified_items(product_items(product), item_invent)
+            orders.append(product[0])
+            order_arrival_time = (1/self.factors["lambda"][product[0]-1])                    # Order inter-arrival time
+            orders_time += order_arrival_time                                                # Sum of arrival times                                                                                                                                                                 
+                
+                
+                ###############################
+                if orders_time <= self.factors["time_horizon"]:                              # Attach if sum is less than time horizon
+                    arrival_times_rng.append(orders_time)                                    # Track number of orders
+                    num_orders += 1
+                    product = random.choices(np.arange(1, self.factors["num_products"]+1), weights = self.factors["product_batch_prob"], k = 1)
+                    product_orders_rng.append(product[0])
+                else: 
+                    break
+    
 
 
 
