@@ -5,7 +5,10 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithmic meth
 
 """
 
+from random import random
 from base import Solver
+from base import random
+import numpy as np
 
 class SPSA(solver):
     """
@@ -115,6 +118,17 @@ class SPSA(solver):
     def check_NL(self):
         return self.factors["NL"] > 0
 
+    def gen_simul_pert_vec(self, inital_solution):
+        """Generates a new simulatanious pertubation vector to be applied, uses input of inital solution to get vector length"""
+        
+        SP_vect = []
+        
+        for i in inital_solution:
+            delta = random.choices([-1,1], [.5,.5])
+            SP_vect.append(delta)
+        
+        return SP_vect
+
     def solve(self, problem):
         """
         Run a single macroreplication of a solver on a problem.
@@ -158,6 +172,10 @@ class SPSA(solver):
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
+        ghat = [0,0]
+        c = max(fthetaVar/self.factors["gavg"]^0.5,.0001)   #check line 113 in matlab code, need to determine fthetavar
+        A = 1 + int(problem.factors["budget"]/self.factors["r"])
+        k = 0
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[2] #the rng list is automatically integrated into the .random class
         # Sequentially generate random solutions and simulate them.
@@ -165,18 +183,30 @@ class SPSA(solver):
             if expended_budget == 0:
                 # Start at initial solution and record as best.
                 new_x = problem.factors["initial_solution"] #CRNs = Common Random Numbers, not what is used here, need a specic RN Stream #3, Look at line 97 on RandSearch
-                new_solution = self.create_new_solution(new_x, problem) #function of a solver super class under base.py
+                new_solution = new_x #function of a solver super class under base.py
                 best_solution = new_solution                            #Can use random.choices([-1,1], .5,.5)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
-                # Identify new solution to simulate.
-                new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = self.create_new_solution(new_x, problem)
-            # Simulate new solution and update budget.
-            problem.simulate(new_solution, self.factors["sample_size"])     #change sample size to r
-            expended_budget += self.factors["sample_size"]
-            # Check for improvement relative to incumbent best solution.
+                #generate Simulanious Pertubation Vector
+                k += 1
+                delta_k = self.gen_simul_pert_vec(new_solution) #outputs either +tv or -tv integers aka +1 or -1 for every variable 
+                #Loss function evaluation
+                ck = c/(k^self.factors(["gamma"]))
+                ak = A/(k + )
+                #loss func 1
+                L1 = np.dot(new_solution,np.add(delta_k,np.multiply(ck,delta_k)))
+                #loss func 2
+                L2 = np.dot(new_solution,np.subtract(delta_k,np.multiply(ck,delta_k)))
+                #Gradient Approximation
+                ghat = np.dot(np.divide(L1-L2, 2 * ck), np.transform(delta_k))
+                #Updating previous solution estimate
+                new_solution = new_solution - ghat
+                recommended_solns.append(new_solution)
+                #iteration or termnination
+                
+                
+                
             # Also check for feasibility w.r.t. stochastic constraints.
             if (problem.minmax * new_solution.objectives_mean
                     > problem.minmax * best_solution.objectives_mean and
