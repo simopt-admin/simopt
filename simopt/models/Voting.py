@@ -4,6 +4,7 @@ Summary
 Simulate demand at facilities.
 """
 
+from pickle import TRUE
 from re import L
 from tkinter import END
 
@@ -196,16 +197,11 @@ class Voting(Model):
         -------
         responses : dict
             <NEW>
-            "turnout_param" = the factor that go to vote in a precinct versus voting population in that precinct, triangularly distributed
-            "vote_time" = time that it takes for each voter to cast a ballot, gamma distributed
-
-            "mach_bd" = binary variable, probability that the
-                0 : The voting machine is broken down at start of day
-                1 : The voting machine does not break down for the day
-
-            "repair_time" = the time that it will take for a machine to be repaired, gamma distributed
-            "arrival_rate" = rate of arrival to the voting location
-
+            "perc_avg_waittime": list of all precint waittimes 
+            "perc_no_waittime": percentage of voters that did not have to wait at the location
+            
+            
+            "
         gradients : dict of dicts
             gradient estimates for each response
         """
@@ -328,8 +324,8 @@ class Voting(Model):
 """
 Summary
 -------
-Minimize the (deterministic) total cost of installing capacity at
-facilities subject to a chance constraint on stockout probability.
+Minimize the the maximum average waiting time across all precincts.
+
 """
 
 class MinVotingMaxWaitTime(Problem):
@@ -453,7 +449,7 @@ class MinVotingMaxWaitTime(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "mach_allocation": vector[:]
+            "mach_allocation": vector[:]        #Need more clarity on this vector call 
         }
         return factor_dict
 
@@ -582,5 +578,5 @@ class MinVotingMaxWaitTime(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])  # natalia will have the code for this, a little more tricky
+        x = random.integer_random_vectors_from_simplex(self,self.model.factors["n_machines"],self.model.factors["n_prec"], TRUE) 
         return x

@@ -21,91 +21,135 @@ In rough terms the problem is how many touch-screen voting machines should be al
     
     8. There are 4600 machines. Machines are to be allocated once at the beginning of the day, and not reallocated.
 
-Let :math:`\bar{W_i}` be the observed average time in system (queueing plus voting) of the voters that go to Precinct :math:`i`. We want to identify the machine allocation that minimizes :math:`E\max^p_{i=1} \bar{W_i}`. (This is the quantity that would “get us on the news” if the machine allocation were poor.)
 
 Sources of Randomness:
 ----------------------
-<The number and nature of sources of randomness.>
+5 Sorces of Randomness:
+
+    1. If machine breaksdown 
+   
+    2. How long broken down machines will take to fix
+   
+    3. Voting turnout percentage
+   
+    4. Interarrival times of voters
+   
+    5. Time to finish voting for each voter
 
 Model Factors:
 --------------
-* <factor1name>: <short description>
+* mach_allocation: number of machines allocation for precinct i
 
-    * Default: <default value>
+    * Default: [10, 10, 10, 10, 10]
 
-* <factor2name>: <short description>
+* n_mach: max number of machines available
 
-    * Default: <default value>
+    * Default: 50
 
-* <factor3name>: <short description>
+* mid_turn_per: midpoint turnout percentage for precinct i
 
-    * Default: <default value>
+    * Default: [10, 15, 10, 50, 30]
+
+* turn_ran: turnout range specific to precinct i
+
+    * Default: [.4, .2, .6, .3, .1] 
+
+* reg_vote: number of registered voters in precinct i
+
+    * Default: [100, 200, 100, 400, 200]
+
+* mean_time2vote: the mean time for the gamma distributed time taken to vote
+
+    * Default: 7.5
+
+* stdev_time2vote: the standard deviation for the gamma distributed time to vote
+
+    * Default: 2
+
+* mean_repair: voting machines are repaired according to a gamma distribution, this is the mean time, minutes
+
+    * Default: 60
+
+* stdev_repair: standard deviation for gamma distribution for time to repair a machine, minutes
+
+    * Default: 20
+
+* bd_prob: probability at which the voting machines break down (bd)
+
+    * Default: 0.05
+
+* hours: number of hours open to vote
+
+    * Default: 13.0
+
+* n_prec: number of precincts
+
+    * Default: 5
 
 Responses:
----------
-* <response1name>: <short description>
+--------------
+* prec_avg_waittime: All wait times for all precincts
 
-* <response2name>: <short description>
-
-* <response3name>: <short description>
-
+* perc_no_waittime: The precentage of voters that did not have to wait at each precinct 
 
 References:
 ===========
-This model is adapted from the article <article name with full citation + hyperlink to journal/arxiv page> 
+This model is adapted from Shane G. Henderson's problem "Voting Machines in Ohio" created on November 7th, 2008.
 
 
-
-
-Optimization Problem: <problem_name> (<problem_abbrev>)
+Optimization Problem: MinVotingMaxWaitTime
 ========================================================
 
 Decision Variables:
 -------------------
-* <dv1name that matches model factor name>
-* <dv2name that matches model factor name>
+* Mach_allocation
 
 Objectives:
 -----------
-<Description using response names. Use math if it is helpful.>
+Let :math:`\bar{W_i}` be the observed average time in system (queueing plus voting) of the voters that go to Precinct :math:`i`. We want to identify the machine allocation that minimizes :math:`E\max^p_{i=1} \bar{W_i}`. (This is the quantity that would “get us on the news” if the machine allocation were poor.)
 
 Constraints:
 ------------
-<Description using response names. Use math if it is helpful.>
+
+* turn_ran > 0
+* reg_vote > 0
+* n_mach > 0
+* n_prec > 0
+* :math:`0 < mid_turn_per < 1`
+* time2vote > 0
+* hours > 0 
+* :math:`\sum`(mach_allocation) = n_mach
+* mach_allocation(k) > 0
 
 Problem Factors:
 ----------------
-* <factor1name>: <short description>
+* initial_solution: Initial solution from which solvers start.
 
-  * Default: <default value>
+  * Default: (10, 10, 10, 10, 10)
   
-* <factor2name>: <short description>
+* budget: Max # of replications for a solver to take.
 
-  * Default: <default value>
+  * Default: 10000
 
 Fixed Model Factors:
 --------------------
-* <factor1name>: <fixed value>
-
-* <factor2name>: <fixed value>
+N/a
 
 Starting Solution: 
 ------------------
-* <dv1name>: <dv1initialvalue>
-
-* <dv2name>: <dv2initialvalue>
+* mach_allocation: (10, 10, 10, 10, 10)
 
 Random Solutions: 
 ------------------
-<description of how to generate random solutions>
+Unknown
 
 Optimal Solution:
 -----------------
-<if known, otherwise unknown>
+Unknown
 
 Optimal Objective Function Value:
 ---------------------------------
-<if known, otherwise unknown>
+Unknown
 
 
 Optimization Problem: <problem_name> (<problem_abbrev>)
