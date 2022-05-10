@@ -77,7 +77,7 @@ class ProdSys(Model):
             "interm_product": {
                 "description": "Product quantities to be processed ahead of time; number of intermediate products presently at node ",
                 "datatype": list,
-                "default": [20, 0, 0, 0, 0, 0]
+                "default": [200, 0, 0, 0, 0, 0]
             },
             "routing_layout": {
                 "description": "Layout matrix, list of edges sequences for each product type",
@@ -292,7 +292,6 @@ class ProdSys(Model):
                     possible_node.append(node)
                 if possible_node != float('inf'):
                     possible_node.reverse()
-            print("Inventory: ", node_product)
             return(possible_node)
 
         def edge_route(nodes):
@@ -338,7 +337,6 @@ class ProdSys(Model):
                 if total_time < min_seq:
                     min_seq = total_time
                     optimal_edges = elem
-            print("optimal edges: ", optimal_edges)
             return optimal_edges
 
         def update_time(prod):
@@ -376,10 +374,8 @@ class ProdSys(Model):
                 for elem in lapse_order:
                     if elem == float('inf'):
                         lapse_order.remove(elem)
-                print("Lapse order", lapse_order)
                 finish_time.append(max(lapse_order))
                 lead_times.append(finish_time[-1]-arrival_time)
-                print("Machine Queue:", machines_q)
                 # network_time.append(sum(optimal_time))
 
         # MAIN CODE
@@ -413,10 +409,7 @@ class ProdSys(Model):
                 break
         rng_list[-2] = product_orders_rng
         rng_list[-1] = arrival_times_rng
-        rng_list = [[[4, 1], 0, 0, 0, [4, 1], [3, 1]], [0, [3, 1], [5, 2], [4, 1], 0, 0], [2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 2, 3, 1, 2, 1, 3], [29.727401676011688, 61.285048195045746, 92.6774513710674, 125.03807931458186, 154.244553001439, 180.64771027023832, 208.32458418385718, 233.3913201191581, 262.38399177585217, 293.21313863649874, 308.2088057588325, 342.68573987169464, 372.01710375272273, 401.3857848259946, 434.2295472258132, 466.42519331866515, 486.70798518555915, 516.3478106441862, 544.4080471479766, 562.9793019943288, 587.4876637499182]]
-        print("")
-        print(rng_list)
-        print("")
+
         # CREATING END NODE LIST
         num_nodes = self.factors["routing_layout"][
             self.factors["num_edges"]-1][1]
@@ -433,17 +426,9 @@ class ProdSys(Model):
         clock = 0
         i = 0
         while len(finish_time) != len(rng_list[3]):
-            print("")
-            print("Clock: ", clock)
             new_lst = [machines_q[k][-1] for k in range(len(machines_q))]
             next_inq = min(new_lst)
-            print("machine queue: ", machines_q)
             ind = new_lst.index(next_inq)
-            if next_inq == float('inf'):
-                print("Next in queue: Arrival")
-            else:
-                print("Next in queue: ", next_inq)
-
             if next_inq < rng_list[3][i] or next_inq != float("inf"):
                 clock = next_inq
                 machines_q[ind].remove(next_inq)
@@ -452,15 +437,9 @@ class ProdSys(Model):
             else:
                 clock = rng_list[3][i]
                 product = rng_list[2][i]
-                print("Product: ", product, "arrives at: ", clock)
                 arrival_time = clock
                 update_time(product)
                 i += 1
-        print("")
-        print("Finish Time: ", finish_time)
-        print("")
-        print("Lead Times:", lead_times)
-        print("")
 
         sum_leadtime = 0
         sum_sslevel = 0
@@ -470,9 +449,6 @@ class ProdSys(Model):
                 sum_sslevel += 1
         avg_ldtime = sum_leadtime / sum_sslevel
         avg_sslevel = sum_sslevel / len(lead_times)
-        print(avg_ldtime)
-        print(avg_sslevel)
-
 #       Compose responses and gradients.
         responses = {"avg_leadtime": avg_ldtime, "avg_servicelevel": avg_sslevel}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
