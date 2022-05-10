@@ -12,7 +12,7 @@ from base import Solver
 from numpy.linalg import inv
 from numpy.linalg import norm
 import numpy as np
-import math
+from math import log, ceil
 import warnings
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
@@ -67,7 +67,7 @@ class ASTRODF(Solver):
             "delta_max": {
                 "description": "maximum value of the trust-region radius",
                 "datatype": float,
-                "default": 200
+                "default": 200.0
             },
             "eta_1": {
                 "description": "threshhold for any success at all",
@@ -87,12 +87,12 @@ class ASTRODF(Solver):
             "gamma_02": {
                 "description": "initial trust-region radius parameter tuning coefficient 2",
                 "datatype": float,
-                "default": 0.95
+                "default": 0.5
             },
             "gamma_1": {
                 "description": "very successful step trust-region radius increase",
                 "datatype": float,
-                "default": 1.05
+                "default": 1.5
             },
             "gamma_2": {
                 "description": "unsuccessful step trust-region radius decrease",
@@ -114,13 +114,8 @@ class ASTRODF(Solver):
                 "datatype": int,
                 "default": 10
             },
-            "c1_lambda": {
-                "description": "minimum sample size coefficient 1",
-                "datatype": float,
-                "default": 0.1
-            },
-            "c2_lambda": {
-                "description": "minimum sample size coefficient 2",
+            "c_lambda": {
+                "description": "minimum sample size coefficient",
                 "datatype": float,
                 "default": 0.1
             },
@@ -129,27 +124,12 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 0.00001 ## less means faster increase at the beginning
             },
-            "kappa_inner": {
-                "description": "adaptive sampling constant in inner loop",
-                "datatype": float,
-                "default": 1
-            },
-            "kappa_outer": {
-                "description": "adaptive sampling constant in outer loop",
-                "datatype": float,
-                "default": 1
-            },
-            "solver_select": {
+            "simple_solve": {
                 "description": "subproblem solver with Cauchy point or the built-in solver? True: Cauchy point, False: built-in solver",
                 "datatype": bool,
                 "default": True
             },
-            "kappa_select": {
-                "description": "fixed kappa or dynamic kappa? True: fixed kappa, False: dynamic kappa",
-                "datatype": bool,
-                "default": False
-            },
-            "criticality_step": {
+            "select_criticality": {
                 "description": "True: skip contraction loop if not near critical region, False: always run contraction loop",
                 "datatype": bool,
                 "default": True
@@ -172,11 +152,8 @@ class ASTRODF(Solver):
             "w": self.check_w,
             "beta": self.check_beta,
             "mu": self.check_mu,
-            "c1_lambda": self.check_c1_lambda,
-            "c2_lambda": self.check_c2_lambda,
+            "c_lambda": self.check_c_lambda,
             "epsilon_lambda": self.check_epsilon_lambda,
-            "kappa_inner": self.check_kappa_inner,
-            "kappa_outer": self.check_kappa_outer,
             "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
@@ -211,20 +188,11 @@ class ASTRODF(Solver):
     def check_mu(self):
         return self.factors["mu"] > 0
 
-    def check_c1_lambda(self):
-        return self.factors["c1_lambda"] > 0
-
-    def check_c2_lambda(self):
-        return self.factors["c2_lambda"] > 0
+    def check_c_lambda(self):
+        return self.factors["c_lambda"] > 0
 
     def check_epsilon_lambda(self):
         return self.factors["epsilon_lambda"] > 0
-
-    def check_kappa_inner(self):
-        return self.factors["kappa_inner"] > 0
-
-    def check_kappa_outer(self):
-        return self.factors["kappa_outer"] > 0
 
     def check_criticality_threshold(self):
         return self.factors["criticality_threshold"] > 0
@@ -240,45 +208,26 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    def samplesize(self, lambda_0, k, sig2, delta, io, kappa_select, kappa_tilde):
-        c1_lambda = self.factors["c1_lambda"]
-        c2_lambda = self.factors["c2_lambda"]
+    def stoppingtime(self, k, sig2, delta, kappa, dim):
+        c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
 
-        if kappa_select == True:
-            if io == 1:  # inner:
-                kappa = self.factors["kappa_inner"]
-            else:  # outer
-                kappa = self.factors["kappa_outer"]
-        else:
-            kappa = kappa_tilde
-
-        lambda_k = (lambda_0 + c1_lambda) * max(math.log(1+k/10+ c2_lambda, 10) ** (1 + epsilon_lambda),1)
+        lambda_k = (max(4, dim) + c_lambda) * max(log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
         # compute sample size
-        N_k = math.ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
+        N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         ## for later: could we normalize f's before computing sig2?
         return N_k
 
-    def determine_kappa_tilde(self, k, fn, sig2):
-        c1_lambda = self.factors["c1_lambda"]
-        c2_lambda = self.factors["c2_lambda"]
-        epsilon_lambda = self.factors["epsilon_lambda"]
-
-        lambda_k = (4 + c1_lambda) * max(math.log(k+ c2_lambda, 10) ** (1 + epsilon_lambda),1)
-        # compute sample size
-        N_k = math.ceil(max(lambda_k, lambda_k * sig2 / (fn ** 2)))
-
-        return N_k
-
-    def model_construction(self, x_k, delta, k, problem, expended_budget, kappa_select, kappa_tilde, new_solution):
+    def model_construction(self, x_k, delta, k, problem, expended_budget, kappa, new_solution):
         interpolation_solns = []
         w = self.factors["w"]
         mu = self.factors["mu"]
         beta = self.factors["beta"]
-        criticality_step = self.factors["criticality_step"]
+        select_criticality = self.factors["select_criticality"]
         criticality_threshold = self.factors["criticality_threshold"]
         j = 0
         d = problem.dim
+        budget = problem.factors["budget"]
         while True:
             fval = []
             j = j + 1
@@ -305,12 +254,8 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = new_solution.objectives_var
-                        if sample_size >= self.samplesize(problem.dim, k, sig2, delta_k, 1, kappa_select, kappa_tilde):
+                        if sample_size >= self.stoppingtime(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
                             break
-
-                        if sample_size  > 100:
-                            break
-
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
 
@@ -318,13 +263,11 @@ class ASTRODF(Solver):
 
             # construct the model and get the model coefficients
             q, grad, Hessian = self.coefficient(Z, fval, problem)
-            if not criticality_step:
+
+            if not select_criticality:
                 # check the condition and break
                 if norm(grad) > criticality_threshold:
                     break
-
-            if norm(grad) == 0:
-                break
 
             if delta_k <= mu * norm(grad):
                 break
@@ -341,7 +284,7 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i]))
             M[i] = np.append(M[i], np.array(Y[i]) ** 2)
 
-        q = np.matmul(inv(M), fval)
+        q = np.matmul(np.linalg.pinv(M), fval)
         grad = q[1:d + 1]
         grad = np.reshape(grad, d)
         Hessian = q[d + 1:2 * d + 1]
@@ -367,24 +310,22 @@ class ASTRODF(Solver):
 
             Y.append(plus)
             Y.append(minus)
-
         return Y
 
-    def parameter_tuning(self, delta, problem):
+    def parameter_tuning(self, delta, delta_max, problem): # use the delta_max determined in the solve(...) function
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
+        k = 0  # iteration number
 
         # default values
-        delta_max = self.factors["delta_max"]
         eta_1 = self.factors["eta_1"]
         eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
-        solver_select = self.factors["solver_select"]
-        kappa_select = self.factors["kappa_select"]
+        simple_solve = self.factors["simple_solve"]
+        budget = problem.factors["budget"]
 
-        k = 0  # iteration number
 
         # Start with the initial solution
         new_x = problem.factors["initial_solution"]
@@ -392,11 +333,11 @@ class ASTRODF(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         delta_k = delta
-        kappa_tilde = 1
+        kappa = 1
 
-        while expended_budget < problem.factors["budget"] * 0.01:
+        while expended_budget < budget * 0.01:
 
-            # calculate kappa_tilde
+            # calculate kappa
             k += 1
             if k == 1:
                 problem.simulate(new_solution, 1)
@@ -408,21 +349,12 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if kappa_select == False:
-                        if sample_size >= self.determine_kappa_tilde(k, fn, sig2):
-                            kappa_tilde = fn/(delta**2)
-                            break
+                    if sample_size >= self.stoppingtime(k, sig2, delta, fn/(delta**2), problem.dim):
+                        kappa = fn/(delta**2)
+                        break
 
-                        if sample_size  > 10:
-                            kappa_tilde = fn/(delta**2)
-                            break
-                    else:
-                        if sample_size >= self.samplesize(problem.dim, k, sig2, delta_k, 0, kappa_select, kappa_tilde):
-                            break
-
-            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta_k, k, problem, expended_budget, kappa_select, kappa_tilde, new_solution)
-
-            if solver_select == True:
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x, delta_k, k, problem, expended_budget, kappa, new_solution)
+            if simple_solve == True:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
                     tau = 1
@@ -442,7 +374,6 @@ class ASTRODF(Solver):
                 candidate_x = new_x + solve_subproblem.x
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
-            # projecting the solution back to the feasible region - TODO
             for i in range(problem.dim):
                 if candidate_x[i] <= problem.lower_bounds[i]:
                     candidate_x[i] = problem.lower_bounds[i] + 0.01
@@ -460,12 +391,8 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(problem.dim, k, sig2, delta_k, 0, kappa_select, kappa_tilde):
+                if sample_size >= self.stoppingtime(k, sig2, delta_k, kappa, problem.dim):
                     break
-
-                if sample_size > 100:
-                    break
-
 
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
@@ -501,7 +428,7 @@ class ASTRODF(Solver):
                 delta_k = min(gamma_2 * delta_k, delta_max)
                 final_ob = fval[0]
 
-        return final_ob, k, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa_tilde
+        return final_ob, k, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa
 
     def solve(self, problem):
         """
@@ -522,6 +449,7 @@ class ASTRODF(Solver):
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
+        budget = problem.factors["budget"]
         delta_max = min( self.factors["delta_max"] , problem.upper_bounds[0] - problem.lower_bounds[0])
         gamma_01 = self.factors["gamma_01"]
         gamma_02 = self.factors["gamma_02"]
@@ -533,8 +461,9 @@ class ASTRODF(Solver):
         eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
-        solver_select = self.factors["solver_select"]
-        kappa_select = self.factors["kappa_select"]
+        simple_solve = self.factors["simple_solve"]
+        
+        
         k = 0  # iteration number
 
         # Start with the initial solution
@@ -544,11 +473,11 @@ class ASTRODF(Solver):
         intermediate_budgets.append(expended_budget)
 
         # Parameter tuning run
-        tp_final_ob_pt, k, delta, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa_tilde = self.parameter_tuning(
-            delta_candidate[0], problem)
+        tp_final_ob_pt, k, delta, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa = self.parameter_tuning(
+            delta_candidate[0], delta_max, problem)
         for i in range(1, 3):
-            final_ob_pt, k_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_tilde_pt = self.parameter_tuning(
-                delta_candidate[i], problem)
+            final_ob_pt, k_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt = self.parameter_tuning(
+                delta_candidate[i], delta_max, problem)
             expended_budget += expended_budget_pt
             if -1 * problem.minmax[0] * final_ob_pt < -1 * problem.minmax[0] * tp_final_ob_pt:
                 k = k_pt
@@ -556,20 +485,19 @@ class ASTRODF(Solver):
                 recommended_solns = recommended_solns_pt
                 intermediate_budgets = intermediate_budgets_pt
                 new_x = new_x_pt
-                kappa_tilde = kappa_tilde_pt
+                kappa = kappa_pt
 
         intermediate_budgets = (
-                intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * problem.factors["budget"] * 0.02).tolist()
+                intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * budget * 0.01).tolist()
         intermediate_budgets[0] = 0
         delta_k = delta
-        while expended_budget < problem.factors["budget"]:
-            k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(new_x,
-                                                                                                               delta_k, k,
-                                                                                                               problem,
-                                                                                                               expended_budget, kappa_select, kappa_tilde, new_solution)
 
-            if solver_select == True:
+        while expended_budget < budget:
+            k += 1
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.model_construction(
+                new_x, delta_k, k, problem, expended_budget, kappa, new_solution)
+
+            if simple_solve == True:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
                     tau = 1
@@ -587,7 +515,6 @@ class ASTRODF(Solver):
                 solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
                 candidate_x = new_x + solve_subproblem.x
 
-            # projecting the solution back to the feasible region - TODO
             for i in range(problem.dim):
                 if candidate_x[i] <= problem.lower_bounds[i]:
                     candidate_x[i] = problem.lower_bounds[i] + 0.01
@@ -607,13 +534,7 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.samplesize(problem.dim, k, sig2, delta_k, 0, kappa_select, kappa_tilde):
-                    break
-
-                if sample_size > 100:
-                    break
-
-                if sample_size > 100:
+                if sample_size >= self.stoppingtime(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
                     break
 
             # calculate success ratio
@@ -646,4 +567,5 @@ class ASTRODF(Solver):
                 intermediate_budgets.append(expended_budget)
             else:
                 delta_k = min(gamma_2 * delta_k, delta_max)
+
         return recommended_solns, intermediate_budgets
