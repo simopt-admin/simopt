@@ -89,11 +89,11 @@ Problem Factors:
 
   * Default: 50
 
-* B: Represents the maximum sum of the buffer of n stations
+* B: Represents the maximum number of the sum of the buffer of n stations
 
   * Default: 20
 
-* R: Represents the maximum sum of the service rate of n stations.
+* R: Represents the maximum number of the sum of the service rate of n stations.
 
   * Default: 20
 
