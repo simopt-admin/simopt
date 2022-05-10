@@ -27,7 +27,7 @@ inven_stops = [1000,10000]
 # Two versions of random search with varying sample sizes.
 rs_sample_sizes = [10, 50]
 
-macroreps = 3
+macroreps = 10
 # RUNNING AND POST-PROCESSING EXPERIMENTS
 
 # Loop over problem instances.
