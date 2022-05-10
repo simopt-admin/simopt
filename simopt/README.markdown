@@ -12,7 +12,7 @@ Several papers have discussed the development of SimOpt and experiments run on t
 * [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2021/09/SimOpt-metrics-paper.pdf) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt.
 
 ## Documentation
-Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**. Descriptions of the problems and solvers are under development. 
+Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**. Descriptions of the problems and solvers are under development.
 
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*

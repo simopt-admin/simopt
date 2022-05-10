@@ -35,10 +35,10 @@ for sd in st_devs:
             # RS with sample size of 100 will get through only 10 iterations.
             problem_fixed_factors = {"budget": 1000}
             problem_rename = f"IRONORECONT-1_sd={sd}_hc={hc}_is={inv}"
-            
+
             # Temporarily store experiments on the same problem for post-normalization.
             experiments_same_problem = []
-            
+
             # Loop over random search solvers.
             for rs_ss in rs_sample_sizes:
                 solver_fixed_factors = {"sample_size": rs_ss}
@@ -57,7 +57,7 @@ for sd in st_devs:
                 # Post replicate experiment with N = 100.
                 new_experiment.post_replicate(n_postreps=100)
                 experiments_same_problem.append(new_experiment)
-    
+
             solver_fixed_factors = {"delta_max": 200.0}
             new_experiment = Experiment(solver_name="ASTRODF",
                                         problem_name="IRONORECONT-1",
@@ -71,7 +71,7 @@ for sd in st_devs:
             # Post replicate experiment with N = 100.
             new_experiment.post_replicate(n_postreps=100)
             experiments_same_problem.append(new_experiment)
-            
+
             # Post-normalize experiments with L = 200.
             # Provide NO proxies for f(x0), f(x*), or f(x).
             post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
@@ -126,10 +126,8 @@ n_problems = len(experiments[0])
 plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=0.1, beta=0.5, all_in_one=True, plot_CIs=True, print_max_hw=True)
-                          
-for i in range(n_problems+1):
+
+for i in range(n_problems):
     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="quantile", beta=0.9, all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
-
-

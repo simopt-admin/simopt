@@ -4,7 +4,7 @@ Summary
 Simulate multiple periods of production and sales for an iron ore inventory problem.
 """
 import numpy as np
-import math
+from math import sqrt, exp, copysign, log 
 
 from base import Model, Problem
 
@@ -211,8 +211,8 @@ class IronOre(Model):
         for day in range(1, self.factors["n_days"]):
             # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ)).
             # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4).
-            mean_val = math.sqrt(math.sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
-            mean_dir = math.copysign(1, self.factors["mean_price"] - mkt_price[day])
+            mean_val = sqrt(sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
+            mean_dir = copysign(1, self.factors["mean_price"] - mkt_price[day])
             mean_move = mean_val * mean_dir
             move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
             mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
@@ -506,7 +506,8 @@ class IronOreMaxRev(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        x = (rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(1000,10000),rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200))
         return x
 
 """
@@ -585,7 +586,7 @@ class IronOreMaxRevCnt(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
+        self.lower_bounds = (0., 0., 0.)
         self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
@@ -761,5 +762,7 @@ class IronOreMaxRevCnt(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        
+        x = (rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200))
         return x
