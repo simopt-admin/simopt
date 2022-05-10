@@ -70,49 +70,32 @@ Model Factors:
                 [0.13, 0.0195],
                 [0.40, 0.06]]
     
-* :math:`routing_layout`: Layout matrix, list of edges sequences for each product type
+* :math:`product_req`: Bill of materials; required item types/quantity for each product type
 
-    * Default: [[1, 2],
-                [1, 3],
-                [2, 4],
-                [2, 5],
-                [3, 5],
-                [3, 6]]
+    * Default: [[1, 0, 0, 1, 0, 1, 1, 0],
+                [1, 0, 0, 0, 1, 1, 1, 0],
+                [0, 1, 0, 1, 0, 1, 0, 0],
+                [0, 0, 1, 1, 0, 1, 0, 1],
+                [0, 0, 1, 0, 1, 1, 1, 0]]
 
-* :math:`machine_layout`: List of machines, each element is the index for the machine that processes the task on each edge
+* :math:`warm_up_time`: Warm-up period in time units
 
-    * Default: [1, 2, 2, 2, 1, 1]
+    * Default: 20
 
-* :math:`processing_time_mean`: Normally distributed processing times list; each element is the mean for the processing time distribution associated with the task on each edge
-    * Default: [4, 3, 5, 4, 4, 3]
+* :math:`run_time`: Run-length in time units for capturing statistics
 
-* :math:`processing_time_StDev`: Normally distributed processing times matrix; standard deviation
+    * Default: 50
 
-    * Default: [1, 1, 2, 1, 1, 1]
+* :math:`key_items`: Number of key-items (columns)
 
-* :math:`product_batch_prob`: Batch order probabilities of product
-
-    * Default: [0.5, 0.35, 0.15]
-
-* :math:`time_horizon`: Time horizon for raw material delivery
-    
-    * Default: 600
-
-* :math:`batch`: Batch size
-
-    * Default: 10
-    
-* :math:`n_sets`: Set of raw material to be ordered (dependent on time horizon)
-
-    * Default: 200
+    * Default: [6
 
     
     
 Responses:
 ---------
-* :math:`avg_ldtime`: Average lead time
+* :math:`avg_profit`: Average profit
 
-* :math:`avg_sslevel`: Average service level
 
 
 References:
@@ -124,12 +107,12 @@ Discrete Optimization via Simulation Using COMPASS. Operations Research 54 (1), 
 
 Optimization Problem: Minimize Lead Time (ProdSys)
 ========================================================
-Our objective is thus to minimize the expected lead time, :math:`y(x1, x2, . . . , xn)`, 
-while satisfying a tolerable service level, :math:`b` with high probability :math:`1 − α`.
+We wish to maximize the expected total profit per unit time, :math:`avg_profit` by selecting the target inventory
+level vector, :math:`b`.
 
 Decision Variables:
 -------------------
-* :math:`interim_products`
+* :math:`item_cap`
 
 Objectives:
 -----------
@@ -137,18 +120,14 @@ Minimize :math:`avg_leadtime`
 
 Constraints:
 ------------
-1 stocahstic consraint: :math:`P[g(x1, x2, . . . , xn) ≥ b] ≥ 1 − α`
+1 box consraint: :math:`0 ≤ xk ≤ ck`
 
 Problem Factors:
 ----------------
-* :math:`alpha`: Risk level parameter
+* :math:`b`: Target inventory vector
 
-  * Default: 0.10
+  * Default: [20, 20, 20, 20, 20, 20, 20, 20]
   
-* :math:`min_sslevel`: Minimum tolerable service leve
-
-  * Default: 0.5
-
 Fixed Model Factors:
 --------------------
 None
