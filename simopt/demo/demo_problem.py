@@ -19,7 +19,7 @@ from base import Solution
 # Replace <filename> with name of .py file containing problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: from models.cntnv import CntNVMaxProfit
-from models.Voting import Voting
+from models.Voting import MinVotingMaxWaitTime
 
 # Fix factors of problem. Specify a dictionary of factors.
 # Look at Problem class definition to get names of factors.
@@ -31,7 +31,7 @@ fixed_factors = {}  # Resort to all default values.
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = Voting(fixed_factors)
+myproblem = MinVotingMaxWaitTime(fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
@@ -69,7 +69,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 10
+n_reps = 2
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to terminal.

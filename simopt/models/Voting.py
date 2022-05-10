@@ -63,17 +63,17 @@ class Voting(Model):
             "mid_turn_per": {
                 "description": "midpoint turnout percentage for precinct i",
                 "datatype": list,
-                "default": [10, 15, 10, 50, 30]
+                "default": [10, 15, 10, 20, 30]
             },
             "turn_ran": {
                 "description": "turnout range specific to precinct i",
                 "datatype": list,
-                "default": [.4, .2, .6, .3, .1]
+                "default": [.4, .2, .3, .3, .1]
             },
             "reg_vote": {
                 "description": "number of registered voters in precinct i",
                 "datatype": list,
-                "default": [100, 200, 100, 400, 200]
+                "default": [100, 200, 100, 200, 200]
             },
             "mean_time2vote": {
                 "description": "the mean time for the gamma distributed time taken to vote",
@@ -305,18 +305,15 @@ class Voting(Model):
                 rand_list.append(len(wait_times))
                 rand_list.append(len(arr_times))
                 rand_list.append(vote_ind)
-            sum = 0
-            for i in range(len(wait_times)):
-                sum += wait_times[i]
-            prec_avg_waittime.append(sum/len(wait_times))
+            prec_avg_waittime.append(sum(wait_times)/len(wait_times))
             perc_no_waittime.append((wait_times.count(0) / len(wait_times)) * 100)
-            print(len(queue))
+            print(sum(wait_times)/len(wait_times))
+
 
         responses = {
             "prec_avg_waittime": prec_avg_waittime,
             "perc_no_waittime": perc_no_waittime
         }
-        print(rand_list)
         for key, value in responses.items():
             print(f"\t {key} is {value}.")
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
@@ -398,11 +395,11 @@ class MinVotingMaxWaitTime(Problem):
     def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
         self.name = name  # refer to the model factor of number of precincts, move below the initialization of the models   #self.model.factors["n_prec"]
         self.n_objectives = 1
-        self.n_stochastic_constraints = 1
+        self.n_stochastic_constraints = 0
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.upper_bounds = (math.inf, math.inf, math.inf, math.inf, math.inf)
+        self.upper_bounds = ()
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -418,7 +415,7 @@ class MinVotingMaxWaitTime(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             }
         }
         self.check_factor_list = {
@@ -427,12 +424,10 @@ class MinVotingMaxWaitTime(Problem):
         }
 
         super().__init__(fixed_factors, model_fixed_factors)
-        self.model = MinVotingMaxWaitTime(self.model_fixed_factors)
+        self.model = Voting(self.model_fixed_factors)
         self.dim = self.model.factors["n_prec"]
-        self.lower_bounds = ()
-        for i in range(self.dim):  # can we do this??
-            self.upper_bounds.append(math.inf)
-            self.lower_bounds.append(1)
+        self.lower_bounds = (1,) * self.model.factors["n_prec"]
+        self.upper_bounds = (np.inf,) * self.model.factors["n_prec"]
 
     def vector_to_factor_dict(self, vector):
         """
@@ -449,7 +444,7 @@ class MinVotingMaxWaitTime(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "mach_allocation": vector[:]        #Need more clarity on this vector call 
+            "mach_allocation": vector[:]      
         }
         return factor_dict
 
@@ -487,7 +482,7 @@ class MinVotingMaxWaitTime(Problem):
             vector of objectives
         """
 
-        objectives = (max(response_dict["avg_wait_time"]), )  # need to take the max average waiting time, in a tuple with a comma at the end.  = np.max(response_dict[avg_waitingtime])
+        objectives = (max(response_dict["prec_avg_waittime"]), ) 
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -505,7 +500,7 @@ class MinVotingMaxWaitTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None  # can set to none
+        stoch_constraints = (0,)  # can set to none
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -524,8 +519,8 @@ class MinVotingMaxWaitTime(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None  # can set to none
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = (0,)  # can set to none
+        det_stoch_constraints_gradients = (0, ) * self.model.factors['n_prec']
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
@@ -544,8 +539,8 @@ class MinVotingMaxWaitTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = None  # can set to none, if there was a cost penalty then this could be use
-        det_objectives_gradients = None
+        det_objectives = (0,)  # can set to none, if there was a cost penalty then this could be use
+        det_objectives_gradients = (0, ) * self.model.factors['n_prec']
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
