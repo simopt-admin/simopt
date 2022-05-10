@@ -284,7 +284,7 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i]))
             M[i] = np.append(M[i], np.array(Y[i]) ** 2)
 
-        q = np.matmul(np.linalg.pinv(M), fval)
+        q = np.matmul(np.linalg.pinv(M), fval) # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
         grad = q[1:d + 1]
         grad = np.reshape(grad, d)
         Hessian = q[d + 1:2 * d + 1]
