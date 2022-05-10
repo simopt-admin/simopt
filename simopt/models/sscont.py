@@ -6,7 +6,7 @@ with continuous inventory.
 A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
 """
 import numpy as np
-from math import exp, log, sqrt 
+from math import exp, log, sqrt
 from base import Model, Problem
 
 
@@ -529,7 +529,7 @@ class SSContMinCost(Problem):
         # x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
         mu_d = self.model_default_factors["demand_mean"]
         mu_l = self.model_default_factors["lead_mean"]
-        x = (rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)), 
+        x = (rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)),
              rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)))
         return x
 
