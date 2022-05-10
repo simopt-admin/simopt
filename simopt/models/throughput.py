@@ -56,13 +56,13 @@ class Throughput(Model):
                 "description": "Parameter of the buffer allocation \
                                 distribution.",
                 "datatype": float,
-                "default": 10
+                "default": 10.0
             },
             "prate": {
                 "description": "rate parameter lambda for the exponential distribution used \
-                                to generate random processing times for 3 stations.",
+                                to generate random processing times for each stations.",
                 "datatype": float,
-                "default": 10
+                "default": 10.0
             },
             "warmup": {
                 "description": "Number of people as warmup before \
@@ -71,8 +71,8 @@ class Throughput(Model):
                 "default": 2000
             },
             "n": {
-                "description": "The number of the station \
-                                distribution.",
+                "description": "The number of the total working station. \
+                                ",
                 "datatype": int,
                 "default": 3
             },

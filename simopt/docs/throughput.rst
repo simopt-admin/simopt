@@ -1,16 +1,15 @@
-Model: M/M/1 Queue
+Model: throughput
 ==========================================
 
 Description:
 ------------
 A model that simulates a working station with an n-stage flow line and a finite buffer storage, 
-    an infinite number of jobs in front of Station. A single server at each station with 
-    an Exponential(x) service time. The optimal objective is to minimize the average sojourn time 
-for each entities enter the stations. (M/M/1: A stochastic process Represents a customer flow system with a certain state space)
-
+an infinite number of jobs in front of Station. A single server at each station with 
+an Exponential(x) service time. The optimal objective solution is to find a buffer allocation and service rates
+such that the throughput (average output of the flow line per unit time) is maximized.
 .. math::
 
-   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
+   No specific math equation
 
 Sources of Randomness:
 ----------------------
@@ -18,65 +17,88 @@ This model has assigned random generater to arrival rate lists and service rate 
 
 Model Factors:
 --------------
+* buffer: Parameter of the buffer allocation distribution
+
+  * Default: 10.0
+  
+* prate: rate parameter lambda for the exponential distribution used to generate random processing times for each stations
+
+  * Default: 10.0
+
+* n: The number of the total working station.
+  
+  * Default: 3
+
 * warmup: Represents the number of people as warmup before collecting statistics
 
-    * Default: 50
+  * Default: 2000
 
-* people: Represents the number of people from which to calculate the average sojourn time.
+* jobs: Represents the number of people required for calculating throughput.
 
-    * Default: 200
-  
+  * Default: 50
+
+
+
+
 Respones:
 ---------
-* avg_sojourn_time: The average of sojourn time calculated using data stored in customers' matrix
+* Thoughtput: The average output of the flow line per unit time, represent as 50/T.
 
-* avg_waiting_time: The average of waiting time calculated using data stored in customers' matrix
+* rate_list: The service rate list that the throughput of the system is maximized.
 
-* frac_cust_wait: The fraction of customers who are waiting
+* buffer_list: The buffer list that the throughput of the system is maximized.
 
 
 References:
 ===========
-This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777
+This example is taken, almost verbatim, from the article Pichitlamken, J., B. L. Nelson and L. J. Hong, 2006. A sequential procedure for neighborhood selection-of-the-best in optimization via
+simulation. European Journal of Operational Research 173, 283–298.
 
 
 
 
 
-Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
-========================================================
+Optimization Problem: Maximization of throughput of the system
 
 
 Decision Variables:
 -------------------
-* mu
+* buffer: b
+
+* prate: r
 
 
 Objectives:
 -----------
-The goal is to minimize the average sojourn time of this M/M/1 Queue under certain cost and numbers of replications.
+The goal is to find a buffer allocation and service rates such that the throughput (average output of the flow line per unit time) is maximized.
 
 Constraints:
 ------------
-No deterministic and stochastic constraints described.
+b2 + ... bn <= B
+
+r2 + ... rn <= R
 
 Problem Factors:
 ----------------
-* lambda: Rate parameter of interarrival time distribution between entities
-
-  * Default: 1.5
-  
-* mu: Rate parameter of service time distribution
-
-  * Default: 3.0
 
 * warmup: Number of people as warmup before collecting statistics
   
+  * Default: 2000
+
+* jobs: Represents the number of people required for calculating throughput.
+
+  * Default: 50
+
+* B: Represents the maximum sum of the buffer of n stations
+
   * Default: 20
 
-* people: Number of people from which to calculate the average sojourn time
-  
-  * Default: 50
+* R: Represents the maximum sum of the service rate of n stations.
+
+  * Default: 20
+
+* Budget: Maximum number of replications for a solver to take
+  * Default: 1000
 
 Fixed Model Factors:
 --------------------
@@ -84,7 +106,7 @@ None
 
 Starting Solution: 
 ------------------
-* mu: 3.0
+None
 
 Random Solutions: 
 ------------------
@@ -92,18 +114,15 @@ Using random-number generator rng.MRG32k3a object to generate random solutions f
 
 Optimal Solution:
 -----------------
-By running the demo_model test function, the optimal solutions are unknown. Analytical solutions are generated based on solvers are
-
-response for average sojourn time is 0.58169
-response for average waiting time is 0.25554
-response for customers who are waiting is 0.48
+According to Pichitlamken et al. (2006), there are 2 solutions to the discrete-service-rate moderate-sized problem, 
+namely r = (6, 7, 7), b = (12, 8) and r = (7, 7, 6), b = (8, 12) with an expected throughput
 
 Optimal Objective Function Value:
 ---------------------------------
-The objective function value is 0.58169, which reflects the average sojourn time but the optimal value is still unknown. 
+The rate list of (6, 7, 7) and (7, 7, 6) with buffer list of (12, 8) and (8, 12)
 
 
-Optimization Problem: Minimization of average sojourn time of M/M/1 Queue (M/M/1: A stochastic process Represents a flow system with a certain state space)
+Optimization Problem: The optimal buffer allocation and service rates generated throughput (average output of the flow line per unit time) is 5.776. 
 ========================================================
 
 ...
