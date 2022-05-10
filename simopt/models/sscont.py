@@ -6,7 +6,7 @@ with continuous inventory.
 A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
 """
 import numpy as np
-
+from math import exp, log, sqrt 
 from base import Model, Problem
 
 
@@ -351,7 +351,10 @@ class SSContMinCost(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.model_default_factors = {}
+        self.model_default_factors = {
+            "demand_mean": 100.0,
+            "lead_mean": 6.0
+            }
         self.model_decision_factors = {"s", "S"}
         self.factors = fixed_factors
         self.specifications = {
@@ -521,6 +524,18 @@ class SSContMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        # x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
-        x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
+<<<<<<< Updated upstream
+        x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
+=======
+        # x = (rand_sol_rng.expovariate(1/300), rand_sol_rng.expovariate(1/300))
+        # x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
+        mu_d = self.model_default_factors["demand_mean"]
+        mu_l = self.model_default_factors["lead_mean"]
+        x = (rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)), 
+             rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)))
+>>>>>>> Stashed changes
         return x
+
+
+# If T is lead time and X is a single demand, then var(sum_{i=1}^T X_i) = E(T) var(X) + (E X))^2 var T
+# var(S) = E var(S|T) + var E(S|T)
