@@ -173,41 +173,58 @@ class SPSA(solver):
         intermediate_budgets = []
         expended_budget = 0
         ghat = [0,0]
+
+        # Designate random number generator for random sampling.
+        find_next_soln_rng = self.rng_list[2] #the rng list is automatically integrated into the .random class
+
+        #Create inital vectors for coefficients
         c = max(fthetaVar/self.factors["gavg"]^0.5,.0001)   #check line 113 in matlab code, need to determine fthetavar
         A = 1 + int(problem.factors["budget"]/self.factors["r"])
         k = 0
-        # Designate random number generator for random sampling.
-        find_next_soln_rng = self.rng_list[2] #the rng list is automatically integrated into the .random class
+        
         # Sequentially generate random solutions and simulate them.
         while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
+
+                #intialize the solution and evaluate what the vectors should start at based on gain difference
+
+
+                #redo most of this
                 new_x = problem.factors["initial_solution"] #CRNs = Common Random Numbers, not what is used here, need a specic RN Stream #3, Look at line 97 on RandSearch
                 new_solution = new_x #function of a solver super class under base.py
                 best_solution = new_solution                            #Can use random.choices([-1,1], .5,.5)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
-                #generate Simulanious Pertubation Vector
                 k += 1
-                delta_k = self.gen_simul_pert_vec(new_solution) #outputs either +tv or -tv integers aka +1 or -1 for every variable 
-                #Loss function evaluation
                 ck = c/(k^self.factors(["gamma"]))
                 ak = A/(k + )
-                #loss func 1
+                
+                #generate random direction
+                delta_k = self.gen_simul_pert_vec(new_solution) #outputs either +tv or -tv integers aka +1 or -1 for every variable 
+                
+                #Determine direciton for next steps
+                #theta pos (need to redo these calculations as well)
                 L1 = np.dot(new_solution,np.add(delta_k,np.multiply(ck,delta_k)))
-                #loss func 2
+                #theta neg
                 L2 = np.dot(new_solution,np.subtract(delta_k,np.multiply(ck,delta_k)))
-                #Gradient Approximation
+                #check feasibility
+
+                #Objective function evaluation
+                    #also mix in minmax variable to self correct the solver
+
+                #check if new solution is better or not and update accordingly
+                if 0 == 0:    
+                    new_solution = new_solution - ghat
+                    recommended_solns.append(new_solution)
+                #Estimate gradient               
                 ghat = np.dot(np.divide(L1-L2, 2 * ck), np.transform(delta_k))
-                #Updating previous solution estimate
-                new_solution = new_solution - ghat
-                recommended_solns.append(new_solution)
-                #iteration or termnination
+                
+                #Take step and check feasibility
                 
                 
-                
-            # Also check for feasibility w.r.t. stochastic constraints.
+            # Also check for feasibility w.r.t. stochastic constraints. Utilize other solver examples to do so
             if (problem.minmax * new_solution.objectives_mean
                     > problem.minmax * best_solution.objectives_mean and
                     all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
