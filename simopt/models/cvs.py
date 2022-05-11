@@ -174,16 +174,11 @@ class CVS(Model):
                 "description": "Initial inventory of the stores (differs by demand type of the store).",
                 "datatype": dict,
                 "default": {0: 100, 1: 200}
-            }, 
-            "init_inv_DC": {
-                "description": "Initial inventory of the DCs.",
-                "datatype": int,
-                "default": 1000000
             },
             "demand_store":{
-                "description": "The demand at each store (differs by demand type of the store).",
-                "datatype": dict,
-                "default": {0: 10, 1: 20}
+                "description": "The average daily demand at each store .",
+                "datatype": tuple,
+                "default": (5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
             },
             "inv_thre": {
                 "description": "The inventory threshold at each store (differs by demand type of the store).",
@@ -195,8 +190,8 @@ class CVS(Model):
                 "datatype": dict,
                 "default": {0: 50, 1: 200}
             },
-            "checking_freq": {
-                "description": "Time between route checking (hours)",
+            "t_delivery": {
+                "description": "Time between deliveries",
                 "datatype": float,
                 "default": 7 * 24.0
             },
@@ -213,7 +208,7 @@ class CVS(Model):
             "n_days": {
                 "description": "Number of periods to simulate.",
                 "datatype": int,
-                "default": 100
+                "default": 300
             },
             "warmup": {
                 "description": "Number of periods as warmup before collecting statistics.",
