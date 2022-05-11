@@ -25,7 +25,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
 solver_name = "STRONG"  # Random search solver
-problem_name = "IRONORECONT-1" # Continuous newsvendor problem
+problem_name = "FACSIZE-2" # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")

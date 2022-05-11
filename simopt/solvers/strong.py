@@ -225,7 +225,7 @@ class STRONG(Solver):
                     grad, Hessian = self.finite_diff(new_solution, BdsCheck, 1, problem, n_r)
                     expended_budget += NumOfEval * n_r
                     # Update n_r and counter after each loop.
-                    n_r = lam * n_r
+                    n_r = int(lam * n_r)
 
                 # Step 2: Solve the subproblem.
                 # Cauchy reduction.
@@ -285,7 +285,7 @@ class STRONG(Solver):
                     grad, Hessian = self.finite_diff(new_solution, BdsCheck, 2, problem, n_r)
                     expended_budget += NumOfEval * n_r
                     # Update n_r and counter after each loop.
-                    n_r = lam * n_r
+                    n_r = int(lam * n_r)
                 # Step2: Solve the subproblem.
                 # Cauchy reduction.
                 candidate_x = self.cauchy_point(grad, Hessian, new_x, problem,)
@@ -323,7 +323,7 @@ class STRONG(Solver):
                             G, H = self.finite_diff(new_solution, BdsCheck, 2, problem, (sub_counter + 1) * n_r)
                             expended_budget += NumOfEval * (sub_counter + 1) * n_r
                             # Update n_r and counter after each loop.
-                            n_r = lam * n_r
+                            n_r = int(lam * n_r)
 
                         # Step2: determine the new inner solution based on the accumulated design matrix X.
                         try_x = self.cauchy_point(G, H, new_x, problem)
