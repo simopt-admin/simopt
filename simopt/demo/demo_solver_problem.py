@@ -25,7 +25,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
 solver_name = "STRONG"  # Random search solver
-problem_name = "PARAMESTI-1" # Continuous newsvendor problem
+problem_name = "IRONORECONT-1" # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -51,12 +51,18 @@ print(f"Results will be stored as {file_name_path}.")
 
 # Initialize an instance of the experiment class.
 # myexperiment = Experiment(solver_name, problem_name)
+model_fixed_factors = {"st_dev": 1,
+                       "inven_stop": 1000,
+                       "holding_cost": 100
+                       }
+# Initialize an instance of the experiment class.
+myexperiment = Experiment(solver_name, problem_name, model_fixed_factors=model_fixed_factors)
 
-fixed_factors = {"lam": 100000}
-myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors)
+# fixed_factors = {"lam": 100000}
+# myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=10)
+myexperiment.run(n_macroreps=20)
 
 # print(myexperiment.all_recommended_xs)
 # with open('covid_res.txt', 'w') as f:
@@ -68,18 +74,18 @@ myexperiment.run(n_macroreps=10)
 # line above) to read in results from a .pickle file.
 # myexperiment = read_experiment_results(file_name_path)
 
-# print("Post-processing results.")
-# # Run a fixed number of postreplications at all recommended solutions.
-# myexperiment.post_replicate(n_postreps=10)
-# # Find an optimal solution x* for normalization.
-# post_normalize([myexperiment], n_postreps_init_opt=20)
+print("Post-processing results.")
+# Run a fixed number of postreplications at all recommended solutions.
+myexperiment.post_replicate(n_postreps=200)
+# Find an optimal solution x* for normalization.
+post_normalize([myexperiment], n_postreps_init_opt=200)
 
-# print("Plotting results.")
-# # Produce basic plots of the solver on the problem
-# plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
-# plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
-# plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
-# plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
+print("Plotting results.")
+# Produce basic plots of the solver on the problem
+plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
+plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
+plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
 
-# # Plots will be saved in the folder experiments/plots.
-# print("Finished. Plots can be found in experiments/plots folder.")
+# Plots will be saved in the folder experiments/plots.
+print("Finished. Plots can be found in experiments/plots folder.")
