@@ -140,19 +140,18 @@ class RNDSAN(Model):
                     queue.append(n)
 
         # Generate arc lengths.
-        thetas = list(self.factors["arc_means"])
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
-            arc_length[str(self.factors["arcs"][i])] = -exp_rng.expovariate(1 / thetas[i])
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
 
         # Calculate the length of the longest path.
         T = np.zeros(self.factors["num_nodes"])
         for i in range(1, self.factors["num_nodes"]):
             vi = topo_order[i - 1]
             for j in graph_out[vi]:
-                if T[j - 1] > T[vi - 1] + arc_length[str((vi, j))]:
+                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
                     T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
-        longest_path = -T[self.factors["num_nodes"] - 1]
+        longest_path = T[self.factors["num_nodes"] - 1]
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
