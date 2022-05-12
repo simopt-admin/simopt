@@ -5,11 +5,11 @@ Optimization of COVID-19 Testing Frequency
 
 COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
 regular survelliance testing to identify, isolate, and reduce disease spread. The population is divided 
-into three groups: undergraduate, graduate, and faculty/staff with interaction rates "inter_rate". 
-There is a probability of :math:`p\_trans` transmissions per interaction. The initial proportion of infected
+into three groups: undergraduate, graduate, and faculty/staff with interaction rates :math:`inter_rate`. 
+There is a probability of :math:`p_trans` transmissions per interaction. The initial proportion of infected
 is :math:`init\_infect\_percent`. The disease progression for each individual is generated according to the following semi-Markov process:
 
-[insert digram from poster]
+.. image:: disease_progression.png
 
 The number of days one takes to go from exposed to infectious is Poisson distributed with mean :math:`lamb\_exp\_inf`. 
 An infected individual has a :math:`asymp\_rate` chance of being asymptomatic. The number of 
@@ -24,7 +24,9 @@ The decision variables is :math:`freq`, the testing frequency for each group.
 
 The simulation is generated as follows:
 
-  1. Generate number of people exposed on day n. 
+  1. Generate number of people exposed on day n:
+        :math:`new\_exp = t_rate * free\_inf_n * sus_n/(free_n)` 
+        where :math:`t_rate = inter_rate * p_trans`
 
   2. For each individual in this group, generate their future disease progression and testing:
 
