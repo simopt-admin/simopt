@@ -141,22 +141,22 @@ class RNDSAN(Model):
                     queue.append(n)
 
         # Generate arc lengths.
-        thetas = list(self.factors["arc_means"])
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
-            arc_length[str(self.factors["arcs"][i])] = -exp_rng.expovariate(1/thetas[i])
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1/self.factors["arc_means"][i])
 
         # Initialize.
         T = np.zeros(self.factors["num_nodes"])
         # Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
 
+        # Longest path algorithm.
         for i in range(1, self.factors["num_nodes"]):
             vi = topo_order[i-1]
             for j in graph_out[vi]:
-                if T[j-1] > T[vi-1] + arc_length[str((vi,j))]:
+                if T[j-1] < T[vi-1] + arc_length[str((vi,j))]:
                     T[j-1] = T[vi-1] + arc_length[str((vi,j))]
 
-        longest_path = -T[self.factors["num_nodes"]-1]
+        longest_path = T[self.factors["num_nodes"]-1]
         # longest_path_gradient = Tderiv[8, :]
 
         # Compose responses and gradients.
@@ -260,7 +260,7 @@ class RNDSANLongestPath(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 100000
             }
         }
         self.check_factor_list = {
@@ -417,5 +417,5 @@ class RNDSANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0.01, 10) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.uniform(0.01, 25) for _ in range(self.dim)])
         return x
