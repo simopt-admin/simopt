@@ -2,7 +2,7 @@
 Summary
 -------
 Simulate contamination rates.
-A detailed description of the model/problem can be found 
+A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/contam.html>`_.
 """
 import numpy as np
