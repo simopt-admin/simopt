@@ -4,11 +4,10 @@ Model: Chess Matchmaking Optimization (CHESS)
 Description:
 ------------
 Chess players are rated using the Elo rating system, which assigns a (non-unique)
-number to each player based on their level of skill. The problem considered here
-has to do with optimizing online chess matchmaking, such that players are matched
-with players of similar skill level.
+number to each player based on their level of skill. The model simulates an online
+chess-matchmaking platform, which tries to match players of similar skill level.
 
-The decision variable :math:`x` is the search width --- the maximum allowable difference
+The platform uses a search width :math:`x`, which is the maximum allowable difference
 in Elo rating between two matched players. :math:`N` players are drawn from a distribution
 of Elo ratings and arrive (independent of their rating) according to a stationary
 Poisson process with rate :math:`\lambda`. When a player arrives, and there is an existing,
@@ -18,12 +17,12 @@ rating to arrive.
 
 Sources of Randomness:
 ----------------------
-1. To create the Elo distribution, first generatea normal distribution with mean
+1. To create the Elo distribution, first generate a normal distribution with mean
 :math:`1200` and standard deviation :math:`\frac{1200}{\sqrt(2)*\text{erfcinv}(\frac{1}{50})}`,
 where erfcinv is the inverse complementary error function. This results in a distribution
 where the 1st percentile is at :math:`0`, and the 99th percentile is at :math:`2400`.
 Next, truncate the distribution at :math:`0` and :math:`2400`.
-2. Stationary Poisson process with rate :math:`\lambda` for arrivals.
+2. A stationary Poisson process with rate :math:`\lambda` for arrivals.
 
 Model Factors:
 --------------
@@ -41,7 +40,7 @@ Model Factors:
 
 * num_players: Number of players.
 
-    * Default: 10000
+    * Default: 1000
 
 * allowable_diff: Maximum allowable difference between Elo ratings.
 
@@ -60,7 +59,7 @@ Original author of this problem is Bryan Chong (March 15, 2015).
 
 
 
-Optimization Problem: ChessAvgDifference (CHESS-1)
+Optimization Problem: Minimize Average Elo Difference (CHESS-1)
 ========================================================
 
 Decision Variables:
@@ -91,7 +90,7 @@ Problem Factors:
 
 Fixed Model Factors:
 --------------------
-* n/a
+* N/A
 
 Starting Solution: 
 ------------------
@@ -100,7 +99,7 @@ Starting Solution:
 Random Solutions: 
 ------------------
 First draw :math:`x` from a normal distribution with mean :math:`150` and standard
-deviation :math:`50`, then set :math:`x = \max(x, 30)`.
+deviation :math:`50`, then set :math:`x = \min(\max(x, 0), 2400)`.
 
 Optimal Solution:
 -----------------

@@ -30,6 +30,7 @@ from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
+from models.rndsan import RNDSAN, RNDSANLongestPath
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -54,7 +55,8 @@ problem_directory = {
     "SAN-1": SANLongestPath,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
-    "PARAMESTI-1": ParamEstiMinLogLik
+    "PARAMESTI-1": ParamEstiMinLogLik,
+    "RNDSAN-1": RNDSANLongestPath
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -70,5 +72,6 @@ model_directory = {
     "SAN": SAN,
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
-    "PARAMESTI": ParameterEstimation
+    "PARAMESTI": ParameterEstimation,
+    "RNDSAN": RANDSAN,
 }
