@@ -123,7 +123,7 @@ class CVS(Model):
             Order fixed cost (`flt`)
         ``variable_cost``
             Order variable cost per unit (`flt`)
-        ``S``
+        ``tote_order_lim``
             Max inventory position (`flt`)
         ``n_days``
             Number of periods to simulate (`int`)
@@ -139,16 +139,6 @@ class CVS(Model):
         self.n_responses = 7
         self.factors = fixed_factors
         self.specifications = {
-            "p_loss": {
-                "description": "Probability of losing an empty tote per day.",
-                "datatype": float,
-                "default": 0.01
-            },
-            "tote_val":{
-                "description": "The value of an empty tote.",
-                "datatype": float,
-                "default": 100.0
-            },
             "dc_loc": {
                 "description": "Location of the distribution centers.",
                 "datatype": tuple,
@@ -335,9 +325,9 @@ Minimize the expected total cost for (s, S) inventory system.
 """
 
 
-class SSContMinCost(Problem):
+class CVSMinCost(Problem):
     """
-    Class to make (s,S) inventory simulation-optimization problems.
+    Class to make multi-echelon inventory simulation-optimization problems.
 
     Attributes
     ----------
@@ -400,27 +390,25 @@ class SSContMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SSCONT-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CVS-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0)
-        self.upper_bounds = (np.inf, np.inf)
+
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"s", "S"}
+        self.model_decision_factors = {"t_delivery", "tote_order_lim"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (600, 600)
+                "default": (7*24.0, (7*5.0,))
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -434,7 +422,11 @@ class SSContMinCost(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = SSCont(self.model_fixed_factors)
+        self.model = CVS(self.model_fixed_factors)
+        self.dim = len(self.model_factors["demand_store"])
+        self.lower_bounds = (0, (0,)*self.dim)
+        self.upper_bounds = (np.inf, (np.inf,)*self.dim)
+        
 
     def vector_to_factor_dict(self, vector):
         """
@@ -451,8 +443,8 @@ class SSContMinCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "s": vector[0],
-            "S": vector[0] + vector[1]
+            "t_delivery": vector[0],
+            "tote_order_lim": vector[1]
         }
         return factor_dict
 
@@ -471,7 +463,7 @@ class SSContMinCost(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
+        vector = (factor_dict["t_delivery"], factor_dict["tote_order_lim"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -526,8 +518,8 @@ class SSContMinCost(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives = None
+        det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -567,7 +559,7 @@ class SSContMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return (x[0] >= 0 and np.all(np.array(x[1]) >= 0))
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -583,5 +575,5 @@ class SSContMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.expovariate(1/200), rand_sol_rng.expovariate(1/200))
+        x = (rand_sol_rng.uniform(1,20*24.0), tuple(rand_sol_rng.uniform(1,20,self.dim)*self.factors["demand_store"]))
         return x
