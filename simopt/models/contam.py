@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate contamination rates.
+A detailed description of the model/problem can be found 
+`here <https://simopt.readthedocs.io/en/latest/contam.html>`_.
 """
 import numpy as np
 
@@ -265,17 +267,17 @@ class ContaminationTotalCostDisc(Problem):
                 "default": 10000
             },
             "prev_cost": {
-                "description": "Cost of prevention.",
+                "description": "Cost of prevention in each stage.",
                 "datatype": list,
                 "default": [1, 1, 1, 1, 1]
             },
             "error_prob": {
-                "description": "Error probability.",
+                "description": "Allowable error probability in each stage.",
                 "datatype": list,
                 "default": [0.2, 0.2, 0.2, 0.2, 0.2]
             },
             "upper_thres": {
-                "description": "Upper limit of amount of contamination.",
+                "description": "Upper limit of amount of contamination in each stage.",
                 "datatype": list,
                 "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }

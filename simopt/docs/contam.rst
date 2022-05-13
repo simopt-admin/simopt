@@ -3,15 +3,14 @@ Model: Contamination Control Problem (CONTAM)
 
 Description:
 ------------
-Consider a food supply chain consisting of :math:`n` stages. Suppose there exists
-a possibility that pathogenic microorganisms and other poisonous elements contaminate
-some fraction of the food supply at each stage. Specifically, let the growth rate
-of contamination at the stage :math:`i` of the chain be denoted by the random variable
-:math:`\Lambda_i`, :math:`0 \leq \Lambda_i \leq 1` for :math:`i = 1, 2, ..., n`. If
-a prevention effort is made at the stage :math:`i`, the contamination decreases by
-the random rate :math:`\Gamma_i`, :math:`0 \leq \Gamma_i \leq 1` with associated
-prevention cost :math:`c_i`. Let the prevention decision variable :math:`u_i = 1`
-if a prevention measure is executed at the stage :math:`i`, and :math:`u_i = 0` otherwise.
+Consider a food supply chain consisting of :math:`n` stages. Pathogenic microorganisms
+and other poisonous elements can contaminate some fraction of the food supply at each 
+stage. Specifically, let the growth rate of contamination at stage :math:`i` of the
+chain be denoted by the random variable :math:`\Lambda_i`, :math:`0 \leq \Lambda_i \leq 1`
+for :math:`i = 1, 2, ..., n`. If a prevention effort is made at stage :math:`i`, 
+the contamination decreases by the random rate :math:`\Gamma_i`, :math:`0 \leq \Gamma_i \leq 1`
+with associated prevention cost :math:`c_i`. Let the binary variable :math:`u_i` represent
+whether a prevention measure is executed at stage :math:`i`.
 
 
 Sources of Randomness:
@@ -69,7 +68,7 @@ https://dl.acm.org/doi/abs/10.5555/2433508.2433840
 
 
 
-Optimization Problem: ContaminationTotalCostDisc (CONTAM-1)
+Optimization Problem: Minimize Prevention Costs (CONTAM-1)
 ========================================================
 
 Decision Variables:
@@ -86,34 +85,33 @@ Minimize the (deterministic) total cost of prevention efforts (prev_cost * prev_
 
 Constraints:
 ------------
+Each element of `prev_decision` is binary. (See above.)
+
 The contaminated fraction :math:`X_i` at the stage :math:`i`
-should not exceed a pre-specified upper limit :math:`p_i` with probability at least :math:`1 - \epsilon_i`. prev_decision is discrete. (See above.)
+should not exceed a pre-specified upper limit :math:`p_i` with 
+probability at least :math:`1 - \epsilon_i`. 
 
 Problem Factors:
 ----------------
-* initial_solution: Initial solution.
-
-  * Default: (1, 1, 1, 1, 1)
-  
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
 
-* prev_cost: Cost of prevention.
+* prev_cost: Cost of prevention in each stage.
 
   * Default: [1, 1, 1, 1, 1]
 
-* error_prob: Error probability.
+* error_prob: Allowable error probability in each stage.
 
   * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
 
-* upper_thres: Upper limit of amount of contamination.
+* upper_thres: Upper limit of amount of contamination in each stage.
 
   * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
 Fixed Model Factors:
 --------------------
-* n/a
+* N/A
 
 Starting Solution: 
 ------------------
@@ -121,7 +119,7 @@ Starting Solution:
 
 Random Solutions: 
 ------------------
-Generate a tuple of 0s and 1s with equal probability.
+Generate a tuple of Bernoulli(0.5) random variables.
 
 Optimal Solution:
 -----------------
@@ -145,34 +143,33 @@ Minimize the (deterministic) total cost of prevention efforts (prev_cost * prev_
 
 Constraints:
 ------------
+Each element of `prev_decision` in the interval [0, 1].
+
 The contaminated fraction :math:`X_i` at the stage :math:`i`
-should not exceed a pre-specified upper limit :math:`p_i` with probability at least :math:`1 - \epsilon_i`. prev_decision is continuous.
+should not exceed a pre-specified upper limit :math:`p_i` with 
+probability at least :math:`1 - \epsilon_i`. 
 
 Problem Factors:
-----------------
-* initial_solution: Initial solution.
-
-  * Default: (1, 1, 1, 1, 1)
-  
+----------------  
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
 
-* prev_cost: Cost of prevention.
+* prev_cost: Cost of prevention in each stage.
 
   * Default: [1, 1, 1, 1, 1]
 
-* error_prob: Error probability.
+* error_prob: Allowable error probability in each stage.
 
   * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
 
-* upper_thres: Upper limit of amount of contamination.
+* upper_thres: Upper limit of amount of contamination in each stage.
 
   * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
 Fixed Model Factors:
 --------------------
-* n/a
+* N/A
 
 Starting Solution: 
 ------------------
@@ -180,7 +177,7 @@ Starting Solution:
 
 Random Solutions: 
 ------------------
-Generate a tuple of standard uniform solutions.
+Generate a tuple of Uniform(0, 1) random variables.
 
 Optimal Solution:
 -----------------

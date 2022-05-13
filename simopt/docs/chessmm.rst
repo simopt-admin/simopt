@@ -72,14 +72,12 @@ Minimize the average Elo difference between all pairs of matched players.
 
 Constraints:
 ------------
+Maximum allowable difference is between 0 and 2400.
+
 The average waiting time is :math:`\leq \delta`.
 
 Problem Factors:
 ----------------
-* initial_solution: Initial solution.
-
-  * Default: (150,)
-  
 * budget: Max # of replications for a solver to take.
 
   * Default: 1000

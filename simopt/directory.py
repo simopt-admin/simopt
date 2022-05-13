@@ -73,5 +73,5 @@ model_directory = {
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
-    "RNDSAN": RANDSAN,
+    "RNDSAN": RNDSAN,
 }
