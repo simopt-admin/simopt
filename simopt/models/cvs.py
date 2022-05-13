@@ -155,7 +155,7 @@ class CVS(Model):
                 "default": (100,)
             },
             "demand_store":{
-                "description": "The average daily demand at each store .",
+                "description": "The average daily demand at each store.",
                 "datatype": tuple,
                 "default": (5,)
             },
@@ -165,7 +165,7 @@ class CVS(Model):
                 "default": (200,)
             },
             "t_delivery": {
-                "description": "Time between deliveries",
+                "description": "Time between deliveries.",
                 "datatype": float,
                 "default": 7 * 24.0
             },
@@ -181,7 +181,7 @@ class CVS(Model):
             }
         }
         self.check_factor_list = {
-            "demand_mean": self.check_demand_mean,
+            "demand_store": self.check_demand_store,
             "backorder_cost": self.check_backorder_cost,
             "holding_cost": self.check_holding_cost,
             "fixed_cost": self.check_fixed_cost,
@@ -194,8 +194,8 @@ class CVS(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
-        return self.factors["demand_mean"] > 0
+    def check_demand_store(self):
+        return self.factors["demand_store"] > 0
 
     def check_backorder_cost(self):
         return self.factors["backorder_cost"] > 0
@@ -254,39 +254,42 @@ class CVS(Model):
         """
         # Designate random number generators.
         demand_rng = rng_list[0]
-        lead_rng = rng_list[1]
+        # lead_rng = rng_list[1]
+
+        num_stores = len(self.factors["demand_store"])
+        total_days = self.factors["n_days"] + self.factors["warmup"]
         # Generate uniform random demands.
-        demands = [demand_rng.uniform(1/self.factors["demand_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
+        demands = []
+        for i in range(num_stores):
+            demands.extend([demand_rng.uniform(1, 2*self.factors["demand_store"][i]-1) for _ in range(total_days)])
+        demands = np.array(demands, ndmin=2)
         # Initialize starting and ending inventories for each period.
-        start_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        start_inv[0] = self.factors["s"]  # Start with s units at period 0.
-        end_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
+        start_inv = np.zeros((num_stores, total_days))
+        start_inv[:0] = self.factors["init_inv_store"]
+        end_inv = np.zeros((num_stores, total_days))
         # Initialize other quantities to track:
         #   - Amount of product to be received in each period.
         #   - Inventory position each period.
         #   - Amount of product ordered in each period.
         #   - Amount of product outstanding in each period.
-        orders_received = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        inv_pos = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_placed = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_outstanding = np.zeros(self.factors["n_days"] + self.factors["warmup"])
+        orders_received = np.zeros((num_stores, total_days))
+        inv_pos = np.zeros((num_stores, total_days))
+        orders_placed = np.zeros((num_stores, total_days//int(self.factors["t_delivery"])))
+        orders_outstanding = np.zeros((num_stores, total_days))
         # Run simulation over time horizon.
-        for day in range(self.factors["n_days"] + self.factors["warmup"]):
+        for day in range(total_days):
             # Calculate end-of-period inventory on hand and inventory position.
-            end_inv[day] = start_inv[day] - demands[day]
-            inv_pos[day] = end_inv[day] + orders_outstanding[day]
+            end_inv[:day] = start_inv[:day] - demands[:day]
+            inv_pos[:day] = end_inv[:day] + orders_outstanding[:day]
             # Place orders, keeping track of outstanding orders and when they will be received.
-            orders_placed[day] = np.max(((inv_pos[day] < self.factors["s"]) * (self.factors["S"] - inv_pos[day])), 0)
-            if orders_placed[day] > 0:
-                lead = lead_rng.poissonvariate(self.factors["lead_mean"])
-                for future_day in range(day + 1, day + lead + 1):
-                    if future_day < self.factors["n_days"] + self.factors["warmup"]:
-                        orders_outstanding[future_day] = orders_outstanding[future_day] + orders_placed[day]
-                if day + lead + 1 < self.factors["n_days"] + self.factors["warmup"]:
-                    orders_received[day + lead + 1] = orders_received[day + lead + 1] + orders_placed[day]
-            # Calculate starting inventory for next period.
-            if day < self.factors["n_days"] + self.factors["warmup"] - 1:
-                start_inv[day + 1] = end_inv[day] + orders_received[day + 1]
+            if day%self.factors["t_delivery"] == 0:
+                orders_placed[:day//int(self.factors["t_delivery"])] = np.reshape(self.factors["tote_order_lim"], (num_stores,1)) - inv_pos[:day]
+                # Calculate starting inventory for next period.
+                if day < total_days - 1:
+                    start_inv[:day + 1] = end_inv[:day] + orders_received[:day + 1]
+            else:
+                if day < total_days - 1:
+                    start_inv[:day + 1] = end_inv[:day]
         # Calculate responses from simulation data.
         order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
         stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
