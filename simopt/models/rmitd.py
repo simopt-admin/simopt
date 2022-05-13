@@ -2,7 +2,7 @@
 Summary
 -------
 Simulate a multi-stage revenue management system with inter-temporal dependence.
-A detailed description of the model/problem can be found 
+A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/rmitd.html>`_.
 
 """
