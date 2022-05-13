@@ -2,9 +2,11 @@
 Summary
 -------
 Simulate multiple periods of production and sales for an iron ore inventory problem.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/ironore.html>`_.
 """
 import numpy as np
-from math import sqrt, exp, copysign, log 
+from math import sqrt, copysign
 
 from base import Model, Problem
 
@@ -490,7 +492,9 @@ class IronOreMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0 and x[2] >= 0 and x[3] >= 0)
+        # Check box constraints.
+        box_feasible = super().check_deterministic_constraints(x)
+        return box_feasible
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -507,8 +511,9 @@ class IronOreMaxRev(Problem):
             vector of decision variables
         """
         # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-        x = (rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(1000,10000),rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200))
+        x = (rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(1000, 10000), rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(10, 200))
         return x
+
 
 """
 Summary
@@ -763,6 +768,5 @@ class IronOreMaxRevCnt(Problem):
             vector of decision variables
         """
         # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-        
-        x = (rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200))
+        x = (rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(10, 200))
         return x
