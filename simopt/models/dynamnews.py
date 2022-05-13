@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/dynamnews.html>`_.
 """
 import numpy as np
 
