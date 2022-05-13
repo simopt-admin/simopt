@@ -55,7 +55,7 @@ class RNDSAN(Model):
                             (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
             },
             "arc_means": {
-                "description": "Initial solution of means.",
+                "description": "Mean task durations for each arc.",
                 "datatype": tuple,
                 "default": (1,) * 13
             }

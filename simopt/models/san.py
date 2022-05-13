@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate duration of stochastic activity network (SAN).
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/san.html>`_.
 """
 import numpy as np
 
@@ -13,7 +15,6 @@ class SAN(Model):
     A model that simulates a stochastic activity network problem with tasks
     that have exponentially distributed durations, and the selected means
     come with a cost.
-    Returns the optimal mean duration for each task.
 
     Attributes
     ----------
@@ -55,7 +56,7 @@ class SAN(Model):
                 "default": 9
             },
             "arc_means": {
-                "description": "Initial solution of means.",
+                "description": "Mean task durations for each arc.",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
             }
@@ -270,7 +271,7 @@ class SANLongestPath(Problem):
                 "datatype": int,
                 "default": 10000
             },
-            "arc_costs":{
+            "arc_costs": {
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
@@ -403,7 +404,6 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        
         det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
         det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2))
         return det_objectives, det_objectives_gradients

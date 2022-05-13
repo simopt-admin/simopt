@@ -4,8 +4,9 @@ Model: Stochastic Activity Network (SAN)
 Description:
 ------------
 Consider the following stochastic activity network (SAN) where the arcs are labeled
-from 1 through 13. (SANs are also known as PERT networks, and are used in planning
-large-scale projects.) Each arc :math:`i` is associated with a task with random duration :math:`X_i`. Task durations are independent.
+from 1 through 13. (SANs are also known as PERT networks and are used in planning
+large-scale projects.) Each arc :math:`i` is associated with a task with random duration
+:math:`X_i`. Task durations are independent.
 
 .. image:: san.PNG
   :alt: The SAN diagram has failed to display
@@ -25,7 +26,7 @@ Model Factors:
 
     * Default: 9
 
-* arc_means: Initial solution of means.
+* arc_means: Mean task durations for each arc.
 
     * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
@@ -37,12 +38,10 @@ Responses:
 References:
 ===========
 This model is adapted from Avramidis, A.N., Wilson, J.R. (1996).
-Integrated variance reduction strategies for simulation. Operations Research 44, 327-346.
+Integrated variance reduction strategies for simulation. *Operations Research* 44, 327-346.
+(https://pubsonline.informs.org/doi/abs/10.1287/opre.44.2.327)
 
-
-
-
-Optimization Problem: SANLongestPath (SAN-1)
+Optimization Problem: Minimize Longest Path Plus Penalty (SAN-1)
 ========================================================
 
 Decision Variables:
@@ -61,29 +60,26 @@ is also given in the code.
 
 Constraints:
 ------------
-We require that :math:`theta_i \in [0.01, 100]` for each :math:`i`.
+We require that :math:`theta_i > 0` for each :math:`i`.
 
 Problem Factors:
 ----------------
-* initial_solution: Initial solution.
-
-  * Default: (8,) * 13
-  
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
 
 Fixed Model Factors:
 --------------------
-* n/a
+* N/A
 
 Starting Solution: 
 ------------------
-* initial_solution: (8,) * 13
+* initial_solution: (1,) * 13
 
 Random Solutions: 
 ------------------
-Sample uniformly from :math:`[0.5, 5]^{13}`.
+Sample each arc mean uniformly from a lognormal distribution with 
+2.5- and 97.5-percentiles at 0.1 and 10 respectively.
 
 Optimal Solution:
 -----------------
