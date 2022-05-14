@@ -22,7 +22,7 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 demand_means = [25.0, 50.0, 100.0, 200.0, 400.0]
 lead_means = [1.0, 3.0, 6.0, 9.0]
 
-# Three versions of random search with varying sample sizes.
+# Two versions of random search with varying sample sizes.
 rs_sample_sizes = [10, 50]
 
 # RUNNING AND POST-PROCESSING EXPERIMENTS
