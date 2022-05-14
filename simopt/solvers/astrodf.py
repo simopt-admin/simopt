@@ -349,7 +349,7 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.stoppingtime(k, sig2, delta, fn/(delta**2), problem.dim):
+                    if sample_size >= self.stoppingtime(k, sig2, delta, max(1,fn/(delta**2)), problem.dim):
                         kappa = fn/(delta**2)
                         break
 
