@@ -19,8 +19,11 @@ inven_stops = [1000,10000]
 # Two versions of random search with varying sample sizes.
 rs_sample_sizes = [10, 50]
 
-macroreps = 10
 # RUNNING AND POST-PROCESSING EXPERIMENTS
+M = 10
+N = 100
+L = 200
+
 
 # Loop over problem instances.
 for sd in st_devs:
@@ -50,10 +53,10 @@ for sd in st_devs:
                                             problem_fixed_factors=problem_fixed_factors,
                                             model_fixed_factors=model_fixed_factors
                                             )
-                # Run experiment with M = macroreps.
-                new_experiment.run(n_macroreps=macroreps)
-                # Post replicate experiment with N = 100.
-                new_experiment.post_replicate(n_postreps=100)
+                # Run experiment with M.
+                new_experiment.run(n_macroreps=M)
+                # Post replicate experiment with N.
+                new_experiment.post_replicate(n_postreps=N)
                 experiments_same_problem.append(new_experiment)
     
             # Setup and run ASTRO-DF.
@@ -65,10 +68,10 @@ for sd in st_devs:
                                         problem_fixed_factors=problem_fixed_factors,
                                         model_fixed_factors=model_fixed_factors
                                         )
-            # Run experiment with M = macroreps.
-            new_experiment.run(n_macroreps=macroreps)
-            # Post replicate experiment with N = 100.
-            new_experiment.post_replicate(n_postreps=100)
+            # Run experiment with M.
+            new_experiment.run(n_macroreps=M)
+            # Post replicate experiment with N.
+            new_experiment.post_replicate(n_postreps=N)
             experiments_same_problem.append(new_experiment)
             
             # Setup and run Nelder-Mead.
@@ -79,10 +82,10 @@ for sd in st_devs:
                                         problem_fixed_factors=problem_fixed_factors,
                                         model_fixed_factors=model_fixed_factors
                                         )
-            # Run experiment with M = macroreps.
-            new_experiment.run(n_macroreps=macroreps)
-            # Post replicate experiment with N = 100.
-            new_experiment.post_replicate(n_postreps=100)
+            # Run experiment with M.
+            new_experiment.run(n_macroreps=M)
+            # Post replicate experiment with N.
+            new_experiment.post_replicate(n_postreps=N)
             experiments_same_problem.append(new_experiment)
             
             # Setup and run STRONG.
@@ -93,15 +96,15 @@ for sd in st_devs:
                                         problem_fixed_factors=problem_fixed_factors,
                                         model_fixed_factors=model_fixed_factors
                                         )
-            # Run experiment with M = macroreps.
-            new_experiment.run(n_macroreps=macroreps)
-            # Post replicate experiment with N = 100.
-            new_experiment.post_replicate(n_postreps=100)
+            # Run experiment with M.
+            new_experiment.run(n_macroreps=M)
+            # Post replicate experiment with N.
+            new_experiment.post_replicate(n_postreps=N)
             experiments_same_problem.append(new_experiment)
     
-            # Post-normalize experiments with L = 200.
+            # Post-normalize experiments with L.
             # Provide NO proxies for f(x0), f(x*), or f(x).
-            post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
+            post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
         
         
 # TODO: Redo ASTRODF but load others and then post-normalize
