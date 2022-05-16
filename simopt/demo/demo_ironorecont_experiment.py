@@ -9,15 +9,7 @@ import os.path as o
 import os
 # sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles
-
-# Default values of the (s, S) model:
-# "demand_mean": 100.0
-# "lead_mean": 6.0
-# "backorder_cost": 4.0
-# "holding_cost": 1.0
-# "fixed_cost": 36.0
-# "variable_cost": 2.0
+from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
 
 # Create 20 problem instances by varying three factors.
 st_devs = [1,2,3,4,5]
@@ -65,7 +57,7 @@ for sd in st_devs:
                 experiments_same_problem.append(new_experiment)
     
             # Setup and run ASTRO-DF.
-            solver_fixed_factors = {"delta_max": 200.0}
+            solver_fixed_factors = {"delta_max": 100.0}
             new_experiment = Experiment(solver_name="ASTRODF",
                                         problem_name="IRONORECONT-1",
                                         problem_rename=problem_rename,
@@ -162,7 +154,7 @@ experiments_same_solver = []
 for sd in st_devs:
     for hc in holding_costs:
         for inv in inven_stops:
-            problem_rename = f"RONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
+            problem_rename = f"IRONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
             file_name = f"{solver_rename}_on_{problem_rename}"
             # Load experiment.
             new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
@@ -178,7 +170,7 @@ experiments_same_solver = []
 for sd in st_devs:
     for hc in holding_costs:
         for inv in inven_stops:
-            problem_rename = f"RONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
+            problem_rename = f"IRONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
             file_name = f"{solver_rename}_on_{problem_rename}"
             # Load experiment.
             new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
@@ -197,9 +189,13 @@ n_problems = len(experiments[0])
 plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=0.1, beta=0.5, all_in_one=True, plot_CIs=True, print_max_hw=True)
+plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=0.1, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=True, print_max_hw=True)
+plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=0.1, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=True, print_max_hw=True)
+plot_terminal_scatterplots(experiments, all_in_one=True)
                           
 for i in range(n_problems):
     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True)
+    plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
     # plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="quantile", beta=0.9, all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
 
