@@ -97,8 +97,8 @@ Instead of loading an existing Experiment, you can create one from the main page
 </table>
 5. Change factors associated with the problem and model as necessary.
 6. All problems with unique factors must have unique names (no two problems can have the same name, but different factors). If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
-7. The number of macroreplications can be modified in the top-left corner. The default is 10 macroreplicatons.
-8. Select the "Add Experiment" button, which only appears when a solver and problem is selected. Then, a new Experiment will be added in the "Queue of Experiments".
+7.  The number of macroreplications can be modified in the top-left corner. The default is 10 macroreplicatons.
+8.  Select the "Add Experiment" button, which only appears when a solver and problem is selected. Then, a new Experiment will be added in the "Queue of Experiments".
 
 #### Creating a Cross-Design Experiment
 By cross-designing an Experiment, you can create a MetaExperiment, which will be added to the "Queue of Meta-Experiments". (Currently, Meta-Experiments can only be created and not loaded from a file.)
