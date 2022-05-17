@@ -764,5 +764,5 @@ class IronOreMaxRevCnt(Problem):
         """
         # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
         
-        x = (rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200),rand_sol_rng.lognormalvariate(10,200))
+        x = (rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,200))
         return x
