@@ -42,7 +42,7 @@ for sd in st_devs:
                 solver_rename = f"RNDSRCH_ss={rs_ss}"
                 # Create experiment for the problem-solver pair.
                 new_experiment = Experiment(solver_name="RNDSRCH",
-                                            problem_name="SSCONT-1",
+                                            problem_name="IRONORECONT-1",
                                             solver_rename=solver_rename,
                                             problem_rename=problem_rename,
                                             solver_fixed_factors=solver_fixed_factors,
@@ -58,7 +58,7 @@ for sd in st_devs:
             # Setup and run ASTRO-DF.
             solver_fixed_factors = {"delta_max": 200.0}
             new_experiment = Experiment(solver_name="ASTRODF",
-                                        problem_name="SSCONT-1",
+                                        problem_name="IRONORECONT-1",
                                         problem_rename=problem_rename,
                                         solver_fixed_factors=solver_fixed_factors,
                                         problem_fixed_factors=problem_fixed_factors,
@@ -72,7 +72,7 @@ for sd in st_devs:
             
             # Setup and run Nelder-Mead.
             new_experiment = Experiment(solver_name="NELDMD",
-                                        problem_name="SSCONT-1",
+                                        problem_name="IRONORECONT-1",
                                         problem_rename=problem_rename,
                                         problem_fixed_factors=problem_fixed_factors,
                                         model_fixed_factors=model_fixed_factors
@@ -85,7 +85,7 @@ for sd in st_devs:
             
             # Setup and run STRONG.=
             new_experiment = Experiment(solver_name="STRONG",
-                                        problem_name="SSCONT-1",
+                                        problem_name="IRONORECONT-1",
                                         problem_rename=problem_rename,
                                         problem_fixed_factors=problem_fixed_factors,
                                         model_fixed_factors=model_fixed_factors
@@ -182,8 +182,13 @@ plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvabili
 plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=0.1, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=True, print_max_hw=True)
 plot_terminal_scatterplots(experiments, all_in_one=True)
 
-                      
 for i in range(n_problems):
     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True, normalize=False)
     plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
 
+
+# a=np.random.rand(2,3)
+# for i in range(1, 6):
+#     fig.add_subplot(rows, columns, i)
+#     plt.plot(a)### what you want you can plot  
+# plt.show()
