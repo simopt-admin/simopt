@@ -212,7 +212,7 @@ class ASTRODF(Solver):
         c_lambda = self.factors["c_lambda"]
         epsilon_lambda = self.factors["epsilon_lambda"]
 
-        lambda_k = (max(4, dim) + c_lambda) * max(log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
+        lambda_k = (max(3, dim) + c_lambda) * max(log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         ## for later: could we normalize f's before computing sig2?
@@ -349,7 +349,7 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.stoppingtime(k, sig2, delta, max(1,fn/(delta**2)), problem.dim) or expended_budget >= budget:
+                    if sample_size >= self.stoppingtime(k, sig2, delta, fn/(delta**2), problem.dim) or expended_budget >= budget:
                         kappa = fn/(delta**2)
                         break
 
