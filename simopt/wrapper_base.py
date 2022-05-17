@@ -1730,7 +1730,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                         plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
 
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
             if plot_type == "diff_cdf_solvability":
                 file_list.append(save_plot(solver_name="SOLVER SET",
                                            problem_name="PROBLEM SET",
@@ -2096,7 +2096,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     elif plot_type == "area":
         plt.xlabel("Mean Area", size=14)
         plt.ylabel("Std Dev of Area")
-        plt.xlim((0, 1))
+        # plt.xlim((0, 1))
         plt.ylim((0, 0.5))
         title = f"{solver_name}\nAreas Under Progress Curves"
     elif plot_type == "box" or plot_type == "violin":
@@ -2110,7 +2110,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     elif plot_type == "terminal_scatter":
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")
-        plt.xlim((0, 1))
+        # plt.xlim((0, 1))
         plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
     plt.title(title, size=14)
