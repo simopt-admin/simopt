@@ -14,7 +14,7 @@ Solution : class
 
 import numpy as np
 from copy import deepcopy
-from util import bi_dict, _replicate_wrapper
+from auto_diff_util import bi_dict, replicate_wrapper
 
 
 from rng.mrg32k3a import MRG32k3a
@@ -556,11 +556,18 @@ class Problem(object):
                 responses, gradients = self.model.replicate(solution.rng_list)
                 # convert gradient subdictionaries to vectors mapping to decision variables
                 # TEMPORARILY COMMENT OUT GRADIENTS
-                # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                #print(vector_gradients)
+                #print(self.response_dict_to_objectives(vector_gradients))
+                #print(self.response_dict_to_objectives(responses))
                 # convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
-                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                
+                solution.objectives_gradients[solution.n_reps] = self.response_dict_to_objectives(vector_gradients)
+                '''
+                solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                '''
                 if self.n_stochastic_constraints > 0:
                     # convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints
@@ -591,12 +598,10 @@ class Problem(object):
                 n_reps_to_take = n_reps - solution.n_reps
                 self.simulate(solution=solution, m=n_reps_to_take)
 
-
 class Model(object):
     """
     Base class to implement simulation models (models) featured in
     simulation-optimization problems.
-
     Attributes
     ----------
     name : string
@@ -611,7 +616,6 @@ class Model(object):
         details of each factor (for GUI, data validation, and defaults)
     check_factor_list : dict
         switch case for checking factor simulatability
-
     Arguments
     ---------
     fixed_factors : dict
@@ -621,26 +625,17 @@ class Model(object):
         # set factors of the simulation model
         # fill in missing factors with default values
         self.factors = fixed_factors
-        self.differentiable_factor_names = []
         for key in self.specifications:
-            if self.specifications[key]["datatype"] == float:
-                self.differentiable_factor_names.append(key)
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        self.bi_dict = bi_dict(self.response_names)
-                
-                
-        
 
     def __eq__(self, other):
         """
         Check if two models are equivalent.
-
         Arguments
         ---------
         other : base.Model object
             other Model object to compare to self
-
         Returns
         -------
         bool
@@ -659,12 +654,10 @@ class Model(object):
     def check_simulatable_factor(self, factor_name):
         """
         Determine if a simulation replication can be run with the given factor.
-
         Arguments
         ---------
         factor_name : string
             name of factor for dictionary lookup (i.e., key)
-
         Returns
         -------
         is_simulatable : bool
@@ -679,7 +672,6 @@ class Model(object):
     def check_simulatable_factors(self):
         """
         Determine if a simulation replication can be run with the given factors.
-
         Returns
         -------
         is_simulatable : bool
@@ -691,7 +683,6 @@ class Model(object):
     def check_factor_datatype(self, factor_name):
         """
         Determine if a factor's data type matches its specification.
-
         Returns
         -------
         is_right_type : bool
@@ -700,15 +691,13 @@ class Model(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def _replicate(self, rng_list):
+    def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
-
         Arguments
         ---------
         rng_list : list of rng.MRG32k3a objects
             rngs for model to use when simulating a replication
-
         Returns
         -------
         responses : dict
@@ -716,11 +705,31 @@ class Model(object):
         gradients : dict of dicts
             gradient estimate for each response
         """
+        raise NotImplementedError                
+                
+                
+
+class Auto_Model(Model):
+    """
+    Subclass of Model. 
+    """
+    def __init__(self, fixed_factors):
+        # set factors of the simulation model
+        # fill in missing factors with default values
+        super(Auto_Model, self).__init__(fixed_factors)
+        self.differentiable_factor_names = []
+        for key in self.specifications:
+            if self.specifications[key]["datatype"] == float:
+                self.differentiable_factor_names.append(key)
+        self.bi_dict = bi_dict(self.response_names)
+                
+    def innner_replicate(self, rng_list):
         raise NotImplementedError
 
     def replicate(self, rng_list, **kwargs):
-        return _replicate_wrapper(self, rng_list, **kwargs)
+        return replicate_wrapper(self, rng_list, **kwargs)
 
+    
 class Solution(object):
     """
     Base class for solutions represented as vectors of decision variables
@@ -847,7 +856,7 @@ class Solution(object):
             self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
             self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
         # TEMPORARILY COMMENT OUT GRADIENTS
-        # self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
+        self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
         # if self.n_reps > 1:
             # self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
             # self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)

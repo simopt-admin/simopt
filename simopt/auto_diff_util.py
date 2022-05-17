@@ -11,11 +11,6 @@ make_jvp = unary_to_nary(_make_jvp)
 
 @unary_to_nary
 def value_and_jacobian(fun, x):
-    """
-    Returns a function which computes the Value and Jacobian of `fun`. 'fun' must have scalar or array inputs and outputs.
-    If the input to `fun` has shape (in1, in2, ...) and the output has shape
-    (out1, out2, ...) then the Jacobian has shape (out1, out2, ..., in1, in2, ...).
-    """
     vjp, ans = _make_vjp(fun, x)
     ans_vspace = vspace(ans)
     jacobian_shape = ans_vspace.shape + vspace(x).shape
@@ -90,9 +85,9 @@ def gradient_arr_to_dict(gradients_arr, response_names, diff_factors_names):
                 gradients_dict[response][diff_factors_names[j]] = thing
     return gradients_dict
     
-def _replicate_wrapper(model, rng_list, **kwargs):
+def replicate_wrapper(model, rng_list, **kwargs):
     '''
-    wrapper to put around model._replicate() to allow Autograd to get gradients if gradient_needed=True
+    wrapper to put around model.inner_replicate() to allow Autograd to get gradients if gradient_needed=True
     '''
     
     
@@ -105,7 +100,7 @@ def _replicate_wrapper(model, rng_list, **kwargs):
     if 'gradient_needed' in kwargs:
         gradient_needed = kwargs['gradient_needed']
     else:
-        gradient_needed = False
+        gradient_needed = True
   
     response_inds = get_response_indx_list(response_names, model.bi_dict)
     diff_factor_vals = get_diff_factor_arr(model.differentiable_factor_names, model.factors)

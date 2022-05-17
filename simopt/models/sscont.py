@@ -5,11 +5,11 @@ Simulate multiple periods worth of sales for a (s,S) inventory problem
 with continuous inventory. A detailed description of the problem can be found `here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
 """
 import autograd.numpy as np
-from base import Model, Problem
-from util import bi_dict, _replicate_wrapper, factor_dict, resp_dict_to_array
+from base import Auto_Model, Problem
+from util import factor_dict, resp_dict_to_array
 
 
-class SSCont(Model):
+class SSCont(Auto_Model):
     """
     A model that simulates multiple periods' worth of sales for a (s,S)
     inventory problem with continuous inventory, exponentially distributed

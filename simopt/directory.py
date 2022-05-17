@@ -13,6 +13,7 @@ model_directory : dictionary
 # import solvers
 from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
+from solvers.sgd import SGD
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -28,10 +29,12 @@ from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
+from models.ambulance import Ambulance, AmbulanceMinTIS
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
-    "RNDSRCH": RandomSearch
+    "RNDSRCH": RandomSearch,
+    'SGD': SGD
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
@@ -49,7 +52,8 @@ problem_directory = {
     "SAN-1": SANLongestPath,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
-    "PARAMESTI-1": ParamEstiMinLogLik
+    "PARAMESTI-1": ParamEstiMinLogLik,
+    'AMBULANCE-1': AmbulanceMinTIS
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -65,5 +69,6 @@ model_directory = {
     "SAN": SAN,
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
-    "PARAMESTI": ParameterEstimation
+    "PARAMESTI": ParameterEstimation,
+    'AMBULANCE': Ambulance  
 }
