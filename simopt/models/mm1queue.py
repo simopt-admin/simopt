@@ -286,7 +286,7 @@ class MM1MinMeanSojournTime(Problem):
                 "default": 1000
             },
             "cost": {
-                "description": "Cost to increase service rate by 1 unit.",
+                "description": "Cost for increasing service rate.",
                 "datatype": float,
                 "default": 0.1
             }
