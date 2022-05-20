@@ -3,22 +3,23 @@ Model: Parameter Estimation (PARAMESTI)
 
 Description:
 ------------
-A model that simulates MLE estimation for the parameters of
+A model that simulates maximum likelihood estimation for the parameters of
 a two-dimensional gamma distribution.
 
 Say a simulation generates output data :math:`{Y_j}`, :math:`Y_j \in [0, \infty] \times [0, \infty]`,
 that are i.i.d and known to come from a distribution with the two-dimensional density function
+
 .. math:: f(y1, y2; x^*) = \frac{e^{-y1} y_1^{x^*_1 y_2 - 1}{\Gamma(x^*_1 y_2)} \frac{e^{-y2} y_2^{x^*_2 - 1}{\Gamma(x^*_2)}, y1, y2 > 0,
     
 where :math:`x^* ≡ (x^*_1, x^*_2)`` is the unknown vector of parameters.
 
 Noting that :math:`x_star` maximizes the function
-.. math:: g(x) = E [log (f(Y ; x))] = \int_0^\infty \log (f(y; x)) f(y; x
-^*)dy,
+
+.. math:: g(x) = E [log (f(Y ; x))] = \int_0^\infty \log (f(y; x)) f(y; x^*)dy,
 
 and that
-.. math:: G_m(x) = \frac{1}{m} \sum_{j=1}^m
-\log(f(Y_j ; x))
+
+.. math:: G_m(x) = \frac{1}{m} \sum_{j=1}^m \log(f(Y_j ; x))
 
 is a consistent estimator of :math:`g(x)`.
 Observations are generated from the distribution specified by a given :math:`x_star`.
