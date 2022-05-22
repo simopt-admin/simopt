@@ -2,10 +2,14 @@
 Summary
 -------
 Simulate multiple periods of production and sales for an iron ore inventory problem.
+
+
+Changed get_random_solution quantiles 
+    from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
+    to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
 """
 import numpy as np
-from math import sqrt, exp, copysign, log 
-
+from math import sqrt, copysign
 from base import Model, Problem
 
 
@@ -764,5 +768,5 @@ class IronOreMaxRevCnt(Problem):
         """
         # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
         
-        x = (rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,200))
+        x = (rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,1000),rand_sol_rng.lognormalvariate(10,1000))
         return x
