@@ -60,7 +60,7 @@ for sd in st_devs:
                 experiments_same_problem.append(new_experiment)
     
             # Setup and run ASTRO-DF.
-            solver_fixed_factors = {"delta_max": 100.0}
+            solver_fixed_factors = {"delta_max": 200.0}
             new_experiment = Experiment(solver_name="ASTRODF",
                                         problem_name="IRONORECONT-1",
                                         problem_rename=problem_rename,
