@@ -1425,7 +1425,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1693,7 +1693,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
 
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
@@ -1701,7 +1701,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                        extra=solve_tol
                                        ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
