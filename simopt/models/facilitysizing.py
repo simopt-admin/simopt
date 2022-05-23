@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate demand at facilities.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/facilitysizing.html>`_.
 """
 import numpy as np
 

@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate a M/M/1 queue.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/mm1queue.html>`_.
 """
 import numpy as np
 
