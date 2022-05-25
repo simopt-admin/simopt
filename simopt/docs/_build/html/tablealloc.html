@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Restaurant Table Management &#8212; SimOpt 1.0 documentation</title>
+    <title>Model: Restaurant Table Management (TABLEALLOCATION) &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -29,7 +29,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Restaurant Table Management</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: Restaurant Table Management (TABLEALLOCATION)</a></li> 
       </ul>
     </div>  
 
@@ -38,42 +38,146 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="restaurant-table-management">
-<h1>Restaurant Table Management<a class="headerlink" href="#restaurant-table-management" title="Permalink to this headline">¶</a></h1>
-<p><strong>Problem Description</strong></p>
+  <section id="model-restaurant-table-management-tableallocation">
+<h1>Model: Restaurant Table Management (TABLEALLOCATION)<a class="headerlink" href="#model-restaurant-table-management-tableallocation" title="Permalink to this headline">¶</a></h1>
+<section id="description">
+<h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>Floor space in a restaurant is allocated to N different sizes of tables, with capacities
 <span class="math notranslate nohighlight">\(c = [c_1, c_2,..., c_N ], c_i \in Z_+^{n}\)</span>. A table of capacity <span class="math notranslate nohighlight">\(c_i\)</span> can seat
 <span class="math notranslate nohighlight">\(c_i\)</span> or less customers.
 The restaurant can seat a maximum of <span class="math notranslate nohighlight">\(K\)</span> customers at a time,
 regardless of table allocation, and is open for <span class="math notranslate nohighlight">\(T\)</span> consecutive hours.
-The decision variable is the vector <span class="math notranslate nohighlight">\(x \in (Z_+ ∪ \{0\})^N\)</span> ,
+The decision variable is the vector <span class="math notranslate nohighlight">\(x\)</span>,
 the number of tables allocated to each size.</p>
 <p>Customers arrive in groups of size <span class="math notranslate nohighlight">\(j \in \{1, ..., max_i(c_i)\}\)</span> according to a homogeneous
 Poisson process with rate <span class="math notranslate nohighlight">\(\lambda_j\)</span>. A group of customers is seated at the smallest possible
 available table. If there are no available tables large enough, the group of customers
-leaves immediately. Service time per group is exponential with means
-<span class="math notranslate nohighlight">\(s = [s_1, s_2, ..., s_{max_i(c_i)}]\)</span>, and revenue per group is fixed at
-<span class="math notranslate nohighlight">\(r = [r_1, r_2, ..., r_{max_i(c_i)}]\)</span>.</p>
-<p>Let <span class="math notranslate nohighlight">\(N_j(t)\)</span> be the number of groups of size <span class="math notranslate nohighlight">\(j\)</span> that were seated by time <span class="math notranslate nohighlight">\(t\)</span> with
-<span class="math notranslate nohighlight">\(N(t) = [N_1(t),...,N_{max_{i}(c_i)} (t)]\)</span>.
-The optimization problem is thus to maximize the total expected revenue:</p>
+leaves immediately. Service time per group is exponential and revenue per group is fixed.</p>
+</section>
+<section id="sources-of-randomness">
+<h2>Sources of Randomness:<a class="headerlink" href="#sources-of-randomness" title="Permalink to this headline">¶</a></h2>
+<p>Groups of customers arrive  according to a homogenrous Poisson process. Group size is randomly generated
+with probability proportional to each group’s average arrival rate. Service time per group is exponential.</p>
+</section>
+<section id="model-factors">
+<h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>n_hour: Number of hours to simulate.</p>
 <blockquote>
-<div><p>maximize <span class="math notranslate nohighlight">\(N(T)r'\)</span></p>
-<p>subject to <span class="math notranslate nohighlight">\(xc' ≤ K\)</span></p>
+<div><ul class="simple">
+<li><p>Default: 3</p></li>
+</ul>
 </div></blockquote>
-<p><strong>Recommended Parameter Settings:</strong>
-<span class="math notranslate nohighlight">\(T = 180minutes, K = 80\)</span>,</p>
-<p><span class="math notranslate nohighlight">\(c = (2,4,6,8)\)</span></p>
-<p><span class="math notranslate nohighlight">\(λ = (3, 6, 3, 3, 2, 4/3 , 6/5 , 1) ∗ 60\)</span></p>
-<p><span class="math notranslate nohighlight">\(s = (20, 25, 30, 35, 40, 45, 50, 60)\)</span></p>
-<p><span class="math notranslate nohighlight">\(r = (15, 30, 45, 60, 75, 90, 105, 120)\)</span></p>
-<p><strong>Starting Solution(s):</strong> For one starting solution, distribute total capacity equally across table sizes, then distribute remaining capacity by descending table size. Eg. for the above settings, <span class="math notranslate nohighlight">\(80/4 = 20\)</span> capacity is
-assigned to each size, and the remaining 6 capacity is portioned to a table of size 6: <span class="math notranslate nohighlight">\(x = (10, 5, 4, 2)\)</span>.
-For multiple starting solutions, distribute total capacity uniformly across table sizes, then distribute
-remaining capacity by descending table size.</p>
-<p><strong>Measurement of Time:</strong> Number of replications of length <span class="math notranslate nohighlight">\(T\)</span>.</p>
-<p><strong>Optimal Solutions:</strong> Unknown.</p>
-<p><strong>Known Structure:</strong> Unknown.</p>
+</li>
+<li><p>capacity: Maximum total capacity.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 80</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>table_cap: Capacity of each type of table.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: [2,4,6,8]</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>lambda: Average number of arrivals per hour.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: [3, 6, 3, 3, 2, 4/3, 6/5, 1]</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>service_time_means: Mean service time in minutes.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: [20, 25, 30, 35, 40, 45, 50, 60]</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>table_revenue: Revenue earned for each group size.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: [15, 30, 45, 60, 75, 90, 105, 120]</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>num_tables: Number of tables of each capacity.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: [10,5,4,2]</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="responses">
+<h2>Responses:<a class="headerlink" href="#responses" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>total_revenue: Total revenue earned over the simulation period.</p></li>
+<li><p>service_rate: Fraction of customer arrivals that are seated.</p></li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p>Original author of this problem is Bryan Chong (March 10, 2015).</p>
+</section>
+<section id="optimization-problem-tableallocationmaxrev-tableallocation-1">
+<h1>Optimization Problem: TableAllocationMaxRev (TABLEALLOCATION-1)<a class="headerlink" href="#optimization-problem-tableallocationmaxrev-tableallocation-1" title="Permalink to this headline">¶</a></h1>
+<section id="decision-variables">
+<h2>Decision Variables:<a class="headerlink" href="#decision-variables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>num_tables</p></li>
+</ul>
+</section>
+<section id="objectives">
+<h2>Objectives:<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
+<p>Maximize the total expected revenue for a restaurant operation.</p>
+</section>
+<section id="constraints">
+<h2>Constraints:<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
+<p>Number of seats in the restaurant <span class="math notranslate nohighlight">\(&lt;= capacity\)</span>.</p>
+</section>
+<section id="problem-factors">
+<h2>Problem Factors:<a class="headerlink" href="#problem-factors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>initial_solution: Initial solution from which solvers start.</p>
+<ul>
+<li><p>Default: ([10,5,4,2],)</p></li>
+</ul>
+</li>
+<li><p>budget: Max # of replications for a solver to take.</p>
+<ul>
+<li><p>Default: 1000</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="fixed-model-factors">
+<h2>Fixed Model Factors:<a class="headerlink" href="#fixed-model-factors" title="Permalink to this headline">¶</a></h2>
+<p>n/a</p>
+</section>
+<section id="starting-solution">
+<h2>Starting Solution:<a class="headerlink" href="#starting-solution" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>num_tables: [10,5,4,2]</p></li>
+</ul>
+</section>
+<section id="random-solutions">
+<h2>Random Solutions:<a class="headerlink" href="#random-solutions" title="Permalink to this headline">¶</a></h2>
+<p>Distribute total capacity uniformly across table sizes. If the remaining capacity is smaller than the smallest table size, keep the last table allocation as a starting solution.</p>
+</section>
+<section id="optimal-solution">
+<h2>Optimal Solution:<a class="headerlink" href="#optimal-solution" title="Permalink to this headline">¶</a></h2>
+<p>unkown</p>
+</section>
+<section id="optimal-objective-function-value">
+<h2>Optimal Objective Function Value:<a class="headerlink" href="#optimal-objective-function-value" title="Permalink to this headline">¶</a></h2>
+<p>unkown</p>
+</section>
 </section>
 
 
@@ -83,6 +187,30 @@ remaining capacity by descending table size.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Model: Restaurant Table Management (TABLEALLOCATION)</a><ul>
+<li><a class="reference internal" href="#description">Description:</a></li>
+<li><a class="reference internal" href="#sources-of-randomness">Sources of Randomness:</a></li>
+<li><a class="reference internal" href="#model-factors">Model Factors:</a></li>
+<li><a class="reference internal" href="#responses">Responses:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References:</a></li>
+<li><a class="reference internal" href="#optimization-problem-tableallocationmaxrev-tableallocation-1">Optimization Problem: TableAllocationMaxRev (TABLEALLOCATION-1)</a><ul>
+<li><a class="reference internal" href="#decision-variables">Decision Variables:</a></li>
+<li><a class="reference internal" href="#objectives">Objectives:</a></li>
+<li><a class="reference internal" href="#constraints">Constraints:</a></li>
+<li><a class="reference internal" href="#problem-factors">Problem Factors:</a></li>
+<li><a class="reference internal" href="#fixed-model-factors">Fixed Model Factors:</a></li>
+<li><a class="reference internal" href="#starting-solution">Starting Solution:</a></li>
+<li><a class="reference internal" href="#random-solutions">Random Solutions:</a></li>
+<li><a class="reference internal" href="#optimal-solution">Optimal Solution:</a></li>
+<li><a class="reference internal" href="#optimal-objective-function-value">Optimal Objective Function Value:</a></li>
+</ul>
+</li>
+</ul>
+
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -114,7 +242,7 @@ remaining capacity by descending table size.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Restaurant Table Management</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: Restaurant Table Management (TABLEALLOCATION)</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

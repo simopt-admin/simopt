@@ -43,7 +43,7 @@ Model Factors:
   
     * Default: 100.00
 
-* cost_exp: Expedited ordering cost per unit..
+* cost_exp: Expedited ordering cost per unit.
 
     * Default: 110.00
 

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Model: Dual Sourcing System (DUALSOURCING) &#8212; SimOpt 1.0 documentation</title>
+    <title>Model: Chess Matchmaking Optimization (CHESS) &#8212; SimOpt 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -29,7 +29,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Model: Dual Sourcing System (DUALSOURCING)</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: Chess Matchmaking Optimization (CHESS)</a></li> 
       </ul>
     </div>  
 
@@ -38,125 +38,66 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="model-dual-sourcing-system-dualsourcing">
-<h1>Model: Dual Sourcing System (DUALSOURCING)<a class="headerlink" href="#model-dual-sourcing-system-dualsourcing" title="Permalink to this headline">¶</a></h1>
+  <section id="model-chess-matchmaking-optimization-chess">
+<h1>Model: Chess Matchmaking Optimization (CHESS)<a class="headerlink" href="#model-chess-matchmaking-optimization-chess" title="Permalink to this headline">¶</a></h1>
 <section id="description">
 <h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
-<p>Consider a single-stage, incapacitated, manufacturing location facing stochastic demand.
-The manufacturer can buy the material from a “regular” supplier at cost <span class="math notranslate nohighlight">\(c_r\)</span> per unit, or,
-if needed, she can get some or all of the material “expedited” at some premium cost <span class="math notranslate nohighlight">\(c_e\)</span>
-per unit with <span class="math notranslate nohighlight">\(c_e &gt; c_r\)</span>.
-Regular orders arrive after <span class="math notranslate nohighlight">\(l_r\)</span> periods while expedited orders arrive after <span class="math notranslate nohighlight">\(l_e\)</span> periods with
-<span class="math notranslate nohighlight">\(l_e &lt; l_r\)</span>. Let the difference in lead times be <span class="math notranslate nohighlight">\(l = l_r − l_e ≥ 1\)</span>.</p>
-<p>If there is remaining on-hand inventory at the end of period <span class="math notranslate nohighlight">\(n\)</span> (after demand dn is satisfied),
-these items are carried over to the next period (i.e., <span class="math notranslate nohighlight">\(I_n+1 &gt; 0\)</span>) at a holding cost per unit.
-However, if there is a stock-out (i.e., <span class="math notranslate nohighlight">\(In + 1 &lt; 0\)</span>), there is a penalty cost per unit
-of unsatisfied demand.</p>
-<p>We will let the period <span class="math notranslate nohighlight">\(n\)</span> expediting order be based on the on-hand inventory plus the orders that
-will arrive within <span class="math notranslate nohighlight">\(l_e\)</span> periods (both regular and expedited). Regular orders that are due to arrive
-after <span class="math notranslate nohighlight">\(l_e\)</span> periods are not considered in expedited ordering decisions.
-The expedited order is placed to restore the expedited inventory position <span class="math notranslate nohighlight">\(IP_n^e\)</span>,
-to some target parameter level <span class="math notranslate nohighlight">\(z_e\)</span>. The regular order <span class="math notranslate nohighlight">\(X_n^r\)</span>, on the other hand,
-is based on the regular inventory position (sum of on-hand inventory and all outstanding orders,
-including the expedited order placed in the current period). Similarly, it tries to restore the regular
-inventory position <span class="math notranslate nohighlight">\(IP_n^r\)</span> to the target parameter <span class="math notranslate nohighlight">\(z_r\)</span>. Thus, under this model, we carry two inventory positions,
-one for regular orders and another for expedited orders.</p>
+<p>Chess players are rated using the Elo rating system, which assigns a (non-unique)
+number to each player based on their level of skill. The problem considered here
+has to do with optimizing online chess matchmaking, such that players are matched
+with players of similar skill level.</p>
+<p>The decision variable <span class="math notranslate nohighlight">\(x\)</span> is the search width — the maximum allowable difference
+in Elo rating between two matched players. <span class="math notranslate nohighlight">\(N\)</span> players are drawn from a distribution
+of Elo ratings and arrive (independent of their rating) according to a stationary
+Poisson process with rate <span class="math notranslate nohighlight">\(\lambda\)</span>. When a player arrives, and there is an existing,
+unmatched player with Elo rating within <span class="math notranslate nohighlight">\(x\)</span> of the first player’s Elo rating, they
+are matched. If not, then the player waits for an opponent with an appropriate Elo
+rating to arrive.</p>
 </section>
 <section id="sources-of-randomness">
 <h2>Sources of Randomness:<a class="headerlink" href="#sources-of-randomness" title="Permalink to this headline">¶</a></h2>
-<p>Demand follows a normal distribution.</p>
+<p>1. To create the Elo distribution, first generatea normal distribution with mean
+<span class="math notranslate nohighlight">\(1200\)</span> and standard deviation <span class="math notranslate nohighlight">\(\frac{1200}{\sqrt(2)*\text{erfcinv}(\frac{1}{50})}\)</span>,
+where erfcinv is the inverse complementary error function. This results in a distribution
+where the 1st percentile is at <span class="math notranslate nohighlight">\(0\)</span>, and the 99th percentile is at <span class="math notranslate nohighlight">\(2400\)</span>.
+Next, truncate the distribution at <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(2400\)</span>.
+2. Stationary Poisson process with rate <span class="math notranslate nohighlight">\(\lambda\)</span> for arrivals.</p>
 </section>
 <section id="model-factors">
 <h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>n_days: Number of days to simulate.</p>
+<li><p>elo_mean: Mean of normal distribution for Elo rating.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 1000</p></li>
+<li><p>Default: 1200.0</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>initial_inv: Initial inventory.</p>
+<li><p>elo_sd: Standard deviation of normal distribution for Elo rating.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 40</p></li>
+<li><p>Default: 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>cost_reg: Regular ordering cost per unit.</p>
+<li><p>poisson_rate: Rate of Poisson process for player arrivals.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 100.00</p></li>
+<li><p>Default: 1.0</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>cost_exp: Expedited ordering cost per unit.</p>
+<li><p>num_players: Number of players.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 110.00</p></li>
+<li><p>Default: 10000</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>lead_reg: Lead time for regular orders in days.</p>
+<li><p>allowable_diff: Maximum allowable difference between Elo ratings.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Default: 110.00</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>lead_exp: Lead time for expedited orders in days.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 0</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>holding_cost: Holding cost per unit per period.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 5.00</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>penalty_cost: Penalty cost per unit per period for backlogging.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 495.00</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>distribution: Demand distribution</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: ‘Normal’</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>st_dev: Standard deviation of demand distribution.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 10.0</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>mu: Mean of demand distribution.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 30.0</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>order_level_reg: Order-up-to level for regular orders.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 80</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>order_level_exp: Order-up-to level for expedited orders.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Default: 50</p></li>
+<li><p>Default: 150.0</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -165,40 +106,37 @@ one for regular orders and another for expedited orders.</p>
 <section id="responses">
 <h2>Responses:<a class="headerlink" href="#responses" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>average_holding_cost: The average holding cost over the time period.</p></li>
-<li><p>average_penalty_cost: The average penalty cost over the time period.</p></li>
-<li><p>average_ordering_cost: The average ordering cost over the time period.</p></li>
+<li><p>avg_diff: The average Elo difference between all pairs.</p></li>
+<li><p>avg_wait_time: The average waiting time.</p></li>
 </ul>
 </section>
 </section>
 <section id="references">
 <h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
-<p>This model is adapted from the article <a class="reference external" href="https://repository.upenn.edu/oid_papers/121/">Veeraraghavan, S and Scheller-Wolf, A. Now or Later:
-A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations Research (4), 850- 864.</a></p>
+<p>Original author of this problem is Bryan Chong (March 15, 2015).</p>
 </section>
-<section id="optimization-problem-dualsourcingmincost-dualsourcing-1">
-<h1>Optimization Problem: DualSourcingMinCost (DUALSOURCING-1)<a class="headerlink" href="#optimization-problem-dualsourcingmincost-dualsourcing-1" title="Permalink to this headline">¶</a></h1>
+<section id="optimization-problem-chessavgdifference-chess-1">
+<h1>Optimization Problem: ChessAvgDifference (CHESS-1)<a class="headerlink" href="#optimization-problem-chessavgdifference-chess-1" title="Permalink to this headline">¶</a></h1>
 <section id="decision-variables">
 <h2>Decision Variables:<a class="headerlink" href="#decision-variables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>order_level_exp</p></li>
-<li><p>order_level_reg</p></li>
+<li><p>allowable_diff</p></li>
 </ul>
 </section>
 <section id="objectives">
 <h2>Objectives:<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
-<p>Minimize the expected total cost (sum of average_holding_cost, average_penalty_cost, average_ordering_cost) for dual-sourcing inventory system.</p>
+<p>Minimize the average Elo difference between all pairs of matched players.</p>
 </section>
 <section id="constraints">
 <h2>Constraints:<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
-<p>order_level_exp and order_level_reg are both non-negative.</p>
+<p>The average waiting time is <span class="math notranslate nohighlight">\(\leq \delta\)</span>.</p>
 </section>
 <section id="problem-factors">
 <h2>Problem Factors:<a class="headerlink" href="#problem-factors" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>initial_solution: Initial solution from which solvers start.</p>
+<li><p>initial_solution: Initial solution.</p>
 <ul>
-<li><p>Default: (50,80)</p></li>
+<li><p>Default: (150,)</p></li>
 </ul>
 </li>
 <li><p>budget: Max # of replications for a solver to take.</p>
@@ -206,30 +144,37 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
 <li><p>Default: 1000</p></li>
 </ul>
 </li>
+<li><p>upper_time: Upper bound on wait time.</p>
+<ul>
+<li><p>Default: 5.0</p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="fixed-model-factors">
 <h2>Fixed Model Factors:<a class="headerlink" href="#fixed-model-factors" title="Permalink to this headline">¶</a></h2>
-<p>n/a</p>
+<ul class="simple">
+<li><p>n/a</p></li>
+</ul>
 </section>
 <section id="starting-solution">
 <h2>Starting Solution:<a class="headerlink" href="#starting-solution" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>order_level_exp: 50</p></li>
-<li><p>order_level_reg: 80</p></li>
+<li><p>initial_solution: (150,)</p></li>
 </ul>
 </section>
 <section id="random-solutions">
 <h2>Random Solutions:<a class="headerlink" href="#random-solutions" title="Permalink to this headline">¶</a></h2>
-<p>Draw order_level_exp from Uniform(40,60) and order_level_reg from Uniform(70,90).</p>
+<p>First draw <span class="math notranslate nohighlight">\(x\)</span> from a normal distribution with mean <span class="math notranslate nohighlight">\(150\)</span> and standard
+deviation <span class="math notranslate nohighlight">\(50\)</span>, then set <span class="math notranslate nohighlight">\(x = \max(x, 30)\)</span>.</p>
 </section>
 <section id="optimal-solution">
 <h2>Optimal Solution:<a class="headerlink" href="#optimal-solution" title="Permalink to this headline">¶</a></h2>
-<p>unkown</p>
+<p>Unknown</p>
 </section>
 <section id="optimal-objective-function-value">
 <h2>Optimal Objective Function Value:<a class="headerlink" href="#optimal-objective-function-value" title="Permalink to this headline">¶</a></h2>
-<p>unkown</p>
+<p>Unknown</p>
 </section>
 </section>
 
@@ -242,7 +187,7 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Model: Dual Sourcing System (DUALSOURCING)</a><ul>
+<li><a class="reference internal" href="#">Model: Chess Matchmaking Optimization (CHESS)</a><ul>
 <li><a class="reference internal" href="#description">Description:</a></li>
 <li><a class="reference internal" href="#sources-of-randomness">Sources of Randomness:</a></li>
 <li><a class="reference internal" href="#model-factors">Model Factors:</a></li>
@@ -250,7 +195,7 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
 </ul>
 </li>
 <li><a class="reference internal" href="#references">References:</a></li>
-<li><a class="reference internal" href="#optimization-problem-dualsourcingmincost-dualsourcing-1">Optimization Problem: DualSourcingMinCost (DUALSOURCING-1)</a><ul>
+<li><a class="reference internal" href="#optimization-problem-chessavgdifference-chess-1">Optimization Problem: ChessAvgDifference (CHESS-1)</a><ul>
 <li><a class="reference internal" href="#decision-variables">Decision Variables:</a></li>
 <li><a class="reference internal" href="#objectives">Objectives:</a></li>
 <li><a class="reference internal" href="#constraints">Constraints:</a></li>
@@ -267,7 +212,7 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/dualsource.rst.txt"
+      <li><a href="_sources/chessmm.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -295,7 +240,7 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Model: Dual Sourcing System (DUALSOURCING)</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Model: Chess Matchmaking Optimization (CHESS)</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
