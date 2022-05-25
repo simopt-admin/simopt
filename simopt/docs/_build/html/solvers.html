@@ -239,10 +239,197 @@ Cannot handle stochastic constraints.</p>
 
 </section>
 </section>
-<section id="module-solvers.randomsearch">
-<span id="solvers-randomsearch-module"></span><h2>solvers.randomsearch module<a class="headerlink" href="#module-solvers.randomsearch" title="Permalink to this headline">¶</a></h2>
+<section id="module-solvers.neldmd">
+<span id="solvers-neldmd-module"></span><h2>solvers.neldmd module<a class="headerlink" href="#module-solvers.neldmd" title="Permalink to this headline">¶</a></h2>
 <section id="id1">
 <h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Nelder-Mead
+The algorithm maintains a simplex of points that moves around the feasible
+region according to certain geometric operations: reflection, expansion,
+scontraction, and shrinking.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">solvers.neldmd.</span></span><span class="sig-name descname"><span class="pre">NELDMD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NELDMD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
+<p>REFERENCE
+Russell R. Barton, John S. Ivey, Jr., (1996)
+Nelder-Mead Simplex Modifications for Simulation
+Optimization. Management Science 42(7):954-973.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>name of solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.objective_type">
+<span class="sig-name descname"><span class="pre">objective_type</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.objective_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of objective types:</dt><dd><p>“single” or “multi”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.constraint_type">
+<span class="sig-name descname"><span class="pre">constraint_type</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.constraint_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of constraints types:</dt><dd><p>“unconstrained”, “box”, “deterministic”, “stochastic”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.variable_type">
+<span class="sig-name descname"><span class="pre">variable_type</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.variable_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>description of variable types:</dt><dd><p>“discrete”, “continuous”, “mixed”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.gradient_needed">
+<span class="sig-name descname"><span class="pre">gradient_needed</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.gradient_needed" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates if gradient of objective function is needed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>changeable factors (i.e., parameters) of the solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.specifications">
+<span class="sig-name descname"><span class="pre">specifications</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.specifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>details of each factor (for GUI, data validation, and defaults)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.rng_list">
+<span class="sig-name descname"><span class="pre">rng_list</span></span><a class="headerlink" href="#solvers.neldmd.NELDMD.rng_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of RNGs used for the solver’s internal purposes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of rng.MRG32k3a objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – user-specified name for solver</p></li>
+<li><p><strong>fixed_factors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – fixed_factors of the solver</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="base.html#base.Solver" title="base.Solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Solver</span></code></a></p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_alpha">
+<span class="sig-name descname"><span class="pre">check_alpha</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_alpha" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_betap">
+<span class="sig-name descname"><span class="pre">check_betap</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_betap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_const">
+<span class="sig-name descname"><span class="pre">check_const</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_delta">
+<span class="sig-name descname"><span class="pre">check_delta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_delta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_gammap">
+<span class="sig-name descname"><span class="pre">check_gammap</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_gammap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_r">
+<span class="sig-name descname"><span class="pre">check_r</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_r" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.check_sensitivity">
+<span class="sig-name descname"><span class="pre">check_sensitivity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.check_sensitivity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a single macroreplication of a solver on a problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>problem</strong> (<em>Problem object</em>) – simulation-optimization problem to solve</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>recommended_solns</strong> (<em>list of Solution objects</em>) – list of solutions recommended throughout the budget</p></li>
+<li><p><strong>intermediate_budgets</strong> (<em>list of ints</em>) – list of intermediate budgets when recommended solutions changes</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="solvers.neldmd.NELDMD.sort_and_end_update">
+<span class="sig-name descname"><span class="pre">sort_and_end_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn_val_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.neldmd.NELDMD.sort_and_end_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+<section id="module-solvers.randomsearch">
+<span id="solvers-randomsearch-module"></span><h2>solvers.randomsearch module<a class="headerlink" href="#module-solvers.randomsearch" title="Permalink to this headline">¶</a></h2>
+<section id="id2">
+<h3>Summary<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.</p>
 <dl class="py class">
@@ -392,8 +579,8 @@ Take a fixed number of replications at each solution.</p>
 </section>
 <section id="module-solvers.simannealing">
 <span id="solvers-simannealing-module"></span><h2>solvers.simannealing module<a class="headerlink" href="#module-solvers.simannealing" title="Permalink to this headline">¶</a></h2>
-<section id="id2">
-<h3>Summary<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<section id="id3">
+<h3>Summary<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>Simulated Annealing in Noisy Environments (SANE).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="solvers.simannealing.SANE">
@@ -569,12 +756,16 @@ Journal of Heuristics (2008) 14: 627–654.</p>
 <li><a class="reference internal" href="#summary">Summary</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-solvers.randomsearch">solvers.randomsearch module</a><ul>
+<li><a class="reference internal" href="#module-solvers.neldmd">solvers.neldmd module</a><ul>
 <li><a class="reference internal" href="#id1">Summary</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-solvers.simannealing">solvers.simannealing module</a><ul>
+<li><a class="reference internal" href="#module-solvers.randomsearch">solvers.randomsearch module</a><ul>
 <li><a class="reference internal" href="#id2">Summary</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-solvers.simannealing">solvers.simannealing module</a><ul>
+<li><a class="reference internal" href="#id3">Summary</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-solvers">Module contents</a></li>

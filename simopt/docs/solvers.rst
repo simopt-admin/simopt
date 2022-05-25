@@ -12,6 +12,14 @@ solvers.astrodf module
    :undoc-members:
    :show-inheritance:
 
+solvers.neldmd module
+---------------------
+
+.. automodule:: solvers.neldmd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 solvers.randomsearch module
 ---------------------------
 

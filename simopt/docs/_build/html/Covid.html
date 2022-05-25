@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Optimization of COVID-19 Testing Frequency &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Optimization of COVID-19 Testing Frequency</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="optimization-of-covid-19-testing-frequency">
+<h1>Optimization of COVID-19 Testing Frequency<a class="headerlink" href="#optimization-of-covid-19-testing-frequency" title="Permalink to this headline">¶</a></h1>
+<p><strong>Problem Description</strong></p>
+<p>COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
+regular survelliance testing to identify, isolate, and reduce disease spread. The population is divided
+into three groups: undergraduate, graduate, and faculty/staff with interaction rates <span class="math notranslate nohighlight">\(inter_rate\)</span>.
+There is a probability of <span class="math notranslate nohighlight">\(p_trans\)</span> transmissions per interaction. The initial proportion of infected
+is <span class="math notranslate nohighlight">\(init\_infect\_percent\)</span>. The disease progression for each individual is generated according to the following semi-Markov process:</p>
+<img alt="_images/disease_progression.png" src="_images/disease_progression.png" />
+<p>The number of days one takes to go from exposed to infectious is Poisson distributed with mean <span class="math notranslate nohighlight">\(lamb\_exp\_inf\)</span>.
+An infected individual has a <span class="math notranslate nohighlight">\(asymp\_rate\)</span> chance of being asymptomatic. The number of
+days one takes to go from infectious to symptom onset is Poisson distributed with mean <span class="math notranslate nohighlight">\(lamb\_inf\_sym\)</span>.
+After recovery, we assume that one cannot be reinfected.</p>
+<p>We assume that a test has a false negative rate <span class="math notranslate nohighlight">\(false\_neg\)</span> and a false positive rate <span class="math notranslate nohighlight">\(false\_pos\)</span>.
+Once tested positive, the patient will be isolated for <span class="math notranslate nohighlight">\(iso\_day\)</span> number of days and follow the same disease
+progression until recovery.</p>
+<p>The decision variables is <span class="math notranslate nohighlight">\(freq\)</span>, the testing frequency for each group.</p>
+<p>The simulation is generated as follows:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><dl class="simple">
+<dt>Generate number of people exposed on day n:</dt><dd><p><span class="math notranslate nohighlight">\(new\_exp = t_rate * free\_inf_n * sus_n/(free_n)\)</span>
+where <span class="math notranslate nohighlight">\(t_rate = inter_rate * p_trans\)</span></p>
+</dd>
+</dl>
+</li>
+<li><p>For each individual in this group, generate their future disease progression and testing:</p></li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li></li>
+</ol>
+</div></blockquote>
+<p>We will find the optimal testing frequency for each group which minimizes the total number of infections.</p>
+<p><strong>Recommended Parameter Settings:</strong></p>
+<p>“inter_rate”: (10.58, 5, 2, 4, 10.58, 3, 1, 2, 10.57)</p>
+<p>“p_trans”: 0.018</p>
+<p>“lamb_exp_inf”: 2</p>
+<p>“lamb_inf_sym”: 3</p>
+<p>“asymp_rate”: 0.35</p>
+<p>“false_pos”: 0</p>
+<p>“false_neg”: 0.12</p>
+<p>“iso_day”: 12</p>
+<p><strong>Starting Solutions:</strong> (1/7, 1/7, 1/7)</p>
+<p><strong>Measurement of Time:</strong>  Number of simulation replications of length <span class="math notranslate nohighlight">\(n\)</span>.</p>
+<p><strong>Optimal Solutions:</strong> Unknown.</p>
+<p><strong>Known Structure:</strong> Unknown.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Covid.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Optimization of COVID-19 Testing Frequency</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

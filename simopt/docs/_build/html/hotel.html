@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Model: Hotel Revenue Management (HOTEL) &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model: Hotel Revenue Management (HOTEL)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="model-hotel-revenue-management-hotel">
+<h1>Model: Hotel Revenue Management (HOTEL)<a class="headerlink" href="#model-hotel-revenue-management-hotel" title="Permalink to this headline">¶</a></h1>
+<section id="description">
+<h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>Most of the revenue for a hotel comes from guests staying in its rooms. Assume a
+given hotel has only two rates: rack rate and discount rate, which pay <span class="math notranslate nohighlight">\(p_f\)</span>
+and <span class="math notranslate nohighlight">\(p_d\)</span> per night, respectively. Furthermore, let each different combination
+of length of stay, arrival date and rate paid be a “product” so that the following
+56 products are available to satisfy one week’s worth of capacity (14 arriving Monday,
+12 arriving Tuesday, …, 2 Arriving Sunday):</p>
+<ol class="arabic simple">
+<li><p>One night stay, rack rate arriving Monday</p></li>
+<li><p>One night stay, discount rate arriving Monday</p></li>
+<li><p>Two night stay, rack rate arriving Monday</p></li>
+<li><p>Two night stay, discount rate arriving Monday</p></li>
+</ol>
+<p>5. …
+55. One night stay, rack rate arriving Sunday
+56. One night stay, discount rate arriving Sunday</p>
+<p>For a given stay, the hotel collects revenue equal to the (rate paid) x (length of stay).
+Lastly, let the arrival processes for each product be a stationary Poisson process with
+rate <span class="math notranslate nohighlight">\(\lambda_i\)</span>, noting that orders for a Monday night stay stop arriving at
+3 AM Tuesday night, for a Tuesday night stay at 3 AM Wednesday and so on.</p>
+<p>With this in mind, our goal is to find a set of booking limits (<span class="math notranslate nohighlight">\(b_1, ..., b_{56}\)</span>)
+that maximizes an objective. Under this model, the booking limits are controls
+that limit the amount of capacity that can be sold to any particular product; i.e.,
+they represent the maximum number of requests of product <span class="math notranslate nohighlight">\(i\)</span> we are willing to
+accept. We must note that the booking limits do not represent the number of rooms
+reserved for each product, rather, they represent the number of rooms available to
+this product and all products that use the same resources and have a higher booking limit.
+For example, if we have five products and all of them require the same resource (say capacity
+<span class="math notranslate nohighlight">\(C = 10\)</span>) and their corresponding booking limits are <span class="math notranslate nohighlight">\(b_1 = 10, b_2 = 8,
+b_3 = 4, b_4 = 2, b_5 = 1\)</span>, we know we can only take 1 request for product 5, 2 requests
+for product 4 and so on. However, this <strong>does not mean that 2 rooms will be saved</strong>
+until 2 requests for product 4 arrive; <strong>rather</strong>, it means that, <strong>out of all requests
+accepted, at most 2 can be of product 4</strong>. Note also that the maximum number of requests
+accepted in this case would be 10, as they all use the same resource, which has <span class="math notranslate nohighlight">\(C = 10\)</span>.
+Doing this ensures that those products with higher booking limits are always accepted
+if capacity is available while also accounting for the interconnectedness of the system.</p>
+<p>Now, once the booking limits are set, a request for product <span class="math notranslate nohighlight">\(i\)</span> is accepted if
+and only if <span class="math notranslate nohighlight">\(b_i &gt; 0\)</span> and rejected otherwise. When a request for product <span class="math notranslate nohighlight">\(i\)</span> is
+accepted, all of the booking limits that require the resources used by product <span class="math notranslate nohighlight">\(i\)</span>
+must be updated to account for the decrease in available resources. For example,
+if a request for a 3-night stay arriving Monday is accepted, all products using a night
+on either Monday, Tuesday, or Wednesday must have their booking limits decreased by one.</p>
+<p>With a little thought, we may see that <span class="math notranslate nohighlight">\(b_i \leq C\)</span> (to avoid overbooking) and
+that the highest booking limit must equal capacity (we want to rent as many rooms as
+possible without going over capacity, thus, all rooms must be available to at least one
+product). Furthermore, since requests are only accepted when rooms are available
+(<span class="math notranslate nohighlight">\(b_i &gt; 0\)</span>), we are guaranteed to never go over capacity.</p>
+<p>In summary, a booking limit represents the maximum number of requests of product <span class="math notranslate nohighlight">\(i\)</span>
+that we are willing to accept given that we start with full availability. As soon as
+a request is accepted, available capacity changes and booking limits must be updated
+to account for this change. Although our interest is in modeling the full 56 products
+to find the optimal set of booking limits, to illustrate how booking limits are updated,
+one may look at the following, small-scale example:</p>
+<p>Assume a hotel offers only the following 5 products:
+1. Two night stay arriving Monday.
+2. Two night stay arriving Tuesday.
+3. Two night stay arriving Wednesday.
+4. Three night stay arriving Wednesday.
+5. Two night stay arriving Thursday.</p>
+<p>If the booking limits for each product are <span class="math notranslate nohighlight">\(b_1 = 10, b_2 = 8, b_3 = 4, b_4 = 7,
+b_5 = 1\)</span> and the following requests are received, the booking limits would be updated
+in the following way as decisions to accept or reject a given order are made:</p>
+<a class="reference internal image-reference" href="hotel.PNG"><img alt="The HOTEL table has failed to display" src="hotel.PNG" style="width: 800px;" /></a>
+<p>Note that, in this case, product 1 has a final booking limit of 9 as only one room
+has been sold on either Monday or Tuesday, which means that 9 rooms are still available
+on Monday night.</p>
+<p>To simplify this, one may create a binary matrix A showing which products use which
+resources. Thus, we will let each row be a resource available and each column a product,
+having a 1 in entry <span class="math notranslate nohighlight">\((i,j)\)</span> if product <span class="math notranslate nohighlight">\(j\)</span> uses resource <span class="math notranslate nohighlight">\(i\)</span>, and 0
+otherwise. Then, if we accept a request for product <span class="math notranslate nohighlight">\(i\)</span>, we must update the booking
+limits of all products <span class="math notranslate nohighlight">\(j\)</span> such that <span class="math notranslate nohighlight">\(A_j^T \cdot A_i \geq 1\)</span> (they share
+at least one of the resources). For this small example, we have:</p>
+<a class="reference internal image-reference" href="hotel2.PNG"><img alt="The HOTEL matrix has failed to display" src="hotel2.PNG" style="width: 300px;" /></a>
+</section>
+<section id="sources-of-randomness">
+<h2>Sources of Randomness:<a class="headerlink" href="#sources-of-randomness" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Stationary Poisson process with rate <span class="math notranslate nohighlight">\(\lambda_i\)</span> for arrivals of each product.</p></li>
+</ol>
+</section>
+<section id="model-factors">
+<h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>num_products: Number of products: (rate, length of stay).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 56</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>lambda: Arrival rates for each product.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: Take <span class="math notranslate nohighlight">\(\lambda_i = \frac{1}{168}, \frac{2}{168}, \frac{3}{168}, \frac{2}{168}, \frac{1}{168}, \frac{0.5}{168}, \frac{0.25}{168}\)</span> for 1-night, 2-night, …, 7-night stay respectively.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>num_rooms: Hotel capacity.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 100</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>discount_rate: Discount rate.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 100</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>rack_rate: Rack rate (full price).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 200</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>product_incidence: Incidence matrix.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: Let each row be a resource available and each column a product,</p></li>
+</ul>
+<p>having a 1 in entry <span class="math notranslate nohighlight">\((i,j)\)</span> if product <span class="math notranslate nohighlight">\(j\)</span> uses resource <span class="math notranslate nohighlight">\(i\)</span>, and 0
+otherwise.</p>
+</div></blockquote>
+</li>
+<li><p>time_limit: Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: list of 14 27’s, 12 51’s, 10 75’s, 8 99’s, 6 123’s, 4 144’s, and 2 168’s</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>time_before: Hours before t=0 to start running (e.g. 168 means start at time -168).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 168</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>runlength: Runlength of simulation (in hours) after t=0.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 168</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>booking_limits: Booking limits.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: tuple of 56 100’s</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="responses">
+<h2>Responses:<a class="headerlink" href="#responses" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>revenue: Expected revenue.</p></li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p>n/a</p>
+</section>
+<section id="optimization-problem-hotelrevenue-hotel-1">
+<h1>Optimization Problem: HotelRevenue (HOTEL-1)<a class="headerlink" href="#optimization-problem-hotelrevenue-hotel-1" title="Permalink to this headline">¶</a></h1>
+<section id="decision-variables">
+<h2>Decision Variables:<a class="headerlink" href="#decision-variables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>booking_limits</p></li>
+</ul>
+</section>
+<section id="objectives">
+<h2>Objectives:<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
+<p>Maximize the expected revenue.</p>
+</section>
+<section id="constraints">
+<h2>Constraints:<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
+<p>Lower bounded by 0 and upper bounded by the total number of rooms.</p>
+</section>
+<section id="problem-factors">
+<h2>Problem Factors:<a class="headerlink" href="#problem-factors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>initial_solution: Initial solution.</p>
+<ul>
+<li><p>Default: tuple([0 for _ in range(56)])</p></li>
+</ul>
+</li>
+<li><p>budget: Max # of replications for a solver to take.</p>
+<ul>
+<li><p>Default: 10000</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="fixed-model-factors">
+<h2>Fixed Model Factors:<a class="headerlink" href="#fixed-model-factors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>n/a</p></li>
+</ul>
+</section>
+<section id="starting-solution">
+<h2>Starting Solution:<a class="headerlink" href="#starting-solution" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>initial_solution: tuple([0 for _ in range(56)])</p></li>
+</ul>
+</section>
+<section id="random-solutions">
+<h2>Random Solutions:<a class="headerlink" href="#random-solutions" title="Permalink to this headline">¶</a></h2>
+<p>Let each <span class="math notranslate nohighlight">\(b_i\)</span> (element in tuple) be distributed Uniformly <span class="math notranslate nohighlight">\((0,C)\)</span>.</p>
+</section>
+<section id="optimal-solution">
+<h2>Optimal Solution:<a class="headerlink" href="#optimal-solution" title="Permalink to this headline">¶</a></h2>
+<p>Unknown</p>
+</section>
+<section id="optimal-objective-function-value">
+<h2>Optimal Objective Function Value:<a class="headerlink" href="#optimal-objective-function-value" title="Permalink to this headline">¶</a></h2>
+<p>Unknown</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Model: Hotel Revenue Management (HOTEL)</a><ul>
+<li><a class="reference internal" href="#description">Description:</a></li>
+<li><a class="reference internal" href="#sources-of-randomness">Sources of Randomness:</a></li>
+<li><a class="reference internal" href="#model-factors">Model Factors:</a></li>
+<li><a class="reference internal" href="#responses">Responses:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References:</a></li>
+<li><a class="reference internal" href="#optimization-problem-hotelrevenue-hotel-1">Optimization Problem: HotelRevenue (HOTEL-1)</a><ul>
+<li><a class="reference internal" href="#decision-variables">Decision Variables:</a></li>
+<li><a class="reference internal" href="#objectives">Objectives:</a></li>
+<li><a class="reference internal" href="#constraints">Constraints:</a></li>
+<li><a class="reference internal" href="#problem-factors">Problem Factors:</a></li>
+<li><a class="reference internal" href="#fixed-model-factors">Fixed Model Factors:</a></li>
+<li><a class="reference internal" href="#starting-solution">Starting Solution:</a></li>
+<li><a class="reference internal" href="#random-solutions">Random Solutions:</a></li>
+<li><a class="reference internal" href="#optimal-solution">Optimal Solution:</a></li>
+<li><a class="reference internal" href="#optimal-objective-function-value">Optimal Objective Function Value:</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/hotel.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model: Hotel Revenue Management (HOTEL)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
