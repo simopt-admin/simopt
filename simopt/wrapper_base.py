@@ -2097,7 +2097,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         plt.xlabel("Mean Area", size=14)
         plt.ylabel("Std Dev of Area")
         # plt.xlim((0, 1))
-        plt.ylim((0, 0.5))
+        # plt.ylim((0, 0.5))
         title = f"{solver_name}\nAreas Under Progress Curves"
     elif plot_type == "box" or plot_type == "violin":
         plt.xlabel("Solvers")
@@ -2111,7 +2111,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")
         # plt.xlim((0, 1))
-        plt.ylim((0, 0.5))
+        # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
     plt.title(title, size=14)
 
