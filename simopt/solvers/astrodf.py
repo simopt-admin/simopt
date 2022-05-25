@@ -3,13 +3,22 @@
 Summary
 -------
 ASTRODF
-Based on the sample average approximation, the solver makes the surrogate model within the trust region at each iteration k.
-The sample sizes are determined adaptively.
-Solve the subproblem and decide whether the algorithm take the candidate solution as next ieration center point or not.
-Cannot handle stochastic constraints.
+With sample average approximation, the solver makes a quadratic model and 
+solves it within the trust region at each iteration k to suggest a candidate
+solution for next iteration. The solver then decides whether to accept the 
+candidate solution and expand the trust-regioin or reject it and shrink. 
+The sample sizes are determined adaptively. 
+
+TODO:   projections for box constraints, 
+        remove criticality step and 
+            parameters mu, beta, criticality_select, and criticality_threshold,
+        use get_random_solution function to decide delta_max, 
+        use first pilot runs to decide,
+        make the percentage of budget for parameter tuning a factor?,
+        stochastic constraints
 """
 from base import Solver
-from numpy.linalg import inv
+from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
 from math import log, ceil
@@ -114,22 +123,17 @@ class ASTRODF(Solver):
                 "datatype": int,
                 "default": 10
             },
-            "c_lambda": {
-                "description": "minimum sample size coefficient",
-                "datatype": float,
-                "default": 0.1
-            },
-            "epsilon_lambda": {
-                "description": "minimum sample size exponent",
-                "datatype": float,
-                "default": 0.00001 ## less means faster increase at the beginning
+            "lambda_min": {
+                "description": "minimum sample size value",
+                "datatype": int,
+                "default": 4
             },
             "simple_solve": {
                 "description": "subproblem solver with Cauchy point or the built-in solver? True: Cauchy point, False: built-in solver",
                 "datatype": bool,
                 "default": True
             },
-            "select_criticality": {
+            "criticality_select": {
                 "description": "True: skip contraction loop if not near critical region, False: always run contraction loop",
                 "datatype": bool,
                 "default": True
@@ -152,8 +156,7 @@ class ASTRODF(Solver):
             "w": self.check_w,
             "beta": self.check_beta,
             "mu": self.check_mu,
-            "c_lambda": self.check_c_lambda,
-            "epsilon_lambda": self.check_epsilon_lambda,
+            "lambda_min": self.check_lambda_min,
             "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
@@ -188,11 +191,8 @@ class ASTRODF(Solver):
     def check_mu(self):
         return self.factors["mu"] > 0
 
-    def check_c_lambda(self):
-        return self.factors["c_lambda"] > 0
-
-    def check_epsilon_lambda(self):
-        return self.factors["epsilon_lambda"] > 0
+    def check_lambda_min(self):
+        return self.factors["lambda_min"] > 0
 
     def check_criticality_threshold(self):
         return self.factors["criticality_threshold"] > 0
@@ -209,10 +209,8 @@ class ASTRODF(Solver):
         return np.matmul(X, q)
 
     def stoppingtime(self, k, sig2, delta, kappa, dim):
-        c_lambda = self.factors["c_lambda"]
-        epsilon_lambda = self.factors["epsilon_lambda"]
-
-        lambda_k = (max(4, dim) + c_lambda) * max(log(k+ c_lambda, 10) ** (1 + epsilon_lambda),1)
+        lambda_min = self.factors["lambda_min"]
+        lambda_k = max(lambda_min, dim) * max(log(k+0.1, 10) ** (1.01),1)
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         ## for later: could we normalize f's before computing sig2?
@@ -223,7 +221,7 @@ class ASTRODF(Solver):
         w = self.factors["w"]
         mu = self.factors["mu"]
         beta = self.factors["beta"]
-        select_criticality = self.factors["select_criticality"]
+        criticality_select = self.factors["criticality_select"]
         criticality_threshold = self.factors["criticality_threshold"]
         j = 0
         d = problem.dim
@@ -264,7 +262,7 @@ class ASTRODF(Solver):
             # construct the model and get the model coefficients
             q, grad, Hessian = self.coefficient(Z, fval, problem)
 
-            if not select_criticality:
+            if not criticality_select:
                 # check the condition and break
                 if norm(grad) > criticality_threshold:
                     break
@@ -284,7 +282,7 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i]))
             M[i] = np.append(M[i], np.array(Y[i]) ** 2)
 
-        q = np.matmul(np.linalg.pinv(M), fval) # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
+        q = np.matmul(pinv(M), fval) # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
         grad = q[1:d + 1]
         grad = np.reshape(grad, d)
         Hessian = q[d + 1:2 * d + 1]
@@ -349,7 +347,7 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.stoppingtime(k, sig2, delta, fn/(delta**2), problem.dim) or expended_budget >= budget * 0.01:
+                    if sample_size >= self.stoppingtime(k, sig2, delta, fn/(delta**2), problem.dim) or expended_budget >= budget  * 0.01:
                         kappa = fn/(delta**2)
                         break
 
@@ -391,7 +389,7 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.stoppingtime(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget * 0.01:
+                if sample_size >= self.stoppingtime(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget  * 0.01:
                     break
 
             # calculate success ratio
