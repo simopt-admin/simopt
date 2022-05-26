@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate multiple periods of arrival and seating at a restaurant.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/tableallocation.html>`_.
 """
 import numpy as np
 
