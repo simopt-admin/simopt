@@ -210,7 +210,7 @@ class ASTRODF(Solver):
 
     def stoppingtime(self, k, sig2, delta, kappa, dim):
         lambda_min = self.factors["lambda_min"]
-        lambda_k = max(lambda_min, dim) * max(log(k+0.1, 10) ** (1.01),1)
+        lambda_k = max(lambda_min, .5*dim) * max(log(k+0.1, 10) ** (1.01),1)
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         ## for later: could we normalize f's before computing sig2?
