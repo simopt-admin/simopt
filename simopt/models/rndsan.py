@@ -13,7 +13,6 @@ class RNDSAN(Model):
     A model that simulates a random stochastic activity network problem with
     tasks that have exponentially distributed durations, and the selected means
     come with a cost.
-    Returns the optimal mean duration for each task.
 
     Attributes
     ----------
@@ -52,11 +51,11 @@ class RNDSAN(Model):
             "arcs": {
                 "description": "List of arcs.",
                 "datatype": list,
-                "default": [(1,2), (1,3), (2,3), (2,4), (2,6), (3,6), (4,5),
-                            (4,7), (5,6), (5,8), (6,9), (7,8), (8,9)]
-            },        
+                "default": [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
+                            (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
+            },
             "arc_means": {
-                "description": "Initial solution of means.",
+                "description": "Mean task durations for each arc.",
                 "datatype": tuple,
                 "default": (1,) * 13
             }
@@ -71,7 +70,7 @@ class RNDSAN(Model):
 
     def check_num_nodes(self):
         return self.factors["num_nodes"] > 0
-    
+
     def dfs(self, graph, start, visited=None):
         if visited is None:
             visited = set()
@@ -84,8 +83,8 @@ class RNDSAN(Model):
     def check_arcs(self):
         if len(self.factors["arcs"]) <= 0:
             return False
-        # check graph is connected
-        graph = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
+        # Check graph is connected.
+        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:
             graph[a[0]].add(a[1])
         visited = self.dfs(graph, 1)
@@ -96,7 +95,7 @@ class RNDSAN(Model):
     def check_arc_means(self):
         positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & x > 0
+            positive = positive & (x > 0)
         return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
 
     def replicate(self, rng_list):
@@ -120,49 +119,54 @@ class RNDSAN(Model):
         exp_rng = rng_list[0]
 
         # Topological sort.
-        graph_in = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
-        graph_out = {node: set() for node in range(1, self.factors["num_nodes"]+1)}
+        graph_in = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph_out = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:
             graph_in[a[1]].add(a[0])
             graph_out[a[0]].add(a[1])
-        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"]+1)]
+        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
         # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
         queue = []
         topo_order = []
         for n in range(self.factors["num_nodes"]):
             if indegrees[n] == 0:
-                queue.append(n+1)
+                queue.append(n + 1)
         while len(queue) != 0:
             u = queue.pop(0)
             topo_order.append(u)
             for n in graph_out[u]:
-                indegrees[n-1] -= 1
-                if indegrees[n-1] == 0:
+                indegrees[n - 1] -= 1
+                if indegrees[n - 1] == 0:
                     queue.append(n)
 
         # Generate arc lengths.
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
-            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1/self.factors["arc_means"][i])
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
 
-        # Initialize.
+        # Calculate the length of the longest path.
         T = np.zeros(self.factors["num_nodes"])
-        # Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
-
-        # Longest path algorithm.
+        prev = np.zeros(self.factors["num_nodes"])
         for i in range(1, self.factors["num_nodes"]):
-            vi = topo_order[i-1]
+            vi = topo_order[i - 1]
             for j in graph_out[vi]:
-                if T[j-1] < T[vi-1] + arc_length[str((vi,j))]:
-                    T[j-1] = T[vi-1] + arc_length[str((vi,j))]
-
-        longest_path = T[self.factors["num_nodes"]-1]
-        # longest_path_gradient = Tderiv[8, :]
+                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
+                    T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+                    prev[j - 1] = vi
+        longest_path = T[self.factors["num_nodes"] - 1]
+        gradient = np.zeros(len(self.factors["arcs"]))
+        current = topo_order[-1]
+        backtrack = int(prev[self.factors["num_nodes"] - 1])
+        while current != topo_order[0]:
+            idx = self.factors["arcs"].index((backtrack, current))
+            gradient[idx] = arc_length[str((backtrack, current))]/(self.factors["arc_means"][idx])
+            current = backtrack
+            backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {}
-        # gradients = {"longest_path_length": {"mean_grad": longest_path_gradient}}
+        gradients = {"longest_path_length": {"arc_means": None}}
+        gradients["longest_path_length"]["arc_means"] = gradient
         return responses, gradients
 
 
@@ -260,7 +264,7 @@ class RNDSANLongestPath(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100000
+                "default": 10000
             }
         }
         self.check_factor_list = {
@@ -271,8 +275,8 @@ class RNDSANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = RNDSAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (0.01,) * self.dim
-        self.upper_bounds = (100,) * self.dim
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -417,5 +421,5 @@ class RNDSANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0.01, 25) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.lognormalvariate(self, lq=0.1, uq=10) for _ in range(self.dim)])
         return x
