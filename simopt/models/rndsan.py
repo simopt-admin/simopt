@@ -154,6 +154,8 @@ class RNDSAN(Model):
                     T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
                     prev[j - 1] = vi
         longest_path = T[self.factors["num_nodes"] - 1]
+
+        # Calculate the gradients.
         gradient = np.zeros(len(self.factors["arcs"]))
         current = topo_order[-1]
         backtrack = int(prev[self.factors["num_nodes"] - 1])
