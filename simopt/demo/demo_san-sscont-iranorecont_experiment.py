@@ -204,10 +204,20 @@ experiments = []
 # Load all experiments for a given solver, for all solvers.
 # Load experiments belonging to the problems in:
 problems = ["SAN","SSCONT","IRONORECONT"]
-# problems = ["IRONORECONT"]
+# problems = ["SAN"]
 
 for solver in solvers:
     experiments_same_solver = []
+    
+    solver_display = solver
+    if solver == "RNDSRCH_ss=10":
+        solver_display = "RS10"
+    elif solver == "RNDSRCH_ss=50":
+        solver_display = "RS50"
+    elif solver == "ASTRODF":
+        solver_display = "ASTRO-DF"
+    elif solver == "NELDMD":
+        solver_display = "Nelder-Mead"
     
     for problem in problems:
         if problem == "SAN":
@@ -219,6 +229,7 @@ for solver in solvers:
                 new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
                 # Rename problem to produce nicer plot labels.
                 new_experiment.problem.name = f"{problem}-1 with rc={all_random_costs[i]}"
+                new_experiment.solver.name = solver_display
                 experiments_same_solver.append(new_experiment)
         
         elif problem == "SSCONT":
@@ -231,6 +242,7 @@ for solver in solvers:
                     new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
                     # Rename problem to produce nicer plot labels.
                     new_experiment.problem.name = fr"{problem}-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                    new_experiment.solver.name = solver_display
                     experiments_same_solver.append(new_experiment)
         
         elif problem == "IRONORECONT":
@@ -244,6 +256,7 @@ for solver in solvers:
                         new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
                         # Rename problem to produce nicer plot labels.
                         new_experiment.problem.name = fr"{problem}-1 with $\sigma={sd}$ and hc={hc} and inv={inv}"
+                        new_experiment.solver.name = solver_display
                         experiments_same_solver.append(new_experiment)
     
     experiments.append(experiments_same_solver)
@@ -254,12 +267,12 @@ n_solvers = len(experiments)
 n_problems = len(experiments[0])
 
 CI_param = True
-alpha = 0.1
+alpha = 0.2
 
 plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=alpha, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
 plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=alpha, beta=0.5, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRODF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRODF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
+plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
+plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
 plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
 plot_terminal_scatterplots(experiments, all_in_one=True)
                        
@@ -270,3 +283,13 @@ for i in range(n_problems):
     # plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="quantile", beta=0.9, all_in_one=True, plot_CIs=True, print_max_hw=True)
     # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
 
+## Plots for mu_D = 400 and mu_L = 6
+plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+
+plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(3,4)], plot_type="all", all_in_one=True, normalize=False)
+
+plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=False, normalize=True)
+
+plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)], solve_tol=0.2, all_in_one=True, plot_CIs=True, print_max_hw=False)
+
+plot_terminal_progress([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="violin", normalize=False, all_in_one=True)
