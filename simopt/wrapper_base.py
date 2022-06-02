@@ -1425,7 +1425,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
                 plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="lower right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1693,7 +1693,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
 
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
@@ -1701,7 +1701,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                                        extra=solve_tol
                                        ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
@@ -1730,7 +1730,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                         plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
 
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="lower right")
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
             if plot_type == "diff_cdf_solvability":
                 file_list.append(save_plot(solver_name="SOLVER SET",
                                            problem_name="PROBLEM SET",
@@ -1900,7 +1900,8 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
             terminal_values = [td for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
             terminal_data_dict = {"Solvers": solver_names, "Terminal": terminal_values}
             terminal_data_df = pd.DataFrame(terminal_data_dict)
-            sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick")
+            # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
+            sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, cut=0.1)
             if normalize:
                 plt.ylabel("Terminal Progress")
             else:
@@ -2096,8 +2097,8 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     elif plot_type == "area":
         plt.xlabel("Mean Area", size=14)
         plt.ylabel("Std Dev of Area")
-        plt.xlim((0, 1))
-        plt.ylim((0, 0.5))
+        # plt.xlim((0, 1))
+        # plt.ylim((0, 0.5))
         title = f"{solver_name}\nAreas Under Progress Curves"
     elif plot_type == "box" or plot_type == "violin":
         plt.xlabel("Solvers")
@@ -2110,8 +2111,8 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     elif plot_type == "terminal_scatter":
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")
-        plt.xlim((0, 1))
-        plt.ylim((0, 0.5))
+        # plt.xlim((0, 1))
+        # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
     plt.title(title, size=14)
 
