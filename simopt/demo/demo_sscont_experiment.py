@@ -22,6 +22,9 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 demand_means = [25.0, 50.0, 100.0, 200.0, 400.0]
 lead_means = [1.0, 3.0, 6.0, 9.0]
 
+demand_means = [400.0]
+lead_means = [6.0]
+
 # Two versions of random search with varying sample sizes.
 rs_sample_sizes = [10, 50]
 
@@ -125,7 +128,7 @@ for rs_ss in rs_sample_sizes:
             # Load experiment.
             new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
             # Rename problem and solver to produce nicer plot labels.
-            new_experiment.solver.name = f"Random Search {rs_ss}"
+            new_experiment.solver.name = f"RS{rs_ss}"
             new_experiment.problem.name = fr"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
             experiments_same_solver.append(new_experiment)
     experiments.append(experiments_same_solver)
@@ -188,11 +191,23 @@ for i in range(n_problems):
     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True, normalize=False)
     plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
 
-# # All progress curves for one experiment. Problem instance 0.
-# plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
-
-# # All progress curves for one experiment. Problem instance 22.
-# plot_progress_curves([experiments[solver_idx][22] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
+# from math import exp, log, sqrt
+# import numpy as np
+# import matplotlib.pyplot as plt
+# for mu_d in demand_means:
+#     for mu_l in lead_means:
+#         lq = mu_d*mu_l/3
+#         uq = mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)
+#         mu = (log(lq)+log(uq))/2
+#         sigma = (log(uq)-mu)/1.96
+#         print(round(mu_d,0), round(mu_l,0), round(lq,2), round(uq,2), round(mu,2), round(sigma,2))
+#         s = np.random.lognormal(mu, sigma, 1000)
+#         plt.hist(s, density=True, alpha=0.5, label=str(round(mu_d,0))+','+str(round(mu_l,0)), bins=50, color='blue')
+#         plt.axvline(lq,color='red')
+#         plt.axvline(uq,color='red')
+#         plt.axis('tight')
+#         plt.legend()
+#         plt.show()
 
 # # Mean progress curves from all solvers on one problem. Problem instance 0.
 # plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
