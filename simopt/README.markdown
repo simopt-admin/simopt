@@ -49,59 +49,58 @@ The top of the main page provides three ways to create or continue working with 
 At the bottom of the main page, there is a frame containing all Experiments. The Experiments are listed in different tabs: the first tab lists the individual problem-solver pairs ready to be run or post-replicated, the second tab lists the Meta-Experiments made from the cross-design, and the third tab lists those Experiments that are ready to be post-normalized and prepared for plotting.
 
 ### Adding Experiments
-This section will explain how to add Experiments to the Experiments or MetaExperiments queue.
+This section explains how to add Experiments to the Experiments or MetaExperiments queue.
 
 #### Loading an Experiment from a File
-1. In the top left corner, you can click "Load File". Your file system will pop up, and you can navigate to an appropriate \*.pickle file to select. (The GUI will throw an error is the selected file is not a \*.pickle file.
+1. In the top left corner, click "Load File". Your file system will pop up, and you can navigate to an appropriate \*.pickle file to select. (The GUI will throw an error if the selected file is not a \*.pickle file.
 2. Once an Experiment is loaded, it will be added to the Queue of Experiments.
 3. The Run and Post-Process buttons will be updated to accurately reflect whether the Experiment has already been run and/or post-processed.
 
 #### Creating an Experiment
 Instead of loading an existing Experiment, you can create one from the main page of the GUI:
-1. First, select a solver from the "Solver" dropdown list. Each of the solvers contain an abbreviation for the type of problems the solver can handle. Once a solver is selected it will sort through the "Problems" and show only the problems that work with this solver. 
+1. First, select a solver from the "Solver" dropdown list. Each of the solvers has an abbreviation for the type of problems the solver can handle. Once a solver is selected, the "Problem" list will be sorted and show only the problems that work with the selected solver. 
 2. Change factors associated with the solver as necessary.
-3. All solvers with unique factors must have unique names (no two solvers can have the same name, but different factors). If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
-4. Select a problem from the "Problem" dropdown list. Each problem contain an abbreviation that determines which type of solver it can work with. The letters in the abbreviation stand for: 
-<table>
-    <tr>
-      <th> Objective </th>
-      <th> Constraint </th>
-      <th> Variable </th>
-      <th> Gradient </th>
-    </tr>
-    <tr>
-      <td> Single (S) </td>
-      <td> Unconstrained (U) </td>
-      <td> Discrete (D) </td>
-      <td> Gradients Available (G) </td>
-    </tr>
-  <tr>
-      <td> Multi (M) </td>
-      <td> Box (B) </td>
-      <td> Continuous (C) </td>
-      <td> Gradients Not Available (NG) </td>
-    </tr>
-  <tr>
-      <td>  </td>
-      <td> Deterministic (D) </td>
-      <td> Mixed (M)  </td>
-      <td>  </td>
-    </tr>
-  <tr>
-      <td>  </td>
-      <td> Stochastic (S) </td>
-      <td> </td>
-      <td>  </td>
-    </tr>
-  
-</table>
+3. All solvers with unique combinations of factors must have unique names, i.e., no two solvers can have the same name, but different factors. If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
+4. Select a problem from the "Problem" dropdown list. Each problem has an abbreviation indicating which types of solver it can work with. The letters in the abbreviation stand for: 
+    <table>
+        <tr>
+          <th> Objective </th>
+          <th> Constraint </th>
+          <th> Variable </th>
+          <th> Gradient </th>
+        </tr>
+        <tr>
+          <td> Single (S) </td>
+          <td> Unconstrained (U) </td>
+          <td> Discrete (D) </td>
+          <td> Gradients Available (G) </td>
+        </tr>
+      <tr>
+          <td> Multi (M) </td>
+          <td> Box (B) </td>
+          <td> Continuous (C) </td>
+          <td> Gradients Not Available (NG) </td>
+        </tr>
+      <tr>
+          <td>  </td>
+          <td> Deterministic (D) </td>
+          <td> Mixed (M)  </td>
+          <td>  </td>
+        </tr>
+      <tr>
+          <td>  </td>
+          <td> Stochastic (S) </td>
+          <td> </td>
+          <td>  </td>
+        </tr>
+    </table>
 5. Change factors associated with the problem and model as necessary.
-6. All problems with unique factors must have unique names (no two problems can have the same name, but different factors). If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
-7.  The number of macroreplications can be modified in the top-left corner. The default is 10 macroreplicatons.
-8.  Select the "Add Experiment" button, which only appears when a solver and problem is selected. Then, a new Experiment will be added in the "Queue of Experiments".
+6. All problems with unique factors must have unique names, i.e., no two problems can have the same name, but different factors. If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
+7.  The number of macroreplications can be modified in the top-left corner. The default is 10.
+8.  Select the "Add Experiment" button, which only appears when a solver and problem is selected. The Experiment will be added in the "Queue of Experiments."
 
 #### Creating a Cross-Design Experiment
-By cross-designing an Experiment, you can create a MetaExperiment, which will be added to the "Queue of Meta-Experiments". (Currently, Meta-Experiments can only be created and not loaded from a file.)
+By cross-designing an Experiment, you can create a Meta-Experiment, which will be added to the "Queue of Meta-Experiments". (Currently, Meta-Experiments can only be created within the GUI (or command line); they cannot be loaded from a file.)
 1. Click the "Cross-Design Experiments" button.
 2. Check the compatibility of the Problems and Solvers being selected. Note that deterministic solvers can not handle problems with stochastic constraints (e.g., ASTRO-DF cannot be run on FACSIZE-2).
 3. Specify the number of macroreplications - the default is 10.
@@ -129,15 +128,15 @@ Meta-Experiments are post-processed and post-normalized at the same time.
 * Click the "Post-Process" button for the specific Meta-Experiment, then change any values necessary, then click "Post-Process".
 
 ### Plotting Experiments
-The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem- solver pair from one Meta-Experiment can be plotted. (The ability to produce plots based on multiple problems *and* multiple solvers using the GUI is currently under development.) To return to the main page, click the red "x" in the top-left corner of the window.
+The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem-solver pair from a single Meta-Experiment can be plotted. (The ability to produce plots based on multiple problems *and* multiple solvers using the GUI is currently under development.) To return to the main page, click the red "x" in the top-left corner of the window.
 1. On the left side, select one or more problems from the problem list.
 2. Select solvers from the solver list.
 3. On the right side, select a plot type and adjust plot parameters and settings. 
-There are 3 plot settings for all plots: Confident Intervals, Plot Together, and Print Max HW. 
-The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Box, Violin, and Terminal Scatter. 
+There are 3 plot settings for all plots: Confidence Intervals, Plot Together, and Print Max HW. 
+The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Terminal Box/Violin, and Terminal Scatter. 
 4. Click "Add."
-5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved at.
-6. To view one plot, click "View Plot," or all plots can be viewed together by clicking "See All Plots" at the bottom of the page.
+5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved.
+6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
 
 ## Contributing
 Users can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. The core development team currently consists of David Eckman (Texas A&M University), Shane Henderson (Cornell University), and Sara Shashaani (North Carolina State University).
