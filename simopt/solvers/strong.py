@@ -54,7 +54,7 @@ class STRONG(Solver):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
-        self.variable_type = "discrete"
+        self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
