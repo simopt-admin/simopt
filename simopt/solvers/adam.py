@@ -142,7 +142,7 @@ class ADAM(Solver):
 
         # Default values.
         r = self.factors["r"]
-        beta_1 = self.factors["beta1"]
+        beta_1 = self.factors["beta_1"]
         beta_2 = self.factors["beta_2"]
         alpha = self.factors["alpha"]
         epsilon = self.factors["epsilon"]
@@ -155,7 +155,6 @@ class ADAM(Solver):
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         problem.simulate(new_solution, r)
         expended_budget += r
-        best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
@@ -175,20 +174,34 @@ class ADAM(Solver):
             BdsCheck = np.subtract(forward, backward)
             # Use finite difference to calculate gradient.
             grad = self.finite_diff(new_solution, BdsCheck, problem)
-
-            # Update biased first moment estimate
-            m[t] = beta_1 * m[t - 1] + (1 - beta_1) * grad
-            # Update biased second raw moment estimate
-            v[t] = beta_2 * v[t - 1] + (1 - beta_2) * np.square(grad)
-            # Compute bias-corrected first moment estimate
-
-            # Compute bias-corrected second raw moment estimate
-
-
-
+            expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+            # Convert new_x from tuple to list
+            new_x = list(new_x)
+            
+            # Loop through all the dimensions.
+            for i in range(problem.dim): 
+                # Update biased first moment estimate.
+                m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
+                # Update biased second raw moment estimate.
+                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
+                # Compute bias-corrected first moment estimate.
+                mhat = m[i] / (1 - beta_1**t)
+                # Compute bias-corrected second raw moment estimate.
+                vhat = v[i] / (1 - beta_2**t)
+                # Update new_x.
+                new_x[i] = new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon)
+            
+            # Create new solution based on new x
+            new_solution = self.create_new_solution(tuple(new_x), problem)
+            # Use r simulated observations to estimate the objective value.
+            problem.simulate(new_solution, r)
+            expended_budget += r
+            recommended_solns.append(new_solution)
+            intermediate_budgets.append(expended_budget)
+            
         return recommended_solns, intermediate_budgets
 
-    # Finite difference for calculating gradients.
+    # Finite difference for approximating gradients.
     def finite_diff(self, new_solution, BdsCheck, problem):
         r = self.factors['r']
         alpha = self.factors['alpha']

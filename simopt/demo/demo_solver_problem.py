@@ -24,8 +24,8 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Ex:
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
-solver_name = "STRONG"  # Random search solver
-problem_name = "FACSIZE-2" # Continuous newsvendor problem
+solver_name = "ADAM"  # Random search solver
+problem_name = "SAN-1" # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -50,13 +50,13 @@ print(f"Results will be stored as {file_name_path}.")
 #     "initial_solution": list(3 * np.ones(10))}
 
 # Initialize an instance of the experiment class.
-# myexperiment = Experiment(solver_name, problem_name)
-model_fixed_factors = {"st_dev": 1,
-                       "inven_stop": 1000,
-                       "holding_cost": 100
-                       }
-# Initialize an instance of the experiment class.
-myexperiment = Experiment(solver_name, problem_name, model_fixed_factors=model_fixed_factors)
+myexperiment = Experiment(solver_name, problem_name)
+# model_fixed_factors = {"st_dev": 1,
+#                        "inven_stop": 1000,
+#                        "holding_cost": 100
+#                        }
+# # Initialize an instance of the experiment class.
+# myexperiment = Experiment(solver_name, problem_name, model_fixed_factors=model_fixed_factors)
 
 # fixed_factors = {"lam": 100000}
 # myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors)
