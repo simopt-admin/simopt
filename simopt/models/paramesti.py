@@ -193,7 +193,7 @@ class ParamEstiMinLogLik(Problem):
         self.variable_type = "continuous"
         self.lower_bounds = (0.1, 0.1)
         self.upper_bounds = (10, 10)
-        self.gradient_available = True
+        self.gradient_available = False
         self.model_default_factors = {}
         self.model_decision_factors = {"x"}
         self.factors = fixed_factors

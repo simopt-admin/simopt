@@ -391,7 +391,7 @@ class FacilitySizingTotalCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.dot(self.factors["installation_costs"], x),)
-        det_objectives_gradients = ((self.factors["installation_costs"],),)
+        det_objectives_gradients = ((self.factors["installation_costs"],))
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):

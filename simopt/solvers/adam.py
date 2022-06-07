@@ -80,7 +80,7 @@ class ADAM(Solver):
             "alpha": {
                 "description": "Step size.",
                 "datatype": int,
-                "default": 0.001
+                "default": 0.1
             },
             "epsilon": {
                 "description": "A small value to prevent zero-division.",
@@ -88,7 +88,7 @@ class ADAM(Solver):
                 "default": 10**(-8)
             },
             "sensitivity": {
-                "description": "shrinking scale for VarBds",
+                "description": "shrinking scale for variable bounds.",
                 "datatype": float,
                 "default": 10**(-7)
             }
@@ -155,6 +155,7 @@ class ADAM(Solver):
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         problem.simulate(new_solution, r)
         expended_budget += r
+        best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
@@ -172,9 +173,12 @@ class ADAM(Solver):
             backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
-            # Use finite difference to calculate gradient.
-            grad = self.finite_diff(new_solution, BdsCheck, problem)
-            expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+            if problem.gradient_available:
+                grad = problem.deterministic_objectives_and_gradients(new_x)[1][0]
+            else:
+                # Use finite difference to estimate gradient if gradient is not available.
+                grad = self.finite_diff(new_solution, BdsCheck, problem)
+                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
             # Convert new_x from tuple to list
             new_x = list(new_x)
             
@@ -196,8 +200,10 @@ class ADAM(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            recommended_solns.append(new_solution)
-            intermediate_budgets.append(expended_budget)
+            if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
+                best_solution = new_solution
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
             
         return recommended_solns, intermediate_budgets
 
