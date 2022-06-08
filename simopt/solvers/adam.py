@@ -16,6 +16,8 @@ warnings.filterwarnings("ignore")
 
 class ADAM(Solver):
     """
+    An algorithm for first-order gradient-based optimization of
+    stochastic objective functions, based on adaptive estimates of lower-order moments.
 
     Attributes
     ----------
