@@ -39,8 +39,8 @@ class Volunteer(Model):
     """
     def __init__(self, fixed_factors={}):
         self.name = "VOLUNTEER"
-        self.n_rngs = 1
-        self.n_responses = 1
+        self.n_rngs = 2
+        self.n_responses = 4
         self.specifications = {
             "mean_vol": {
                 "description": "Mean number of available volunteers.",
@@ -57,10 +57,15 @@ class Volunteer(Model):
                 "datatype": int,
                 "default": 400
             },
+            "square_length": {
+                "description": "Length (or width) of the square in km.",
+                "datatype": int,
+                "default": 500
+            },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
                 "datatype": list,
-                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').to_list()
+                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
             },
             "p_vol": {
                 "description": "Probability of an available volunteer is in each square.",
@@ -106,18 +111,97 @@ class Volunteer(Model):
         -------
         responses : dict
             performance measures of interest
-            "revenue" = expected revenue
+            "thre_dist_flag" = whether the distance of the closet volunteer exceeds the threshold distance
+            "p_survival" = the probability of survial
+            "OHCA_loc" = the location of an OHCA
+            "vol_locs" = a list of locations of the volunteers
+            "num_vol" = total number of volunteers available
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate separate random number generators.
-        arr_rng = rng_list[0]
+        num_vol_rng = rng_list[0]
+        vol_loc_lat_rng = rng_list[1]
+        vol_loc_lon_rng = rng_list[2]
+        vol_loc_rng = rng_list[3]
+        OHCA_loc_lat_rng = rng_list[4]
+        OHCA_loc_lon_rng = rng_list[5]
+        OHCA_loc_rng = rng_list[6]
+        lat_in_sq_rng = rng_list[7]
+        lon_in_sq_rng = rng_list[7]
+
+        # Initialize quantities to track:
+        # - Location of an OHCA.
+        # - Locations of the volunteers.
+        # - Whether the distance of the closet volunteer exceeds the threshold distance.
+        OHCA_loc = None
+        vol_locs = []
+        thre_dist_flag = 0
+
+        # Generate number of volunteers through a Poisson random variable.
+        num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
+
+        # Generate the square location of an OHCA by acceptance-rejection.
+        done = False
+        x = None
+        y = None
+        while not done:
+            u1 = OHCA_loc_lat_rng.uniform()
+            u2 = OHCA_loc_lon_rng.uniform()
+            x_temp = np.ceil(u1 * (self.factors["num_squares"] - 1))
+            y_temp = np.ceil(u2 * (self.factors["num_squares"] - 1))
+            u3 = OHCA_loc_rng.uniform()
+            if u3 <= self.factors["p_OHCA"][x_temp][y_temp]:
+                x = x_temp
+                y = y_temp
+                done = True
+        # Find a random location in that square.
+        OHCA_loc = (x * self.factors["square_length"] + lon_in_sq_rng.uniform(0, self.factors["square_length"]), 
+                    y * self.factors["square_length"] + lat_in_sq_rng.uniform(0, self.factors["square_length"]))
+        
+        # Generate the locations of the volunteers by a Poisson point process through acceptance-rejection.
+        for _ in num_vol:
+            # Generate the coordinates of the square the volunteer is located in.
+            done = False
+            x = None
+            y = None
+            while not done:
+                u4 = vol_loc_lat_rng.uniform()
+                u5 = vol_loc_lon_rng.uniform()
+                x_temp = np.ceil(u4 * (self.factors["num_squares"] - 1))
+                y_temp = np.ceil(u5 * (self.factors["num_squares"] - 1))
+                u6 = vol_loc_rng.uniform()
+                if u6 <= self.factors["p_vol"][x_temp][y_temp]:
+                    x = x_temp
+                    y = y_temp
+                    done = True
+            # Find a random location in that square.
+            vol_locs.append((x * self.factors["square_length"] + lon_in_sq_rng.uniform(0, self.factors["square_length"]), 
+                            y * self.factors["square_length"] + lat_in_sq_rng.uniform(0, self.factors["square_length"])))
+
+        # Calculate the distance of the closest volunteer to the location of an OHCA.
+        dists = []
+        for i in num_vol:
+            dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
+            dists.append(dist)
+        min_dist = np.min(dists)
+
+        # Check the minimum distance against the threshold distance.
+        if min_dist < self.factors["thre_dist"]:
+            thre_dist_flag = 1
+        # Use the survival function to calculate the probability of survival.
+        # Convert distance to time: 3 min + D/(6km/hr).
+        t = 3 + min_dist / 6 / 60
+        p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
 
         # Compose responses and gradients.
-        responses = {"": }
+        responses = {"thre_dist_flag": thre_dist_flag,
+                    "p_survival": p_survival,
+                    "OHCA_loc": OHCA_loc,
+                    "vol_locs": vol_locs,
+                    "num_vol": num_vol}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
-
 
 """
 Summary
@@ -195,20 +279,20 @@ class VolunteerDist(Problem):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (1,)
+        self.minmax = (-1,)
         self.constraint_type = "box"
-        self.variable_type = "discrete"
+        self.variable_type = "continuous"
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"booking_limits"}
+        self.model_decision_factors = {"p_vol"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple([0 for _ in range(56)])
+                "default": tuple(1/400 * np.ones((20, 20)).tolist())
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
