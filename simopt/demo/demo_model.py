@@ -19,7 +19,7 @@ from rng.mrg32k3a import MRG32k3a
 # Ex: from models.mm1queue import MM1Queue
 from models.ironore import IronOre
 from models.dynamnews import DynamNews
-from models.covid_individual import COVID
+from models.volunteer import Volunteer
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
@@ -42,7 +42,7 @@ fixed_factors = {} # Resort to all default values.
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = COVID(fixed_factors)
+mymodel = Volunteer(fixed_factors)
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
@@ -75,42 +75,3 @@ for key, value in responses.items():
 #     print(f"\tFor the response {outerkey}:")
 #     for innerkey, value in gradients[outerkey].items():
 #         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
-
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'Infected')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'Exposed')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'Susceptible')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'Recovered')
-plt.plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_isolation'], axis = 1), color = 'purple', label = 'Isolation')
-plt.legend()
-plt.xlabel('Number of simulation days')
-plt.ylabel('Population')
-plt.yticks(np.arange(0, int(max(np.sum(responses['num_susceptible'], axis = 1))), 2000))
-# plt.ylim(0, 1000)
-
-plt.savefig('seir_no_test.png', bbox_inches = 'tight')
-
-
-# --------------------------------------------------
-# plt.figure()
-# f, axes = plt.subplots(2,1)
-# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_infected'], axis = 1), color = 'green', label = 'Infected')
-# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_exposed'], axis = 1), color = 'orange', label = 'Exposed')
-# axes[0].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_susceptible'], axis = 1), color = 'blue', label = 'Susceptible')
-# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_recovered'], axis = 1), color = 'red', label = 'Recovered')
-# axes[1].plot(np.arange(0, mymodel.factors["n"]), np.sum(responses['num_isolation'], axis = 1), color = 'purple', label = 'Isolation')
-# axes[0].legend()
-# axes[1].legend()
-# axes[0].set_ylabel('Population')
-# axes[1].set_xlabel('Number of simulation days')
-# axes[1].set_ylabel('Population')
-# plt.savefig('seir.png', bbox_inches = 'tight')
-
-# for i in range(mymodel.factors["num_groups"]):
-#     fig1, ax1 = plt.subplots()
-#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_infected'][:,i], color = 'green', label = 'num_infected in group '+str(i))
-#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_exposed'][:,i], color = 'orange', label = 'num_exposed in group '+str(i))
-#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_susceptible'][:,i], color = 'blue', label = 'num_susceptible in group '+str(i))
-#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_recovered'][:,i], color = 'red', label = 'num_recovered in group '+str(i))  
-#     ax1.plot(np.arange(0, mymodel.factors["n"]), responses['num_isolation'][:,i], color = 'purple', label = 'num_isolation in group '+str(i))
-#     ax1.legend()
-#     fig1.savefig('seir_group'+str(i)+'.png', bbox_inches = 'tight')
