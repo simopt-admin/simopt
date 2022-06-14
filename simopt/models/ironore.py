@@ -12,10 +12,6 @@ Changed get_random_solution quantiles
 import numpy as np
 from math import sqrt, copysign
 
-"""
-import numpy as np
-from math import sqrt, copysign
-
 from base import Model, Problem
 
 
