@@ -32,6 +32,7 @@ from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from models.fixedsan import FixedSAN, FixedSANLongestPath
 from models.voting import Voting, MinVotingMaxWaitTime
+from models.prodsys import ProdSys, ProdSysMinLeadTime
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -58,7 +59,8 @@ problem_directory = {
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
-    "VOTING-1": MinVotingMaxWaitTime
+    "VOTING-1": MinVotingMaxWaitTime,
+    "PRODSYS-1": ProdSysMinLeadTime
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -76,5 +78,6 @@ model_directory = {
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
-    "VOTING": Voting
+    "VOTING": Voting,
+    "PRODSYS": ProdSys
 }
