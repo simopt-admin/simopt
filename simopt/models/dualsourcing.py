@@ -2,9 +2,10 @@
 Summary
 -------
 Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`_.
 """
 import numpy as np
-import scipy.stats as scs
 
 from base import Model, Problem
 
@@ -219,7 +220,7 @@ class DualSourcing(Model):
 
         # Generate demand.
         demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
-        
+
         # Track total expenses.
         total_holding_cost = np.zeros(self.factors["n_days"])
         total_penalty_cost = np.zeros(self.factors["n_days"])
@@ -241,8 +242,8 @@ class DualSourcing(Model):
             orders_exp = np.delete(orders_exp, 0)
             orders_reg = np.delete(orders_reg, 0)
             # Satisfy or backorder demand.
-            #dn = max(0, demand[day]) THIS IS DONE TWICE
-            #inv = inv - dn
+            # dn = max(0, demand[day]) THIS IS DONE TWICE
+            # inv = inv - dn
             inv = inv - demand[day]
             total_penalty_cost[day] = -1 * self.factors["penalty_cost"] * min(0, inv)
             # Charge holding cost.

@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate demand at facilities.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/facilitysizing.html>`_.
 """
 import numpy as np
 
@@ -74,7 +76,7 @@ class FacilitySize(Model):
         super().__init__(fixed_factors)
 
     def check_mean_vec(self):
-        return np.all(self.factors["mean_vec"]) > 0
+        return all(mean > 0 for mean in self.factors["mean_vec"])
 
     def check_cov(self):
         try:

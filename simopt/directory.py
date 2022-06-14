@@ -29,7 +29,9 @@ from models.chessmm import ChessMatchmaking, ChessAvgDifference
 from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
-from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
+from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
+from models.rndsan import RNDSAN, RNDSANLongestPath
+from models.voting import Voting, MinVotingMaxWaitTime
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -54,7 +56,9 @@ problem_directory = {
     "SAN-1": SANLongestPath,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
-    "PARAMESTI-1": ParamEstiMinLogLik
+    "PARAMESTI-1": ParamEstiMaxLogLik,
+    "RNDSAN-1": RNDSANLongestPath,
+    "VOTING-1": MinVotingMaxWaitTime
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -70,5 +74,7 @@ model_directory = {
     "SAN": SAN,
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
-    "PARAMESTI": ParameterEstimation
+    "PARAMESTI": ParameterEstimation,
+    "RNDSAN": RNDSAN,
+    "VOTING": Voting
 }

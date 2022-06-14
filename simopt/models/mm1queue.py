@@ -2,6 +2,8 @@
 Summary
 -------
 Simulate a M/M/1 queue.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/mm1queue.html>`_.
 """
 import numpy as np
 
@@ -286,7 +288,7 @@ class MM1MinMeanSojournTime(Problem):
                 "default": 1000
             },
             "cost": {
-                "description": "Cost to increase service rate by 1 unit.",
+                "description": "Cost for increasing service rate.",
                 "datatype": float,
                 "default": 0.1
             }

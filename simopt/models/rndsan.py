@@ -1,21 +1,18 @@
 """
 Summary
 -------
-Simulate a multi-stage revenue management system with inter-temporal dependence.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/rmitd.html>`_.
-
+Simulate duration of a random stochastic activity network (SAN).
 """
 import numpy as np
 
 from base import Model, Problem
 
 
-class RMITD(Model):
+class RNDSAN(Model):
     """
-    A model that simulates a multi-stage revenue management system with
-    inter-temporal dependence.
-    Returns the total revenue.
+    A model that simulates a random stochastic activity network problem with
+    tasks that have exponentially distributed durations, and the selected means
+    come with a cost.
 
     Attributes
     ----------
@@ -42,107 +39,64 @@ class RMITD(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "RMITD"
-        self.n_rngs = 2
+        self.name = "RNDSAN"
+        self.n_rngs = 1
         self.n_responses = 1
         self.specifications = {
-            "time_horizon": {
-                "description": "Time horizon.",
+            "num_nodes": {
+                "description": "Number of nodes.",
                 "datatype": int,
-                "default": 3
+                "default": 9
             },
-            "prices": {
-                "description": "Prices for each period.",
+            "arcs": {
+                "description": "List of arcs.",
                 "datatype": list,
-                "default": [100, 300, 400]
+                "default": [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
+                            (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
             },
-            "demand_means": {
-                "description": "Mean demand for each period.",
-                "datatype": list,
-                "default": [50, 20, 30]
-            },
-            "cost": {
-                "description": "Cost per unit of capacity at t = 0.",
-                "datatype": float,
-                "default": 80.0
-            },
-            "gamma_shape": {
-                "description": "Shape parameter of gamma distribution.",
-                "datatype": float,
-                "default": 1.0
-            },
-            "gamma_scale": {
-                "description": "Scale parameter of gamma distribution.",
-                "datatype": float,
-                "default": 1.0
-            },
-            "initial_inventory": {
-                "description": "Initial inventory.",
-                "datatype": int,
-                "default": 100
-            },
-            "reservation_qtys": {
-                "description": "Inventory to reserve going into periods 2, 3, ..., T.",
-                "datatype": list,
-                "default": [50, 30]
+            "arc_means": {
+                "description": "Mean task durations for each arc.",
+                "datatype": tuple,
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
-            "time_horizon": self.check_time_horizon,
-            "prices": self.check_prices,
-            "demand_means": self.check_demand_means,
-            "cost": self.check_cost,
-            "gamma_shape": self.check_gamma_shape,
-            "gamma_scale": self.check_gamma_scale,
-            "initial_inventory": self.check_initial_inventory,
-            "reservation_qtys": self.check_reservation_qtys
+            "num_nodes": self.check_num_nodes,
+            "arcs": self.check_arcs,
+            "arc_means": self.check_arc_means
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_time_horizon(self):
-        return self.factors["time_horizon"] > 0
+    def check_num_nodes(self):
+        return self.factors["num_nodes"] > 0
 
-    def check_prices(self):
-        return all(price > 0 for price in self.factors["prices"])
+    def dfs(self, graph, start, visited=None):
+        if visited is None:
+            visited = set()
+        visited.add(start)
 
-    def check_demand_means(self):
-        return all(demand_mean > 0 for demand_mean in self.factors["demand_means"])
+        for next in graph[start] - visited:
+            self.dfs(graph, next, visited)
+        return visited
 
-    def check_cost(self):
-        return self.factors["cost"] > 0
-
-    def check_gamma_shape(self):
-        return self.factors["gamma_shape"] > 0
-
-    def check_gamma_scale(self):
-        return self.factors["gamma_scale"] > 0
-
-    def check_initial_inventory(self):
-        return self.factors["initial_inventory"] > 0
-
-    def check_reservation_qtys(self):
-        return all(reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"])
-
-    def check_simulatable_factors(self):
-        # Check for matching number of periods.
-        if len(self.factors["prices"]) != self.factors["time_horizon"]:
+    def check_arcs(self):
+        if len(self.factors["arcs"]) <= 0:
             return False
-        elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
-            return False
-        elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
-            return False
-        # Check that first reservation level is less than initial inventory.
-        elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
-            return False
-        # Check for non-increasing reservation levels.
-        elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
-            return False
-        # Check that gamma_shape*gamma_scale = 1.
-        elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
-            return False
-        else:
+        # Check graph is connected.
+        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        for a in self.factors["arcs"]:
+            graph[a[0]].add(a[1])
+        visited = self.dfs(graph, 1)
+        if self.factors["num_nodes"] in visited:
             return True
+        return False
+
+    def check_arc_means(self):
+        positive = True
+        for x in list(self.factors["arc_means"]):
+            positive = positive & (x > 0)
+        return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
 
     def replicate(self, rng_list):
         """
@@ -157,35 +111,50 @@ class RMITD(Model):
         -------
         responses : dict
             performance measures of interest
-            "revenue" = total revenue
+            "longest_path_length" = length/duration of longest path
         gradients : dict of dicts
             gradient estimates for each response
         """
         # Designate separate random number generators.
-        # Outputs will be coupled when generating demand.
-        X_rng = rng_list[0]
-        Y_rng = rng_list[1]
-        # Generate X and Y (to use for computing demand).
-        # random.gammavariate takes two inputs: alpha and beta.
-        #     alpha = k = gamma_shape
-        #     beta = 1/theta = 1/gamma_scale
-        X = X_rng.gammavariate(alpha=self.factors["gamma_shape"], beta=1./self.factors["gamma_scale"])
-        Y = [Y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])]
-        # Track inventory over time horizon.
-        remaining_inventory = self.factors["initial_inventory"]
-        # Append "no reservations" for decision-making in final period.
-        reservations = self.factors["reservation_qtys"]
-        reservations.append(0)
-        # Simulate over the time horizon and calculate the realized revenue.
-        revenue = 0
-        for period in range(self.factors["time_horizon"]):
-            demand = self.factors["demand_means"][period]*X*Y[period]
-            sell = min(max(remaining_inventory-reservations[period], 0), demand)
-            remaining_inventory = remaining_inventory - sell
-            revenue += sell*self.factors["prices"][period]
-        revenue -= self.factors["cost"]*self.factors["initial_inventory"]
+        exp_rng = rng_list[0]
+
+        # Topological sort.
+        graph_in = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph_out = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        for a in self.factors["arcs"]:
+            graph_in[a[1]].add(a[0])
+            graph_out[a[0]].add(a[1])
+        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
+        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
+        queue = []
+        topo_order = []
+        for n in range(self.factors["num_nodes"]):
+            if indegrees[n] == 0:
+                queue.append(n + 1)
+        while len(queue) != 0:
+            u = queue.pop(0)
+            topo_order.append(u)
+            for n in graph_out[u]:
+                indegrees[n - 1] -= 1
+                if indegrees[n - 1] == 0:
+                    queue.append(n)
+
+        # Generate arc lengths.
+        arc_length = {}
+        for i in range(len(self.factors["arcs"])):
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
+
+        # Calculate the length of the longest path.
+        T = np.zeros(self.factors["num_nodes"])
+        for i in range(1, self.factors["num_nodes"]):
+            vi = topo_order[i - 1]
+            for j in graph_out[vi]:
+                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
+                    T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+        longest_path = T[self.factors["num_nodes"] - 1]
+
         # Compose responses and gradients.
-        responses = {"revenue": revenue}
+        responses = {"longest_path_length": longest_path}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
 
@@ -193,12 +162,11 @@ class RMITD(Model):
 """
 Summary
 -------
-Maximize the total revenue of a multi-stage revenue management
-with inter-temporal dependence problem.
+Minimize the duration of the longest path from a to i plus cost.
 """
 
 
-class RMITDMaxRevenue(Problem):
+class RNDSANLongestPath(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -243,7 +211,7 @@ class RMITDMaxRevenue(Problem):
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : tuple
+            initial_solution : list
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
@@ -256,34 +224,31 @@ class RMITDMaxRevenue(Problem):
         user-specified name for problem
     fixed_factors : dict
         dictionary of user-specified problem factors
-    model_fixed_factors : dict
+    model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
     See also
     --------
     base.Problem
     """
-    def __init__(self, name="RMITD-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="RNDSAN-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
-        self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "deterministic"
-        self.variable_type = "discrete"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
+        self.minmax = (-1,)
+        self.constraint_type = "box"
+        self.variable_type = "continuous"
         self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  # (90, 50, 0)
+        self.optimal_solution = None
         self.model_default_factors = {}
-        self.model_decision_factors = {"initial_inventory", "reservation_qtys"}
+        self.model_decision_factors = {"arc_means"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (100, 50, 30)
+                "default": (8,) * 13
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -297,7 +262,10 @@ class RMITDMaxRevenue(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = RMITD(self.model_fixed_factors)
+        self.model = RNDSAN(self.model_fixed_factors)
+        self.dim = len(self.model.factors["arcs"])
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -314,8 +282,7 @@ class RMITDMaxRevenue(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "initial_inventory": vector[0],
-            "reservation_qtys": list(vector[0:])
+            "arc_means": vector[:]
         }
         return factor_dict
 
@@ -334,7 +301,7 @@ class RMITDMaxRevenue(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["initial_inventory"],) + tuple(factor_dict["reservation_qtys"])
+        vector = tuple(factor_dict["arc_means"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -352,8 +319,66 @@ class RMITDMaxRevenue(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["revenue"],)
+        objectives = (response_dict["longest_path_length"],)
         return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] >= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : tuple
+            vector of LHSs of stochastic constraint
+        """
+        stoch_constraints = None
+        return stoch_constraints
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = None
+        det_stoch_constraints_gradients = ((0,) * self.dim,)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        return det_stoch_constraints, det_stoch_constraints_gradients
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (np.sum(1 / np.array(x)),)
+        det_objectives_gradients = (-1 / (np.array(x) ** 2))
+        return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
         """
@@ -369,7 +394,7 @@ class RMITDMaxRevenue(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
+        return np.all(np.array(x) >= 0)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -385,9 +410,5 @@ class RMITDMaxRevenue(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate random solution using acceptable/rejection.
-        while True:
-            x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x):
-                break
+        x = tuple([rand_sol_rng.lognormalvariate(self, lq=0.1, uq=10) for _ in range(self.dim)])
         return x

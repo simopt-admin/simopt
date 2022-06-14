@@ -1,7 +1,9 @@
 """
 Summary
 -------
-Simulate 2 dimentional gamma variables.
+Simulate MLE estimation for the parameters of a two-dimensional gamma distribution.
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`_.
 """
 import numpy as np
 import math
@@ -11,9 +13,8 @@ from base import Model, Problem
 
 class ParameterEstimation(Model):
     """
-    An model that simulates MLE estimators for a two-dimensional gamma variable.
-    Returns the 2-D vector x_star that maximizes the probability of seeing
-    parameters x in 2-D gamma probability density function.
+    A model that simulates MLE estimation for the parameters of
+    a two-dimensional gamma distribution.
 
     Attributes
     ----------
@@ -116,7 +117,7 @@ Minimize the log likelihood of 2-D gamma random variable.
 """
 
 
-class ParamEstiMinLogLik(Problem):
+class ParamEstiMaxLogLik(Problem):
     """
     Base class to implement simulation-optimization problems.
 
