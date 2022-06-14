@@ -30,7 +30,7 @@ from models.san import SAN, SANLongestPath
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
-from models.rndsan import RNDSAN, RNDSANLongestPath
+from models.fixedsan import FixedSAN, FixedSANLongestPath
 from models.voting import Voting, MinVotingMaxWaitTime
 # directory dictionaries
 solver_directory = {
@@ -57,7 +57,7 @@ problem_directory = {
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
-    "RNDSAN-1": RNDSANLongestPath,
+    "FIXEDSAN-1": FixedSANLongestPath,
     "VOTING-1": MinVotingMaxWaitTime
 }
 model_directory = {
@@ -75,6 +75,6 @@ model_directory = {
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
-    "RNDSAN": RNDSAN,
+    "FIXEDSAN": FixedSAN,
     "VOTING": Voting
 }
