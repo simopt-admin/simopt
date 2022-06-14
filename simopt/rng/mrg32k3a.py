@@ -311,8 +311,8 @@ class MRG32k3a(random.Random):
         """
         u = self.random()
         z = bsm(u)
-        return mu + sigma*z
-    
+        return mu + sigma * z
+
     def lognormalvariate(self, lq=10, uq=200):
         """Generate a Lognormal random variate using 2.5% and 97.5% quantiles
 
@@ -330,11 +330,10 @@ class MRG32k3a(random.Random):
         'float'
             a lognormal random variate from the specified distribution.
         """
-        mu = (log(lq)+log(uq))/2
-        sigma = (log(uq)-mu)/1.96
+        mu = (log(lq) + log(uq)) / 2
+        sigma = (log(uq) - mu) / 1.96
         x = self.normalvariate(mu, sigma)
         return exp(x)
-
 
     def mvnormalvariate(self, mean_vec, cov, factorized=True):
         """Generate a normal random vector.
@@ -387,7 +386,7 @@ class MRG32k3a(random.Random):
                 n = n + 1
         else:
             z = self.normalvariate()
-            n = max(ceil(lmbda + sqrt(lmbda)*z - 0.5), 0)
+            n = max(ceil(lmbda + sqrt(lmbda) * z - 0.5), 0)
         return n
 
     def gumbelvariate(self, mu, beta):
@@ -401,7 +400,7 @@ class MRG32k3a(random.Random):
         beta : 'float'
             scale parameter of the gumbel distribution from which to
             generate.
-            
+
         Returns
         -------
         'float'
@@ -410,6 +409,96 @@ class MRG32k3a(random.Random):
         u = self.random()
         q = mu - beta * np.log(-np.log(u))
         return q
+
+    def integer_random_vector_from_simplex(self, n_elements, summation, with_zero=False):
+        """
+        Generate a random vector with a specified number of non-negative integer
+        elements that sum up to a specified number.
+
+        Parameters
+        ---------
+        n_elements : 'float'
+            the number of elements in the requested vector.
+        summation : 'int'
+            number to which the integer elements of the vector must sum.
+        with_zero: 'bool'
+            equals True if zeros in the vector are permitted. Otherwise False.
+
+        Returns
+        -------
+        vec: list of int
+            a non-negative integer vector of length n_elements that sum to n_elements.
+        """
+        if with_zero is False:
+            if n_elements > summation:
+                print("The sum cannot be greater than the number of positive integers requested.")
+                return
+            else:
+                # Generate a vector of length n_elements by sampling without replacement from
+                # the set {1, 2, 3, ..., n_elements-1}. Sort it in ascending order, pre-append
+                # "0", and post-append "summation".
+                temp_x = self.sample(population=range(1, summation), k=n_elements - 1)
+                temp_x.sort()
+                x = [0] + temp_x + [summation]
+                # Take differences between consecutive terms. Result will sum to summation.
+                vec = [x[idx + 1] - x[idx] for idx in range(n_elements)]
+        else:
+            temp_vec = self.integer_random_vectors_from_simplex(self,
+                                                                summation=summation + n_elements,
+                                                                n_elements=n_elements,
+                                                                with_zero=False
+                                                                )
+            vec = [tv - 1 for tv in temp_vec]
+        return vec
+
+    def continuous_random_vector_from_simplex(self, n_elements, summation=1, exact_sum=True):
+        """
+        Generate a random vector with a specified number of non-negative
+        real-valued elements that sum up to (or less than or equal to) a
+        specified number.
+
+        Parameters
+        ---------
+        n_elements : 'float'
+            the number of elements in the requested vector.
+        summation : 'int'
+            number to which the integer elements of the vector must sum.
+        exact_sum : 'bool'
+            equals True if the sum should be equal to summation.
+            equals False if the sum should be less than or equal to summation.
+
+        Returns
+        -------
+        vec : list of float
+            a vector of "n_elements" non-negative real-valued numbers that
+            sum up to (or less than or equal to) "summation."
+        """
+        if exact_sum is True:
+            # Generate a vector of length n_elements of i.i.d. Exponential(1)
+            # random variates. Normalize all values by the sum and multiply by
+            # "summation".
+            exp_rvs = [self.expovariate(lambd=1) for _ in range(n_elements)]
+            exp_sum = sum(exp_rvs)
+            vec = [summation * x / exp_sum for x in exp_rvs]
+        else:  # Sum must equal summation.
+            # Follows Theorem 2.1 of "Non-Uniform Random Variate Generation" by DeVroye.
+            # Chapter 11, page 568.
+            # Generate a vector of length n_elements of i.i.d. Uniform(0, 1)
+            # random variates. Sort it in ascending order, pre-append
+            # "0", and post-append "summation".
+            unif_rvs = [self.random() for _ in range(n_elements)]
+            unif_rvs.sort()
+            x = [0] + unif_rvs + [1]
+            # Take differences between consecutive terms. Result will sum to 1.
+            diffs = np.array([x[idx + 1] - x[idx] for idx in range(n_elements + 1)])
+            # Construct a matrix of the vertices of the simplex in R^d in regular position.
+            # Includes zero vector and d unit vectors in R^d.
+            vertices = np.concatenate((np.zeros((1, n_elements)), np.identity(n=n_elements)), axis=0)
+            # Multiply each vertex by the corresponding term in diffs.
+            # Then multiply each component by "summation" and sum the vectors
+            # to get the convex combination of the vertices (scaled up to "summation").
+            vec = list(summation * np.sum(np.multiply(vertices, diffs[:, np.newaxis]), axis=0))
+        return vec
 
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.

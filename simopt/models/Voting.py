@@ -563,9 +563,9 @@ class MinVotingMaxWaitTime(Problem):
         x : tuple
             vector of decision variables
         """
-        x = rand_sol_rng.integer_random_vectors_from_simplex(self,
-                                                             summation=self.model.factors["n_mach"],
+        x = rand_sol_rng.integer_random_vector_from_simplex(self,
                                                              n_elements=self.model.factors["n_prec"],
+                                                             summation=self.model.factors["n_mach"],
                                                              with_zero=False
                                                              )
         return x
