@@ -40,15 +40,15 @@ class Volunteer(Model):
     def __init__(self, fixed_factors={}):
         self.name = "VOLUNTEER"
         self.n_rngs = 7
-        self.n_responses = 5
+        self.n_responses = 6
         self.specifications = {
             "mean_vol": {
                 "description": "Mean number of available volunteers.",
                 "datatype": int,
-                "default": 5000
+                "default": 1600
             },
             "thre_dist": {
-                "description": "The distance within which a volunteer can reach a call within the time threshold.",
+                "description": "The distance within which a volunteer can reach a call within the time threshold in meters.",
                 "datatype": float,
                 "default": 200.0
             },
@@ -58,7 +58,7 @@ class Volunteer(Model):
                 "default": 400
             },
             "square_length": {
-                "description": "Length (or width) of the square in km.",
+                "description": "Length (or width) of the square in meters.",
                 "datatype": int,
                 "default": 500
             },
@@ -115,10 +115,11 @@ class Volunteer(Model):
         -------
         responses : dict
             performance measures of interest
-            "thre_dist_flag" = whether the distance of the closet volunteer exceeds the threshold distance
+            "thre_dist_flag" = whether the distance of the closest volunteer exceeds the threshold distance
             "p_survival" = the probability of survial
             "OHCA_loc" = the location of an OHCA
             "closest_locs" = the closest volunteer location to an OHCA
+            "closest_dist" = the distance of the closest volunteer in meters.
             "num_vol" = total number of volunteers available
         gradients : dict of dicts
             gradient estimates for each response
@@ -191,18 +192,19 @@ class Volunteer(Model):
         closest_loc = vol_locs[np.argmin(dists)]
 
         # Check the minimum distance against the threshold distance.
-        if min_dist < self.factors["thre_dist"]:
+        if min_dist > self.factors["thre_dist"]:
             thre_dist_flag = 1
         # Use the survival function to calculate the probability of survival.
         # Convert distance to time: 3 min + D/(6km/hr).
-        t = 3 + min_dist / 6 / 60
+        t = 3 + min_dist / (6000 / 60)
         p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
 
         # Compose responses and gradients.
         responses = {"thre_dist_flag": thre_dist_flag,
                     "p_survival": p_survival,
                     "OHCA_loc": OHCA_loc,
-                    "closest_loc": closest_loc,
+                    "closest_loc":closest_loc,
+                    "closest_dist": min_dist,
                     "num_vol": num_vol}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -456,7 +458,7 @@ class VolunteerDist(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.sum(x) == 1
+        return np.sum(x) == 1 ### add some sensitivity here. 10**-5
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -482,7 +484,7 @@ Maximize the probability of survival.
 """
 
 
-class VolunteerDist(Problem):
+class VolunteerSurvival(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -724,7 +726,7 @@ class VolunteerDist(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.sum(x) == 1
+        return (np.sum(x) <= 1 + 10**(-5)) & (np.sum(x) >= 1 - 10**(-5))
 
     def get_random_solution(self, rand_sol_rng):
         """

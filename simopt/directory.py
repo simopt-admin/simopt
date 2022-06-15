@@ -16,6 +16,7 @@ from solvers.randomsearch import RandomSearch
 from solvers.strong import STRONG
 from solvers.neldmd import NelderMead
 from solvers.adam import ADAM
+from solvers.aloe import ALOE
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -38,7 +39,8 @@ solver_directory = {
     "RNDSRCH": RandomSearch,
     "STRONG": STRONG,
     "NELDMD": NelderMead,
-    "ADAM": ADAM
+    "ADAM": ADAM,
+    "ALOE": ALOE
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,

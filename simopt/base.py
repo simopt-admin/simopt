@@ -512,7 +512,8 @@ class Problem(object):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return True
+        # Check box constraints.
+        return bool(np.prod([self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx] for idx in range(len(x))]))
 
     def get_random_solution(self, rand_sol_rng):
         """

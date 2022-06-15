@@ -1,9 +1,8 @@
 """
 Summary
 -------
-ADAM
-An algorithm for first-order gradient-based optimization of
-stochastic objective functions, based on adaptive estimates of lower-order moments.
+ALOE
+A line search algorithm
 """
 from base import Solver
 from numpy.linalg import norm
@@ -13,11 +12,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class ADAM(Solver):
+class ALOE(Solver):
     """
-    An algorithm for first-order gradient-based optimization of
-    stochastic objective functions, based on adaptive estimates of lower-order moments.
-
+    
     Attributes
     ----------
     name : string
@@ -51,7 +48,7 @@ class ADAM(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ADAM", fixed_factors={}):
+    def __init__(self, name="ALOE", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -66,27 +63,32 @@ class ADAM(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 10
             },
-            "beta_1": {
+            "theta": {
+                "description": "Constant in the Armijo condition.",
+                "datatype": int,
+                "default": 0.2
+            },
+            "gamma": {
                 "description": "Exponential decay of the rate for the first moment estimates.",
                 "datatype": int,
-                "default": 0.9
+                "default": 0.8
             },
-            "beta_2": {
-                "description": "Exponential decay rate for the second-moment estimates.",
+            "alpha_max": {
+                "description": "Maximum step size.",
                 "datatype": int,
-                "default": 0.999
+                "default": 10
             },
-            "alpha": {
-                "description": "Step size.",
+            "alpha_0": {
+                "description": "Initial step size.",
                 "datatype": int,
-                "default": 0.5 # Changing the step size matters a lot.
+                "default": 1
             },
-            "epsilon": {
-                "description": "A small value to prevent zero-division.",
+            "epsilon_f": {
+                "description": "Additive constant in the Armijo condition.",
                 "datatype": int,
-                "default": 10**(-8)
+                "default": 1 # In the paper, this value is estimated for every epoch.
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds.",
@@ -97,10 +99,11 @@ class ADAM(Solver):
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
             "r": self.check_r,
-            "beta_1": self.check_beta_1,
-            "beta_2": self.check_beta_2,
-            "alpha": self.check_alpha,
-            "epsilon": self.check_epsilon,
+            "theta": self.check_theta,
+            "gamma": self.check_gamma,
+            "alpha_max": self.check_alpha_max,
+            "alpha_0": self.check_alpha_0,
+            "epsilon_f": self.check_epsilon_f,
             "sensitivity": self.check_sensitivity
         }
         super().__init__(fixed_factors)
@@ -108,17 +111,20 @@ class ADAM(Solver):
     def check_r(self):
         return self.factors["r"] > 0
 
-    def check_beta_1(self):
-        return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+    def check_theta(self):
+        return self.factors["theta"] > 0 & self.factors["theta"] < 1
 
-    def check_beta_2(self):
-        return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
+    def check_gamma(self):
+        return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
 
-    def check_alpha(self):
-        return self.factors["alpha"] > 0
+    def check_alpha_max(self):
+        return self.factors["alpha_max"] > 0
 
-    def check_epsilon(self):
-        return self.factors["epsilon"] > 0
+    def check_alpha_0(self):
+        return self.factors["alpha_0"] > 0
+
+    def check_epsilon_f(self):
+        return self.factors["epsilon_f"] > 0
     
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
@@ -147,14 +153,18 @@ class ADAM(Solver):
 
         # Default values.
         r = self.factors["r"]
-        beta_1 = self.factors["beta_1"]
-        beta_2 = self.factors["beta_2"]
-        alpha = self.factors["alpha"]
-        epsilon = self.factors["epsilon"]
+        theta = self.factors["theta"]
+        gamma = self.factors["gamma"]
+        alpha_max = self.factors["alpha_max"]
+        alpha_0 = self.factors["alpha_0"]
+        epsilon_f = self.factors["epsilon_f"]
 
         # Shrink the bounds to prevent floating errors.
         lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
         upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+
+        # Initialize stepsize
+        alpha = alpha_0
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
@@ -164,58 +174,45 @@ class ADAM(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        # Initialize the first moment vector, the second moment vector, and the timestep.
-        m = np.zeros(problem.dim)
-        v = np.zeros(problem.dim)
-        t = 0
-
         while expended_budget < problem.factors["budget"]:
-            # Update timestep.
-            t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
             forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
             backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
-            # if problem.gradient_available:
-            #     grad = problem.deterministic_objectives_and_gradients(new_x)[1][0] ## need to add the gradient of the stochastic part of the function
-            # else:
+
             # Use finite difference to estimate gradient if gradient is not available.
-            grad = self.finite_diff(new_solution, BdsCheck, problem)
+            grad = self.finite_diff(new_solution, BdsCheck, problem, alpha)
             expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-            # Convert new_x from tuple to list
-            new_x = list(new_x)
-            
-            # Loop through all the dimensions.
-            for i in range(problem.dim): 
-                # Update biased first moment estimate.
-                m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
-                # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
-                # Compute bias-corrected first moment estimate.
-                mhat = m[i] / (1 - beta_1**t)
-                # Compute bias-corrected second raw moment estimate.
-                vhat = v[i] / (1 - beta_2**t)
-                # Update new_x.
-                new_x[i] = new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon)
-            
-            # Create new solution based on new x
-            new_solution = self.create_new_solution(tuple(new_x), problem)
+
+            # Check sufficient decrease.
+            candidate_x = new_x - alpha * grad
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(new_solution, r)
+            problem.simulate(candidate_solution, r)
             expended_budget += r
+            # Check the modified Armijo condition.
+            if -1 * problem.minmax * candidate_solution.objectives_mean <= -1 * problem.minmax * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f:
+                # Successful step.
+                new_solution = candidate_solution
+                alpha = min(alpha_max, alpha / gamma)
+            else:
+                # Unsuccessful step.
+                new_solution = candidate_solution
+                alpha = gamma * alpha
+            
+            # Append new solution.
             if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
                 best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
+            recommended_solns.append(new_solution)
+            intermediate_budgets.append(expended_budget)
             
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(self, new_solution, BdsCheck, problem):
+    def finite_diff(self, new_solution, BdsCheck, problem, stepsize):
         r = self.factors['r']
-        alpha = self.factors['alpha']
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
@@ -229,9 +226,9 @@ class ADAM(Solver):
             x1 = list(new_x)
             x2 = list(new_x)
             # Forward stepsize.
-            steph1 = alpha
+            steph1 = stepsize
             # Backward stepsize.
-            steph2 = alpha
+            steph2 = stepsize
 
             # Check variable bounds.
             if x1[i] + steph1 > upper_bound[i]:
@@ -249,7 +246,7 @@ class ADAM(Solver):
             elif BdsCheck[i] == 1:
                 FnPlusMinus[i, 2] = steph1
                 x1[i] = x1[i] + FnPlusMinus[i, 2]
-            # Backward diff
+            # Backward diff.
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]

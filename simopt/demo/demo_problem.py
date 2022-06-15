@@ -20,7 +20,7 @@ from base import Solution
 # # Replace <filename> with name of .py file containing problem class.
 # # Replace <problem_class_name> with name of problem class.
 # # Ex: from models.cntnv import CntNVMaxProfit
-from models.covid_individual import CovidMinInfect
+from models.volunteer import VolunteerDist, VolunteerSurvival
 
 
 # Fix factors of problem. Specify a dictionary of factors.
@@ -42,7 +42,7 @@ fixed_factors = {}  # Resort to all default values.
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
 # Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = CovidMinInfect(fixed_factors= fixed_factors)
+myproblem = VolunteerDist(fixed_factors= fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
@@ -51,8 +51,9 @@ myproblem = CovidMinInfect(fixed_factors= fixed_factors)
 #     x = (3,)
 # x = (2,3)
 # x = 3 * np.ones(10)
-x = (0.1774432756724305, 0.5065309266462998, 0.7125438096022961)
-print('max testing number:', np.sum(np.dot(myproblem.model.factors["group_size"][g],x[g]) for g in range(myproblem.dim)))
+# x = (0.1774432756724305, 0.5065309266462998, 0.7125438096022961)
+# print('max testing number:', np.sum(np.dot(myproblem.model.factors["group_size"][g],x[g]) for g in range(myproblem.dim)))
+x = tuple((1/400 * np.ones((20, 20))).tolist())
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 
