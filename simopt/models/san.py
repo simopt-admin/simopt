@@ -253,7 +253,7 @@ class SANLongestPath(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}

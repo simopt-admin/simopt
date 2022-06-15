@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Solver: Adaptive Line-search with Oracle Estimations (ALOE) &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Solver: Adaptive Line-search with Oracle Estimations (ALOE)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="solver-adaptive-line-search-with-oracle-estimations-aloe">
+<h1>Solver: Adaptive Line-search with Oracle Estimations (ALOE)<a class="headerlink" href="#solver-adaptive-line-search-with-oracle-estimations-aloe" title="Permalink to this headline">¶</a></h1>
+<section id="description">
+<h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>The solver is a stochastic line search algorithm  with the gradient estimate recomputed in each iteration,
+whether or not a step is accepted. The algorithm includes the relatxation of the Armijo condition by
+an additive constant <span class="math notranslate nohighlight">\(2\epsilon_f\)</span>.</p>
+</section>
+<section id="modifications-implementation">
+<h2>Modifications &amp; Implementation:<a class="headerlink" href="#modifications-implementation" title="Permalink to this headline">¶</a></h2>
+<p>For each iteration, first compute the gradient approximation <span class="math notranslate nohighlight">\(g_k\)</span> using finite difference.
+Then, the algorithm checks for sufficient decrease. Let <span class="math notranslate nohighlight">\(x_k^{+} = x_k - \alpha_k g_k\)</span>. Estimate the objective
+values <span class="math notranslate nohighlight">\(f(x_k^{+})\)</span> and <span class="math notranslate nohighlight">\(f(x_k)\)</span>. Check the modified Arimjo condition:</p>
+<div class="math notranslate nohighlight">
+\[f(x_k^{+}) \leq f(x_k) - \alpha_k \theta ||g_k||^2 + 2\epsilon_f.\]</div>
+<p>If the condition holds, then set <span class="math notranslate nohighlight">\(x_{k+1} \leftarrow x_{k}\)</span> and <span class="math notranslate nohighlight">\(\alpha_{k+1} \leftarrow \min\{ \alpha_{max}, \gamma^{-1}\alpha_k \}\)</span>.
+Otherwise, set <span class="math notranslate nohighlight">\(x_{k+1} \leftarrow x_{k}\)</span> and <span class="math notranslate nohighlight">\(\alpha_{k+1} \leftarrow \gamma \alpha_k\)</span></p>
+<p>Helper functions:
+The finite_diff function uses finite difference methods to estimate the gradient of the objective function.</p>
+</section>
+<section id="scope">
+<h2>Scope:<a class="headerlink" href="#scope" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>objective_type: single</p></li>
+<li><p>constraint_type: box</p></li>
+<li><p>variable_type: continuous</p></li>
+</ul>
+</section>
+<section id="solver-factors">
+<h2>Solver Factors:<a class="headerlink" href="#solver-factors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>crn_across_solns: Use CRN across solutions?</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: True</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>r: Number of replications taken at each solution.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 10</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>theta: Constant in the Armijo condition.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 0.2</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>gamma: Constant for shrinking the step size.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 0.8</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>alpha_max:  Maximum step size.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 10</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>alpha_0:  initial step size.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 1</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>epsilon_f: Additive constant in the Armijo condition.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 1</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>sensitivity: Shrinking scale for variable bounds.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 10^(-7)</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p>This solver is adapted from the article Jin, B., Scheinberg, K., &amp; Xie, M. (2021). High probability complexity bounds for line search based on stochastic oracles. Advances in Neural Information Processing Systems, 34, 9193-9203.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Solver: Adaptive Line-search with Oracle Estimations (ALOE)</a><ul>
+<li><a class="reference internal" href="#description">Description:</a></li>
+<li><a class="reference internal" href="#modifications-implementation">Modifications &amp; Implementation:</a></li>
+<li><a class="reference internal" href="#scope">Scope:</a></li>
+<li><a class="reference internal" href="#solver-factors">Solver Factors:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References:</a></li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/aloe.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Solver: Adaptive Line-search with Oracle Estimations (ALOE)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

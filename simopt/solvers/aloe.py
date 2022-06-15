@@ -71,7 +71,7 @@ class ALOE(Solver):
                 "default": 0.2
             },
             "gamma": {
-                "description": "Exponential decay of the rate for the first moment estimates.",
+                "description": "Constant for shrinking the step size.",
                 "datatype": int,
                 "default": 0.8
             },
@@ -91,7 +91,7 @@ class ALOE(Solver):
                 "default": 1 # In the paper, this value is estimated for every epoch.
             },
             "sensitivity": {
-                "description": "shrinking scale for variable bounds.",
+                "description": "Shrinking scale for variable bounds.",
                 "datatype": float,
                 "default": 10**(-7)
             }

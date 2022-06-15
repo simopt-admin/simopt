@@ -408,13 +408,24 @@ class MRG32k3a(random.Random):
         q = mu - beta * np.log(-np.log(u))
         return q
 
-    def binomialvariate(self, n ,p):
+    def binomialvariate(self, n, p):
         k = 0
         for _ in range(n):
             u = self.random()
             if u < p:
                 k += 1
         return k
+
+    def unitsimplexvariate(self, n):
+        """Generate n uniform random variate from a unit simplex
+        """
+        x_list = []
+        y_list = []
+        for _ in range(n):
+            x_list.append(self.expovariate(1))
+        for i in range(n):
+            y_list.append(x_list[i] / np.sum(x_list))
+        return y_list
 
     def advance_stream(self):
         """Advance the state of the generator to the start of the next stream.

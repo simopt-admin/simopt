@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Model: COVID-19 Disease Progression and Testing Frequency (COVID) &#8212; SimOpt 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model: COVID-19 Disease Progression and Testing Frequency (COVID)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="model-covid-19-disease-progression-and-testing-frequency-covid">
+<h1>Model: COVID-19 Disease Progression and Testing Frequency (COVID)<a class="headerlink" href="#model-covid-19-disease-progression-and-testing-frequency-covid" title="Permalink to this headline">¶</a></h1>
+<section id="description">
+<h2>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>COVID-19 is a contagious respiratory disease with a high trasmission rate. A college campus implements
+regular survelliance testing to identify, isolate, and reduce disease spread. However, model can also
+be generalized and simulate the interaction among any given groups of people.
+The initial prevalance level of the disease is <span class="math notranslate nohighlight">\(init_infect_percent\)</span>. The population is divided
+into different groups with intra-group interaction matrix <span class="math notranslate nohighlight">\(inter_rate\)</span>. There is a probability of <span class="math notranslate nohighlight">\(p_trans\)</span>
+transmissions per interaction. The transmission rate per individual can be calculated by multiplying
+<span class="math notranslate nohighlight">\(inter_rate\)</span> by <span class="math notranslate nohighlight">\(p_trans\)</span>. The disease progression for each individual follows the following semi-Markov process:</p>
+<a class="reference internal image-reference" href="_images/covid_compartments.png"><img alt="_images/covid_compartments.png" src="_images/covid_compartments.png" style="width: 400px;" /></a>
+<p>After recovery, we assume that an individual cannot be reinfected. Once tested positive, the patient will be moved to isolated states
+and follow the same disease progression.</p>
+<p>The simulation is generated as follows:</p>
+<ol class="arabic">
+<li><p>For each day in <span class="math notranslate nohighlight">\(n\)</span> and for each group <span class="math notranslate nohighlight">\(g\)</span>, generate newly exposed individuals.</p></li>
+<li><p>For each newly exposed individual in group <span class="math notranslate nohighlight">\(g\)</span>:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Generate <span class="math notranslate nohighlight">\(exp_days\)</span> number of days remaining in exposed.</p></li>
+<li><p>For each day in exposed, move to isolation exposed if tested positive.</p></li>
+<li><p>At the end of <span class="math notranslate nohighlight">\(exp_days\)</span>, move to infectious/isolation infectious</p></li>
+<li><p>Generate <span class="math notranslate nohighlight">\(inf_days\)</span> number of days remaining in infectious/isolation infectious.</p></li>
+<li><p>For each day in infectious, move to isolation infectious if tested positive.</p></li>
+<li><p>At the end of <span class="math notranslate nohighlight">\(inf_days\)</span>, move to symptomatic/asymptomatic/isolation (a)symptomatic.</p></li>
+<li><p>Generate <span class="math notranslate nohighlight">\(symp_asymp_days\)</span> number of days remaining in symptomatic/asymptomatic/isolation (a)symptomatic.</p></li>
+<li><p>At the end of <span class="math notranslate nohighlight">\(symp_asymp_days\)</span>, move to recovered.</p></li>
+</ol>
+</div></blockquote>
+</li>
+</ol>
+</section>
+<section id="sources-of-randomness">
+<h2>Sources of Randomness:<a class="headerlink" href="#sources-of-randomness" title="Permalink to this headline">¶</a></h2>
+<p>There are six sources of randomness.</p>
+<p>1. The number of newly exposed individuals on each day follows a Poisson distribution with mean equal to transmission rate times
+number of free infected (infectious + symptomatic + asymptomatic) individuals times number of susceptible individuals.</p>
+<ol class="arabic simple" start="2">
+<li><p>The number of days from exposed to infectious for each individual is Poisson distributed with mean <span class="math notranslate nohighlight">\(lamb_exp_inf\)</span>.</p></li>
+<li><p>The number of days from infectious to symptomatic/asymptomatic for each individual is Poisson distributed with mean <span class="math notranslate nohighlight">\(lamb_inf_sym\)</span>.</p></li>
+<li><p>The number of days from symptomatic/asymptomatic to recovered for each individual is Poisson distributed with mean <span class="math notranslate nohighlight">\(lamb_sym\)</span>.</p></li>
+<li><p>An individual in infectious state has a <span class="math notranslate nohighlight">\(asymp_rate\)</span> chance of being asymptomatic.</p></li>
+</ol>
+<p>6. An exposed/infectious/symptomatic/asymptomatic individual in group <span class="math notranslate nohighlight">\(g\)</span> has a probability
+<span class="math notranslate nohighlight">\(freq_g\)</span> of being tested and moved to the isolated states.</p>
+</section>
+<section id="model-factors">
+<h2>Model Factors:<a class="headerlink" href="#model-factors" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>num_groups: Number of groups.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 3</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>n: Number of days to simulate.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 200</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>p_trans: Probability of transmission per interaction.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 0.018</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>inter_rate: Interaction rates between two groups per day</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: (10.58, 5, 2, 4, 6.37, 3, 6.9, 4, 2)</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>group_size: Size of each group.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: (8123, 4921, 3598)</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>lamb_exp_inf: Mean number of days from exposed to infectious.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 2.0</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>lamb_inf_sym: Mean number of days from infectious to symptomatic.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 3.0</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>lamb_sym: Mean number of days from symptomatic/asymptomatic to recovered.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 12.0</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>init_infect_percent: Initial prevalance level.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: (0.00200, 0.00121, 0.0008)</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>freq: Testing frequency of each group.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: (0/7, 0/7, 0/7)</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>asymp_rate: Probability of being asymptomatic.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 0.35</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>false_neg: False negative rate.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default: 0.12</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="respones">
+<h2>Respones:<a class="headerlink" href="#respones" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>num_infected: Number of infected individuals per day</p></li>
+<li><p>num_susceptible: Number of susceptible individuals per day</p></li>
+<li><p>num_exposed: Number of exposed individuals per day</p></li>
+<li><p>num_recovered: Number of recovered individuals per day</p></li>
+<li><p>total_cases: Total number of infected individuals</p></li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h1>References:<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p>This model is adapted from the article Frazier, Peter I et al. “Modeling for COVID-19 college reopening decisions: Cornell, a case study.” Proceedings of the National Academy of Sciences of the United States of America vol. 119,2 (2022): e2112532119. doi:10.1073/pnas.2112532119</p>
+</section>
+<section id="optimization-problem-covidmininfect-covid-1">
+<h1>Optimization Problem: CovidMinInfect (COVID-1)<a class="headerlink" href="#optimization-problem-covidmininfect-covid-1" title="Permalink to this headline">¶</a></h1>
+<section id="decision-variables">
+<h2>Decision Variables:<a class="headerlink" href="#decision-variables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>freq</p></li>
+</ul>
+</section>
+<section id="objectives">
+<h2>Objectives:<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
+<p>Find the optimal testing frequency for each group which minimizes the expected total number of infected individuals over time <span class="math notranslate nohighlight">\(n\)</span>.</p>
+</section>
+<section id="constraints">
+<h2>Constraints:<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
+<p>The total number of tests per day should be smaller than testing_cap.</p>
+</section>
+<section id="problem-factors">
+<h2>Problem Factors:<a class="headerlink" href="#problem-factors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>initial_solution: Initial solution from which solvers start.</p>
+<ul>
+<li><p>Default: (0/7, 0/7, 0/7)</p></li>
+</ul>
+</li>
+<li><p>budget: Max # of replications for a solver to take.</p>
+<ul>
+<li><p>Default: 300</p></li>
+</ul>
+</li>
+<li><p>testing_cap: Maxi testing capacity per day.</p>
+<ul>
+<li><p>Default: 7000</p></li>
+</ul>
+</li>
+<li><p>budget: Max # of replications for a solver to take</p>
+<ul>
+<li><p>Default: 300</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="fixed-model-factors">
+<h2>Fixed Model Factors:<a class="headerlink" href="#fixed-model-factors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>n/a</p></li>
+</ul>
+</section>
+<section id="starting-solution">
+<h2>Starting Solution:<a class="headerlink" href="#starting-solution" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>initial_solution: (0/7, 0/7, 0/7)</p></li>
+</ul>
+</section>
+<section id="random-solutions">
+<h2>Random Solutions:<a class="headerlink" href="#random-solutions" title="Permalink to this headline">¶</a></h2>
+<p>Sample each <span class="math notranslate nohighlight">\(x_i\)</span> in a simplex.</p>
+</section>
+<section id="optimal-solution">
+<h2>Optimal Solution:<a class="headerlink" href="#optimal-solution" title="Permalink to this headline">¶</a></h2>
+<p>Unknown</p>
+</section>
+<section id="optimal-objective-function-value">
+<h2>Optimal Objective Function Value:<a class="headerlink" href="#optimal-objective-function-value" title="Permalink to this headline">¶</a></h2>
+<p>Unknown</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Model: COVID-19 Disease Progression and Testing Frequency (COVID)</a><ul>
+<li><a class="reference internal" href="#description">Description:</a></li>
+<li><a class="reference internal" href="#sources-of-randomness">Sources of Randomness:</a></li>
+<li><a class="reference internal" href="#model-factors">Model Factors:</a></li>
+<li><a class="reference internal" href="#respones">Respones:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References:</a></li>
+<li><a class="reference internal" href="#optimization-problem-covidmininfect-covid-1">Optimization Problem: CovidMinInfect (COVID-1)</a><ul>
+<li><a class="reference internal" href="#decision-variables">Decision Variables:</a></li>
+<li><a class="reference internal" href="#objectives">Objectives:</a></li>
+<li><a class="reference internal" href="#constraints">Constraints:</a></li>
+<li><a class="reference internal" href="#problem-factors">Problem Factors:</a></li>
+<li><a class="reference internal" href="#fixed-model-factors">Fixed Model Factors:</a></li>
+<li><a class="reference internal" href="#starting-solution">Starting Solution:</a></li>
+<li><a class="reference internal" href="#random-solutions">Random Solutions:</a></li>
+<li><a class="reference internal" href="#optimal-solution">Optimal Solution:</a></li>
+<li><a class="reference internal" href="#optimal-objective-function-value">Optimal Objective Function Value:</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/covid.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model: COVID-19 Disease Progression and Testing Frequency (COVID)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, simopt-admin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

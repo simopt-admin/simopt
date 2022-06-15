@@ -46,7 +46,16 @@
 <p>The purpose of the SimOpt testbed is to encourage development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.</p>
 <p>For the purposes of this site, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.</p>
 <p>The paper  <a class="reference external" href="https://www.informs-sim.org/wsc06papers/028.pdf">Pasupathy and Henderson (2006)</a> explains the original motivation for the testbed, and the follow-up paper <a class="reference external" href="https://www.informs-sim.org/wsc11papers/363.pdf">Pasupathy and Henderson (2011)</a> describes an earlier interface for MATLAB implementations of problems and solvers. The paper <a class="reference external" href="https://www.informs-sim.org/wsc17papers/includes/files/179.pdf">Dong et al. (2017)</a>  conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance. The recent Winter Simulation Conference paper <a class="reference external" href="https://www.informs-sim.org/wsc19papers/374.pdf">Eckman et al. (2019)</a> describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.</p>
-<p>The <a class="reference external" href="oracles.html">Oracle Library</a> contains the simulation logic to simulate a variety of systems. The <a class="reference external" href="problems.html">Problem Library</a> builds upon the Oracle Library and contains a variety of SO test problems. The <a class="reference external" href="solvers.html">Solver Library</a> provides users with the latest SO solvers to solve different types of SO problems. You can also contribute to SimOpt by using pull requests in GitHub. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers. Instructions on how to run solvers on problems can be found  <a class="reference external" href="instructions.html">here</a>.</p>
+<p>The <a class="reference external" href="models.html">models</a> library contains the simulation logic to simulate a variety of systems and SO test problems built around these models. The <a class="reference external" href="solvers.html">solvers</a> library provides users with the latest SO solvers to solve different types of SO problems. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers.</p>
+<p>The source code consists of the following modules:</p>
+<ul class="simple">
+<li><p>The <a class="reference external" href="base.html">base.py</a> module contains class definitions for models, problems, and solvers.</p></li>
+<li><p>The <a class="reference external" href="wrapper_base.html">wrapper_base.py</a> module contains class definitions and functions for running experiments with simulation-optimization solvers.</p></li>
+<li><p>The <a class="reference external" href="data_farming_base.html">data_farming_base.py</a> module contains class definitions and functions for running data-farming experiments.</p></li>
+<li><p>The <a class="reference external" href="directory.html">directory.py</a> module contains a listing of models, problems, and solvers in the library.</p></li>
+</ul>
+<p>The <a class="reference external" href="rng.html">rng</a> folder contains the source code for the MRG32k3a random number generator used throughout SimOpt.</p>
+<p>The experiments folder contains empty folders for storing data and plots produced by running experiments.</p>
 <section id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <p>Please make sure you have the following dependencies installed: Python 3, numpy, scipy, and matplotlib. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo_solver_problem.py.</p>
@@ -56,6 +65,7 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">simopt</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="GUI.html">GUI module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="base.html">base module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="base.html#summary">Summary</a></li>
 <li class="toctree-l3"><a class="reference internal" href="base.html#listing">Listing</a></li>
@@ -69,15 +79,25 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="models.html">models package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="models.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.chessmm">models.chessmm module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.cntnv">models.cntnv module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.contam">models.contam module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.covid">models.covid module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.cvs">models.cvs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.dualsourcing">models.dualsourcing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.dynamnews">models.dynamnews module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.facilitysizing">models.facilitysizing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.hotel">models.hotel module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.ironore">models.ironore module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.mainopt">models.mainopt module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.mm1queue">models.mm1queue module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.paramesti">models.paramesti module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.rmitd">models.rmitd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.san">models.san module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.sscont">models.sscont module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.tableallocation">models.tableallocation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models.vehicleroute">models.vehicleroute module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#module-models.volunteer">models.volunteer module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="models.html#module-models">Module contents</a></li>
 </ul>
 </li>
@@ -90,9 +110,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="solvers.html">solvers package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.adam">solvers.adam module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.aloe">solvers.aloe module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.astrodf">solvers.astrodf module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.neldmd">solvers.neldmd module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.randomsearch">solvers.randomsearch module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.simannealing">solvers.simannealing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers.strong">solvers.strong module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="solvers.html#module-solvers">Module contents</a></li>
 </ul>
@@ -130,8 +152,9 @@ Any opinions, findings and conclusions or recommendations expressed in this mate
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Welcome to SimOpt’s documentation!</a><ul>
 <li><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li><a class="reference internal" href="#contents">Contents</a></li>
@@ -141,9 +164,12 @@ Any opinions, findings and conclusions or recommendations expressed in this mate
 </li>
 </ul>
 
-  <h4>Next topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="next chapter">simopt</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="modules.html"
+                          title="next chapter">simopt</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -183,7 +209,7 @@ Any opinions, findings and conclusions or recommendations expressed in this mate
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="data_farming_base module" href="data_farming_base.html" />
-    <link rel="prev" title="simopt" href="modules.html" /> 
+    <link rel="prev" title="GUI module" href="GUI.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -33,7 +33,7 @@
           <a href="data_farming_base.html" title="data_farming_base module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="simopt"
+          <a href="GUI.html" title="GUI module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">simopt</a> &#187;</li>
@@ -60,7 +60,7 @@ Model : class
 Solution : class</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="base.Model">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class to implement simulation models (models) featured in
 simulation-optimization problems.</p>
@@ -202,7 +202,7 @@ simulation-optimization problems.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="base.Problem">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class to implement simulation-optimization problems.</p>
 <dl class="py attribute">
@@ -684,7 +684,7 @@ of left-hand sides of stochastic constraints: E[Y] &gt;= 0</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="base.Solution">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class for solutions represented as vectors of decision variables
 and dictionaries of decision factors.</p>
@@ -882,7 +882,7 @@ and dictionaries of decision factors.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="base.Solver">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.Solver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Base class to implement simulation-optimization solvers.</p>
 <dl class="py attribute">
@@ -1124,8 +1124,9 @@ to simulate replications.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">base module</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
 <li><a class="reference internal" href="#listing">Listing</a></li>
@@ -1133,12 +1134,17 @@ to simulate replications.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="previous chapter">simopt</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="data_farming_base.html"
-                        title="next chapter">data_farming_base module</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="GUI.html"
+                          title="previous chapter">GUI module</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="data_farming_base.html"
+                          title="next chapter">data_farming_base module</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1173,7 +1179,7 @@ to simulate replications.</p>
           <a href="data_farming_base.html" title="data_farming_base module"
              >next</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="simopt"
+          <a href="GUI.html" title="GUI module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">SimOpt 1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >simopt</a> &#187;</li>
@@ -1182,7 +1188,7 @@ to simulate replications.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

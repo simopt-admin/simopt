@@ -636,5 +636,5 @@ class CovidMinInfect(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
         return x

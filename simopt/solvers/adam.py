@@ -178,11 +178,11 @@ class ADAM(Solver):
             backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
-            # if problem.gradient_available:
-            #     grad = problem.deterministic_objectives_and_gradients(new_x)[1][0] ## need to add the gradient of the stochastic part of the function
-            # else:
+            if problem.gradient_available:
+                grad = problem.minmax *(new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+            else:
             # Use finite difference to estimate gradient if gradient is not available.
-            grad = self.finite_diff(new_solution, BdsCheck, problem)
+                grad = self.finite_diff(new_solution, BdsCheck, problem)
             expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
             # Convert new_x from tuple to list
             new_x = list(new_x)

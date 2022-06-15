@@ -60,14 +60,19 @@ to find the set of routes for the vehicles minimizing the total distance travele
 service levels. <span class="math notranslate nohighlight">\(\theta = (\theta_1,\ldots,\theta_m)\)</span> denotes the routes for the vehicles <span class="math notranslate nohighlight">\(1,\ldots,m\)</span>, where
 <span class="math notranslate nohighlight">\(\theta_k \subset A\)</span> and is the set of arcs for vehicle <span class="math notranslate nohighlight">\(k\)</span> to travel along <span class="math notranslate nohighlight">\((1 \leq k \leq m)\)</span>. The problem can then
 be formulated as follows:</p>
+<div class="line-block">
+<div class="line"><span class="math notranslate nohighlight">\(\min\)</span> Total distance traveled by the vehicles</div>
+<div class="line"><em>s.t.</em> P(Total demand along the route for vehicle <span class="math notranslate nohighlight">\(k \leq Q\)</span>) <span class="math notranslate nohighlight">\(\geq \alpha_k, 1 \leq k \leq m\)</span></div>
+<div class="line-block">
+<div class="line">P(Total travel time along the route for vehicle <span class="math notranslate nohighlight">\(k \leq B\)</span>) <span class="math notranslate nohighlight">\(\geq \beta_k, 1 \leq k \leq m\)</span></div>
+</div>
+</div>
+<p>or equivalently,</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\min ~~~ \sum\limits_{i,j=1}^{n}(D_i - Q)^{+} \cdot x_{ij} \cdot c_{ij} \\
-\text{s.t.} ~~~ \sum\limits_{i = 1}^{n}x_{ij} = 1, j = 1,2,\ldots,n \\
-\sum\limits_{j = 1}^{n}x_{ij} = 1, i = 1,2,\ldots,n \\
-\sum\limits_{i = 0}^{n}x_{i0} = m \\
-\sum\limits_{i = 0}^{n}x_{0j} = m \\
-P(\sum\limits_{i,j = 1}^{n}T_{ij} \leq B) \geq \beta_k, 1 \leq k \leq m \\
-x_{ij} \in \{0, 1\}, i,j = 1, 2 \ldots n\end{split}\]</div>
+\[\begin{split}\min ~~~ \sum\limits_{k=1}^{m}\sum\limits_{(v_i,v_j)\in\theta_k}c_{ij}\\
+\textit{s.t.} ~~~ P(\sum\limits_{(v_i, v_j)\in \theta_k, j \neq 0}D_{j} \leq B) \geq \alpha_k,   1 \leq k \leq m \\
+P(\sum\limits_{(v_i, v_j)\in \theta_k} T_{ij} \leq B) \geq \beta_k,   1 \leq k \leq m \\\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha_k\)</span> and <span class="math notranslate nohighlight">\(\beta_k\)</span>, <span class="math notranslate nohighlight">\(1 \leq k \leq m\)</span>, are the desired service levels.</p>
 <p><strong>Recommended Parameter Settings:</strong>
 <span class="math notranslate nohighlight">\(n = m = 5, \alpha_k = \beta_k = 0.9\)</span> for <span class="math notranslate nohighlight">\(1\leq k \leq m\)</span>, <span class="math notranslate nohighlight">\(Q = 350\)</span>,
 <span class="math notranslate nohighlight">\(B = 240\)</span>, and</p>
@@ -138,7 +143,7 @@ the depot, visits exactly one customer, and returns to the depot.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

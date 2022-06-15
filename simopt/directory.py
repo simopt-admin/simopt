@@ -33,6 +33,7 @@ from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 from models.covid import COVID, CovidMinInfect
+from models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -60,7 +61,9 @@ problem_directory = {
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMinLogLik,
-    "COVID-1": CovidMinInfect
+    "COVID-1": CovidMinInfect,
+    "VOLUNTEER-1": VolunteerDist,
+    "VOLUNTEER-2": VolunteerSurvival
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -77,5 +80,6 @@ model_directory = {
     "HOTEL": Hotel,
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
-    "COVID": COVID
+    "COVID": COVID,
+    "VOLUNTEER": Volunteer
 }

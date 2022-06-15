@@ -28,6 +28,22 @@ models.contam module
    :undoc-members:
    :show-inheritance:
 
+models.covid module
+-------------------
+
+.. automodule:: models.covid
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.cvs module
+-----------------
+
+.. automodule:: models.cvs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 models.dualsourcing module
 --------------------------
 
@@ -64,6 +80,14 @@ models.ironore module
 ---------------------
 
 .. automodule:: models.ironore
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.mainopt module
+---------------------
+
+.. automodule:: models.mainopt
    :members:
    :undoc-members:
    :show-inheritance:
@@ -112,6 +136,22 @@ models.tableallocation module
 -----------------------------
 
 .. automodule:: models.tableallocation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.vehicleroute module
+--------------------------
+
+.. automodule:: models.vehicleroute
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.volunteer module
+-----------------------
+
+.. automodule:: models.volunteer
    :members:
    :undoc-members:
    :show-inheritance:

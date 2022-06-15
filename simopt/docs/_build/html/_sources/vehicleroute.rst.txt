@@ -11,7 +11,7 @@ Invited Review: Stochastic vehicle routing. European Journal of Operational Rese
 **Problem Statement:**
 
 Consider the *Vehicle Routing Problem* (VRP) defined on a graph :math:`G = (V, A)`, 
-where :math:`V = {v_0,v_1,v_2,\ldots,v_n}`` is a set of vertices and :math:`A = {(v_i,v_j) : i \neq j, v_i,v_j \in V}` 
+where :math:`V = {v_0,v_1,v_2,\ldots,v_n}` is a set of vertices and :math:`A = {(v_i,v_j) : i \neq j, v_i,v_j \in V}` 
 is a set of arcs. Vertex :math:`v_0` denotes a depot where :math:`m` identical vehicles
 are based, while the remaining vertices correspond to :math:`n` customers. A matrix :math:`C = (c_{ij})`
 is defined on :math:`A` with :math:`c_{ij}` representing the distance between :math:`v_i` and :math:`v_j` . A travel time
@@ -26,14 +26,19 @@ service levels. :math:`\theta = (\theta_1,\ldots,\theta_m)` denotes the routes f
 :math:`\theta_k \subset A` and is the set of arcs for vehicle :math:`k` to travel along :math:`(1 \leq k \leq m)`. The problem can then
 be formulated as follows:
 
+| :math:`\min` Total distance traveled by the vehicles
+| *s.t.* P(Total demand along the route for vehicle :math:`k \leq Q`) :math:`\geq \alpha_k, 1 \leq k \leq m`
+|         P(Total travel time along the route for vehicle :math:`k \leq B`) :math:`\geq \beta_k, 1 \leq k \leq m``
+
+or equivalently,
+
 .. math::
-    \min ~~~ \sum\limits_{i,j=1}^{n}(D_i - Q)^{+} \cdot x_{ij} \cdot c_{ij} \\
-    \text{s.t.} ~~~ \sum\limits_{i = 1}^{n}x_{ij} = 1, j = 1,2,\ldots,n \\
-    \sum\limits_{j = 1}^{n}x_{ij} = 1, i = 1,2,\ldots,n \\
-    \sum\limits_{i = 0}^{n}x_{i0} = m \\
-    \sum\limits_{i = 0}^{n}x_{0j} = m \\
-    P(\sum\limits_{i,j = 1}^{n}T_{ij} \leq B) \geq \beta_k, 1 \leq k \leq m \\
-    x_{ij} \in \{0, 1\}, i,j = 1, 2 \ldots n
+    \min ~~~ \sum\limits_{k=1}^{m}\sum\limits_{(v_i,v_j)\in\theta_k}c_{ij}\\
+    \textit{s.t.} ~~~ P(\sum\limits_{(v_i, v_j)\in \theta_k, j \neq 0}D_{j} \leq B) \geq \alpha_k,   1 \leq k \leq m \\
+    P(\sum\limits_{(v_i, v_j)\in \theta_k} T_{ij} \leq B) \geq \beta_k,   1 \leq k \leq m \\
+
+where :math:`\alpha_k` and :math:`\beta_k`, :math:`1 \leq k \leq m`, are the desired service levels.
+
 
 **Recommended Parameter Settings:** 
 :math:`n = m = 5, \alpha_k = \beta_k = 0.9` for :math:`1\leq k \leq m`, :math:`Q = 350`,

@@ -209,7 +209,7 @@ reset_subsubstream : method
 start_fixed_s_ss_sss : method</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></span><span class="sig-name descname"><span class="pre">MRG32k3a</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rng.mrg32k3a.</span></span><span class="sig-name descname"><span class="pre">MRG32k3a</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345,</span> <span class="pre">12345)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ss_sss_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/random.html#random.Random" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">random.Random</span></code></a></p>
 <p>Implements mrg32k3a as the generator for a random.Random object.</p>
 <dl class="py attribute">
@@ -313,6 +313,11 @@ Subsubstreams are of length 2**47.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.binomialvariate">
+<span class="sig-name descname"><span class="pre">binomialvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.binomialvariate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.get_current_state">
 <span class="sig-name descname"><span class="pre">get_current_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.get_current_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the current state of the generator.</p>
@@ -360,6 +365,28 @@ generate.</p></li>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a gumbel random variate from the specified distribution.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>‘float’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.lognormalvariate">
+<span class="sig-name descname"><span class="pre">lognormalvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.lognormalvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a Lognormal random variate using 2.5% and 97.5% quantiles
+:param lq: 2.5% quantile of the lognormal distribution from which to</p>
+<blockquote>
+<div><p>generate.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uq</strong> (<em>'float'</em>) – 97.5% quantile of the lognormal distribution from which to
+generate.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a lognormal random variate from the specified distribution.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>‘float’</p>
@@ -502,6 +529,12 @@ state.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="rng.mrg32k3a.MRG32k3a.unitsimplexvariate">
+<span class="sig-name descname"><span class="pre">unitsimplexvariate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rng.mrg32k3a.MRG32k3a.unitsimplexvariate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate n uniform random variate from a unit simplex</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -554,8 +587,9 @@ the Beasley-Springer-Moro algorithm.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">rng package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-rng.matmodops">rng.matmodops module</a><ul>
@@ -573,12 +607,17 @@ the Beasley-Springer-Moro algorithm.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="models.html"
-                        title="previous chapter">models package</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="solvers.html"
-                        title="next chapter">solvers package</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="models.html"
+                          title="previous chapter">models package</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="solvers.html"
+                          title="next chapter">solvers package</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -622,7 +661,7 @@ the Beasley-Springer-Moro algorithm.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, simopt-admin.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

@@ -69,8 +69,8 @@ class Volunteer(Model):
             },
             "p_vol": {
                 "description": "Probability of an available volunteer is in each square.",
-                "datatype": list,
-                "default": (1/400 * np.ones((20, 20))).tolist()
+                "datatype": tuple,
+                "default": tuple((1/400 * np.ones(400)).tolist())
             }
         }
         self.check_factor_list = {
@@ -116,9 +116,9 @@ class Volunteer(Model):
         responses : dict
             performance measures of interest
             "thre_dist_flag" = whether the distance of the closest volunteer exceeds the threshold distance
-            "p_survival" = the probability of survial
-            "OHCA_loc" = the location of an OHCA
-            "closest_locs" = the closest volunteer location to an OHCA
+            "p_survival" = probability of survial
+            "OHCA_loc" = location of the OHCA
+            "closest_loc" = the closest volunteer location
             "closest_dist" = the distance of the closest volunteer in meters.
             "num_vol" = total number of volunteers available
         gradients : dict of dicts
@@ -132,6 +132,9 @@ class Volunteer(Model):
         OHCA_loc_lat_rng = rng_list[4]
         OHCA_loc_lon_rng = rng_list[5]
         OHCA_loc_rng = rng_list[6]
+
+        # Reshape p_vol.
+        p_vol = np.array(list(self.factors["p_vol"])).reshape((20, 20))
 
         # Initialize quantities to track:
         # - Location of an OHCA.
@@ -175,7 +178,7 @@ class Volunteer(Model):
                 x_temp = u4 * (np.sqrt(self.factors["num_squares"]) - 1)
                 y_temp = u5 * (np.sqrt(self.factors["num_squares"]) - 1)
                 u6 = vol_loc_rng.uniform(0, 1)
-                if u6 <= self.factors["p_vol"][int(x_temp)][int(y_temp)]:
+                if u6 <= p_vol[int(x_temp)][int(y_temp)]:
                     x = x_temp
                     y = y_temp
                     done = True
@@ -298,7 +301,7 @@ class VolunteerDist(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple((1/400 * np.ones((20, 20))).tolist())
+                "default": tuple((1/400 * np.ones(400)).tolist())
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -458,7 +461,7 @@ class VolunteerDist(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.sum(x) == 1 ### add some sensitivity here. 10**-5
+        return np.sum(x) <= 1 + 10**(-5)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -474,7 +477,7 @@ class VolunteerDist(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
         return x
 
 """
@@ -726,7 +729,7 @@ class VolunteerSurvival(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(x) <= 1 + 10**(-5)) & (np.sum(x) >= 1 - 10**(-5))
+        return np.sum(x) <= 1 + 10**(-5)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -742,5 +745,5 @@ class VolunteerSurvival(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
         return x
