@@ -459,7 +459,7 @@ class ProdSys(Model):
 Summary
 -------
 Find the optimal inventory placement that minimizes expected lead time,
-while satisfying service level with high probability.
+while satisfying service level requirement with high probability.
 """
 
 
