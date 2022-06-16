@@ -1,4 +1,4 @@
 {
     "restructuredtext.confPath": "${workspaceFolder}/simopt/docs",
-    "esbonio.sphinx.confDir": "${workspaceFolder}\\simopt\\docs"
+    "esbonio.sphinx.confDir": "${workspaceFolder}/simopt/docs"
 }
