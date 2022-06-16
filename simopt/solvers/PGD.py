@@ -1,10 +1,10 @@
 """
 Summary
 -------
-ADAM
-An algorithm for first-order gradient-based optimization of
-stochastic objective functions, based on adaptive estimates of lower-order moments.
+PGD
+projected gradient descent
 """
+from sklearn.metrics import euclidean_distances
 from base import Solver
 from numpy.linalg import norm
 import numpy as np
@@ -13,10 +13,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class ADAM(Solver):
+class PGD(Solver):
     """
-    An algorithm for first-order gradient-based optimization of
-    stochastic objective functions, based on adaptive estimates of lower-order moments.
+    Description.
 
     Attributes
     ----------
@@ -51,10 +50,10 @@ class ADAM(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ADAM", fixed_factors={}):
+    def __init__(self, name="PGD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "box"
+        self.constraint_type = "deterministic"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -200,6 +199,9 @@ class ADAM(Solver):
                 # Update new_x.
                 new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
             
+            # Project new_x to the probability simplex.
+            new_x = self.proj_prob_simplex(new_x, problem)
+                
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
@@ -275,3 +277,20 @@ class ADAM(Solver):
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
 
         return grad
+    
+    # Euclidean projection of a vector onto the probability simplex.
+    # Referencing Wang and Carreira-Perpinan (2013)
+    def proj_prob_simplex(self, x, problem):
+        # Sort the vector.
+        sorted_x = -np.sort(-x)
+        j = problem.dim
+        while j >= 1:
+            if sorted_x[j - 1] + 1/j * (1 - sum(sorted_x[:j])):
+                rho = j
+                break
+            else:
+                j -= 1
+        lam = 1 / rho * (1 - sum(sorted_x[:rho]))
+        return [max(i + lam, 0) for i in x]
+        
+
