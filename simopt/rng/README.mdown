@@ -4,7 +4,7 @@ The `simopt.rng.mrg32k3a` module includes a Python implementation of the mrg32k3
 
 ## Details
 The `simopt.rng.mrg32k3a` module includes the `MRG32k3a` class and several useful functions for controlling the generators.
-* The `MRG32k3a` class is a subclass of Python's `random.Random` class and therefore inherits easy-to-use methods for generating random variates. E.g., if `rng` is an instance of the `MRG32k3a` class, the command `rng.normalvariate(mu=2, sigma=5)` generates a normal random variate with mean 2 and standard deviation 5.
+* The `MRG32k3a` class is a subclass of Python's `random.Random` class and therefore inherits easy-to-use methods for generating random variates. E.g., if `rng` is an instance of the `MRG32k3a` class, the command `rng.normalvariate(mu=2, sigma=5)` generates a normal random variate with mean 2 and standard deviation 5, *and* the command `rng.lognormalvariate(lq=2, uq=5)` generates a lognormal random variate with 2.5\% quantile of 2 and 97.5\% quantile of 5.
 * The `advance_stream`, `advance_substream`, and `advance_subsubstream` functions advance the generator to the start of the next stream, substream, or subsubstream, respectively.
 They make use of techniques for efficiently "jumping ahead," as outlined by L'Ecuyer (1990).
 * The `reset_stream`, `reset_substream`, and `reset_subsubstream` functions reset the generator to the start of the current stream, substream, or subsubstream, respectively.
