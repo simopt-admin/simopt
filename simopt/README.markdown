@@ -29,7 +29,7 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 
 * `demo_data_farming_model.py`: Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (.csv) file in the `data_farming_experiments` folder.
 
-* `demo_sscont_experiment.py`: Run multiple solvers on multiple versions of an (s, S) inventory problem and produce plots.
+* `demo_san-sscont-ironorecont_experiment`: Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots.
 
 ## Graphical User Interface (GUI) - User Guide
 
