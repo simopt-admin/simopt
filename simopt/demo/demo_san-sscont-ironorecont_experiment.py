@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Tue Apr 19 08:32:33 2022
-
-@author: sarashashaani
-
-For David:
-diff plots do not show the tol and beta in the file names.
-
+This script is intended to help with a large experiment with
+5 solvers (two versions of random search, ASTRO-DF, STRONG, and Nelder-Mead)
+and 60 problems (20 unique instances of problems from
+(s, S) inventory, iron ore, and stochastic activity network).
+Produces plots appearing in the INFORMS Journal on Computing submission.
 """
 import sys
 import os.path as o
@@ -15,27 +11,27 @@ import os
 
 from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
 
-# Problems factors used in experiments 
+# Problems factors used in experiments
 ## SAN
-all_random_costs =  [(1, 2, 2, 7, 17, 7, 2, 13, 1, 9, 18, 16, 7), 
-                     (2, 1, 10, 13, 15, 13, 12, 9, 12, 15, 5, 8, 10), 
-                     (2, 6, 7, 11, 13, 5, 1, 2, 2, 3, 15, 16, 13), 
-                     (3, 4, 18, 8, 10, 17, 14, 19, 15, 15, 7, 10, 6), 
-                     (3, 6, 9, 15, 1, 19, 1, 13, 2, 19, 6, 7, 14), 
-                     (4, 4, 2, 4, 5, 3, 19, 4, 17, 5, 16, 8, 8), 
-                     (5, 14, 14, 7, 10, 14, 16, 16, 8, 7, 14, 11, 17), 
-                     (7, 9, 17, 19, 1, 7, 4, 3, 9, 9, 13, 17, 14), 
-                     (8, 14, 1, 10, 18, 10, 17, 1, 2, 11, 1, 16, 6), 
-                     (8, 17, 5, 17, 4, 14, 2, 5, 5, 5, 8, 8, 16), 
-                     (10, 3, 2, 7, 15, 12, 7, 9, 12, 17, 9, 1, 2), 
-                     (10, 5, 17, 12, 13, 14, 6, 5, 19, 17, 1, 7, 17), 
-                     (10, 16, 10, 13, 9, 1, 1, 16, 5, 7, 7, 12, 15), 
-                     (11, 5, 15, 13, 15, 17, 12, 12, 16, 11, 18, 19, 2), 
-                     (12, 11, 13, 4, 15, 11, 16, 2, 7, 7, 13, 8, 3), 
-                     (13, 3, 14, 2, 15, 18, 17, 13, 5, 17, 17, 5, 18), 
-                     (14, 8, 8, 14, 8, 8, 18, 16, 8, 18, 12, 6, 7), 
-                     (14, 18, 7, 8, 13, 17, 10, 17, 19, 1, 13, 6, 12), 
-                     (15, 1, 2, 6, 14, 18, 11, 19, 15, 18, 15, 1, 4), 
+all_random_costs =  [(1, 2, 2, 7, 17, 7, 2, 13, 1, 9, 18, 16, 7),
+                     (2, 1, 10, 13, 15, 13, 12, 9, 12, 15, 5, 8, 10),
+                     (2, 6, 7, 11, 13, 5, 1, 2, 2, 3, 15, 16, 13),
+                     (3, 4, 18, 8, 10, 17, 14, 19, 15, 15, 7, 10, 6),
+                     (3, 6, 9, 15, 1, 19, 1, 13, 2, 19, 6, 7, 14),
+                     (4, 4, 2, 4, 5, 3, 19, 4, 17, 5, 16, 8, 8),
+                     (5, 14, 14, 7, 10, 14, 16, 16, 8, 7, 14, 11, 17),
+                     (7, 9, 17, 19, 1, 7, 4, 3, 9, 9, 13, 17, 14),
+                     (8, 14, 1, 10, 18, 10, 17, 1, 2, 11, 1, 16, 6),
+                     (8, 17, 5, 17, 4, 14, 2, 5, 5, 5, 8, 8, 16),
+                     (10, 3, 2, 7, 15, 12, 7, 9, 12, 17, 9, 1, 2),
+                     (10, 5, 17, 12, 13, 14, 6, 5, 19, 17, 1, 7, 17),
+                     (10, 16, 10, 13, 9, 1, 1, 16, 5, 7, 7, 12, 15),
+                     (11, 5, 15, 13, 15, 17, 12, 12, 16, 11, 18, 19, 2),
+                     (12, 11, 13, 4, 15, 11, 16, 2, 7, 7, 13, 8, 3),
+                     (13, 3, 14, 2, 15, 18, 17, 13, 5, 17, 17, 5, 18),
+                     (14, 8, 8, 14, 8, 8, 18, 16, 8, 18, 12, 6, 7),
+                     (14, 18, 7, 8, 13, 17, 10, 17, 19, 1, 13, 6, 12),
+                     (15, 1, 2, 6, 14, 18, 11, 19, 15, 18, 15, 1, 4),
                      (18, 4, 19, 2, 13, 11, 9, 2, 17, 18, 11, 7, 14)]
 
 num_problems = len(all_random_costs)
@@ -70,11 +66,11 @@ for i in range(num_problems):
     model_fixed_factors = {}
     problem_fixed_factors = {"budget": 10000, "arc_costs":all_random_costs[i]}
     problem_rename = f"SAN-1_rc={all_random_costs[i]}"
-    
+
     # Temporarily store experiments on the same problem for post-normalization.
     experiments_same_problem = []
     solver_fixed_factors = {}
-    
+
     for solver in solvers:
         solver_name = solver
         if solver == "RNDSRCH_ss=10":
@@ -85,8 +81,8 @@ for i in range(num_problems):
             solver_fixed_factors = {"sample_size": 50}
         elif solver == "ASTRODF":
             solver_fixed_factors = {"delta_max": delta_max}
-    
-        #Lopp over solvers: 
+
+        #Lopp over solvers:
         new_experiment = Experiment(solver_name=solver_name,
                                     solver_rename=solver,
                                     solver_fixed_factors=solver_fixed_factors,
@@ -100,11 +96,11 @@ for i in range(num_problems):
         # Post replicate experiment with N.
         new_experiment.post_replicate(n_postreps=N)
         experiments_same_problem.append(new_experiment)
-    
+
     # Post-normalize experiments with L.
     # Provide NO proxies for f(x0), f(x*), or f(x).
     post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
- 
+
 # Second problem: SSCONT
 for dm in demand_means:
     for lm in lead_means:
@@ -114,7 +110,7 @@ for dm in demand_means:
         # RS with sample size of 100 will get through only 10 iterations.
         problem_fixed_factors = {"budget": 1000}
         problem_rename = f"SSCONT-1_dm={dm}_lm={lm}"
-        
+
         # Temporarily store experiments on the same problem for post-normalization.
         experiments_same_problem = []
         solver_fixed_factors = {}
@@ -128,8 +124,8 @@ for dm in demand_means:
                 solver_fixed_factors = {"sample_size": 50}
             elif solver == "ASTRODF":
                 solver_fixed_factors = {"delta_max": delta_max}
-        
-            #Lopp over solvers: 
+
+            #Lopp over solvers:
             new_experiment = Experiment(solver_name=solver_name,
                                         solver_rename=solver,
                                         solver_fixed_factors=solver_fixed_factors,
@@ -143,7 +139,7 @@ for dm in demand_means:
             # Post replicate experiment with N.
             new_experiment.post_replicate(n_postreps=N)
             experiments_same_problem.append(new_experiment)
-        
+
         # Post-normalize experiments with L.
         # Provide NO proxies for f(x0), f(x*), or f(x).
         post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
@@ -158,7 +154,7 @@ for sd in st_devs:
             problem_fixed_factors = {"budget": 1000}
             problem_rename = f"IRONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
 
-        
+
             # Temporarily store experiments on the same problem for post-normalization.
             experiments_same_problem = []
             solver_fixed_factors = {}
@@ -172,8 +168,8 @@ for sd in st_devs:
                     solver_fixed_factors = {"sample_size": 50}
                 elif solver == "ASTRODF":
                     solver_fixed_factors = {"delta_max": delta_max}
-            
-                #Lopp over solvers: 
+
+                #Lopp over solvers:
                 new_experiment = Experiment(solver_name=solver_name,
                                             solver_rename=solver,
                                             solver_fixed_factors=solver_fixed_factors,
@@ -187,11 +183,11 @@ for sd in st_devs:
                 # Post replicate experiment with N.
                 new_experiment.post_replicate(n_postreps=N)
                 experiments_same_problem.append(new_experiment)
-            
+
             # Post-normalize experiments with L.
             # Provide NO proxies for f(x0), f(x*), or f(x).
             post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
-  
+
 # LOAD DATA FROM .PICKLE FILES TO PREPARE FOR PLOTTING.
 
 # For plotting, "experiments" will be a list of list of Experiment objects.
@@ -208,7 +204,7 @@ problems = ["SAN","SSCONT","IRONORECONT"]
 
 for solver in solvers:
     experiments_same_solver = []
-    
+
     solver_display = solver
     if solver == "RNDSRCH_ss=10":
         solver_display = "RS10"
@@ -218,7 +214,7 @@ for solver in solvers:
         solver_display = "ASTRO-DF"
     elif solver == "NELDMD":
         solver_display = "Nelder-Mead"
-    
+
     for problem in problems:
         if problem == "SAN":
             # Load SAN .pickle files
@@ -231,7 +227,7 @@ for solver in solvers:
                 new_experiment.problem.name = f"{problem}-1 with rc={all_random_costs[i]}"
                 new_experiment.solver.name = solver_display
                 experiments_same_solver.append(new_experiment)
-        
+
         elif problem == "SSCONT":
             # Load SSCONT .pickle files
             for dm in demand_means:
@@ -244,7 +240,7 @@ for solver in solvers:
                     new_experiment.problem.name = fr"{problem}-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
                     new_experiment.solver.name = solver_display
                     experiments_same_solver.append(new_experiment)
-        
+
         elif problem == "IRONORECONT":
             # Load IRONORECONT .pickle files
             for sd in st_devs:
@@ -258,7 +254,7 @@ for solver in solvers:
                         new_experiment.problem.name = fr"{problem}-1 with $\sigma={sd}$ and hc={hc} and inv={inv}"
                         new_experiment.solver.name = solver_display
                         experiments_same_solver.append(new_experiment)
-    
+
     experiments.append(experiments_same_solver)
 
 # PLOTTING
@@ -275,15 +271,13 @@ plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvabili
 plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
 plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
 plot_terminal_scatterplots(experiments, all_in_one=True)
-                       
-for i in range(n_problems):
-    plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True)
-    plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
 
-    # plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="quantile", beta=0.9, all_in_one=True, plot_CIs=True, print_max_hw=True)
+for i in range(n_problems):
+    plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=CI_param, print_max_hw=True)
+    plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
     # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
 
-## Plots for mu_D = 400 and mu_L = 6
+## Plots for mu_D = 400 and mu_L = 6 (appreared in the paper)
 plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="all", all_in_one=True)
 
 plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(3,4)], plot_type="all", all_in_one=True, normalize=False)
