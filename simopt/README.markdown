@@ -17,7 +17,7 @@ Full documentation for the source code can be found **[here](https://simopt.read
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*
 
-Download a copy of the cloned repository to your local machine and navigate to the `simopt/simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `math`, `random`, and `copy`.
+Download a copy of the cloned repository to your local machine and navigate to the `simopt/simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
 
@@ -58,10 +58,11 @@ This section explains how to add Experiments to the Experiments or MetaExperimen
 
 #### Creating an Experiment
 Instead of loading an existing Experiment, you can create one from the main page of the GUI:
-1. First, select a solver from the "Solver" dropdown list. Each of the solvers has an abbreviation for the type of problems the solver can handle. Once a solver is selected, the "Problem" list will be sorted and show only the problems that work with the selected solver. 
+1. First, select a solver from the "Solver" dropdown list. Each of the solvers has an abbreviation for the type of problems the solver can handle. Once a solver is selected, the "Problem" list will be sorted and show only the problems that work with the selected solver.
 2. Change factors associated with the solver as necessary.
 3. All solvers with unique combinations of factors must have unique names, i.e., no two solvers can have the same name, but different factors. If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver - the last solver factor - accordingly.
-4. Select a problem from the "Problem" dropdown list. Each problem has an abbreviation indicating which types of solver it can work with. The letters in the abbreviation stand for: 
+4. Select a problem from the "Problem" dropdown list.
+Each problem has an abbreviation indicating which types of solver is compatible to solve it. The letters in the abbreviation stand for:
     <table>
         <tr>
           <th> Objective </th>
@@ -73,13 +74,13 @@ Instead of loading an existing Experiment, you can create one from the main page
           <td> Single (S) </td>
           <td> Unconstrained (U) </td>
           <td> Discrete (D) </td>
-          <td> Gradients Available (G) </td>
+          <td> Gradient Observations Available (G) </td>
         </tr>
       <tr>
-          <td> Multi (M) </td>
+          <td> Multiple (M) </td>
           <td> Box (B) </td>
           <td> Continuous (C) </td>
-          <td> Gradients Not Available (NG) </td>
+          <td> Gradient Observations Not Available (N) </td>
         </tr>
       <tr>
           <td>  </td>
@@ -94,6 +95,7 @@ Instead of loading an existing Experiment, you can create one from the main page
           <td>  </td>
         </tr>
     </table>
+
 5. Change factors associated with the problem and model as necessary.
 6. All problems with unique factors must have unique names, i.e., no two problems can have the same name, but different factors. If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem - the last problem factor - accordingly.
 7.  The number of macroreplications can be modified in the top-left corner. The default is 10.
@@ -131,9 +133,9 @@ Meta-Experiments are post-processed and post-normalized at the same time.
 The Plotting page is the same for both Experiments and Meta Experiments. Currently, multiple Experiments with the same Problem can be plotted together, and any problem-solver pair from a single Meta-Experiment can be plotted. (The ability to produce plots based on multiple problems *and* multiple solvers using the GUI is currently under development.) To return to the main page, click the red "x" in the top-left corner of the window.
 1. On the left side, select one or more problems from the problem list.
 2. Select solvers from the solver list.
-3. On the right side, select a plot type and adjust plot parameters and settings. 
-There are 3 plot settings for all plots: Confidence Intervals, Plot Together, and Print Max HW. 
-The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Terminal Box/Violin, and Terminal Scatter. 
+3. On the right side, select a plot type and adjust plot parameters and settings.
+There are 3 plot settings for all plots: Confidence Intervals, Plot Together, and Print Max HW.
+The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Terminal Box/Violin, and Terminal Scatter.
 4. Click "Add."
 5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved.
 6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
