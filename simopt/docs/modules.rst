@@ -2,7 +2,7 @@ simopt
 ======
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    base
    data_farming_base
