@@ -17,7 +17,7 @@ Full documentation for the source code can be found **[here](https://simopt.read
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*
 
-Download a copy of the cloned repository to your local machine and navigate to the `simopt/simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`.
+Download a copy of the cloned repository to your local machine and navigate to the `simopt/simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`. Run the command ``` pip install numpy scipy matplotlib pandas seaborn ``` to install them from the terminal.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
 
