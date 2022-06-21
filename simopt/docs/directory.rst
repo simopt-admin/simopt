@@ -14,13 +14,13 @@ Each problem has an abbreviation indicating which types of solver is compatible 
           <td> Single (S) </td>
           <td> Unconstrained (U) </td>
           <td> Discrete (D) </td>
-          <td> Gradients Available (G) </td>
+          <td> Gradient Observations Available (G) </td>
         </tr>
       <tr>
-          <td> Multi (M) </td>
+          <td> Multiple (M) </td>
           <td> Box (B) </td>
           <td> Continuous (C) </td>
-          <td> Gradients Not Available (NG) </td>
+          <td> Gradient Observations Not Available (N) </td>
         </tr>
       <tr>
           <td>  </td>
