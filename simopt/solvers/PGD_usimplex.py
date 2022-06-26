@@ -282,7 +282,7 @@ class PGD(Solver):
     # Referencing Wang and Carreira-Perpinan (2013)
     def proj_prob_simplex(self, x, problem):
         # Sort the vector.
-        sorted_x = -np.sort(-x)
+        sorted_x = -np.sort(-np.array(x))
         j = problem.dim
         while j >= 1:
             if sorted_x[j - 1] + 1/j * (1 - sum(sorted_x[:j])):

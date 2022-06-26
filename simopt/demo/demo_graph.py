@@ -34,12 +34,14 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 
 # PROBLEM = "PARAMESTI-1"
 # PROBLEM_FULL_NAME = "Parameter Estimation"
-PROBLEM = "CNTNEWS-1"
-PROBLEM_FULL_NAME = "Continuous Newsvendor"
+# PROBLEM = "CNTNEWS-1"
+# PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
 # PROBLEM = "SAN-1"
 # PROBLEM_FULL_NAME = "Stochastic Activity Network"
+PROBLEM = "MM1-1"
+PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
 
 # Temporarily store experiments on the same problem for post-normalization.
 experiments_same_problem = []
@@ -63,11 +65,12 @@ experiments_same_problem.append(new_experiment)
 #                             problem_name=PROBLEM,
 #                             solver_fixed_factors=solver_fixed_factors
 #                             )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
 # NELDMD
 new_experiment = Experiment(solver_name="NELDMD",
@@ -89,6 +92,36 @@ new_experiment.run(n_macroreps=10)
 new_experiment.post_replicate(n_postreps=100)
 experiments_same_problem.append(new_experiment)
 
+
+# ADAM
+new_experiment = Experiment(solver_name="ADAM",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
+
+# ALOE
+new_experiment = Experiment(solver_name="ALOE",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
+
+# ADAM without true gradient
+new_experiment = Experiment(solver_name="ADAM2",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
 
 # Post-normalize experiments with L = 200.
 # Provide NO proxies for f(x0), f(x*), or f(x).
@@ -154,6 +187,45 @@ new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
+# Load ADAM results.
+solver_rename = "ADAM"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "Adam"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
+
+# Load ALOE results.
+solver_rename = "ALOE"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "ALOE"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
+
+# Load ADAM without true gradient results.
+solver_rename = "ADAM2"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "Adam w/o true grad"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
+
 
 # PLOTTING
 
@@ -202,13 +274,13 @@ plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in r
 #                      print_max_hw=False
 #                      )
 
-# Plot cdf of 0.2-solve times for all solvers on one problem. Problem instance 0.
-plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-                      solve_tol=0.2,
-                      all_in_one=True,
-                      plot_CIs=True,
-                      print_max_hw=False
-                      )
+# # Plot cdf of 0.2-solve times for all solvers on one problem. Problem instance 0.
+# plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+#                       solve_tol=0.2,
+#                       all_in_one=True,
+#                       plot_CIs=True,
+#                       print_max_hw=False
+#                       )
 
 # # Plot cdf of 0.2-solve times for all solvers on one problem. Problem instance 22.
 # plot_solvability_cdfs(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
@@ -218,31 +290,31 @@ plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in 
 #                       print_max_hw=False
 #                       )
 
-# Plot area scatterplots of all solvers on all problems.
-plot_area_scatterplots(experiments=experiments,
-                       all_in_one=True,
-                       plot_CIs=False,
-                       print_max_hw=False
-                       )
+# # Plot area scatterplots of all solvers on all problems.
+# plot_area_scatterplots(experiments=experiments,
+#                        all_in_one=True,
+#                        plot_CIs=False,
+#                        print_max_hw=False
+#                        )
 
-# Plot cdf 0.1-solvability profiles of all solvers on all problems.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="cdf_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1
-                          )
+# # Plot cdf 0.1-solvability profiles of all solvers on all problems.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="cdf_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1
+#                           )
 
-# Plot 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
-plot_solvability_profiles(experiments=experiments,
-                          plot_type="quantile_solvability",
-                          all_in_one=True,
-                          plot_CIs=True,
-                          print_max_hw=False,
-                          solve_tol=0.1,
-                          beta=0.5
-                          )
+# # Plot 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
+# plot_solvability_profiles(experiments=experiments,
+#                           plot_type="quantile_solvability",
+#                           all_in_one=True,
+#                           plot_CIs=True,
+#                           print_max_hw=False,
+#                           solve_tol=0.1,
+#                           beta=0.5
+#                           )
 
 # Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
 # Reference solver = ASTRO-DF.

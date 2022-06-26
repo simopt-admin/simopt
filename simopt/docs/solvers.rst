@@ -4,6 +4,14 @@ solvers package
 Submodules
 ----------
 
+solvers.PGD module
+------------------
+
+.. automodule:: solvers.PGD
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 solvers.adam module
 -------------------
 

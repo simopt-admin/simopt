@@ -17,6 +17,8 @@ from solvers.strong import STRONG
 from solvers.neldmd import NelderMead
 from solvers.adam import ADAM
 from solvers.aloe import ALOE
+from solvers.adam_2 import ADAM2
+from solvers.PGD_usimplex import PGD
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -41,7 +43,9 @@ solver_directory = {
     "STRONG": STRONG,
     "NELDMD": NelderMead,
     "ADAM": ADAM,
-    "ALOE": ALOE
+    "ALOE": ALOE,
+    "ADAM2": ADAM2,
+    "PGD": PGD
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
