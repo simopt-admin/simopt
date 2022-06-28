@@ -38,10 +38,10 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 # PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
-# PROBLEM = "SAN-1"
-# PROBLEM_FULL_NAME = "Stochastic Activity Network"
-PROBLEM = "MM1-1"
-PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
+PROBLEM = "SAN-1"
+PROBLEM_FULL_NAME = "Stochastic Activity Network"
+# PROBLEM = "MM1-1"
+# PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
 
 # Temporarily store experiments on the same problem for post-normalization.
 experiments_same_problem = []
