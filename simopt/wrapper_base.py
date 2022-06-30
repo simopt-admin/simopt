@@ -1314,7 +1314,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
-                                   normalize=normalize
+                                   normalize=normalize,
+                                   extra=beta
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1364,7 +1365,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             file_list.append(save_plot(solver_name=experiment.solver.name,
                                        problem_name=experiment.problem.name,
                                        plot_type=plot_type,
-                                       normalize=normalize
+                                       normalize=normalize,
+                                       extra=beta
                                        ))
     return file_list
 
@@ -2154,7 +2156,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     elif plot_type == "mean":
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
-        plot_name = "quantile_prog_curve"
+        plot_name = f"{extra}_quantile_prog_curve"
     elif plot_type == "solve_time_cdf":
         plot_name = f"cdf_{extra}_solve_times"
     elif plot_type == "cdf_solvability":
@@ -2162,9 +2164,9 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     elif plot_type == "quantile_solvability":
         plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
     elif plot_type == "diff_cdf_solvability":
-        plot_name = "diff_cdf_solvability_profile"
+        plot_name = f"diff_profile_cdf_{extra}_solve_times"
     elif plot_type == "diff_quantile_solvability":
-        plot_name = "diff_quantile_solvability_profile"
+        plot_name = f"diff_profile_{extra[1]}_quantile_{extra[0]}_solve_times"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     elif plot_type == "box":
