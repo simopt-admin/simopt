@@ -182,7 +182,7 @@ class PGD(Solver):
             else:
             # Use finite difference to estimate gradient if gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem)
-            expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
             # Convert new_x from tuple to list
             new_x = list(new_x)
             

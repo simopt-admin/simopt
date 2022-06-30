@@ -4,7 +4,7 @@ Summary
 Simulate the distribution of emergency medical service volunteer.
 """
 import numpy as np
-
+from itertools import chain
 from base import Model, Problem
 
 
@@ -97,7 +97,7 @@ class Volunteer(Model):
         return (len(self.factors["p_OHCA"]) * len(self.factors["p_OHCA"][0])) == self.factors["num_squares"]
 
     def check_p_vol(self):
-        return (len(self.factors["p_vol"]) * len(self.factors["p_vol"][0])) == self.factors["num_squares"]
+        return len(self.factors["p_vol"]) == self.factors["num_squares"]
     
     def check_square_length(self):
         return self.factors["square_length"] > 0
@@ -126,15 +126,12 @@ class Volunteer(Model):
         """
         # Designate separate random number generators.
         num_vol_rng = rng_list[0]
-        vol_loc_lat_rng = rng_list[1]
+        vol_sq_rng = rng_list[1]
         vol_loc_lon_rng = rng_list[2]
-        vol_loc_rng = rng_list[3]
+        vol_loc_lat_rng = rng_list[3]
         OHCA_loc_lat_rng = rng_list[4]
         OHCA_loc_lon_rng = rng_list[5]
-        OHCA_loc_rng = rng_list[6]
-
-        # Reshape p_vol.
-        p_vol = np.array(list(self.factors["p_vol"])).reshape((20, 20))
+        OHCA_sq_rng = rng_list[6]
 
         # Initialize quantities to track:
         # - Location of an OHCA.
@@ -148,43 +145,31 @@ class Volunteer(Model):
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
 
-        # Generate the square location of an OHCA by acceptance-rejection.
-        done = False
-        x = None
-        y = None
-        while not done:
-            u1 = OHCA_loc_lat_rng.uniform(0, 1)
-            u2 = OHCA_loc_lon_rng.uniform(0, 1)
-            x_temp = u1 * (np.sqrt(self.factors["num_squares"]) - 1)
-            y_temp = u2 * (np.sqrt(self.factors["num_squares"]) - 1)
-            u3 = OHCA_loc_rng.uniform(0, 1)
-            if u3 <= self.factors["p_OHCA"][int(x_temp)][int(y_temp)]:
-                x = x_temp
-                y = y_temp
-                done = True
-        # Find a random location in that square.
-        OHCA_loc = (x * self.factors["square_length"], 
-                    y * self.factors["square_length"])
-        
-        # Generate the locations of the volunteers by a Poisson point process through acceptance-rejection.
+        # Generate the location of an OHCA.
+        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
+        prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)
+        # Generate the square containing the OHCA.
+        u1 = OHCA_sq_rng.alias(prob1, alias1)
+        x = u1 // np.sqrt(self.factors["num_squares"])
+        y = u1 % np.sqrt(self.factors["num_squares"])
+        # Find a random location in the square.
+        u2 = OHCA_loc_lat_rng.uniform(0, 1)
+        u3 = OHCA_loc_lon_rng.uniform(0, 1)
+        OHCA_loc = ((x + u3) * self.factors["square_length"], 
+                    (y + u2) * self.factors["square_length"])
+
+        # Generate the locations of the volunteers following a Poisson point process.
+        prob2, alias2 = vol_sq_rng.alias_init(list(self.factors["p_vol"]))
         for _ in range(num_vol):
             # Generate the coordinates of the square the volunteer is located in.
-            done = False
-            x = None
-            y = None
-            while not done:
-                u4 = vol_loc_lat_rng.uniform(0, 1)
-                u5 = vol_loc_lon_rng.uniform(0, 1)
-                x_temp = u4 * (np.sqrt(self.factors["num_squares"]) - 1)
-                y_temp = u5 * (np.sqrt(self.factors["num_squares"]) - 1)
-                u6 = vol_loc_rng.uniform(0, 1)
-                if u6 <= p_vol[int(x_temp)][int(y_temp)]:
-                    x = x_temp
-                    y = y_temp
-                    done = True
-            # Find a random location in that square.
-            vol_locs.append((x * self.factors["square_length"], 
-                            y * self.factors["square_length"]))
+            u4 = vol_sq_rng.alias(prob2, alias2)
+            x = u4 // np.sqrt(self.factors["num_squares"])
+            y = u4 % np.sqrt(self.factors["num_squares"])
+            # Find a random location in the square.
+            u5 = vol_loc_lat_rng.uniform(0, 1)
+            u6 = vol_loc_lon_rng.uniform(0, 1)
+            vol_locs.append(((x + u5) * self.factors["square_length"], 
+                        (y + u6) * self.factors["square_length"]))
 
         # Calculate the distance of the closest volunteer to the location of an OHCA.
         dists = []
@@ -217,7 +202,6 @@ Summary
 -------
 Minimize the probability of exceeding the threshold distance.
 """
-
 
 class VolunteerDist(Problem):
     """
@@ -486,7 +470,6 @@ Summary
 Maximize the probability of survival.
 """
 
-
 class VolunteerSurvival(Problem):
     """
     Base class to implement simulation-optimization problems.
@@ -569,12 +552,12 @@ class VolunteerSurvival(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple((1/400 * np.ones((20, 20))).tolist())
+                "default": tuple((1/400 * np.ones(400)).tolist())
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 500
             }
         }
         self.check_factor_list = {

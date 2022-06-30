@@ -19,7 +19,7 @@ from base import Solution
 # # Import problem.
 # # Replace <filename> with name of .py file containing problem class.
 # # Replace <problem_class_name> with name of problem class.
-# # Ex: from models.cntnv import CntNVMaxProfit
+from models.cntnv import CntNVMaxProfit
 from models.volunteer import VolunteerDist, VolunteerSurvival
 
 
@@ -41,19 +41,19 @@ fixed_factors = {}  # Resort to all default values.
 #     "cost": 5 * np.ones(10)}
 # Initialize an instance of the specified problem class.
 # Replace <problem_class_name> with name of problem class.
-# Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = VolunteerDist(fixed_factors= fixed_factors)
+myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+# myproblem = VolunteerSurvival(fixed_factors= fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
 # Ex: for the CntNVMaxProfit class
-#     x = (3,)
+x = (0.05,)
 # x = (2,3)
 # x = 3 * np.ones(10)
 # x = (0.1774432756724305, 0.5065309266462998, 0.7125438096022961)
 # print('max testing number:', np.sum(np.dot(myproblem.model.factors["group_size"][g],x[g]) for g in range(myproblem.dim)))
-x = tuple((1/400 * np.ones((20, 20))).tolist())
+# x = tuple((1/400 * np.ones(400)).tolist())
 # The following line does not need to be changed.
 mysolution = Solution(x, myproblem)
 
@@ -90,6 +90,8 @@ myproblem.simulate(mysolution, m=n_reps)
 # Print results to terminal.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")
 print(f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with standard error {round(mysolution.objectives_stderr[0], 4)}.")
+print(f"The mean gradient estimate was {mysolution.objectives_gradients_mean[0]}.")
+
 print("The individual responses were:")
 for idx in range(n_reps):
     print(f"\t {round(mysolution.objectives[idx][0], 4)}")

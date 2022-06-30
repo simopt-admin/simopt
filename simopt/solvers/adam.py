@@ -179,7 +179,11 @@ class ADAM(Solver):
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
             if problem.gradient_available:
-                grad = problem.minmax *(new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+                grad = (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+                print('true grad', new_solution.objectives_gradients_mean)
+                grad = self.finite_diff(new_solution, BdsCheck, problem)
+                print('est grad', grad)
+                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
             else:
             # Use finite difference to estimate gradient if gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem)

@@ -20,6 +20,7 @@ from rng.mrg32k3a import MRG32k3a
 from models.ironore import IronOre
 from models.dynamnews import DynamNews
 from models.volunteer import Volunteer
+from models.cntnv import CntNV
 
 # Fix factors of model. Specify a dictionary of factors.
 # Look at Model class definition to get names of factors.
@@ -42,7 +43,9 @@ fixed_factors = {} # Resort to all default values.
 # Initialize an instance of the specified model class.
 # Replace <model_class_name> with name of model class.
 # Ex: mymodel = MM1Queue(fixed_factors)
-mymodel = Volunteer(fixed_factors)
+# mymodel = Volunteer(fixed_factors)
+mymodel = CntNV(fixed_factors)
+
 
 # Working example for MM1 model. (Commented out)
 # -----------------------------------------------
@@ -70,8 +73,8 @@ print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():
     print(f"\t {key} is {value}.")
-# print("\n Gradients:")
-# for outerkey in gradients:
-#     print(f"\tFor the response {outerkey}:")
-#     for innerkey, value in gradients[outerkey].items():
-#         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+print("\n Gradients:")
+for outerkey in gradients:
+    print(f"\tFor the response {outerkey}:")
+    for innerkey, value in gradients[outerkey].items():
+        print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")

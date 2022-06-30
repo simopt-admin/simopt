@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class ALOE(Solver):
+class ALOE2(Solver):
     """
     Adaptive Line-search with Oracle Estimations
 
@@ -52,7 +52,7 @@ class ALOE(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ALOE", fixed_factors={}):
+    def __init__(self, name="ALOE2", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -186,12 +186,9 @@ class ALOE(Solver):
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
-            if problem.gradient_available:
-                grad = problem.minmax *(new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
-            else:
             # Use finite difference to estimate gradient if gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem)
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+            grad = self.finite_diff(new_solution, BdsCheck, problem, alpha)
+            expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
 
             # Check sufficient decrease.
             candidate_x = new_x - alpha * grad
