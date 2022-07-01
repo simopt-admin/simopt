@@ -5,6 +5,8 @@ Simulate the distribution of emergency medical service volunteer.
 """
 import numpy as np
 from itertools import chain
+
+from scipy import rand
 from base import Model, Problem
 
 
@@ -50,7 +52,7 @@ class Volunteer(Model):
             "thre_dist": {
                 "description": "The distance within which a volunteer can reach a call within the time threshold in meters.",
                 "datatype": float,
-                "default": 200.0
+                "default": 100.0
             },
             "num_squares": {
                 "description": "Number of squares (regions) the city is divided into.",
@@ -71,7 +73,12 @@ class Volunteer(Model):
                 "description": "Probability of an available volunteer is in each square.",
                 "datatype": tuple,
                 "default": tuple((1/400 * np.ones(400)).tolist())
-            }
+            },
+            "num_OHCA": {
+                "description": "Number of OHCAs to generate.",
+                "datatype": int,
+                "default": 20
+            },
         }
         self.check_factor_list = {
             "mean_vol": self.check_mean_vol,
@@ -79,7 +86,8 @@ class Volunteer(Model):
             "num_squares": self.check_num_squares,
             "p_OHCA": self.check_p_OHCA,
             "p_vol": self.check_p_vol,
-            "square_length": self.check_square_length
+            "square_length": self.check_square_length,
+            "num_OHCA": self.check_num_OHCA
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -101,6 +109,9 @@ class Volunteer(Model):
     
     def check_square_length(self):
         return self.factors["square_length"] > 0
+    
+    def chekc_num_OHCA(self):
+        return self.factors["num_OHCA"] > 0
 
     def replicate(self, rng_list):
         """
@@ -140,23 +151,9 @@ class Volunteer(Model):
         OHCA_loc = None
         closest_loc = None
         vol_locs = []
-        thre_dist_flag = 0
 
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
-
-        # Generate the location of an OHCA.
-        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
-        prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)
-        # Generate the square containing the OHCA.
-        u1 = OHCA_sq_rng.alias(prob1, alias1)
-        x = u1 // np.sqrt(self.factors["num_squares"])
-        y = u1 % np.sqrt(self.factors["num_squares"])
-        # Find a random location in the square.
-        u2 = OHCA_loc_lat_rng.uniform(0, 1)
-        u3 = OHCA_loc_lon_rng.uniform(0, 1)
-        OHCA_loc = ((x + u3) * self.factors["square_length"], 
-                    (y + u2) * self.factors["square_length"])
 
         # Generate the locations of the volunteers following a Poisson point process.
         prob2, alias2 = vol_sq_rng.alias_init(list(self.factors["p_vol"]))
@@ -171,24 +168,40 @@ class Volunteer(Model):
             vol_locs.append(((x + u5) * self.factors["square_length"], 
                         (y + u6) * self.factors["square_length"]))
 
-        # Calculate the distance of the closest volunteer to the location of an OHCA.
-        dists = []
-        for i in range(num_vol):
-            dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
-            dists.append(dist)
-        min_dist = np.min(dists)
-        closest_loc = vol_locs[np.argmin(dists)]
+        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
+        prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)    
+        sum = 0
+        # Generate the location of an OHCA.
+        for i in range(self.factors["num_OHCA"]):
+            # Generate the square containing the OHCA.
+            u1 = OHCA_sq_rng.alias(prob1, alias1)
+            x = u1 // np.sqrt(self.factors["num_squares"])
+            y = u1 % np.sqrt(self.factors["num_squares"])
+            # Find a random location in the square.
+            u2 = OHCA_loc_lat_rng.uniform(0, 1)
+            u3 = OHCA_loc_lon_rng.uniform(0, 1)
+            OHCA_loc = ((x + u3) * self.factors["square_length"], 
+                        (y + u2) * self.factors["square_length"])
+            # Calculate the distance of the closest volunteer to the location of an OHCA.
+            dists = []
+            for i in range(num_vol):
+                dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
+                dists.append(dist)
+            min_dist = np.min(dists)
+            closest_loc = vol_locs[np.argmin(dists)]
+            thre_dist_flag = 0
+            # Check the minimum distance against the threshold distance.
+            if min_dist > self.factors["thre_dist"]:
+                thre_dist_flag = 1
+            sum += thre_dist_flag
 
-        # Check the minimum distance against the threshold distance.
-        if min_dist > self.factors["thre_dist"]:
-            thre_dist_flag = 1
         # Use the survival function to calculate the probability of survival.
         # Convert distance to time: 3 min + D/(6km/hr).
         t = 3 + min_dist / (6000 / 60)
         p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
 
         # Compose responses and gradients.
-        responses = {"thre_dist_flag": thre_dist_flag,
+        responses = {"thre_dist_flag": sum / self.factors["num_OHCA"],
                     "p_survival": p_survival,
                     "OHCA_loc": OHCA_loc,
                     "closest_loc":closest_loc,
@@ -290,7 +303,12 @@ class VolunteerDist(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 100
+            },
+            "p_OHCA": {
+                "description": "Probability of an OHCA occurs in each square.",
+                "datatype": list,
+                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
             }
         }
         self.check_factor_list = {
@@ -352,7 +370,7 @@ class VolunteerDist(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["p_vol"])
+        vector = (factor_dict["p_vol"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -461,8 +479,12 @@ class VolunteerDist(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        if rand_sol_rng.random() < 0.25:
+            x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        else:
+            x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
+
 
 """
 Summary
@@ -728,5 +750,8 @@ class VolunteerSurvival(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        if rand_sol_rng.random() < 0.5:
+            x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        else:
+            x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
