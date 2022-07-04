@@ -412,18 +412,21 @@ class Experiment(object):
             1. Provide the names of the solver and problem to look up in directory.py.
             2. Provide the solver and problem objects to pair.
         """
-        if solver is not None:
+        # Initialize solver.
+        if solver is not None:  # Method #2
             self.solver = solver
-        elif solver_rename is None:
+        elif solver_rename is None:  # Method #1
             self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
-        else:
+        else:  # Method #1
             self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
-        if problem is not None:
+        # Initialize problem.
+        if problem is not None:  # Method #2
             self.problem = problem
-        elif problem_rename is None:
+        elif problem_rename is None:  # Method #1
             self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
-        else:
+        else:  # Method #1
             self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
+        # Initialize file path.
         if file_name_path is None:
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
@@ -2429,8 +2432,17 @@ def find_unique_solvers_problems(experiments):
     unique_problems : list of base.Problem objects
         unique problems
     """
-    unique_solvers = list(set(experiment.solver for experiment in experiments))
-    unique_problems = list(set(experiment.problem for experiment in experiments))
+    # Set comprehensions do not work because Solver and Problem objects are not
+    # hashable.
+    # unique_solvers = list(set([experiment.solver for experiment in experiments]))
+    # unique_problems = list(set([experiment.problem for experiment in experiments]))
+    unique_solvers = []
+    unique_problems = []
+    for experiment in experiments:
+        if experiment.solver not in unique_solvers:
+            unique_solvers.append(experiment.solver)
+        if experiment.problem not in unique_problems:
+            unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
 
 
