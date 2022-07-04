@@ -85,7 +85,10 @@ problem_nonabbreviated_directory = {
     "Min Mean Longest Path for Stochastic Activity Network (SBCN)": SANLongestPath,
     "Max Revenue for Hotel Booking (SBDN)": HotelRevenue,
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
-    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": ParamEstiMaxLogLik
+    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": ParamEstiMaxLogLik,
+    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": FixedSANLongestPath,
+    "Minimize Maximum Waiting Time for Voting System (SDDN)": MinVotingMaxWaitTime,
+    "Minimize Lead Time for Production System (SSDN)": ProdSysMinLeadTime
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -122,5 +125,8 @@ model_unabbreviated_directory = {
     "Min Mean Longest Path for Stochastic Activity Network (SBCN)": "SAN",
     "Max Revenue for Hotel Booking (SBDN)": "HOTEL",
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
-    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": "PARAMESTI"
+    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": "PARAMESTI",
+    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": "FIXEDSAN",
+    "Minimize Maximum Waiting Time for Voting System (SDDN)": "VOTING",
+    "Minimize Lead Time for Production System (SSDN)": "PRODSYS"
 }
