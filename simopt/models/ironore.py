@@ -42,7 +42,9 @@ class IronOre(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "IRONORE"
         self.n_rngs = 1
         self.n_responses = 3
@@ -323,7 +325,11 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="IRONORE-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -583,7 +589,11 @@ class IronOreMaxRevCnt(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="IRONORECONT-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="IRONORECONT-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 3
         self.n_objectives = 1

@@ -40,7 +40,9 @@ class DynamNews(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "DYNAMNEWS"
         self.n_rngs = 1
         self.n_responses = 2
@@ -253,7 +255,11 @@ class DynamNewsMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DYNAMNEWS-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="DYNAMNEWS-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
