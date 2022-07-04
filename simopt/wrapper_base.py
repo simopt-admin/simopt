@@ -33,6 +33,9 @@ plot_terminal_scatterplots : function
 setup_plot : function
 save_plot : function
 MetaExperiment : class
+find_unique_solvers_problems : function
+find_missing_experiments : function
+make_full_metaexperiment : function
 """
 
 import numpy as np
@@ -390,6 +393,10 @@ class Experiment(object):
         user-specified name for solver
     problem_rename : str
         user-specified name for problem
+    solver : base.Solver object
+        simulation-optimization solver
+    problem : base.Problem object
+        simulation-optimization problem
     solver_fixed_factors : dict
         dictionary of user-specified solver factors
     problem_fixed_factors : dict
@@ -399,15 +406,34 @@ class Experiment(object):
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name, problem_name, solver_rename=None, problem_rename=None, solver_fixed_factors={}, problem_fixed_factors={}, model_fixed_factors={}, file_name_path=None):
-        if solver_rename is None:
+    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
+        """
+        There are two ways to create an Experiment object:
+            1. Provide the names of the solver and problem to look up in directory.py.
+            2. Provide the solver and problem objects to pair.
+        """
+        # Handle unassigned arguments.
+        if solver_fixed_factors is None:
+            solver_fixed_factors = {}
+        if problem_fixed_factors is None:
+            problem_fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Initialize solver.
+        if solver is not None:  # Method #2
+            self.solver = solver
+        elif solver_rename is None:  # Method #1
             self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
-        else:
+        else:  # Method #1
             self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
-        if problem_rename is None:
+        # Initialize problem.
+        if problem is not None:  # Method #2
+            self.problem = problem
+        elif problem_rename is None:  # Method #1
             self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
-        else:
+        else:  # Method #1
             self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
+        # Initialize file path.
         if file_name_path is None:
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
@@ -1314,7 +1340,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
-                                   normalize=normalize
+                                   normalize=normalize,
+                                   extra=beta
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1364,7 +1391,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             file_list.append(save_plot(solver_name=experiment.solver.name,
                                        problem_name=experiment.problem.name,
                                        plot_type=plot_type,
-                                       normalize=normalize
+                                       normalize=normalize,
+                                       extra=beta
                                        ))
     return file_list
 
@@ -2155,7 +2183,7 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     elif plot_type == "mean":
         plot_name = "mean_prog_curve"
     elif plot_type == "quantile":
-        plot_name = "quantile_prog_curve"
+        plot_name = f"{extra}_quantile_prog_curve"
     elif plot_type == "solve_time_cdf":
         plot_name = f"cdf_{extra}_solve_times"
     elif plot_type == "cdf_solvability":
@@ -2163,9 +2191,9 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     elif plot_type == "quantile_solvability":
         plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
     elif plot_type == "diff_cdf_solvability":
-        plot_name = "diff_cdf_solvability_profile"
+        plot_name = f"diff_profile_cdf_{extra}_solve_times"
     elif plot_type == "diff_quantile_solvability":
-        plot_name = "diff_quantile_solvability_profile"
+        plot_name = f"diff_profile_{extra[1]}_quantile_{extra[0]}_solve_times"
     elif plot_type == "area":
         plot_name = "area_scatterplot"
     elif plot_type == "box":
@@ -2200,6 +2228,10 @@ class MetaExperiment(object):
         list of problem names
     n_problems : int > 0
         number of problems
+    solvers : list of base.Solver objects
+        list of solvers
+    problems : list of base.Problem objects
+        list of problems
     all_solver_fixed_factors : dict of dict
         fixed solver factors for each solver
             outer key is solver name
@@ -2227,57 +2259,87 @@ class MetaExperiment(object):
         user-specified names for problems
     fixed_factors_filename : string
         name of .py file containing dictionaries of fixed factors
-        for solvers/problems/models.
+        for solvers/problems/models
+    solvers : list of base.Solver objects
+        list of solvers
+    problems : list of base.Problem objects
+        list of problems
+    experiments : list of list of Experiment objects
+        all problem-solver pairs
     """
-    def __init__(self, solver_names, problem_names, solver_renames=None, problem_renames=None, fixed_factors_filename=None):
-        self.n_solvers = len(solver_names)
-        self.n_problems = len(problem_names)
-        if solver_renames is None:
-            self.solver_names = solver_names
-        else:
-            self.solver_names = solver_renames
-        if problem_renames is None:
-            self.problem_names = problem_names
-        else:
-            self.problem_names = problem_renames
-        # Read in fixed solver/problem/model factors from .py file in the Experiments folder.
-        # File should contain three dictionaries of dictionaries called
-        #   - all_solver_fixed_factors
-        #   - all_problem_fixed_factors
-        #   - all_model_fixed_factors
-        if fixed_factors_filename is None:
-            self.all_solver_fixed_factors = {solver_name: {} for solver_name in self.solver_names}
-            self.all_problem_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
-            self.all_model_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
-        else:
-            fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
-            all_factors = importlib.import_module(fixed_factors_filename)
-            self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
-            self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
-            self.all_model_fixed_factors = getattr(all_factors, "all_model_fixed_factors")
-        # Create all problem-solver pairs (i.e., instances of Experiment class)
-        self.experiments = []
-        for solver_idx in range(self.n_solvers):
-            solver_experiments = []
-            for problem_idx in range(self.n_problems):
-                try:
-                    # If a file exists, read in Experiment object.
-                    with open(f"experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
-                        next_experiment = pickle.load(file)
-                    # TO DO: Check if the solver/problem/model factors in the file match
-                    # those for the MetaExperiment.
-                except Exception:
-                    # If no file exists, create new Experiment object.
-                    print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
-                    next_experiment = Experiment(solver_name=solver_names[solver_idx],
-                                                 problem_name=problem_names[problem_idx],
-                                                 solver_rename=self.solver_names[solver_idx],
-                                                 problem_rename=self.problem_names[problem_idx],
-                                                 solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
-                                                 problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                 model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]])
-                solver_experiments.append(next_experiment)
-            self.experiments.append(solver_experiments)
+    def __init__(self, solver_names=None, problem_names=None, solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None):
+        """
+        There are three ways to create a MetaExperiment object:
+            1. Provide the names of the solvers and problems to look up in directory.py.
+            2. Provide the lists of unique solver and problem objects to pair.
+            3. Provide a list of list of Experiment objects.
+        """
+        if experiments is not None:  # Method #3
+            self.experiments = experiments
+            self.solvers = [experiments[idx][0].solver for idx in range(len(experiments))]
+            self.problems = [experiment.problem for experiment in experiments[0]]
+            self.solver_names = [solver.name for solver in self.solvers]
+            self.problem_names = [problem.name for problem in self.problems]
+            self.n_solvers = len(self.solvers)
+            self.n_problems = len(self.problems)
+        elif solvers is not None and problems is not None:  # Method #2
+            self.experiments = [[Experiment(solver=solver, problem=problem) for problem in problems] for solver in solvers]
+            self.solvers = solvers
+            self.problems = problems
+            self.solver_names = [solver.name for solver in self.solvers]
+            self.problem_names = [problem.name for problem in self.problems]
+            self.n_solvers = len(self.solvers)
+            self.n_problems = len(self.problems)
+        else:  # Method #1
+            if solver_renames is None:
+                self.solver_names = solver_names
+            else:
+                self.solver_names = solver_renames
+            if problem_renames is None:
+                self.problem_names = problem_names
+            else:
+                self.problem_names = problem_renames
+            self.n_solvers = len(solver_names)
+            self.n_problems = len(problem_names)
+            # Read in fixed solver/problem/model factors from .py file in the Experiments folder.
+            # File should contain three dictionaries of dictionaries called
+            #   - all_solver_fixed_factors
+            #   - all_problem_fixed_factors
+            #   - all_model_fixed_factors
+            if fixed_factors_filename is None:
+                self.all_solver_fixed_factors = {solver_name: {} for solver_name in self.solver_names}
+                self.all_problem_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+                self.all_model_fixed_factors = {problem_name: {} for problem_name in self.problem_names}
+            else:
+                fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
+                all_factors = importlib.import_module(fixed_factors_filename)
+                self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
+                self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
+                self.all_model_fixed_factors = getattr(all_factors, "all_model_fixed_factors")
+            # Create all problem-solver pairs (i.e., instances of Experiment class)
+            self.experiments = []
+            for solver_idx in range(self.n_solvers):
+                solver_experiments = []
+                for problem_idx in range(self.n_problems):
+                    try:
+                        # If a file exists, read in Experiment object.
+                        with open(f"experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
+                            next_experiment = pickle.load(file)
+                        # TO DO: Check if the solver/problem/model factors in the file match
+                        # those for the MetaExperiment.
+                    except Exception:
+                        # If no file exists, create new Experiment object.
+                        print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
+                        next_experiment = Experiment(solver_name=solver_names[solver_idx],
+                                                     problem_name=problem_names[problem_idx],
+                                                     solver_rename=self.solver_names[solver_idx],
+                                                     problem_rename=self.problem_names[problem_idx],
+                                                     solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                     problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                     model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]]
+                                                     )
+                    solver_experiments.append(next_experiment)
+                self.experiments.append(solver_experiments)
 
     def check_compatibility(self):
         """
@@ -2360,3 +2422,95 @@ class MetaExperiment(object):
             post_normalize(experiments=experiments_same_problem,
                            n_postreps_init_opt=n_postreps_init_opt,
                            crn_across_init_opt=crn_across_init_opt)
+
+
+def find_unique_solvers_problems(experiments):
+    """
+    Identify the unique problems and solvers in a collection of experiments.
+
+    Parameters
+    ----------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on different problems
+
+    Returns
+    -------
+    unique_solvers : list of base.Solver objects
+        unique solvers
+    unique_problems : list of base.Problem objects
+        unique problems
+    """
+    # Set comprehensions do not work because Solver and Problem objects are not
+    # hashable.
+    unique_solvers = []
+    unique_problems = []
+    for experiment in experiments:
+        if experiment.solver not in unique_solvers:
+            unique_solvers.append(experiment.solver)
+        if experiment.problem not in unique_problems:
+            unique_problems.append(experiment.problem)
+    return unique_solvers, unique_problems
+
+
+def find_missing_experiments(experiments):
+    """
+    Identify problem-solver pairs that are not part of a list
+    of experiments.
+
+    Parameters
+    ----------
+    experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on different problems
+
+    Returns
+    -------
+    unique_solvers : list of base.Solver objects
+        list of solvers present in the list of experiments
+    unique_problems : list of base.Problem objects
+        list of problems present in the list of experiments
+    missing : list of tuples
+        list of names of missing problem-solver pairs
+    """
+    pairs = [(experiment.solver, experiment.problem) for experiment in experiments]
+    unique_solvers, unique_problems = find_unique_solvers_problems(experiments)
+    missing = []
+    for solver in unique_solvers:
+        for problem in unique_problems:
+            if (solver, problem) not in pairs:
+                missing.append((solver, problem))
+    return unique_solvers, unique_problems, missing
+
+
+def make_full_metaexperiment(existing_experiments, unique_solvers, unique_problems, missing_experiments):
+    """
+    Create experiment objects for missing problem-solver pairs
+    and run them.
+
+    Parameters
+    ----------
+    existing_experiments : list of wrapper_base.Experiment objects
+        experiments of different solvers on different problems
+    unique_solvers : list of base.Solver objects
+        list of solvers present in the list of experiments
+    unique_problems : list of base.Problem objects
+        list of problems present in the list of experiments
+    missing_experiments : list of tuples
+        list of missing problem-solver pairs.
+
+    Returns
+    -------
+    metaexperiment : wrapper_base.MetaExperiment object
+    """
+    # Ordering of solvers and problems in unique_solvers and unique_problems
+    # is used to construct experiments.
+    full_experiments = [[[] for _ in range(len(unique_problems))] for _ in range(len(unique_solvers))]
+    for experiment in existing_experiments:
+        solver_idx = unique_solvers.index(experiment.solver)
+        problem_idx = unique_problems.index(experiment.problem)
+        full_experiments[solver_idx][problem_idx] = experiment
+    for pair in missing_experiments:
+        solver_idx = unique_solvers.index(pair[0])
+        problem_idx = unique_problems.index(pair[1])
+        full_experiments[solver_idx][problem_idx] = Experiment(solver=pair[0], problem=pair[1])
+    metaexperiment = MetaExperiment(experiments=full_experiments)
+    return metaexperiment

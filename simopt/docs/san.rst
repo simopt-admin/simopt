@@ -3,10 +3,12 @@ Model: Stochastic Activity Network (SAN)
 
 Description:
 ------------
-Consider the following stochastic activity network (SAN) where the arcs are labeled
-from 1 through 13. (SANs are also known as PERT networks and are used in planning
-large-scale projects.) Each arc :math:`i` is associated with a task with random duration
-:math:`X_i`. Task durations are independent.
+Consider a stochastic activity network (SAN) where each arc :math:`i`
+is associated with a task with random duration :math:`X_i`. Task durations
+are independent. SANs are also known as PERT networks and are used in planning
+large-scale projects. 
+
+An example SAN with 13 arcs is given in the following figure:
 
 .. image:: san.PNG
   :alt: The SAN diagram has failed to display
@@ -18,13 +20,14 @@ Sources of Randomness:
 
 Model Factors:
 --------------
-* num_arcs: Number of arcs.
-
-    * Default: 13
-
 * num_nodes: Number of nodes.
 
     * Default: 9
+
+* arcs: List of arcs.
+
+    * Default: [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
+                (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
 
 * arc_means: Mean task durations for each arc.
 
@@ -53,7 +56,8 @@ Objectives:
 Suppose that we can select :math:`\theta_i > 0` for each :math:`i`,
 but there is an associated cost. In particular, we want to minimize :math:`ET(\theta) + f(\theta)`,
 where :math:`T(\theta)` is the (random) duration of the longest path from :math:`a`
-to :math:`i` and :math:`f(\theta) = \sum_{i=1}^{9}\theta_i^{-1}`.
+to :math:`i` and :math:`f(\theta) = \sum_{i=1}^{n}\theta_i^{-1}` where :math:`n`
+is the number of arcs.
 
 The objective function is convex in :math:`\theta`. An IPA estimator of the gradient
 is also given in the code.
@@ -74,7 +78,7 @@ Fixed Model Factors:
 
 Starting Solution: 
 ------------------
-* initial_solution: (1,) * 13
+* initial_solution: (8,) * 13
 
 Random Solutions: 
 ------------------

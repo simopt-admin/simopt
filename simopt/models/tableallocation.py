@@ -55,7 +55,9 @@ class TableAllocation(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "TABLEALLOCATION"
         self.n_rngs = 3
         self.n_responses = 2
@@ -278,7 +280,11 @@ class TableAllocationMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="TABLEALLOCATION-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="TABLEALLOCATION-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -286,8 +292,8 @@ class TableAllocationMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lowerbound = ([0, 0, 0, 0])
-        self.upperbound = ([np.inf, np.inf, np.inf, np.inf])
+        self.lower_bounds = ([0, 0, 0, 0])
+        self.upper_bounds = ([np.inf, np.inf, np.inf, np.inf])
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -461,6 +467,8 @@ class TableAllocationMaxRev(Problem):
             vector of decision variables
         """
         # Add new tables of random size to the restaurant until the capacity is reached.
+        # TO DO: Replace this with call to integer_random_vector_from_simplex().
+        # The different-weight case is not yet implemented.
         allocated = 0
         num_tables = [0, 0, 0, 0]
         while allocated < self.model_fixed_factors["capacity"]:

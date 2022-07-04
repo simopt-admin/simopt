@@ -41,7 +41,9 @@ class Voting(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "VOTING"
         self.n_rngs = 5
         self.n_responses = 2
@@ -309,7 +311,7 @@ class Voting(Model):
 """
 Summary
 -------
-Minimize the the maximum average waiting time across all precincts.
+Minimize the maximum average waiting time across all precincts.
 
 """
 
@@ -379,8 +381,12 @@ class MinVotingMaxWaitTime(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="voting", fixed_factors={}, model_fixed_factors={}):
-        self.name = "VOTING-1"
+    def __init__(self, name="VOTING-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)

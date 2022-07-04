@@ -40,7 +40,9 @@ class FacilitySize(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "FACSIZE"
         self.n_rngs = 1
         self.n_responses = 3
@@ -224,7 +226,11 @@ class FacilitySizingTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="FACSIZE-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 3
         self.n_objectives = 1
@@ -505,7 +511,11 @@ class FacilitySizingMaxService(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FACSIZE-2", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="FACSIZE-2", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 3
         self.n_objectives = 1

@@ -41,7 +41,9 @@ class ChessMatchmaking(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "CHESS"
         self.n_rngs = 2
         self.n_responses = 2
@@ -228,7 +230,11 @@ class ChessAvgDifference(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CHESS-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CHESS-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 1
         self.n_objectives = 1

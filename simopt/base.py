@@ -78,10 +78,10 @@ class Solver(object):
             if self.factors == other.factors:
                 return True
             else:
-                print("Solver factors do not match.")
+                # print("Solver factors do not match.")
                 return False
         else:
-            print("Solver types do not match.")
+            # print("Solver types do not match.")
             return False
 
     def attach_rngs(self, rng_list):
@@ -304,14 +304,14 @@ class Problem(object):
                 non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
                 for factor in non_decision_factors:
                     if self.model.factors[factor] != other.model.factors[factor]:
-                        print("Model factors do not match")
+                        # print("Model factors do not match")
                         return False
                 return True
             else:
-                print("Problem factors do not match.")
+                # print("Problem factors do not match.")
                 return False
         else:
-            print("Problem types do not match.")
+            # print("Problem types do not match.")
             return False
 
     def check_initial_solution(self):
@@ -643,10 +643,10 @@ class Model(object):
             if self.factors == other.factors:
                 return True
             else:
-                print("Model factors do not match.")
+                # print("Model factors do not match.")
                 return False
         else:
-            print("Model types do not match.")
+            # print("Model types do not match.")
             return False
 
     def check_simulatable_factor(self, factor_name):

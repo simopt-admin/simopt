@@ -52,7 +52,9 @@ class NelderMead(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="NELDMD", fixed_factors={}):
+    def __init__(self, name="NELDMD", fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
