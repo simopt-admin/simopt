@@ -406,12 +406,19 @@ class Experiment(object):
     file_name_path : str
         path of .pickle file for saving wrapper_base.Experiment object
     """
-    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors={}, problem_fixed_factors={}, model_fixed_factors={}, file_name_path=None):
+    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
         """
         There are two ways to create an Experiment object:
             1. Provide the names of the solver and problem to look up in directory.py.
             2. Provide the solver and problem objects to pair.
         """
+        # Handle unassigned arguments.
+        if solver_fixed_factors is None:
+            solver_fixed_factors = {}
+        if problem_fixed_factors is None:
+            problem_fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         # Initialize solver.
         if solver is not None:  # Method #2
             self.solver = solver
