@@ -2280,7 +2280,7 @@ class MetaExperiment(object):
             self.solver_names = [solver.name for solver in self.solvers]
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
-            self.n_problems = len(self.solvers)
+            self.n_problems = len(self.problems)
         elif solvers is not None and problems is not None:  # Method #2
             self.experiments = [[Experiment(solver=solver, problem=problem) for problem in problems] for solver in solvers]
             self.solvers = solvers
@@ -2288,7 +2288,7 @@ class MetaExperiment(object):
             self.solver_names = [solver.name for solver in self.solvers]
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
-            self.n_problems = len(self.solvers)
+            self.n_problems = len(self.problems)
         else:  # Method #1
             if solver_renames is None:
                 self.solver_names = solver_names
@@ -2441,8 +2441,6 @@ def find_unique_solvers_problems(experiments):
     """
     # Set comprehensions do not work because Solver and Problem objects are not
     # hashable.
-    # unique_solvers = list(set([experiment.solver for experiment in experiments]))
-    # unique_problems = list(set([experiment.problem for experiment in experiments]))
     unique_solvers = []
     unique_problems = []
     for experiment in experiments:
