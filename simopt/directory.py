@@ -19,6 +19,7 @@ from solvers.adam import ADAM
 from solvers.aloe import ALOE
 from solvers.adam2 import ADAM2
 from solvers.PGD_usimplex import PGD
+from solvers.aloe2 import ALOE2
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -45,7 +46,8 @@ solver_directory = {
     "ADAM": ADAM,
     "ALOE": ALOE,
     "ADAM2": ADAM2,
-    "PGD": PGD
+    "PGD": PGD,
+    "ALOE2": ALOE2
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,

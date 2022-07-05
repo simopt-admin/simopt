@@ -10,7 +10,8 @@ different parameters from estimates of first and second moments of the gradients
 
 Modifications & Implementation:
 ----------------------
-At each timestep :math:`t`, we first evaluate the gradient w.r.t the current solution :math:`x`.
+At each timestep :math:`t`, we first evaluate the gradient w.r.t the current solution :math:`x`, either using
+the IPA gradient estimates or finite difference estimates.
 Then, the algorithm updates exponential moving averages of the gradient :math:`m_t` and the squared gradient
 :math:`v_t` where the hyper-parameters :math:`\beta_1`, :math:`\beta_2` control the exponential decay rates of 
 these moving averages. The moving averages themselves are estimates of the 1st moment (the mean) and the
@@ -54,7 +55,7 @@ Solver Factors:
 
 * alpha: Step size.
 
-    * Default: 0.1
+    * Default: 0.5
 
 * epsilon: A small value to prevent zero-division.
 

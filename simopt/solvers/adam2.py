@@ -1,7 +1,7 @@
 """
 Summary
 -------
-ADAM
+ADAM without IPA gradient
 An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
 """
@@ -178,7 +178,7 @@ class ADAM2(Solver):
             backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
-            # Use finite difference to estimate gradient if gradient is not available.
+            # Use finite difference to estimate gradient.
             grad = self.finite_diff(new_solution, BdsCheck, problem)
             expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
             # Convert new_x from tuple to list
@@ -202,7 +202,7 @@ class ADAM2(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

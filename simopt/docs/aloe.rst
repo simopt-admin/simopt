@@ -10,7 +10,8 @@ an additive constant :math:`2\epsilon_f`.
 
 Modifications & Implementation:
 --------------------------------
-For each iteration, first compute the gradient approximation :math:`g_k` using finite difference.
+For each iteration, first compute the gradient approximation :math:`g_k` using either
+the IPA gradient estimates or finite difference estimates.
 Then, the algorithm checks for sufficient decrease. Let :math:`x_k^{+} = x_k - \alpha_k g_k`. Estimate the objective
 values :math:`f(x_k^{+})` and :math:`f(x_k)`. Check the modified Arimjo condition:
 
@@ -42,7 +43,7 @@ Solver Factors:
 
 * r: Number of replications taken at each solution.
 
-    * Default: 10
+    * Default: 30
 
 * theta: Constant in the Armijo condition.
 

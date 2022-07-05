@@ -34,12 +34,12 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 
 # PROBLEM = "PARAMESTI-1"
 # PROBLEM_FULL_NAME = "Parameter Estimation"
-# PROBLEM = "CNTNEWS-1"
-# PROBLEM_FULL_NAME = "Continuous Newsvendor"
+PROBLEM = "CNTNEWS-1"
+PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
-PROBLEM = "SAN-1"
-PROBLEM_FULL_NAME = "Stochastic Activity Network"
+# PROBLEM = "SAN-1"
+# PROBLEM_FULL_NAME = "Stochastic Activity Network"
 # PROBLEM = "MM1-1"
 # PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
 
@@ -60,17 +60,17 @@ new_experiment.post_replicate(n_postreps=100)
 experiments_same_problem.append(new_experiment)
 
 # Setup and run ASTRO-DF.
-# solver_fixed_factors = {"delta_max": 200.0}
-# new_experiment = Experiment(solver_name="ASTRODF",
-#                             problem_name=PROBLEM,
-#                             solver_fixed_factors=solver_fixed_factors
-#                             )
+solver_fixed_factors = {"delta_max": 200.0}
+new_experiment = Experiment(solver_name="ASTRODF",
+                            problem_name=PROBLEM,
+                            solver_fixed_factors=solver_fixed_factors
+                            )
 
-# # Run experiment with M = 10.
-# new_experiment.run(n_macroreps=10)
-# # Post replicate experiment with N = 100.
-# new_experiment.post_replicate(n_postreps=100)
-# experiments_same_problem.append(new_experiment)
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
 
 # NELDMD
 new_experiment = Experiment(solver_name="NELDMD",
@@ -123,6 +123,16 @@ new_experiment.run(n_macroreps=10)
 new_experiment.post_replicate(n_postreps=100)
 experiments_same_problem.append(new_experiment)
 
+# ALOE without true gradient
+new_experiment = Experiment(solver_name="ALOE2",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
+
 # Post-normalize experiments with L = 200.
 # Provide NO proxies for f(x0), f(x*), or f(x).
 post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
@@ -148,18 +158,18 @@ new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
-# # Load ASTRO-DF results.
-# solver_rename = "ASTRODF"
-# experiments_same_solver = []
-# problem_rename = PROBLEM
-# file_name = f"{solver_rename}_on_{problem_rename}"
-# # Load experiment.
-# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# # Rename problem and solver to produce nicer plot labels.
-# new_experiment.solver.name = "ASTRO-DF"
-# new_experiment.problem.name = PROBLEM_FULL_NAME
-# experiments_same_solver.append(new_experiment)
-# experiments.append(experiments_same_solver)
+# Load ASTRO-DF results.
+solver_rename = "ASTRODF"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "ASTRO-DF"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
 
 # Load NELDMD results.
 solver_rename = "NELDMD"
@@ -221,7 +231,20 @@ file_name = f"{solver_rename}_on_{problem_rename}"
 # Load experiment.
 new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
 # Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "Adam w/o true grad"
+new_experiment.solver.name = "Adam w/o IPA grad"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
+
+# Load ALOE without true gradient results.
+solver_rename = "ALOE2"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "ALOE w/o IPA grad"
 new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)

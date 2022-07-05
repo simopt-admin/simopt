@@ -60,7 +60,7 @@ class RandomSearch(Solver):
             "sample_size": {
                 "description": "Sample size per solution",
                 "datatype": int,
-                "default": 20
+                "default": 10
             }
         }
         self.check_factor_list = {
@@ -117,8 +117,6 @@ class RandomSearch(Solver):
                     > problem.minmax * best_solution.objectives_mean and
                     all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
                 # If better, record incumbent solution as best.
-                print('new', new_solution.objectives_mean)
-                print('incumbent', best_solution.objectives_mean)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

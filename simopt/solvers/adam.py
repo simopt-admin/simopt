@@ -6,9 +6,7 @@ An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
 """
 from base import Solver
-from numpy.linalg import norm
 import numpy as np
-import math
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -81,7 +79,7 @@ class ADAM(Solver):
             "alpha": {
                 "description": "Step size.",
                 "datatype": int,
-                "default": 0.5 # Changing the step size matters a lot.
+                "default": 0.5  # Changing the step size matters a lot.
             },
             "epsilon": {
                 "description": "A small value to prevent zero-division.",
@@ -119,7 +117,7 @@ class ADAM(Solver):
 
     def check_epsilon(self):
         return self.factors["epsilon"] > 0
-    
+
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
 
@@ -179,20 +177,17 @@ class ADAM(Solver):
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
             if problem.gradient_available:
-                grad = (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
-                print('true grad', new_solution.objectives_gradients_mean)
-                grad = self.finite_diff(new_solution, BdsCheck, problem)
-                print('est grad', grad)
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                # Use IPA gradient if available.
+                grad = -1 * problem.minmax[0] * (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
             else:
-            # Use finite difference to estimate gradient if gradient is not available.
+                # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+
             # Convert new_x from tuple to list
             new_x = list(new_x)
-            
             # Loop through all the dimensions.
-            for i in range(problem.dim): 
+            for i in range(problem.dim):
                 # Update biased first moment estimate.
                 m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
                 # Update biased second raw moment estimate.
@@ -201,19 +196,19 @@ class ADAM(Solver):
                 mhat = m[i] / (1 - beta_1**t)
                 # Compute bias-corrected second raw moment estimate.
                 vhat = v[i] / (1 - beta_2**t)
-                # Update new_x.
+                # Update new_x and adjust it for box constraints.
                 new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
-            
+
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-            
+
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

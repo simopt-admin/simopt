@@ -1,7 +1,7 @@
 """
 Summary
 -------
-ALOE
+ALOE without IPA
 The solver is a stochastic line search algorithm  with the gradient estimate recomputed in each iteration,
 whether or not a step is accepted. The algorithm includes the relatxation of the Armijo condition by 
 an additive constant.
@@ -67,7 +67,7 @@ class ALOE2(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 10
+                "default": 30
             },
             "theta": {
                 "description": "Constant in the Armijo condition.",
@@ -186,18 +186,22 @@ class ALOE2(Solver):
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
-            # Use finite difference to estimate gradient if gradient is not available.
+            # Use finite difference to estimate gradient.
             grad = self.finite_diff(new_solution, BdsCheck, problem, alpha)
             expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-
-            # Check sufficient decrease.
-            candidate_x = new_x - alpha * grad
+            
+            # Calculate the candidate solution and adjust the solution to respect box constraints.
+            candidate_x = list()
+            for i in range(problem.dim):
+                candidate_x.append(min(max((new_x[i] - alpha * grad[i]), lower_bound[i]), upper_bound[i]))
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
             expended_budget += r
-            # Check the modified Armijo condition.
-            if -1 * problem.minmax * candidate_solution.objectives_mean <= -1 * problem.minmax * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f:
+
+            # Check the modified Armijo condition for sufficient decrease.
+            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f):
                 # Successful step.
                 new_solution = candidate_solution
                 alpha = min(alpha_max, alpha / gamma)
@@ -207,7 +211,7 @@ class ALOE2(Solver):
                 alpha = gamma * alpha
             
             # Append new solution.
-            if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

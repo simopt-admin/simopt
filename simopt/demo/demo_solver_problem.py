@@ -24,8 +24,8 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Ex:
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
-solver_name = "RNDSRCH"  
-problem_name = "VOLUNTEER-1"
+solver_name = "ALOE"  
+problem_name = "SAN-1"
 
 # solver_name = <solver_name>
 # problem_name = <problem_name>
@@ -35,20 +35,6 @@ print(f"Testing solver {solver_name} on problem {problem_name}.")
 # Specify file path name for storing experiment outputs in .pickle file.
 file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
 print(f"Results will be stored as {file_name_path}.")
-
-# c_utility = []
-# for j in range(1, 11):
-#     c_utility.append(5 + j)
-
-# fixed_factors = {
-#     "num_prod": 10,
-#     "num_customer": 30,
-#     "c_utility": c_utility,
-#     "mu": 1.0,
-#     "init_level":  list(3 * np.ones(10)),
-#     "price": list(9 * np.ones(10)),
-#     "cost": list(5 * np.ones(10)),
-#     "initial_solution": list(3 * np.ones(10))}
 
 # Initialize an instance of the experiment class.
 myexperiment = Experiment(solver_name, problem_name)
