@@ -11,6 +11,3 @@ __pycache__/
 # Environments
 .env
 .venv
-
-# Keep outputs folder empty
-simopt/experiments/outputs/*
