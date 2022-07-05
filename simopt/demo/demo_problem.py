@@ -16,42 +16,40 @@ from rng.mrg32k3a import MRG32k3a
 from base import Solution
 
 # Import problem.
+
+# from models.<filename> import <problem_class_name>
 # Replace <filename> with name of .py file containing problem class.
 # Replace <problem_class_name> with name of problem class.
-# Ex: from models.cntnv import CntNVMaxProfit
-from models.<filename> import <problem_class_name>
 
 # Fix factors of problem. Specify a dictionary of factors.
+
+# fixed_factors = {}  # Resort to all default values.
 # Look at Problem class definition to get names of factors.
-# Ex: for the CntNVMaxProfit class,
-#     fixed_factors = {"initial_solution": (2,),
-#                      "budget": 500}
-fixed_factors = {}  # Resort to all default values.
 
 # Initialize an instance of the specified problem class.
+
+# myproblem = <problem_class_name>(fixed_factors=fixed_factors)
 # Replace <problem_class_name> with name of problem class.
-# Ex: myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-myproblem = <problem_class_name>(fixed_factors=fixed_factors)
 
 # Initialize a solution x corresponding to the problem.
+
+# x = (,)
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
-# Ex: for the CntNVMaxProfit class
-#     x = (3,)
-x = (,)
+
 # The following line does not need to be changed.
-mysolution = Solution(x, myproblem)
-
-# Working example for CntNVMaxProfit problem. (Commented out)
-# -----------------------------------------------
-# from models.cntnv import CntNVMaxProfit
-# fixed_factors = {"initial_solution": (2,), "budget": 500}
-# myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-# x = (3,)
 # mysolution = Solution(x, myproblem)
+
+# Working example for CntNVMaxProfit problem.
+# -----------------------------------------------
+from models.cntnv import CntNVMaxProfit
+fixed_factors = {"initial_solution": (2,), "budget": 500}
+myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+x = (3,)
+mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
-# Another working example for CntNVMaxProfit problem. (Commented out)
+# Another working example for FacilitySizingTotalCost problem. (Commented out)
 # This example has stochastic constraints.
 # -----------------------------------------------
 # from models.facilitysizing import FacilitySizingTotalCost
@@ -72,7 +70,7 @@ mysolution.attach_rngs(rng_list, copy=False)
 n_reps = 10
 myproblem.simulate(mysolution, m=n_reps)
 
-# Print results to terminal.
+# Print results to console.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")
 print(f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with standard error {round(mysolution.objectives_stderr[0], 4)}.")
 print("The individual responses were:")
@@ -87,5 +85,4 @@ if myproblem.n_stochastic_constraints > 0:
             print(f"\t\t {round(mysolution.stoch_constraints[idx][stc_idx], 4)}")
 else:
     print("\nThis problem has no stochastic constraints.")
-
-# TO DO: Print results for gradients.
+# TODO: Print results for gradients.

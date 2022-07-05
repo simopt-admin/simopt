@@ -16,28 +16,22 @@ from rng.mrg32k3a import MRG32k3a
 # from models.<filename> import <model_class_name>
 # Replace <filename> with name of .py file containing model class.
 # Replace <model_class_name> with name of model class.
-# Ex:
-from models.mm1queue import MM1Queue
 
 # Fix factors of model. Specify a dictionary of factors.
+
+# fixed_factors = {}  # Resort to all default values.
 # Look at Model class definition to get names of factors.
-# Ex: for the MM1Queue class,
-#     fixed_factors = {"lambda": 3.0,
-#                      "mu": 8.0}
-fixed_factors = {}  # Resort to all default values.
 
 # Initialize an instance of the specified model class.
 
 # mymodel = <model_class_name>(fixed_factors)
 # Replace <model_class_name> with name of model class.
-mymodel = MM1Queue(fixed_factors)
 
-
-# Working example for MM1 model. (Commented out)
+# Working example for MM1 model.
 # -----------------------------------------------
-# from models.mm1queue import MM1Queue
-# fixed_factors = {"lambda": 3.0, "mu": 8.0}
-# mymodel = MM1Queue(fixed_factors)
+from models.mm1queue import MM1Queue
+fixed_factors = {"lambda": 3.0, "mu": 8.0}
+mymodel = MM1Queue(fixed_factors)
 # -----------------------------------------------
 
 # The rest of this script requires no changes.

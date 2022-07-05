@@ -18,15 +18,18 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # See directory.py for more details.
 
 # Specify the names of the solver and problem to test.
-# These names are strings and should match those input to directory.py.
-# Ex:
-solver_name = "RNDSRCH"  # Random search solver
-#problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
-problem_name = "PARAMESTI-1"
+
 # solver_name = <solver_name>
 # problem_name = <problem_name>
-print(f"Testing solver {solver_name} on problem {problem_name}.")
+# These names are strings and should match those input to directory.py.
 
+# Example with random search solver on continuous newsvendor problem.
+# -----------------------------------------------
+solver_name = "RNDSRCH"  # Random search solver
+problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
+# -----------------------------------------------
+
+print(f"Testing solver {solver_name} on problem {problem_name}.")
 
 # Specify file path name for storing experiment outputs in .pickle file.
 file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
