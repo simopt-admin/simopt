@@ -4,6 +4,7 @@ Summary
 PGD
 projected gradient descent
 """
+from tkinter import N
 from sklearn.metrics import euclidean_distances
 from base import Solver
 from numpy.linalg import norm
@@ -53,7 +54,7 @@ class PGD(Solver):
     def __init__(self, name="PGD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -67,60 +68,78 @@ class PGD(Solver):
                 "datatype": int,
                 "default": 30
             },
-            "beta_1": {
-                "description": "Exponential decay of the rate for the first moment estimates.",
+            "theta": {
+                "description": "Constant in the Armijo condition.",
                 "datatype": int,
-                "default": 0.9
+                "default": 0.2
             },
-            "beta_2": {
-                "description": "Exponential decay rate for the second-moment estimates.",
+            "gamma": {
+                "description": "Constant for shrinking the step size.",
                 "datatype": int,
-                "default": 0.999
+                "default": 0.8
             },
-            "alpha": {
-                "description": "Step size.",
+            "alpha_max": {
+                "description": "Maximum step size.",
                 "datatype": int,
-                "default": 0.5 # Changing the step size matters a lot.
+                "default": 10
             },
-            "epsilon": {
-                "description": "A small value to prevent zero-division.",
+            "alpha_0": {
+                "description": "Initial step size.",
                 "datatype": int,
-                "default": 10**(-8)
+                "default": 1
+            },
+            "epsilon_f": {
+                "description": "Additive constant in the Armijo condition.",
+                "datatype": int,
+                "default": 1  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
             "sensitivity": {
-                "description": "shrinking scale for variable bounds.",
+                "description": "Shrinking scale for variable bounds.",
                 "datatype": float,
                 "default": 10**(-7)
-            }
+            },
+            "lambda": {
+                "description": "magnifying factor for n_r inside the finite difference function",
+                "datatype": int,
+                "default": 2
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
             "r": self.check_r,
-            "beta_1": self.check_beta_1,
-            "beta_2": self.check_beta_2,
-            "alpha": self.check_alpha,
-            "epsilon": self.check_epsilon,
-            "sensitivity": self.check_sensitivity
+            "theta": self.check_theta,
+            "gamma": self.check_gamma,
+            "alpha_max": self.check_alpha_max,
+            "alpha_0": self.check_alpha_0,
+            "epsilon_f": self.check_epsilon_f,
+            "sensitivity": self.check_sensitivity,
+            "lambda": self.check_lambda
         }
         super().__init__(fixed_factors)
 
     def check_r(self):
         return self.factors["r"] > 0
 
-    def check_beta_1(self):
-        return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+    def check_theta(self):
+        return self.factors["theta"] > 0 & self.factors["theta"] < 1
 
-    def check_beta_2(self):
-        return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
+    def check_gamma(self):
+        return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
 
-    def check_alpha(self):
-        return self.factors["alpha"] > 0
+    def check_alpha_max(self):
+        return self.factors["alpha_max"] > 0
 
-    def check_epsilon(self):
-        return self.factors["epsilon"] > 0
-    
+    def check_alpha_0(self):
+        return self.factors["alpha_0"] > 0
+
+    def check_epsilon_f(self):
+        return self.factors["epsilon_f"] > 0
+
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
+    
+    def check_lambda(self):
+        return self.factors["lambda"] > 0
 
     def solve(self, problem):
         """
@@ -146,14 +165,18 @@ class PGD(Solver):
 
         # Default values.
         r = self.factors["r"]
-        beta_1 = self.factors["beta_1"]
-        beta_2 = self.factors["beta_2"]
-        alpha = self.factors["alpha"]
-        epsilon = self.factors["epsilon"]
+        theta = self.factors["theta"]
+        gamma = self.factors["gamma"]
+        alpha_max = self.factors["alpha_max"]
+        alpha_0 = self.factors["alpha_0"]
+        epsilon_f = self.factors["epsilon_f"]
 
         # Shrink the bounds to prevent floating errors.
         lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
         upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+
+        # Initialize stepsize.
+        alpha = alpha_0
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
@@ -163,61 +186,73 @@ class PGD(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        # Initialize the first moment vector, the second moment vector, and the timestep.
-        m = np.zeros(problem.dim)
-        v = np.zeros(problem.dim)
-        t = 0
-
         while expended_budget < problem.factors["budget"]:
-            # Update timestep.
-            t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
             forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
             backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
+
             if problem.gradient_available:
-                grad = problem.minmax *(new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+                # Use IPA gradient if available.
+                grad = -1 * problem.minmax[0] * (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
             else:
-            # Use finite difference to estimate gradient if gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem)
+                # Use finite difference to estimate gradient if IPA gradient is not available.
+                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-            # Convert new_x from tuple to list
-            new_x = list(new_x)
+                # A while loop to prevent zero gradient
+                while np.all((grad == 0)):
+                    if expended_budget > problem.factors["budget"]:
+                        break
+                    grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                    expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                    # Update r after each iteration.
+                    r = int(self.factors["lambda"] * r)
+
+            # Get the projected gradient.
+            proj_grad = self.project_grad(grad)
+
+            # Adjust the step size to respect box constraints if necessary.
+            temp_steps = list()
+            for i in problem.dim:
+                temp_x = new_x[i] - alpha * proj_grad[i]
+                if temp_x < lower_bound[i]:
+                    temp_steps.append((new_x[i] - lower_bound[i]) / proj_grad[i])
+                elif temp_x > upper_bound[i]:
+                    temp_steps.append((new_x[i] - upper_bound[i]) / proj_grad[i])
             
-            # Loop through all the dimensions.
-            for i in range(problem.dim): 
-                # Update biased first moment estimate.
-                m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
-                # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
-                # Compute bias-corrected first moment estimate.
-                mhat = m[i] / (1 - beta_1**t)
-                # Compute bias-corrected second raw moment estimate.
-                vhat = v[i] / (1 - beta_2**t)
-                # Update new_x.
-                new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
-            
-            # Project new_x to the probability simplex.
-            new_x = self.proj_prob_simplex(new_x, problem)
-                
-            # Create new solution based on new x
-            new_solution = self.create_new_solution(tuple(new_x), problem)
+            # Update alpha to be the maximum stepsize possible.
+            alpha = min(temp_steps)
+
+            # Calculate the candidate solution.
+            candidate_x = new_x - alpha * proj_grad
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(new_solution, r)
+            problem.simulate(candidate_solution, r)
             expended_budget += r
-            if (problem.minmax * new_solution.objectives_mean > problem.minmax * best_solution.objectives_mean):
+
+            # Check the modified Armijo condition for sufficient decrease.
+            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(proj_grad)**2 + 2 * epsilon_f):
+                # Successful step.
+                new_solution = candidate_solution
+                alpha = min(alpha_max, alpha / gamma)
+            else:
+                # Unsuccessful step.
+                new_solution = candidate_solution
+                alpha = gamma * alpha
+            
+            # Append new solution.
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-            
+
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(self, new_solution, BdsCheck, problem):
-        r = self.factors['r']
-        alpha = self.factors['alpha']
+    def finite_diff(self, new_solution, BdsCheck, problem, stepsize, r):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
@@ -231,9 +266,9 @@ class PGD(Solver):
             x1 = list(new_x)
             x2 = list(new_x)
             # Forward stepsize.
-            steph1 = alpha
+            steph1 = stepsize
             # Backward stepsize.
-            steph2 = alpha
+            steph2 = stepsize
 
             # Check variable bounds.
             if x1[i] + steph1 > upper_bound[i]:
@@ -251,7 +286,7 @@ class PGD(Solver):
             elif BdsCheck[i] == 1:
                 FnPlusMinus[i, 2] = steph1
                 x1[i] = x1[i] + FnPlusMinus[i, 2]
-            # Backward diff
+            # Backward diff.
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
@@ -277,7 +312,7 @@ class PGD(Solver):
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
 
         return grad
-    
+
     # Euclidean projection of a vector onto the probability simplex.
     # Referencing Wang and Carreira-Perpinan (2013)
     def proj_prob_simplex(self, x, problem):
@@ -292,5 +327,18 @@ class PGD(Solver):
                 j -= 1
         lam = 1 / rho * (1 - sum(sorted_x[:rho]))
         return [max(i + lam, 0) for i in x]
+    
+    
+    def project_grad(self, grad):
+        """
+        Project the gradient onto the hyperplane H: sum{x_i} = 0.
+        """
+        n = len(grad)
+        # Generate the projection matrix.
+        proj_mat = np.identity(n) - 1/n * np.ones((n, n))
+        # Perform the projection.
+        proj_grad = np.matmul(proj_mat, grad)
+        return proj_grad
+
         
 

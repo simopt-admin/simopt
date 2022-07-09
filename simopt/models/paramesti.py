@@ -253,7 +253,7 @@ class ParamEstiMinLogLik(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["x"])
+        vector = (factor_dict["x"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):

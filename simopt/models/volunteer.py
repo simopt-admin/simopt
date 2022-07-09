@@ -110,7 +110,7 @@ class Volunteer(Model):
     def check_square_length(self):
         return self.factors["square_length"] > 0
     
-    def chekc_num_OHCA(self):
+    def check_num_OHCA(self):
         return self.factors["num_OHCA"] > 0
 
     def replicate(self, rng_list):
@@ -303,7 +303,7 @@ class VolunteerDist(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 1000
             },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",

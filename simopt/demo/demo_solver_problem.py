@@ -24,8 +24,8 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Ex:
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
-solver_name = "ALOE"  
-problem_name = "SAN-1"
+solver_name = "PGD"  
+problem_name = "VOLUNTEER-1"
 
 # solver_name = <solver_name>
 # problem_name = <problem_name>

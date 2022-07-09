@@ -258,7 +258,7 @@ class DynamNewsMaxProfit(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -274,7 +274,7 @@ class DynamNewsMaxProfit(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 10000
             }
         }
         self.check_factor_list = {
@@ -322,7 +322,7 @@ class DynamNewsMaxProfit(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["init_level"])
+        vector = (factor_dict["init_level"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):

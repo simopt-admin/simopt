@@ -97,7 +97,12 @@ class ALOE(Solver):
                 "description": "Shrinking scale for variable bounds.",
                 "datatype": float,
                 "default": 10**(-7)
-            }
+            },
+            "lambda": {
+                "description": "magnifying factor for n_r inside the finite difference function",
+                "datatype": int,
+                "default": 2
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -107,7 +112,8 @@ class ALOE(Solver):
             "alpha_max": self.check_alpha_max,
             "alpha_0": self.check_alpha_0,
             "epsilon_f": self.check_epsilon_f,
-            "sensitivity": self.check_sensitivity
+            "sensitivity": self.check_sensitivity,
+            "lambda": self.check_lambda
         }
         super().__init__(fixed_factors)
 
@@ -131,6 +137,9 @@ class ALOE(Solver):
 
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
+    
+    def check_lambda(self):
+        return self.factors["lambda"] > 0
 
     def solve(self, problem):
         """
@@ -190,8 +199,16 @@ class ALOE(Solver):
                 grad = -1 * problem.minmax[0] * (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                # A while loop to prevent zero gradient
+                while np.all((grad == 0)):
+                    if expended_budget > problem.factors["budget"]:
+                        break
+                    grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                    expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                    # Update r after each iteration.
+                    r = int(self.factors["lambda"] * r)
 
             # Calculate the candidate solution and adjust the solution to respect box constraints.
             candidate_x = list()
@@ -214,7 +231,7 @@ class ALOE(Solver):
                 alpha = gamma * alpha
 
             # Append new solution.
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean and True):
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -222,8 +239,7 @@ class ALOE(Solver):
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(self, new_solution, BdsCheck, problem, stepsize):
-        r = self.factors['r']
+    def finite_diff(self, new_solution, BdsCheck, problem, stepsize, r):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
