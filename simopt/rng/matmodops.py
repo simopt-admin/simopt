@@ -7,18 +7,18 @@ Useful matrix/modulus operations for mrg32k3a generator.
 
 
 def mat33_mat31_mult(A, b):
-    """Multiply a 3x3 matrix with a 3x1 matrix.
+    """Multiply a 3 x 3 matrix with a 3 x 1 matrix.
 
     Parameters
     ----------
-    A : `list` [`list` [`float`]]
+    A : list [list [float]]
         3 x 3 matrix.
-    b : `list` [`float`]
+    b : list [float]
         3 x 1 matrix.
 
     Returns
     -------
-    res : `list` [`float`]
+    res : list [float]
         3 x 1 matrix.
     """
     res = [0, 0, 0]
@@ -33,14 +33,14 @@ def mat33_mat33_mult(A, B):
 
     Parameters
     ----------
-    A : `list` [`list` [`float`]]
+    A : list [list [float]]
         3 x 3 matrix.
-    B : `list` [`list` [`float`]]
+    B : list [list [float]]
         3 x 3 matrix.
 
     Returns
     -------
-    res : `list` [`float`]
+    res : list [float]
         3 x 3 matrix.
     """
     res = [[0, 0, 0],
@@ -55,18 +55,18 @@ def mat33_mat33_mult(A, B):
 
 
 def mat31_mod(b, m):
-    """Compute moduli of a 3x1 matrix.
+    """Compute moduli of a 3 x 1 matrix.
 
     Parameters
     ----------
-    b : `list` [`float`]
+    b : list [float]
         3 x 1 matrix.
-    m : `float`
+    m : float
         Modulus.
 
     Returns
     -------
-    res : `list` [`float`]
+    res : list [float]
         3 x 1 matrix.
     """
     res = [0, 0, 0]
@@ -79,18 +79,18 @@ def mat31_mod(b, m):
 
 
 def mat33_mod(A, m):
-    """Compute moduli of a 3x3 matrix.
+    """Compute moduli of a 3 x 3 matrix.
 
     Parameters
     ----------
-    A : `list` [`float`]
+    A : list [float]
         3 x 3 matrix.
-    m : `float`
+    m : float
         Modulus.
 
     Returns
     -------
-    res : `list` [`float`]
+    res : list [float]
         3 x 3 matrix.
     """
     res = [[0, 0, 0],
@@ -108,20 +108,20 @@ def mat33_mod(A, m):
 
 
 def mat33_mat33_mod(A, B, m):
-    """Compute moduli of a 3x3 matrix x 3x3 matrix product.
+    """Compute moduli of a 3 x 3 matrix x 3 x 3 matrix product.
 
     Parameters
     ----------
-    A : `list` [`list` [`float`]]
+    A : list [list [float]]
         3 x 3 matrix.
-    B : `list` [`list` [`float`]]
+    B : list [list [float]]
         3 x 3 matrix.
-    m : `float`
+    m : float
         Modulus.
 
     Returns
     -------
-    res : `list` [`list` [`float`]]
+    res : list [list [float]]
         3 x 3 matrix.
     """
     C = mat33_mat33_mult(A, B)
@@ -130,21 +130,21 @@ def mat33_mat33_mod(A, B, m):
 
 
 def mat33_power_mod(A, j, m):
-    """Compute moduli of a 3x3 matrix power.
+    """Compute moduli of a 3 x 3 matrix power.
     Use divide-and-conquer algorithm described in L'Ecuyer (1990).
 
     Parameters
     ----------
-    A : `list` [`list` [`float`]]
+    A : list [list [float]]
         3 x 3 matrix.
-    j : `int`
+    j : int
         Exponent.
-    m : `float`
+    m : float
         Modulus.
 
     Returns
     -------
-    res : `list` [`list` [`float`]]
+    res : list [list [float]]
         3 x 3 matrix.
     """
     B = [[1, 0, 0],
