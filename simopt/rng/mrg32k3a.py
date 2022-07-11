@@ -232,10 +232,10 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        _current_state : tuple [int]
-            Current state of the generator.
-        random.Random.getstate() : tuple [int]
-            Ouptput of ``random.getstate``.
+        tuple [int]
+            Current state of the generator, ``_current_state``.
+        tuple [int]
+            Ouptput of ``random.Random.getstate()``.
 
         See also
         --------
@@ -250,7 +250,6 @@ class MRG32k3a(random.Random):
         ----------
         state : tuple
             ``state[0]`` is new state for the generator.
-
             ``state[1]`` is ``random.Random.getstate()``.
 
         See also
@@ -339,8 +338,10 @@ class MRG32k3a(random.Random):
             Covariance matrix of the multivariate normal distribution
             from which to generate.
         factorized : bool
-            False : need to calculate chol based on covariance.
-            True : do not need to calculate chol since we already have it.
+            True if we do not need to calculate Cholesky decomposition,
+            i.e., if Cholesky decomposition is given as ``cov``;
+            False otherwise.
+        
         Returns
         -------
         list [float]
@@ -413,7 +414,7 @@ class MRG32k3a(random.Random):
         summation : int
             Number to which the integer elements of the vector must sum.
         with_zero: bool
-            Equals True if zeros in the vector are permitted. Otherwise False.
+            True if zeros in the vector are permitted; False otherwise.
 
         Returns
         -------
@@ -448,18 +449,18 @@ class MRG32k3a(random.Random):
         specified number.
 
         Parameters
-        ---------
+        ----------
         n_elements : float
             Number of elements in the requested vector.
-        summation : int
+        summation : int, optional
             Number to which the integer elements of the vector must sum.
-        exact_sum : bool
-            Equals True if the sum should be equal to summation.
-            Equals False if the sum should be less than or equal to summation.
+        exact_sum : bool, optional
+            True if the sum should be equal to summation;
+            False if the sum should be less than or equal to summation.
 
         Returns
         -------
-        vec : list of float
+        vec : list [float]
             Vector of ``n_elements`` non-negative real-valued numbers that
             sum up to (or less than or equal to) ``summation``.
         """
