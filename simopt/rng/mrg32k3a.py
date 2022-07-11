@@ -2,7 +2,7 @@
 """
 Summary
 -------
-Provide a subclass of random.Random using mrg32k3a as the generator
+Provide a subclass of ``random.Random`` using mrg32k3a as the generator
 with stream/substream/subsubstream support.
 """
 
@@ -89,14 +89,14 @@ def mrg32k3a(state):
 
     Parameters
     ----------
-    state : `tuple` [`int`]
+    state : tuple [int]
         Current state of the generator.
 
     Returns
     -------
-    new_state : `tuple` [`int`]
+    new_state : tuple [int]
         Next state of the generator.
-    u : `float`
+    u : float
         Pseudo uniform random variate.
     """
     # Component 1.
@@ -126,12 +126,12 @@ def bsm(u):
 
     Parameters
     ----------
-    u : `float`
+    u : float
         Probability value for the desired quantile (between 0 and 1).
 
     Returns
     -------
-    z : `float`
+    z : float
         Corresponding quantile of the standard normal distribution.
     """
     y = u - 0.5
@@ -171,25 +171,25 @@ class MRG32k3a(random.Random):
 
     Attributes
     ----------
-    _current_state : `tuple` [`int`]
+    _current_state : tuple [int]
         Current state of mrg32k3a generator.
-    ref_seed : `tuple` [`int`]
+    ref_seed : tuple [int]
         Seed from which to start the generator.
         Streams/substreams/subsubstreams are referenced w.r.t. ``ref_seed``.
-    s_ss_sss_index : `list` [`int`]
+    s_ss_sss_index : list [int]
         Triplet of the indices of the current stream-substream-subsubstream.
-    stream_start : `list` [`int`]
+    stream_start : list [int]
         State corresponding to the start of the current stream.
-    substream_start: `list` [`int`]
+    substream_start: list [int]
         State corresponding to the start of the current substream.
-    subsubstream_start: `list` [`int`]
+    subsubstream_start: list [int]
         State corresponding to the start of the current subsubstream.
 
     Parameters
     ----------
-    ref_seed : `tuple` [`int`], optional
+    ref_seed : tuple [int], optional
         Seed from which to start the generator.
-    s_ss_sss_index : `list` [`int`]
+    s_ss_sss_index : list [int], optional
         Triplet of the indices of the stream-substream-subsubstream to start at.
 
     See also
@@ -220,7 +220,7 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        new_state : `tuple` [`int`]
+        new_state : tuple [int]
             New state to which to advance the generator.
         """
         assert(len(new_state) == 6)
@@ -232,9 +232,9 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        _current_state : `tuple` [`int`]
+        _current_state : tuple [int]
             Current state of the generator.
-        random.Random.getstate() : `tuple` [`int`]
+        random.Random.getstate() : tuple [int]
             Ouptput of ``random.getstate``.
 
         See also
@@ -248,8 +248,9 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        state : `tuple`
+        state : tuple
             ``state[0]`` is new state for the generator.
+
             ``state[1]`` is ``random.Random.getstate()``.
 
         See also
@@ -265,7 +266,7 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        u : `float`
+        u : float
             Pseudo uniform random variate.
         """
         state = self._current_state
@@ -278,7 +279,7 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        _current_state : `tuple` [`int`]
+        _current_state : tuple [int]
             Current state of the generator.
         """
         return self._current_state
@@ -288,16 +289,16 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        mu : `float`
+        mu : float
             Expected value of the normal distribution from which to
             generate.
-        sigma : `float`
+        sigma : float
             Standard deviation of the normal distribution from which to
             generate.
 
         Returns
         -------
-        `float`
+        float
             A normal random variate from the specified distribution.
         """
         u = self.random()
@@ -309,16 +310,16 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        lq : `float`
+        lq : float
             2.5% quantile of the lognormal distribution from which to
             generate.
-        uq : `float`
+        uq : float
             97.5% quantile of the lognormal distribution from which to
             generate.
 
         Returns
         -------
-        `float`
+        float
             A lognormal random variate from the specified distribution.
         """
         mu = (log(lq) + log(uq)) / 2
@@ -331,18 +332,18 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        mean_vec : `array`
+        mean_vec : array
             Location parameters of the multivariate normal distribution
             from which to generate.
-        cov : `array`
+        cov : array
             Covariance matrix of the multivariate normal distribution
             from which to generate.
-        factorized : `bool`
+        factorized : bool
             False : need to calculate chol based on covariance.
             True : do not need to calculate chol since we already have it.
         Returns
         -------
-        `list` [`float`]
+        list [float]
             Multivariate normal random variate from the specified distribution.
         """
         n_cols = len(cov)
@@ -358,13 +359,13 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        lmbda : `float`
+        lmbda : float
             Expected value of the Poisson distribution from which to
             generate.
 
         Returns
         -------
-        `float`
+        float
             Poisson random variate from the specified distribution.
         """
         if lmbda < 35:
@@ -385,16 +386,16 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        mu : `float`
+        mu : float
             Location of the mode of the Gumbel distribution from which to
             generate.
-        beta : `float`
+        beta : float
             Scale parameter of the Gumbel distribution from which to
             generate.
 
         Returns
         -------
-        `float`
+        float
             Gumbel random variate from the specified distribution.
         """
         u = self.random()
@@ -407,11 +408,11 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        n_elements : `float`
+        n_elements : float
             Number of elements in the requested vector.
-        summation : `int`
+        summation : int
             Number to which the integer elements of the vector must sum.
-        with_zero: `bool`
+        with_zero: bool
             Equals True if zeros in the vector are permitted. Otherwise False.
 
         Returns
@@ -448,11 +449,11 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        n_elements : `float`
+        n_elements : float
             Number of elements in the requested vector.
-        summation : `int`
+        summation : int
             Number to which the integer elements of the vector must sum.
-        exact_sum : `bool`
+        exact_sum : bool
             Equals True if the sum should be equal to summation.
             Equals False if the sum should be less than or equal to summation.
 
@@ -590,7 +591,7 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        s_ss_sss_triplet : `list` [`int`]
+        s_ss_sss_triplet : list [int]
             Triplet of the indices of the current stream-substream-subsubstream.
         """
         state = self.ref_seed
