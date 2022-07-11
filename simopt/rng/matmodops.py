@@ -3,15 +3,6 @@
 Summary
 -------
 Useful matrix/modulus operations for mrg32k3a generator.
-
-Listing
--------
-mat33_mat31_mult
-mat33_mat33_mult
-mat31_mod
-mat33_mod
-mat33_mat33_mod
-mat33_power_mod
 """
 
 
@@ -20,14 +11,14 @@ def mat33_mat31_mult(A, b):
 
     Parameters
     ----------
-    A : 'list' ['list' ['float']]
+    A : `list` [`list` [`float`]]
         3x3 matrix.
-    b : 'list' ['float']
+    b : `list` [`float`]
         3x1 matrix.
 
     Returns
     -------
-    res : 'list' ['float']
+    res : `list` [`float`]
         3x1 matrix.
     """
     res = [0, 0, 0]
@@ -42,15 +33,15 @@ def mat33_mat33_mult(A, B):
 
     Parameters
     ----------
-    A : 'list' ['list' ['float']]
-        3x3 matrix.
-    B : 'list' ['list' ['float']]
-        3x3 matrix.
+    A : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
+    B : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
 
     Returns
     -------
-    res : 'list' ['float']
-        3x3 matrix.
+    res : `list` [`float`]
+        A 3 x 3 matrix.
     """
     res = [[0, 0, 0],
            [0, 0, 0],
@@ -68,15 +59,15 @@ def mat31_mod(b, m):
 
     Parameters
     ----------
-    b : 'list' ['float']
-        3x1 matrix.
-    m : 'float'
-        modulus.
+    b : `list` [`float`]
+        A 3 x 1 matrix.
+    m : `float`
+        A modulus.
 
     Returns
     -------
-    res : 'list' ['float']
-        3x1 matrix.
+    res : `list` [`float`]
+        A 3 x 1 matrix.
     """
     res = [0, 0, 0]
     for i in range(3):
@@ -92,15 +83,15 @@ def mat33_mod(A, m):
 
     Parameters
     ----------
-    A : 'list' ['float']
-        3x3 matrix.
-    m : 'float'
-        modulus.
+    A : `list` [`float`]
+        A 3 x 3 matrix.
+    m : `float`
+        A modulus.
 
     Returns
     -------
-    res : 'list' ['float']
-        3x3 matrix.
+    res : `list` [`float`]
+        A 3 x 3 matrix.
     """
     res = [[0, 0, 0],
            [0, 0, 0],
@@ -121,17 +112,17 @@ def mat33_mat33_mod(A, B, m):
 
     Parameters
     ----------
-    A : 'list' ['list' ['float']]
-        3x3 matrix.
-    B : 'list' ['list' ['float']]
-        3x3 matrix.
-    m : 'float'
-        modulus.
+    A : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
+    B : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
+    m : `float`
+        A modulus.
 
     Returns
     -------
-    res : 'list' ['list' ['float']]
-        3x3 matrix.
+    res : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
     """
     C = mat33_mat33_mult(A, B)
     res = mat33_mod(C, m)
@@ -144,16 +135,16 @@ def mat33_power_mod(A, j, m):
 
     Parameters
     ----------
-    A : 'list' ['list' ['float']]
-        3x3 matrix.
-    j : 'int'
-        exponent.
-    m : 'float'
-        modulus.
+    A : `list` [`list` [`float`]]
+        A 3 x 3 matrix.
+    j : `int`
+        An exponent.
+    m : `float`
+        A modulus.
 
     Returns
     -------
-    res : 'list' ['list' ['float']]
+    res : `list` [`list` [`float`]]
         3x3 matrix.
     """
     B = [[1, 0, 0],
