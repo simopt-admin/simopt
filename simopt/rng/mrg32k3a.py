@@ -4,17 +4,6 @@ Summary
 -------
 Provide a subclass of random.Random using mrg32k3a as the generator
 with stream/substream/subsubstream support.
-
-Listing
--------
-MRG32k3a : class
-advance_stream : method
-advance_substream : method
-advance_subsubstream : method
-reset_stream : method
-reset_substream : method
-reset_subsubstream : method
-start_fixed_s_ss_sss : method
 """
 
 # Code largely adopted from PyMOSO repository (https://github.com/pymoso/PyMOSO).
@@ -100,15 +89,15 @@ def mrg32k3a(state):
 
     Parameters
     ----------
-    state : 'tuple' ['int']
-        current state of the generator.
+    state : `tuple` [`int`]
+        Current state of the generator.
 
     Returns
     -------
-    new_state : 'tuple' ['int']
-        next state of the generator.
-    u : 'float'
-        pseudo uniform random variate.
+    new_state : `tuple` [`int`]
+        Next state of the generator.
+    u : `float`
+        Pseudo uniform random variate.
     """
     # Component 1.
     p1 = mrga12 * state[1] - mrga13n * state[0]
@@ -137,12 +126,13 @@ def bsm(u):
 
     Parameters
     ----------
-    u : 'float'
-        probability value for the desired quantile (between 0 and 1).
+    u : `float`
+        Probability value for the desired quantile (between 0 and 1).
 
     Returns
     -------
-    z : 'float'
+    z : `float`
+        Corresponding quantile of the standard normal distribution.
     """
     y = u - 0.5
     if abs(y) < 0.42:
@@ -177,35 +167,36 @@ def bsm(u):
 
 
 class MRG32k3a(random.Random):
-    """Implements mrg32k3a as the generator for a random.Random object.
+    """Implements mrg32k3a as the generator for a ``random.Random`` object.
 
     Attributes
     ----------
-    _current_state : 'tuple' ['int']
-        current state of mrg32k3a generator.
-    ref_seed : 'tuple' ['int']
-        seed from which to start the generator
-        streams/substreams/subsubstreams are referenced w.r.t. ref_seed.
-    s_ss_sss_index : 'list' ['int']
-        triplet of the indices of the current stream-substream-subsubstream.
-    stream_start : 'list' ['int']
-        state corresponding to the start of the current stream.
-    substream_start: 'list' ['int']
-        state corresponding to the start of the current substream.
-    subsubstream_start: 'list' ['int']
-        state corresponding to the start of the current subsubstream.
+    _current_state : `tuple` [`int`]
+        Current state of mrg32k3a generator.
+    ref_seed : `tuple` [`int`]
+        Seed from which to start the generator.
+        Streams/substreams/subsubstreams are referenced w.r.t. ``ref_seed``.
+    s_ss_sss_index : `list` [`int`]
+        Triplet of the indices of the current stream-substream-subsubstream.
+    stream_start : `list` [`int`]
+        State corresponding to the start of the current stream.
+    substream_start: `list` [`int`]
+        State corresponding to the start of the current substream.
+    subsubstream_start: `list` [`int`]
+        State corresponding to the start of the current subsubstream.
 
     Parameters
     ----------
-    ref_seed : 'tuple' ['int'], optional
-        seed from which to start the generator.
-    s_ss_sss_index : 'list' ['int']
-        triplet of the indices of the stream-substream-subsubstream to start at.
+    ref_seed : `tuple` [`int`], optional
+        Seed from which to start the generator.
+    s_ss_sss_index : `list` [`int`]
+        Triplet of the indices of the stream-substream-subsubstream to start at.
 
     See also
     --------
     random.Random
     """
+
     def __init__(self, ref_seed=(12345, 12345, 12345, 12345, 12345, 12345), s_ss_sss_index=None):
         assert(len(ref_seed) == 6)
         self.version = 2
@@ -229,8 +220,8 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        new_state : 'tuple' ['int']
-            new state to which to advance the generator.
+        new_state : `tuple` [`int`]
+            New state to which to advance the generator.
         """
         assert(len(new_state) == 6)
         self._current_state = new_state
@@ -241,10 +232,10 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        _current_state : 'tuple' ['int']
-            current state of the generator.
-        random.Random.getstate() : 'tuple' ['int']
-            Random.getstate output.
+        _current_state : `tuple` [`int`]
+            Current state of the generator.
+        random.Random.getstate() : `tuple` [`int`]
+            Ouptput of ``random.getstate``.
 
         See also
         --------
@@ -257,9 +248,9 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        state : 'tuple'
-            ''state[0]'' is new state for the generator.
-            ''state[1]'' is random.Random.getstate().
+        state : `tuple`
+            ``state[0]`` is new state for the generator.
+            ``state[1]`` is ``random.Random.getstate()``.
 
         See also
         --------
@@ -274,8 +265,8 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        u : 'float'
-            pseudo uniform random variate.
+        u : `float`
+            Pseudo uniform random variate.
         """
         state = self._current_state
         new_state, u = self.generate(state)
@@ -287,8 +278,8 @@ class MRG32k3a(random.Random):
 
         Returns
         -------
-        _current_state : 'tuple' ['int']
-            current state of the generator.
+        _current_state : `tuple` [`int`]
+            Current state of the generator.
         """
         return self._current_state
 
@@ -297,17 +288,17 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        mu : 'float'
-            expected value of the normal distribution from which to
+        mu : `float`
+            Expected value of the normal distribution from which to
             generate.
-        sigma : 'float'
-            standard deviation of the normal distribution from which to
+        sigma : `float`
+            Standard deviation of the normal distribution from which to
             generate.
 
         Returns
         -------
-        'float'
-            a normal random variate from the specified distribution.
+        `float`
+            A normal random variate from the specified distribution.
         """
         u = self.random()
         z = bsm(u)
@@ -318,17 +309,17 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        lq : 'float'
+        lq : `float`
             2.5% quantile of the lognormal distribution from which to
             generate.
-        uq : 'float'
+        uq : `float`
             97.5% quantile of the lognormal distribution from which to
             generate.
 
         Returns
         -------
-        'float'
-            a lognormal random variate from the specified distribution.
+        `float`
+            A lognormal random variate from the specified distribution.
         """
         mu = (log(lq) + log(uq)) / 2
         sigma = (log(uq) - mu) / 1.96
@@ -340,19 +331,19 @@ class MRG32k3a(random.Random):
 
         Parameters
         ---------
-        mean_vec : 'array'
-            location parameters of the multivariate normal distribution
+        mean_vec : `array`
+            Location parameters of the multivariate normal distribution
             from which to generate.
-        cov : 'array'
-            covariance matrix of the multivariate normal distribution
+        cov : `array`
+            Covariance matrix of the multivariate normal distribution
             from which to generate.
-        factorized : 'bool'
-            False : need to calculate chol based on covariance
+        factorized : `bool`
+            False : need to calculate chol based on covariance.
             True : do not need to calculate chol since we already have it.
         Returns
         -------
-        'list' ['float']
-            a normal random multivariate from the specified distribution.
+        `list` [`float`]
+            Multivariate normal random variate from the specified distribution.
         """
         n_cols = len(cov)
         if not factorized:
@@ -363,18 +354,18 @@ class MRG32k3a(random.Random):
         return Chol.dot(observations).transpose() + mean_vec
 
     def poissonvariate(self, lmbda):
-        """Generate a poisson random variate.
+        """Generate a Poisson random variate.
 
         Parameters
         ---------
-        lmbda : 'float'
-            expected value of the poisson distribution from which to
+        lmbda : `float`
+            Expected value of the Poisson distribution from which to
             generate.
 
         Returns
         -------
-        'float'
-            a poisson random variate from the specified distribution.
+        `float`
+            Poisson random variate from the specified distribution.
         """
         if lmbda < 35:
             n = 0
@@ -390,44 +381,43 @@ class MRG32k3a(random.Random):
         return n
 
     def gumbelvariate(self, mu, beta):
-        """Generate a gumbel random variate.
+        """Generate a Gumbel random variate.
 
         Parameters
         ---------
-        mu : 'float'
-            location of the mode of the gumbel distribution from which to
+        mu : `float`
+            Location of the mode of the Gumbel distribution from which to
             generate.
-        beta : 'float'
-            scale parameter of the gumbel distribution from which to
+        beta : `float`
+            Scale parameter of the Gumbel distribution from which to
             generate.
 
         Returns
         -------
-        'float'
-            a gumbel random variate from the specified distribution.
+        `float`
+            Gumbel random variate from the specified distribution.
         """
         u = self.random()
         q = mu - beta * np.log(-np.log(u))
         return q
 
     def integer_random_vector_from_simplex(self, n_elements, summation, with_zero=False):
-        """
-        Generate a random vector with a specified number of non-negative integer
+        """Generate a random vector with a specified number of non-negative integer
         elements that sum up to a specified number.
 
         Parameters
         ---------
-        n_elements : 'float'
-            the number of elements in the requested vector.
-        summation : 'int'
-            number to which the integer elements of the vector must sum.
-        with_zero: 'bool'
-            equals True if zeros in the vector are permitted. Otherwise False.
+        n_elements : `float`
+            Number of elements in the requested vector.
+        summation : `int`
+            Number to which the integer elements of the vector must sum.
+        with_zero: `bool`
+            Equals True if zeros in the vector are permitted. Otherwise False.
 
         Returns
         -------
         vec: list of int
-            a non-negative integer vector of length n_elements that sum to n_elements.
+            A non-negative integer vector of length n_elements that sum to n_elements.
         """
         if with_zero is False:
             if n_elements > summation:
@@ -452,26 +442,25 @@ class MRG32k3a(random.Random):
         return vec
 
     def continuous_random_vector_from_simplex(self, n_elements, summation=1, exact_sum=True):
-        """
-        Generate a random vector with a specified number of non-negative
+        """Generate a random vector with a specified number of non-negative
         real-valued elements that sum up to (or less than or equal to) a
         specified number.
 
         Parameters
         ---------
-        n_elements : 'float'
-            the number of elements in the requested vector.
-        summation : 'int'
-            number to which the integer elements of the vector must sum.
-        exact_sum : 'bool'
-            equals True if the sum should be equal to summation.
-            equals False if the sum should be less than or equal to summation.
+        n_elements : `float`
+            Number of elements in the requested vector.
+        summation : `int`
+            Number to which the integer elements of the vector must sum.
+        exact_sum : `bool`
+            Equals True if the sum should be equal to summation.
+            Equals False if the sum should be less than or equal to summation.
 
         Returns
         -------
         vec : list of float
-            a vector of "n_elements" non-negative real-valued numbers that
-            sum up to (or less than or equal to) "summation."
+            Vector of ``n_elements`` non-negative real-valued numbers that
+            sum up to (or less than or equal to) ``summation``.
         """
         if exact_sum is True:
             # Generate a vector of length n_elements of i.i.d. Exponential(1)
@@ -601,8 +590,8 @@ class MRG32k3a(random.Random):
 
         Parameters
         ----------
-        s_ss_sss_triplet : 'list' ['int']
-            triplet of the indices of the current stream-substream-subsubstream.
+        s_ss_sss_triplet : `list` [`int`]
+            Triplet of the indices of the current stream-substream-subsubstream.
         """
         state = self.ref_seed
         # Split the reference seed into 2 components of length 3.
