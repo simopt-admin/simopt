@@ -77,7 +77,7 @@ print("The individual responses were:")
 for idx in range(n_reps):
     print(f"\t {round(mysolution.objectives[idx][0], 4)}")
 if myproblem.n_stochastic_constraints > 0:
-    print(f"\nThis problem has {myproblem.n_stochastic_constraints} stochastic constraints of the form E[LHS] >= 0.")
+    print(f"\nThis problem has {myproblem.n_stochastic_constraints} stochastic constraints of the form E[LHS] <= 0.")
     for stc_idx in range(myproblem.n_stochastic_constraints):
         print(f"\tFor stochastic constraint #{stc_idx + 1}, the mean of the LHS was {round(mysolution.stoch_constraints_mean[stc_idx], 4)} with standard error {round(mysolution.stoch_constraints_stderr[stc_idx], 4)}.")
         print("\tThe individual LHSs were:")

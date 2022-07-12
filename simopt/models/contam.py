@@ -380,7 +380,7 @@ class ContaminationTotalCostDisc(Problem):
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+        of left-hand sides of stochastic constraints: E[Y] <= 0
 
         Arguments
         ---------
@@ -392,7 +392,8 @@ class ContaminationTotalCostDisc(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"])
+        under_control = response_dict["level"] <= self.factors["upper_thres"]
+        stoch_constraints = tuple([-z for z in under_control])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -411,7 +412,7 @@ class ContaminationTotalCostDisc(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = tuple(-np.ones(self.dim) + self.factors["error_prob"])
+        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
@@ -690,7 +691,7 @@ class ContaminationTotalCostCont(Problem):
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+        of left-hand sides of stochastic constraints: E[Y] <= 0
 
         Arguments
         ---------
@@ -702,7 +703,8 @@ class ContaminationTotalCostCont(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = tuple(response_dict["level"] <= self.factors["upper_thres"])
+        under_control = response_dict["level"] <= self.factors["upper_thres"]
+        stoch_constraints = tuple([-z for z in under_control])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -721,7 +723,7 @@ class ContaminationTotalCostCont(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = tuple(-np.ones(self.dim) + self.factors["error_prob"])
+        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
         det_stoch_constraints_gradients = ((0,),)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 

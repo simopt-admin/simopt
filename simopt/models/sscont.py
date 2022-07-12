@@ -443,7 +443,7 @@ class SSContMinCost(Problem):
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+        of left-hand sides of stochastic constraints: E[Y] <= 0
 
         Arguments
         ---------

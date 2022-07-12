@@ -117,7 +117,7 @@ class RandomSearch(Solver):
             # Also check for feasibility w.r.t. stochastic constraints.
             if (problem.minmax * new_solution.objectives_mean
                     > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] >= 0 for idx in range(problem.n_stochastic_constraints))):
+                    all(new_solution.stoch_constraints_mean[idx] <= 0 for idx in range(problem.n_stochastic_constraints))):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
