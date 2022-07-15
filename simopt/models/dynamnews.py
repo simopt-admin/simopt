@@ -274,7 +274,7 @@ class DynamNewsMaxProfit(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             }
         }
         self.check_factor_list = {

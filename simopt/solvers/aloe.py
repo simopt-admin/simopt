@@ -207,7 +207,7 @@ class ALOE(Solver):
                         break
                     grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-                    # Update r after each iteration.
+                    # Update sample size after each iteration.
                     r = int(self.factors["lambda"] * r)
 
             # Calculate the candidate solution and adjust the solution to respect box constraints.
