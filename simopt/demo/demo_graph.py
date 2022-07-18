@@ -38,12 +38,12 @@ from wrapper_base import Experiment, plot_area_scatterplots, post_normalize, plo
 # PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
-# PROBLEM = "SAN-1"
-# PROBLEM_FULL_NAME = "Stochastic Activity Network"
+PROBLEM = "SAN-1"
+PROBLEM_FULL_NAME = "Stochastic Activity Network"
 # PROBLEM = "MM1-1"
 # PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
-PROBLEM = "DYNAMNEWS-1"
-PROBLEM_FULL_NAME = "Dynamic Newsvendor"
+# PROBLEM = "DYNAMNEWS-1"
+# PROBLEM_FULL_NAME = "Dynamic Newsvendor"
 # PROBLEM = "IRONORECONT-1"
 # PROBLEM_FULL_NAME = "Continuous Iron Ore"
 
@@ -118,25 +118,25 @@ new_experiment.run(n_macroreps=10)
 new_experiment.post_replicate(n_postreps=100)
 experiments_same_problem.append(new_experiment)
 
-# # ADAM without true gradient
-# new_experiment = Experiment(solver_name="ADAM2",
-#                             problem_name=PROBLEM
-#                             )
-# # Run experiment with M = 10.
-# new_experiment.run(n_macroreps=10)
-# # Post replicate experiment with N = 100.
-# new_experiment.post_replicate(n_postreps=100)
-# experiments_same_problem.append(new_experiment)
+# ADAM without true gradient
+new_experiment = Experiment(solver_name="ADAM2",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
 
-# # ALOE without true gradient
-# new_experiment = Experiment(solver_name="ALOE2",
-#                             problem_name=PROBLEM
-#                             )
-# # Run experiment with M = 10.
-# new_experiment.run(n_macroreps=10)
-# # Post replicate experiment with N = 100.
-# new_experiment.post_replicate(n_postreps=100)
-# experiments_same_problem.append(new_experiment)
+# ALOE without true gradient
+new_experiment = Experiment(solver_name="ALOE2",
+                            problem_name=PROBLEM
+                            )
+# Run experiment with M = 10.
+new_experiment.run(n_macroreps=10)
+# Post replicate experiment with N = 100.
+new_experiment.post_replicate(n_postreps=100)
+experiments_same_problem.append(new_experiment)
 
 # Post-normalize experiments with L = 200.
 # Provide NO proxies for f(x0), f(x*), or f(x).
@@ -228,31 +228,31 @@ new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
-# # Load ADAM without true gradient results.
-# solver_rename = "ADAM2"
-# experiments_same_solver = []
-# problem_rename = PROBLEM
-# file_name = f"{solver_rename}_on_{problem_rename}"
-# # Load experiment.
-# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# # Rename problem and solver to produce nicer plot labels.
-# new_experiment.solver.name = "Adam w/o IPA grad"
-# new_experiment.problem.name = PROBLEM_FULL_NAME
-# experiments_same_solver.append(new_experiment)
-# experiments.append(experiments_same_solver)
+# Load ADAM without true gradient results.
+solver_rename = "ADAM2"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "Adam w/o IPA grad"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
 
-# # Load ALOE without true gradient results.
-# solver_rename = "ALOE2"
-# experiments_same_solver = []
-# problem_rename = PROBLEM
-# file_name = f"{solver_rename}_on_{problem_rename}"
-# # Load experiment.
-# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# # Rename problem and solver to produce nicer plot labels.
-# new_experiment.solver.name = "ALOE w/o IPA grad"
-# new_experiment.problem.name = PROBLEM_FULL_NAME
-# experiments_same_solver.append(new_experiment)
-# experiments.append(experiments_same_solver)
+# Load ALOE without true gradient results.
+solver_rename = "ALOE2"
+experiments_same_solver = []
+problem_rename = PROBLEM
+file_name = f"{solver_rename}_on_{problem_rename}"
+# Load experiment.
+new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# Rename problem and solver to produce nicer plot labels.
+new_experiment.solver.name = "ALOE w/o IPA grad"
+new_experiment.problem.name = PROBLEM_FULL_NAME
+experiments_same_solver.append(new_experiment)
+experiments.append(experiments_same_solver)
 
 
 # PLOTTING

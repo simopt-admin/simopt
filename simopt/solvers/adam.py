@@ -208,7 +208,6 @@ class ADAM(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

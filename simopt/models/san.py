@@ -1,7 +1,9 @@
 """
 Summary
 -------
-Simulate duration of stochastic activity network (SAN).
+Simulate duration of a stochastic activity network (SAN).
+A detailed description of the model/problem can be found
+`here <https://simopt.readthedocs.io/en/latest/san.html>`_.
 """
 import numpy as np
 
@@ -10,10 +12,9 @@ from base import Model, Problem
 
 class SAN(Model):
     """
-    A model that simulates a stochastic activity network problem with tasks
-    that have exponentially distributed durations, and the selected means
-    come with a cost.
-    Returns the optimal mean duration for each task.
+    A model that simulates a stochastic activity network problem with
+    tasks that have exponentially distributed durations, and the selected
+    means come with a cost.
 
     Attributes
     ----------
@@ -39,46 +40,67 @@ class SAN(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "SAN"
         self.n_rngs = 1
         self.n_responses = 1
         self.specifications = {
-            "num_arcs": {
-                "description": "Number of arcs.",
-                "datatype": int,
-                "default": 13
-            },
             "num_nodes": {
                 "description": "Number of nodes.",
                 "datatype": int,
                 "default": 9
             },
+            "arcs": {
+                "description": "List of arcs.",
+                "datatype": list,
+                "default": [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
+                            (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
+            },
             "arc_means": {
-                "description": "Initial solution of means.",
+                "description": "Mean task durations for each arc.",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
-            "num_arcs": self.check_num_arcs,
             "num_nodes": self.check_num_nodes,
+            "arcs": self.check_arcs,
             "arc_means": self.check_arc_means
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_num_arcs(self):
-        return self.factors["num_arcs"] > 0
-
     def check_num_nodes(self):
         return self.factors["num_nodes"] > 0
+
+    def dfs(self, graph, start, visited=None):
+        if visited is None:
+            visited = set()
+        visited.add(start)
+
+        for next in graph[start] - visited:
+            self.dfs(graph, next, visited)
+        return visited
+
+    def check_arcs(self):
+        if len(self.factors["arcs"]) <= 0:
+            return False
+        # Check graph is connected.
+        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        for a in self.factors["arcs"]:
+            graph[a[0]].add(a[1])
+        visited = self.dfs(graph, 1)
+        if self.factors["num_nodes"] in visited:
+            return True
+        return False
 
     def check_arc_means(self):
         positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & x > 0
-        return (len(self.factors["arc_means"]) != self.factors["num_arcs"]) & positive
+            positive = positive & (x > 0)
+        return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
 
     def replicate(self, rng_list):
         """
@@ -100,81 +122,60 @@ class SAN(Model):
         # Designate separate random number generators.
         exp_rng = rng_list[0]
 
+        # Topological sort.
+        graph_in = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph_out = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        for a in self.factors["arcs"]:
+            graph_in[a[1]].add(a[0])
+            graph_out[a[0]].add(a[1])
+        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
+        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
+        queue = []
+        topo_order = []
+        for n in range(self.factors["num_nodes"]):
+            if indegrees[n] == 0:
+                queue.append(n + 1)
+        while len(queue) != 0:
+            u = queue.pop(0)
+            topo_order.append(u)
+            for n in graph_out[u]:
+                indegrees[n - 1] -= 1
+                if indegrees[n - 1] == 0:
+                    queue.append(n)
+
         # Generate arc lengths.
+        arc_length = {}
+        for i in range(len(self.factors["arcs"])):
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
+
+        # Calculate the length of the longest path.
         T = np.zeros(self.factors["num_nodes"])
-        Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
-        thetas = list(self.factors["arc_means"])
-        arcs = [exp_rng.expovariate(1 / x) for x in thetas]
+        prev = np.zeros(self.factors["num_nodes"])
+        for i in range(1, self.factors["num_nodes"]):
+            vi = topo_order[i - 1]
+            for j in graph_out[vi]:
+                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
+                    T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+                    prev[j - 1] = vi
+        longest_path = T[self.factors["num_nodes"] - 1]
 
-        # Brute force calculation like in Matlab code
-        T[1] = T[0] + arcs[0]
-        Tderiv[1, :] = Tderiv[0, :]
-        Tderiv[1, 0] = Tderiv[1, 0] + arcs[0] / thetas[0]
-
-        T[2] = max(T[0] + arcs[1], T[1] + arcs[2])
-        if T[0] + arcs[1] > T[1] + arcs[2]:
-            T[2] = T[0] + arcs[1]
-            Tderiv[2, :] = Tderiv[0, :]
-            Tderiv[2, 1] = Tderiv[2, 1] + arcs[1] / thetas[1]
-        else:
-            T[2] = T[1] + arcs[2]
-            Tderiv[2, :] = Tderiv[1, :]
-            Tderiv[2, 2] = Tderiv[2, 2] + arcs[2] / thetas[2]
-
-        T[3] = T[1] + arcs[3]
-        Tderiv[3, :] = Tderiv[1, :]
-        Tderiv[3, 3] = Tderiv[3, 3] + arcs[3] / thetas[3]
-
-        T[4] = T[3] + arcs[6]
-        Tderiv[4, :] = Tderiv[3, :]
-        Tderiv[4, 6] = Tderiv[4, 6] + arcs[6] / thetas[6]
-
-        T[5] = max([T[1] + arcs[4], T[2] + arcs[5], T[4] + arcs[8]])
-        ind = np.argmax([T[1] + arcs[4], T[2] + arcs[5], T[4] + arcs[8]])
-
-        if ind == 1:
-            Tderiv[5, :] = Tderiv[1, :]
-            Tderiv[5, 4] = Tderiv[5, 4] + arcs[4] / thetas[4]
-        elif ind == 2:
-            Tderiv[5, :] = Tderiv[2, :]
-            Tderiv[5, 5] = Tderiv[5, 5] + arcs[5] / thetas[5]
-        else:
-            Tderiv[5, :] = Tderiv[4, :]
-            Tderiv[5, 8] = Tderiv[5, 8] + arcs[8] / thetas[8]
-
-        T[6] = T[3] + arcs[7]
-        Tderiv[6, :] = Tderiv[3, :]
-        Tderiv[6, 7] = Tderiv[6, 7] + arcs[7] / thetas[7]
-
-        if T[6] + arcs[11] > T[4] + arcs[9]:
-            T[7] = T[6] + arcs[11]
-            Tderiv[7, :] = Tderiv[6, :]
-            Tderiv[7, 11] = Tderiv[7, 11] + arcs[11] / thetas[11]
-        else:
-            T[7] = T[4] + arcs[9]
-            Tderiv[7, :] = Tderiv[4, :]
-            Tderiv[7, 9] = Tderiv[7, 9] + arcs[9] / thetas[9]
-
-        if T[5] + arcs[10] > T[7] + arcs[12]:
-            T[8] = T[5] + arcs[10]
-            Tderiv[8, :] = Tderiv[5, :]
-            Tderiv[8, 10] = Tderiv[8, 10] + arcs[10] / thetas[10]
-        else:
-            T[8] = T[7] + arcs[12]
-            Tderiv[8, :] = Tderiv[7, :]
-            Tderiv[8, 12] = Tderiv[8, 12] + arcs[12] / thetas[12]
-
-        longest_path = T[8]
-        longest_path_gradient = Tderiv[8, :]
+        # Calculate the IPA gradient w.r.t. arc means.
+        # If an arc is on the longest path, the component of the gradient
+        # is the length of the length of that arc divided by its mean.
+        # If an arc is not on the longest path, the component of the gradient is zero.
+        gradient = np.zeros(len(self.factors["arcs"]))
+        current = topo_order[-1]
+        backtrack = int(prev[self.factors["num_nodes"] - 1])
+        while current != topo_order[0]:
+            idx = self.factors["arcs"].index((backtrack, current))
+            gradient[idx] = arc_length[str((backtrack, current))] / (self.factors["arc_means"][idx])
+            current = backtrack
+            backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {response_key:
-                {factor_key: np.nan for factor_key in self.specifications}
-                for response_key in responses
-                }
-        gradients["longest_path_length"]["arc_means"] = longest_path_gradient
-
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["longest_path_length"]["arc_means"] = gradient
         return responses, gradients
 
 
@@ -250,7 +251,11 @@ class SANLongestPath(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SAN-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="SAN-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -267,36 +272,24 @@ class SANLongestPath(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": (10,) * 13
+                "default": (8,) * 13
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
-            },
-            "arc_costs":{
-                "description": "Cost associated to each arc.",
-                "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-            "arc_costs": self.check_arc_costs
+            "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors)
-        self.dim = self.model.factors["num_arcs"]
+        self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (0.01,) * self.dim
-        self.upper_bounds = (100,) * self.dim
-
-    def check_arc_costs(self):
-        positive = True
-        for x in list(self.factors["arc_costs"]):
-            positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -356,7 +349,7 @@ class SANLongestPath(Problem):
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+        of left-hand sides of stochastic constraints: E[Y] <= 0
 
         Arguments
         ---------
@@ -407,9 +400,8 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
+        det_objectives = (np.sum(1 / np.array(x)),)
+        det_objectives_gradients = (-1 / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -442,5 +434,5 @@ class SANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0.01, 100) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
         return x
