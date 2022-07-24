@@ -24,7 +24,7 @@ from wrapper_base import Experiment, read_experiment_results, post_normalize, pl
 # Ex:
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "COVID-1" # Continuous newsvendor problem
-solver_name = "ADAM"  
+solver_name = "ALOE"  
 problem_name = "SAN-1"
 
 # solver_name = <solver_name>
@@ -49,7 +49,7 @@ myexperiment = Experiment(solver_name, problem_name)
 # myexperiment = Experiment(solver_name, problem_name, problem_fixed_factors = fixed_factors)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=5)
+myexperiment.run(n_macroreps=10)
 
 # print(myexperiment.all_recommended_xs)
 # with open('covid_res.txt', 'w') as f:
@@ -63,9 +63,9 @@ myexperiment.run(n_macroreps=5)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=20)
+myexperiment.post_replicate(n_postreps=100)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=20)
+post_normalize([myexperiment], n_postreps_init_opt=100)
 
 print("Plotting results.")
 # Produce basic plots of the solver on the problem
