@@ -47,6 +47,7 @@ from scipy.stats import norm
 import pickle
 import importlib
 from copy import deepcopy
+import time
 
 
 from rng.mrg32k3a import MRG32k3a
@@ -354,6 +355,8 @@ class Experiment(object):
         sequences of recommended solutions from each macroreplication
     all_intermediate_budgets : list of lists
         sequences of intermediate budgets from each macroreplication
+    timings : list of floats
+        run times (in seconds) for each macroreplication
     n_postreps : int
         number of postreplications to take at each recommended solution
     crn_across_budget : bool
@@ -480,6 +483,7 @@ class Experiment(object):
         self.n_macroreps = n_macroreps
         self.all_recommended_xs = []
         self.all_intermediate_budgets = []
+        self.timings = []
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
         #     Stream 1: reserved for bootstrapping
@@ -505,8 +509,12 @@ class Experiment(object):
             self.solver.solution_progenitor_rngs = progenitor_rngs
             # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
+            tic = time.perf_counter()
             recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
-            # Trim solutions recommended after final budget
+            toc = time.perf_counter()
+            # Record the run time of the macroreplication.
+            self.timings.append(toc - tic)
+            # Trim solutions recommended after final budget.
             recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
             # Extract decision-variable vectors (x) from recommended solutions.
             # Record recommended solutions and intermediate budgets.
