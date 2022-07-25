@@ -4,7 +4,7 @@
 
 Determine the vendor order quantity that maximizes the vendor's expected profit.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/CNTNV/ContinuousNewsvendor.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/CNTNV/ContinuousNewsvendor.pdf).
 
 ### Properties
 
@@ -12,7 +12,7 @@ For full details, see the [documentation](https://github.com/simopt-admin/simopt
 
 **Constraints Class:** Variable bounds (nonnegativity).
 
-**Optimal Solutions:** Known. See the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/CNTNV/ContinuousNewsvendor.pdf).
+**Optimal Solutions:** Known. See the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/CNTNV/ContinuousNewsvendor.pdf).
 
 **Known Structure:** The objective function is concave.
 

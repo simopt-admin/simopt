@@ -4,7 +4,7 @@
 
 Find parameters for the best-fitting function.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/MM1/MetaModeling.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/MM1/MetaModeling.pdf).
 
 ### Properties
 

@@ -4,7 +4,7 @@
 
 Choose individual road improvements to maximize the expected profit over a finite time horizon.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/TOLLNW/TollNetwork.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/TOLLNW/TollNetwork.pdf).
 
 ### Properties
 

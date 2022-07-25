@@ -4,7 +4,7 @@
 
 Determine where to locate warehouses in order to maximize the proportion of orders for which delivery is completed within tau minutes of their arrival.
 
-For full details, see the [documentation.](https://github.com/simopt-admin/simopt/tree/master/Problems/FACLOC/FacilityLocation.pdf)
+For full details, see the [documentation.](https://github.com/simopt-admin/simopt/tree/matlab/Problems/FACLOC/FacilityLocation.pdf)
 
 ### Properties
 

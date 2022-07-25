@@ -4,7 +4,7 @@
 
 Choose ambulance base locations that minimize the expected daily average call response time.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/AMBUSQ/AmbulanceLocationsInSquare.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/AMBUSQ/AmbulanceLocationsInSquare.pdf).
 
 ### Properties
 

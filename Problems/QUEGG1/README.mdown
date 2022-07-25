@@ -4,7 +4,7 @@
 
 Chose the parameter of the service distribution that minimize the sum of the average steady-state sojourn time for a customer in a GI/G/1 queue and a continuously differentiable function.
 
-For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/master/Problems/QUEGG1/GIG1Queue.pdf).
+For full details, see the [documentation](https://github.com/simopt-admin/simopt/tree/matlab/Problems/QUEGG1/GIG1Queue.pdf).
 
 ### Properties
 
