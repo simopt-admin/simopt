@@ -11,8 +11,8 @@ from PIL import ImageTk, Image
 from directory import problem_directory
 from directory import solver_directory
 from directory import model_directory
-from wrapper_base import Experiment, MetaExperiment
-import wrapper_base
+from experiment_base import Experiment, MetaExperiment
+import experiment_base
 import pickle
 from tkinter import Listbox
 import ast
@@ -2066,7 +2066,7 @@ class Post_Normal_Window():
                 proxy_sol = ast.literal_eval(self.proxy_sol.get())
             if self.proxy_var.get() != "":
                 proxy_val = ast.literal_eval(self.proxy_var.get())
-            wrapper_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=crn, proxy_init_val=None, proxy_opt_val=proxy_val, proxy_opt_x=proxy_sol)
+            experiment_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=crn, proxy_init_val=None, proxy_opt_val=proxy_val, proxy_opt_x=proxy_sol)
             # self.master.destroy()
             self.post_processed_bool = True
 
@@ -2358,29 +2358,29 @@ class Plot_Window():
             hw = param_value_list[2]
 
             if self.plot_type_list[i] == "Mean Progress Curve":
-                path_name = wrapper_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, normalize=param_value_list[3])
+                path_name = experiment_base.plot_progress_curves(exp,"mean", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, normalize=param_value_list[3])
                 param_list = {"plot CIs":ci, "print max hw":hw, "normalize":param_value_list[3]}
             elif self.plot_type_list[i] == "Quatile Progress Curve":
-                path_name = wrapper_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, beta=param_value_list[3],normalize=param_value_list[4])
+                path_name = experiment_base.plot_progress_curves(exp,"quantile", plot_CIs=ci, all_in_one=param_value_list[1], print_max_hw=hw, beta=param_value_list[3],normalize=param_value_list[4])
                 param_list = {"plot CIs":ci, "print max hw":hw, "normalize":param_value_list[4], "beta":param_value_list[3]}
             elif self.plot_type_list[i] == "Solve time CDF":
-                path_name = wrapper_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3])
+                path_name = experiment_base.plot_solvability_cdfs(exp, plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3])
                 param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3]}
             elif self.plot_type_list[i] == "Scatter Plot":
-                path_name = wrapper_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=hw)
+                path_name = experiment_base.plot_area_scatterplots(exp2, plot_CIs=ci, print_max_hw=hw)
                 param_list = {}
             elif self.plot_type_list[i] == "CDF Solvability":
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],ref_solver=None)
+                path_name = experiment_base.plot_solvability_profiles(exp2, "cdf_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],ref_solver=None)
                 param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3]}
             elif self.plot_type_list[i] == "Quantile Solvability":
                 param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"beta":param_value_list[4]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=None)
+                path_name = experiment_base.plot_solvability_profiles(exp2, "quantile_solvability", plot_CIs=ci, print_max_hw=hw, solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=None)
             elif self.plot_type_list[i] == "CDF Difference Plot":
                 param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"ref solver":param_value_list[4]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],ref_solver=param_value_list[4])
+                path_name = experiment_base.plot_solvability_profiles(exp2, "diff_cdf_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],ref_solver=param_value_list[4])
             elif self.plot_type_list[i] == "Quanitle Difference Plot":
                 param_list = {"plot CIs":ci, "print max hw":hw, "solve tol":param_value_list[3],"ref solver":param_value_list[5],"beta":param_value_list[4]}
-                path_name = wrapper_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=param_value_list[5])
+                path_name = experiment_base.plot_solvability_profiles(exp2, "diff_quantile_solvability", plot_CIs=ci,print_max_hw=hw,solve_tol=param_value_list[3],beta=param_value_list[4],ref_solver=param_value_list[5])
             else:
                 print(self.plot_type_list[i])
             for i,new_plot in enumerate(path_name):

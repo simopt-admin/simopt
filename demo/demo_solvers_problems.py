@@ -10,7 +10,7 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the Experiment class and other useful functions
-from wrapper_base import MetaExperiment, plot_solvability_profiles
+from experiment_base import MetaExperiment, plot_solvability_profiles
 
 # !! When testing a new solver/problem, first go to directory.py.
 # There you should add the import statement and an entry in the respective

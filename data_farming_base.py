@@ -7,7 +7,7 @@ import pandas as pd
 
 from directory import model_directory
 from rng.mrg32k3a import MRG32k3a
-from wrapper_base import Experiment, post_normalize
+from experiment_base import Experiment, post_normalize
 
 
 class DesignPoint(object):
