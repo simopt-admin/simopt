@@ -18,7 +18,7 @@ The source code consists of the following modules:
 
 * The `base.py <base.html>`_ module contains class definitions for models, problems, and solvers.
 
-* The `wrapper_base.py <wrapper_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
+* The `experiment_base.py <experiment_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
 
 * The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data-farming experiments.
 
