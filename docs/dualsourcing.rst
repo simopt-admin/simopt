@@ -1,5 +1,5 @@
 Model: Dual Sourcing System (DUALSOURCING)
-==================================================
+==========================================
 
 Description:
 ------------
@@ -80,7 +80,7 @@ Model Factors:
     * Default: 50
 
 Responses:
----------
+----------
 * average_holding_cost: The average holding cost over the time period.
 
 * average_penalty_cost: The average penalty cost over the time period.
@@ -95,7 +95,7 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
 
 
 Optimization Problem: Minimize total cost (DUALSOURCING-1)
-========================================================
+==========================================================
 
 Decision Variables:
 -------------------
@@ -127,7 +127,7 @@ Starting Solution:
 * order_level_reg: 80
 
 Random Solutions: 
-------------------
+-----------------
 Draw order_level_exp from Uniform(40,60) and order_level_reg from Uniform(70,90).
 
 Optimal Solution:

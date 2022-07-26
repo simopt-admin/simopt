@@ -1,5 +1,5 @@
 Model: Newsvendor under Dynamic Consumer Substitution (DYNAMNEWS)
-==========================================
+=================================================================
 
 Description:
 ------------
@@ -80,7 +80,7 @@ Stocking Retail Assortments under Dynamic Consumer Substitution.
 
 
 Optimization Problem: Maximize Profit (<DYNAMNEWS-1)
-========================================================
+====================================================
 
 Decision Variables:
 -------------------
@@ -113,7 +113,7 @@ Starting Solution:
 * initial_solution: (2, 3) or :math:`(3, 3, \ldots, 3)`
 
 Random Solutions: 
-------------------
+-----------------
 Sample uniformly from (0, 10) in the dimension of num_prod.
 
 Optimal Solution:

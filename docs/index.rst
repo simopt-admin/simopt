@@ -31,7 +31,7 @@ The experiments folder contains empty folders for storing data and plots produce
 Getting Started
 ----------------
 
-Please make sure you have the following dependencies installed: Python 3, numpy, scipy, and matplotlib. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, and seaborn. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
 
 Contents
 -------------------

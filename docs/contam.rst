@@ -1,5 +1,5 @@
 Model: Contamination Control Problem (CONTAM)
-==========================================
+=============================================
 
 Description:
 ------------
@@ -53,7 +53,7 @@ Model Factors:
     * Default: (0, 0, 0, 0, 0)
 
 Responses:
----------
+----------
 * level: A list of contamination levels over time.
 
 
@@ -69,7 +69,7 @@ https://dl.acm.org/doi/abs/10.5555/2433508.2433840
 
 
 Optimization Problem: Minimize Prevention Costs (CONTAM-1)
-========================================================
+==========================================================
 
 Decision Variables:
 -------------------
@@ -118,7 +118,7 @@ Starting Solution:
 * initial_solution: (1, 1, 1, 1, 1)
 
 Random Solutions: 
-------------------
+-----------------
 Generate a tuple of Bernoulli(0.5) random variables.
 
 Optimal Solution:
@@ -131,7 +131,7 @@ Unknown
 
 
 Optimization Problem: ContaminationTotalCostCont (CONTAM-2)
-========================================================
+===========================================================
 
 Decision Variables:
 -------------------
@@ -176,7 +176,7 @@ Starting Solution:
 * initial_solution: (1, 1, 1, 1, 1)
 
 Random Solutions: 
-------------------
+-----------------
 Generate a tuple of Uniform(0, 1) random variables.
 
 Optimal Solution:

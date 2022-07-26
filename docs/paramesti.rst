@@ -1,5 +1,5 @@
 Model: Parameter Estimation (PARAMESTI)
-==========================================
+=======================================
 
 Description:
 ------------
@@ -48,7 +48,7 @@ This model is designed by Raghu Pasupathy (Virginia Tech) and Shane G. Henderson
 
 
 Optimization Problem: Max Log Likelihood (ParamEstiMaxLogLik)
-========================================================
+=============================================================
 
 Decision Variables:
 -------------------
@@ -77,7 +77,7 @@ Starting Solution:
 * x: [1, 1]
 
 Random Solutions: 
-------------------
+-----------------
 Generate :math:`x` i.i.d. uniformly in the square (0, 10) × (0, 10).
 
 Optimal Solution:

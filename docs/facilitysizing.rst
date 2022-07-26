@@ -1,5 +1,5 @@
 Model: Facility Sizing
-==========================================
+======================
 
 Description:
 ------------
@@ -48,7 +48,7 @@ This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Es
 
 
 Optimization Problem: Minimize Total Cost (FACSIZE-1)
-========================================================
+=====================================================
 
 Our goal is to minimize the total costs of installing capacity while keeping the probability of stocking out low. 
 
@@ -91,7 +91,7 @@ Starting Solution:
 * capacity: (300, 300, 300)
 
 Random Solutions: 
-------------------
+-----------------
 * Each facility's capacity is Uniform(0, 300).
 
 Optimal Solution:
@@ -142,7 +142,7 @@ Starting Solution:
 * capacity: (100, 100, 100)
 
 Random Solutions: 
-------------------
+-----------------
 * Use acceptance rejection to generate capacity vectors uniformly from space of vectors summing to less than installation budget.
 
 Optimal Solution:

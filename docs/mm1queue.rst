@@ -1,5 +1,5 @@
 Model: M/M/1 Queue
-==========================================
+==================
 
 Description:
 ------------
@@ -46,7 +46,7 @@ This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of 
 
 
 Optimization Problem: Minimize average sojourn time plus penalty (MM1-1)
-========================================================
+========================================================================
 
 
 Decision Variables:
@@ -82,7 +82,7 @@ Starting Solution:
 * mu: 3.0
 
 Random Solutions: 
-------------------
+-----------------
 Generate mu from an exponential distribution with mean 3.
 
 Optimal Solution:

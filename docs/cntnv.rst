@@ -59,7 +59,7 @@ chapter 12, pages 605–652. Elsevier, New York, 1990.
 
 
 Optimization Problem: Maximize Profit
-===========================================
+=====================================
 
 Decision Variables:
 -------------------
@@ -95,7 +95,7 @@ Starting Solution:
 
 
 Random Solutions: 
-------------------
+-----------------
 
 If random solutions are needed, generate :math:`x` from an Exponential distribution with mean 1.
 

@@ -1,6 +1,6 @@
 
 (s,S) Inventory System
-=======================
+======================
 
 This example is adapted (almost verbatim) from the article Kleijnen, J.P.C. et al. Constrained Optimization in Simulation: A Novel Approach, Discussion Paper 2008-95, Tilburg University, Center for Economic Research.
 

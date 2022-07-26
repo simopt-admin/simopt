@@ -1,5 +1,5 @@
 Model: Hotel Revenue Management (HOTEL)
-==========================================
+=======================================
 
 Description:
 ------------
@@ -138,7 +138,7 @@ Model Factors:
     * Default: tuple of 56 100's
 
 Responses:
----------
+----------
 * revenue: Expected revenue.
 
 
@@ -150,7 +150,7 @@ N/A
 
 
 Optimization Problem: Maximize Revenue (HOTEL-1)
-========================================================
+================================================
 
 Decision Variables:
 -------------------
@@ -181,7 +181,7 @@ Starting Solution:
   * Default: tuple of 56 zeros
 
 Random Solutions: 
-------------------
+-----------------
 Let each :math:`b_i` (element in tuple) be distributed Uniformly :math:`(0, C)`.
 
 Optimal Solution:

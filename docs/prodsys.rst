@@ -1,5 +1,5 @@
 Model: Production System (ProdSys)
-==========================================
+==================================
 
 Description:
 ------------
@@ -85,7 +85,7 @@ Model Factors:
     * Default: 10    
     
 Responses:
----------
+----------
 * :math:`avg_lead_time`: Average lead time.
 
 * :math:`service_level`: Service level.

@@ -11,3 +11,6 @@ __pycache__/
 # Environments
 .env
 .venv
+
+# Documentation build
+docs/_build/**

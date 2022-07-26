@@ -1,5 +1,5 @@
 Model: Chess Matchmaking Optimization (CHESS)
-==========================================
+=============================================
 
 Description:
 ------------
@@ -47,7 +47,7 @@ Model Factors:
     * Default: 150.0
 
 Responses:
----------
+----------
 * avg_diff: The average Elo difference between all pairs.
 
 * avg_wait_time: The average waiting time.
@@ -60,7 +60,7 @@ Original author of this problem is Bryan Chong (March 15, 2015).
 
 
 Optimization Problem: Minimize Average Elo Difference (CHESS-1)
-========================================================
+===============================================================
 
 Decision Variables:
 -------------------
@@ -95,7 +95,7 @@ Starting Solution:
 * initial_solution: (150,)
 
 Random Solutions: 
-------------------
+-----------------
 First draw :math:`x` from a normal distribution with mean :math:`150` and standard
 deviation :math:`50`, then set :math:`x = \min(\max(x, 0), 2400)`.
 

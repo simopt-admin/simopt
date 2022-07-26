@@ -1,5 +1,5 @@
 Model: Iron Ore Production with Exogenous Stochastic Price (IRONORE)
-===================================================================
+====================================================================
 
 Description:
 ------------
@@ -106,7 +106,7 @@ N/A
 
 
 Optimization Problem: Maximize Profit (IRONORE-1)
-========================================================
+=================================================
 
 Decision Variables:
 -------------------
@@ -139,7 +139,7 @@ Starting Solution:
 * initial_solution: :math:`x_1 = 80`, :math:`x_2 = 7000`, :math:`x_3 = 40`, :math:`x_4=100`
 
 Random Solutions: 
-------------------
+-----------------
 * :math:`x_1`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
 * :math:`x_2`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 1000 and 10000.
 * :math:`x_3`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.

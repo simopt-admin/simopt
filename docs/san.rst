@@ -1,5 +1,5 @@
 Model: Stochastic Activity Network (SAN)
-==========================================
+========================================
 
 Description:
 ------------
@@ -34,7 +34,7 @@ Model Factors:
     * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 Responses:
----------
+----------
 * longest_path_length: Length/duration of the longest path.
 
 
@@ -45,7 +45,7 @@ Integrated variance reduction strategies for simulation. *Operations Research* 4
 (https://pubsonline.informs.org/doi/abs/10.1287/opre.44.2.327)
 
 Optimization Problem: Minimize Longest Path Plus Penalty (SAN-1)
-========================================================
+================================================================
 
 Decision Variables:
 -------------------
@@ -81,7 +81,7 @@ Starting Solution:
 * initial_solution: (8,) * 13
 
 Random Solutions: 
-------------------
+-----------------
 Sample each arc mean uniformly from a lognormal distribution with 
 2.5- and 97.5-percentiles at 0.1 and 10 respectively.
 

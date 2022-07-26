@@ -1,5 +1,5 @@
 Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)
-==========================================
+============================================================================
 
 Description:
 ------------
@@ -74,7 +74,7 @@ at Stanford University. (https://www.gsb.stanford.edu/faculty-research/faculty/j
 
 
 Optimization Problem: Maximize Total Revenue
-========================================================
+============================================
 
 Decision Variables:
 -------------------
@@ -116,7 +116,7 @@ Starting Solution:
 * :math:`r_3 = 30`
 
 Random Solutions: 
-------------------
+-----------------
 
 If multiple solutions are needed for Reservation Quantity (r), use :math:`r_2` ∼ Uniform(40,60) and :math:`r_3` ∼ Uniform(20,40).
 

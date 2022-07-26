@@ -1,5 +1,5 @@
 Model: Voting Machines in Ohio (Voting)
-==========================================
+=======================================
 
 Description:
 ------------
@@ -86,7 +86,7 @@ Model Factors:
     * Default: 5
 
 Responses:
---------------
+----------
 * prec_avg_waittime: all wait times for all precincts
 
 * perc_no_waittime: the precentage of voters that did not have to wait at each precinct 
@@ -133,7 +133,7 @@ Starting Solution:
 * mach_allocation: (10, 10, 10, 10, 10)
 
 Random Solutions: 
-------------------
+-----------------
 Generate allocations uniformly at random from the set of vectors (of length equal to the number of precincts) whose values sum to the number of machines.
 
 Optimal Solution:

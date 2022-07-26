@@ -12,7 +12,7 @@ where value, gradient, and Hessian of the center point are further calculated.
 
 
 Modifications & Implementation:
-----------------------
+-------------------------------
 Process within a stage:
 We first find the Cauchy Point and the new solution in order to create a polynomial.
 Then, the solver either shrinks trust region size, or moves the center point while the
@@ -31,7 +31,7 @@ There are 3 helper functions in addition to the main algorithm.
     the Hessian matrix.
 
 Scope:
-----------------------
+------
 * objective_type: single
 
 * constraint_type: box
@@ -40,7 +40,7 @@ Scope:
 
 
 Solver Factors:
---------------
+---------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True

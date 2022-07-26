@@ -1,5 +1,5 @@
 Model: Restaurant Table Management (TABLEALLOCATION)
-==================================================
+====================================================
 
 Description:
 ------------
@@ -52,7 +52,7 @@ Model Factors:
     * Default: [10,5,4,2]
 
 Responses:
----------
+----------
 * total_revenue: Total revenue earned over the simulation period.
 
 * service_rate: Fraction of customer arrivals that are seated.
@@ -63,7 +63,7 @@ Original author of this problem is Bryan Chong (March 10, 2015).
 
 
 Optimization Problem: Maximize Revenue (TABLEALLOCATION-1)
-========================================================
+==========================================================
 
 Decision Variables:
 -------------------
@@ -92,7 +92,7 @@ Starting Solution:
 * num_tables: [10, 5, 4, 2]. Corresponds to 10 tables of size 2, 5 tables of size 4, 4 tables of size 6, and 2 tables of size 8.
 
 Random Solutions: 
-------------------
+-----------------
 Distribute total capacity uniformly across table sizes. If the remaining capacity is smaller than the smallest table size, keep the last table allocation as a starting solution.
 
 Optimal Solution:

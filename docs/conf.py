@@ -54,7 +54,8 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 autodoc_mock_imports = ['numpy',
                         'scipy',
                         'matplotlib',
-                        'pandas'
+                        'pandas',
+                        'seaborn'
 ]
 
 napolean_numpy_docstring = True
