@@ -66,7 +66,7 @@ class ALOE(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 200
+                "default": 100
             },
             "theta": {
                 "description": "Constant in the Armijo condition.",

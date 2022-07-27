@@ -63,9 +63,9 @@ myexperiment.run(n_macroreps=10)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=100)
+myexperiment.post_replicate(n_postreps=200)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=100)
+post_normalize([myexperiment], n_postreps_init_opt=200)
 
 print("Plotting results.")
 # Produce basic plots of the solver on the problem
