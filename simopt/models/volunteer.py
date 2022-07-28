@@ -5,7 +5,7 @@ Simulate the distribution of emergency medical service volunteer.
 """
 import numpy as np
 from itertools import chain
-
+from math import sqrt, sin, cos, pi
 from scipy import rand
 from base import Model, Problem
 
@@ -147,9 +147,31 @@ class Volunteer(Model):
         # Initialize quantities to track:
         # - Location of an OHCA.
         # - Locations of the volunteers.
+        # - Number of points in each square.
         OHCA_loc = None
         vol_locs = []
-        pts = []
+        pts = np.zeros(self.factors["num_squares"])
+
+        # Generate points that are equally spaced within a circle of radius "thre_dist" using sunflow seed arrangment.
+        phi = (1 + sqrt(5)) / 2  # golden ratio
+        def sunflower(n, alpha=0):
+            xs = []
+            ys = []
+            angle_stride = 2 * pi / phi ** 2
+            b = round(alpha * sqrt(n))  # number of boundary points
+            for k in range(1, n + 1):
+                r = radius(k, n, b)
+                theta = k * angle_stride
+                xs.append(r * cos(theta))
+                ys.append(r * sin(theta))
+            return xs, ys
+        def radius(k, n, b):
+            if k > n - b:
+                return self.factors["thre_dist"]
+            else:
+                return sqrt(k - 0.5) / sqrt(n - (b + 1) / 2) * self.factors["thre_dist"]     
+        # Store coordinates of 200 points.
+        xs, ys = sunflower(200, alpha=2)
 
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
@@ -170,6 +192,7 @@ class Volunteer(Model):
         flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
         prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)    
         sum_flag = 0
+        flag_grads = []
         sum_p = 0
         p_grads = []
         # Generate the location of an OHCA.
@@ -197,12 +220,41 @@ class Volunteer(Model):
             if min_dist > self.factors["thre_dist"]:
                 thre_dist_flag = 1
             sum_flag += thre_dist_flag
+
+            # Compute gradient estimator for thre_dist_flag
+            for j in range(200):
+                # Get actual coordinate of the point
+                temp_x = OHCA_loc[0] + xs[j]
+                temp_y = OHCA_loc[1] + ys[j]
+                if temp_x > 0 and temp_y > 0 and temp_x < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]) and temp_y < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]):
+                    # Get index of the square
+                    idx_sq = np.sqrt(self.factors["num_squares"]) * int(temp_x / self.factors["square_length"]) + int(temp_y / self.factors["square_length"])
+                    # Update pts
+                    pts[idx_sq] += 1
+            frac_sq = np.zeros(self.factors["num_squares"])
+            # Find max possible points in a square
+            count = 0
+            for x,y in zip(xs, ys):
+                if x > -self.factors["thre_dist"]/4 and y > -self.factors["thre_dist"]/4 and x < self.factors["thre_dist"]/4 and y < self.factors["thre_dist"]/4:
+                    count += 1
+            max_possible = (self.factors["square_length"] / self.factors["thre_dist"] * 4)**2 * count
+            for i in range(self.factors["num_squares"]):
+                # Fraction of square i covered by circle can be approximated by pts[i]/max possible
+                frac_sq[i] = pts[i] / max_possible
+            # Estimated mean number of volunteers in the circle with radius "thre_dist".
+            vol_in_circle = np.sum(np.multiply(self.factors["p_vol"], frac_sq))
+            flag_grad = np.zeros(self.factors["num_squares"])
+            for i in range(self.factors["num_squares"]):
+                flag_grad[i] = -np.exp(-self.factors["mean_vol"] * vol_in_circle) * self.factors["mean_vol"] * frac_sq[i]
+            flag_grads.append(flag_grad)
+            
             # Use the survival function to calculate the probability of survival.
             # Convert distance to time: 3 min + D/(6km/hr).
             t = 3 + min_dist / (6000 / 60)
             p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
             sum_p += p_survival
-            # Compute gradient estimator for p_survival
+
+            # Compute gradient estimator for p_survival.
             p_grad = np.zeros(self.factors["num_squares"])
             for i in range(self.factors["num_squares"]):
                 x = i // np.sqrt(self.factors["num_squares"])
@@ -216,7 +268,9 @@ class Volunteer(Model):
                     "p_survival": sum_p / self.factors["num_OHCA"],
                     "num_vol": num_vol}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["thre_dist_flag"] = np.average(flag_grads, axis=0)
         gradients["p_survival"] = np.average(p_grads, axis=0)
+
         return responses, gradients
 
 """
@@ -295,7 +349,7 @@ class VolunteerDist(Problem):
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
-        self.constraint_type = "box"
+        self.constraint_type = "deterministic"
         self.variable_type = "continuous"
         self.gradient_available = False
         self.optimal_value = None
