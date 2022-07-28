@@ -207,7 +207,6 @@ class ALOE2(Solver):
                 alpha = min(alpha_max, alpha / gamma)
             else:
                 # Unsuccessful step.
-                new_solution = candidate_solution
                 alpha = gamma * alpha
             
             # Append new solution.

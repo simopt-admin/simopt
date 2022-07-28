@@ -37,6 +37,7 @@ from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMinLogLik
 from models.covid import COVID, CovidMinInfect
 from models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
+from models.fake import Fake, FakeProblem
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -69,7 +70,8 @@ problem_directory = {
     "PARAMESTI-1": ParamEstiMinLogLik,
     "COVID-1": CovidMinInfect,
     "VOLUNTEER-1": VolunteerDist,
-    "VOLUNTEER-2": VolunteerSurvival
+    "VOLUNTEER-2": VolunteerSurvival,
+    "FAKE-1": FakeProblem
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -87,5 +89,6 @@ model_directory = {
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
     "COVID": COVID,
-    "VOLUNTEER": Volunteer
+    "VOLUNTEER": Volunteer,
+    "FAKE": Fake
 }

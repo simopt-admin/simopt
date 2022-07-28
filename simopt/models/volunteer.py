@@ -147,10 +147,9 @@ class Volunteer(Model):
         # Initialize quantities to track:
         # - Location of an OHCA.
         # - Locations of the volunteers.
-        # - Whether the distance of the closet volunteer exceeds the threshold distance.
         OHCA_loc = None
-        closest_loc = None
         vol_locs = []
+        pts = []
 
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
@@ -170,7 +169,9 @@ class Volunteer(Model):
 
         flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
         prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)    
-        sum = 0
+        sum_flag = 0
+        sum_p = 0
+        p_grads = []
         # Generate the location of an OHCA.
         for i in range(self.factors["num_OHCA"]):
             # Generate the square containing the OHCA.
@@ -184,30 +185,38 @@ class Volunteer(Model):
                         (y + u2) * self.factors["square_length"])
             # Calculate the distance of the closest volunteer to the location of an OHCA.
             dists = []
+            vol_cnt = {}
             for i in range(num_vol):
                 dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
                 dists.append(dist)
+                vol_cnt[(vol_locs[i][0], vol_locs[i][1])] += 1
             min_dist = np.min(dists)
-            closest_loc = vol_locs[np.argmin(dists)]
+            # closest_loc = vol_locs[np.argmin(dists)]
             thre_dist_flag = 0
             # Check the minimum distance against the threshold distance.
             if min_dist > self.factors["thre_dist"]:
                 thre_dist_flag = 1
-            sum += thre_dist_flag
-
-        # Use the survival function to calculate the probability of survival.
-        # Convert distance to time: 3 min + D/(6km/hr).
-        t = 3 + min_dist / (6000 / 60)
-        p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
+            sum_flag += thre_dist_flag
+            # Use the survival function to calculate the probability of survival.
+            # Convert distance to time: 3 min + D/(6km/hr).
+            t = 3 + min_dist / (6000 / 60)
+            p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
+            sum_p += p_survival
+            # Compute gradient estimator for p_survival
+            p_grad = np.zeros(self.factors["num_squares"])
+            for i in range(self.factors["num_squares"]):
+                x = i // np.sqrt(self.factors["num_squares"])
+                y = i % np.sqrt(self.factors["num_squares"])
+                if self.factors["p_vol"][i] > 0:
+                    p_grad[i] = p_survival * vol_cnt[(x, y)] / self.factors["p_vol"][i]
+            p_grads.append(p_grad)
 
         # Compose responses and gradients.
-        responses = {"thre_dist_flag": sum / self.factors["num_OHCA"],
-                    "p_survival": p_survival,
-                    "OHCA_loc": OHCA_loc,
-                    "closest_loc":closest_loc,
-                    "closest_dist": min_dist,
+        responses = {"thre_dist_flag": sum_flag / self.factors["num_OHCA"],
+                    "p_survival": sum_p / self.factors["num_OHCA"],
                     "num_vol": num_vol}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["p_survival"] = np.average(p_grads, axis=0)
         return responses, gradients
 
 """

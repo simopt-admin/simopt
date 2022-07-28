@@ -66,7 +66,7 @@ class ALOE(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 100
+                "default": 30
             },
             "theta": {
                 "description": "Constant in the Armijo condition.",
@@ -91,7 +91,7 @@ class ALOE(Solver):
             "epsilon_f": {
                 "description": "Additive constant in the Armijo condition.",
                 "datatype": int,
-                "default": 0.01  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
+                "default": 1  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
             "sensitivity": {
                 "description": "Shrinking scale for variable bounds.",
@@ -227,11 +227,10 @@ class ALOE(Solver):
                 alpha = min(alpha_max, alpha / gamma)
             else:
                 # Unsuccessful step.
-                new_solution = candidate_solution
                 alpha = gamma * alpha
 
             # Append new solution.
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean) and True:
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

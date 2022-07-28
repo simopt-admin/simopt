@@ -212,15 +212,18 @@ class PGD(Solver):
 
             # Get the projected gradient.
             proj_grad = self.project_grad(grad)
+            print('proj_grad', proj_grad)
 
             # Adjust the step size to respect box constraints if necessary.
             temp_steps = list()
-            for i in problem.dim:
+            for i in range(problem.dim):
                 temp_x = new_x[i] - alpha * proj_grad[i]
                 if temp_x < lower_bound[i]:
                     temp_steps.append((new_x[i] - lower_bound[i]) / proj_grad[i])
                 elif temp_x > upper_bound[i]:
                     temp_steps.append((new_x[i] - upper_bound[i]) / proj_grad[i])
+                else:
+                    temp_steps.append(alpha)
             
             # Update alpha to be the maximum stepsize possible.
             alpha = min(temp_steps)
@@ -242,13 +245,12 @@ class PGD(Solver):
                 # Unsuccessful step.
                 new_solution = candidate_solution
                 alpha = gamma * alpha
-            
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-
+        [print(i.x) for i in recommended_solns]
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

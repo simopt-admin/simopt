@@ -160,8 +160,6 @@ class FakeProblem(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (np.inf,)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = (0.5,0.5)
@@ -188,6 +186,8 @@ class FakeProblem(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Fake(self.model_fixed_factors)
         self.dim = len(self.model.factors["x"])
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
 
     def vector_to_factor_dict(self, vector):
@@ -279,8 +279,8 @@ class FakeProblem(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives = (np.sum(np.array(x)),)
+        det_objectives_gradients = (np.array(x),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -337,5 +337,5 @@ class FakeProblem(Problem):
             vector of decision variables
         """
         # Generate an Exponential(rate = 1) r.v.
-        x = (rand_sol_rng.expovariate(1),)
+        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
         return x
