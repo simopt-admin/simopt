@@ -1216,7 +1216,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, plot_CIs=True, print_max_hw=True):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, plot_CIs=True, print_max_hw=True):
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1236,6 +1236,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         otherwise False.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    n_bootstraps : int, default=100
+        Number of bootstrap samples.
     plot_CIs : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
@@ -1296,7 +1298,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             if plot_CIs and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
-                                                                     n_bootstraps=100,
+                                                                     n_bootstraps=n_bootstraps,
                                                                      plot_type=plot_type,
                                                                      beta=beta,
                                                                      estimator=estimator,
@@ -1350,7 +1352,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             if plot_CIs and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
-                                                                     n_bootstraps=100,
+                                                                     n_bootstraps=n_bootstraps,
                                                                      plot_type=plot_type,
                                                                      beta=beta,
                                                                      estimator=estimator,
@@ -1368,7 +1370,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     return file_list
 
 
-def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=True, print_max_hw=True):
+def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, plot_CIs=True, print_max_hw=True):
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -1379,6 +1381,8 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
         Relative optimality gap definining when a problem is solved; in (0, 1].
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    n_bootstraps : int, default=100
+        Number of bootstrap samples.
     plot_CIs : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
@@ -1414,7 +1418,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
             if plot_CIs:
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
-                                                                     n_bootstraps=100,
+                                                                     n_bootstraps=n_bootstraps,
                                                                      plot_type="solve_time_cdf",
                                                                      solve_tol=solve_tol,
                                                                      estimator=estimator,
@@ -1444,7 +1448,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
             if plot_CIs:
                 # Note: "experiments" needs to be a list of list of Experiments.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
-                                                                     n_bootstraps=100,
+                                                                     n_bootstraps=n_bootstraps,
                                                                      plot_type="solve_time_cdf",
                                                                      solve_tol=solve_tol,
                                                                      estimator=estimator,
@@ -1462,7 +1466,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, plot_CIs=
     return file_list
 
 
-def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_max_hw=True):
+def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, plot_CIs=True, print_max_hw=True):
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
 
@@ -1477,6 +1481,8 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
         Experiments used to produce plots.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    n_bootstraps : int, default=100
+        Number of bootstrap samples.
     plot_CIs : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
@@ -1514,13 +1520,13 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
                     mean_bs_CI_lb, mean_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
-                                                                       n_bootstraps=100,
+                                                                       n_bootstraps=n_bootstraps,
                                                                        plot_type="area_mean",
                                                                        estimator=mean_estimator,
                                                                        normalize=True
                                                                        )
                     std_dev_bs_CI_lb, std_dev_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
-                                                                             n_bootstraps=100,
+                                                                             n_bootstraps=n_bootstraps,
                                                                              plot_type="area_std_dev",
                                                                              estimator=std_dev_estimator,
                                                                              normalize=True
@@ -1564,13 +1570,13 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
                     mean_bs_CI_lb, mean_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
-                                                                       n_bootstraps=100,
+                                                                       n_bootstraps=n_bootstraps,
                                                                        plot_type="area_mean",
                                                                        estimator=mean_estimator,
                                                                        normalize=True
                                                                        )
                     std_dev_bs_CI_lb, std_dev_bs_CI_ub = bootstrap_procedure(experiments=[[experiment]],
-                                                                             n_bootstraps=100,
+                                                                             n_bootstraps=n_bootstraps,
                                                                              plot_type="area_std_dev",
                                                                              estimator=std_dev_estimator,
                                                                              normalize=True
@@ -1597,7 +1603,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=True, print_ma
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -1612,6 +1618,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
             "diff_quantile_solvability" : difference of quantile-solvability profiles.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    n_bootstraps : int, default=100
+        Number of bootstrap samples.
     plot_CIs : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
@@ -1684,7 +1692,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
                     bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
-                                                                         n_bootstraps=100,
+                                                                         n_bootstraps=n_bootstraps,
                                                                          plot_type=plot_type,
                                                                          solve_tol=solve_tol,
                                                                          beta=beta,
@@ -1721,7 +1729,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                     if plot_CIs:
                         # Note: "experiments" needs to be a list of list of Experiments.
                         bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
-                                                                             n_bootstraps=100,
+                                                                             n_bootstraps=n_bootstraps,
                                                                              plot_type=plot_type,
                                                                              solve_tol=solve_tol,
                                                                              beta=beta,
@@ -1782,7 +1790,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                 if plot_CIs:
                     # Note: "experiments" needs to be a list of list of Experiments.
                     bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
-                                                                         n_bootstraps=100,
+                                                                         n_bootstraps=n_bootstraps,
                                                                          plot_type=plot_type,
                                                                          solve_tol=solve_tol,
                                                                          beta=beta,
@@ -1827,7 +1835,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, plot_CIs=
                     if plot_CIs:
                         # Note: "experiments" needs to be a list of list of Experiments.
                         bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
-                                                                             n_bootstraps=100,
+                                                                             n_bootstraps=n_bootstraps,
                                                                              plot_type=plot_type,
                                                                              solve_tol=solve_tol,
                                                                              beta=beta,
@@ -1894,7 +1902,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         else:
             terminal_data = [[experiment.objective_curves[mrep].y_vals[-1] for mrep in range(experiment.n_macroreps)] for experiment in experiments]
         if plot_type == "box":
-            plt.boxplot(terminal_data)  # showmeans=True, meanline=True, bootstrap=1000)
+            plt.boxplot(terminal_data)
             plt.xticks(range(1, n_experiments + 1), labels=[experiment.solver.name for experiment in experiments])
         if plot_type == "violin":
             solver_names = [experiments[exp_idx].solver.name for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
