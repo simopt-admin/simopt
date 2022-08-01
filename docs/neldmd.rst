@@ -7,9 +7,6 @@ The algorithm maintains a simplex of points that moves around the feasible
 region according to certain geometric operations: reflection, expansion, 
 scontraction, and shrinking.
 
-A detailed description of the solver can be found 
-`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
-
 Modifications & Implementation:
 -------------------------------
 Initial (dimension + 1) points:
@@ -63,9 +60,7 @@ Solver Factors:
 
 References:
 ===========
-This solver is adapted from the article "Nelder-Mead Simplex Modifications for Simulation Optimization" [1].
-MATLAB version of the code written by Anna Dong and Nellie Wu (2016).
-
-[1] Russell R. Barton, John S. Ivey, Jr., (1996)
-Nelder-Mead Simplex Modifications for Simulation
-Optimization. Management Science 42(7):954-973.
+This solver is adapted from the article Russell R. Barton and John S. Ivey, Jr., (1996).
+Nelder-Mead Simplex Modifications for Simulation Optimization.
+*Management Science*, 42(7):954-973.
+(https://pubsonline.informs.org/doi/abs/10.1287/mnsc.42.7.954)

@@ -1,10 +1,11 @@
 """
 Summary
 -------
-Nelder-Mead
-The algorithm maintains a simplex of points that moves around the feasible
+Nelder-Mead: An algorithm that maintains a simplex of points that moves around the feasible
 region according to certain geometric operations: reflection, expansion,
-scontraction, and shrinking.
+contraction, and shrinking.
+A detailed description of the solver can be found 
+`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
 """
 from base import Solution, Solver
 import numpy as np
@@ -13,11 +14,9 @@ warnings.filterwarnings("ignore")
 
 
 class NelderMead(Solver):
-    """
-    REFERENCE
-    Russell R. Barton, John S. Ivey, Jr., (1996)
-    Nelder-Mead Simplex Modifications for Simulation
-    Optimization. Management Science 42(7):954-973.
+    """The Nelder-Mead algorithm, which maintains a simplex of points that moves around the feasible
+    region according to certain geometric operations: reflection, expansion,
+    contraction, and shrinking.
 
     Attributes
     ----------

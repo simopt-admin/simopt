@@ -91,5 +91,7 @@ Solver Factors:
 
 References:
 ===========
-This solver is adapted from the article Kuo-Hao Chang, L. Jeff Hong, Hong Wan, (2013) Stochastic Trust-Region Response-Surface Method (STRONG)—A New
-Response-Surface Framework for Simulation Optimization. *INFORMS Journal on Computing* 25(2):230-243. https://doi.org/10.1287/ijoc.1120.0498
+This solver is adapted from the article Kuo-Hao Chang, L. Jeff Hong, Hong Wan, (2013).
+Stochastic Trust-Region Response-Surface Method (STRONG) - A New Response-Surface Framework for Simulation Optimization.
+*INFORMS Journal on Computing*, 25(2):230-243.
+(https://doi.org/10.1287/ijoc.1120.0498)
