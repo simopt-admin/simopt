@@ -9,8 +9,8 @@ import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-# Import the Experiment class and other useful functions
-from experiment_base import MetaExperiment, plot_solvability_profiles
+# Import the ProblemsSolvers class and other useful functions
+from experiment_base import ProblemsSolvers, plot_solvability_profiles
 
 # !! When testing a new solver/problem, first go to directory.py.
 # There you should add the import statement and an entry in the respective
@@ -25,7 +25,7 @@ problem_names = ["CNTNEWS-1", "SAN-1"]
 
 
 # Initialize an instance of the experiment class.
-mymetaexperiment = MetaExperiment(solver_names, problem_names)
+mymetaexperiment = ProblemsSolvers(solver_names, problem_names)
 
 # Run a fixed number of macroreplications of each solver on each problem.
 mymetaexperiment.run(n_macroreps=3)

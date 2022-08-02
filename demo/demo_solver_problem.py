@@ -9,8 +9,8 @@ import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-# Import the Experiment class and other useful functions
-from experiment_base import Experiment, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
+# Import the ProblemSolver class and other useful functions
+from experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
 
 # !! When testing a new solver/problem, first go to directory.py.
 # There you should add the import statement and an entry in the respective
@@ -36,7 +36,7 @@ file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + 
 print(f"Results will be stored as {file_name_path}.")
 
 # Initialize an instance of the experiment class.
-myexperiment = Experiment(solver_name, problem_name)
+myexperiment = ProblemSolver(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
 myexperiment.run(n_macroreps=20)

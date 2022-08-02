@@ -9,8 +9,8 @@ import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-# Import the Experiment class and other useful functions
-from experiment_base import Experiment, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
+# Import the ProblemSolver class and other useful functions
+from experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
 
 solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
 problem_names = {"SAN-1"} # CNTNEWS-1"} #, "SAN-1"}
@@ -25,7 +25,7 @@ for problem_name in problem_names:
     for solver_name in solver_names:
         print(f"Testing solver {solver_name} on problem {problem_name}.")
         # Initialize an instance of the experiment class.
-        myexperiment = Experiment(solver_name, problem_name)
+        myexperiment = ProblemSolver(solver_name, problem_name)
 
         file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
 
