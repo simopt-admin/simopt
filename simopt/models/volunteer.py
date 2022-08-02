@@ -47,7 +47,8 @@ class Volunteer(Model):
             "mean_vol": {
                 "description": "Mean number of available volunteers.",
                 "datatype": int,
-                "default": 1600
+                # "default": 1600
+                "default": 10
             },
             "thre_dist": {
                 "description": "The distance within which a volunteer can reach a call within the time threshold in meters.",
@@ -57,7 +58,8 @@ class Volunteer(Model):
             "num_squares": {
                 "description": "Number of squares (regions) the city is divided into.",
                 "datatype": int,
-                "default": 400
+                # "default": 400
+                "default": 4
             },
             "square_length": {
                 "description": "Length (or width) of the square in meters.",
@@ -67,12 +69,15 @@ class Volunteer(Model):
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
                 "datatype": list,
-                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                "default": [[0.1, 0.1],[0.1, 0.7]]
             },
             "p_vol": {
                 "description": "Probability of an available volunteer is in each square.",
                 "datatype": tuple,
-                "default": tuple((1/400 * np.ones(400)).tolist())
+                # "default": tuple((1/400 * np.ones(400)).tolist())
+                "default": tuple((1/4 * np.ones(4)).tolist())
+
             },
             "num_OHCA": {
                 "description": "Number of OHCAs to generate.",
@@ -150,6 +155,7 @@ class Volunteer(Model):
         # - Number of points in each square.
         OHCA_loc = None
         vol_locs = []
+        vol_locs_idx = []
         pts = np.zeros(self.factors["num_squares"])
 
         # Generate points that are equally spaced within a circle of radius "thre_dist" using sunflow seed arrangment.
@@ -183,6 +189,7 @@ class Volunteer(Model):
             u4 = vol_sq_rng.alias(prob2, alias2)
             x = u4 // np.sqrt(self.factors["num_squares"])
             y = u4 % np.sqrt(self.factors["num_squares"])
+            vol_locs_idx.append((x, y))
             # Find a random location in the square.
             u5 = vol_loc_lat_rng.uniform(0, 1)
             u6 = vol_loc_lon_rng.uniform(0, 1)
@@ -212,7 +219,11 @@ class Volunteer(Model):
             for i in range(num_vol):
                 dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
                 dists.append(dist)
-                vol_cnt[(vol_locs[i][0], vol_locs[i][1])] += 1
+                vol_coord = (vol_locs_idx[i][0], vol_locs_idx[i][1])
+                if vol_coord in vol_cnt:
+                    vol_cnt[vol_coord] += 1
+                else:
+                    vol_cnt[vol_coord] = 1
             min_dist = np.min(dists)
             # closest_loc = vol_locs[np.argmin(dists)]
             thre_dist_flag = 0
@@ -228,7 +239,7 @@ class Volunteer(Model):
                 temp_y = OHCA_loc[1] + ys[j]
                 if temp_x > 0 and temp_y > 0 and temp_x < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]) and temp_y < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]):
                     # Get index of the square
-                    idx_sq = np.sqrt(self.factors["num_squares"]) * int(temp_x / self.factors["square_length"]) + int(temp_y / self.factors["square_length"])
+                    idx_sq = int(np.sqrt(self.factors["num_squares"]) * int(temp_x / self.factors["square_length"]) + int(temp_y / self.factors["square_length"]))
                     # Update pts
                     pts[idx_sq] += 1
             frac_sq = np.zeros(self.factors["num_squares"])
@@ -260,7 +271,7 @@ class Volunteer(Model):
                 x = i // np.sqrt(self.factors["num_squares"])
                 y = i % np.sqrt(self.factors["num_squares"])
                 if self.factors["p_vol"][i] > 0:
-                    p_grad[i] = p_survival * vol_cnt[(x, y)] / self.factors["p_vol"][i]
+                    p_grad[i] = p_survival * vol_cnt.get((x, y), 0) / self.factors["p_vol"][i]
             p_grads.append(p_grad)
 
         # Compose responses and gradients.
@@ -268,8 +279,8 @@ class Volunteer(Model):
                     "p_survival": sum_p / self.factors["num_OHCA"],
                     "num_vol": num_vol}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        gradients["thre_dist_flag"] = np.average(flag_grads, axis=0)
-        gradients["p_survival"] = np.average(p_grads, axis=0)
+        gradients["thre_dist_flag"]["p_vol"] = np.average(flag_grads, axis=0)
+        gradients["p_survival"]["p_vol"] = np.average(p_grads, axis=0)
 
         return responses, gradients
 
@@ -351,7 +362,7 @@ class VolunteerDist(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -361,17 +372,19 @@ class VolunteerDist(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple((1/400 * np.ones(400)).tolist())
+                # "default": tuple((1/400 * np.ones(400)).tolist())
+                "default": tuple((1/4 * np.ones(4)).tolist())
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 500
             },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
                 "datatype": list,
-                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                "default": [[0.1, 0.1],[0.1, 0.7]]
             }
         }
         self.check_factor_list = {
@@ -433,7 +446,10 @@ class VolunteerDist(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["p_vol"],)
+        if np.isnan(factor_dict["p_vol"]).any():
+            vector = np.nan
+        else:
+            vector = tuple(factor_dict["p_vol"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):

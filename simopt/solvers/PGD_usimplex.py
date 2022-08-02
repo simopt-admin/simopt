@@ -250,7 +250,7 @@ class PGD(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-        [print(i.x) for i in recommended_solns]
+        # [print(i.x) for i in recommended_solns]
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
