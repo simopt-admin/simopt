@@ -12,6 +12,8 @@ import numpy as np
 import random
 from math import log, ceil, sqrt, exp
 from copy import deepcopy
+from decimal import *
+
 
 from .matmodops import mat33_mat31_mult, mat33_mat33_mult, mat31_mod, mat33_mod, mat33_mat33_mod, mat33_power_mod
 
@@ -326,6 +328,26 @@ class MRG32k3a(random.Random):
         x = self.normalvariate(mu, sigma)
         return exp(x)
 
+    def lognormalvariate(self, lq=10, uq=200):
+            """Generate a Lognormal random variate using 2.5% and 97.5% quantiles
+            Parameters
+            ----------
+            lq : 'float'
+                2.5% quantile of the lognormal distribution from which to
+                generate.
+            uq : 'float'
+                97.5% quantile of the lognormal distribution from which to
+                generate.
+            Returns
+            -------
+            'float'
+                a lognormal random variate from the specified distribution.
+            """
+            mu = (log(lq)+log(uq))/2
+            sigma = (log(uq)-mu)/1.96
+            x = self.normalvariate(mu, sigma)
+            return exp(x)
+
     def mvnormalvariate(self, mean_vec, cov, factorized=True):
         """Generate a normal random vector.
 
@@ -381,7 +403,7 @@ class MRG32k3a(random.Random):
             z = self.normalvariate()
             n = max(ceil(lmbda + sqrt(lmbda) * z - 0.5), 0)
         return n
-
+    
     def gumbelvariate(self, mu, beta):
         """Generate a Gumbel random variate.
 
@@ -403,6 +425,88 @@ class MRG32k3a(random.Random):
         q = mu - beta * np.log(-np.log(u))
         return q
 
+    def binomialvariate(self, n, p):
+        k = 0
+        for _ in range(n):
+            u = self.random()
+            if u < p:
+                k += 1
+        return k
+
+    def unitsimplexvariate(self, n):
+        """Generate n uniform random variates in a unit simplex.
+
+        Parameters
+        ---------
+        n : 'int'
+            number of random variates.
+
+        Returns
+        -------
+        'list' ['int']
+            a  list of random variates from the specified distribution.
+        """
+        x_list = []
+        y_list = []
+        for _ in range(n):
+            x_list.append(self.expovariate(1))
+        for i in range(n):
+            y_list.append(x_list[i] / np.sum(x_list))
+        return y_list
+
+
+    def alias_init(self, dist):
+            n = len(dist)
+            table_prob = {}
+            table_alias = {}
+            small = []
+            large = []
+            for val, prob in enumerate(dist, 1):
+                table_prob[val] = Decimal(prob) * n
+                if table_prob[val] < 1:
+                    small.append(val)
+                else:
+                    large.append(val)
+            
+            while small and large:
+                l = small.pop()
+                g = large.pop()
+                table_alias[l] = g
+                table_prob[g] = (table_prob[g] + table_prob[l] - Decimal(1))
+                if table_prob[g] < 1:
+                    small.append(g)
+                else:
+                    large.append(g)
+            
+            while large:
+                table_prob[large.pop()] = Decimal(1)
+
+            while small:
+                table_prob[small.pop()] = Decimal(1)
+            return table_prob, table_alias
+
+
+    def alias(self, table_prob, table_alias):
+        """Generate a discrete random variate.
+
+        Parameters
+        ---------
+        table_prob : 'dictionary'
+            table of probabilities
+        table_alias : 'dictionary'
+            table of alias
+
+        Returns
+        -------
+        int
+            a discrete random variate from the specified distribution.
+        """
+
+        i = int(np.floor(self.random() * len(table_prob))) + 1
+        if self.random() < table_prob[i]:
+            return i
+        else:
+            return table_alias[i]
     def integer_random_vector_from_simplex(self, n_elements, summation, with_zero=False):
         """Generate a random vector with a specified number of non-negative integer
         elements that sum up to a specified number.
