@@ -243,14 +243,13 @@ class PGD(Solver):
                 alpha = min(alpha_max, alpha / gamma)
             else:
                 # Unsuccessful step.
-                new_solution = candidate_solution
                 alpha = gamma * alpha
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-        # [print(i.x) for i in recommended_solns]
+        [print(i.x) for i in recommended_solns]
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

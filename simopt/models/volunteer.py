@@ -378,7 +378,7 @@ class VolunteerDist(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 500
+                "default": 10000
             },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
@@ -658,7 +658,7 @@ class VolunteerSurvival(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 500
+                "default": 1000
             }
         }
         self.check_factor_list = {
