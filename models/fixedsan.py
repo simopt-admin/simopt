@@ -10,7 +10,7 @@ import numpy as np
 from base import Model, Problem
 
 
-class SAN(Model):
+class FixedSAN(Model):
     """
     A model that simulates a stochastic activity network problem with
     tasks that have exponentially distributed durations, and the selected
@@ -186,7 +186,7 @@ Minimize the duration of the longest path from a to i plus cost.
 """
 
 
-class SANLongestPath(Problem):
+class FixedSANLongestPath(Problem):
     """
     Base class to implement simulation-optimization problems.
 

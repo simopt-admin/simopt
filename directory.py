@@ -18,6 +18,11 @@ from solvers.astrodf import ASTRODF
 from solvers.randomsearch import RandomSearch
 from solvers.neldmd import NelderMead
 from solvers.strong import STRONG
+from solvers.adam import ADAM
+from solvers.aloe import ALOE
+from solvers.adam2 import ADAM2
+from solvers.PGD_usimplex import PGD
+from solvers.aloe2 import ALOE2
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -36,12 +41,20 @@ from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from models.fixedsan import FixedSAN, FixedSANLongestPath
 from models.voting import Voting, MinVotingMaxWaitTime
 from models.prodsys import ProdSys, ProdSysMinLeadTime
+from models.covid import COVID, CovidMinInfect
+from models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
+from models.fake import Fake, FakeProblem
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
     "NELDMD": NelderMead,
-    "STRONG": STRONG
+    "STRONG": STRONG,
+    "ADAM": ADAM,
+    "ALOE": ALOE,
+    "ADAM2": ADAM2,
+    "PGD": PGD,
+    "ALOE2": ALOE2
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,
@@ -67,7 +80,11 @@ problem_directory = {
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
     "VOTING-1": MinVotingMaxWaitTime,
-    "PRODSYS-1": ProdSysMinLeadTime
+    "PRODSYS-1": ProdSysMinLeadTime,
+    "COVID-1": CovidMinInfect,
+    "VOLUNTEER-1": VolunteerDist,
+    "VOLUNTEER-2": VolunteerSurvival,
+    "FAKE-1": FakeProblem
 }
 problem_nonabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
@@ -107,7 +124,10 @@ model_directory = {
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
     "VOTING": Voting,
-    "PRODSYS": ProdSys
+    "PRODSYS": ProdSys,
+    "COVID": COVID,
+    "VOLUNTEER": Volunteer,
+    "FAKE": Fake
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
