@@ -286,7 +286,7 @@ class FixedSANLongestPath(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = SAN(self.model_fixed_factors)
+        self.model = FixedSAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (0.01,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
