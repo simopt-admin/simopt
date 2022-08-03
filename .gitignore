@@ -1,11 +1,16 @@
+# Portions of this .gitignore file are copied from Python.gitignore at https://github.com/github/gitignore.
 
-simopt/rng/.vscode/.ropeproject/config.py
-simopt/rng/.vscode/.ropeproject/objectdb
-simopt/rng/.vscode/settings.json
-*.pyc
-simopt/.vscode/.ropeproject/config.py
-simopt/.vscode/.ropeproject/objectdb
-simopt/.vscode/settings.json
-simopt/simopt.env
-simopt/oracles/.DS_Store
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# MacOS
 .DS_Store
+
+# Environments
+.env
+.venv
+
+# Documentation build
+docs/_build/**
