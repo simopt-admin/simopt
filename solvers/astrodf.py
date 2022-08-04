@@ -211,6 +211,8 @@ class ASTRODF(Solver):
         return np.matmul(X, q)
 
     def stoppingtime(self, k, sig2, delta, kappa, dim):
+        if kappa == 0:       
+            kappa = 1             
         lambda_min = self.factors["lambda_min"]
         lambda_k = max(lambda_min, .5*dim) * max(log(k+0.1, 10) ** (1.01),1)
         # compute sample size
