@@ -51,17 +51,17 @@ class DynamNews(Model):
             "num_prod": {
                 "description": "Number of Products",
                 "datatype": int,
-                "default": 2
+                "default": 10
             },
             "num_customer": {
                 "description": "Number of Customers",
                 "datatype": int,
-                "default": 5
+                "default": 30
             },
             "c_utility": {
                 "description": "Constant of each product's utility",
                 "datatype": list,
-                "default": [1.0, 1.0]
+                "default": [5 + j for j in range(1, 11)]
             },
             "mu": {
                 "description": "Mu for calculating Gumbel random variable",
@@ -71,17 +71,17 @@ class DynamNews(Model):
             "init_level": {
                 "description": "Initial inventory level",
                 "datatype": list,
-                "default": [2, 3]
+                "default": list(3 * np.ones(10))
             },
             "price": {
                 "description": "Sell price of products",
                 "datatype": list,
-                "default": [9, 9]
+                "default": list(9 * np.ones(10))
             },
             "cost": {
                 "description": "Cost of products",
                 "datatype": list,
-                "default": [5, 5]
+                "default": list(5 * np.ones(10))
             }
         }
         self.check_factor_list = {
@@ -265,8 +265,8 @@ class DynamNewsMaxProfit(Problem):
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "discrete"
-        self.gradient_available = True
+        self.variable_type = "continuous"
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -276,8 +276,8 @@ class DynamNewsMaxProfit(Problem):
         self.specifications = {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (2, 3)
+                "datatype": list,
+                "default": list(3 * np.ones(10))
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -330,7 +330,7 @@ class DynamNewsMaxProfit(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["init_level"])
+        vector = (factor_dict["init_level"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
