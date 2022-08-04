@@ -36,6 +36,7 @@ from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from models.fixedsan import FixedSAN, FixedSANLongestPath
 from models.voting import Voting, MinVotingMaxWaitTime
 from models.prodsys import ProdSys, ProdSysMinLeadTime
+from models.network import Network, NetworkMinTotalCost
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -67,7 +68,8 @@ problem_directory = {
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
     "VOTING-1": MinVotingMaxWaitTime,
-    "PRODSYS-1": ProdSysMinLeadTime
+    "PRODSYS-1": ProdSysMinLeadTime,
+    "NETWORK-1": NetworkMinTotalCost
 }
 problem_nonabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
@@ -88,7 +90,8 @@ problem_nonabbreviated_directory = {
     "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": ParamEstiMaxLogLik,
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": FixedSANLongestPath,
     "Minimize Maximum Waiting Time for Voting System (SDDN)": MinVotingMaxWaitTime,
-    "Minimize Lead Time for Production System (SSDN)": ProdSysMinLeadTime
+    "Minimize Lead Time for Production System (SSDN)": ProdSysMinLeadTime,
+    "Minimize Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -107,7 +110,8 @@ model_directory = {
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
     "VOTING": Voting,
-    "PRODSYS": ProdSys
+    "PRODSYS": ProdSys,
+    "NETWORK": Network
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
@@ -128,5 +132,6 @@ model_unabbreviated_directory = {
     "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": "PARAMESTI",
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": "FIXEDSAN",
     "Minimize Maximum Waiting Time for Voting System (SDDN)": "VOTING",
-    "Minimize Lead Time for Production System (SSDN)": "PRODSYS"
+    "Minimize Lead Time for Production System (SSDN)": "PRODSYS",
+    "Minimize Total Cost for Communication Networks System (SDCN)": "NETWORK"
 }
