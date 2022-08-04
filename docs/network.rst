@@ -73,7 +73,7 @@ The objective is to minimize total costs, the sum of time costs and network cost
 
 Constraints:
 ------------
-* :math:`0 \le p_i \le 1` for all :math:` i = 1, 2, ..., n`
+* :math:`0 \le p_i \le 1` for all :math:`i = 1, 2, ..., n`
 * :math:`\sum_{i=1}^n p_i = 1`
 
 :math:`p_1, p_2,..., p_n \in [0, 1]` are the routing probabilities.
