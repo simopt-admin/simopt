@@ -262,7 +262,7 @@ class SANLongestPath(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -288,7 +288,7 @@ class SANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (0,) * self.dim
+        self.lower_bounds = (0.01,) * self.dim # change to 0.01 to avoid zero division error in NeldMd
         self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
@@ -401,7 +401,7 @@ class SANLongestPath(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.sum(1 / np.array(x)),)
-        det_objectives_gradients = (-1 / (np.array(x) ** 2))
+        det_objectives_gradients = (-1 / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -434,5 +434,5 @@ class SANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(self, lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
         return x
