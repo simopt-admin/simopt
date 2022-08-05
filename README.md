@@ -78,19 +78,19 @@ Each problem has an abbreviation indicating which types of solver is compatible 
           <th> Objective </th>
           <th> Constraint </th>
           <th> Variable </th>
-          <th> Gradient </th>
+          <th> Direct Gradient Observations </th>
         </tr>
         <tr>
           <td> Single (S) </td>
           <td> Unconstrained (U) </td>
           <td> Discrete (D) </td>
-          <td> Gradient Observations Available (G) </td>
+          <td> Available (G) </td>
         </tr>
       <tr>
           <td> Multiple (M) </td>
           <td> Box (B) </td>
           <td> Continuous (C) </td>
-          <td> Gradient Observations Not Available (N) </td>
+          <td> Not Available (N) </td>
         </tr>
       <tr>
           <td>  </td>
