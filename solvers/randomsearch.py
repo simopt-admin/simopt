@@ -3,6 +3,7 @@ Summary
 -------
 Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`_.
 """
 from base import Solver
 
