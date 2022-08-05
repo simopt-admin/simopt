@@ -2,8 +2,7 @@
 
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
-A most-up-to-data publication to this library is available at
-* [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf)
+The most-up-to-date publication about this library is [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf).
 
 
 For the purposes of this project, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function or stochastic constraints. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
@@ -23,12 +22,12 @@ Several papers have discussed the development of SimOpt and experiments run on t
 * The `matlab` branch contains a previous stable version of the testbed written in MATLAB.
 
 ## Documentation
-Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**. Descriptions of the problems and solvers are under development.
+Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*
 
-Download a copy of the cloned repository to your local machine and navigate to the `simopt/simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`. Run the command ``` pip install numpy scipy matplotlib pandas seaborn ``` to install them from the terminal.
+Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`. Run the command ``` pip install numpy scipy matplotlib pandas seaborn ``` to install them from the terminal.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
 
@@ -37,6 +36,8 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 * `demo_problem.py`: Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints.
 
 * `demo_solver_problem.py`: Run multiple macroreplications of a solver on a problem, save the outputs to a .pickle file in the `experiments/outputs` folder, and save plots of the results to .png files in the `experiments/plots` folder.
+
+* `demo_solvers_problems.py`: Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots.
 
 * `demo_data_farming_model.py`: Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (.csv) file in the `data_farming_experiments` folder.
 
@@ -61,9 +62,9 @@ At the bottom of the main page, there is a frame containing all **problem-solver
 ### Adding **problem-solver pair**s
 This section explains how to add **problem-solver pair**s to the queue.
 
-#### Loading a **problem-solver pair** from a File
-1. In the top left corner, click "Load File". Your file system will pop up, and you can navigate to an appropriate \*.pickle file to select. (The GUI will throw an error if the selected file is not a \*.pickle file.
-2. Once a **problem-solver pair** object is loaded, it will be added to the Queue of **problem-solver pair**s.
+#### Loading a **problem-solver pair** from a file
+1. In the top left corner, click "Load File". Your file system will pop up, and you can navigate to and select an appropriate \*.pickle file. (The GUI will throw an error if the selected file is not a \*.pickle file.)
+2. Once a **problem-solver pair** object is loaded, it will be added to the "Queue of **problem-solver pair**s".
 3. The Run and Post-Process buttons will be updated to accurately reflect whether the **problem-solver pair** has already been run and/or post-processed.
 
 #### Creating a **problem-solver pair**
@@ -130,13 +131,12 @@ To run a **problem-solver pair** or a **problem-solver group**, click the "Run" 
 **Note:** Running a **problem-solver pair** can take anywhere from a couple of seconds to a couple of minutes depending on the **problem-solver pair** and the number of macroreplications.
 
 ### Post-Processing and Post-Normalization
-Post-processing happens before post-normalizing and after the run is complete. You can specify the number of post-replications, the (proxy) optimal solution or function value, the number of postnormalizations, and the number of bootstraps.  After post-normalization is complete, the Plotting window appears.
+Post-processing happens before post-normalizing and after the run is complete. You can specify the number of post-replications and the (proxy) optimal solution or function value.  After post-normalization is complete, the Plotting window appears.
 To exit out of the Post-Process/ Normalize pop-up without post-processing or post-normalizing, click the red "x" in the top-left corner of the window.
 
 #### - **problem-solver pair**
-**problem-solver pair**s can be post-processed from the "Queue of **problem-solver pair**s" tab by clicking "Post-Process." Adjust Post-Processing factors as necessary. Only **problem-solver pair**s that have already been run and have not yet been post-processed can be post-processed. <br>
-After post-processing, click the "Post-Normalize by Problem" tab to select which **problem-solver pair**s to post-normalize together.
-* Only **problem-solver pair**s with the same Problem can be post-normalized together.
+**problem-solver pair**s can be post-processed from the "Queue of **problem-solver pair**s" tab by clicking "Post-Process." Adjust Post-Processing factors as necessary. Only **problem-solver pair**s that have already been run and have not yet been post-processed can be post-processed. After post-processing, click the "Post-Normalize by Problem" tab to select which **problem-solver pair**s to post-normalize together.
+* Only **problem-solver pair**s with the same problem can be post-normalized together.
 * Once all **problem-solver pair**s of interest are selected, click the "Post-Normalize Selected" button at the bottom of the GUI (this button only appears when in the Post-Normalize tab).
 * Update any values necessary and click "Post-Normalize" when the **problem-solver pair**s are ready to be post-normalized.
 
@@ -145,11 +145,11 @@ After post-processing, click the "Post-Normalize by Problem" tab to select which
 * Click the "Post-Process" button for the specific **problem-solver group**, then change any values necessary, then click "Post-Process".
 
 ### Plotting **problem-solver pair**s
-The Plotting page is the same for both **problem-solver pair**s and **problem-solver group**s. Currently, multiple **problem-solver pair**s with the same Problem can be plotted together, and any problem-solver pair from a single **problem-solver group** can be plotted together in Solvability profiles, Difference Plots, and Area Scatter Plots. To return to the main page, click the red "x" in the top-left corner of the window.
+The Plotting page is the same for both **problem-solver pair**s and **problem-solver group**s. Currently, multiple **problem-solver pair**s with the same problem can be plotted together, and any problem-solver pair from a single **problem-solver group** can be plotted together in Solvability Profiles, Difference Plots, and Area Scatter Plots. To return to the main page, click the red "x" in the top-left corner of the window.
 1. On the left side, select one or more problems from the problem list.
 2. Select solvers from the solver list.
 3. On the right side, select a plot type and adjust plot parameters and settings.
-There are 3 plot settings for all plots: Confidence Intervals, Plot Together, and Print Max HW.
+There are 5 settings common to most plot types: Confidence Intervals, Number of Bootstrap Samples, Confidence Level, Plot Together, and Print Max HW.
 The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Terminal Box/Violin, and Terminal Scatter.
 4. Click "Add."
 5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved.
@@ -161,16 +161,6 @@ Users can contribute problems and solver to SimOpt by using [pull requests](http
 ## Citation
 To cite this work, please use
 ```
-@misc{simoptlib,
-	author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
-	date-added = {2017-04-26 17:32:29 +0000},
-	date-modified = {2020-05-01 15:27:11 -0400},
-	howpublished = {\url{http://github.com/simopt-admin/simopt}},
-	note = {[Online; Accessed May 1, 2020]},
-	title = {Simulation Optimization Library},
-	year = {2020},
-	Bdsk-Url-1 = {http://www.simopt.org}}
-
 @misc{simoptgithub,
   author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
   title = {{SimOpt}},
