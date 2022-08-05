@@ -1,4 +1,4 @@
-Solver: ASTRO-DF (ASTRODF)
+Solver: Adaptive Sampling Trust-Region Optimization for Derivative-Free Simulations (ASTRODF)
 ============================
 
 Description:
@@ -8,21 +8,20 @@ The solver progressively builds local models (quadratic with diagonal Hessian) u
 Modifications & Implementation:
 -------------------------------
 
-construct_model: take the model and accept it if its gradient is large relative to the trust-region radius
+**construct_model**: take the model and accept it if its gradient is large relative to the trust-region radius
 
-evaluate_model: find (proxy to) the subproblem solution
+**evaluate_model**: find (proxy to) the subproblem solution
 
-get_stopping_time: decide whether to stop at the existing sample size.
+**get_stopping_time**: decide whether to stop at the existing sample size for a given solution.
 
-get_standard_basis: form the coordinate basis 
+**get_standard_basis**: form the coordinate basis 
 
-get_model_coefficients: solve system of linear equations (interpolation) to obtain model coefficients
+**get_model_coefficients**: solve system of linear equations (interpolation) to obtain model coefficients
 
-get_interpolation_points: choose coordinate bases
+**get_interpolation_points**: choose coordinate bases
 
-tune_parameters: delta_0 is tuned before starting the search by choosing one of three choices
+**tune_parameters**: the initial trust-region radius is tuned before starting the search by choosing one of three choices
 
-solve: 
 
 Scope:
 ------
