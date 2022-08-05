@@ -1,7 +1,10 @@
 # Welcome to SimOpt!
 
-SimOpt is a testbed of simulation-optimization problems and solvers.
-Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
+SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
+
+A most-up-to-data publication to this library is available at
+* [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf)
+
 
 For the purposes of this project, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function or stochastic constraints. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
 
@@ -11,6 +14,9 @@ Several papers have discussed the development of SimOpt and experiments run on t
 * [Dong et al. (2017)](https://www.informs-sim.org/wsc17papers/includes/files/179.pdf) conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance.
 * [Eckman et al. (2019)](https://www.informs-sim.org/wsc19papers/374.pdf) describes in detail changes to the architecture of the MATLAB version of SimOpt and the control of random number streams.
 * [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2021/09/SimOpt-metrics-paper.pdf) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt.
+
+
+
 
 ## Code
 * The `master` branch contains the source code for the latest version of the testbed, which is written in Python.
@@ -39,11 +45,10 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 ## Graphical User Interface (GUI) - User Guide
 
 ### Installation
-To start up the GUI, navigate to the `simopt/simopt` directory and run the command ``` python3 GUI.py ``` from the terminal.
-The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`.
+To start up the GUI, navigate to the `simopt` directory and run the command ``` python3 GUI.py ``` from the terminal. The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`. Run the command ``` pip install numpy scipy matplotlib Pillow tkinter ``` to install them from the terminal.
 
 ### Overview
-From the GUI's main page, a user can create a specified problem-solver pair (referred to in the GUI as an **Experiment**), run macroreplications, and generate plots.
+From the GUI's main page, a user can create a specified problem-solver pair (referred to in the GUI as a **Experiment**), run macroreplications, and generate plots.
 
 The top of the main page provides three ways to create or continue working with an existing Experiment:
 
@@ -115,6 +120,7 @@ By cross-designing an Experiment, you can create a Meta-Experiment, which will b
 5. The pop-up window will disappear, and the Experiments frame will automatically switch to the "Queue of Meta-Experiments".
 6. To exit out of the Meta-Experiment pop-up without creating an Experiment, click the red "x" in the top-left corner of the window.
 
+
 ### Run an Experiment
 To run an Experiment or Meta-Experiment that has not already been run, click the "Run Exp." button in the "Queue of Experiments" or "Queue of MetaExperiments". Once the Experiment has been run, it cannot be re-run.
 **Note:** Running an Experiment can take anywhere a couple of seconds to a couple of minutes depending on the Experiment and the number of macroreplications.
@@ -147,6 +153,30 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 
 ## Contributing
 Users can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. The core development team currently consists of David Eckman (Texas A&M University), Shane Henderson (Cornell University), and Sara Shashaani (North Carolina State University).
+
+## Citation
+To cite this work, please use
+```
+@misc{simoptlib,
+	author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
+	date-added = {2017-04-26 17:32:29 +0000},
+	date-modified = {2020-05-01 15:27:11 -0400},
+	howpublished = {\url{http://github.com/simopt-admin/simopt}},
+	note = {[Online; Accessed May 1, 2020]},
+	title = {Simulation Optimization Library},
+	year = {2020},
+	Bdsk-Url-1 = {http://www.simopt.org}}
+
+@misc{simoptgithub,
+  author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
+  title = {{SimOpt}},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/simopt-admin/simopt}},
+  commit = {eda24b9f6a5885a37321ad7f8534bf10dec22480}
+}
+```
 
 ## Acknowledgments
 An earlier website for SimOpt, [http://www.simopt.org](http://www.simopt.org), was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
