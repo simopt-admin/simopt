@@ -3,11 +3,11 @@ Solver: Random Search (RNDSRCH)
 
 Description:
 ------------
-Randomly sample solutions from the feasible region and use fixed number of replications at each solution. The sampling distribution is specified inside each problem class in **get_random_solution**.
+Randomly sample solutions from the feasible region and use a fixed number of replications at each solution. The sampling distribution is specified inside each problem class in **get_random_solution**.
 
 Modifications & Implementation:
 -------------------------------
-The new random solutions maintain the type of each variable based on the sampling distributions that are discrete for integer decisions and otherwise continutes.
+The new random solutions maintain the type of each variable based on the sampling distributions that are discrete for integer decisions and otherwise continuous.
 
 Scope:
 ------
@@ -33,6 +33,6 @@ Solver Factors:
 References:
 ===========
 This solver is adapted from the article Chia, Y.L. and Glynn, P.W., (2013). 
-Limit theorems for simulation-based optimization via random search. 
+Limit Theorems for Simulation-Based Optimization via Random Search. 
 *ACM Transactions on Modeling and Computer Simulation (TOMACS)*, 23(3), pp.1-18.
 (https://dl.acm.org/doi/abs/10.1145/2499913.2499915)
