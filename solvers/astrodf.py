@@ -181,9 +181,10 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    def get_stopping_time(self, k, sig2, delta, kappa, dim):
-        #if kappa == 0:       
-        #    kappa = 1             
+    def get_stopping_time(self, k, sig2, delta, kappa, dim):   
+        if kappa == 0:       
+            kappa = 1             
+              
         lambda_min = self.factors["lambda_min"]
         lambda_k = max(lambda_min, .5*dim) * max(log(k+0.1, 10) ** (1.01),1)
         # compute sample size
@@ -195,6 +196,7 @@ class ASTRODF(Solver):
         w = self.factors["w"]
         mu = self.factors["mu"]
         beta = self.factors["beta"]
+        lambda_min = self.factors["lambda_min"]
         criticality_select = self.factors["criticality_select"]
         criticality_threshold = self.factors["criticality_threshold"]
         j = 0
@@ -208,19 +210,20 @@ class ASTRODF(Solver):
             # construct the interpolation set
             Y = self.get_interpolation_points(x_k, delta_k, problem)
             for i in range(2 * d + 1):
-                # For X_0, we don't need to simulate the system
+                # for X_0, we don't need to simulate the new solution
                 if (k == 1) and (i==0):
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
-                # Otherwise, we need to simulate the system
+                # otherwise, we need to simulate the new solution
                 else:
                     new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
-                    # check if there is existing result
-                    problem.simulate(new_solution, 1)
-                    expended_budget += 1
-                    sample_size = 1
+                    # pilot run # ??check if there is existing result
+                    pilot_run = max(lambda_min, .5*problem.dim) - 1
+                    problem.simulate(new_solution, pilot_run)
+                    expended_budget += pilot_run
+                    sample_size = pilot_run
 
-                    # Adaptive sampling
+                    # adaptive sampling
                     while True:
                         problem.simulate(new_solution, 1)
                         expended_budget += 1
@@ -313,10 +316,11 @@ class ASTRODF(Solver):
             # calculate kappa
             k += 1
             if k == 1:
-                sample_size_lower_bound = max(lambda_min, .5*problem.dim) - 1
-                problem.simulate(new_solution, sample_size_lower_bound)
-                expended_budget += sample_size_lower_bound
-                sample_size = sample_size_lower_bound
+                # pilot run
+                pilot_run = max(lambda_min, .5*problem.dim) - 1
+                problem.simulate(new_solution, pilot_run)
+                expended_budget += pilot_run
+                sample_size = pilot_run
                 while True:
                     problem.simulate(new_solution, 1)
                     expended_budget += 1
@@ -355,9 +359,10 @@ class ASTRODF(Solver):
                     candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             # pilot run
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size = 1
+            pilot_run = max(lambda_min, .5*problem.dim) - 1
+            problem.simulate(candidate_solution, pilot_run)
+            expended_budget += pilot_run
+            sample_size = pilot_run
 
             # adaptive sampling
             while True:
@@ -384,7 +389,7 @@ class ASTRODF(Solver):
             else:
                 rho = (fval[0] - fval_tilde) / \
                             (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(
-                        candidate_x - new_x, q));
+                        candidate_x - new_x, q))
 
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
@@ -436,7 +441,7 @@ class ASTRODF(Solver):
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
         simple_solve = self.factors["simple_solve"]
-        
+        lambda_min = self.factors["lambda_min"]
         
         k = 0  # iteration number
 
@@ -497,12 +502,13 @@ class ASTRODF(Solver):
 
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
-            # pilot run 
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size = 1
+            # pilot run
+            pilot_run = max(lambda_min, .5*problem.dim) - 1
+            problem.simulate(candidate_solution, pilot_run)
+            expended_budget += pilot_run
+            sample_size = pilot_run 
 
-            # Adaptive sampling
+            # adaptive sampling
             while True:
                 problem.simulate(candidate_solution, 1)
                 expended_budget += 1
