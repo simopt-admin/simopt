@@ -1,12 +1,8 @@
-
 """
 Summary
 -------
-ASTRODF
-
-The solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
+The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
-
 """
 from base import Solver
 from numpy.linalg import pinv
@@ -18,9 +14,10 @@ from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
 warnings.filterwarnings("ignore")
 
+
 class ASTRODF(Solver):
-    """
-    Needed description
+    """The ASTRO-DF solver.
+
     Attributes
     ----------
     name : string
@@ -183,12 +180,12 @@ class ASTRODF(Solver):
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    def get_stopping_time(self, k, sig2, delta, kappa, dim):   
-        if kappa == 0:       
-            kappa = 1             
-              
+    def get_stopping_time(self, k, sig2, delta, kappa, dim):
+        if kappa == 0:
+            kappa = 1
+
         lambda_min = self.factors["lambda_min"]
-        lambda_k = max(lambda_min, .5*dim) * max(log(k+0.1, 10) ** (1.01),1)
+        lambda_k = max(lambda_min, .5 * dim) * max(log(k + 0.1, 10) ** (1.01), 1)
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         return N_k
@@ -213,14 +210,14 @@ class ASTRODF(Solver):
             Y = self.get_interpolation_points(x_k, delta_k, problem)
             for i in range(2 * d + 1):
                 # for X_0, we don't need to simulate the new solution
-                if (k == 1) and (i==0):
+                if (k == 1) and (i == 0):
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
                 # otherwise, we need to simulate the new solution
                 else:
                     new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
                     # pilot run # ??check if there is existing result
-                    pilot_run = max(lambda_min, .5*problem.dim) - 1
+                    pilot_run = max(lambda_min, .5 * problem.dim) - 1
                     problem.simulate(new_solution, pilot_run)
                     expended_budget += pilot_run
                     sample_size = pilot_run
@@ -261,7 +258,7 @@ class ASTRODF(Solver):
             M[i] = np.append(M[i], np.array(Y[i]))
             M[i] = np.append(M[i], np.array(Y[i]) ** 2)
 
-        q = np.matmul(pinv(M), fval) # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
+        q = np.matmul(pinv(M), fval)  # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
         grad = q[1:d + 1]
         grad = np.reshape(grad, d)
         Hessian = q[d + 1:2 * d + 1]
@@ -289,7 +286,7 @@ class ASTRODF(Solver):
             Y.append(minus)
         return Y
 
-    def tune_parameters(self, delta, delta_max, problem): # use the delta_max determined in the solve(...) function
+    def tune_parameters(self, delta, delta_max, problem):  # use the delta_max determined in the solve(...) function
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
@@ -319,7 +316,7 @@ class ASTRODF(Solver):
             k += 1
             if k == 1:
                 # pilot run
-                pilot_run = max(lambda_min, .5*problem.dim) - 1
+                pilot_run = max(lambda_min, .5 * problem.dim) - 1
                 problem.simulate(new_solution, pilot_run)
                 expended_budget += pilot_run
                 sample_size = pilot_run
@@ -329,12 +326,12 @@ class ASTRODF(Solver):
                     sample_size += 1
                     fn = new_solution.objectives_mean
                     sig2 = new_solution.objectives_var
-                    if sample_size >= self.get_stopping_time(k, sig2, delta, fn/(delta**2), problem.dim) or expended_budget >= budget  * 0.01:
-                        kappa = fn/(delta**2)
+                    if sample_size >= self.get_stopping_time(k, sig2, delta, fn / (delta ** 2), problem.dim) or expended_budget >= budget * 0.01:
+                        kappa = fn / (delta ** 2)
                         break
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution)
-            if simple_solve == True:
+            if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
                     tau = 1
@@ -361,7 +358,7 @@ class ASTRODF(Solver):
                     candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             # pilot run
-            pilot_run = max(lambda_min, .5*problem.dim) - 1
+            pilot_run = max(lambda_min, .5 * problem.dim) - 1
             problem.simulate(candidate_solution, pilot_run)
             expended_budget += pilot_run
             sample_size = pilot_run
@@ -372,7 +369,7 @@ class ASTRODF(Solver):
                 expended_budget += 1
                 sample_size += 1
                 sig2 = candidate_solution.objectives_var
-                if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget  * 0.01:
+                if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget * 0.01:
                     break
 
             # calculate success ratio
@@ -390,8 +387,7 @@ class ASTRODF(Solver):
                 rho = 0
             else:
                 rho = (fval[0] - fval_tilde) / \
-                            (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(
-                        candidate_x - new_x, q))
+                      (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(candidate_x - new_x, q))
 
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
@@ -431,9 +427,9 @@ class ASTRODF(Solver):
         intermediate_budgets = []
         expended_budget = 0
         budget = problem.factors["budget"]
-        delta_max = min( self.factors["delta_max"] , problem.upper_bounds[0] - problem.lower_bounds[0])
-        gamma_01 = 0.08 #self.factors["gamma_01"]
-        gamma_02 = 0.5 #self.factors["gamma_02"]
+        delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
+        gamma_01 = 0.08  # self.factors["gamma_01"]
+        gamma_02 = 0.5  # self.factors["gamma_02"]
         delta_start = delta_max * gamma_01
         delta_candidate = [gamma_02 * delta_start, delta_start, delta_start / gamma_02]
 
@@ -444,7 +440,7 @@ class ASTRODF(Solver):
         gamma_2 = self.factors["gamma_2"]
         simple_solve = self.factors["simple_solve"]
         lambda_min = self.factors["lambda_min"]
-        
+
         k = 0  # iteration number
 
         # Start with the initial solution
@@ -468,8 +464,7 @@ class ASTRODF(Solver):
                 new_x = new_x_pt
                 kappa = kappa_pt
 
-        intermediate_budgets = (
-                intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * budget * 0.01).tolist()
+        intermediate_budgets = (intermediate_budgets + 2 * np.ones(len(intermediate_budgets)) * budget * 0.01).tolist()
         intermediate_budgets[0] = 0
         delta_k = delta
 
@@ -478,7 +473,7 @@ class ASTRODF(Solver):
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.construct_model(
                 new_x, delta_k, k, problem, expended_budget, kappa, new_solution)
 
-            if simple_solve == True:
+            if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
                     tau = 1
@@ -505,10 +500,10 @@ class ASTRODF(Solver):
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # pilot run
-            pilot_run = max(lambda_min, .5*problem.dim) - 1
+            pilot_run = max(lambda_min, .5 * problem.dim) - 1
             problem.simulate(candidate_solution, pilot_run)
             expended_budget += pilot_run
-            sample_size = pilot_run 
+            sample_size = pilot_run
 
             # adaptive sampling
             while True:
@@ -533,9 +528,7 @@ class ASTRODF(Solver):
                     np.array(candidate_x) - np.array(new_x), q)) == 0:
                 rho = 0
             else:
-                rho = (fval[0] - fval_tilde) / (
-                        self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(
-                    candidate_x - new_x, q));
+                rho = (fval[0] - fval_tilde) / (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(candidate_x - new_x, q))
 
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
