@@ -1,7 +1,7 @@
 """
 This script is intended to help with debugging problems and solvers.
-It create a problem-solver pairing (using the directory) and runs multiple
-macroreplications of the solver on the problem.
+It create problem-solver groups (using the directory) and runs multiple
+macroreplications of each problem-solver pair.
 """
 
 import sys
