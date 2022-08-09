@@ -1172,7 +1172,7 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
                      )
 
 
-def report_max_halfwidth(curve_pairs, normalize):
+def report_max_halfwidth(curve_pairs, normalize, difference=False):
     """Compute and print caption for max halfwidth of one or more bootstrap CI curves.
 
     Parameters
@@ -1182,6 +1182,8 @@ def report_max_halfwidth(curve_pairs, normalize):
     normalize : bool
         True if progress curves are to be normalized w.r.t. optimality gaps,
         otherwise False.
+    difference : bool
+        True if the plot is for difference profiles, otherwise False.
     """
     # Compute max halfwidth of bootstrap confidence intervals.
     min_lower_bound = np.inf
@@ -1194,8 +1196,12 @@ def report_max_halfwidth(curve_pairs, normalize):
     max_halfwidth = max(max_halfwidths)
     # Print caption about max halfwidth.
     if normalize:
-        xloc = 0.05
-        yloc = -0.35
+        if difference:
+            xloc = 0.05
+            yloc = -1.35
+        else:
+            xloc = 0.05
+            yloc = -0.35
     else:
         # xloc = 0.05 * budget of the problem
         xloc = 0.05 * curve_pairs[0][0].x_vals[-1]
@@ -1303,7 +1309,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             else:
                 print("Not a valid plot type.")
             solver_curve_handles.append(handle)
-            if plot_CIs and plot_type != "all":
+            if (plot_CIs or print_max_hw) and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=n_bootstraps,
@@ -1313,7 +1319,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                                                      estimator=estimator,
                                                                      normalize=normalize
                                                                      )
-                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                if plot_CIs:
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
@@ -1358,7 +1365,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                 estimator.plot()
             else:
                 print("Not a valid plot type.")
-            if plot_CIs and plot_type != "all":
+            if (plot_CIs or print_max_hw) and plot_type != "all":
                 # Note: "experiments" needs to be a list of list of ProblemSolvers.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=n_bootstraps,
@@ -1368,7 +1375,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                                                      estimator=estimator,
                                                                      normalize=normalize
                                                                      )
-                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                if plot_CIs:
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=normalize)
             file_list.append(save_plot(solver_name=experiment.solver.name,
@@ -1427,7 +1435,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
             estimator = cdf_of_curves_crossing_times(experiment.progress_curves, threshold=solve_tol)
             handle = estimator.plot(color_str=color_str)
             solver_curve_handles.append(handle)
-            if plot_CIs:
+            if plot_CIs or print_max_hw:
                 # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=n_bootstraps,
@@ -1437,7 +1445,8 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                                                                      estimator=estimator,
                                                                      normalize=True
                                                                      )
-                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                if plot_CIs:
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
@@ -1458,7 +1467,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                        )
             estimator = cdf_of_curves_crossing_times(experiment.progress_curves, threshold=solve_tol)
             estimator.plot()
-            if plot_CIs:
+            if plot_CIs or print_max_hw:
                 # Note: "experiments" needs to be a list of list of Problem-Solver objects.
                 bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[[experiment]],
                                                                      n_bootstraps=n_bootstraps,
@@ -1468,7 +1477,8 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                                                                      estimator=estimator,
                                                                      normalize=True
                                                                      )
-                plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                if plot_CIs:
+                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
                 if print_max_hw:
                     report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True)
             file_list.append(save_plot(solver_name=experiment.solver.name,
@@ -1689,6 +1699,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                        beta=beta,
                        solve_tol=solve_tol
                        )
+        if print_max_hw:
+            curve_pairs = []
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         solver_curve_handles = []
@@ -1711,7 +1723,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 handle = solver_curve.plot(color_str=color_str)
                 solver_curve_handles.append(handle)
-                if plot_CIs:
+                if plot_CIs or print_max_hw:
                     # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
                                                                          n_bootstraps=n_bootstraps,
@@ -1722,10 +1734,14 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                                          estimator=solver_curve,
                                                                          normalize=True
                                                                          )
-                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
-
+                    if plot_CIs:
+                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                    if print_max_hw:
+                        curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         if plot_type == "cdf_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            if print_max_hw:
+                report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
@@ -1734,6 +1750,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                        ))
         elif plot_type == "quantile_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            if print_max_hw:
+                report_max_halfwidth(curve_pairs=curve_pairs, normalize=True)
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
@@ -1749,7 +1767,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     color_str = "C" + str(solver_idx)
                     handle = diff_solver_curve.plot(color_str=color_str)
                     solver_curve_handles.append(handle)
-                    if plot_CIs:
+                    if plot_CIs or print_max_hw:
                         # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                         bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
                                                                              n_bootstraps=n_bootstraps,
@@ -1760,10 +1778,14 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                                              estimator=diff_solver_curve,
                                                                              normalize=True
                                                                              )
-                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
-
+                        if plot_CIs:
+                            plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
+                        if print_max_hw:
+                            curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
             plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
+            if print_max_hw:
+                report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, difference=True)
             if plot_type == "diff_cdf_solvability":
                 file_list.append(save_plot(solver_name="SOLVER SET",
                                            problem_name="PROBLEM SET",
@@ -1811,7 +1833,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                 solve_tol=solve_tol
                                                 ))
                 handle = solver_curve.plot()
-                if plot_CIs:
+                if plot_CIs or print_max_hw:
                     # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx]],
                                                                          n_bootstraps=n_bootstraps,
@@ -1822,7 +1844,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                                          estimator=solver_curve,
                                                                          normalize=True
                                                                          )
-                    plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                    if plot_CIs:
+                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                    if print_max_hw:
+                        report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True)
                 if plot_type == "cdf_solvability":
                     file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                                problem_name="PROBLEM SET",
@@ -1857,7 +1882,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                     ))
                     diff_solver_curve = difference_of_curves(solver_curves[solver_idx], solver_curves[ref_solver_idx])
                     handle = diff_solver_curve.plot()
-                    if plot_CIs:
+                    if plot_CIs or print_max_hw:
                         # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                         bs_CI_lb_curve, bs_CI_ub_curve = bootstrap_procedure(experiments=[experiments[solver_idx], experiments[ref_solver_idx]],
                                                                              n_bootstraps=n_bootstraps,
@@ -1868,7 +1893,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                                              estimator=diff_solver_curve,
                                                                              normalize=True
                                                                              )
-                        plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                        if plot_CIs:
+                            plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve)
+                        if print_max_hw:
+                            report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True, difference=True)
                     if plot_type == "diff_cdf_solvability":
                         file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                                    problem_name="PROBLEM SET",
