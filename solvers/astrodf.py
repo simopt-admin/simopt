@@ -217,7 +217,7 @@ class ASTRODF(Solver):
                 else:
                     new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
                     # pilot run # ??check if there is existing result
-                    pilot_run = max(lambda_min, .5 * problem.dim) - 1
+                    pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
                     problem.simulate(new_solution, pilot_run)
                     expended_budget += pilot_run
                     sample_size = pilot_run
@@ -316,7 +316,7 @@ class ASTRODF(Solver):
             k += 1
             if k == 1:
                 # pilot run
-                pilot_run = max(lambda_min, .5 * problem.dim) - 1
+                pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
                 problem.simulate(new_solution, pilot_run)
                 expended_budget += pilot_run
                 sample_size = pilot_run
@@ -358,7 +358,7 @@ class ASTRODF(Solver):
                     candidate_x[i] = problem.upper_bounds[i] - 0.01
 
             # pilot run
-            pilot_run = max(lambda_min, .5 * problem.dim) - 1
+            pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
             problem.simulate(candidate_solution, pilot_run)
             expended_budget += pilot_run
             sample_size = pilot_run
@@ -500,7 +500,7 @@ class ASTRODF(Solver):
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # pilot run
-            pilot_run = max(lambda_min, .5 * problem.dim) - 1
+            pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
             problem.simulate(candidate_solution, pilot_run)
             expended_budget += pilot_run
             sample_size = pilot_run

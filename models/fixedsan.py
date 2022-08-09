@@ -292,7 +292,7 @@ class FixedSANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = FixedSAN(self.model_fixed_factors)
         self.dim = self.model.factors["num_arcs"]
-        self.lower_bounds = (0,) * self.dim
+        self.lower_bounds = (1e-4,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
     def check_arc_costs(self):
@@ -444,5 +444,5 @@ class FixedSANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(self, lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
         return x
