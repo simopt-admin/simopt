@@ -2377,6 +2377,8 @@ class ProblemsSolvers(object):
                                                         )
                     solver_experiments.append(next_experiment)
                 self.experiments.append(solver_experiments)
+                self.solvers = [self.experiments[idx][0].solver for idx in range(len(self.experiments))]
+                self.problems = [experiment.problem for experiment in self.experiments[0]]
 
     def check_compatibility(self):
         """Check whether all experiments' solvers and problems are compatible.
