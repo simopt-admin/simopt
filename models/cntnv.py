@@ -48,22 +48,22 @@ class CntNV(Model):
         self.factors = fixed_factors
         self.specifications = {
             "purchase_price": {
-                "description": "Purchasing Cost per unit",
+                "description": "purchasing cost per unit",
                 "datatype": float,
                 "default": 5.0
             },
             "sales_price": {
-                "description": "Sales Price per unit",
+                "description": "sales price per unit",
                 "datatype": float,
                 "default": 9.0
             },
             "salvage_price": {
-                "description": "Salvage cost per unit",
+                "description": "salvage cost per unit",
                 "datatype": float,
                 "default": 1.0
             },
             "order_quantity": {
-                "description": "Order quantity",
+                "description": "order quantity",
                 "datatype": float,  # or int
                 "default": 0.5
             },
@@ -266,12 +266,12 @@ class CntNVMaxProfit(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (0,)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

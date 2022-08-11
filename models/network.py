@@ -47,47 +47,47 @@ class Network(Model):
         self.factors = fixed_factors
         self.specifications = {
             "process_prob": {
-                "description": "Probability that a message will go through a particular network i.",
+                "description": "probability that a message will go through a particular network i",
                 "datatype": list,
                 "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
             },
             "cost_process": {
-                "description": "Message processing cost of network i.",
+                "description": "message processing cost of network i",
                 "datatype": list,
                 "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]
             },
             "cost_time": {
-                "description": "Cost for the length of time a message spends in a network i per each unit of time.",
+                "description": "cost for the length of time a message spends in a network i per each unit of time",
                 "datatype": list,
                 "default": [0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
             },
             "mode_transit_time": {
-                "description": "Mode time of transit for network i following a triangular distribution.",
+                "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
                 "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             },
             "lower_limits_transit_time": {
-                "description": "Lower limits for the triangular distribution for the transit time.",
+                "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
                 "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
             },
             "upper_limits_transit_time": {
-                "description": "Upper limits for the triangular distribution for the transit time.",
+                "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
                 "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
             },
             "arrival_rate": {
-                "description": "Arrival rate of messages following a Poisson process.",
+                "description": "arrival rate of messages following a Poisson process",
                 "datatype": float,
                 "default": 1.0
             },
             "n_messages": {
-                "description": "Number of messages that arrives and needs to be routed.",
+                "description": "number of messages that arrives and needs to be routed",
                 "datatype": int,
                 "default": 1000
             },
             "n_networks": {
-                "description": "Number of networks.",
+                "description": "number of networks",
                 "datatype": int,
                 "default": 10
             },
@@ -320,12 +320,12 @@ class NetworkMinTotalCost(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

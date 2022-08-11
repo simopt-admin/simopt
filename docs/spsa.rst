@@ -27,11 +27,11 @@ Solver Factors:
 
     * Default: True
 
-* alpha: Non negative coefficient in the SPSA gain sequecence ak.
+* alpha: Non-negative coefficient in the SPSA gain sequecence ak.
 
     * Default: 0.602
 
-* gamma: Non negative coefficient in the SPSA gain sequecence ck.
+* gamma: Non-negative coefficient in the SPSA gain sequecence ck.
 
     * Default: 0.101
 
@@ -39,7 +39,7 @@ Solver Factors:
 
     * Default: 0.1
 
-* gavg: The averaged SP gradients used per iteration.
+* gavg: Averaged SP gradients used per iteration.
 
     * Default: 1
 
@@ -47,7 +47,7 @@ Solver Factors:
 
     * Default: 30
 
-* n_loss: The number of loss function evaluations used in this gain calculation.
+* n_loss: Number of loss function evaluations used in this gain calculation.
 
     * Default: 2
 

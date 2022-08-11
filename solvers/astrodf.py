@@ -59,7 +59,7 @@ class ASTRODF(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "CRN across solutions?",
+                "description": "use CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },

@@ -48,12 +48,12 @@ class ParameterEstimation(Model):
         self.n_responses = 1
         self.specifications = {
             "xstar": {
-                "description": "x^*, the unknown parameter that maximizes g(x).",
+                "description": "x^*, the unknown parameter that maximizes g(x)",
                 "datatype": list,
                 "default": [2, 5]
             },
             "x": {
-                "description": "x, variable in pdf.",
+                "description": "x, variable in pdf",
                 "datatype": list,
                 "default": [1, 1]
             }
@@ -206,12 +206,12 @@ class ParamEstiMaxLogLik(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": list,
                 "default": (1, 1)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

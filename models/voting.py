@@ -400,12 +400,12 @@ class MinVotingMaxWaitTime(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (10, 10, 10, 10, 10)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

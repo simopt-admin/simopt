@@ -61,17 +61,17 @@ class STRONG(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "Use CRN across solutions?",
+                "description": "use CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },
             "n0": {
-                "description": "Initial sample size",
+                "description": "initial sample size",
                 "datatype": int,
                 "default": 10
             },
             "n_r": {
-                "description": "Number of replications taken at each solution",
+                "description": "number of replications taken at each solution",
                 "datatype": int,
                 "default": 10
             },
@@ -91,22 +91,22 @@ class STRONG(Solver):
                 "default": 2
             },
             "eta_0": {
-                "description": "the constant of accepting",
+                "description": "constant for accepting",
                 "datatype": float,
                 "default": 0.01
             },
             "eta_1": {
-                "description": "the constant of more confident accepting",
+                "description": "constant for more confident accepting",
                 "datatype": float,
                 "default": 0.3
             },
             "gamma_1": {
-                "description": "the constant of shrinking the trust region",
+                "description": "constant for shrinking the trust region",
                 "datatype": float,
                 "default": 0.9
             },
             "gamma_2": {
-                "description": "the constant of expanding the trust region",
+                "description": "constant for expanding the trust region",
                 "datatype": float,
                 "default": 1.11
             },

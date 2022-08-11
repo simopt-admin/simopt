@@ -55,67 +55,67 @@ class IronOre(Model):
         self.factors = fixed_factors
         self.specifications = {
             "mean_price": {
-                "description": "Mean iron ore price per unit.",
+                "description": "mean iron ore price per unit",
                 "datatype": float,
                 "default": 100.0
             },
             "max_price": {
-                "description": "Maximum iron ore price per unit.",
+                "description": "maximum iron ore price per unit",
                 "datatype": float,
                 "default": 200.0
             },
             "min_price": {
-                "description": "Minimum iron ore price per unit.",
+                "description": "minimum iron ore price per unit",
                 "datatype": float,
                 "default": 0.0
             },
             "capacity": {
-                "description": "Maximum holding capacity.",
+                "description": "maximum holding capacity",
                 "datatype": int,
                 "default": 10000
             },
             "st_dev": {
-                "description": "Standard deviation of random walk steps for price.",
+                "description": "standard deviation of random walk steps for price",
                 "datatype": float,
                 "default": 7.5
             },
             "holding_cost": {
-                "description": "Holding cost per unit per period.",
+                "description": "holding cost per unit per period",
                 "datatype": float,
                 "default": 1.0
             },
             "prod_cost": {
-                "description": "Production cost per unit.",
+                "description": "production cost per unit",
                 "datatype": float,
                 "default": 100.0
             },
             "max_prod_perday": {
-                "description": "Maximum units produced per day.",
+                "description": "maximum units produced per day",
                 "datatype": int,
                 "default": 100
             },
             "price_prod": {
-                "description": "Price level to start production.",
+                "description": "price level to start production",
                 "datatype": float,
                 "default": 80.0
             },
             "inven_stop": {
-                "description": "Inventory level to cease production.",
+                "description": "inventory level to cease production",
                 "datatype": int,
                 "default": 7000
             },
             "price_stop": {
-                "description": "Price level to stop production.",
+                "description": "price level to stop production",
                 "datatype": float,
                 "default": 40
             },
             "price_sell": {
-                "description": "Price level to sell all stock.",
+                "description": "price level to sell all stock",
                 "datatype": float,
                 "default": 100
             },
             "n_days": {
-                "description": "Number of days to simulate.",
+                "description": "number of days to simulate",
                 "datatype": int,
                 "default": 365
             }
@@ -351,12 +351,12 @@ class IronOreMaxRev(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (80, 7000, 40, 100)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }
@@ -615,12 +615,12 @@ class IronOreMaxRevCnt(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (80, 40, 100)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

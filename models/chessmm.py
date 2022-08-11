@@ -49,27 +49,27 @@ class ChessMatchmaking(Model):
         self.n_responses = 2
         self.specifications = {
             "elo_mean": {
-                "description": "Mean of normal distribution for Elo rating.",
+                "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
                 "default": 1200.0
             },
             "elo_sd": {
-                "description": "Standard deviation of normal distribution for Elo rating.",
+                "description": "standard deviation of normal distribution for Elo rating",
                 "datatype": float,
                 "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
             },
             "poisson_rate": {
-                "description": "Rate of Poisson process for player arrivals.",
+                "description": "rate of Poisson process for player arrivals",
                 "datatype": float,
                 "default": 1.0
             },
             "num_players": {
-                "description": "Number of players.",
+                "description": "number of players",
                 "datatype": int,
                 "default": 1000
             },
             "allowable_diff": {
-                "description": "Maximum allowable difference between Elo ratings.",
+                "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
                 "default": 150.0
             }
@@ -252,17 +252,17 @@ class ChessAvgDifference(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (150,)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             },
             "upper_time": {
-                "description": "Upper bound on wait time.",
+                "description": "upper bound on wait time",
                 "datatype": float,
                 "default": 5.0
             }

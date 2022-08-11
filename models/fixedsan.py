@@ -48,17 +48,17 @@ class FixedSAN(Model):
         self.n_responses = 1
         self.specifications = {
             "num_arcs": {
-                "description": "Number of arcs.",
+                "description": "number of arcs",
                 "datatype": int,
                 "default": 13
             },
             "num_nodes": {
-                "description": "Number of nodes.",
+                "description": "number of nodes",
                 "datatype": int,
                 "default": 9
             },
             "arc_means": {
-                "description": "Mean task durations for each arc.",
+                "description": "mean task durations for each arc",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
             }
@@ -268,17 +268,17 @@ class FixedSANLongestPath(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (10,) * 13
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
             },
             "arc_costs": {
-                "description": "Cost associated to each arc.",
+                "description": "cost associated to each arc",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
             }

@@ -48,22 +48,22 @@ class FacilitySize(Model):
         self.n_responses = 3
         self.specifications = {
             "mean_vec": {
-                "description": "Location parameters of the multivariate normal distribution",
+                "description": "location parameters of the multivariate normal distribution",
                 "datatype": list,
                 "default": [100, 100, 100]
             },
             "cov": {
-                "description": "Covariance of multivariate normal distribution.",
+                "description": "covariance of multivariate normal distribution",
                 "datatype": list,
                 "default": [[2000, 1500, 500], [1500, 2000, 750], [500, 750, 2000]]
             },
             "capacity": {
-                "description": "Capacity.",
+                "description": "capacity",
                 "datatype": list,
                 "default": [150, 300, 400]
             },
             "n_fac": {
-                "description": "The number of facilities.",
+                "description": "number of facilities",
                 "datatype": int,
                 "default": 3
             }

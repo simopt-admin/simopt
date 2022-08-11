@@ -48,18 +48,18 @@ class SAN(Model):
         self.n_responses = 1
         self.specifications = {
             "num_nodes": {
-                "description": "Number of nodes.",
+                "description": "number of nodes",
                 "datatype": int,
                 "default": 9
             },
             "arcs": {
-                "description": "List of arcs.",
+                "description": "list of arcs",
                 "datatype": list,
                 "default": [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
                             (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
             },
             "arc_means": {
-                "description": "Mean task durations for each arc.",
+                "description": "mean task durations for each arc",
                 "datatype": tuple,
                 "default": (1,) * 13
             }
@@ -270,12 +270,12 @@ class SANLongestPath(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (8,) * 13
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
             }

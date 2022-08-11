@@ -50,47 +50,47 @@ class SPSA(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "Use CRN across solutions?",
+                "description": "use CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },
             "alpha": {
-                "description": "Non negative coefficient in the SPSA gain sequecence ak.",
+                "description": "non-negative coefficient in the SPSA gain sequecence ak",
                 "datatype": float,
                 "default": 0.602
             },
             "gamma": {
-                "description": "Non negative coefficient in the SPSA gain sequence ck.",
+                "description": "non-negative coefficient in the SPSA gain sequence ck",
                 "datatype": float,
                 "default": 0.101
             },
             "step": {
-                "description": "The initial desired magnitude of change in the theta elements.",
+                "description": "initial desired magnitude of change in the theta elements",
                 "datatype": float,
                 "default": 0.1
             },
             "gavg": {
-                "description": "The averaged SP gradients used per iteration.",
+                "description": "averaged SP gradients used per iteration",
                 "datatype": float,
                 "default": 1
             },
             "n_reps": {
-                "description": "Number of replications takes at each solution",
+                "description": "number of replications takes at each solution",
                 "datatype": int,
                 "default": 30
             },
             "n_loss": {
-                "description": "The number of loss function evaluations used in this gain calculation.",
+                "description": "number of loss function evaluations used in this gain calculation",
                 "datatype": int,
                 "default": 2
             },
             "eval_pct": {
-                "description": "Percentage of the expected number of loss evaluations per run.",
+                "description": "percentage of the expected number of loss evaluations per run",
                 "datatype": float,
                 "default": 2 / 3
             },
             "iter_pct": {
-                "description": "Percentage of the maximum expected number of iterations.",
+                "description": "percentage of the maximum expected number of iterations",
                 "datatype": float,
                 "default": 0.1
             }

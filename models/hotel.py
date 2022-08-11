@@ -46,12 +46,12 @@ class Hotel(Model):
         self.n_responses = 1
         self.specifications = {
             "num_products": {
-                "description": "Number of products: (rate, length of stay).",
+                "description": "number of products: (rate, length of stay)",
                 "datatype": int,
                 "default": 56
             },
             "lambda": {
-                "description": "Arrival rates for each product.",
+                "description": "arrival rates for each product",
                 "datatype": list,
                 "default": ((1 / 168) * np.array([1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, .25, .25,
                                                   1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, 1, 1,
@@ -59,22 +59,22 @@ class Hotel(Model):
                                                   2, 2, 1, 1, 2, 2, 3, 3, 1, 1, 2, 2, 1, 1])).tolist()
             },
             "num_rooms": {
-                "description": "Hotel capacity.",
+                "description": "hotel capacity",
                 "datatype": int,
                 "default": 100
             },
             "discount_rate": {
-                "description": "Discount rate.",
+                "description": "discount rate",
                 "datatype": int,
                 "default": 100
             },
             "rack_rate": {
-                "description": "Rack rate (full price).",
+                "description": "rack rate (full price)",
                 "datatype": int,
                 "default": 200
             },
             "product_incidence": {
-                "description": "Incidence matrix",
+                "description": "incidence matrix",
                 "datatype": list,
                 "default": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                             [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -85,22 +85,22 @@ class Hotel(Model):
                             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1]]
             },
             "time_limit": {
-                "description": "Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).",
+                "description": "time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27)",
                 "datatype": list,
                 "default": np.concatenate((27 * np.ones(14), 51 * np.ones(12), 75 * np.ones(10), 99 * np.ones(8), 123 * np.ones(6), 144 * np.ones(4), 168 * np.ones(2)), axis=None).tolist()
             },
             "time_before": {
-                "description": "Hours before t=0 to start running (e.g. 168 means start at time -168).",
+                "description": "hours before t=0 to start running (e.g. 168 means start at time -168)",
                 "datatype": int,
                 "default": 168
             },
             "runlength": {
-                "description": "Runlength of simulation (in hours) after t=0.",
+                "description": "runlength of simulation (in hours) after t=0",
                 "datatype": int,
                 "default": 168
             },
             "booking_limits": {
-                "description": "Booking limits.",
+                "description": "booking limits",
                 "datatype": tuple,
                 "default": tuple([100 for _ in range(56)])
             }
@@ -318,12 +318,12 @@ class HotelRevenue(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": tuple([0 for _ in range(56)])
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 100
             }

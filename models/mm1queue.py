@@ -52,22 +52,22 @@ class MM1Queue(Model):
         self.n_responses = 2
         self.specifications = {
             "lambda": {
-                "description": "Rate parameter of interarrival time distribution.",
+                "description": "rate parameter of interarrival time distribution",
                 "datatype": float,
                 "default": 1.5
             },
             "mu": {
-                "description": "Rate parameter of service time distribution.",
+                "description": "rate parameter of service time distribution",
                 "datatype": float,
                 "default": 3.0
             },
             "warmup": {
-                "description": "Number of people as warmup before collecting statistics",
+                "description": "number of people as warmup before collecting statistics",
                 "datatype": int,
                 "default": 20
             },
             "people": {
-                "description": "Number of people from which to calculate the average sojourn time",
+                "description": "number of people from which to calculate the average sojourn time",
                 "datatype": int,
                 "default": 50
             }
@@ -284,17 +284,17 @@ class MM1MinMeanSojournTime(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution from which solvers start",
                 "datatype": tuple,
                 "default": (5,)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             },
             "cost": {
-                "description": "Cost for increasing service rate.",
+                "description": "cost for increasing service rate",
                 "datatype": float,
                 "default": 0.1
             }

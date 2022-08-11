@@ -49,37 +49,37 @@ class DynamNews(Model):
         self.factors = fixed_factors
         self.specifications = {
             "num_prod": {
-                "description": "Number of Products",
+                "description": "number of products",
                 "datatype": int,
                 "default": 2
             },
             "num_customer": {
-                "description": "Number of Customers",
+                "description": "number of customers",
                 "datatype": int,
                 "default": 5
             },
             "c_utility": {
-                "description": "Constant of each product's utility",
+                "description": "constant of each product's utility",
                 "datatype": list,
                 "default": [1.0, 1.0]
             },
             "mu": {
-                "description": "Mu for calculating Gumbel random variable",
+                "description": "mu for calculating Gumbel random variable",
                 "datatype": float,
                 "default": 1.0
             },
             "init_level": {
-                "description": "Initial inventory level",
+                "description": "initial inventory level",
                 "datatype": list,
                 "default": [2, 3]
             },
             "price": {
-                "description": "Sell price of products",
+                "description": "sell price of products",
                 "datatype": list,
                 "default": [9, 9]
             },
             "cost": {
-                "description": "Cost of products",
+                "description": "cost of products",
                 "datatype": list,
                 "default": [5, 5]
             }
@@ -275,12 +275,12 @@ class DynamNewsMaxProfit(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (2, 3)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

@@ -49,42 +49,42 @@ class Contamination(Model):
         self.n_responses = 1
         self.specifications = {
             "contam_rate_alpha": {
-                "description": "Alpha parameter of beta distribution for growth rate of contamination at each stage.",
+                "description": "alpha parameter of beta distribution for growth rate of contamination at each stage",
                 "datatype": float,
                 "default": 1.0
             },
             "contam_rate_beta": {
-                "description": "Beta parameter of beta distribution for growth rate of contamination at each stage.",
+                "description": "beta parameter of beta distribution for growth rate of contamination at each stage",
                 "datatype": float,
                 "default": 17 / 3
             },
             "restore_rate_alpha": {
-                "description": "Alpha parameter of beta distribution for rate that contamination decreases by after prevention effort.",
+                "description": "alpha parameter of beta distribution for rate that contamination decreases by after prevention effort",
                 "datatype": float,
                 "default": 1.0
             },
             "restore_rate_beta": {
-                "description": "Beta parameter of beta distribution for rate that contamination decreases by after prevention effort.",
+                "description": "beta parameter of beta distribution for rate that contamination decreases by after prevention effort",
                 "datatype": float,
                 "default": 3 / 7
             },
             "initial_rate_alpha": {
-                "description": "Alpha parameter of beta distribution for initial contamination fraction.",
+                "description": "alpha parameter of beta distribution for initial contamination fraction",
                 "datatype": float,
                 "default": 1.0
             },
             "initial_rate_beta": {
-                "description": "Beta parameter of beta distribution for initial contamination fraction.",
+                "description": "beta parameter of beta distribution for initial contamination fraction",
                 "datatype": float,
                 "default": 30.0
             },
             "stages": {
-                "description": "Stage of food supply chain.",
+                "description": "stage of food supply chain",
                 "datatype": int,
                 "default": 5
             },
             "prev_decision": {
-                "description": "Prevention decision.",
+                "description": "prevention decision",
                 "datatype": tuple,
                 "default": (0, 0, 0, 0, 0)
             }
@@ -263,27 +263,27 @@ class ContaminationTotalCostDisc(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000
             },
             "prev_cost": {
-                "description": "Cost of prevention in each stage.",
+                "description": "cost of prevention in each stage",
                 "datatype": list,
                 "default": [1, 1, 1, 1, 1]
             },
             "error_prob": {
-                "description": "Allowable error probability in each stage.",
+                "description": "allowable error probability in each stage",
                 "datatype": list,
                 "default": [0.2, 0.2, 0.2, 0.2, 0.2]
             },
             "upper_thres": {
-                "description": "Upper limit of amount of contamination in each stage.",
+                "description": "upper limit of amount of contamination in each stage",
                 "datatype": list,
                 "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }
@@ -555,27 +555,27 @@ class ContaminationTotalCostCont(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (1, 1, 1, 1, 1)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
             },
             "prev_cost": {
-                "description": "Cost of prevention.",
+                "description": "cost of prevention",
                 "datatype": list,
                 "default": [1, 1, 1, 1, 1]
             },
             "error_prob": {
-                "description": "Error probability.",
+                "description": "error probability",
                 "datatype": list,
                 "default": [0.2, 0.2, 0.2, 0.2, 0.2]
             },
             "upper_thres": {
-                "description": "Upper limit of amount of contamination.",
+                "description": "upper limit of amount of contamination",
                 "datatype": list,
                 "default": [0.1, 0.1, 0.1, 0.1, 0.1]
             }

@@ -73,52 +73,52 @@ class SSCont(Model):
         self.factors = fixed_factors
         self.specifications = {
             "demand_mean": {
-                "description": "Mean of exponentially distributed demand in each period.",
+                "description": "mean of exponentially distributed demand in each period.",
                 "datatype": float,
                 "default": 100.0
             },
             "lead_mean": {
-                "description": "Mean of Poisson distributed order lead time.",
+                "description": "mean of Poisson distributed order lead time",
                 "datatype": float,
                 "default": 6.0
             },
             "backorder_cost": {
-                "description": "Cost per unit of demand not met with in-stock inventory.",
+                "description": "cost per unit of demand not met with in-stock inventory",
                 "datatype": float,
                 "default": 4.0
             },
             "holding_cost": {
-                "description": "Holding cost per unit per period.",
+                "description": "holding cost per unit per period",
                 "datatype": float,
                 "default": 1.0
             },
             "fixed_cost": {
-                "description": "Order fixed cost.",
+                "description": "order fixed cost",
                 "datatype": float,
                 "default": 36.0
             },
             "variable_cost": {
-                "description": "Order variable cost per unit.",
+                "description": "order variable cost per unit",
                 "datatype": float,
                 "default": 2.0
             },
             "s": {
-                "description": "Inventory threshold for placing order.",
+                "description": "inventory threshold for placing order",
                 "datatype": float,
                 "default": 1000.0
             },
             "S": {
-                "description": "Max inventory.",
+                "description": "max inventory",
                 "datatype": float,
                 "default": 2000.0
             },
             "n_days": {
-                "description": "Number of periods to simulate.",
+                "description": "number of periods to simulate",
                 "datatype": int,
                 "default": 100
             },
             "warmup": {
-                "description": "Number of periods as warmup before collecting statistics.",
+                "description": "number of periods as warmup before collecting statistics",
                 "datatype": int,
                 "default": 20
             }
@@ -366,12 +366,12 @@ class SSContMinCost(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution from which solvers start",
                 "datatype": tuple,
                 "default": (600, 600)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

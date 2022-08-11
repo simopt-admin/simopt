@@ -49,42 +49,42 @@ class RMITD(Model):
         self.n_responses = 1
         self.specifications = {
             "time_horizon": {
-                "description": "Time horizon.",
+                "description": "time horizon",
                 "datatype": int,
                 "default": 3
             },
             "prices": {
-                "description": "Prices for each period.",
+                "description": "prices for each period",
                 "datatype": list,
                 "default": [100, 300, 400]
             },
             "demand_means": {
-                "description": "Mean demand for each period.",
+                "description": "mean demand for each period",
                 "datatype": list,
                 "default": [50, 20, 30]
             },
             "cost": {
-                "description": "Cost per unit of capacity at t = 0.",
+                "description": "cost per unit of capacity at t = 0",
                 "datatype": float,
                 "default": 80.0
             },
             "gamma_shape": {
-                "description": "Shape parameter of gamma distribution.",
+                "description": "shape parameter of gamma distribution",
                 "datatype": float,
                 "default": 1.0
             },
             "gamma_scale": {
-                "description": "Scale parameter of gamma distribution.",
+                "description": "scale parameter of gamma distribution",
                 "datatype": float,
                 "default": 1.0
             },
             "initial_inventory": {
-                "description": "Initial inventory.",
+                "description": "initial inventory",
                 "datatype": int,
                 "default": 100
             },
             "reservation_qtys": {
-                "description": "Inventory to reserve going into periods 2, 3, ..., T.",
+                "description": "inventory to reserve going into periods 2, 3, ..., T",
                 "datatype": list,
                 "default": [50, 30]
             }
@@ -287,12 +287,12 @@ class RMITDMaxRevenue(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (100, 50, 30)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
             }

@@ -56,12 +56,12 @@ class RandomSearch(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "Use CRN across solutions?",
+                "description": "use CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },
             "sample_size": {
-                "description": "Sample size per solution",
+                "description": "sample size per solution",
                 "datatype": int,
                 "default": 10
             }

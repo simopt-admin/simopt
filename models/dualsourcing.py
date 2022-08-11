@@ -75,62 +75,62 @@ class DualSourcing(Model):
         self.factors = fixed_factors
         self.specifications = {
             "n_days": {
-                "description": "Number of days to simulate.",
+                "description": "number of days to simulate",
                 "datatype": int,
                 "default": 1000
             },
             "initial_inv": {
-                "description": "Initial inventory.",
+                "description": "initial inventory",
                 "datatype": int,
                 "default": 40
             },
             "cost_reg": {
-                "description": "Regular ordering cost per unit.",
+                "description": "regular ordering cost per unit",
                 "datatype": float,
                 "default": 100.00
             },
             "cost_exp": {
-                "description": "Expedited ordering cost per unit.",
+                "description": "expedited ordering cost per unit",
                 "datatype": float,
                 "default": 110.00
             },
             "lead_reg": {
-                "description": "Lead time for regular orders in days.",
+                "description": "lead time for regular orders in days",
                 "datatype": int,
                 "default": 2
             },
             "lead_exp": {
-                "description": "Lead time for expedited orders in days.",
+                "description": "lead time for expedited orders in days",
                 "datatype": int,
                 "default": 0
             },
             "holding_cost": {
-                "description": "Holding cost per unit per period.",
+                "description": "holding cost per unit per period",
                 "datatype": float,
                 "default": 5.00
             },
             "penalty_cost": {
-                "description": "Penalty cost per unit per period for backlogging.",
+                "description": "penalty cost per unit per period for backlogging",
                 "datatype": float,
                 "default": 495.00
             },
             "st_dev": {
-                "description": "Standard deviation of demand distribution.",
+                "description": "standard deviation of demand distribution",
                 "datatype": float,
                 "default": 10.0
             },
             "mu": {
-                "description": "Mean of demand distribution.",
+                "description": "mean of demand distribution",
                 "datatype": float,
                 "default": 30.0
             },
             "order_level_reg": {
-                "description": "Order-up-to level for regular orders.",
+                "description": "order-up-to level for regular orders",
                 "datatype": int,
                 "default": 80
             },
             "order_level_exp": {
-                "description": "Order-up-to level for expedited orders.",
+                "description": "order-up-to level for expedited orders",
                 "datatype": int,
                 "default": 50
             }
@@ -350,12 +350,12 @@ class DualSourcingMinCost(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (50, 80)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }

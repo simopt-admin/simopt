@@ -64,37 +64,37 @@ class TableAllocation(Model):
         self.factors = fixed_factors
         self.specifications = {
             "n_hours": {
-                "description": "Number of hours to simulate.",
+                "description": "number of hours to simulate",
                 "datatype": float,
                 "default": 5.0
             },
             "capacity": {
-                "description": "Maximum capacity of restaurant.",
+                "description": "maximum capacity of restaurant",
                 "datatype": int,
                 "default": 80
             },
             "table_cap": {
-                "description": "Seating capacity of each type of table.",
+                "description": "seating capacity of each type of table",
                 "datatype": list,
                 "default": [2, 4, 6, 8]
             },
             "lambda": {
-                "description": "Average number of arrivals per hour.",
+                "description": "average number of arrivals per hour",
                 "datatype": list,
                 "default": [3, 6, 3, 3, 2, 4 / 3, 6 / 5, 1]
             },
             "service_time_means": {
-                "description": "Mean service time (in minutes).",
+                "description": "mean service time (in minutes)",
                 "datatype": list,
                 "default": [20, 25, 30, 35, 40, 45, 50, 60]
             },
             "table_revenue": {
-                "description": "Revenue earned for each group size.",
+                "description": "revenue earned for each group size",
                 "datatype": list,
                 "default": [15, 30, 45, 60, 75, 90, 105, 120]
             },
             "num_tables": {
-                "description": "Number of tables of each capacity.",
+                "description": "number of tables of each capacity",
                 "datatype": list,
                 "default": [10, 5, 4, 2]
             }
@@ -302,12 +302,12 @@ class TableAllocationMaxRev(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (10, 5, 4, 2)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }
