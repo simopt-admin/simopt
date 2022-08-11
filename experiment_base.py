@@ -2281,6 +2281,8 @@ class ProblemsSolvers(object):
             inner key is factor name.
     experiments : list [list [``experiment_base.ProblemSolver``]]
         All problem-solver pairs.
+    file_name_path : str
+        Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
 
     Parameters
     ----------
@@ -2301,8 +2303,10 @@ class ProblemsSolvers(object):
         List of problems.
     experiments : list [list [``experiment_base.ProblemSolver``]], optional
         All problem-solver pairs.
+    file_name_path : str
+        Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
     """
-    def __init__(self, solver_names=None, problem_names=None, solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None):
+    def __init__(self, solver_names=None, problem_names=None, solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2381,6 +2385,13 @@ class ProblemsSolvers(object):
                 self.experiments.append(solver_experiments)
                 self.solvers = [self.experiments[idx][0].solver for idx in range(len(self.experiments))]
                 self.problems = [experiment.problem for experiment in self.experiments[0]]
+        # Initialize file path.
+        if file_name_path is None:
+            solver_names_string = "_".join(self.solver_names)
+            problem_names_string = "_".join(self.problem_names)
+            self.file_name_path = f"./experiments/outputs/group_{solver_names_string}_on_{problem_names_string}.pickle"
+        else:
+            self.file_name_path = file_name_path
 
     def check_compatibility(self):
         """Check whether all experiments' solvers and problems are compatible.
@@ -2415,6 +2426,8 @@ class ProblemsSolvers(object):
                     print(f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_run()
                     experiment.run(n_macroreps)
+        # Save ProblemsSolvers object to .pickle file.
+        self.record_group_experiment_results()
 
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
         """For each problem-solver pair, run postreplications at solutions
@@ -2442,6 +2455,8 @@ class ProblemsSolvers(object):
                     print(f"Post-processing {experiment.solver.name} on {experiment.problem.name}.")
                     experiment.clear_postreplicate()
                     experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
+        # Save ProblemsSolvers object to .pickle file.
+        self.record_group_experiment_results()
 
     def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
         """Construct objective curves and (normalized) progress curves
@@ -2462,6 +2477,32 @@ class ProblemsSolvers(object):
             post_normalize(experiments=experiments_same_problem,
                            n_postreps_init_opt=n_postreps_init_opt,
                            crn_across_init_opt=crn_across_init_opt)
+        # Save ProblemsSolvers object to .pickle file.
+        self.record_group_experiment_results()
+
+    def record_group_experiment_results(self):
+        """Save ``experiment_base.ProblemsSolvers`` object to .pickle file.
+        """
+        with open(self.file_name_path, "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+
+def read_group_experiment_results(file_name_path):
+    """Read in ``experiment_base.ProblemsSolvers`` object from .pickle file.
+
+    Parameters
+    ----------
+    file_name_path : str
+        Path of .pickle file for reading ``experiment_base.ProblemsSolvers`` object.
+
+    Returns
+    -------
+    groupexperiment : ``experiment_base.ProblemsSolvers``
+        Problem-solver group that has been run or has been post-processed.
+    """
+    with open(file_name_path, "rb") as file:
+        groupexperiment = pickle.load(file)
+    return groupexperiment
 
 
 def find_unique_solvers_problems(experiments):
