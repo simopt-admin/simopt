@@ -288,7 +288,7 @@ class SANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (1e-1,) * self.dim
+        self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
