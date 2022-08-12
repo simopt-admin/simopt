@@ -19,6 +19,7 @@ from solvers.randomsearch import RandomSearch
 from solvers.neldmd import NelderMead
 from solvers.strong import STRONG
 from solvers.spsa import SPSA
+from solvers.adam import ADAM
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -43,14 +44,16 @@ solver_directory = {
     "RNDSRCH": RandomSearch,
     "NELDMD": NelderMead,
     "STRONG": STRONG,
-    "SPSA": SPSA
+    "SPSA": SPSA,
+    "ADAM": ADAM,
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SBCN)": ASTRODF,
     "RandomSearch (SSMN)": RandomSearch,
     "Nelder-Mead (SBCN)": NelderMead,
     "STRONG (SBCN)": STRONG,
-    "SPSA (SBCN)": SPSA
+    "SPSA (SBCN)": SPSA,
+    "ADAM (SBCN)": ADAM
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
