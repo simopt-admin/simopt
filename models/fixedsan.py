@@ -60,7 +60,7 @@ class FixedSAN(Model):
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
@@ -260,7 +260,7 @@ class FixedSANLongestPath(Problem):
         self.minmax = (-1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
