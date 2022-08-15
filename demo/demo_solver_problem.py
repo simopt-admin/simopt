@@ -52,6 +52,9 @@ myexperiment.post_replicate(n_postreps=200)
 # Find an optimal solution x* for normalization.
 post_normalize([myexperiment], n_postreps_init_opt=200)
 
+# Log results.
+myexperiment.log_experiment_results()
+
 print("Plotting results.")
 # Produce basic plots of the solver on the problem.
 plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
