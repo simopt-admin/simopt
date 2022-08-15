@@ -744,6 +744,61 @@ class ProblemSolver(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
+    def log_experiment_results(self):
+        """Create readable .txt file from a problem-solver pair's .pickle file.
+        """
+        # Create a new text file in experiments/logs folder with correct name.
+        new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
+        new_path2 = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
+
+        with open(new_path2 + "_experiment_results.txt", "w") as file:
+            # Title txt file with experiment information.
+            file.write(self.file_name_path)
+            file.write('\n')
+            file.write(f"Problem: {self.problem.name}\n")
+            file.write(f"Solver: {self.solver.name}\n\n")
+
+            # Display model factors.
+            file.write("Model Factors:\n")
+            for key, value in self.problem.model.factors.items():
+                # Excluding model factors corresponding to decision variables.
+                if key not in self.problem.model_decision_factors:
+                    file.write(f"\t{key}: {value}\n")
+            file.write("\n")
+            # Display problem factors.
+            file.write("Problem Factors:\n")
+            for key, value in self.problem.factors.items():
+                file.write(f"\t{key}: {value}\n")
+            file.write("\n")
+            # Display solver factors.
+            file.write("Solver Factors:\n")
+            for key, value in self.solver.factors.items():
+                file.write(f"\t{key}: {value}\n")
+            file.write("\n")
+
+            # Display macroreplication information.
+            file.write(f"{self.n_macroreps} macroreplications were run.\n")
+            # If results have been postreplicated, list the number of post-replications.
+            if self.check_postreplicate():
+                file.write(f"{self.n_postreps} postreplications were run at each recommended solution.\n\n")
+            # If post-normalized, state initial solution (x0) and proxy optimal solution (x_star)
+            # and how many replications were taken of them (n_postreps_init_opt).
+            if self.check_postnormalize():
+                file.write(f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
+                file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
+                file.write(f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n")
+            # Display recommended solution at each budget value for each macroreplication.
+            file.write('Macroreplication Results:\n')
+            for mrep in range(self.n_macroreps):
+                file.write(f"\nMacroreplication {mrep + 1}:\n")
+                for budget in range(len(self.all_intermediate_budgets[mrep])):
+                    file.write(f"\tBudget: {round(self.all_intermediate_budgets[mrep][budget], 4)}\t Recommended Solution: {tuple([round(x, 4) for x in self.all_recommended_xs[mrep][budget]])}\t")
+                    # If postreplicated, add estimated objective function values
+                    if self.check_postreplicate():
+                        file.write(f"Estimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n")
+                file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
+        file.close()
+
 
 def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     """Trim solutions recommended by solver after problem's max budget.

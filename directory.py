@@ -19,6 +19,7 @@ from solvers.randomsearch import RandomSearch
 from solvers.neldmd import NelderMead
 from solvers.strong import STRONG
 from solvers.spsa import SPSA
+from solvers.adam import ADAM
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -43,14 +44,16 @@ solver_directory = {
     "RNDSRCH": RandomSearch,
     "NELDMD": NelderMead,
     "STRONG": STRONG,
-    "SPSA": SPSA
+    "SPSA": SPSA,
+    "ADAM": ADAM,
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SBCN)": ASTRODF,
     "RandomSearch (SSMN)": RandomSearch,
     "Nelder-Mead (SBCN)": NelderMead,
     "STRONG (SBCN)": STRONG,
-    "SPSA (SBCN)": SPSA
+    "SPSA (SBCN)": SPSA,
+    "ADAM (SBCN)": ADAM
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
@@ -82,16 +85,16 @@ problem_nonabbreviated_directory = {
     "Max Revenue for Revenue Management Temporal Demand (SDDN)": RMITDMaxRevenue,
     "Min Total Cost for (s, S) Inventory (SBCN)": SSContMinCost,
     "Max Revenue for Iron Ore (SBDN)": IronOreMaxRev,
-    "Max Profit for Dynamic Newsvendor (SBDG)": DynamNewsMaxProfit,
+    "Max Profit for Dynamic Newsvendor (SBDN)": DynamNewsMaxProfit,
     "Min Cost for Dual Sourcing (SBDN)": DualSourcingMinCost,
     "Min Total Cost for Discrete Contamination (SSDN)": ContaminationTotalCostDisc,
     "Min Total Cost for Continuous Contamination (SSCN)": ContaminationTotalCostCont,
     "Min Avg Difference for Chess Matchmaking (SSCN)": ChessAvgDifference,
-    "Min Mean Longest Path for Stochastic Activity Network (SBCN)": SANLongestPath,
+    "Min Mean Longest Path for Stochastic Activity Network (SBCG)": SANLongestPath,
     "Max Revenue for Hotel Booking (SBDN)": HotelRevenue,
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
-    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": ParamEstiMaxLogLik,
-    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": FixedSANLongestPath,
+    "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
+    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSANLongestPath,
     "Minimize Maximum Waiting Time for Voting System (SDDN)": MinVotingMaxWaitTime,
     "Minimize Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
 }
@@ -122,16 +125,16 @@ model_unabbreviated_directory = {
     "Max Revenue for Revenue Management Temporal Demand (SDDN)": "RMITD",
     "Min Total Cost for (s, S) Inventory (SBCN)": "SSCONT",
     "Max Revenue for Iron Ore (SBDN)": "IRONORE",
-    "Max Profit for Dynamic Newsvendor (SBDG)": "DYNAMNEWS",
+    "Max Profit for Dynamic Newsvendor (SBDN)": "DYNAMNEWS",
     "Min Cost for Dual Sourcing (SBDN)": "DUALSOURCING",
     "Min Total Cost for Discrete Contamination (SSDN)": "CONTAM",
     "Min Total Cost for Continuous Contamination (SSCN)": "CONTAM",
     "Min Avg Difference for Chess Matchmaking (SSCN)": "CHESS",
-    "Min Mean Longest Path for Stochastic Activity Network (SBCN)": "SAN",
+    "Min Mean Longest Path for Stochastic Activity Network (SBCG)": "SAN",
     "Max Revenue for Hotel Booking (SBDN)": "HOTEL",
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
-    "Max Log Likelihood for Gamma Parameter Estimation (SBCG)": "PARAMESTI",
-    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCN)": "FIXEDSAN",
+    "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
+    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
     "Minimize Maximum Waiting Time for Voting System (SDDN)": "VOTING",
     "Minimize Total Cost for Communication Networks System (SDCN)": "NETWORK"
 }

@@ -51,17 +51,17 @@ class DynamNews(Model):
             "num_prod": {
                 "description": "number of products",
                 "datatype": int,
-                "default": 2
+                "default": 10
             },
             "num_customer": {
                 "description": "number of customers",
                 "datatype": int,
-                "default": 5
+                "default": 30
             },
             "c_utility": {
                 "description": "constant of each product's utility",
                 "datatype": list,
-                "default": [1.0, 1.0]
+                "default": [5 + j for j in range(1, 11)]
             },
             "mu": {
                 "description": "mu for calculating Gumbel random variable",
@@ -71,17 +71,17 @@ class DynamNews(Model):
             "init_level": {
                 "description": "initial inventory level",
                 "datatype": list,
-                "default": [2, 3]
+                "default": list(3 * np.ones(10))
             },
             "price": {
                 "description": "sell price of products",
                 "datatype": list,
-                "default": [9, 9]
+                "default": list(9 * np.ones(10))
             },
             "cost": {
                 "description": "cost of products",
                 "datatype": list,
-                "default": [5, 5]
+                "default": list(5 * np.ones(10))
             }
         }
         self.check_factor_list = {
@@ -265,8 +265,8 @@ class DynamNewsMaxProfit(Problem):
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "box"
-        self.variable_type = "discrete"
-        self.gradient_available = True
+        self.variable_type = "continuous"
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -277,7 +277,7 @@ class DynamNewsMaxProfit(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (2, 3)
+                "default": tuple(3 * np.ones(10))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
