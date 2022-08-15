@@ -196,7 +196,8 @@ class PGD(Solver):
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                print('grad', new_solution.det_objectives_gradients)
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
@@ -214,23 +215,25 @@ class PGD(Solver):
             proj_grad = self.project_grad(grad)
             print('proj_grad', proj_grad)
 
-            # Adjust the step size to respect box constraints if necessary.
-            temp_steps = list()
-            for i in range(problem.dim):
-                temp_x = new_x[i] - alpha * proj_grad[i]
-                if temp_x < lower_bound[i]:
-                    temp_steps.append((new_x[i] - lower_bound[i]) / proj_grad[i])
-                elif temp_x > upper_bound[i]:
-                    temp_steps.append((new_x[i] - upper_bound[i]) / proj_grad[i])
-                else:
-                    temp_steps.append(alpha)
+            # # Adjust the step size to respect box constraints if necessary.
+            # temp_steps = list()
+            # for i in range(problem.dim):
+            #     temp_x = new_x[i] - alpha * proj_grad[i]
+            #     if temp_x < lower_bound[i]:
+            #         temp_steps.append((new_x[i] - lower_bound[i]) / proj_grad[i])
+            #     elif temp_x > upper_bound[i]:
+            #         temp_steps.append((new_x[i] - upper_bound[i]) / proj_grad[i])
+            #     else:
+            #         temp_steps.append(alpha)
             
-            # Update alpha to be the maximum stepsize possible.
-            alpha = min(temp_steps)
+            # # Update alpha to be the maximum stepsize possible.
+            # alpha = min(temp_steps)
+            print('alpha', alpha)
 
             # Calculate the candidate solution.
             candidate_x = new_x - alpha * proj_grad
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+            print('candidate_sol', candidate_x)
 
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
@@ -244,11 +247,17 @@ class PGD(Solver):
             else:
                 # Unsuccessful step.
                 alpha = gamma * alpha
+            print('new',new_solution.x)
             # Append new solution.
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
-                best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
+            # if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean) and True:
+            #     print('here')
+            #     best_solution = new_solution
+            #     recommended_solns.append(new_solution)
+            #     intermediate_budgets.append(expended_budget)
+            best_solution = new_solution
+            recommended_solns.append(new_solution)
+            intermediate_budgets.append(expended_budget)
+        print('recommended solutions:')
         [print(i.x) for i in recommended_solns]
         return recommended_solns, intermediate_budgets
 

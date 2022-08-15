@@ -32,6 +32,8 @@ from rng.mrg32k3a import MRG32k3a
 from models.mm1queue import MM1Queue
 fixed_factors = {"lambda": 3.0, "mu": 8.0}
 mymodel = MM1Queue(fixed_factors)
+from models.fake import Fake
+mymodel = Fake()
 # -----------------------------------------------
 
 # The rest of this script requires no changes.

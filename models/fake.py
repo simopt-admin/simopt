@@ -2,6 +2,7 @@
 Summary
 -------
 """
+import xxlimited
 import numpy as np
 
 from base import Model, Problem
@@ -71,13 +72,13 @@ class Fake(Model):
             performance measures of interest
         """
         
-
         # Compose responses and gradients.
-        responses = {"sum": np.sum(self.factors["x"])}
+        responses = {"sum": 0}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
                      }
+        gradients["sum"]["x"] = np.zeros(len(self.factors["x"]))
         return responses, gradients
 
 
@@ -160,9 +161,9 @@ class FakeProblem(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.5,0.5)
+        self.optimal_solution = (0.5, 0.5)
         self.model_default_factors = {}
         self.model_decision_factors = {"x"}
         self.factors = fixed_factors
@@ -205,7 +206,7 @@ class FakeProblem(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "sum": vector[0]
+            "x": vector[:]
         }
         return factor_dict
 
@@ -224,7 +225,7 @@ class FakeProblem(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["x"],)
+        vector = tuple(factor_dict["x"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -279,8 +280,8 @@ class FakeProblem(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(np.array(x)),)
-        det_objectives_gradients = (np.array(x),)
+        det_objectives = (np.sum(np.array(x) **2),)
+        det_objectives_gradients = (x,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):

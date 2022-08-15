@@ -47,6 +47,11 @@ fixed_factors = {"initial_solution": (2,), "budget": 500}
 myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
 x = (3,)
 mysolution = Solution(x, myproblem)
+
+from models.fake import FakeProblem
+myproblem = FakeProblem()
+x = (1, 0)
+mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
 # Another working example for FacilitySizingTotalCost problem. (Commented out)
