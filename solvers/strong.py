@@ -117,7 +117,7 @@ class STRONG(Solver):
             },
             "lambda_2": {
                 "description": "magnifying factor for n_r in stage I and stage II",
-                "datatype": int,
+                "datatype": float,
                 "default": 1.01
             }
         }
