@@ -198,7 +198,7 @@ class ALOE(Solver):
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * (new_solution.det_objectives_gradients + new_solution.objectives_gradients_mean)[0]
+                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
