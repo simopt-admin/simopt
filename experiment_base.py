@@ -761,7 +761,9 @@ class ProblemSolver(object):
             # Display model factors.
             file.write("Model Factors:\n")
             for key, value in self.problem.model.factors.items():
-                file.write(f"\t{key}: {value}\n")
+                # Excluding model factors corresponding to decision variables.
+                if key not in self.problem.model_decision_factors:
+                    file.write(f"\t{key}: {value}\n")
             file.write("\n")
             # Display problem factors.
             file.write("Problem Factors:\n")
@@ -782,8 +784,8 @@ class ProblemSolver(object):
             # If post-normalized, state initial solution (x0) and proxy optimal solution (x_star)
             # and how many replications were taken of them (n_postreps_init_opt).
             if self.check_postnormalize():
-                file.write(f"The initial solution is {self.x0}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
-                file.write(f"The proxy optimal solution is {self.xstar}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
+                file.write(f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
+                file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
                 file.write(f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n")
             # Display recommended solution at each budget value for each macroreplication.
             file.write('Macroreplication Results:\n')

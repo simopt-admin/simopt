@@ -574,12 +574,11 @@ class Problem(object):
                 # Generate one replication at x.
                 responses, gradients = self.model.replicate(solution.rng_list)
                 # Convert gradient subdictionaries to vectors mapping to decision variables.
-                # TEMPORARILY COMMENT OUT GRADIENTS
-                # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # Convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives.
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
-                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
                     # Convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints.

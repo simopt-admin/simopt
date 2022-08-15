@@ -82,7 +82,7 @@ class ADAM(Solver):
             "alpha": {
                 "description": "step size",
                 "datatype": float,
-                "default": 1.0  # Changing the step size matters a lot.
+                "default": 0.5  # Changing the step size matters a lot.
             },
             "epsilon": {
                 "description": "a small value to prevent zero-division",
@@ -250,7 +250,7 @@ class ADAM(Solver):
             elif BdsCheck[i] == 1:
                 FnPlusMinus[i, 2] = steph1
                 x1[i] = x1[i] + FnPlusMinus[i, 2]
-            # Backward diff
+            # Backward diff.
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
