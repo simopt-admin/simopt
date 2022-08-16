@@ -172,7 +172,8 @@ class FixedSAN(Model):
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {"longest_path_length": {"mean_grad": longest_path_gradient}}
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["longest_path_length"]["arc_means"] = longest_path_gradient
 
         return responses, gradients
 
@@ -411,7 +412,7 @@ class FixedSANLongestPath(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2))
+        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
