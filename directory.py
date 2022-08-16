@@ -21,7 +21,7 @@ from solvers.strong import STRONG
 from solvers.adam import ADAM
 from solvers.aloe import ALOE
 from solvers.adam2 import ADAM2
-from solvers.PGD_usimplex import PGD
+from solvers.pgd_usimplex import PGD
 from solvers.aloe2 import ALOE2
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit

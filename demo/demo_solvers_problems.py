@@ -10,7 +10,7 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemsSolvers class and other useful functions
-from experiment_base import ProblemsSolvers, plot_solvability_profiles
+from experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves
 
 # !! When testing a new solver/problem, first go to directory.py.
 # There you should add the import statement and an entry in the respective
@@ -20,8 +20,8 @@ from experiment_base import ProblemsSolvers, plot_solvability_profiles
 # Specify the names of the solver and problem to test.
 # These names are strings and should match those input to directory.py.
 # Ex:
-solver_names = ["RNDSRCH", "ASTRODF", "NELDMD"]
-problem_names = ["CNTNEWS-1", "SAN-1"]
+solver_names = ["RNDSRCH", "PGD"]
+problem_names = ["VOLUNTEER-1", "VOLUNTEER-2"]
 
 
 # Initialize an instance of the experiment class.
@@ -33,13 +33,13 @@ mymetaexperiment.run(n_macroreps=3)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=50)
+mymetaexperiment.post_replicate(n_postreps=20)
 # Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=50)
+mymetaexperiment.post_normalize(n_postreps_init_opt=20)
 
 print("Plotting results.")
 # Produce basic plots of the solvers on the problems.
-plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
+# plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
 
 # Plots will be saved in the folder experiments/plots.
 print("Finished. Plots can be found in experiments/plots folder.")

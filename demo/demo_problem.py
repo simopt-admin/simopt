@@ -14,6 +14,7 @@ from rng.mrg32k3a import MRG32k3a
 
 # Import the Solution class.
 from base import Solution
+import numpy as np
 
 # Import problem.
 
@@ -51,6 +52,11 @@ mysolution = Solution(x, myproblem)
 from models.fake import FakeProblem
 myproblem = FakeProblem()
 x = (1, 0)
+mysolution = Solution(x, myproblem)
+
+from models.volunteer import VolunteerDist
+myproblem = VolunteerDist()
+x = tuple((1/4 * np.ones(4)).tolist())
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 

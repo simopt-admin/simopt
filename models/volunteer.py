@@ -6,7 +6,6 @@ Simulate the distribution of emergency medical service volunteer.
 import numpy as np
 from itertools import chain
 from math import sqrt, sin, cos, pi
-from scipy import rand
 from base import Model, Problem
 
 
@@ -243,14 +242,14 @@ class Volunteer(Model):
                     # Update pts
                     pts[idx_sq] += 1
             frac_sq = np.zeros(self.factors["num_squares"])
-            # Find max possible points in a square
+            # Find max possible points in a square.
             count = 0
             for x,y in zip(xs, ys):
                 if x > -self.factors["thre_dist"]/4 and y > -self.factors["thre_dist"]/4 and x < self.factors["thre_dist"]/4 and y < self.factors["thre_dist"]/4:
                     count += 1
             max_possible = (self.factors["square_length"] / self.factors["thre_dist"] * 4)**2 * count
             for i in range(self.factors["num_squares"]):
-                # Fraction of square i covered by circle can be approximated by pts[i]/max possible
+                # Fraction of square i covered by circle can be approximated by pts[i]/max possible.
                 frac_sq[i] = pts[i] / max_possible
             # Estimated mean number of volunteers in the circle with radius "thre_dist".
             vol_in_circle = np.sum(np.multiply(self.factors["p_vol"], frac_sq))
@@ -378,7 +377,7 @@ class VolunteerDist(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
@@ -643,7 +642,7 @@ class VolunteerSurvival(Problem):
         self.minmax = (1,)
         self.constraint_type = "box"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -653,12 +652,20 @@ class VolunteerSurvival(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                "default": tuple((1/400 * np.ones(400)).tolist())
+                # "default": tuple((1/400 * np.ones(400)).tolist())
+                "default": tuple((1/4 * np.ones(4)).tolist())
+
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 1000
+            },
+            "p_OHCA": {
+                "description": "Probability of an OHCA occurs in each square.",
+                "datatype": list,
+                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                "default": [[0.1, 0.1],[0.1, 0.7]]
             }
         }
         self.check_factor_list = {
@@ -720,7 +727,10 @@ class VolunteerSurvival(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["p_vol"])
+        if np.isnan(factor_dict["p_vol"]).any():
+            vector = np.nan
+        else:
+            vector = tuple(factor_dict["p_vol"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):

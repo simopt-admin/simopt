@@ -2,7 +2,6 @@
 Summary
 -------
 """
-import xxlimited
 import numpy as np
 
 from base import Model, Problem
@@ -45,7 +44,7 @@ class Fake(Model):
             "x": {
                 "description": "x",
                 "datatype": tuple,
-                "default": (1, 0)
+                "default": (1, 0, 0, 0, 0)
             },
         }
         self.check_factor_list = {
@@ -163,7 +162,6 @@ class FakeProblem(Problem):
         self.variable_type = "continuous"
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.5, 0.5)
         self.model_default_factors = {}
         self.model_decision_factors = {"x"}
         self.factors = fixed_factors
@@ -171,7 +169,7 @@ class FakeProblem(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (1, 0)
+                "default": (1, 0, 0, 0, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -189,7 +187,7 @@ class FakeProblem(Problem):
         self.dim = len(self.model.factors["x"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
-
+        self.optimal_solution = tuple(np.ones(self.dim) / self.dim)
 
     def vector_to_factor_dict(self, vector):
         """

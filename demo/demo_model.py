@@ -34,6 +34,8 @@ fixed_factors = {"lambda": 3.0, "mu": 8.0}
 mymodel = MM1Queue(fixed_factors)
 from models.fake import Fake
 mymodel = Fake()
+from models.volunteer import Volunteer
+mymodel = Volunteer()
 # -----------------------------------------------
 
 # The rest of this script requires no changes.

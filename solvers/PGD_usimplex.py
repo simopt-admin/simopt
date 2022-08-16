@@ -4,12 +4,10 @@ Summary
 PGD
 projected gradient descent
 """
-from tkinter import N
-from sklearn.metrics import euclidean_distances
+
 from base import Solver
 from numpy.linalg import norm
 import numpy as np
-import math
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -197,7 +195,10 @@ class PGD(Solver):
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-                print('grad', new_solution.det_objectives_gradients)
+                print('IPA grad', grad)
+                # grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                # expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                # print('finite diff grad', grad)
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
@@ -213,27 +214,12 @@ class PGD(Solver):
 
             # Get the projected gradient.
             proj_grad = self.project_grad(grad)
-            print('proj_grad', proj_grad)
-
-            # # Adjust the step size to respect box constraints if necessary.
-            # temp_steps = list()
-            # for i in range(problem.dim):
-            #     temp_x = new_x[i] - alpha * proj_grad[i]
-            #     if temp_x < lower_bound[i]:
-            #         temp_steps.append((new_x[i] - lower_bound[i]) / proj_grad[i])
-            #     elif temp_x > upper_bound[i]:
-            #         temp_steps.append((new_x[i] - upper_bound[i]) / proj_grad[i])
-            #     else:
-            #         temp_steps.append(alpha)
-            
-            # # Update alpha to be the maximum stepsize possible.
-            # alpha = min(temp_steps)
-            print('alpha', alpha)
 
             # Calculate the candidate solution.
             candidate_x = new_x - alpha * proj_grad
+            # Check box constraints and update the solution accordingly.
+            candidate_x = self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-            print('candidate_sol', candidate_x)
 
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
@@ -247,19 +233,30 @@ class PGD(Solver):
             else:
                 # Unsuccessful step.
                 alpha = gamma * alpha
-            print('new',new_solution.x)
+
             # Append new solution.
-            # if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean) and True:
-            #     print('here')
-            #     best_solution = new_solution
-            #     recommended_solns.append(new_solution)
-            #     intermediate_budgets.append(expended_budget)
-            best_solution = new_solution
-            recommended_solns.append(new_solution)
-            intermediate_budgets.append(expended_budget)
-        print('recommended solutions:')
-        [print(i.x) for i in recommended_solns]
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean) and True:
+                best_solution = new_solution
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+
         return recommended_solns, intermediate_budgets
+
+    def check_cons(self, candidate_x, new_x, lower_bound, upper_bound):
+        # The current step.
+        stepV = np.subtract(candidate_x, new_x)
+        # Form a matrix to determine the possible stepsize.
+        tmaxV = np.ones((2, len(candidate_x)))
+        for i in range(0, len(candidate_x)):
+            if stepV[i] > 0:
+                tmaxV[0, i] = (upper_bound[i] - new_x[i]) / stepV[i]
+            elif stepV[i] < 0:
+                tmaxV[1, i] = (lower_bound[i] - new_x[i]) / stepV[i]
+        # Find the minimum stepsize.
+        t2 = tmaxV.min()
+        # Calculate the modified x.
+        modified_x = new_x + t2 * stepV
+        return modified_x
 
     # Finite difference for approximating gradients.
     def finite_diff(self, new_solution, BdsCheck, problem, stepsize, r):
@@ -338,7 +335,6 @@ class PGD(Solver):
         lam = 1 / rho * (1 - sum(sorted_x[:rho]))
         return [max(i + lam, 0) for i in x]
     
-    
     def project_grad(self, grad):
         """
         Project the gradient onto the hyperplane H: sum{x_i} = 0.
@@ -349,6 +345,3 @@ class PGD(Solver):
         # Perform the projection.
         proj_grad = np.matmul(proj_mat, grad)
         return proj_grad
-
-        
-
