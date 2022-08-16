@@ -744,7 +744,7 @@ class ProblemSolver(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-    def log_experiment_results(self):
+    def log_experiment_results(self, print_solutions=True):
         """Create readable .txt file from a problem-solver pair's .pickle file.
         """
         # Create a new text file in experiments/logs folder with correct name.
@@ -792,10 +792,13 @@ class ProblemSolver(object):
             for mrep in range(self.n_macroreps):
                 file.write(f"\nMacroreplication {mrep + 1}:\n")
                 for budget in range(len(self.all_intermediate_budgets[mrep])):
-                    file.write(f"\tBudget: {round(self.all_intermediate_budgets[mrep][budget], 4)}\t Recommended Solution: {tuple([round(x, 4) for x in self.all_recommended_xs[mrep][budget]])}\t")
-                    # If postreplicated, add estimated objective function values
+                    file.write(f"\tBudget: {round(self.all_intermediate_budgets[mrep][budget], 4)}")
+                    # Optionally print solutions.
+                    if print_solutions:
+                        file.write(f"\tRecommended Solution: {tuple([round(x, 4) for x in self.all_recommended_xs[mrep][budget]])}")
+                    # If postreplicated, add estimated objective function values.
                     if self.check_postreplicate():
-                        file.write(f"Estimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n")
+                        file.write(f"\tEstimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n")
                 file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
         file.close()
 
