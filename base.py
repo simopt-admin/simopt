@@ -431,6 +431,27 @@ class Problem(object):
         """
         raise NotImplementedError
 
+    def factor_dict_to_vector_gradients(self, factor_dict):
+        """Convert a dictionary with factor keys to a gradient vector.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``factor_dict_to_vector_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        factor_dict : dict
+            Dictionary with factor keys and associated values.
+
+        Returns
+        -------
+        vector : tuple
+            Vector of partial derivatives associated with decision variables.
+        """
+        return self.factor_dict_to_vector(factor_dict)
+
     def response_dict_to_objectives(self, response_dict):
         """Convert a dictionary with response keys to a vector
         of objectives.
@@ -450,6 +471,28 @@ class Problem(object):
             Vector of objectives.
         """
         raise NotImplementedError
+
+    def response_dict_to_objectives_gradients(self, response_dict):
+        """Convert a dictionary with response keys to a vector
+        of gradients.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``response_dict_to_objectives_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        response_dict : dict
+            Dictionary with response keys and associated values.
+
+        Returns
+        -------
+        vector : tuple
+            Vector of gradients.
+        """
+        return self.response_dict_to_objectives(response_dict)
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """Convert a dictionary with response keys to a vector
@@ -575,12 +618,14 @@ class Problem(object):
                 responses, gradients = self.model.replicate(solution.rng_list)
                 # Convert gradient subdictionaries to vectors mapping to decision variables.
                 if self.gradient_available:
-                    vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                    vector_gradients = {keys: self.factor_dict_to_vector_gradients(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                    # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # Convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives.
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
                 if self.gradient_available:
-                    solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                    solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives_gradients(vector_gradients), solution.det_objectives_gradients)]
+                    # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
                     # Convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints.

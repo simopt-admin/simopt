@@ -326,6 +326,28 @@ class FacilitySizingTotalCost(Problem):
         vector = tuple(factor_dict["capacity"])
         return vector
 
+    def factor_dict_to_vector_gradients(self, factor_dict):
+        """Convert a dictionary with factor keys to a gradient vector.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``factor_dict_to_vector_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        factor_dict : dict
+            Dictionary with factor keys and associated values.
+
+        Returns
+        -------
+        vector : tuple
+            Vector of partial derivatives associated with decision variables.
+        """
+        vector = (np.nan * len(self.model.factors["capacity"]),)
+        return vector
+
     def response_dict_to_objectives(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -343,6 +365,28 @@ class FacilitySizingTotalCost(Problem):
         """
         objectives = (0,)
         return objectives
+
+    def response_dict_to_objectives_gradients(self, response_dict):
+        """Convert a dictionary with response keys to a vector
+        of gradients.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``response_dict_to_objectives_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        response_dict : dict
+            Dictionary with response keys and associated values.
+
+        Returns
+        -------
+        tuple
+            Vector of gradients.
+        """
+        return ((0,) * len(self.model.factors["capacity"]),)
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """
@@ -399,7 +443,7 @@ class FacilitySizingTotalCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.dot(self.factors["installation_costs"], x),)
-        det_objectives_gradients = ((self.factors["installation_costs"],),)
+        det_objectives_gradients = (tuple(self.factors["installation_costs"]),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -434,7 +478,7 @@ class FacilitySizingTotalCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300*rand_sol_rng.random() for _ in range(self.dim)])
+        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])
         return x
 
 
@@ -707,7 +751,6 @@ class FacilitySizingMaxService(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         return budget_feasible * box_feasible
 
-
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.
@@ -725,7 +768,7 @@ class FacilitySizingMaxService(Problem):
         # Generate random solution using acceptable/rejection.
         # TO DO: More efficiently sample uniformly from the simplex.
         while True:
-            x = tuple([self.factors["installation_budget"]*rand_sol_rng.random() for _ in range(self.dim)])
+            x = tuple([self.factors["installation_budget"] * rand_sol_rng.random() for _ in range(self.dim)])
             if self.check_deterministic_constraints(x):
                 break
         return x

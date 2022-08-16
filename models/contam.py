@@ -255,7 +255,7 @@ class ContaminationTotalCostDisc(Problem):
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "discrete"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -359,6 +359,28 @@ class ContaminationTotalCostDisc(Problem):
         vector = tuple(factor_dict["prev_decision"])
         return vector
 
+    def factor_dict_to_vector_gradients(self, factor_dict):
+        """Convert a dictionary with factor keys to a gradient vector.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``factor_dict_to_vector_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        factor_dict : dict
+            Dictionary with factor keys and associated values.
+
+        Returns
+        -------
+        vector : tuple
+            Vector of partial derivatives associated with decision variables.
+        """
+        vector = (np.nan * len(self.model.factors["prev_decision"]),)
+        return vector
+
     def response_dict_to_objectives(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -377,6 +399,28 @@ class ContaminationTotalCostDisc(Problem):
         objectives = (0,)
         return objectives
 
+    def response_dict_to_objectives_gradients(self, response_dict):
+        """Convert a dictionary with response keys to a vector
+        of gradients.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``response_dict_to_objectives_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        response_dict : dict
+            Dictionary with response keys and associated values.
+
+        Returns
+        -------
+        tuple
+            Vector of gradients.
+        """
+        return ((0,) * len(self.model.factors["prev_decision"]),)
+
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -393,7 +437,7 @@ class ContaminationTotalCostDisc(Problem):
             vector of LHSs of stochastic constraint
         """
         under_control = response_dict["level"] <= self.factors["upper_thres"]
-        stoch_constraints = tuple([-z for z in under_control])
+        stoch_constraints = tuple([-1 * z for z in under_control])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -433,7 +477,7 @@ class ContaminationTotalCostDisc(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.dot(self.factors["prev_cost"], x),)
-        det_objectives_gradients = ((self.factors["prev_cost"],),)
+        det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -547,7 +591,7 @@ class ContaminationTotalCostCont(Problem):
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -670,6 +714,28 @@ class ContaminationTotalCostCont(Problem):
         vector = tuple(factor_dict["prev_decision"])
         return vector
 
+    def factor_dict_to_vector_gradients(self, factor_dict):
+        """Convert a dictionary with factor keys to a gradient vector.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``factor_dict_to_vector_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        factor_dict : dict
+            Dictionary with factor keys and associated values.
+
+        Returns
+        -------
+        vector : tuple
+            Vector of partial derivatives associated with decision variables.
+        """
+        vector = (np.nan * len(self.model.factors["prev_decision"]),)
+        return vector
+
     def response_dict_to_objectives(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -688,6 +754,28 @@ class ContaminationTotalCostCont(Problem):
         objectives = (0,)
         return objectives
 
+    def response_dict_to_objectives_gradients(self, response_dict):
+        """Convert a dictionary with response keys to a vector
+        of gradients.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom
+        ``response_dict_to_objectives_gradients`` method if the
+        objective is deterministic.
+
+        Parameters
+        ----------
+        response_dict : dict
+            Dictionary with response keys and associated values.
+
+        Returns
+        -------
+        tuple
+            Vector of gradients.
+        """
+        return ((0,) * len(self.model.factors["prev_decision"]),)
+
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
@@ -704,7 +792,7 @@ class ContaminationTotalCostCont(Problem):
             vector of LHSs of stochastic constraint
         """
         under_control = response_dict["level"] <= self.factors["upper_thres"]
-        stoch_constraints = tuple([-z for z in under_control])
+        stoch_constraints = tuple([-1 * z for z in under_control])
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -744,7 +832,7 @@ class ContaminationTotalCostCont(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (np.dot(self.factors["prev_cost"], x),)
-        det_objectives_gradients = ((self.factors["prev_cost"],),)
+        det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
