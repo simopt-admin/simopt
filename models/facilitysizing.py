@@ -232,14 +232,11 @@ class FacilitySizingTotalCost(Problem):
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
-        self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
         self.minmax = (-1,)
         self.constraint_type = "stochastic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None  # (185, 185, 185)
@@ -277,6 +274,9 @@ class FacilitySizingTotalCost(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = FacilitySize(self.model_fixed_factors)
+        self.dim = self.model.factors["n_fac"]
+        self.lower_bounds = (0,) * self.model.factors["n_fac"]
+        self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
     def check_installation_costs(self):
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
@@ -478,8 +478,11 @@ class FacilitySizingTotalCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([300 * rand_sol_rng.random() for _ in range(self.dim)])
-        return x
+        cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
+        x = rand_sol_rng.mvnormalvariate(self.factors["initial_solution"], cov_matrix, factorized=False)
+        while np.any(x < 0):
+            x = rand_sol_rng.mvnormalvariate(self.factors["initial_solution"], cov_matrix, factorized=False)
+        return tuple(x)
 
 
 """
@@ -561,14 +564,11 @@ class FacilitySizingMaxService(Problem):
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
-        self.dim = 3
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.lower_bounds = (0, 0, 0)
-        self.upper_bounds = (np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None  # (175, 179, 143)
@@ -606,6 +606,9 @@ class FacilitySizingMaxService(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = FacilitySize(self.model_fixed_factors)
+        self.dim = self.model.factors["n_fac"]
+        self.lower_bounds = (0,) * self.model.factors["n_fac"]
+        self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
     def check_installation_costs(self):
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
@@ -765,10 +768,10 @@ class FacilitySizingMaxService(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate random solution using acceptable/rejection.
-        # TO DO: More efficiently sample uniformly from the simplex.
-        while True:
-            x = tuple([self.factors["installation_budget"] * rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x):
-                break
+        # Generate random vector of length # of facilities of continuous values
+        # summing to less than or equal to installation budget.
+        x = rand_sol_rng.continuous_random_vector_from_simplex(n_elements=self.model.factors["n_fac"],
+                                                               summation=self.factors["installation_budget"],
+                                                               exact_sum=False
+                                                               )
         return x
