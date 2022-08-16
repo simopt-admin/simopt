@@ -71,7 +71,7 @@ class SPSA(Solver):
             },
             "gavg": {
                 "description": "averaged SP gradients used per iteration",
-                "datatype": float,
+                "datatype": int,
                 "default": 1
             },
             "n_reps": {

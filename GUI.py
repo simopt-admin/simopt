@@ -185,7 +185,7 @@ class Experiment_Window(tk.Tk):
                                                 command = self.post_normal_all_function)
 
         self.make_meta_experiment = ttk.Button(master=self.master,
-                                                text = "Create Problem-Solver Groups from Selected",
+                                                text = "Create Problem-Solver Group from Selected",
                                                 width = 35,
                                                 state = "normal",
                                                 command = self.make_meta_experiment_func) 
@@ -201,8 +201,8 @@ class Experiment_Window(tk.Tk):
                                                     wraplength = "500")
 
 
-        style = ttk.Style()
-        style.configure("Bold.TLabel", font = ("Calibri",15,"bold"))
+        self.style = ttk.Style()
+        self.style.configure("Bold.TLabel", font = ("Calibri",15,"bold"))
         label_Workspace = ttk.Label(text = "Workspace", style="Bold.TLabel")
         self.queue_label_frame = ttk.LabelFrame(master=self.master, labelwidget= label_Workspace)
 
@@ -242,7 +242,7 @@ class Experiment_Window(tk.Tk):
             label.grid(row=0, column=self.heading_list.index(heading), padx=10, pady=3)
 
         self.tab_two = tk.Frame(master=self.notebook)
-        self.notebook.add(self.tab_two, text="Queue of Problem-Solver Groups")
+        self.notebook.add(self.tab_two, text="Queue of Problem-Solver Group")
         self.tab_two.grid_rowconfigure(0)
         self.heading_list = ["Problems", "Solvers", "Macroreps", "", "", "", "",""]
 
@@ -598,7 +598,7 @@ class Experiment_Window(tk.Tk):
 
         self.solver_factors_list = []
         self.solver_factors_types = []
-
+    
         self.factor_label_frame_solver = ttk.LabelFrame(master=self.master, text="Solver Factors")
 
         self.factor_canvas_solver = tk.Canvas(master=self.factor_label_frame_solver, borderwidth=0)
@@ -1389,7 +1389,7 @@ class Experiment_Window(tk.Tk):
                     self.widget_list.insert(place,self.widget_row)
                     self.check_box_list.append(self.checkbox_select)
                     self.check_box_list_var.append(self.checkbox_select_var)
-
+    
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
                     if self.my_experiment.check_run() == True:
                         run_button = row_of_widgets[3]
@@ -1657,7 +1657,7 @@ class Experiment_Window(tk.Tk):
         for widget in self.tab_three.winfo_children():
             widget.destroy()
 
-        self.heading_list = ["Problem", "Solvers", "Select", "", "", "", "",""]
+        self.heading_list = ["Problem", "Solvers", "Selected", "", "", "", "",""]
         for heading in self.heading_list:
             self.tab_three.grid_columnconfigure(self.heading_list.index(heading))
             label = tk.Label(master=self.tab_three, text=heading, font="Calibri 14 bold")
@@ -3108,7 +3108,11 @@ class Plot_Window():
                                                     command = self.plot_button)
 
 
-            self.queue_label_frame = ttk.LabelFrame(master=self.master, text="Plots")
+            self.style = ttk.Style()
+            self.style.configure("Bold.TLabel", font = ("Calibri",15,"bold"))
+            Label = ttk.Label(master = self.master, text ="Plot Workspace", style="Bold.TLabel")
+            
+            self.queue_label_frame = ttk.LabelFrame(master=self.master, labelwidget = Label)
 
             self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
 
@@ -3168,7 +3172,7 @@ class Plot_Window():
             self.param_entry = []
             self.factor_label_frame_problem = None
 
-            self.CI_label_frame = ttk.LabelFrame(master=self.master, text="Plot Parameters")
+            self.CI_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings and Parameters")
             self.CI_canvas = tk.Canvas(master=self.CI_label_frame, borderwidth=0)
             self.CI_frame = ttk.Frame(master=self.CI_canvas)
 
@@ -3178,7 +3182,7 @@ class Plot_Window():
 
             self.CI_label_frame.place(relx=.4, rely=.15, relheight=.2, relwidth=.3)
 
-            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings")
+            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Error Estimation Setting and Parameters")
             self.settings_canvas = tk.Canvas(master=self.settings_label_frame, borderwidth=0)
             self.settings_frame = ttk.Frame(master=self.settings_canvas)
 
@@ -3473,7 +3477,7 @@ class Plot_Window():
             self.CI_label_frame.place(relx=.4, rely=.15, relheight=.3, relwidth=.25)
             
             self.settings_label_frame.destroy()
-            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings")
+            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings and Parameters")
             self.settings_canvas = tk.Canvas(master=self.settings_label_frame, borderwidth=0)
             self.settings_frame = ttk.Frame(master=self.settings_canvas)
 
@@ -3526,7 +3530,8 @@ class Plot_Window():
             
             for param, param_val in param_list.items():
                 if param == 'normalize':
-                    entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "True", *tf_list)
+                    entry = tk.Checkbutton(master=self.CI_canvas, variable=self.params[i], onvalue="True", offvalue="False")
+                    entry.select()
                     label = tk.Label(master=self.CI_canvas, text="Normalize By Relative Optimality Gap", font="Calibri 13", wraplength="200")
                     label.grid(row=i, column=0, padx=10, pady=3)
                     entry.grid(row=i, column=1, padx=10, pady=3)
