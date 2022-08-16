@@ -37,7 +37,6 @@ from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from models.fixedsan import FixedSAN, FixedSANLongestPath
-from models.voting import Voting, MinVotingMaxWaitTime
 from models.network import Network, NetworkMinTotalCost
 # directory dictionaries
 solver_directory = {
@@ -77,7 +76,6 @@ problem_directory = {
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
-    "VOTING-1": MinVotingMaxWaitTime,
     "NETWORK-1": NetworkMinTotalCost
 }
 problem_nonabbreviated_directory = {
@@ -98,7 +96,6 @@ problem_nonabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSANLongestPath,
-    "Minimize Maximum Waiting Time for Voting System (SDDN)": MinVotingMaxWaitTime,
     "Minimize Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
 }
 model_directory = {
@@ -117,7 +114,6 @@ model_directory = {
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
-    "VOTING": Voting,
     "NETWORK": Network
 }
 model_unabbreviated_directory = {
@@ -138,6 +134,5 @@ model_unabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
-    "Minimize Maximum Waiting Time for Voting System (SDDN)": "VOTING",
     "Minimize Total Cost for Communication Networks System (SDCN)": "NETWORK"
 }
