@@ -14,3 +14,6 @@ __pycache__/
 
 # Documentation build
 docs/_build/**
+
+# Pickle files
+.pickle
