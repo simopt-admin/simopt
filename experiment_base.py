@@ -14,9 +14,9 @@ from scipy.stats import norm
 import pickle
 import importlib
 import time
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
-from rng.mrg32k3a import MRG32k3a
 from base import Solution
 from directory import solver_directory, problem_directory
 

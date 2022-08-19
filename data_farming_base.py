@@ -4,9 +4,10 @@ import csv
 from copy import deepcopy
 import itertools
 import pandas as pd
+from mrg32k3a.mrg32k3a import MRG32k3a
+
 
 from directory import model_directory
-from rng.mrg32k3a import MRG32k3a
 from experiment_base import Experiment, post_normalize
 
 
