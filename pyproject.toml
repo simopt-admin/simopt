@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "simoptlib"
+version = "1.0.0"
+authors = [
+  { name="David Eckman", email="eckman@tamu.edu" },
+  { name="Shane Henderson", email="sgh9@cornell.edu" },
+  { name="Sara Shashaani", email="sshasha2@ncsu.edu" },
+]
+description = "A testbed for simulation-optimization experiments."
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "pandas",
+  "seaborn",
+  "mrg32k3a"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/simopt-admin/simopt"
+"Documentation" = "https://simopt.readthedocs.io/en/latest/"
