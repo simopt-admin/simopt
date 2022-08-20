@@ -117,9 +117,7 @@ Model Factors:
 
 * product_incidence: Incidence matrix.
 
-    * Default: Let each row be a resource available and each column a product,
-    having a 1 in entry :math:`(i,j)` if product :math:`j` uses resource :math:`i`, and 0
-    otherwise.
+    * Default: Let each row be a resource available and each column a product, having a 1 in entry :math:`(i,j)` if product :math:`j` uses resource :math:`i`, and 0 otherwise.
 
 * time_limit: Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).
 

@@ -27,7 +27,7 @@ objective function.
 
 
 Scope:
-----------------------
+------
 * objective_type: single
 
 * constraint_type: box
@@ -36,7 +36,7 @@ Scope:
 
 
 Solver Factors:
---------------
+---------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True

@@ -25,7 +25,7 @@ Full documentation for the source code can be found **[here](https://simopt.read
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*
 
-Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, and `seaborn`. Run the command ``` pip install numpy scipy matplotlib pandas seaborn ``` to install them from the terminal.
+Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, and `mrg32k3a`. Run the command ``` python -m pip install numpy scipy matplotlib pandas seaborn mrg32k3a``` to install them from the terminal.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
 
@@ -44,7 +44,7 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 ## Graphical User Interface (GUI) - User Guide
 
 ### Installation
-To start up the GUI, navigate to the `simopt` directory and run the command ``` python3 GUI.py ``` from the terminal. The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`. Run the command ``` pip install numpy scipy matplotlib Pillow tkinter ``` to install them from the terminal.
+To start up the GUI, navigate to the `simopt` directory and run the command ``` python3 GUI.py ``` from the terminal. The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`. Run the command ``` python -m pip install numpy scipy matplotlib Pillow tkinter ``` to install them from the terminal.
 
 ### Overview
 From the GUI, you can create a specified **problem-solver pair** or a **problem-solver group**, run macroreplications, and generate plots. The main page provides ways to create or continue working with experiments:

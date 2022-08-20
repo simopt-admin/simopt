@@ -22,7 +22,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../src/simopt'))
+sys.path.insert(0, os.path.abspath('../src'))
 
 
 # -- Project information -----------------------------------------------------
@@ -55,7 +56,8 @@ autodoc_mock_imports = ['numpy',
                         'scipy',
                         'matplotlib',
                         'pandas',
-                        'seaborn'
+                        'seaborn',
+                        'mrg32k3a'
 ]
 
 napolean_numpy_docstring = True
@@ -91,4 +93,4 @@ html_static_path = []
 
 
 from sphinx.ext.apidoc import main
-main(["-o",  os.path.abspath('.'), os.path.abspath('..'), "-f"])
+main(["-o",  os.path.abspath('.'), os.path.abspath('../src'), "-f"])

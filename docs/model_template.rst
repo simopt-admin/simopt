@@ -32,7 +32,7 @@ Model Factors:
     * Default: <default value>
 
 Responses:
----------
+----------
 * <response1name>: <short description>
 
 * <response2name>: <short description>

@@ -51,7 +51,7 @@ Model Factors:
     
     
 Responses:
----------
+----------
 * total_cost: Total cost spent to route and process all messages.
 
 

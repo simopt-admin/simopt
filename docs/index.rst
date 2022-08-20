@@ -24,14 +24,10 @@ The source code consists of the following modules:
 
 * The `directory.py <directory.html>`_ module contains a listing of models, problems, and solvers in the library.
 
-The `rng <rng.html>`_ folder contains the source code for the MRG32k3a random number generator used throughout SimOpt.
-
-The experiments folder contains empty folders for storing data and plots produced by running experiments.
-
 Getting Started
 ----------------
 
-Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, and seaborn. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, seaborn, and mrg32k3a. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
 
 Contents
 -------------------
