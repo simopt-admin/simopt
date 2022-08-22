@@ -23,7 +23,7 @@ Several papers have discussed the development of SimOpt and experiments run on t
 Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
 ## Getting Started
-The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)*
+The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)* Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
 
 Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, and `mrg32k3a`. Run the command ``` python -m pip install numpy scipy matplotlib pandas seaborn mrg32k3a``` to install them from the terminal.
 
@@ -33,9 +33,9 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 
 * `demo_problem.py`: Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints.
 
-* `demo_solver_problem.py`: Run multiple macroreplications of a solver on a problem, save the outputs to a .pickle file in the `experiments/outputs` folder, and save plots of the results to .png files in the `experiments/plots` folder.
+* `demo_problem_solver.py`: Run multiple macroreplications of a solver on a problem, save the outputs to a .pickle file in the `experiments/outputs` folder, and save plots of the results to .png files in the `experiments/plots` folder.
 
-* `demo_solvers_problems.py`: Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots.
+* `demo_problems_solvers.py`: Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots.
 
 * `demo_data_farming_model.py`: Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (.csv) file in the `data_farming_experiments` folder.
 
@@ -155,6 +155,40 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 
 ## Contributing
 You can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. 
+
+
+## Package
+The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
+
+    python -m pip install simoptlib
+
+## Basic Example
+
+After installing `simoptlib`, the package's main module (`simopt`) can be imported from the Python console (or in code):
+
+    import simopt
+
+The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
+
+    myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
+    myexperiment.run(n_macroreps=10)
+
+The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
+
+    myexperiment.post_replicate(n_postreps=200)
+    simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
+
+A .txt file summarizing the progress of the solver on each macroreplication can be produced:
+    
+    myexperiment.log_experiment_results()
+
+A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
+
+One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
+    
+    simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+
+The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
 
 ## Authors
 The core development team currently consists of 
