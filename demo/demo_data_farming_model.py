@@ -9,7 +9,7 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 
-from src.simopt.data_farming_base import DataFarmingExperiment
+from simopt.data_farming_base import DataFarmingExperiment
 
 # Specify the name of the model as it appears in directory.py
 model_name = "CNTNEWS"

@@ -27,7 +27,7 @@ The source code consists of the following modules:
 Getting Started
 ----------------
 
-Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, seaborn, and mrg32k3a. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, seaborn, and mrg32k3a. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_problem\_solver.py.
 
 Contents
 -------------------
@@ -36,14 +36,7 @@ Contents
    :maxdepth: 3
    
    modules
-   
 
-Indices and tables
--------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 Acknowledgments
 -------------------

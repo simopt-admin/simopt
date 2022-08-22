@@ -10,19 +10,13 @@ import time
 from xml.dom.minidom import parseString
 from PIL import ImageTk, Image
 import traceback
-
-from .directory import problem_directory
-from .directory import problem_nonabbreviated_directory
-from .directory import solver_directory
-from .directory import solver_nonabbreviated_directory
-from .directory import model_directory
-from .directory import model_unabbreviated_directory
-from .experiment_base import ProblemSolver, ProblemsSolvers
-# import experiment_base
 import pickle
 from tkinter import Listbox
 import ast
 from PIL import ImageTk
+
+from .directory import problem_directory, problem_nonabbreviated_directory, solver_directory, solver_nonabbreviated_directory, model_directory, model_unabbreviated_directory
+from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots
 
 
 class Experiment_Window(tk.Tk):
@@ -1015,7 +1009,7 @@ class Experiment_Window(tk.Tk):
                 # self.selected[0] = self.problem_name
 
                 self.my_experiment = ProblemSolver(solver_name=self.solver_name, problem_name=self.problem_name, solver_rename=self.solver_rename, problem_rename=self.problem_rename, solver_fixed_factors=self.solver_factors, problem_fixed_factors=self.problem_factors, model_fixed_factors=self.oracle_factors)
-                print("type", type(self.selected[2]))
+                # print("type", type(self.selected[2]))
                 self.my_experiment.n_macroreps = self.selected[2]
                 self.my_experiment.post_norm_ready = False
 
@@ -1444,7 +1438,7 @@ class Experiment_Window(tk.Tk):
         self.selected = self.experiment_master_list[row_index]
         self.macro_reps = self.selected[2]
 
-        print("type macro reps", type(self.macro_reps))
+        # print("type macro reps", type(self.macro_reps))
         self.my_experiment.run(n_macroreps=self.macro_reps)
         
 
@@ -1455,9 +1449,9 @@ class Experiment_Window(tk.Tk):
         self.post_rep_function_row_index = integer
         # calls postprocessing window
 
-        print("This is the row_index variable name", row_index)
-        print("self.selected: ", self.selected)
-        print("self.post_rep_function_row_index", self.post_rep_function_row_index)
+        # print("This is the row_index variable name", row_index)
+        # print("self.selected: ", self.selected)
+        # print("self.post_rep_function_row_index", self.post_rep_function_row_index)
 
         self.postrep_window = tk.Tk()
         self.postrep_window.geometry("600x400")
@@ -1503,8 +1497,8 @@ class Experiment_Window(tk.Tk):
         self.cross_app = Cross_Design_Window(self.crossdesign_window, self)
 
     def add_meta_exp_to_frame(self, n_macroreps=None, input_meta_experiment=None):
-        print("n_macroreps", n_macroreps)
-        print("input_meta_experiment", input_meta_experiment)
+        # print("n_macroreps", n_macroreps)
+        # print("input_meta_experiment", input_meta_experiment)
         if n_macroreps == None and input_meta_experiment != None:
             self.cross_app = Cross_Design_Window(master = None, main_widow = None, forced_creation = True)
             self.cross_app.crossdesign_MetaExperiment = input_meta_experiment
@@ -1693,11 +1687,12 @@ class Experiment_Window(tk.Tk):
         self.postrep_window.geometry("610x350")
         self.postrep_window.title("Post-Normalization Page")
         self.app = Post_Normal_Window(self.postrep_window, self.post_norm_exp_list, self)
-        # experiment_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
+        # post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None)
 
     def post_norm_return_func(self):
         #('IN post_process_disable_button ', self.post_rep_function_row_index)
-        print("youve returned")
+        # print("youve returned")
+        pass
     
     def make_meta_experiment_func(self):
         self.list_checked_experiments = []
@@ -1715,13 +1710,13 @@ class Experiment_Window(tk.Tk):
                     index = self.check_box_list_var.index(checkbox)
                     experiment_checked = self.experiment_object_list[index] ## Is this right?
                     self.list_checked_experiments.append(experiment_checked)
-                    print("checkbox",checkbox.get())
-                    print("experiment_checked:", experiment_checked )
+                    # print("checkbox",checkbox.get())
+                    # print("experiment_checked:", experiment_checked )
                     # Making the checkbox in the Queue of Porblem-Solver Groups disabled
                     check_box_object = self.check_box_list[index]
                     check_box_object["state"] = "disabled"
-            self.list_unique_solver,self.list_unique_problems,self.list_missing_experiments  =  experiment_base.find_missing_experiments(self.list_checked_experiments)
-            self.meta_experiment_created = experiment_base.make_full_metaexperiment(self.list_checked_experiments,self.list_unique_solver,self.list_unique_problems,self.list_missing_experiments)
+            self.list_unique_solver,self.list_unique_problems,self.list_missing_experiments = find_missing_experiments(self.list_checked_experiments)
+            self.meta_experiment_created = make_full_metaexperiment(self.list_checked_experiments,self.list_unique_solver,self.list_unique_problems,self.list_missing_experiments)
             
             self.add_meta_exp_to_frame(n_macroreps = None, input_meta_experiment=self.meta_experiment_created)
             self.meta_experiment_problem_solver_list(self.meta_experiment_created)
@@ -1732,9 +1727,9 @@ class Experiment_Window(tk.Tk):
         self.list_meta_experiment_solvers = []
         
         self.list_meta_experiment_problems = metaExperiment.problem_names
-        print("self.list_meta_experiment_problems", self.list_meta_experiment_problems)
+        # print("self.list_meta_experiment_problems", self.list_meta_experiment_problems)
         self.list_meta_experiment_solvers = metaExperiment.solver_names
-        print("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
+        # print("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
 
     def view_meta_function(self, row_num):
         self.factor_label_frame_solver.destroy()
@@ -1785,7 +1780,7 @@ class Experiment_Window(tk.Tk):
                 view_button_added["state"] = "disabled"
 
         for i in range(self.count_experiment_queue-1):
-            print("VALUE OF I",i)
+            # print("VALUE OF I",i)
             self.run_button_added = self.widget_list[i][3]
             self.run_button_added["state"] = "disabled"
 
@@ -1956,7 +1951,7 @@ class Experiment_Window(tk.Tk):
                 self.boolean_list = ["True", "False"]
                 self.boolean_var = tk.StringVar(self.factor_tab_one_solver)
 
-                print("str(self.custom_solver_object.factors[factor_type])",str(self.custom_solver_object.factors[factor_type]))
+                # print("str(self.custom_solver_object.factors[factor_type])",str(self.custom_solver_object.factors[factor_type]))
                 self.boolean_menu = ttk.OptionMenu(self.factor_tab_one_solver, self.boolean_var, str(self.custom_solver_object.factors[factor_type]), *self.boolean_list)
                 
                 self.boolean_menu.configure(state = "disabled")
@@ -2513,7 +2508,8 @@ class Cross_Design_Window():
                                                 command = self.confirm_cross_design_function)
                 self.crossdesign_button.place(x=15, y=135+(25*problem_cnt))
             else:
-                print("forced creation of cross design window class")
+                # print("forced creation of cross design window class")
+                pass
 
     def confirm_cross_design_function(self):
         solver_names_list = list(solver_directory.keys())
@@ -2567,7 +2563,8 @@ class Cross_Design_Window():
         #(self.crossdesign_MetaExperiment)
 
     def test_function(self, *args):
-        print("test function connected")
+        # print("test function connected")
+        pass
 
     def get_crossdesign_MetaExperiment(self):
         return self.crossdesign_MetaExperiment
@@ -2757,10 +2754,10 @@ class Post_Processing_Window():
             self.crn_across_macroreps_var.set("False")
 
             self.n_postreps = self.experiment_list[0] # int
-            print("self.n_prostreps", type(self.n_postreps))
+            # print("self.n_prostreps", type(self.n_postreps))
             # self.n_postreps_init_opt = self.experiment_list[4] # int
             self.crn_across_budget = self.experiment_list[1] # boolean
-            print("self.n_prostreps", type(self.n_postreps))
+            # print("self.n_prostreps", type(self.n_postreps))
             self.crn_across_macroreps = self.experiment_list[2] # boolean
 
             # print("This is the experiment object", self.my_experiment)
@@ -2975,7 +2972,7 @@ class Post_Normal_Window():
                 proxy_sol = ast.literal_eval(self.proxy_sol.get())
             if self.proxy_var.get() != "":
                 proxy_val = ast.literal_eval(self.proxy_var.get())
-            experiment_base.post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=crn, proxy_init_val=None, proxy_opt_val=proxy_val, proxy_opt_x=proxy_sol)
+            post_normalize(self.post_norm_exp_list, n_postreps_init_opt, crn_across_init_opt=crn, proxy_init_val=None, proxy_opt_val=proxy_val, proxy_opt_x=proxy_sol)
             # self.master.destroy()
             self.post_processed_bool = True
 
@@ -3267,7 +3264,7 @@ class Plot_Window():
             param_value_list = []
             for t in self.params:
                 #(t.get())
-                print(t.get())
+                # print(t.get())
                 if t.get() == True:
                     param_value_list.append(True)
                 elif t.get() == False:
@@ -3308,44 +3305,43 @@ class Plot_Window():
                     for item in sublist:
                         exp.append(item)
 
-
             if self.plot_type_list[i] == "Mean Progress Curve":
-                print("n_bootstraps", param_value_list[4])
-                print("conf_level",param_value_list[5])
-                path_name = experiment_base.plot_progress_curves(exp,plot_type="mean", normalize=param_value_list[3], all_in_one=param_value_list[1], plot_CIs=param_value_list[0], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5])
+                # print("n_bootstraps", param_value_list[4])
+                # print("conf_level",param_value_list[5])
+                path_name = plot_progress_curves(exp,plot_type="mean", normalize=param_value_list[3], all_in_one=param_value_list[1], plot_CIs=param_value_list[0], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5])
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[2], "normalize":param_value_list[3],"n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
             elif self.plot_type_list[i] == "Quantile Progress Curve":
-                print("n_bootstraps", param_value_list[5])
-                print("conf_level",param_value_list[6])
-                path_name = experiment_base.plot_progress_curves(exp,plot_type = "quantile",  beta=param_value_list[3], normalize=param_value_list[4],plot_CIs=param_value_list[0], all_in_one=param_value_list[1], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
+                # print("n_bootstraps", param_value_list[5])
+                # print("conf_level",param_value_list[6])
+                path_name = plot_progress_curves(exp,plot_type = "quantile",  beta=param_value_list[3], normalize=param_value_list[4],plot_CIs=param_value_list[0], all_in_one=param_value_list[1], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[2], "normalize":param_value_list[4], "beta":param_value_list[3],"n_bootstraps":param_value_list[5], "conf_level":param_value_list[6]}
             elif self.plot_type_list[i] == "Solve time CDF":
-                path_name = experiment_base.plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps=int(param_value_list[3]), conf_level=param_value_list[4] )
+                path_name = plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps=int(param_value_list[3]), conf_level=param_value_list[4] )
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"n_bootstraps":param_value_list[3], "conf_level":param_value_list[4]}
             elif self.plot_type_list[i] == "Scatter Plot":
-                path_name = experiment_base.plot_area_scatterplots(exp2, plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps= int(param_value_list[2]), conf_level=param_value_list[3] )
+                path_name = plot_area_scatterplots(exp2, plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps= int(param_value_list[2]), conf_level=param_value_list[3] )
                 param_list = {}
             elif self.plot_type_list[i] == "CDF Solvability":
-                path_name = experiment_base.plot_solvability_profiles(exp2, plot_type = "cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],ref_solver=None, n_bootstraps= int(param_value_list[3]), conf_level=param_value_list[4] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],ref_solver=None, n_bootstraps= int(param_value_list[3]), conf_level=param_value_list[4] )
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"n_bootstraps":param_value_list[3], "conf_level":param_value_list[4]}
             elif self.plot_type_list[i] == "Quantile Solvability":
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol": param_value_list[2], "beta": param_value_list[3],"n_bootstraps":param_value_list[4], "conf_level":param_value_list[5]}
-                path_name = experiment_base.plot_solvability_profiles(exp2, plot_type = "quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=None, n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=None, n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
             elif self.plot_type_list[i] == "CDF Difference Plot":
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"ref solver":param_value_list[3],"n_bootstraps":param_value_list[4], "conf_level":param_value_list[5]}
-                path_name = experiment_base.plot_solvability_profiles(exp2, plot_type = "diff_cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1],solve_tol=param_value_list[2], ref_solver=param_value_list[3], n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "diff_cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1],solve_tol=param_value_list[2], ref_solver=param_value_list[3], n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
             elif self.plot_type_list[i] == "Quantile Difference Plot":
-                print("n_bootstraps", param_value_list[5])
-                print("conf_level",param_value_list[6])
+                # print("n_bootstraps", param_value_list[5])
+                # print("conf_level",param_value_list[6])
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3],"n_bootstraps":param_value_list[5], "conf_level":param_value_list[6]}
-                path_name = experiment_base.plot_solvability_profiles(exp2, plot_type = "diff_quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2], beta=param_value_list[3],ref_solver=param_value_list[4], n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "diff_quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2], beta=param_value_list[3],ref_solver=param_value_list[4], n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
             elif self.plot_type_list[i] == "Terminal Progress Plot":
-                print("plot_type", param_value_list[1])
+                # print("plot_type", param_value_list[1])
                 param_list = {"plot type": param_value_list[1], "normalize":param_value_list[2]}
-                path_name = experiment_base.plot_terminal_progress(exp, plot_type = param_value_list[1], normalize = param_value_list[2], all_in_one =param_value_list[0])
+                path_name = plot_terminal_progress(exp, plot_type = param_value_list[1], normalize = param_value_list[2], all_in_one =param_value_list[0])
             elif self.plot_type_list[i] == "Area Scatter Plot":
                 param_list = {}
-                path_name = experiment_base.plot_terminal_scatterplots(exp2, all_in_one = param_value_list[0])
+                path_name = plot_terminal_scatterplots(exp2, all_in_one = param_value_list[0])
             else:
                 print(f"{self.plot_type_list[i]} is the plot_type_list at index {i}")
 
@@ -3410,7 +3406,7 @@ class Plot_Window():
                 # self.view_plot.pack()
                 self.changeOnHover(self.view_plot, "red", "yellow")
                 self.all_path_names.append(new_plot)
-                print("all_path_names",self.all_path_names)
+                # print("all_path_names",self.all_path_names)
                 self.num_plots += 1
 
         def changeOnHover(self, button, colorOnHover, colorOnLeave):

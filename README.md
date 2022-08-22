@@ -44,7 +44,7 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 ## Graphical User Interface (GUI) - User Guide
 
 ### Installation
-To start up the GUI, navigate to the `simopt` directory and run the command ``` python3 GUI.py ``` from the terminal. The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`. Run the command ``` python -m pip install numpy scipy matplotlib Pillow tkinter ``` to install them from the terminal.
+To start up the GUI, navigate to the outer `simopt` directory and run the command ``` python3 -m simopt.GUI ``` from the terminal. The GUI depends on Python 3, `numpy`, `scipy`, `matplotlib`, `Pillow`, and `tkinter`. Run the command ``` python3 -m pip install numpy scipy matplotlib Pillow tkinter ``` to install them from the terminal.
 
 ### Overview
 From the GUI, you can create a specified **problem-solver pair** or a **problem-solver group**, run macroreplications, and generate plots. The main page provides ways to create or continue working with experiments:
@@ -164,9 +164,10 @@ The `simoptlib` package is available to download through the Python Packaging In
 
 ## Basic Example
 
-After installing `simoptlib`, the package's main module (`simopt`) can be imported from the Python console (or in code):
+After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
 
     import simopt
+    from simopt import models, solvers, experiment_base
 
 The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
 
@@ -189,6 +190,10 @@ One can then plot the mean progress curve of the solver (with confidence interva
     simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
 
 The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
+
+One can also use the SimOpt graphical user interface by running the following from the terminal:
+
+    python -m simopt.GUI
 
 ## Authors
 The core development team currently consists of 

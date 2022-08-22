@@ -1,5 +1,5 @@
-src
-===
+simopt
+======
 
 .. toctree::
    :maxdepth: 4

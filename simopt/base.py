@@ -642,7 +642,7 @@ class Problem(object):
 
         Parameters
         ----------
-        solutions : set
+        solutions : set [``base.Solution``]
             A set of ``base.Solution`` objects.
         n_reps : int
             Common number of replications to simulate each solution up to.
@@ -733,7 +733,7 @@ class Model(object):
 
         Notes
         -----
-        Each subclass of `base.Model`` has its own custom ``check_simulatable_factors`` method.
+        Each subclass of ``base.Model`` has its own custom ``check_simulatable_factors`` method.
 
         Returns
         -------
@@ -759,7 +759,7 @@ class Model(object):
 
         Parameters
         ----------
-        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a`]
+        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
             RNGs for model to use when simulating a replication.
 
         Returns
@@ -818,7 +818,7 @@ class Solution(object):
     ----------
     x : tuple
         Vector of decision variables.
-    problem : ``base.Problem`` object
+    problem : ``base.Problem``
         Problem to which `x` is a solution.
     """
     def __init__(self, x, problem):
@@ -863,7 +863,7 @@ class Solution(object):
 
         Parameters
         ----------
-        rng_list : list [mrg32k3a.mrg32k3a.MRG32k3a objects]
+        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
             List of random-number generators used to run simulation replications.
         copy : bool, default=True
             True if we want to copy the ``mrg32k3a.mrg32k3a.MRG32k3a`` objects, otherwise False.

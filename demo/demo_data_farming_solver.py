@@ -9,7 +9,7 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 
-from src.simopt.data_farming_base import DataFarmingMetaExperiment
+from simopt.data_farming_base import DataFarmingMetaExperiment
 
 
 # Specify the name of the solver as it appears in directory.py

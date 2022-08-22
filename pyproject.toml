@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "simoptlib"
-version = "1.0.0"
+version = "1.0.3"
 authors = [
   { name="David Eckman", email="eckman@tamu.edu" },
   { name="Shane Henderson", email="sgh9@cornell.edu" },
@@ -22,8 +22,8 @@ classifiers = [
 dependencies = [
   "numpy",
   "scipy",
-  "matplotlib",
-  "pandas",
+  "matplotlib >= 1.3",
+  "pandas >= 1.4.3",
   "seaborn",
   "mrg32k3a"
 ]

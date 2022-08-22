@@ -22,8 +22,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src/simopt'))
-sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../simopt'))
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -93,4 +93,4 @@ html_static_path = []
 
 
 from sphinx.ext.apidoc import main
-main(["-o",  os.path.abspath('.'), os.path.abspath('../src'), "-f"])
+main(["-o",  os.path.abspath('.'), os.path.abspath('..'), "-f"])

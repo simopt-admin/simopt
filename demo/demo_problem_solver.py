@@ -10,7 +10,7 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemSolver class and other useful functions
-from src.simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
+from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
 
 # !! When testing a new solver/problem, first go to directory.py.
 # There you should add the import statement and an entry in the respective
