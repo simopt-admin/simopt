@@ -14,6 +14,7 @@ from scipy.stats import norm
 import pickle
 import importlib
 import time
+import os
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 
@@ -741,6 +742,10 @@ class ProblemSolver(object):
     def record_experiment_results(self):
         """Save ``experiment_base.ProblemSolver`` object to .pickle file.
         """
+        # Create directories if they do no exist.
+        if "./experiments/outputs" in self.file_name_path and not os.path.exists("./experiments/outputs"):
+            os.makedirs("./experiments", exist_ok=True)
+            os.makedirs("./experiments/outputs")
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
@@ -750,6 +755,11 @@ class ProblemSolver(object):
         # Create a new text file in experiments/logs folder with correct name.
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
         new_path2 = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
+
+        # Create directories if they do no exist.
+        if "./experiments/logs" in new_path2 and not os.path.exists("./experiments/logs"):
+            os.makedirs("./experiments", exist_ok=True)
+            os.makedirs("./experiments/logs")
 
         with open(new_path2 + "_experiment_results.txt", "w") as file:
             # Title txt file with experiment information.
@@ -2303,6 +2313,10 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     path_name = path_name.replace("\\", "")
     path_name = path_name.replace("$", "")
     path_name = path_name.replace(" ", "_")
+    # Create directories if they do no exist.
+    if not os.path.exists("./experiments/plots"):
+        os.makedirs("./experiments", exist_ok=True)
+        os.makedirs("./experiments/plots")
     plt.savefig(path_name, bbox_inches="tight")
     # Return path_name for use in GUI.
     return path_name
@@ -2424,7 +2438,7 @@ class ProblemsSolvers(object):
                 for problem_idx in range(self.n_problems):
                     try:
                         # If a file exists, read in ProblemSolver object.
-                        with open(f"experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
+                        with open(f"./experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
                             next_experiment = pickle.load(file)
                         # TODO: Check if the solver/problem/model factors in the file match
                         # those for the ProblemsSolvers.
