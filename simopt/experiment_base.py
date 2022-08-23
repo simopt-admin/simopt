@@ -1044,14 +1044,23 @@ def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=N
     plot_type : str
         String indicating which type of plot to produce:
             "mean" : estimated mean progress curve;
+
             "quantile" : estimated beta quantile progress curve;
+
             "area_mean" : mean of area under progress curve;
+
             "area_std_dev" : standard deviation of area under progress curve;
+
             "solve_time_quantile" : beta quantile of solve time;
+
             "solve_time_cdf" : cdf of solve time;
+
             "cdf_solvability" : cdf solvability profile;
+
             "quantile_solvability" : quantile solvability profile;
+
             "diff_cdf_solvability" : difference of cdf solvability profiles;
+            
             "diff_quantile_solvability" : difference of quantile solvability profiles.
     beta : float, optional
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1117,14 +1126,23 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
     plot_type : str
         String indicating which type of plot to produce:
             "mean" : estimated mean progress curve;
+
             "quantile" : estimated beta quantile progress curve;
+
             "area_mean" : mean of area under progress curve;
+
             "area_std_dev" : standard deviation of area under progress curve;
+
             "solve_time_quantile" : beta quantile of solve time;
+
             "solve_time_cdf" : cdf of solve time;
+            
             "cdf_solvability" : cdf solvability profile;
+
             "quantile_solvability" : quantile solvability profile;
+
             "diff_cdf_solvability" : difference of cdf solvability profiles;
+
             "diff_quantile_solvability" : difference of quantile solvability profiles;
     beta : float, default=0.5
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1188,7 +1206,7 @@ def compute_bootstrap_CI(observations, conf_level, bias_correction=True, overall
     bias_correction : bool, default=True
         True if bias-corrected bootstrap CIs (via percentile method) are to be used,
         otherwise False.
-    overall estimator : float, optional
+    overall_estimator : float, optional
         Estimator to compute bootstrap confidence interval of;
         required for bias corrected CI.
 
@@ -1309,7 +1327,9 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     plot_type : str
         String indicating which type of plot to produce:
             "all" : all estimated progress curves;
+
             "mean" : estimated mean progress curve;
+
             "quantile" : estimated beta quantile progress curve.
     beta : float, default=0.50
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1713,8 +1733,11 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
     plot_type : str
         String indicating which type of plot to produce:
             "cdf_solvability" : cdf-solvability profile;
+
             "quantile_solvability" : quantile-solvability profile;
+
             "diff_cdf_solvability" : difference of cdf-solvability profiles;
+
             "diff_quantile_solvability" : difference of quantile-solvability profiles.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
@@ -1994,7 +2017,9 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         ProblemSolver pairs of different solvers on a common problem.
     plot_type : str, default="violin"
         String indicating which type of plot to produce:
+        
             "box" : comparative box plots;
+
             "violin" : comparative violin plots.
     normalize : bool, default=True
         True if progress curves are to be normalized w.r.t. optimality gaps,
@@ -2151,16 +2176,27 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     plot_type : str
         String indicating which type of plot to produce:
             "all" : all estimated progress curves;
+
             "mean" : estimated mean progress curve;
+
             "quantile" : estimated beta quantile progress curve;
+
             "solve_time_cdf" : cdf of solve time;
+
             "cdf_solvability" : cdf solvability profile;
+
             "quantile_solvability" : quantile solvability profile;
+
             "diff_cdf_solvability" : difference of cdf solvability profiles;
+
             "diff_quantile_solvability" : difference of quantile solvability profiles;
+
             "area" : area scatterplot;
+
             "box" : box plot of terminal progress;
+
             "violin" : violin plot of terminal progress;
+
             "terminal_scatter" : scatterplot of mean and std dev of terminal progress.
     solver_name : str, default="SOLVER_SET"
         Name of solver.
@@ -2261,14 +2297,23 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
     plot_type : str
         String indicating which type of plot to produce:
             "all" : all estimated progress curves;
+
             "mean" : estimated mean progress curve;
+
             "quantile" : estimated beta quantile progress curve;
+
             "solve_time_cdf" : cdf of solve time;
+
             "cdf_solvability" : cdf solvability profile;
+
             "quantile_solvability" : quantile solvability profile;
+
             "diff_cdf_solvability" : difference of cdf solvability profiles;
+
             "diff_quantile_solvability" : difference of quantile solvability profiles;
+
             "area" : area scatterplot;
+
             "terminal_scatter" : scatterplot of mean and std dev of terminal progress.
     normalize : bool
         True if progress curves are to be normalized w.r.t. optimality gaps,

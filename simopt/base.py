@@ -75,7 +75,7 @@ class Solver(object):
 
         Parameters
         ----------
-        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a`]
+        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
             List of random-number generators used for the solver's internal purposes.
         """
         self.rng_list = rng_list
