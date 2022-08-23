@@ -16,13 +16,13 @@ The `models <simopt.models.html>`_ library contains the simulation logic to simu
 
 The source code consists of the following modules:
 
-* The `base.py <base.html>`_ module contains class definitions for models, problems, and solvers.
+* The `base.py <simopt.html#module-simopt.base>`_ module contains class definitions for models, problems, and solvers.
 
-* The `experiment_base.py <experiment_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
+* The `experiment_base.py <simopt.html#module-simopt.experiment_base>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
 
-* The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data-farming experiments.
+* The `data_farming_base.py <simopt.html#module-simopt.data_farming_base>`_ module contains class definitions and functions for running data-farming experiments.
 
-* The `directory.py <directory.html>`_ module contains a listing of models, problems, and solvers in the library.
+* The `directory.py <simopt.html#module-simopt.directory>`_ module contains a listing of models, problems, and solvers in the library.
 
 Getting Started
 ----------------
@@ -30,10 +30,10 @@ Getting Started
 Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, seaborn, and mrg32k3a. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_problem\_solver.py.
 
 Contents
--------------------
+--------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    
    modules
 

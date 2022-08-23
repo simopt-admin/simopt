@@ -12,28 +12,27 @@ from .experiment_base import ProblemSolver, post_normalize
 
 
 class DesignPoint(object):
-    """
-    Base class for design points represented as dictionaries of factors.
+    """Base class for design points represented as dictionaries of factors.
 
     Attributes
     ----------
-    model : 'base.Model'
-        model to simulate
-    model_factors : 'dict'
-        model factor names and values
-    rng_list : 'list' ['mrg32k3a.mrg32k3a.MRG32k3a']
-        rngs for model to use when running replications at the solution
-    n_reps : 'int'
-        number of replications run at a design point
-    responses : 'dict'
-        responses observed from replications
-    gradients : 'dict' ['dict']
-        gradients of responses (w.r.t. model factors) observed from replications
+    model : ``base.Model``
+        Model to simulate.
+    model_factors : dict
+        Model factor names and values.
+    rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
+        Rngs for model to use when running replications at the solution.
+    n_reps : int
+        Number of replications run at a design point.
+    responses : dict
+        Responses observed from replications.
+    gradients : dict [dict]
+        Gradients of responses (w.r.t. model factors) observed from replications.
 
     Parameters
     ----------
-    model : 'base.Model'
-        model with factors model_factors
+    model : ``base.Model``
+        Model with factors model_factors.
     """
     def __init__(self, model):
         super().__init__()
@@ -45,13 +44,12 @@ class DesignPoint(object):
         self.gradients = {}
 
     def attach_rngs(self, rng_list, copy=True):
-        """
-        Attach a list of random-number generators to the design point.
+        """Attach a list of random-number generators to the design point.
 
-        Arguments
-        ---------
-        rng_list : 'list' ['mrg32k3a.mrg32k3a.MRG32k3a']
-            list of random-number generators used to run simulation replications
+        Parameters
+        ----------
+        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
+            List of random-number generators used to run simulation replications.
         """
         if copy:
             self.rng_list = [deepcopy(rng) for rng in rng_list]
@@ -59,14 +57,13 @@ class DesignPoint(object):
             self.rng_list = rng_list
 
     def simulate(self, m=1):
-        """
-        Simulate m replications for the current model factors.
-        Append results to the responses and gradients dictionaries.
+        """Simulate m replications for the current model factors and 
+        append results to the responses and gradients dictionaries.
 
         Parameters
         ----------
-        m : int > 0
-            number of macroreplications to run at the design point
+        m : int, default=1
+            Number of macroreplications to run at the design point; > 0.
         """
         for _ in range(m):
             # Generate a single replication of model, as described by design point.
@@ -88,31 +85,30 @@ class DesignPoint(object):
 
 
 class DataFarmingExperiment(object):
-    """
-    Base class for data-farming experiments consisting of an model
+    """Base class for data-farming experiments consisting of an model
     and design of associated factors.
 
     Attributes
     ----------
-    model : 'base.Model'
-        model on which the experiment is run
-    design : 'list' ['data_farming_base.DesignPoint']
-        list of design points forming the design
+    model : ``base.Model``
+        Model on which the experiment is run.
+    design : list [``data_farming_base.DesignPoint``]
+        List of design points forming the design.
     n_design_pts : int
-        number of design points in the design
+        Number of design points in the design.
 
     Parameters
     ----------
-    model_name : 'str'
-        name of model on which the experiment is run
-    factor_settings_filename : 'str'
-        name of .txt file containing factor ranges and # of digits
-    factor_headers : 'list' ['str']
-        ordered list of factor names appearing in factor settings/design file
-    design_filename : 'str'
-        name of .txt file containing design matrix
-    model_fixed_factors : 'dict'
-        non-default values of model factors that will not be varied
+    model_name : str
+        Name of model on which the experiment is run.
+    factor_settings_filename : str
+        Name of .txt file containing factor ranges and # of digits.
+    factor_headers : list [str]
+        Ordered list of factor names appearing in factor settings/design file.
+    design_filename : str
+        Name of .txt file containing design matrix.
+    model_fixed_factors : dict
+        Non-default values of model factors that will not be varied.
     """
     def __init__(self, model_name, factor_settings_filename, factor_headers, design_filename=None, model_fixed_factors={}):
         # Initialize model object with fixed factors.
@@ -142,15 +138,14 @@ class DataFarmingExperiment(object):
             self.design.append(DesignPoint(self.model))
 
     def run(self, n_reps=10, crn_across_design_pts=True):
-        """
-        Run a fixed number of macroreplications at each design point.
+        """Run a fixed number of macroreplications at each design point.
 
         Parameters
         ----------
-        n_reps : 'int'
-            number of replications run at each design point
-        crn_across_design_pts : 'bool'
-            use CRN across design points?
+        n_reps : int, default=10
+            Number of replications run at each design point.
+        crn_across_design_pts : bool, default=True
+            True if CRN are to be used across design points, otherwise False.
         """
         # Setup random number generators for model.
         # Use stream 0 for all runs; start with substreams 0, 1, ..., model.n_rngs-1.
@@ -174,14 +169,13 @@ class DataFarmingExperiment(object):
                         rng.advance_substream()
 
     def print_to_csv(self, csv_filename="raw_results"):
-        """
-        Extract observed responses from simulated design points.
-        Publish to .csv output file.
+        """Extract observed responses from simulated design points and
+        publish to .csv output file.
 
         Parameters
         ----------
-        csv_filename : 'str'
-            name of .csv file to print output to
+        csv_filename : str, default="raw_results"
+            Name of .csv file to print output to.
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -201,37 +195,42 @@ class DataFarmingExperiment(object):
 
 
 class DataFarmingMetaExperiment(object):
-    """
-    Base class for data-farming meta experiments consisting of problem-solver
+    """Base class for data-farming meta experiments consisting of problem-solver
     pairs and a design of associated factors.
 
     Attributes
     ----------
-    design : list of experiment_base.ProblemSolver objects
-        list of design points forming the design
+    design : list [``experiment_base.ProblemSolver``]
+        List of design points forming the design.
     n_design_pts : int
-        number of design points in the design
+        Number of design points in the design.
 
-    Arguments
-    ---------
-    solver_name : string
-        name of solver
-    problem_name : string
-        name of problem
-    solver_factor_settings_filename : string
-        name of .txt file containing solver factor ranges and # of digits
-    solver_factor_headers : list of strings
-        ordered list of solver factor names appearing in factor settings/design file
-    design_filename : string
-        name of .txt file containing design matrix
-    solver_fixed_factors : dict
-        dictionary of user-specified solver factors that will not be varied
-    problem_fixed_factors : dict
-        dictionary of user-specified problem factors that will not be varied
-    model_fixed_factors : dict
-        dictionary of user-specified model factors that will not be varied
+    Parameters
+    ----------
+    solver_name : str
+        Name of solver.
+    problem_name : str
+        Name of problem.
+    solver_factor_headers : list [str]
+        Ordered list of solver factor names appearing in factor settings/design file.
+    solver_factor_settings_filename : str, default=None
+        Name of .txt file containing solver factor ranges and # of digits.
+    design_filename : str, default=None
+        Name of .txt file containing design matrix.
+    solver_fixed_factors : dict, default=None
+        Dictionary of user-specified solver factors that will not be varied.
+    problem_fixed_factors : dict, default=None
+        Dictionary of user-specified problem factors that will not be varied.
+    model_fixed_factors : dict, default=None
+        Dictionary of user-specified model factors that will not be varied.
     """
-    def __init__(self, solver_name, problem_name, solver_factor_headers, solver_factor_settings_filename=None, design_filename=None, solver_fixed_factors={}, problem_fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, solver_name, problem_name, solver_factor_headers, solver_factor_settings_filename=None, design_filename=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None):
+        if solver_fixed_factors is None:
+            solver_fixed_factors={}
+        if problem_fixed_factors is None:
+            problem_fixed_factors={}
+        if model_fixed_factors is None:
+            model_fixed_factors={}
         # TO DO: Extend to allow a design on problem/model factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None:
@@ -269,13 +268,12 @@ class DataFarmingMetaExperiment(object):
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def run(self, n_macroreps=10):
-        """
-        Run n_macroreps of each problem-solver design point.
+        """Run n_macroreps of each problem-solver design point.
 
-        Arguments
-        ---------
+        Paramaters
+        ----------
         n_macroreps : int
-            number of macroreplications for each design point
+            Number of macroreplications for each design point.
         """
         for design_pt_index in range(self.n_design_pts):
             # If the problem-solver pair has not been run in this way before,
@@ -290,20 +288,19 @@ class DataFarmingMetaExperiment(object):
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
-        """
-        For each design point, run postreplications at solutions
+        """For each design point, run postreplications at solutions
         recommended by the solver on each macroreplication.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         n_postreps : int
-            number of postreplications to take at each recommended solution
-        n_postreps_init_opt : int
-            number of postreplications to take at initial x0 and optimal x*
-        crn_across_budget : bool
-            use CRN for post-replications at solutions recommended at different times?
-        crn_across_macroreps : bool
-            use CRN for post-replications at solutions recommended on different macroreplications?
+            Number of postreplications to take at each recommended solution.
+        crn_across_budget : bool, default=True
+            True if CRN are to be used for post-replications at solutions recommended at
+            different times, otherwise False.
+        crn_across_macroreps : bool, default=False
+            True if CRN are to be used for post-replications at solutions recommended on
+            different macroreplications, otherwise False.
         """
         for design_pt_index in range(self.n_design_pts):
             experiment = self.design[design_pt_index]
@@ -318,11 +315,14 @@ class DataFarmingMetaExperiment(object):
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
-        """
+        """Post-normalize problem-solver pairs.
+        
+        Parameters
+        ----------
         n_postreps_init_opt : int
-            number of postreplications to take at initial x0 and optimal x*
-        crn_across_init_opt : bool
-            use CRN for post-replications at solutions x0 and x*?
+            Number of postreplications to take at initial x0 and optimal x*.
+        crn_across_init_opt : bool, default=True
+            True if CRN are to be used for post-replications at solutions x0 and x*, otherwise False.
         """
         post_normalize(experiments=self.design,
                        n_postreps_init_opt=n_postreps_init_opt,
@@ -330,15 +330,14 @@ class DataFarmingMetaExperiment(object):
                        )
 
     def report_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
-        """
-        For each design point, calculate statistics from each macoreplication and print to csv.
+        """For each design point, calculate statistics from each macoreplication and print to csv.
 
-        Arguments
-        ---------
-        solve_tols : list of floats in (0,1]
-            relative optimality gap(s) definining when a problem is solved
-        csv_filename : string
-            name of .csv file to print output to
+        Parameters
+        ----------
+        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+            Relative optimality gap(s) definining when a problem is solved; in (0,1].
+        csv_filename : str, default="df_solver_results"
+            Name of .csv file to print output to.
         """
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
