@@ -1,9 +1,38 @@
-# Welcome to SimOpt!
+[![INFORMS Journal on Computing Logo](https://INFORMSJoC.github.io/logos/INFORMS_Journal_on_Computing_Header.jpg)](https://pubsonline.informs.org/journal/ijoc)
+
+This project is distributed in association with the [INFORMS Journal on
+Computing](https://pubsonline.informs.org/journal/ijoc) under the [MIT License](LICENSE).
+
+The software and data in this repository are associated with the paper [SimOpt: A Testbed for Simulation-Optimization Experiments](???) by D. J. Eckman, S. G. Henderson, and S. Shashaani. 
+
+## Version
+
+The version used in the paper is
+
+[![Release](v1.0.0)](https://github.com/simopt-admin/simopt/releases/tag/v1.0.0)
+
+## Cite
+
+To cite this software, please cite the [paper](???) and the software, using the following DOI.
+
+[![DOI](???)](???)
+
+Below is the BibTex for citing this version of the code.
+
+```
+@article{simoptijoc,
+  author =        {D. J. Eckman and S. G. Henderson and S. Shashaani},
+  publisher =     {INFORMS Journal on Computing},
+  title =         {SimOpt: A Testbed for Simulation-Optimization Experiments},
+  year =          {2022},
+  doi =           {???},
+  url =           {???},
+}  
+```
+
+## Description
 
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
-
-The most-up-to-date publication about this library is [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf).
-
 
 For the purposes of this project, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function or stochastic constraints. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
 
@@ -15,16 +44,51 @@ Several papers have discussed the development of SimOpt and experiments run on t
 * [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2021/09/SimOpt-metrics-paper.pdf) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt. For detailed description of the terminology used in the library, e.g., factors, macroreplications, post-processing, solvability plots, etc., see this paper.
 
 
-## Code
-* The `master` branch contains the source code for the latest version of the testbed, which is written in Python.
-* The `matlab` branch contains a previous stable version of the testbed written in MATLAB.
-
 ## Documentation
 Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
-## Getting Started
-The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)* Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
 
+## Installation
+
+The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
+
+    python -m pip install simoptlib
+
+## Basic Example
+
+After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
+
+    import simopt
+    from simopt import models, solvers, experiment_base
+
+The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
+
+    myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
+    myexperiment.run(n_macroreps=10)
+
+The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
+
+    myexperiment.post_replicate(n_postreps=200)
+    simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
+
+A .txt file summarizing the progress of the solver on each macroreplication can be produced:
+    
+    myexperiment.log_experiment_results()
+
+A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
+
+One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
+    
+    simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+
+The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
+
+One can also use the SimOpt graphical user interface by running the following from the terminal:
+
+    python -m simopt.GUI
+
+## Working with the Repository
+Another way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. 
 Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, and `mrg32k3a`. Run the command ``` python -m pip install numpy scipy matplotlib pandas seaborn mrg32k3a``` to install them from the terminal.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
@@ -153,69 +217,18 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
 7. To return to the main page, click the red "x" in the top-left corner of the window.
 
-## Contributing
-You can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. 
+## Ongoing Development
 
-
-## Package
-The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
-
-    python -m pip install simoptlib
-
-## Basic Example
-
-After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
-
-    import simopt
-    from simopt import models, solvers, experiment_base
-
-The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
-
-    myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
-    myexperiment.run(n_macroreps=10)
-
-The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
-
-    myexperiment.post_replicate(n_postreps=200)
-    simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
-
-A .txt file summarizing the progress of the solver on each macroreplication can be produced:
-    
-    myexperiment.log_experiment_results()
-
-A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
-
-One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
-    
-    simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
-
-The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
-
-One can also use the SimOpt graphical user interface by running the following from the terminal:
-
-    python -m simopt.GUI
-
-## Authors
 The core development team currently consists of 
 
 - [**David Eckman**](https://eckman.engr.tamu.edu) (Texas A&M University)
 - [**Sara Shashaani**](https://shashaani.wordpress.ncsu.edu) (North Carolina State University)
 - [**Shane Henderson**](https://people.orie.cornell.edu/shane/) (Cornell University)
 
+This code is being developed on an on-going basis at the authors'
+[Github site](https://github.com/simopt-admin/simopt).
+Users can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. 
 
-## Citation
-To cite this work, please use
-```
-@misc{simoptgithub,
-  author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
-  title = {{SimOpt}},
-  year = {2021},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/simopt-admin/simopt}},
-  commit = {eda24b9f6a5885a37321ad7f8534bf10dec22480}
-}
-```
 
 ## Acknowledgments
 An earlier website for SimOpt, [http://www.simopt.org](http://www.simopt.org), was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
