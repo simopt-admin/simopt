@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "simoptlib"
-version = "1.0.3"
+version = "1.0.0"
 authors = [
   { name="David Eckman", email="eckman@tamu.edu" },
   { name="Shane Henderson", email="sgh9@cornell.edu" },
