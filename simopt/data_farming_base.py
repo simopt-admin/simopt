@@ -177,6 +177,9 @@ class DataFarmingExperiment(object):
         csv_filename : str, default="raw_results"
             Name of .csv file to print output to.
         """
+        # Create directory if they do no exist.
+        if not os.path.exists("./data_farming_experiments"):
+            os.makedirs("./data_farming_experiments")
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             # Print headers.
@@ -257,7 +260,7 @@ class DataFarmingMetaExperiment(object):
             new_design_pt_solver_factors = {**solver_fixed_factors, **design_pt_solver_factors}
             # In Python 3.9, will be able to use: dict1 | dict2.
             # Create new design point and add to design0.
-            file_name_path = "data_farming_experiments/outputs/" + solver_name + "_on_" + problem_name + "_designpt_" + str(i) + ".pickle"
+            file_name_path = "./data_farming_experiments/outputs/" + solver_name + "_on_" + problem_name + "_designpt_" + str(i) + ".pickle"
             new_design_pt = ProblemSolver(solver_name=solver_name,
                                        problem_name=problem_name,
                                        solver_fixed_factors=new_design_pt_solver_factors,
@@ -339,6 +342,9 @@ class DataFarmingMetaExperiment(object):
         csv_filename : str, default="df_solver_results"
             Name of .csv file to print output to.
         """
+        # Create directory if they do no exist.
+        if not os.path.exists("./data_farming_experiments"):
+            os.makedirs("./data_farming_experiments")
         with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
             csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             base_experiment = self.design[0]

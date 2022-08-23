@@ -746,6 +746,9 @@ class ProblemSolver(object):
         if "./experiments/outputs" in self.file_name_path and not os.path.exists("./experiments/outputs"):
             os.makedirs("./experiments", exist_ok=True)
             os.makedirs("./experiments/outputs")
+        elif "./data_farming_experiments/outputs" in self.file_name_path and not os.path.exists("./data_farming_experiments/outputs"):
+            os.makedirs("./data_farming_experiments", exist_ok=True)
+            os.makedirs("./data_farming_experiments/outputs")
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
