@@ -74,7 +74,7 @@ class SSCont(Model):
         self.factors = fixed_factors
         self.specifications = {
             "demand_mean": {
-                "description": "mean of exponentially distributed demand in each period.",
+                "description": "mean of exponentially distributed demand in each period",
                 "datatype": float,
                 "default": 100.0
             },
