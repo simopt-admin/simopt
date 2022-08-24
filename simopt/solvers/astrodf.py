@@ -111,12 +111,12 @@ class ASTRODF(Solver):
                 "default": 4
             },
             "simple_solve": {
-                "description": "subproblem solver with Cauchy point or the built-in solver? True - Cauchy point, False - built-in solver",
+                "description": "solve subproblem with Cauchy point (rough approximate)?",
                 "datatype": bool,
                 "default": True
             },
             "criticality_select": {
-                "description": "True - skip contraction loop if not near critical region, False - always run contraction loop",
+                "description": "skip contraction loop if not near critical region?",
                 "datatype": bool,
                 "default": True
             },
