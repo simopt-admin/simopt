@@ -39,15 +39,17 @@ solver_directory = {
     "ADAM": ADAM,
     "ALOE": ALOE
 }
-solver_nonabbreviated_directory = {
-    "ASTRODF (SBCN)": ASTRODF,
-    "RandomSearch (SSMN)": RandomSearch,
+
+solver_unabbreviated_directory = {
+    "ASTRO-DF (SBCN)": ASTRODF,
+    "Random Search (SSMN)": RandomSearch,
     "Nelder-Mead (SBCN)": NelderMead,
     "STRONG (SBCN)": STRONG,
     "SPSA (SBCN)": SPSA,
     "ADAM (SBCN)": ADAM,
-    "ALOE (SBCN)": ALOE
+    "Adaptive Line-search with Oracle Estimations (SBCN)": ALOE
 }
+
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,
     "MM1-1": MM1MinMeanSojournTime,
@@ -69,7 +71,8 @@ problem_directory = {
     "FIXEDSAN-1": FixedSANLongestPath,
     "NETWORK-1": NetworkMinTotalCost
 }
-problem_nonabbreviated_directory = {
+
+problem_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": MM1MinMeanSojournTime,
     "Min Total Cost for Facility Sizing (SSCG)": FacilitySizingTotalCost,
@@ -77,6 +80,7 @@ problem_nonabbreviated_directory = {
     "Max Revenue for Revenue Management Temporal Demand (SDDN)": RMITDMaxRevenue,
     "Min Total Cost for (s, S) Inventory (SBCN)": SSContMinCost,
     "Max Revenue for Iron Ore (SBDN)": IronOreMaxRev,
+    "Max Revenue for Continuous Iron Ore (SBCN)": IronOreMaxRevCnt,
     "Max Profit for Dynamic Newsvendor (SBDN)": DynamNewsMaxProfit,
     "Min Cost for Dual Sourcing (SBDN)": DualSourcingMinCost,
     "Min Total Cost for Discrete Contamination (SSDN)": ContaminationTotalCostDisc,
@@ -87,7 +91,7 @@ problem_nonabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSANLongestPath,
-    "Minimize Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
+    "Min Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -115,6 +119,7 @@ model_unabbreviated_directory = {
     "Max Revenue for Revenue Management Temporal Demand (SDDN)": "RMITD",
     "Min Total Cost for (s, S) Inventory (SBCN)": "SSCONT",
     "Max Revenue for Iron Ore (SBDN)": "IRONORE",
+    "Max Revenue for Continuous Iron Ore (SBCN)": "IRONORE",
     "Max Profit for Dynamic Newsvendor (SBDN)": "DYNAMNEWS",
     "Min Cost for Dual Sourcing (SBDN)": "DUALSOURCING",
     "Min Total Cost for Discrete Contamination (SSDN)": "CONTAM",
@@ -125,5 +130,5 @@ model_unabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
-    "Minimize Total Cost for Communication Networks System (SDCN)": "NETWORK"
+    "Min Total Cost for Communication Networks System (SDCN)": "NETWORK"
 }
