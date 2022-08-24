@@ -89,7 +89,7 @@ class Experiment_Window(tk.Tk):
         self.list_checked_experiments = []
 
         self.instruction_label = tk.Label(master=self.master, # window label is used in
-                            text = "Welcome to SimOpt \n Please Load or Add Your Problem-Solver Pair(s): ",
+                            text = "Welcome to SimOpt Library Graphic User Interface\n Please Load or Add Your Problem-Solver Pair(s): ",
                             font = "Calibri 15 bold",
                             justify="center")
 
@@ -104,7 +104,7 @@ class Experiment_Window(tk.Tk):
             text = " OR Select Problem and Solver from Below:",
             font = "Calibri 13")
         self.or_label22 = tk.Label(master=self.master, # window label is used in
-            text = "Select from Below",
+            text = "Select from Below:",
             font = "Calibri 12")
 
         # from experiments.inputs.all_factors.py:
@@ -167,10 +167,10 @@ class Experiment_Window(tk.Tk):
                                                 command = self.load_pickle_file_function)
 
         self.attribute_description_label = tk.Label(master=self.master,
-                                                    text = "Attribute Description Label for Problems: Objective(Single [S] or Multiple [M])                                 Constraint(Unconstrained [U], Box[B], Determinisitic [D], Stochastic [S])\n                      Variable(Discrete [D], Continuous [C], Mixed [M])          Gradient Available (True [G] or False [N])" ,
+                                                    text = "Attribute Description Label for Problems:\n Objective (Single [S] or Multiple [M])\n Constraint (Unconstrained [U], Box[B], Determinisitic [D], Stochastic [S])\n Variable (Discrete [D], Continuous [C], Mixed [M])\n Gradient Available (True [G] or False [N])" ,
                                                     font = "Calibri 9"
                                                     )
-        self.attribute_description_label.place(x= 250, rely = 0.478)
+        self.attribute_description_label.place(x= 450, rely = 0.478)
 
 
         self.post_normal_all_button = ttk.Button(master=self.master,
@@ -298,7 +298,7 @@ class Experiment_Window(tk.Tk):
         self.or_label2.place(x=480, rely=.06)
         # self.or_label22.place(x=435, rely=.06)
 
-        self.queue_label_frame.place(x=10, rely=.53, relheight=.39, relwidth=.99)
+        self.queue_label_frame.place(x=10, rely=.56, relheight=.35, relwidth=.99)
         # self.post_normal_all_button.place(x=400,rely=.95)
 
         self.frame.pack(fill='both')
@@ -385,7 +385,7 @@ class Experiment_Window(tk.Tk):
                                             font = "Calibri 13")
 
         self.save_var_problem = tk.StringVar(self.factor_tab_one_problem)
-        self.save_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.save_var_problem, justify = tk.LEFT, width=10)
+        self.save_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.save_var_problem, justify = tk.LEFT, width=15)
         
         self.save_entry_problem.insert(index=tk.END, string=oldname)
 
@@ -411,7 +411,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var_problem = tk.StringVar(self.factor_tab_one_problem)
-                self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width=10)
+                self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width=15)
                 if args and len(args) == 2 and args[0] == True:
                     self.int_float_entry_problem.insert(index=tk.END, string=str(args[1][3][0][factor_type]))
                 elif self.problem_object().specifications[factor_type].get("datatype") == tuple and len(self.problem_object().specifications[factor_type]['default']) == 1:
@@ -529,7 +529,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var_oracle = tk.StringVar(self.factor_tab_one_oracle)
-                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 10)
+                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 15)
 
                 if args and len(args) == 2 and args[0] == True:
                     self.int_float_entry_oracle.insert(index=tk.END, string=str(args[1][4][0][factor_type]))
@@ -649,7 +649,7 @@ class Experiment_Window(tk.Tk):
             
 
         self.save_var_solver = tk.StringVar(self.factor_tab_one_solver)
-        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=10)
+        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=15)
         
 
         self.save_entry_solver.insert(index=tk.END, string=oldname)
@@ -680,7 +680,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
-                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=10)
+                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=15)
                 
                 if args and len(args) == 3 and args[0] == True:
                     self.int_float_entry.insert(index=tk.END, string=str(args[1][5][0][factor_type]))
@@ -1925,7 +1925,7 @@ class Experiment_Window(tk.Tk):
                                             font = "Calibri 13")
 
         self.save_var_solver = tk.StringVar(self.factor_tab_one_solver)
-        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=10)
+        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=15)
         
 
         self.save_entry_solver.insert(index=tk.END, string=solver_name)
@@ -1951,7 +1951,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
-                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=10)
+                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=15)
                 self.int_float_entry.insert(index=tk.END, string=str(self.custom_solver_object.factors[factor_type]))
                 self.int_float_entry["state"] = "disabled"
                 self.int_float_description.grid(row=count_factors_solver, column=0, sticky='nsew')
@@ -2056,7 +2056,7 @@ class Experiment_Window(tk.Tk):
                                             font = "Calibri 13")
 
         self.save_var_problem = tk.StringVar(self.factor_tab_one_problem)
-        self.save_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.save_var_problem, justify = tk.LEFT, width = 10)
+        self.save_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.save_var_problem, justify = tk.LEFT, width = 15)
         
         self.save_entry_problem.insert(index=tk.END, string=problem_name)
         self.save_entry_problem["state"] = "disabled"
@@ -2080,7 +2080,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var_problem = tk.StringVar(self.factor_tab_one_problem)
-                self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width = 10)
+                self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width = 15)
                 if self.default_problem_object.specifications[factor_type].get("datatype") == tuple and len(self.default_problem_object.specifications[factor_type]['default']) == 1:
                     self.int_float_entry_problem.insert(index=tk.END, string=str(self.custom_problem_object.factors[factor_type][0]))
                 else:
@@ -2198,7 +2198,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var_oracle = tk.StringVar(self.factor_tab_one_oracle)
-                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 10)
+                self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 15)
 
                 self.int_float_entry_oracle.insert(index=tk.END, string=str(self.custom_oracle_object.factors[factor_type]))
                 self.int_float_entry_oracle["state"] = "disabled"
@@ -2318,7 +2318,7 @@ class Experiment_Window(tk.Tk):
             
 
         self.save_var_solver = tk.StringVar(self.factor_tab_one_solver)
-        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=10)
+        self.save_entry_solver = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.save_var_solver, justify = tk.LEFT, width=15)
         
 
         self.save_entry_solver.insert(index=tk.END, string=oldname)
@@ -2349,7 +2349,7 @@ class Experiment_Window(tk.Tk):
                                                     wraplength=150)
 
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
-                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=10)
+                self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=15)
                 
                 if args and len(args) == 3 and args[0] == True:
                     self.int_float_entry.insert(index=tk.END, string=str(args[1][5][0][factor_type]))
@@ -2476,7 +2476,7 @@ class Cross_Design_Window():
                 self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
 
                 self.crossdesign_macro_var = tk.StringVar(self.master)
-                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=10)
+                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=15)
                 self.crossdesign_macro_entry.insert(index=tk.END, string="10")
                 self.crossdesign_macro_entry.place(x=15, y=105+(25*solver_cnt))
 
@@ -2495,7 +2495,7 @@ class Cross_Design_Window():
                 self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
 
                 self.crossdesign_macro_var = tk.StringVar(self.master)
-                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=10)
+                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=15)
                 self.crossdesign_macro_entry.insert(index=tk.END, string="10")
 
                 self.crossdesign_macro_entry.place(x=15, y=105+(25*problem_cnt))
@@ -2515,7 +2515,7 @@ class Cross_Design_Window():
                 self.crossdesign_macro_label.place(x=15, y=80+(25*problem_cnt))
 
                 self.crossdesign_macro_var = tk.StringVar(self.master)
-                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=10)
+                self.crossdesign_macro_entry = ttk.Entry(master=self.master, textvariable = self.crossdesign_macro_var, justify = tk.LEFT, width=15)
                 self.crossdesign_macro_entry.insert(index=tk.END, string="10")
                 self.crossdesign_macro_entry.place(x=15, y=105+(25*problem_cnt))
 
@@ -2624,7 +2624,7 @@ class Post_Processing_Window():
                                     wraplength = "250")
 
         self.n_postreps_var = tk.StringVar(self.master)
-        self.n_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_var, justify = tk.LEFT, width=10)
+        self.n_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_var, justify = tk.LEFT, width=15)
         self.n_postreps_entry.insert(index=tk.END, string="100")
 
 
@@ -2675,7 +2675,7 @@ class Post_Processing_Window():
                                     wraplength = "300")
 
         self.n_norm_postreps_var = tk.StringVar(self.master)
-        self.n_norm_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_norm_postreps_var, justify = tk.LEFT, width=10)
+        self.n_norm_postreps_entry = ttk.Entry(master=self.master, textvariable = self.n_norm_postreps_var, justify = tk.LEFT, width=15)
         self.n_norm_postreps_entry.insert(index=tk.END, string="200")
 
         self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
@@ -2934,7 +2934,7 @@ class Post_Normal_Window():
                                 wraplength = "310")
 
         self.n_postreps_init_opt_var = tk.StringVar(self.master)
-        self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT, width=10)
+        self.n_postreps_init_opt_entry = ttk.Entry(master=self.master, textvariable = self.n_postreps_init_opt_var, justify = tk.LEFT, width=15)
         self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
         self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
@@ -3032,7 +3032,7 @@ class Plot_Window():
             self.experiment_list = experiment_list
             self.main_window = main_window
             self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
-            self.plot_type_names = ["Mean Progress Curve", "Quantile Progress Curve", "Solve time CDF", "Scatter Plot", "CDF Solvability","Quantile Solvability","CDF Difference Plot", "Quantile Difference Plot", "Terminal Progress Plot", "Area Scatter Plot"]
+            self.plot_type_names = ["Mean Progress Curve", "Quantile Progress Curve", "Solve time CDF", "Area Scatter Plot", "CDF Solvability","Quantile Solvability","CDF Difference Plot", "Quantile Difference Plot", "Terminal Progress Plot", "Terminal Scatter Plot"]
             self.num_plots = 0
             self.plot_exp_list = []
             self.plot_type_list = []
@@ -3124,7 +3124,7 @@ class Plot_Window():
 
             self.style = ttk.Style()
             self.style.configure("Bold.TLabel", font = ("Calibri",15,"bold"))
-            Label = ttk.Label(master = self.master, text ="Plot Workspace", style="Bold.TLabel")
+            Label = ttk.Label(master = self.master, text ="Plotting Workspace", style="Bold.TLabel")
             
             self.queue_label_frame = ttk.LabelFrame(master=self.master, labelwidget = Label)
 
@@ -3149,8 +3149,7 @@ class Plot_Window():
 
             self.tab_one = tk.Frame(master=self.notebook)
 
-            #
-            self.notebook.add(self.tab_one, text="Problem-Solver Pairs to Plot")
+            self.notebook.add(self.tab_one, text="Problem-Solver Pairs to Plots")
 
             self.tab_one.grid_rowconfigure(0)
 
@@ -3178,9 +3177,10 @@ class Plot_Window():
             separator = ttk.Separator(master=self.master, orient='horizontal')
             separator.place(relx=0.35, rely=.08, relheight=.4)
 
-            self.post_normal_all_button.place(relx=.3,rely=.95)
+            self.post_normal_all_button.place(relx=.01,rely=.92)
 
-            self.queue_label_frame.place(x=10, rely=.5, relheight=.4, relwidth=1)
+            # self.queue_label_frame.place(x=10, rely=.7, relheight=.3, relwidth=1)
+            self.queue_label_frame.place(x=10, rely=.56, relheight=.35, relwidth=.99)
 
             self.param_label = []
             self.param_entry = []
@@ -3260,7 +3260,7 @@ class Plot_Window():
             if len(probs) == 0 or len(self.solvers) == 0 or str(self.plot_var.get()) == "Plot":
                 txt = "At least 1 Problem, 1 Solver, and 1 Plot Type must be selected."
                 self.bad_label = tk.Label(master=self.master,text=txt,font = "Calibri 12",justify="center")
-                self.bad_label.place(relx=.5, rely=.55)
+                self.bad_label.place(relx=.45, rely=.5)
                 return
             elif self.bad_label != None:
                 self.bad_label.destroy()
@@ -3335,7 +3335,7 @@ class Plot_Window():
             elif self.plot_type_list[i] == "Solve time CDF":
                 path_name = plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps=int(param_value_list[3]), conf_level=param_value_list[4] )
                 param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"n_bootstraps":param_value_list[3], "conf_level":param_value_list[4]}
-            elif self.plot_type_list[i] == "Scatter Plot":
+            elif self.plot_type_list[i] == "Area Scatter Plot":
                 path_name = plot_area_scatterplots(exp2, plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps= int(param_value_list[2]), conf_level=param_value_list[3] )
                 param_list = {}
             elif self.plot_type_list[i] == "CDF Solvability":
@@ -3356,7 +3356,7 @@ class Plot_Window():
                 # print("plot_type", param_value_list[1])
                 param_list = {"plot type": param_value_list[1], "normalize":param_value_list[2]}
                 path_name = plot_terminal_progress(exp, plot_type = param_value_list[1], normalize = param_value_list[2], all_in_one =param_value_list[0])
-            elif self.plot_type_list[i] == "Area Scatter Plot":
+            elif self.plot_type_list[i] == "Terminal Scatter Plot":
                 param_list = {}
                 path_name = plot_terminal_scatterplots(exp2, all_in_one = param_value_list[0])
             else:
@@ -3456,7 +3456,7 @@ class Plot_Window():
                 param_list = {'beta':0.50, 'normalize':True, 'n_bootstraps': 100, 'conf_level':0.95}
             elif plot_choice == "Solve time CDF":
                 param_list = {'solve_tol':0.1, 'n_bootstraps':100, 'conf_level':0.95}
-            elif plot_choice == "Scatter Plot":
+            elif plot_choice == "Area Scatter Plot":
                 param_list = { 'n_bootstraps':100, 'conf_level':0.95}
             elif plot_choice == "CDF Solvability":
                 param_list = {'solve_tol':0.1, 'n_bootstraps':100, 'conf_level':0.95}
@@ -3468,7 +3468,7 @@ class Plot_Window():
                 param_list = {'solve_tol':0.1, 'beta':0.5, 'ref_solver':None, 'n_bootstraps':100, 'conf_level':0.95}
             elif plot_choice == "Terminal Progress Plot":
                 param_list = {'plot type': "violin", 'normalize': True}
-            elif plot_choice == "Area Scatter Plot":
+            elif plot_choice == "Terminal Scatter Plot":
                 param_list = {}
             else:
                 print("invalid plot?")
@@ -3478,7 +3478,7 @@ class Plot_Window():
             # self.params = [tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master), tk.StringVar(master=self.master)]
 
             self.CI_label_frame.destroy()
-            self.CI_label_frame = ttk.LabelFrame(master=self.master, text="Plot Parameters")
+            self.CI_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings and Parameters")
             self.CI_canvas = tk.Canvas(master=self.CI_label_frame, borderwidth=0)
             self.CI_frame = ttk.Frame(master=self.CI_canvas)
 
@@ -3490,7 +3490,7 @@ class Plot_Window():
             self.CI_label_frame.place(relx=.4, rely=.15, relheight=.3, relwidth=.25)
             
             self.settings_label_frame.destroy()
-            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Plot Settings and Parameters")
+            self.settings_label_frame = ttk.LabelFrame(master=self.master, text="Error Estimation Settings and Parameters")
             self.settings_canvas = tk.Canvas(master=self.settings_label_frame, borderwidth=0)
             self.settings_frame = ttk.Frame(master=self.settings_canvas)
 
@@ -3510,31 +3510,31 @@ class Plot_Window():
             
             # Plot Settings
             i = 0 
-            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
+            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Area Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
                 # Confidence Intervals
                 entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue="True", offvalue="False")
                 entry1.select()
                 # entry1 = ttk.OptionMenu(self.settings_canvas, self.params[0], "True", *tf_list)
-                label1 = tk.Label(master=self.settings_canvas, text="Show Confidence Intervals", font="Calibri 13")
+                label1 = tk.Label(master=self.settings_canvas, text="Show Confidence Intervals", font="Calibri 13", wraplength="150")
                 label1.grid(row=0, column=0, padx=10, pady=3)
                 entry1.grid(row=0, column=1, padx=10, pady=3)
                 i += 1
 
-            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice == "Terminal Progress Plot" or plot_choice == "Area Scatter Plot":
+            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice == "Terminal Progress Plot" or plot_choice == "Terminal Scatter Plot":
                 # Plot Together Checkbox
                 entry = tk.Checkbutton(self.CI_canvas, variable=self.params[i], onvalue="True", offvalue="False")
                 entry.select()
                 # Creates the Check Mark that checks whether the plots will be plot together
-                label = tk.Label(self.CI_canvas, text="Plot Together", font="Calibri 13")
+                label = tk.Label(self.CI_canvas, text="Plot Together", font="Calibri 13", wraplength="150")
                 label.grid(row=i, column=0, padx=10, pady=3)
                 entry.grid(row=i, column=1, padx=10, pady=3) 
                 i += 1
             
-            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
+            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Area Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
                 # Show Print Max Halfwidth
                 entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue="True", offvalue="False")
                 entry2.select()
-                label2 = tk.Label(master=self.settings_canvas, text="Show Max Halfwidth", font="Calibri 13")
+                label2 = tk.Label(master=self.settings_canvas, text="Show Max Halfwidth", font="Calibri 13", wraplength="150")
                 label2.grid(row=1, column=0, padx=10, pady=3)
                 entry2.grid(row=1, column=1, padx=10, pady=3)
                 i += 1
@@ -3551,43 +3551,43 @@ class Plot_Window():
                 elif param == 'ref_solver':
                     label = tk.Label(master=self.CI_canvas, text="Select Solver", font="Calibri 13")
                     if len(self.solvers_names) != 0:
-                        label = tk.Label(master=self.CI_canvas, text="Benchmark Solver", font="Calibri 13")
+                        label = tk.Label(master=self.CI_canvas, text="Benchmark Solver", font="Calibri 13", wraplength="150")
                         entry = ttk.OptionMenu(self.CI_canvas, self.params[i], self.solvers_names[0], *self.solvers_names)
                         entry.grid(row=i, column=1, padx=10, pady=3)
                     label.grid(row=i, column=0, padx=10, pady=3)
                 elif param == 'solve_tol':
-                    label = tk.Label(master=self.CI_canvas, text="Optimality Gap Threshold", font="Calibri 13", wraplength="100")
+                    label = tk.Label(master=self.CI_canvas, text="Optimality Gap Threshold", font="Calibri 13", wraplength="150")
                     label.grid(row=i, column=0, padx=10, pady=3)
-                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=10)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=15)
                     if param_val is not None:
                         entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
                     entry.grid(row=i, column=1, padx=10, pady=3)
                 elif param == 'beta':
-                    label = tk.Label(master=self.CI_canvas, text="Quantile Probability", font="Calibri 13", wraplength="100")
+                    label = tk.Label(master=self.CI_canvas, text="Quantile Probability", font="Calibri 13", wraplength="150")
                     label.grid(row=i, column=0, padx=10, pady=3)
-                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=10)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=15)
                     if param_val is not None:
                         entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
                     entry.grid(row=i, column=1, padx=10, pady=3)
                 elif param == 'plot type':
-                    label = tk.Label(master=self.CI_canvas, text="Type of Terminal Progress Plot", font="Calibri 13", wraplength="100")
+                    label = tk.Label(master=self.CI_canvas, text="Type of Terminal Progress Plot", font="Calibri 13", wraplength="150")
                     entry = ttk.OptionMenu(self.CI_canvas, self.params[i], "violin",*bp_list)
                     label.grid(row=i, column=0, padx=10, pady=3)
                     entry.grid(row=i, column=1, padx=10, pady=3)
                 elif param == 'n_bootstraps':
-                    label = tk.Label(master=self.settings_canvas, text="Number of Bootstrap Samples", font="Calibri 13", wraplength="100")
+                    label = tk.Label(master=self.settings_canvas, text="Number of Bootstraps", font="Calibri 13", wraplength="150")
                     label.grid(row=3, column=0, padx=10, pady=3)
-                    entry = ttk.Entry(master=self.settings_canvas, textvariable = self.params[i], justify = tk.LEFT, width=10)
+                    entry = ttk.Entry(master=self.settings_canvas, textvariable = self.params[i], justify = tk.LEFT, width=15)
                     if param_val is not None:
                         entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
                     entry.grid(row=3, column=1, padx=10, pady=3)
                 elif param == 'conf_level':
-                    label = tk.Label(master=self.settings_canvas, text="Confidence Level", font="Calibri 13", wraplength="100")
+                    label = tk.Label(master=self.settings_canvas, text="Confidence Level", font="Calibri 13", wraplength="150")
                     label.grid(row=2, column=0, padx=10, pady=3)
-                    entry = ttk.Entry(master=self.settings_canvas, textvariable = self.params[i], justify = tk.LEFT, width=10)
+                    entry = ttk.Entry(master=self.settings_canvas, textvariable = self.params[i], justify = tk.LEFT, width=15)
                     if param_val is not None:
                         entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
@@ -3595,7 +3595,7 @@ class Plot_Window():
                 else:
                     label = tk.Label(master=self.CI_canvas, text=param, font="Calibri 13")
                     label.grid(row=i, column=0, padx=10, pady=3)
-                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=10)
+                    entry = ttk.Entry(master=self.CI_canvas, textvariable = self.params[i], justify = tk.LEFT, width=15)
                     if param_val is not None:
                         entry.delete(0, 'end')
                         entry.insert(index=tk.END, string=param_val)
