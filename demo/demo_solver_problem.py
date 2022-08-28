@@ -27,7 +27,7 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
 solver_name = "PGD"  # Random search solver
-problem_name = "VOLUNTEER-2"  # Continuous newsvendor problem
+problem_name = "FAKE-1"  # Continuous newsvendor problem
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")

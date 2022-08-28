@@ -2,7 +2,7 @@
 Summary
 -------
 PGD
-projected gradient descent for problems with constraint \sum x = 1
+projected gradient descent for problems with linear constraints
 """
 
 from base import Solver
@@ -173,6 +173,9 @@ class PGD(Solver):
         lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
         upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
 
+        A = problem.A
+        b = problem.b
+
         # Initialize stepsize.
         alpha = alpha_0
 
@@ -319,14 +322,26 @@ class PGD(Solver):
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
 
         return grad
+
+    # Euclidean projection of a vector onto the probability simplex.
+    # Referencing Wang and Carreira-Perpinan (2013)
+    def proj_prob_simplex(self, x, problem):
+        # Sort the vector.
+        sorted_x = -np.sort(-np.array(x))
+        j = problem.dim
+        while j >= 1:
+            if sorted_x[j - 1] + 1/j * (1 - sum(sorted_x[:j])):
+                rho = j
+                break
+            else:
+                j -= 1
+        lam = 1 / rho * (1 - sum(sorted_x[:rho]))
+        return [max(i + lam, 0) for i in x]
     
-    def project_grad(self, grad):
+    def project_grad(self, grad, A):
         """
-        Project the gradient onto the hyperplane H: sum{x_i} = 0.
+        Project the gradient onto the hyperplane H: Ax = 0.
         """
-        n = len(grad)
-        # Generate the projection matrix.
-        proj_mat = np.identity(n) - 1/n * np.ones((n, n))
-        # Perform the projection.
-        proj_grad = np.matmul(proj_mat, grad)
+        lamb = np.linalg.solve(A@A.T, np.matmul(A, grad))
+        proj_grad = grad - np.matmul(A.T, lamb)
         return proj_grad

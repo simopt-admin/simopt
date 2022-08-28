@@ -76,12 +76,11 @@ class Volunteer(Model):
                 "datatype": tuple,
                 # "default": tuple((1/400 * np.ones(400)).tolist())
                 "default": tuple((1/4 * np.ones(4)).tolist())
-
             },
             "num_OHCA": {
                 "description": "Number of OHCAs to generate.",
                 "datatype": int,
-                "default": 20
+                "default": 10
             },
         }
         self.check_factor_list = {
@@ -182,7 +181,7 @@ class Volunteer(Model):
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
 
         # Generate the locations of the volunteers following a Poisson point process.
-        prob2, alias2 = vol_sq_rng.alias_init(list(self.factors["p_vol"]))
+        prob2, alias2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))
         for _ in range(num_vol):
             # Generate the coordinates of the square the volunteer is located in.
             u4 = vol_sq_rng.alias(prob2, alias2)
@@ -196,7 +195,7 @@ class Volunteer(Model):
                         (y + u6) * self.factors["square_length"]))
 
         flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
-        prob1, alias1 = OHCA_sq_rng.alias_init(flat_p_OHCA)    
+        prob1, alias1 = OHCA_sq_rng.alias_init(dict(enumerate(flat_p_OHCA, 1)))    
         sum_flag = 0
         flag_grads = []
         sum_p = 0

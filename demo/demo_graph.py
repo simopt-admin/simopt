@@ -9,7 +9,7 @@ import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
-from experiment_base import Experiment, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles
+from experiment_base import ProblemSolver, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles
 
 # Default values of the (s, S) model:
 # "demand_mean": 100.0
@@ -38,14 +38,16 @@ from experiment_base import Experiment, plot_area_scatterplots, post_normalize, 
 # PROBLEM_FULL_NAME = "Continuous Newsvendor"
 # PROBLEM = "SSCONT-1"
 # PROBLEM_FULL_NAME = "(s,S) Inventory"
-PROBLEM = "SAN-1"
-PROBLEM_FULL_NAME = "Stochastic Activity Network"
+# PROBLEM = "SAN-1"
+# PROBLEM_FULL_NAME = "Stochastic Activity Network"
 # PROBLEM = "MM1-1"
 # PROBLEM_FULL_NAME = "MM1MinMeanSojournTime"
 # PROBLEM = "DYNAMNEWS-1"
 # PROBLEM_FULL_NAME = "Dynamic Newsvendor"
 # PROBLEM = "IRONORECONT-1"
 # PROBLEM_FULL_NAME = "Continuous Iron Ore"
+PROBLEM = "VOLUNTEER-2"
+PROBLEM_FULL_NAME = "Volunteer Survival"
 
 
 # Temporarily store experiments on the same problem for post-normalization.
@@ -55,92 +57,102 @@ experiments_same_problem = []
 # solver_fixed_factors = {"sample_size": rs_ss}
 # solver_rename = f"RNDSRCH_ss={rs_ss}"
 # Create experiment for the problem-solver pair.
-new_experiment = Experiment(solver_name="RNDSRCH",
+new_experiment = ProblemSolver(solver_name="RNDSRCH",
                             problem_name=PROBLEM
                             )
 # Run experiment with M = 10.
 new_experiment.run(n_macroreps=10)
 # Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
+new_experiment.post_replicate(n_postreps=20)
 experiments_same_problem.append(new_experiment)
 
-# Setup and run ASTRO-DF.
-solver_fixed_factors = {"delta_max": 200.0}
-new_experiment = Experiment(solver_name="ASTRODF",
-                            problem_name=PROBLEM,
-                            solver_fixed_factors=solver_fixed_factors
-                            )
 
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
-
-# NELDMD
-new_experiment = Experiment(solver_name="NELDMD",
+new_experiment = ProblemSolver(solver_name="PGD",
                             problem_name=PROBLEM
                             )
 # Run experiment with M = 10.
 new_experiment.run(n_macroreps=10)
 # Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
+new_experiment.post_replicate(n_postreps=20)
 experiments_same_problem.append(new_experiment)
 
-# STRONG
-new_experiment = Experiment(solver_name="STRONG",
-                            problem_name=PROBLEM
-                            )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+# # Setup and run ASTRO-DF.
+# solver_fixed_factors = {"delta_max": 200.0}
+# new_experiment = Experiment(solver_name="ASTRODF",
+#                             problem_name=PROBLEM,
+#                             solver_fixed_factors=solver_fixed_factors
+#                             )
+
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
+
+# # NELDMD
+# new_experiment = Experiment(solver_name="NELDMD",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
+
+# # STRONG
+# new_experiment = Experiment(solver_name="STRONG",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
 
-# ADAM
-new_experiment = Experiment(solver_name="ADAM",
-                            problem_name=PROBLEM
-                            )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+# # ADAM
+# new_experiment = Experiment(solver_name="ADAM",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
-# ALOE
-new_experiment = Experiment(solver_name="ALOE",
-                            problem_name=PROBLEM
-                            )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+# # ALOE
+# new_experiment = Experiment(solver_name="ALOE",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
-# ADAM without true gradient
-new_experiment = Experiment(solver_name="ADAM2",
-                            problem_name=PROBLEM
-                            )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+# # ADAM without true gradient
+# new_experiment = Experiment(solver_name="ADAM2",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
-# ALOE without true gradient
-new_experiment = Experiment(solver_name="ALOE2",
-                            problem_name=PROBLEM
-                            )
-# Run experiment with M = 10.
-new_experiment.run(n_macroreps=10)
-# Post replicate experiment with N = 100.
-new_experiment.post_replicate(n_postreps=100)
-experiments_same_problem.append(new_experiment)
+# # ALOE without true gradient
+# new_experiment = Experiment(solver_name="ALOE2",
+#                             problem_name=PROBLEM
+#                             )
+# # Run experiment with M = 10.
+# new_experiment.run(n_macroreps=10)
+# # Post replicate experiment with N = 100.
+# new_experiment.post_replicate(n_postreps=100)
+# experiments_same_problem.append(new_experiment)
 
 # Post-normalize experiments with L = 200.
 # Provide NO proxies for f(x0), f(x*), or f(x).
-post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=200)
+post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=20)
 
 # LOAD DATA FROM .PICKLE FILES TO PREPARE FOR PLOTTING.
 
@@ -163,96 +175,111 @@ new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
-# Load ASTRO-DF results.
-solver_rename = "ASTRODF"
+
+# Load .pickle files of past results.
+# Load all experiments for a given solver, for all solvers.
+solver_rename = "PGD"
 experiments_same_solver = []
 problem_rename = PROBLEM
 file_name = f"{solver_rename}_on_{problem_rename}"
 # Load experiment.
 new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
 # Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "ASTRO-DF"
+new_experiment.solver.name = "Projected Gradient"
 new_experiment.problem.name = PROBLEM_FULL_NAME
 experiments_same_solver.append(new_experiment)
 experiments.append(experiments_same_solver)
 
-# Load NELDMD results.
-solver_rename = "NELDMD"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "Nelder-Mead"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load ASTRO-DF results.
+# solver_rename = "ASTRODF"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "ASTRO-DF"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
-# Load STRONG results.
-solver_rename = "STRONG"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "STRONG"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load NELDMD results.
+# solver_rename = "NELDMD"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "Nelder-Mead"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
-# Load ADAM results.
-solver_rename = "ADAM"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "Adam"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load STRONG results.
+# solver_rename = "STRONG"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "STRONG"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
-# Load ALOE results.
-solver_rename = "ALOE"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "ALOE"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load ADAM results.
+# solver_rename = "ADAM"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "Adam"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
-# Load ADAM without true gradient results.
-solver_rename = "ADAM2"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "Adam w/o IPA grad"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load ALOE results.
+# solver_rename = "ALOE"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "ALOE"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
-# Load ALOE without true gradient results.
-solver_rename = "ALOE2"
-experiments_same_solver = []
-problem_rename = PROBLEM
-file_name = f"{solver_rename}_on_{problem_rename}"
-# Load experiment.
-new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
-# Rename problem and solver to produce nicer plot labels.
-new_experiment.solver.name = "ALOE w/o IPA grad"
-new_experiment.problem.name = PROBLEM_FULL_NAME
-experiments_same_solver.append(new_experiment)
-experiments.append(experiments_same_solver)
+# # Load ADAM without true gradient results.
+# solver_rename = "ADAM2"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "Adam w/o IPA grad"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
+
+# # Load ALOE without true gradient results.
+# solver_rename = "ALOE2"
+# experiments_same_solver = []
+# problem_rename = PROBLEM
+# file_name = f"{solver_rename}_on_{problem_rename}"
+# # Load experiment.
+# new_experiment = read_experiment_results(f"experiments/outputs/{file_name}.pickle")
+# # Rename problem and solver to produce nicer plot labels.
+# new_experiment.solver.name = "ALOE w/o IPA grad"
+# new_experiment.problem.name = PROBLEM_FULL_NAME
+# experiments_same_solver.append(new_experiment)
+# experiments.append(experiments_same_solver)
 
 
 # PLOTTING

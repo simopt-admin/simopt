@@ -456,44 +456,64 @@ class MRG32k3a(random.Random):
 
 
     def alias_init(self, dist):
-            n = len(dist)
-            table_prob = {}
-            table_alias = {}
-            small = []
-            large = []
-            for val, prob in enumerate(dist, 1):
-                table_prob[val] = Decimal(prob) * n
-                if table_prob[val] < 1:
-                    small.append(val)
-                else:
-                    large.append(val)
-            
-            while small and large:
-                l = small.pop()
-                g = large.pop()
-                table_alias[l] = g
-                table_prob[g] = (table_prob[g] + table_prob[l] - Decimal(1))
-                if table_prob[g] < 1:
-                    small.append(g)
-                else:
-                    large.append(g)
-            
-            while large:
-                table_prob[large.pop()] = Decimal(1)
-
-            while small:
-                table_prob[small.pop()] = Decimal(1)
-            return table_prob, table_alias
-
-
-    def alias(self, table_prob, table_alias):
-        """Generate a discrete random variate.
+        """
+        Initialize the alias method 
+        (referencing https://github.com/asmith26/Vose-Alias-Method/blob/main/vose_sampler/vose_sampler.py).
 
         Parameters
         ---------
-        table_prob : 'dictionary'
+        dist : 'dictionary'
+            A probability distribution for discrete weighted random variables that maps the values to their probabilities.
+
+        Returns
+        -------
+        table_prob: dictionary
             table of probabilities
-        table_alias : 'dictionary'
+        table_alias : dictionary
+            table of alias
+        """
+        n = len(dist)
+        table_prob = {}
+        table_alias = {}
+        small = [] # stack for probabilities smaller that 1
+        large = [] # stack for probabilities greater than or equal to 1
+
+        # Construct and sort the scaled probabilities into their appropriate stacks
+        for val, prob in dist.items():
+            table_prob[val] = Decimal(prob) * n
+            if table_prob[val] < 1:
+                small.append(val)
+            else:
+                large.append(val)
+
+        # Construct the probability and alias tables
+        while small and large:
+            l = small.pop()
+            g = large.pop()
+            table_alias[l] = g
+            table_prob[g] = (table_prob[g] + table_prob[l] - Decimal(1))
+            if table_prob[g] < 1:
+                small.append(g)
+            else:
+                large.append(g)
+
+        # The remaining outcomes (of one stack) must have probability 1
+        while large:
+            table_prob[large.pop()] = Decimal(1)
+
+        while small:
+            table_prob[small.pop()] = Decimal(1)
+        return table_prob, table_alias
+
+
+    def alias(self, table_prob, table_alias):
+        """Generate a discrete random variate in constant time.
+
+        Parameters
+        ---------
+        table_prob : dictionary
+            table of probabilities
+        table_alias : dictionary
             table of alias
 
         Returns
@@ -501,12 +521,14 @@ class MRG32k3a(random.Random):
         int
             a discrete random variate from the specified distribution.
         """
-
+        # Determine which column of table_prob to inspect
         i = int(np.floor(self.random() * len(table_prob))) + 1
+        # Determine which outcome to pick in that column
         if self.random() < table_prob[i]:
             return i
         else:
             return table_alias[i]
+
     def integer_random_vector_from_simplex(self, n_elements, summation, with_zero=False):
         """Generate a random vector with a specified number of non-negative integer
         elements that sum up to a specified number.

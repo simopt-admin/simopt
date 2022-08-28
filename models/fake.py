@@ -278,8 +278,8 @@ class FakeProblem(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(np.array(x) **2),)
-        det_objectives_gradients = (x,)
+        det_objectives = (np.sum(np.array(x)**2),)
+        det_objectives_gradients = (2*np.array(x),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
