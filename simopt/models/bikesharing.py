@@ -72,7 +72,7 @@ class BikeShare(Model):
                 "datatype": float,
                 "default": 50.0
             },
-            "fall_penalty_constant": {
+            "full_penalty_constant": {
                 "description": "the penalty constant for when a station is full",
                 "datatype": float,
                 "default": 50.0
@@ -115,65 +115,62 @@ class BikeShare(Model):
         }
 
         self.check_factor_list = {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
-            "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
-            "n_days": self.check_n_days,
+            "num_bikes": self.check_num_bikes,
+            "num_stations": self.check_num_stations,
+            "day_length": self.check_day_length,
+            "station_capacities": self.check_station_capacities,
+            "empty_penalty_constant": self.check_empty_penalty_constant,
+            "full_penalty_constant": self.check_full_penalty_constant,
+            "arrival_rates": self.check_arrival_rates,
+            "gamma_mean_const": self.check_gamma_mean_const,
+            "gamma_variance_const": self.check_gamma_variance_const,
+            "gamma_mean_const_s": self.check_gamma_mean_const_s,
+            "gamma_variance_const_s": self.check_gamma_variance_const_s,
+            "rebalancing_constant": self.check_rebalancing_constant,
+            "distance": self.check_distance,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self):
-        return self.factors["mean_price"] > 0
+    def check_num_bikes(self):
+        return self.factors["num_bikes"] > 0
 
-    def check_max_price(self):
-        return self.factors["max_price"] > 0
+    def check_num_stations(self):
+        return self.factors["num_stations"] > 0
 
-    def check_min_price(self):
-        return self.factors["min_price"] >= 0
+    def check_day_length(self):
+        return self.factors["day_length"] >= 0 and self.factors["day_length"] <= 24
 
-    def check_capacity(self):
-        return self.factors["capacity"] >= 0
+    def check_station_capacities(self):
+        return self.factors["station_capacities"] >= 0
 
-    def check_st_dev(self):
-        return self.factors["st_dev"] > 0
+    def check_empty_penalty_constant(self):
+        return self.factors["empty_penalty_constant"] > 0
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+    def check_full_penalty_constant(self):
+        return self.factors["full_penalty_constant"] > 0
 
-    def check_prod_cost(self):
-        return self.factors["prod_cost"] > 0
+    def check_arrival_rates(self):
+        return all(rates > 0 for rates in self.factors["arrival_rates"])
 
-    def check_max_prod_perday(self):
-        return self.factors["max_prod_perday"] > 0
+    def check_gamma_mean_const(self):
+        return self.factors["gamma_mean_const"] > 0
 
-    def check_price_prod(self):
-        return self.factors["price_prod"] > 0
+    def check_gamma_variance_const(self):
+        return self.factors["gamma_variance_const"] > 0
 
-    def check_inven_stop(self):
-        return self.factors["inven_stop"] > 0
+    def check_gamma_mean_const_s(self):
+        return self.factors["gamma_mean_const_s"] > 0
 
-    def check_price_stop(self):
-        return self.factors["price_stop"] > 0
+    def check_gamma_variance_const_s(self):
+        return self.factors["gamma_variance_const_s"] > 0
 
-    def check_price_sell(self):
-        return self.factors["price_sell"] > 0
+    def check_rebalancing_constant(self):
+        return self.factors["rebalancing_constant"] > 0
 
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
-
-    def check_simulatable_factors(self):
-        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
+    def check_distance(self):
+        return True # TODO: check distances
 
     def replicate(self, rng_list):
         """
@@ -193,7 +190,7 @@ class BikeShare(Model):
             "mean_stock" = The average stocks over the time period
         """
         # Designate random number generators.
-        price_rng = rng_list[0]
+        arrival = rng_list[0]
         # Initialize quantities to track:
         #   - Market price in each period (Pt).
         #   - Starting stock in each period.
