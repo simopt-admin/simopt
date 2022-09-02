@@ -6,6 +6,7 @@ A detailed description of the model/problem can be found
 `here <TODO: no documentation>`_.
 """
 import numpy as np
+import bisect
 
 from ..base import Model, Problem
 
@@ -185,71 +186,67 @@ class BikeShare(Model):
         -------
         responses : dict
             performance measures of interest
-            "total_profit" = The total profit over the time period
-            "frac_producing" = The fraction of days spent producing iron ore
-            "mean_stock" = The average stocks over the time period
+            "total cost" = The total operations cost over a running day
         """
         # Designate random number generators.
-        arrival = rng_list[0]
-        # Initialize quantities to track:
-        #   - Market price in each period (Pt).
-        #   - Starting stock in each period.
-        #   - Ending stock in each period.
-        #   - Profit in each period.
-        #   - Whether producing or not in each period.
-        #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        profit = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
+        # arrival = rng_list[0]
+        # price_rng.normalvariate(mean_move, self.factors["st_dev"])
 
-        # Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt−1 + Nt(μt,σ)).
-            # Run μt, mean at period t, where μt = sgn(μ0 − Pt−1) ∗ |μ0 − Pt−1|^(1/4).
-            mean_val = sqrt(sqrt(abs(self.factors["mean_price"] - mkt_price[day])))
-            mean_dir = copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val * mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(min(mkt_price[day - 1] + move, self.factors["max_price"]), self.factors["min_price"])
-            # If production is underway...
-            if producing[day] == 1:
-                # ... cease production if price goes too low or inventory is too high.
-                if ((mkt_price[day] <= self.factors["price_stop"]) | (stock[day] >= self.factors["inven_stop"])):
-                    producing[day] = 0
+        events = {0: "arrive", 1: "return"}
+
+        t = 0
+        event_list = [] # [time, event, station]
+
+        num_bikes = [10] * self.factors["num_stations"]
+        capacity = [30] * self.factors["num_stations"]
+        arrival_rate = [1/6] * self.factors["num_stations"]
+        empty_since = [-1] * self.factors["num_stations"]
+        full_since = [-1] * self.factors["num_stations"]
+
+        penalty_full = 0
+        penalty_empty = 0
+
+        while t <= self.factors["day_length"]:
+            event_list.sort(key = lambda x:x[0])
+            
+            t, event, station = event_list.pop(0)
+            print(t, event, station)
+
+            # Arrival Event
+            if event == 0:
+                if num_bikes[station] < 1:
+                    empty_since[station] = t 
+                elif num_bikes[station] == capacity[station]:
+                    assert full_since[station] >= 0
+                    penalty_full += self.factors["full_penalty_constant"] * (t - full_since[station])
+                    full_since[station] = -1
                 else:
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # If production is not currently underway...
-            else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
-                    producing[day] = 1
-                    prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
-            # Sell if price is high enough.
-            if (mkt_price[day] >= self.factors["price_sell"]):
-                profit[day] = profit[day] + stock[day] * mkt_price[day]
-                stock[day] = 0
-            # Charge holding cost.
-            profit[day] = profit[day] - stock[day] * self.factors["holding_cost"]
-            # Calculate starting quantities for next period.
-            if day < self.factors["n_days"] - 1:
-                profit[day + 1] = profit[day]
-                stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day]
-                producing[day + 1] = producing[day]
-        # Calculate responses from simulation data.
-        responses = {"total_profit": profit[self.factors["n_days"] - 1],
-                     "frac_producing": np.mean(producing),
-                     "mean_stock": np.mean(stock)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        return responses, gradients
+                    num_bikes[station] -= 1  
+                    station_to = int(rng_list[0].random() * self.factors["num_stations"])
+                    if station_to != station:
+                        time_out = self.factors["distance"] #TODO: simulate gamma
+                    else:
+                        time_out = 0 #TODO: simulate gamma
+                    event_list.append([t+time_out, 1, station_to])
+                # TODO: generate the next arrival for this station
+                int_arr_time = 0 # TODO
+                event_list.append([t + int_arr_time, 0, station])
+            if event == 1:
+                if num_bikes[station] >= capacity[station]:
+                    full_since[station] = t
+                elif num_bikes[station] == 0:
+                    assert empty_since[station] >= 0
+                    penalty_empty += self.factors["empty_penalty_constant"] * (t - empty_since[station])
+                    empty_since[station] = -1
+                else:
+                    num_bikes[station] += 1
+                    
+        distribution_cost = 0
+        # calculate the distribution cost
+        for num in num_bikes:
 
+
+       
 
 """
 Summary
