@@ -322,26 +322,11 @@ class PGD(Solver):
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
 
         return grad
-
-    # Euclidean projection of a vector onto the probability simplex.
-    # Referencing Wang and Carreira-Perpinan (2013)
-    def proj_prob_simplex(self, x, problem):
-        # Sort the vector.
-        sorted_x = -np.sort(-np.array(x))
-        j = problem.dim
-        while j >= 1:
-            if sorted_x[j - 1] + 1/j * (1 - sum(sorted_x[:j])):
-                rho = j
-                break
-            else:
-                j -= 1
-        lam = 1 / rho * (1 - sum(sorted_x[:rho]))
-        return [max(i + lam, 0) for i in x]
     
     def project_grad(self, grad, A):
         """
         Project the gradient onto the hyperplane H: Ax = 0.
         """
-        lamb = np.linalg.solve(A@A.T, np.matmul(A, grad))
-        proj_grad = grad - np.matmul(A.T, lamb)
+        lamb = np.linalg.solve(A@A.T, A@grad)
+        proj_grad = grad - A.T@lamb
         return proj_grad
