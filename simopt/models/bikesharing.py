@@ -58,6 +58,11 @@ class BikeShare(Model):
                 "datatype": int,
                 "default": 225
             },
+            "num_bikes_start":{
+                "description": "(decision var) number of bikes to start at each station at the beginning of the day",
+                "datatype": list,
+                "default": [14] * 175 + [15] * 50
+            },
             "day_length": {
                 "description": "the length of a day in operation in hours",
                 "datatype": int,
@@ -81,7 +86,7 @@ class BikeShare(Model):
             "arrival_rates": {
                 "description": "user arrival rates to each corresponding stations (in this model, we assume a homogeneous Poisson process for each station)",
                 "datatype": list,
-                "default": [] # TODO
+                "default": [1/6] * 225 # mean interarrival time = 10min for each station
             },
             "gamma_mean_const": {
                 "description": "scalar for the mean time it takes the user to return the bike",
@@ -111,13 +116,14 @@ class BikeShare(Model):
             "distance": {
                 "description": "An s x s matrix containing distance from each pair of stations",
                 "datatype": list,
-                "default": [[]] # TODO
+                "default": [[]] # TODO: 
             }
         }
 
         self.check_factor_list = {
             "num_bikes": self.check_num_bikes,
             "num_stations": self.check_num_stations,
+            "num_bikes_start": self.check_num_bikes_start,
             "day_length": self.check_day_length,
             "station_capacities": self.check_station_capacities,
             "empty_penalty_constant": self.check_empty_penalty_constant,
@@ -139,6 +145,9 @@ class BikeShare(Model):
 
     def check_num_stations(self):
         return self.factors["num_stations"] > 0
+
+    def check_num_bikes_start(self):
+        return all(rates > 0 for rates in self.factors["num_bikes_start"])
 
     def check_day_length(self):
         return self.factors["day_length"] >= 0 and self.factors["day_length"] <= 24
@@ -192,20 +201,28 @@ class BikeShare(Model):
         # arrival = rng_list[0]
         # price_rng.normalvariate(mean_move, self.factors["st_dev"])
 
-        events = {0: "arrive", 1: "return"}
+        events = {0: "arrive", 1: "return"} # list of events: 0 indexing arrival and 1 indexing return
 
         t = 0
         event_list = [] # [time, event, station]
 
-        num_bikes = [10] * self.factors["num_stations"]
-        capacity = [30] * self.factors["num_stations"]
-        arrival_rate = [1/6] * self.factors["num_stations"]
+        num_bikes = self.factors["num_bikes_start"]
+        capacity = self.factors["station_capacities"]
+        arrival_rates = self.factors["arrival_rates"]
+
+        # switches indicating whether a station is empty or full or not
         empty_since = [-1] * self.factors["num_stations"]
         full_since = [-1] * self.factors["num_stations"]
 
         penalty_full = 0
         penalty_empty = 0
 
+        # Generate the first event for each station in a day
+        for i, rate in enumerate(arrival_rates):
+            int_arr_time = self.rng_list[3].expovariate(rate)
+            event_list.append([int_arr_time, 0, i])
+
+        # Simulate a working day
         while t <= self.factors["day_length"]:
             event_list.sort(key = lambda x:x[0])
             
@@ -214,8 +231,9 @@ class BikeShare(Model):
 
             # Arrival Event
             if event == 0:
+                # No bikes in the station
                 if num_bikes[station] < 1:
-                    empty_since[station] = t 
+                    empty_since[station] = t # customer is lost, start counting penalty hours
                 elif num_bikes[station] == capacity[station]:
                     assert full_since[station] >= 0
                     penalty_full += self.factors["full_penalty_constant"] * (t - full_since[station])
@@ -224,13 +242,20 @@ class BikeShare(Model):
                     num_bikes[station] -= 1  
                     station_to = int(rng_list[0].random() * self.factors["num_stations"])
                     if station_to != station:
-                        time_out = self.factors["distance"] #TODO: simulate gamma
+                        dist = self.factors["distance"][station]
+                        mean = self.factors["gamma_mean_const"] * dist
+                        var = self.factors["gamma_variance_const"] * dist
+                        time_out = self.factors["distance"] * rng_list[1].gammavariate(mean**2/var, mean/var) #TODO: check if this is correct
                     else:
-                        time_out = 0 #TODO: simulate gamma
+                        mean = self.factors["gamma_mean_const_s"]
+                        var = self.factors["gamma_variance_const_s"]
+                        time_out = rng_list[2].gammavariate(mean**2/var, mean/var)
                     event_list.append([t+time_out, 1, station_to])
-                # TODO: generate the next arrival for this station
-                int_arr_time = 0 # TODO
+                # Generate the next arrival for this station
+                int_arr_time = self.rng_list[3].expovariate(arrival_rates[station])
                 event_list.append([t + int_arr_time, 0, station])
+
+            # Return Event
             if event == 1:
                 if num_bikes[station] >= capacity[station]:
                     full_since[station] = t
@@ -240,12 +265,32 @@ class BikeShare(Model):
                     empty_since[station] = -1
                 else:
                     num_bikes[station] += 1
-                    
+        
+        target_num_bikes = self.factors["num_bikes_start"]
         distribution_cost = 0
-        # calculate the distribution cost
-        for num in num_bikes:
+        surplus_pointer = 0
+        lack_pointer = 0
+        # Calculate the redistribution cost
+        while surplus_pointer < self.factors["num_stations"]:
+            if num_bikes[surplus_pointer] > target_num_bikes[surplus_pointer]:
+                surplus = num_bikes[surplus_pointer] - target_num_bikes[surplus_pointer]
+                while surplus > 0 and lack_pointer < self.factors["num_stations"]:
+                    if num_bikes[lack_pointer] > target_num_bikes[lack_pointer]:
+                        need = num_bikes[lack_pointer] - target_num_bikes[lack_pointer]
+                        # station needs more than the surplus
+                        if need >= surplus:
+                            num_distribute = surplus 
+                            surplus = 0
+                        else:
+                            num_distribute = need 
+                            surplus -= need 
+                            lack_pointer += 1
+                        distribution_cost += self.factors["distance"][surplus_pointer][lack_pointer] * \
+                            self.factors["rebalancing_constant"] * num_distribute
+            surplus_pointer += 1
+        penalty = penalty_empty + penalty_full
 
-
+        return distribution_cost, penalty
        
 
 """
