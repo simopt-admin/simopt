@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 import numpy as np
 from scipy.spatial import distance_matrix
 
-from queue import PriorityQueue
+import heapq
 
 from ..base import Model, Problem
 
@@ -202,9 +202,6 @@ class BikeShare(Model):
             performance measures of interest
             "total cost" = The total operations cost over a running day
         """
-        # Designate random number generators.
-        # arrival = rng_list[0]
-        # price_rng.normalvariate(mean_move, self.factors["st_dev"])
 
         events = {0: "arrive", 1: "return"} # list of events: 0 indexing arrival and 1 indexing return
 
@@ -232,7 +229,7 @@ class BikeShare(Model):
             event_list.sort(key = lambda x:x[0])
             
             t, event, station = event_list.pop(0)
-            print(t, event, station)
+            print(t, events[event], station)
 
             # Arrival Event
             if event == 0:
@@ -562,5 +559,5 @@ class BikeShareMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(1000, 10000), rand_sol_rng.lognormalvariate(10, 200), rand_sol_rng.lognormalvariate(10, 200))
+        x = tuple(rand_sol_rng.integer_random_from_simplex(self.model.factors["num_stations"], self.model.factors["num_bikes"]))
         return x
