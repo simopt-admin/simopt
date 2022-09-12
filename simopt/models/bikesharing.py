@@ -46,8 +46,8 @@ class BikeShare(Model):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "BIKESHARING"
-        self.n_rngs = 1 # TODO: number of rng used in the model
-        self.n_responses = 2 # TODO: modify if more responses are added
+        self.n_rngs = 4 # TODO: number of rng used in the model
+        self.n_responses = 1 # TODO: modify if more responses are added
         self.factors = fixed_factors 
 
         locations = [[i, j] for i in range(15) for j in range(15)]
@@ -158,7 +158,7 @@ class BikeShare(Model):
         return self.factors["day_length"] >= 0 and self.factors["day_length"] <= 24
 
     def check_station_capacities(self):
-        return self.factors["station_capacities"] >= 0
+        return all (cap >= 0 for cap in self.factors["station_capacities"])
 
     def check_empty_penalty_constant(self):
         return self.factors["empty_penalty_constant"] > 0
@@ -221,11 +221,12 @@ class BikeShare(Model):
 
         # Generate the first event for each station in a day
         for i, rate in enumerate(arrival_rates):
-            int_arr_time = self.rng_list[3].expovariate(rate)
+            int_arr_time = rng_list[3].expovariate(rate)
             event_list.append([int_arr_time, 0, i])
 
         # Simulate a working day
         while t <= self.factors["day_length"]:
+            print("events:", event_list)
             event_list.sort(key = lambda x:x[0])
             
             t, event, station = event_list.pop(0)
@@ -244,18 +245,19 @@ class BikeShare(Model):
                     num_bikes[station] -= 1  
                     station_to = int(rng_list[0].random() * self.factors["num_stations"])
                     if station_to != station:
-                        dist = self.factors["distance"][station]
+                        dist = self.factors["distance"][station][station_to]
                         mean = self.factors["gamma_mean_const"] * dist
                         var = self.factors["gamma_variance_const"] * dist
-                        time_out = self.factors["distance"] * rng_list[1].gammavariate(mean**2/var, mean/var) #TODO: check if this is correct
+                        time_out = dist * rng_list[1].gammavariate(mean**2/var, mean/var) #TODO: check if this is correct
                     else:
                         mean = self.factors["gamma_mean_const_s"]
                         var = self.factors["gamma_variance_const_s"]
                         time_out = rng_list[2].gammavariate(mean**2/var, mean/var)
                     event_list.append([t+time_out, 1, station_to])
                 # Generate the next arrival for this station
-                int_arr_time = self.rng_list[3].expovariate(arrival_rates[station])
-                event_list.append([t + int_arr_time, 0, station])
+                int_arr_time = rng_list[3].expovariate(arrival_rates[station])
+
+                event_list.append([t+int_arr_time, 0, station])
 
             # Return Event
             if event == 1:
