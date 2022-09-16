@@ -6,6 +6,7 @@ A detailed description of the model/problem can be found
 `here <TODO: no documentation>`_.
 """
 import numpy as np
+import copy
 from scipy.spatial import distance_matrix
 
 import heapq
@@ -52,6 +53,10 @@ class BikeShare(Model):
 
         locations = [[i, j] for i in range(15) for j in range(15)]
         dist_mat = distance_matrix(locations, locations, p=1)
+
+        # locations = [[i, j] for i in range(2) for j in range(2)]
+        # dist_mat = distance_matrix(locations, locations, p=1)
+
         self.specifications = {
             "num_bikes": {
                 "description": "total number of bikes in the city",
@@ -76,7 +81,7 @@ class BikeShare(Model):
             "station_capacities": {
                 "description": "the capacity of each corresponding stations",
                 "datatype": list,
-                "default": [30] * 225 
+                "default": [20] * 225 
             },
             "empty_penalty_constant": {
                 "description": "the penalty constant for when a station has no bike",
@@ -208,7 +213,9 @@ class BikeShare(Model):
         t = 0
         event_list = [] # [time, event, station]
 
-        num_bikes = self.factors["num_bikes_start"]
+        # print(self.factors["num_bikes_start"])
+        num_bikes = copy.deepcopy(self.factors["num_bikes_start"])
+        target_num_bikes = copy.deepcopy(self.factors["num_bikes_start"])
         capacity = self.factors["station_capacities"]
         arrival_rates = self.factors["arrival_rates"]
 
@@ -226,21 +233,26 @@ class BikeShare(Model):
 
         # Simulate a working day
         while t <= self.factors["day_length"]:
-            print("events:", event_list)
+            
             event_list.sort(key = lambda x:x[0])
+            # print("events:", event_list)
+            # print("full since", full_since)
+            # print("empty since", empty_since)
+            # print("num bikes", num_bikes)
             
             t, event, station = event_list.pop(0)
-            print(t, events[event], station)
+            # print(t, events[event], station)
 
             # Arrival Event
             if event == 0:
                 # No bikes in the station
-                if num_bikes[station] < 1:
+                if num_bikes[station] -1 < 1:
+                    num_bikes[station] -= 1  
                     empty_since[station] = t # customer is lost, start counting penalty hours
                 elif num_bikes[station] == capacity[station]:
                     assert full_since[station] >= 0
                     penalty_full += self.factors["full_penalty_constant"] * (t - full_since[station])
-                    full_since[station] = -1
+                    full_since[station] = -1 
                 else:
                     num_bikes[station] -= 1  
                     station_to = int(rng_list[0].random() * self.factors["num_stations"])
@@ -248,12 +260,14 @@ class BikeShare(Model):
                         dist = self.factors["distance"][station][station_to]
                         mean = self.factors["gamma_mean_const"] * dist
                         var = self.factors["gamma_variance_const"] * dist
-                        time_out = dist * rng_list[1].gammavariate(mean**2/var, mean/var) #TODO: check if this is correct
+                        time_out = dist * rng_list[1].gammavariate(mean**2/var * 0.0001, mean/var) #TODO: check if this is correct
                     else:
                         mean = self.factors["gamma_mean_const_s"]
                         var = self.factors["gamma_variance_const_s"]
-                        time_out = rng_list[2].gammavariate(mean**2/var, mean/var)
-                    event_list.append([t+time_out, 1, station_to])
+                        time_out = rng_list[2].gammavariate(mean**2/var * 0.0001, mean/var)
+                    # print("return time:", t + time_out)
+                    if (t + time_out) < self.factors["day_length"]:
+                        event_list.append([t+time_out, 1, station_to])
                 # Generate the next arrival for this station
                 int_arr_time = rng_list[3].expovariate(arrival_rates[station])
 
@@ -261,8 +275,16 @@ class BikeShare(Model):
 
             # Return Event
             if event == 1:
-                if num_bikes[station] >= capacity[station]:
+                if num_bikes[station] + 1 == capacity[station]:
+                    num_bikes[station] += 1
                     full_since[station] = t
+                elif full_since[station] >= 0:
+                    dist = self.factors["distance"][station][station_to]
+                    mean = self.factors["gamma_mean_const"] * dist
+                    var = self.factors["gamma_variance_const"] * dist
+                    time_out = dist * rng_list[1].gammavariate(mean**2/var * 0.0001, mean/var)
+                    station_to = station + 1
+                    event_list.append([t+time_out, 1, station_to])
                 elif num_bikes[station] == 0:
                     assert empty_since[station] >= 0
                     penalty_empty += self.factors["empty_penalty_constant"] * (t - empty_since[station])
@@ -270,29 +292,47 @@ class BikeShare(Model):
                 else:
                     num_bikes[station] += 1
         
-        target_num_bikes = self.factors["num_bikes_start"]
+        print("End simulation, start surplus calculation")
+        # print(self.factors["num_bikes_start"])
+        # print("target", target_num_bikes)
         distribution_cost = 0
         surplus_pointer = 0
         lack_pointer = 0
+
+        # print(num_bikes, len(num_bikes), sum(num_bikes), self.factors["num_bikes_start"])
+        print("Num bikes", sum(num_bikes))
         # Calculate the redistribution cost
-        while surplus_pointer < self.factors["num_stations"]:
+        while surplus_pointer < self.factors["num_stations"] and lack_pointer < self.factors["num_stations"]:
+            print("surplus pointer", surplus_pointer)
             if num_bikes[surplus_pointer] > target_num_bikes[surplus_pointer]:
                 surplus = num_bikes[surplus_pointer] - target_num_bikes[surplus_pointer]
+                print("surplus", surplus)
                 while surplus > 0 and lack_pointer < self.factors["num_stations"]:
-                    if num_bikes[lack_pointer] > target_num_bikes[lack_pointer]:
-                        need = num_bikes[lack_pointer] - target_num_bikes[lack_pointer]
+                    print("lack pointer", lack_pointer)
+                    print(num_bikes[lack_pointer], target_num_bikes[lack_pointer])
+                    if num_bikes[lack_pointer] < target_num_bikes[lack_pointer]:
+                        need = target_num_bikes[lack_pointer] - num_bikes[lack_pointer]
+                        print("need", need)
                         # station needs more than the surplus
                         if need >= surplus:
                             num_distribute = surplus 
                             surplus = 0
+                            num_bikes[lack_pointer] += surplus
                         else:
                             num_distribute = need 
                             surplus -= need 
                             lack_pointer += 1
+                        print("debug checker", self.factors["distance"][surplus_pointer][lack_pointer], num_distribute)
+                        print("* redistribution cost", self.factors["distance"][surplus_pointer][lack_pointer] * \
+                            self.factors["rebalancing_constant"] * num_distribute)
                         distribution_cost += self.factors["distance"][surplus_pointer][lack_pointer] * \
                             self.factors["rebalancing_constant"] * num_distribute
+                    else:
+                        lack_pointer += 1
             surplus_pointer += 1
         penalty = penalty_empty + penalty_full
+
+        print(penalty, distribution_cost)
 
         responses = {"cost": penalty + distribution_cost}
         gradient = {} # TODO: implement gradient
