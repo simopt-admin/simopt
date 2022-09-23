@@ -4,11 +4,12 @@ Model: Amusement Park Queues (AMUSEMENT)
 Description:
 ------------
 This model simulates an amusement park with 7 attractions. Tourists arrive at
-each attraction according to a poisson  distribution with a rate \gamma_i=1\,
+each attraction according to a poisson  distribution with a rate $\gamma_i$ = 1,
 i = 1,. . . , 7. Each attraction can only take one tourist at a time, while
 others wait in a queue. The park has enough facilities to keep C tourists
 waiting across all attractions. These facilities are to be distributed to
-create queue capacities c_1,...,c7, such that the sum of these queue capacities is equivalent to the park capacity, C.
+create queue capacities $c_1,...,c7$, such that
+$\sum_{i=1}^{7} c_i = C$
 
 If a queue is full, the tourists will immediately leave the park.
 
@@ -22,7 +23,7 @@ matrix:
 
 
 The time that a tourist spend at an attraction follows an Erlang
-distribution with shape parameter k = 2 and rate = 1/9. Without loss of
+distribution with shape parameter $k = 2$ and rate $\lambda = 9$. Without loss of
 generality, suppose each attraction is occupied at all time. The park opens at
 9AM and closes at 5PM, and the unit of time is minute. When the park closes,
 all tourists in the queue leave immediately.
@@ -35,10 +36,26 @@ There are 3 sources of randomness in this model:
 
 * The probability of 0.2 that a tourist leaves a park after visiting each attraction and the associated probability matrix of their next attraction otherwise.
 
-* The time spent at each attraction as an Erlang distribution with the shape parameter k = 2 and rate = 1/9.
+* The time spent at each attraction as an Erlang distribution with the shape parameter k = 2 and rate = 9.
 
-The Erlang distribution is the distribution representing a sum of k independent exponential variables with mean 1/lambda each.
-The Erlang distribution is a special case of the gamma distribution wherein the shape of the distribution is discretized.
+The Erlang distribution is the distribution representing a sum of k independent exponential variables with mean $1/\lambda$ each.
+It is a special case of the gamma distribution wherein the shape of the distribution is discretized. The probability density function
+of the Erlang distribution is
+
+$f(x;k,\lambda) = \frac{\lambda^{k}x^{k-1}e^{-\lambda x}}{(k-1)!} \quad for \ x, \beta >= 0$
+
+where $k$ is the shape parameter, $\lambda$ is the rate parameter.
+
+Alternatively, the pdf can be expressed as
+
+$f(x;k,\beta) = \frac{x^{k-1}e^{-x/\beta}}{\beta^k(k-1)!} \quad for \ x, \beta >= 0$
+
+where $\beta$ is the scale parameter, which is the reciprocal of the rate parameter.
+
+* Note: In this model, Erlang variates are generated through the gamma distribution with the scale ($\beta$) parameter set to $1/9$.
+Accordingly, the reciprocal of desired rate values should be used in the erlang_scale parameter.
+
+
 
 
 Model Factors:
@@ -59,7 +76,7 @@ Model Factors:
 
     Default: [2, 2, 2, 2, 2, 2, 2]
 
-* erlang_rate: The rate parameter of the Erlang distribution for each attraction duration.
+* erlang_scale: The scale parameter of the Erlang distribution for each attraction duration (reciprocal of the rate value).
 
         Default: [1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9]
 
@@ -118,7 +135,7 @@ Constraints:
 ------------
 * park_capacity = 350
 
-* .. math:: \[\sum_{i=1}^{7} queue_capacities = park_capacity\]
+* $\sum_{i=1}^{7}$ queue_capacities = park_capacity
 
 * queue_capacities >= 0
 

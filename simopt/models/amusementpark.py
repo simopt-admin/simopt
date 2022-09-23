@@ -12,7 +12,7 @@ Changed get_random_solution quantiles
 
 import numpy as np
 import math as math
-from base import Model, Problem
+from ..base import Model, Problem
 
 
 class AmusementPark(Model):
@@ -79,7 +79,7 @@ class AmusementPark(Model):
                 "datatype": int,
                 "default": [2, 2, 2, 2, 2, 2, 2]
             },
-            "erlang_rate": {
+            "erlang_scale": {
                 "description": "The rate parameter of the Erlang distribution for each attraction"
                                "duration.",
                 "datatype": float,
@@ -126,7 +126,7 @@ class AmusementPark(Model):
             "arrival_gammas": self.check_arrival_gammas,
             "transition_probabilities": self.check_transition_probabilities,
             "erlang_shape": self.check_erlang_shape,
-            "erlang_rate": self.check_erlang_rate
+            "erlang_scale": self.check_erlang_scale
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -172,10 +172,10 @@ class AmusementPark(Model):
         else: return all([gamma >= 0 for gamma in self.factors["erlang_shape"]])
 
 
-    def check_erlang_rate(self):
-        if len(self.factors["erlang_rate"]) != self.factors["number_attractions"]:
+    def check_erlang_scale(self):
+        if len(self.factors["erlang_scale"]) != self.factors["number_attractions"]:
             return False
-        else: return all([gamma >= 0 for gamma in self.factors["erlang_rate"]])
+        else: return all([gamma >= 0 for gamma in self.factors["erlang_scale"]])
 
     def check_simulatable_factors(self):
         return sum(self.factors["queue_capacities"]) <= self.factors["park_capacity"]
@@ -203,14 +203,9 @@ class AmusementPark(Model):
         transition_rng = rng_list[1]
         time_rng = rng_list[2]
 
-        # generate external arrivals in advance using poisson superposition.
-        # arr_times = []
-        # t = arrival_rng.expovariate(1/sum(self.factors["arrival_gammas"]))
-        # while t <= self.factors["time_open"]:
-        #     arr_times.append(t)
-        #     t += arrival_rng.expovariate(1/sum(self.factors["arrival_gammas"]))
-
-        previous_arrival = 0
+        # Initiate clock variables for statistics tracking and event handling.
+        clock = 0
+        previous_clock = 0
         next_arrival = arrival_rng.expovariate(sum(self.factors["arrival_gammas"]))
 
         # initialize list of attractions to be selected upon arrival.
@@ -232,19 +227,21 @@ class AmusementPark(Model):
         # initialize time average and utilization quantities.
         in_system = 0
         time_average = 0
-        util_average = [0 for _ in range(self.factors["number_attractions"])]
+        cumulative_util = [0 for _ in range(self.factors["number_attractions"])]
 
         # Run simulation over time horizon.
         while min(next_arrival, min(completion_times)) < self.factors["time_open"]:
             #count number of tourists on attractions and in queues
+            clock = min(next_arrival, min(completion_times))
             riders = 0
             for i in range(self.factors["number_attractions"]):
                 if completion_times[i] != math.inf:
-                    riders +=1
-                    util_average[i] += (next_arrival-previous_arrival)
+                    riders += 1
+                    cumulative_util[i] += (clock-previous_clock)
             in_system = sum(queues) + riders
-            time_average += in_system*(next_arrival-previous_arrival)
-            previous_arrival = next_arrival
+            time_average += in_system*(clock-previous_clock)
+
+            previous_clock = clock
             if next_arrival < min(completion_times):  # next event is external tourist arrival
                 total_visitors += 1
                 # select attraction
@@ -255,7 +252,7 @@ class AmusementPark(Model):
                     # generate completion time if attraction available.
                     completion_times[attraction_selection] = next_arrival + \
                                                              time_rng.gammavariate(self.factors["erlang_shape"][attraction_selection],
-                                                                                   self.factors["erlang_rate"][attraction_selection])
+                                                                                   self.factors["erlang_scale"][attraction_selection])
                 # if unavailable, check if current queue is less than capacity. If queue is not full, join queue.
                 elif queues[attraction_selection] < self.factors["queue_capacities"][attraction_selection]:
                     queues[attraction_selection] += 1
@@ -272,7 +269,7 @@ class AmusementPark(Model):
                 if queues[finished_attraction] > 0:
                     completion_times[finished_attraction] = (min(completion_times) +
                                                              time_rng.gammavariate(self.factors["erlang_shape"][finished_attraction],
-                                                                                   self.factors["erlang_rate"][finished_attraction]))
+                                                                                   self.factors["erlang_scale"][finished_attraction]))
                     queues[finished_attraction] -= 1
                 else:  # if no one in queue, set next completion of that attraction to infinity.
                     completion_times[finished_attraction] = math.inf
@@ -291,7 +288,7 @@ class AmusementPark(Model):
                     if completion_times[next_destination] == math.inf:
                         # generate completion time if attraction available
                         completion_times[next_destination] = (min(completion_times) +
-                                                              time_rng.gammavariate(self.factors["erlang_shape"][finished_attraction],  self.factors["erlang_rate"][finished_attraction]))
+                                                              time_rng.gammavariate(self.factors["erlang_shape"][finished_attraction],  self.factors["erlang_scale"][finished_attraction]))
                     # if unavailable, check if current queue is less than capacity. If queue is not full, join queue.
                     elif queues[next_destination] < self.factors["queue_capacities"][next_destination]:
                         queues[next_destination] += 1
@@ -301,13 +298,13 @@ class AmusementPark(Model):
 
         # Finish percent utilization calculation for each attraction.
         for i in range(self.factors["number_attractions"]):
-            util_average[i] = round(util_average[i]/self.factors["time_open"], 2)
+            cumulative_util[i] = round(cumulative_util[i]/self.factors["time_open"], 2)
 
         # Calculate responses from simulation data.
         responses = {"total_departed": total_departed,
                      "percent_departed": round((total_departed/total_visitors)*100,2),
                      "average_number_in_system": round(time_average/self.factors["time_open"],2),
-                     "attraction_utilization_percentages": util_average
+                     "attraction_utilization_percentages": cumulative_util
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in
                      responses}
