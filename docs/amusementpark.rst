@@ -17,7 +17,7 @@ After visiting each attraction, a tourist leaves the park with probability 0.2.
 Otherwise, the tourist goes to another attraction according to the transition
 matrix:
 
-.. image:: Amusement1.PNG
+.. image:: amusementpark1.PNG
   :alt: The transition matrix has failed to display
   :width: 700
 
@@ -95,7 +95,7 @@ Model Factors:
 * transition_probabilities: The transition matrix that describes the probability of a tourist visiting each attraction after their current attraction
 
     * Default:
-    .. image:: Amusement1.PNG
+    .. image:: amusementpark1.PNG
       :alt: The transition matrix has failed to display
       :width: 700
 
