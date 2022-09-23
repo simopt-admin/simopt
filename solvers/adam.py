@@ -149,7 +149,7 @@ class ADAM(Solver):
         beta_2 = self.factors["beta_2"]
         alpha = self.factors["alpha"]
         epsilon = self.factors["epsilon"]
-
+        
         # Shrink the bounds to prevent floating errors.
         lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
         upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
