@@ -58,15 +58,15 @@ class BikeShare(Model):
         # dist_mat = distance_matrix(locations, locations, p=1)
 
         self.specifications = {
+            "map_dim":{
+                "description": "dimsion of the grid map",
+                "datatype": int,
+                "default": 15
+            },
             "num_bikes": {
                 "description": "total number of bikes in the city",
                 "datatype": int,
                 "default": 3200
-            },
-            "num_stations": {
-                "description": "total number of stations in the city",
-                "datatype": int,
-                "default": 225
             },
             "num_bikes_start":{
                 "description": "(decision var) number of bikes to start at each station at the beginning of the day",
@@ -91,7 +91,7 @@ class BikeShare(Model):
             "full_penalty_constant": {
                 "description": "the penalty constant for when a station is full",
                 "datatype": float,
-                "default": 50.0
+                "default": 50.0 
             },
             "arrival_rates": {
                 "description": "user arrival rates to each corresponding stations (in this model, we assume a homogeneous Poisson process for each station)",
@@ -132,7 +132,6 @@ class BikeShare(Model):
 
         self.check_factor_list = {
             "num_bikes": self.check_num_bikes,
-            "num_stations": self.check_num_stations,
             "num_bikes_start": self.check_num_bikes_start,
             "day_length": self.check_day_length,
             "station_capacities": self.check_station_capacities,
@@ -152,9 +151,6 @@ class BikeShare(Model):
     # Check for simulatable factors
     def check_num_bikes(self):
         return self.factors["num_bikes"] > 0
-
-    def check_num_stations(self):
-        return self.factors["num_stations"] > 0
 
     def check_num_bikes_start(self):
         return all(rates > 0 for rates in self.factors["num_bikes_start"])
@@ -208,6 +204,17 @@ class BikeShare(Model):
             "total cost" = The total operations cost over a running day
         """
 
+        def gen_arrival_rate():
+            dim = self.factors["map_dim"]
+            morning = np.ones(size=(dim, dim))
+            afternoon = np.ones(size=(dim, dim))
+
+            for i in dim:
+                for j in dim:
+                    morning[i, j] = np.abs(i - dim/2) + np.abs(j - dim/2)
+                    afternoon[i, j] = - (np.abs(i - dim/2) + np.abs(j - dim/2)) 
+            return morning, afternoon
+
         events = {0: "arrive", 1: "return"} # list of events: 0 indexing arrival and 1 indexing return
 
         t = 0
@@ -219,9 +226,10 @@ class BikeShare(Model):
         capacity = self.factors["station_capacities"]
         arrival_rates = self.factors["arrival_rates"]
 
+        num_stations = self.factors["map_dim"] ** 2
         # switches indicating whether a station is empty or full or not
-        empty_since = [-1] * self.factors["num_stations"]
-        full_since = [-1] * self.factors["num_stations"]
+        empty_since = [-1] * num_stations
+        full_since = [-1] * num_stations
 
         penalty_full = 0
         penalty_empty = 0
@@ -233,7 +241,7 @@ class BikeShare(Model):
 
         # Simulate a working day
         while t <= self.factors["day_length"]:
-            
+        
             event_list.sort(key = lambda x:x[0])
             # print("events:", event_list)
             # print("full since", full_since)
@@ -255,12 +263,13 @@ class BikeShare(Model):
                     full_since[station] = -1 
                 else:
                     num_bikes[station] -= 1  
-                    station_to = int(rng_list[0].random() * self.factors["num_stations"])
+                    station_to = int(rng_list[0].random() * num_stations)
                     if station_to != station:
                         dist = self.factors["distance"][station][station_to]
                         mean = self.factors["gamma_mean_const"] * dist
                         var = self.factors["gamma_variance_const"] * dist
                         time_out = dist * rng_list[1].gammavariate(mean**2/var * 0.0001, mean/var) #TODO: check if this is correct
+                        print(time_out)
                     else:
                         mean = self.factors["gamma_mean_const_s"]
                         var = self.factors["gamma_variance_const_s"]
@@ -302,12 +311,12 @@ class BikeShare(Model):
         # print(num_bikes, len(num_bikes), sum(num_bikes), self.factors["num_bikes_start"])
         print("Num bikes", sum(num_bikes))
         # Calculate the redistribution cost
-        while surplus_pointer < self.factors["num_stations"] and lack_pointer < self.factors["num_stations"]:
+        while surplus_pointer < num_stations and lack_pointer < num_stations:
             print("surplus pointer", surplus_pointer)
             if num_bikes[surplus_pointer] > target_num_bikes[surplus_pointer]:
                 surplus = num_bikes[surplus_pointer] - target_num_bikes[surplus_pointer]
                 print("surplus", surplus)
-                while surplus > 0 and lack_pointer < self.factors["num_stations"]:
+                while surplus > 0 and lack_pointer < num_stations:
                     print("lack pointer", lack_pointer)
                     print(num_bikes[lack_pointer], target_num_bikes[lack_pointer])
                     if num_bikes[lack_pointer] < target_num_bikes[lack_pointer]:
@@ -332,7 +341,7 @@ class BikeShare(Model):
             surplus_pointer += 1
         penalty = penalty_empty + penalty_full
 
-        print(penalty, distribution_cost)
+        print(penalty, distribution_cost) 
 
         responses = {"cost": penalty + distribution_cost}
         gradient = {} # TODO: implement gradient
@@ -601,5 +610,5 @@ class BikeShareMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.integer_random_from_simplex(self.model.factors["num_stations"], self.model.factors["num_bikes"]))
+        x = tuple(rand_sol_rng.integer_random_from_simplex(self.model.factors["map_dim"]**2, self.model.factors["num_bikes"]))
         return x
