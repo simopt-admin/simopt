@@ -131,6 +131,7 @@ class BikeShare(Model):
         }
 
         self.check_factor_list = {
+            "map_dim": self.check_map_dim,
             "num_bikes": self.check_num_bikes,
             "num_bikes_start": self.check_num_bikes_start,
             "day_length": self.check_day_length,
@@ -149,6 +150,9 @@ class BikeShare(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
+    def check_map_dim(self):
+        return self.factors["map_dim"] > 0
+
     def check_num_bikes(self):
         return self.factors["num_bikes"] > 0
 
@@ -204,16 +208,21 @@ class BikeShare(Model):
             "total cost" = The total operations cost over a running day
         """
 
-        def gen_arrival_rate():
+        def gen_arrival_rate(alpha = 1/6):
+            """
+            Return the time-dependent arrival rates of bikeville in the 
+            morning, noon, and evening
+            """
             dim = self.factors["map_dim"]
             morning = np.ones(size=(dim, dim))
-            afternoon = np.ones(size=(dim, dim))
+            noon = np.ones(size=(dim, dim))
+            evening = np.ones(size=(dim, dim))
 
             for i in dim:
                 for j in dim:
-                    morning[i, j] = np.abs(i - dim/2) + np.abs(j - dim/2)
-                    afternoon[i, j] = - (np.abs(i - dim/2) + np.abs(j - dim/2)) 
-            return morning, afternoon
+                    morning[i, j] = alpha + (np.abs(i - dim/2) + np.abs(j - dim/2)) * (1/dim)
+                    evening[i, j] = - (np.abs(i - dim/2) + np.abs(j - dim/2)) 
+            return morning.flatten(), noon.flatten(), evening.flatten()
 
         events = {0: "arrive", 1: "return"} # list of events: 0 indexing arrival and 1 indexing return
 
