@@ -4,6 +4,14 @@ simopt.models package
 Submodules
 ----------
 
+simopt.models.amusementpark module
+----------------------------------
+
+.. automodule:: simopt.models.amusementpark
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 simopt.models.chessmm module
 ----------------------------
 
