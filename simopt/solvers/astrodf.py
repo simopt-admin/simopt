@@ -568,5 +568,6 @@ class ASTRODF(Solver):
                 intermediate_budgets.append(expended_budget)
             else:
                 delta_k = min(gamma_2 * delta_k, delta_max)
-
+                ind_unsuc = 1
+                
         return recommended_solns, intermediate_budgets
