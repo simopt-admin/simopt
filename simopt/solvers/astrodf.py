@@ -108,7 +108,7 @@ class ASTRODF(Solver):
             "lambda_min": {
                 "description": "minimum sample size value",
                 "datatype": int,
-                "default": 4
+                "default": 5
             },
             "simple_solve": {
                 "description": "solve subproblem with Cauchy point (rough approximate)?",
@@ -187,12 +187,12 @@ class ASTRODF(Solver):
             kappa = 1
 
         lambda_min = self.factors["lambda_min"]
-        lambda_k = max(lambda_min, .5 * dim) * max(log(k + 0.1, 10) ** (1.01), 1)
+        lambda_k = max(lambda_min, 2 * log(dim,10)) * max(log(k + 0.1, 10) ** (1.01), 1)
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / ((kappa ** 2) * delta ** 4)))
         return N_k
 
-    def construct_model(self, x_k, delta, k, problem, expended_budget, kappa, new_solution, ind_unsuc):
+    def construct_model(self, x_k, delta, k, problem, expended_budget, kappa, new_solution, ind_unsuc, ss_newsol):
         interpolation_solns = []
         w = self.factors["w"]
         mu = self.factors["mu"]
@@ -213,10 +213,13 @@ class ASTRODF(Solver):
             for i in range(2 * d + 1):
                 # for X_0, we don't need to simulate the new solution
                 if (k == 1) and (i == 0):
+                    sample_size = ss_newsol
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
                 # otherwise, we need to simulate the new solution
                 elif (ind_unsuc == 1) and (i ==0):
+                    sample_size = ss_newsol
+                    sig2 = new_solution.objectives_var
                     # adaptive sampling
                     while True:
                         if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
@@ -246,6 +249,9 @@ class ASTRODF(Solver):
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
 
+                if i == 0:
+                    ss_newsol = sample_size
+
             Z = self.get_interpolation_points(np.zeros(d), delta_k, problem)
 
             # construct the model and obtain the model coefficients
@@ -261,7 +267,7 @@ class ASTRODF(Solver):
 
         delta_k = min(max(beta * norm(grad), delta_k), delta)
 
-        return fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns
+        return fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol
 
     def get_model_coefficients(self, Y, fval, problem):
         M = []
@@ -341,8 +347,9 @@ class ASTRODF(Solver):
                     if sample_size >= self.get_stopping_time(k, sig2, delta_k, fn / (delta_k ** 2), problem.dim) or expended_budget >= budget * 0.01:
                         kappa = fn / (delta_k ** 2)
                         break
+                ss_newsol = sample_size
 
-            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, ind_unsuc)
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, ind_unsuc, ss_newsol)
             if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
@@ -383,6 +390,7 @@ class ASTRODF(Solver):
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget * 0.01:
                     break
+            ss_candsol = sample_size
 
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
@@ -404,6 +412,7 @@ class ASTRODF(Solver):
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
                 new_solution = candidate_solution
+                ss_newsol = ss_candsol
                 final_ob = candidate_solution.objectives_mean
                 delta_k = min(gamma_1 * delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
@@ -411,6 +420,7 @@ class ASTRODF(Solver):
             elif rho >= eta_1:  # successful
                 new_x = candidate_x
                 new_solution = candidate_solution
+                ss_newsol = ss_candsol
                 final_ob = candidate_solution.objectives_mean
                 delta_k = min(delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
@@ -420,7 +430,7 @@ class ASTRODF(Solver):
                 final_ob = fval[0]
                 ind_unsuc = 1
 
-        return final_ob, k, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, ind_unsuc, new_solution
+        return final_ob, k, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, ind_unsuc, new_solution, ss_newsol
 
     def solve(self, problem):
         """
@@ -455,16 +465,19 @@ class ASTRODF(Solver):
         lambda_min = self.factors["lambda_min"]
 
         # Parameter tuning run
-        tp_final_ob_pt, k, delta, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, ind_unsuc, new_solution = self.tune_parameters(
+        tp_final_ob_pt, k, delta, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, ind_unsuc, new_solution, ss_newsol = self.tune_parameters(
             delta_candidate[0], delta_max, problem)
+        expended_budget_best = expended_budget
+
         for i in range(1, 3):
-            final_ob_pt, k_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt, ind_unsuc_pt, new_solution_pt = self.tune_parameters(
+            final_ob_pt, k_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt, ind_unsuc_pt, new_solution_pt, ss_newsol_pt = self.tune_parameters(
                 delta_candidate[i], delta_max, problem)
             expended_budget += expended_budget_pt
             if -1 * problem.minmax[0] * final_ob_pt < -1 * problem.minmax[0] * tp_final_ob_pt:
                 k = k_pt
                 delta = delta_pt
                 recommended_solns = recommended_solns_pt
+                ss_newsol = ss_newsol_pt
                 intermediate_budgets = intermediate_budgets_pt
                 expended_budget_best = expended_budget_pt
                 ind_unsuc = ind_unsuc_pt
@@ -478,8 +491,8 @@ class ASTRODF(Solver):
 
         while expended_budget < budget:
             k += 1
-            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns = self.construct_model(
-                new_x, delta_k, k, problem, expended_budget, kappa, ind_unsuc, new_solution)
+            fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(
+                new_x, delta_k, k, problem, expended_budget, kappa, ind_unsuc, new_solution, ss_newsol)
 
             if simple_solve:
                 # Cauchy reduction
@@ -521,6 +534,7 @@ class ASTRODF(Solver):
                 sig2 = candidate_solution.objectives_var
                 if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
                     break
+            ss_cand = sample_size
 
             # calculate success ratio
             fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
@@ -540,12 +554,14 @@ class ASTRODF(Solver):
 
             if rho >= eta_2:  # very successful
                 new_x = candidate_x
+                ss_newsol = ss_cand
                 new_solution = candidate_solution
                 delta_k = min(gamma_1 * delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
                 intermediate_budgets.append(expended_budget)
             elif rho >= eta_1:  # successful
                 new_x = candidate_x
+                ss_newsol = ss_cand
                 new_solution = candidate_solution
                 delta_k = min(delta_k, delta_max)
                 recommended_solns.append(candidate_solution)
