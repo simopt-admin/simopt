@@ -350,6 +350,8 @@ class ASTRODF(Solver):
                 ss_newsol = sample_size
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, ind_unsuc, ss_newsol)
+            ind_unsuc = 0
+            
             if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
@@ -493,7 +495,8 @@ class ASTRODF(Solver):
             k += 1
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(
                 new_x, delta_k, k, problem, expended_budget, kappa, ind_unsuc, new_solution, ss_newsol)
-
+            ind_unsuc = 0
+            
             if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
