@@ -108,7 +108,7 @@ class ASTRODF(Solver):
             "lambda_min": {
                 "description": "minimum sample size value",
                 "datatype": int,
-                "default": 5
+                "default": 12
             },
             "simple_solve": {
                 "description": "solve subproblem with Cauchy point (rough approximate)?",
@@ -222,7 +222,7 @@ class ASTRODF(Solver):
                     sig2 = new_solution.objectives_var
                     # adaptive sampling
                     while True:
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
+                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= 0.1*budget:
                             break
                         problem.simulate(new_solution, 1)
                         expended_budget += 1
@@ -244,7 +244,7 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = new_solution.objectives_var
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget:
+                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= 0.1*budget:
                             break
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
@@ -256,6 +256,7 @@ class ASTRODF(Solver):
 
             # construct the model and obtain the model coefficients
             q, grad, Hessian = self.get_model_coefficients(Z, fval, problem)
+            #print(grad,'grad')
 
             if not criticality_select:
                 # check the condition and break
@@ -263,6 +264,9 @@ class ASTRODF(Solver):
                     break
 
             if delta_k <= mu * norm(grad):
+                break
+
+            if norm(grad) == 0:
                 break
 
         delta_k = min(max(beta * norm(grad), delta_k), delta)
@@ -351,7 +355,7 @@ class ASTRODF(Solver):
 
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, ind_unsuc, ss_newsol)
             ind_unsuc = 0
-            
+
             if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
@@ -496,7 +500,7 @@ class ASTRODF(Solver):
             fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, ss_newsol = self.construct_model(
                 new_x, delta_k, k, problem, expended_budget, kappa, ind_unsuc, new_solution, ss_newsol)
             ind_unsuc = 0
-            
+
             if simple_solve:
                 # Cauchy reduction
                 if np.dot(np.multiply(grad, Hessian), grad) <= 0:
