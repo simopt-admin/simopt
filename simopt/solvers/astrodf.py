@@ -108,7 +108,7 @@ class ASTRODF(Solver):
             "lambda_min": {
                 "description": "minimum sample size value",
                 "datatype": int,
-                "default": 12
+                "default": 8
             },
             "simple_solve": {
                 "description": "solve subproblem with Cauchy point (rough approximate)?",
@@ -576,5 +576,4 @@ class ASTRODF(Solver):
             else:
                 delta_k = min(gamma_2 * delta_k, delta_max)
                 ind_unsuc = 1
-                
         return recommended_solns, intermediate_budgets
