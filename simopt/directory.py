@@ -29,6 +29,8 @@ from .models.tableallocation import TableAllocation, TableAllocationMaxRev
 from .models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from .models.fixedsan import FixedSAN, FixedSANLongestPath
 from .models.network import Network, NetworkMinTotalCost
+from .models.synthetic import SYNTHETIC, SYNTHETIC_MIN
+
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -69,7 +71,8 @@ problem_directory = {
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
-    "NETWORK-1": NetworkMinTotalCost
+    "NETWORK-1": NetworkMinTotalCost,
+    "SYN-1": SYNTHETIC_MIN
 }
 
 problem_unabbreviated_directory = {
@@ -109,7 +112,8 @@ model_directory = {
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
-    "NETWORK": Network
+    "NETWORK": Network,
+    "SYN": SYNTHETIC
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
