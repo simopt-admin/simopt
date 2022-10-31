@@ -759,7 +759,7 @@ class ProblemSolver(object):
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
         new_path2 = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
 
-        # Create directories if they do no exist.
+        # Create directories if they do not exist.
         if "./experiments/logs" in new_path2 and not os.path.exists("./experiments/logs"):
             os.makedirs("./experiments", exist_ok=True)
             os.makedirs("./experiments/logs")

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: simoptlib
-Version: 1.0.0
+Version: 1.0.1
 Summary: A testbed for simulation-optimization experiments.
 Author-email: David Eckman <eckman@tamu.edu>, Shane Henderson <sgh9@cornell.edu>, Sara Shashaani <sshasha2@ncsu.edu>
 License: MIT License

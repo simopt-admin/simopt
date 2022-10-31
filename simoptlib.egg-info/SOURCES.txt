@@ -8,6 +8,7 @@ simopt/data_farming_base.py
 simopt/directory.py
 simopt/experiment_base.py
 simopt/models/__init__.py
+simopt/models/amusementpark.py
 simopt/models/chessmm.py
 simopt/models/cntnv.py
 simopt/models/contam.py
