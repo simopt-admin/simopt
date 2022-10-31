@@ -154,12 +154,9 @@ class AmusementPark(Model):
 
     # Check if transition matrix has same number of rows and columns and that each row + depart probability sums to 1.
     def check_transition_probabilities(self):
-        if all([len(row) == len(self.factors["transition_probabilities"]) for row in
-                self.factors["transition_probabilities"]]) \
-                & all([cap2 + 0.2 == 1 for cap2 in list(map(sum, self.factors["transition_probabilities"]))]):
-            transition_sums = [sum(a) for a in self.factors["transition_probabilities"]]
-            all([transition_sums[i] + self.factors["depart_probabilities"][i] for i in
-                 range(self.factors["number_attractions"])])
+        transition_sums = list(map(sum, self.factors["transition_probabilities"]))
+        if all([len(row) == len(self.factors["transition_probabilities"]) for row in self.factors["transition_probabilities"]]) & \
+                all(transition_sums[i] + self.factors["depart_probabilities"][i] == 1 for i in range(self.factors["number_attractions"])):
             return True
         else:
             return False
