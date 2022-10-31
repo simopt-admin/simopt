@@ -273,7 +273,7 @@ class DataFarmingMetaExperiment(object):
     def run(self, n_macroreps=10):
         """Run n_macroreps of each problem-solver design point.
 
-        Paramaters
+        Parameters
         ----------
         n_macroreps : int
             Number of macroreplications for each design point.

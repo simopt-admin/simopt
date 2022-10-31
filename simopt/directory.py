@@ -29,6 +29,7 @@ from .models.tableallocation import TableAllocation, TableAllocationMaxRev
 from .models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from .models.fixedsan import FixedSAN, FixedSANLongestPath
 from .models.network import Network, NetworkMinTotalCost
+from .models.amusementpark import AmusementPark, AmusementParkMinDepart
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -69,7 +70,8 @@ problem_directory = {
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
-    "NETWORK-1": NetworkMinTotalCost
+    "NETWORK-1": NetworkMinTotalCost,
+    "AMUSEMENTPARK-1": AmusementParkMinDepart
 }
 
 problem_unabbreviated_directory = {
@@ -91,7 +93,8 @@ problem_unabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSANLongestPath,
-    "Min Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost
+    "Min Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost,
+    "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementParkMinDepart
 }
 model_directory = {
     "CNTNEWS": CntNV,
@@ -109,7 +112,8 @@ model_directory = {
     "TABLEALLOCATION": TableAllocation,
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
-    "NETWORK": Network
+    "NETWORK": Network,
+    "AMUSEMENTPARK": AmusementPark
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
@@ -130,5 +134,6 @@ model_unabbreviated_directory = {
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
-    "Min Total Cost for Communication Networks System (SDCN)": "NETWORK"
+    "Min Total Cost for Communication Networks System (SDCN)": "NETWORK",
+    "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK"
 }
