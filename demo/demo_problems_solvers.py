@@ -27,9 +27,11 @@ problem_names = ["CNTNEWS-1", "SAN-1"]
 # Initialize an instance of the experiment class.
 mymetaexperiment = ProblemsSolvers(solver_names, problem_names)
 
+# Write to log file.
+mymetaexperiment.log_group_experiment_results()
+
 # Run a fixed number of macroreplications of each solver on each problem.
 mymetaexperiment.run(n_macroreps=3)
-
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.

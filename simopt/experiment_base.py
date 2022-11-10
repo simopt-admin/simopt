@@ -1063,7 +1063,7 @@ def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=N
             "quantile_solvability" : quantile solvability profile;
 
             "diff_cdf_solvability" : difference of cdf solvability profiles;
-            
+
             "diff_quantile_solvability" : difference of quantile solvability profiles.
     beta : float, optional
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1139,7 +1139,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
             "solve_time_quantile" : beta quantile of solve time;
 
             "solve_time_cdf" : cdf of solve time;
-            
+
             "cdf_solvability" : cdf solvability profile;
 
             "quantile_solvability" : quantile solvability profile;
@@ -2020,7 +2020,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         ProblemSolver pairs of different solvers on a common problem.
     plot_type : str, default="violin"
         String indicating which type of plot to produce:
-        
+
             "box" : comparative box plots;
 
             "violin" : comparative violin plots.
@@ -2605,6 +2605,56 @@ class ProblemsSolvers(object):
         """
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+    def log_group_experiment_results(self):
+        """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
+        """
+        # Create a new text file in experiments/logs folder with correct name.
+        new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
+        new_path = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
+
+        # Create directories if they do no exist.
+        if "./experiments/logs" in new_path and not os.path.exists("./experiments/logs"):
+            os.makedirs("./experiments", exist_ok=True)
+            os.makedirs("./experiments/logs")
+        # Create text file.
+        with open(new_path + "_group_experiment_results.txt", "w") as file:
+            # Title text file with experiment information.
+            file.write(self.file_name_path)
+            file.write('\n')
+            # Write the name of each problem.
+            file.write("----------------------------------------------------------------------------------------------")
+            file.write("\nProblems:\n\n")
+            for i in range(self.n_problems):
+                file.write(f"{self.problem_names[i]}\n\t")
+                # Write model factors for each problem.
+                file.write("Model Factors:\n")
+                for key, value in self.problems[i].model.factors.items():
+                    # Excluding model factors corresponding to decision variables.
+                    if key not in self.problems[i].model_decision_factors:
+                        file.write(f"\t\t{key}: {value}\n")
+                # Write problem factors for each problem.
+                file.write("\n\tProblem Factors:\n")
+                for key, value in self.problems[i].factors.items():
+                    file.write(f"\t\t{key}: {value}\n")
+                file.write("\n")
+            file.write("----------------------------------------------------------------------------------------------")
+            # Write the name of each Solver.
+            file.write("\nSolvers:\n\n")
+            # Write solver factors for each solver.
+            for j in range(self.n_solvers):
+                file.write(f"{self.solver_names[j]}\n\t")
+                file.write("Solver Factors:\n")
+                for key, value in self.solvers[i].factors.items():
+                    file.write(f"\t\t{key}: {value}\n")
+                file.write("\n")
+            file.write("----------------------------------------------------------------------------------------------")
+            # Write the name of pickle files for each Problem-Solver pair.
+            file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
+            for p in self.problem_names:
+                for s in self.solver_names:
+                    file.write(f"\t{s}_on_{p}.pickle\n")
+        file.close()
 
 
 def read_group_experiment_results(file_name_path):
