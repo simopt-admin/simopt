@@ -464,7 +464,7 @@ class ProblemSolver(object):
         for mrep in range(self.n_macroreps):
             print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             # Create, initialize, and attach RNGs used for simulating solutions.
-            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.model.n_rngs)]
+            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
             self.solver.solution_progenitor_rngs = progenitor_rngs
             # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
