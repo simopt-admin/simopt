@@ -390,8 +390,8 @@ class TrafficLight(Model):
         def generate_path():
             path = None
             while path is None:
-                start = start_rng.randint(11, self.factors["numintersections"])
-                end = end_rng.randint(11, self.factors["numintersections"])
+                start = start_rng.randint(1, self.factors["numintersections"])
+                end = end_rng.randint(1, self.factors["numintersections"])
                 path = find_shortest_path(graph, points[start], points[end])
             return path
 
