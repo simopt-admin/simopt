@@ -798,7 +798,10 @@ class ProblemSolver(object):
             # and how many replications were taken of them (n_postreps_init_opt).
             if self.check_postnormalize():
                 file.write(f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
-                file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
+                if self.xstar is None:
+                    file.write(f"No proxy optimal solution was used. A proxy optimal objective function value of {self.problem.optimal_value[0]} was provided.\n")
+                else:
+                    file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
                 file.write(f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n")
             # Display recommended solution at each budget value for each macroreplication.
             file.write('Macroreplication Results:\n')
@@ -916,7 +919,10 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
     if proxy_opt_val is not None:
-        xstar = None
+        if proxy_opt_x is None:
+            xstar = None
+        else:
+            xstar = proxy_opt_x  # Assuming the provided x is optimal in this case.
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
@@ -929,7 +935,9 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
         xstar = None
-        xstar_postreps = [ref_experiment.problem.optimal_value] * n_postreps_init_opt
+        # NOTE: optimal_value is a tuple.
+        # Currently hard-coded for single objective case, i.e., optimal_value[0].
+        xstar_postreps = [ref_experiment.problem.optimal_value[0]] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
         xstar = ref_experiment.problem.optimal_solution

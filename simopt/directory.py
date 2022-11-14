@@ -13,6 +13,7 @@ from .solvers.spsa import SPSA
 from .solvers.adam import ADAM
 from .solvers.aloe import ALOE
 # import models and problems
+from .models.example import ExampleModel, ExampleProblem
 from .models.cntnv import CntNV, CntNVMaxProfit
 from .models.mm1queue import MM1Queue, MM1MinMeanSojournTime
 from .models.facilitysizing import FacilitySize, FacilitySizingTotalCost, FacilitySizingMaxService
@@ -52,6 +53,7 @@ solver_unabbreviated_directory = {
 }
 
 problem_directory = {
+    "EXAMPLE-1": ExampleProblem,
     "CNTNEWS-1": CntNVMaxProfit,
     "MM1-1": MM1MinMeanSojournTime,
     "FACSIZE-1": FacilitySizingTotalCost,
@@ -75,6 +77,7 @@ problem_directory = {
 }
 
 problem_unabbreviated_directory = {
+    "Min Deterministic Function + Noise (SUCG)": ExampleProblem,
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": MM1MinMeanSojournTime,
     "Min Total Cost for Facility Sizing (SSCG)": FacilitySizingTotalCost,
@@ -97,6 +100,7 @@ problem_unabbreviated_directory = {
     "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementParkMinDepart
 }
 model_directory = {
+    "EXAMPLE": ExampleModel,
     "CNTNEWS": CntNV,
     "MM1": MM1Queue,
     "FACSIZE": FacilitySize,
@@ -116,6 +120,7 @@ model_directory = {
     "AMUSEMENTPARK": AmusementPark
 }
 model_unabbreviated_directory = {
+    "Min Deterministic Function + Noise (SUCG)": "EXAMPLE",
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": "MM1",
     "Min Total Cost for Facility Sizing (SSCG)": "FACSIZE",

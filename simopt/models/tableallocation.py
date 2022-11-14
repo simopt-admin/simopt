@@ -243,7 +243,7 @@ class TableAllocationMaxRev(Problem):
             "discrete", "continuous", "mixed"
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_value : float
+    optimal_value : tuple
         optimal objective function value
     optimal_solution : tuple
         optimal solution
