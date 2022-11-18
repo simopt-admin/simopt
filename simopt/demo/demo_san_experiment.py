@@ -68,7 +68,7 @@ for i in range(num_problems):
         new_experiment.post_replicate(n_postreps=N)
         experiments_same_problem.append(new_experiment)
 
-    solver_fixed_factors = {"delta_max": 200.0}
+    solver_fixed_factors = {"delta_max": 200.0, "lambda_min" : 3}
     new_experiment = Experiment(solver_name="ASTRODF",
                                 problem_name="SAN-1",
                                 problem_rename=problem_rename,
@@ -185,6 +185,6 @@ plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solv
 plot_terminal_scatterplots(experiments, all_in_one=True)
 
                       
-for i in range(n_problems):
-    plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True, normalize=False)
-    plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
+# for i in range(n_problems):
+#     plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=True, normalize=False)
+#     plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
