@@ -373,3 +373,39 @@ class DataFarmingMetaExperiment(object):
                                        progress_curve.compute_area_under_curve()] + solve_time_values
                     print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
                     csv_writer.writerow(print_list)
+
+            with open("./data_farming_experiments/" + csv_filename + ".csv", mode="w", newline="") as output_file:
+                csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                base_experiment = self.design[0]
+                solver_factor_names = list(base_experiment.solver.specifications.keys())
+                problem_factor_names = list(base_experiment.problem.specifications.keys())
+                model_factor_names = list(set(base_experiment.problem.model.specifications.keys()) - base_experiment.problem.model_decision_factors)
+                # Concatenate solve time headers.
+                solve_time_headers = [[f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"] for solve_tol in solve_tols]
+                solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
+                # Print headers.
+                csv_writer.writerow(["DesignPt#"]
+                                    + solver_factor_names
+                                    + problem_factor_names
+                                    + model_factor_names
+                                    + ["MacroRep#"]
+                                    + ["Final Relative Optimality Gap"]
+                                    + ["Area Under Progress Curve"]
+                                    + solve_time_headers)
+                # Compute performance metrics.
+                for designpt_index in range(self.n_design_pts):
+                    experiment = self.design[designpt_index]
+                    # Parse lists of factors.
+                    solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
+                    problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
+                    model_factor_list = [experiment.problem.model.factors[model_factor_name] for model_factor_name in model_factor_names]
+
+                    ## average and average+std for each response
+                    progress_curve = experiment.progress_curves[mrep]
+                    # Parse list of statistics.
+                    solve_time_values = [[progress_curve.compute_crossing_time(threshold=solve_tol)] + [int(progress_curve.compute_crossing_time(threshold=solve_tol) < np.infty)] for solve_tol in solve_tols]
+                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
+                    statistics_list = [progress_curve.y_vals[-1],
+                                       progress_curve.compute_area_under_curve()] + solve_time_values
+                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
+                    csv_writer.writerow(print_list)
