@@ -1,20 +1,17 @@
 """
 Summary
 -------
-Simulate MLE estimation for the parameters of a two-dimensional gamma distribution.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`_.
+Simulate a synthetic problem with a deterministic objective function
+evaluated with noise.
 """
 import numpy as np
-import math
 
 from base import Model, Problem
 
 
-class ParameterEstimation(Model):
+class ExampleModel(Model):
     """
-    A model that simulates MLE estimation for the parameters of
-    a two-dimensional gamma distribution.
+    A model that is a deterministic function evaluated with noise.
 
     Attributes
     ----------
@@ -27,62 +24,49 @@ class ParameterEstimation(Model):
     factors : dict
         changeable factors of the simulation model
     specifications : dict
-        details of each factor (for GUI and data validation)
+        details of each factor (for GUI, data validation, and defaults)
     check_factor_list : dict
         switch case for checking factor simulatability
 
     Arguments
     ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
+    fixed_factors : dict
+        fixed_factors of the simulation model
 
     See also
     --------
-    base.model
+    base.Model
     """
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
-        self.name = "PARAMESTI"
-        self.n_rngs = 2
+        self.name = "EXAMPLE"
+        self.n_rngs = 1
         self.n_responses = 1
+        self.factors = fixed_factors
         self.specifications = {
-            "xstar": {
-                "description": "x^*, the unknown parameter that maximizes g(x)",
-                "datatype": list,
-                "default": [2, 5]
-            },
             "x": {
-                "description": "x, variable in pdf",
-                "datatype": list,
-                "default": [1, 1]
+                "description": "point to evaluate",
+                "datatype": tuple,
+                "default": (0.0,)
             }
         }
         self.check_factor_list = {
-            "xstar": self.check_xstar,
             "x": self.check_x
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_xstar(self):
-        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
-
     def check_x(self):
-        return all(x_i > 0 for x_i in self.factors["x"])
+        # Assume f(x) can be evaluated at any x in R^d.
+        return True
 
     def check_simulatable_factors(self):
-        # Check for dimension of x and xstar.
-        if len(self.factors["x"]) != 2:
-            return False
-        elif len(self.factors["xstar"]) != 2:
-            return False
-        else:
-            return True
+        return True
 
     def replicate(self, rng_list):
         """
-        Simulate a single replication for the current model factors.
+        Evaluate a deterministic function f(x) with stochastic noise.
 
         Arguments
         ---------
@@ -93,33 +77,27 @@ class ParameterEstimation(Model):
         -------
         responses : dict
             performance measures of interest
-            "loglik" = the corresponding loglikelihood
-        gradients : dict of dicts
-            gradient estimates for each response
+            "est_f(x)" = f(x) evaluated with stochastic noise
         """
-        # Designate separate random number generators.
-        # Outputs will be coupled when generating Y_j's.
-        y2_rng = rng_list[0]
-        y1_rng = rng_list[1]
-        # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
-        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
-        # Compute Log Likelihood
-        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
+        # Designate random number generator for stochastic noise.
+        noise_rng = rng_list[0]
+        x = np.array(self.factors["x"])
+        fn_eval_at_x = x**2 + noise_rng.normalvariate()
+
         # Compose responses and gradients.
-        responses = {'loglik': loglik}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {"est_f(x)": fn_eval_at_x}
+        gradients = {"est_f(x)": {"x": 2 * x}}
         return responses, gradients
 
 
 """
 Summary
 -------
-Minimize the log likelihood of 2-D gamma random variable.
+Minimize f(x).
 """
 
 
-class ParamEstiMaxLogLik(Problem):
+class ExampleProblem(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -151,25 +129,23 @@ class ParamEstiMaxLogLik(Problem):
         optimal objective function value
     optimal_solution : tuple
         optimal solution
-    model : model object
+    model : Model object
         associated simulation model that generates replications
     model_default_factors : dict
         default values for overriding model-level default factors
     model_fixed_factors : dict
         combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
         changeable factors of the problem
-            initial_solution : list
+            initial_solution : tuple
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
-            prev_cost : list
-                cost of prevention
-            upper_thres : float > 0
-                upper limit of amount of contamination
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -186,29 +162,29 @@ class ParamEstiMaxLogLik(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="PARAMESTI-1", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="EXAMPLE-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
-        self.dim = 2
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
+        self.minmax = (-1,)
+        self.constraint_type = "unconstrained"
         self.variable_type = "continuous"
-        self.lower_bounds = (0.1, 0.1)
-        self.upper_bounds = (10, 10)
-        self.gradient_available = False
+        self.gradient_available = True
+        self.optimal_value = (0,)
+        self.optimal_solution = (0,)
         self.model_default_factors = {}
+        self.model_fixed_factors = {}
         self.model_decision_factors = {"x"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
-                "datatype": list,
-                "default": (1, 1)
+                "datatype": tuple,
+                "default": (2,)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -221,10 +197,11 @@ class ParamEstiMaxLogLik(Problem):
             "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ParameterEstimation(self.model_fixed_factors)
-        self.optimal_solution = list(self.model.factors["xstar"])
-        self.optimal_value = None
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = ExampleModel(self.model_fixed_factors)
+        self.dim = len(self.model.factors["x"])
+        self.lower_bounds = (-np.inf,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
 
     def vector_to_factor_dict(self, vector):
         """
@@ -278,8 +255,26 @@ class ParamEstiMaxLogLik(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["loglik"],)
+        objectives = (response_dict["est_f(x)"],)
         return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] <= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : tuple
+            vector of LHSs of stochastic constraint
+        """
+        stoch_constraints = None
+        return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
         """
@@ -298,12 +293,35 @@ class ParamEstiMaxLogLik(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0, 0),)
+        det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints
+        for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of
+            stochastic constraints
+        """
+        det_stoch_constraints = None
+        det_stoch_constraints_gradients = None
+        return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
         """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        Check if a solution `x` satisfies the problem's deterministic
+        constraints.
 
         Arguments
         ---------
@@ -315,7 +333,9 @@ class ParamEstiMaxLogLik(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return True
+        # Superclass method will check box constraints.
+        # Can add other constraints here.
+        return super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -331,5 +351,5 @@ class ParamEstiMaxLogLik(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
+        x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
         return x
