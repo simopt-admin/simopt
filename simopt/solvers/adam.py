@@ -10,7 +10,7 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
-from ..base import Solver
+from base import Solver
 
 
 class ADAM(Solver):
