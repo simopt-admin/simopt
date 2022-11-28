@@ -237,7 +237,7 @@ class Experiment_Window(tk.Tk):
             label.grid(row=0, column=self.heading_list.index(heading), padx=10, pady=3)
 
         self.tab_two = tk.Frame(master=self.notebook)
-        self.notebook.add(self.tab_two, text="Queue of Problem-Solver Group")
+        self.notebook.add(self.tab_two, text="Queue of Problem-Solver Groups")
         self.tab_two.grid_rowconfigure(0)
         self.heading_list = ["Problems", "Solvers", "Macroreps", "", "", "", "",""]
 
@@ -803,7 +803,7 @@ class Experiment_Window(tk.Tk):
             text_on_run = run_button_added["text"]
             split_text = text_on_run.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            new_text = " ".join(split_text)
+            # new_text = " ".join(split_text)
             # run_button_added["text"] = new_text
             run_button_added["command"] = partial(self.run_row_function, row_index+1)
 
@@ -813,7 +813,7 @@ class Experiment_Window(tk.Tk):
             text_on_viewEdit = viewEdit_button_added["text"]
             split_text = text_on_viewEdit.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            new_text = " ".join(split_text)
+            # new_text = " ".join(split_text)
             # viewEdit_button_added["text"] = new_text
             viewEdit_button_added["command"] = partial(self.viewEdit_function, row_index+1)
 
@@ -823,7 +823,7 @@ class Experiment_Window(tk.Tk):
             text_on_clear = clear_button_added["text"]
             split_text = text_on_clear.split(" ")
             split_text[len(split_text)-1] = str(row_index+1)
-            new_text = " ".join(split_text)
+            # new_text = " ".join(split_text)
             # clear_button_added["text"] = new_text
             clear_button_added["command"] = partial(self.clearRow_function, row_index+1)
 
@@ -2615,7 +2615,7 @@ class Post_Processing_Window():
                                 font = "Calibri 15 bold",justify="center")
         if self.meta:
             self.title = tk.Label(master = self.master,
-                                text = "Welcome to the Post-Processing \nand Post-Normalizing Page",
+                                text = "Welcome to the Post-Processing \nand Post-Normalization Page",
                                 font = "Calibri 15 bold",justify="center")
 
         self.n_postreps_label = tk.Label(master = self.master,
@@ -2884,7 +2884,7 @@ class Post_Normal_Window():
         self.title = tk.Label(master = self.master,
                                 text = top_lab,
                                 font = "Calibri 15 bold",
-                                background="#fff",justify="center")
+                                justify="center")
         initsol = self.post_norm_exp_list[0].problem.factors['initial_solution']
         if len(initsol) == 1:
             initsol = str(initsol[0])
@@ -2892,12 +2892,12 @@ class Post_Normal_Window():
             initsol = str(initsol)
 
         self.n_init_label = tk.Label(master = self.master,
-                                text = "The initial solution, x\u2080, is " + initsol +".",
+                                text = "The Initial Solution, x\u2080, is " + initsol +".",
                                 font = "Calibri 13",
                                 wraplength = "400")
 
         self.n_opt_label = tk.Label(master = self.master,
-                                text = "The optimal solution, x\u002A, is " + opt +  " for this " + minmax + "imization problem. \nIf the proxy optimal value or the proxy optimal solution is unspecified, SimOpt uses the best value found in the experiments as the proxy optimal value.",
+                                text = "The Optimal Solution, x\u002A, is " + opt +  " for this " + minmax + "imization Problem. \nIf the Proxy Optimal Value or the Proxy Optimal Solution is unspecified, SimOpt uses the best Solution found in the selected Problem-Solver Pair experiments as the Proxy Optimal Solution.",
                                 font = "Calibri 13",
                                 wraplength = "600",
                                 justify="left")
@@ -2907,18 +2907,18 @@ class Post_Normal_Window():
                                 font = "Calibri 13",
                                 wraplength = "250")
         self.n_proxy_val_label = tk.Label(master = self.master,
-                                text = "Proxy Optimal Value, f(x\u002A):",
+                                text = "Insert Proxy Optimal Value, f(x\u002A):",
                                 font = "Calibri 13",
                                 wraplength = "250")
         self.n_proxy_sol_label = tk.Label(master = self.master,
-                                text = "Proxy Optimal Solution, x\u002A:",
+                                text = "Insert Proxy Optimal Solution, x\u002A:",
                                 font = "Calibri 13",
                                 wraplength = "250")
 
 
-        t = ["x","f(x)"]
-        self.n_proxy_sol_entry = ttk.Entry(master=self.master, textvariable = self.proxy_sol, justify = tk.LEFT, width=10)
-        self.n_proxy_val_entry = ttk.Entry(master=self.master, textvariable = self.proxy_var, justify = tk.LEFT, width=10)
+        # t = ["x","f(x)"]
+        self.n_proxy_sol_entry = ttk.Entry(master=self.master, textvariable = self.proxy_sol, justify = tk.LEFT, width=8)
+        self.n_proxy_val_entry = ttk.Entry(master=self.master, textvariable = self.proxy_var, justify = tk.LEFT, width=8)
         self.n_initial_entry = ttk.Entry(master=self.master, textvariable = self.init_var, justify = tk.LEFT, width=10)
 
         self.n_crn_label = tk.Label(master = self.master,
@@ -2938,9 +2938,9 @@ class Post_Normal_Window():
         self.n_postreps_init_opt_entry.insert(index=tk.END, string="200")
 
         self.post_processing_run_label = tk.Label(master=self.master, # window label is used for
-                        text = "Complete Post-Normalization of the Problem-Solver Pair(s)",
+                        text = "Click to Post-Normalize the Problem-Solver Pairs",
                         font = "Calibri 13",
-                        wraplength = "290")
+                        wraplength = "300")
 
         self.post_processing_run_button = ttk.Button(master=self.master, # window button is used in
                         # aesthetic of button and specific formatting options
@@ -2958,8 +2958,8 @@ class Post_Normal_Window():
         # self.n_proxy_label.place(x=10, y=200)
         self.n_proxy_val_label.place(x=10,y=190)
         self.n_proxy_sol_label.place(x=325,y=190)
-        self.n_proxy_val_entry.place(x=190, y=190)
-        self.n_proxy_sol_entry.place(x=500, y=190)
+        self.n_proxy_val_entry.place(x=220, y=190)
+        self.n_proxy_sol_entry.place(x=530, y=190)
 
         self.n_crn_label.place(x=10, y=230)
         self.n_crn_checkbox.place(x=325, y=230)
@@ -3032,7 +3032,7 @@ class Plot_Window():
             self.experiment_list = experiment_list
             self.main_window = main_window
             self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
-            self.plot_type_names = ["Mean Progress Curve", "Quantile Progress Curve", "Solve time CDF", "Area Scatter Plot", "CDF Solvability","Quantile Solvability","CDF Difference Plot", "Quantile Difference Plot", "Terminal Progress Plot", "Terminal Scatter Plot"]
+            self.plot_type_names = ["All Progress Curves", "Mean Progress Curve", "Quantile Progress Curve", "Solve time CDF", "Area Scatter Plot", "CDF Solvability","Quantile Solvability","CDF Difference Plot", "Quantile Difference Plot", "Terminal Progress Plot", "Terminal Scatter Plot"]
             self.num_plots = 0
             self.plot_exp_list = []
             self.plot_type_list = []
@@ -3205,12 +3205,12 @@ class Plot_Window():
                                     tags="self.queue_frame")
             self.settings_canvas.grid_rowconfigure(0)
 
-            tf_list = ['True','False']
+            # tf_list = ['True','False']
             self.settings_label_frame.place(relx=.65, rely=.15, relheight=.2, relwidth=.3)
            
             """
             # Confidence Interval Checkbox
-            entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[0], onvalue="True", offvalue="False")
+            entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[0], onvalue=True, offvalue=False)
             entry1.select()
             # entry1 = ttk.OptionMenu(self.settings_canvas, self.params[0], "True", *tf_list)
             label1 = tk.Label(master=self.settings_canvas, text="Confidence Intervals", font="Calibri 14")
@@ -3218,14 +3218,14 @@ class Plot_Window():
             entry1.grid(row=0, column=1, padx=10, pady=3)
 
             # Plot Together Checkbox
-            entry = tk.Checkbutton(self.settings_canvas, variable=self.params[1], onvalue="True", offvalue="False")
+            entry = tk.Checkbutton(self.settings_canvas, variable=self.params[1], onvalue=True, offvalue=False)
             entry.select()
             # Creates the Check Mark that checks whether the plots will be plot together
             label = tk.Label(master=self.settings_canvas, text="Plot Together", font="Calibri 14")
             label.grid(row=1, column=0, padx=10, pady=3)
             entry.grid(row=1, column=1, padx=10, pady=3)
 
-            entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[2], onvalue="True", offvalue="False")
+            entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[2], onvalue=True, offvalue=False)
             entry2.select()
             label2 = tk.Label(master=self.settings_canvas, text="Print Max HW", font="Calibri 14")
             label2.grid(row=2, column=0, padx=10, pady=3)
@@ -3248,16 +3248,16 @@ class Plot_Window():
                         self.solvers.append(exp)
 
             problemList = ""
-            probs = []
+            self.problems = []
             # Appends experiment that is part of the experiment list if it matches what was chosen in the problem
             # menu 
             for i in self.problem_menu.curselection():
                 problemList = problemList + self.problem_menu.get(i) + " "
                 for exp in self.experiment_list:
                     if exp.problem.name == self.problem_menu.get(i):
-                        probs.append(exp)
+                        self.problems.append(exp)
 
-            if len(probs) == 0 or len(self.solvers) == 0 or str(self.plot_var.get()) == "Plot":
+            if len(self.problems) == 0 or len(self.solvers) == 0 or str(self.plot_var.get()) == "Plot":
                 txt = "At least 1 Problem, 1 Solver, and 1 Plot Type must be selected."
                 self.bad_label = tk.Label(master=self.master,text=txt,font = "Calibri 12",justify="center")
                 self.bad_label.place(relx=.45, rely=.5)
@@ -3280,17 +3280,17 @@ class Plot_Window():
             
             param_value_list = []
             for t in self.params:
-                #(t.get())
-                # print(t.get())
+                new_value = ""
                 if t.get() == True:
-                    param_value_list.append(True)
+                    new_value = True
                 elif t.get() == False:
-                    param_value_list.append(False)
+                    new_value = False
                 elif t.get() != "":
                     try:
-                        param_value_list.append(float(t.get()))
+                        new_value = float(t.get())
                     except ValueError:
-                        param_value_list.append(t.get())
+                        new_value = t.get()
+                param_value_list.append(new_value)
 
             #ci = param_value_list[0]
             #plot_together = param_value_list[1]
@@ -3322,43 +3322,46 @@ class Plot_Window():
                     for item in sublist:
                         exp.append(item)
 
+            if self.plot_type_list[i] == "All Progress Curves":
+                path_name = plot_progress_curves(exp,plot_type = "all", normalize = bool(param_value_list[1]), all_in_one = bool(param_value_list[0]))
+                param_list = {"normalize":bool(param_value_list[1])}
             if self.plot_type_list[i] == "Mean Progress Curve":
                 # print("n_bootstraps", param_value_list[4])
                 # print("conf_level",param_value_list[5])
-                path_name = plot_progress_curves(exp,plot_type="mean", normalize=param_value_list[3], all_in_one=param_value_list[1], plot_CIs=param_value_list[0], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5])
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[2], "normalize":param_value_list[3],"n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
+                path_name = plot_progress_curves(exp,plot_type = "mean", normalize = bool(param_value_list[3]), all_in_one = bool(param_value_list[1]), plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[2]), n_bootstraps = int(param_value_list[4]), conf_level = param_value_list[5])
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[2]), "normalize":bool(param_value_list[3]),"n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
             elif self.plot_type_list[i] == "Quantile Progress Curve":
                 # print("n_bootstraps", param_value_list[5])
                 # print("conf_level",param_value_list[6])
-                path_name = plot_progress_curves(exp,plot_type = "quantile",  beta=param_value_list[3], normalize=param_value_list[4],plot_CIs=param_value_list[0], all_in_one=param_value_list[1], print_max_hw=param_value_list[2],n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[2], "normalize":param_value_list[4], "beta":param_value_list[3],"n_bootstraps":param_value_list[5], "conf_level":param_value_list[6]}
+                path_name = plot_progress_curves(exp,plot_type = "quantile",  beta = param_value_list[3], normalize = bool(param_value_list[4]), plot_CIs = bool(param_value_list[0]), all_in_one = bool(param_value_list[1]), print_max_hw = bool(param_value_list[2]),n_bootstraps = int(param_value_list[5]), conf_level = param_value_list[6] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[2]), "normalize":bool(param_value_list[4]), "beta":param_value_list[3],"n_bootstraps":int(param_value_list[5]), "conf_level":param_value_list[6]}
             elif self.plot_type_list[i] == "Solve time CDF":
-                path_name = plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps=int(param_value_list[3]), conf_level=param_value_list[4] )
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"n_bootstraps":param_value_list[3], "conf_level":param_value_list[4]}
+                path_name = plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), n_bootstraps = int(param_value_list[3]), conf_level = param_value_list[4] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "solve tol":param_value_list[2],"n_bootstraps":int(param_value_list[3]), "conf_level":param_value_list[4]}
             elif self.plot_type_list[i] == "Area Scatter Plot":
-                path_name = plot_area_scatterplots(exp2, plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], n_bootstraps= int(param_value_list[2]), conf_level=param_value_list[3] )
-                param_list = {}
+                path_name = plot_area_scatterplots(exp2, plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), n_bootstraps = int(param_value_list[2]), conf_level = param_value_list[3] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "n_bootstraps":int(param_value_list[2]), "conf_level":param_value_list[3]}
             elif self.plot_type_list[i] == "CDF Solvability":
-                path_name = plot_solvability_profiles(exp2, plot_type = "cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],ref_solver=None, n_bootstraps= int(param_value_list[3]), conf_level=param_value_list[4] )
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"n_bootstraps":param_value_list[3], "conf_level":param_value_list[4]}
+                path_name = plot_solvability_profiles(exp2, plot_type = "cdf_solvability", plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), solve_tol = param_value_list[2], ref_solver = None, n_bootstraps = int(param_value_list[3]), conf_level = param_value_list[4] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "solve tol":param_value_list[2],"n_bootstraps":int(param_value_list[3]), "conf_level":param_value_list[4]}
             elif self.plot_type_list[i] == "Quantile Solvability":
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol": param_value_list[2], "beta": param_value_list[3],"n_bootstraps":param_value_list[4], "conf_level":param_value_list[5]}
-                path_name = plot_solvability_profiles(exp2, plot_type = "quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2],beta=param_value_list[3],ref_solver=None, n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "quantile_solvability", plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), solve_tol = param_value_list[2], beta = param_value_list[3], ref_solver = None, n_bootstraps = int(param_value_list[4]), conf_level = param_value_list[5] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "solve tol": param_value_list[2], "beta":param_value_list[3], "n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
             elif self.plot_type_list[i] == "CDF Difference Plot":
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"ref solver":param_value_list[3],"n_bootstraps":param_value_list[4], "conf_level":param_value_list[5]}
-                path_name = plot_solvability_profiles(exp2, plot_type = "diff_cdf_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1],solve_tol=param_value_list[2], ref_solver=param_value_list[3], n_bootstraps= int(param_value_list[4]), conf_level=param_value_list[5] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "diff_cdf_solvability", plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), solve_tol = param_value_list[2], ref_solver = param_value_list[3], n_bootstraps = int(param_value_list[4]), conf_level = param_value_list[5] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "solve tol":param_value_list[2], "ref solver":param_value_list[3], "n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
             elif self.plot_type_list[i] == "Quantile Difference Plot":
                 # print("n_bootstraps", param_value_list[5])
                 # print("conf_level",param_value_list[6])
-                param_list = {"plot CIs":param_value_list[0], "print max hw":param_value_list[1], "solve tol":param_value_list[2],"ref solver":param_value_list[4],"beta":param_value_list[3],"n_bootstraps":param_value_list[5], "conf_level":param_value_list[6]}
-                path_name = plot_solvability_profiles(exp2, plot_type = "diff_quantile_solvability", plot_CIs=param_value_list[0], print_max_hw=param_value_list[1], solve_tol=param_value_list[2], beta=param_value_list[3],ref_solver=param_value_list[4], n_bootstraps= int(param_value_list[5]), conf_level=param_value_list[6] )
+                path_name = plot_solvability_profiles(exp2, plot_type = "diff_quantile_solvability", plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), solve_tol = param_value_list[2], beta = param_value_list[3], ref_solver = param_value_list[4], n_bootstraps = int(param_value_list[5]), conf_level = param_value_list[6] )
+                param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[1]), "solve tol":param_value_list[2],"ref solver":param_value_list[4], "beta":param_value_list[3],"n_bootstraps":int(param_value_list[5]), "conf_level":param_value_list[6]}
             elif self.plot_type_list[i] == "Terminal Progress Plot":
                 # print("plot_type", param_value_list[1])
-                param_list = {"plot type": param_value_list[1], "normalize":param_value_list[2]}
-                path_name = plot_terminal_progress(exp, plot_type = param_value_list[1], normalize = param_value_list[2], all_in_one =param_value_list[0])
+                path_name = plot_terminal_progress(exp, plot_type = param_value_list[1], normalize = bool(param_value_list[2]), all_in_one = bool(param_value_list[0]))
+                param_list = {"normalize":bool(param_value_list[2])}
             elif self.plot_type_list[i] == "Terminal Scatter Plot":
+                path_name = plot_terminal_scatterplots(exp2, all_in_one = bool(param_value_list[0]))
                 param_list = {}
-                path_name = plot_terminal_scatterplots(exp2, all_in_one = param_value_list[0])
             else:
                 print(f"{self.plot_type_list[i]} is the plot_type_list at index {i}")
 
@@ -3450,7 +3453,9 @@ class Plot_Window():
             # remove CI from experiment box
 
             # beta=0.50, normalize=True
-            if plot_choice == "Mean Progress Curve":
+            if plot_choice == "All Progress Curves":
+                param_list = {'normalize':True}
+            elif plot_choice == "Mean Progress Curve":
                 param_list = {'normalize':True, 'n_bootstraps': 100, 'conf_level':0.95}
             elif plot_choice == "Quantile Progress Curve":
                 param_list = {'beta':0.50, 'normalize':True, 'n_bootstraps': 100, 'conf_level':0.95}
@@ -3512,7 +3517,7 @@ class Plot_Window():
             i = 0 
             if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Area Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
                 # Confidence Intervals
-                entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue="True", offvalue="False")
+                entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue=True, offvalue=False)
                 entry1.select()
                 # entry1 = ttk.OptionMenu(self.settings_canvas, self.params[0], "True", *tf_list)
                 label1 = tk.Label(master=self.settings_canvas, text="Show Confidence Intervals", font="Calibri 13", wraplength="150")
@@ -3520,9 +3525,9 @@ class Plot_Window():
                 entry1.grid(row=0, column=1, padx=10, pady=3)
                 i += 1
 
-            if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice == "Terminal Progress Plot" or plot_choice == "Terminal Scatter Plot":
+            if plot_choice == "All Progress Curves" or plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice == "Terminal Progress Plot" or plot_choice == "Terminal Scatter Plot":
                 # Plot Together Checkbox
-                entry = tk.Checkbutton(self.CI_canvas, variable=self.params[i], onvalue="True", offvalue="False")
+                entry = tk.Checkbutton(self.CI_canvas, variable=self.params[i], onvalue=True, offvalue=False)
                 entry.select()
                 # Creates the Check Mark that checks whether the plots will be plot together
                 label = tk.Label(self.CI_canvas, text="Plot Together", font="Calibri 13", wraplength="150")
@@ -3532,7 +3537,7 @@ class Plot_Window():
             
             if plot_choice == "Mean Progress Curve" or plot_choice == "Quantile Progress Curve" or plot_choice ==  "Solve time CDF" or plot_choice =="Area Scatter Plot" or plot_choice == "CDF Solvability" or plot_choice == "Quantile Solvability" or plot_choice == "CDF Difference Plot" or plot_choice == "Quantile Difference Plot":
                 # Show Print Max Halfwidth
-                entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue="True", offvalue="False")
+                entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[i], onvalue=True, offvalue=False)
                 entry2.select()
                 label2 = tk.Label(master=self.settings_canvas, text="Show Max Halfwidth", font="Calibri 13", wraplength="150")
                 label2.grid(row=1, column=0, padx=10, pady=3)
@@ -3543,7 +3548,7 @@ class Plot_Window():
             
             for param, param_val in param_list.items():
                 if param == 'normalize':
-                    entry = tk.Checkbutton(master=self.CI_canvas, variable=self.params[i], onvalue="True", offvalue="False")
+                    entry = tk.Checkbutton(master=self.CI_canvas, variable=self.params[i], onvalue=True, offvalue=False)
                     entry.select()
                     label = tk.Label(master=self.CI_canvas, text="Normalize by Relative Optimality Gap", font="Calibri 13", wraplength="150")
                     label.grid(row=i, column=0, padx=10, pady=3)
@@ -3626,10 +3631,7 @@ class Plot_Window():
             # widget.place(relx = percent of x, rely = percent of y)
             ro = 0
             c = 0
-            #(self.plot_exp_list)
-            #  self.plot_types_inputs = ["cdf_solvability", "quantile_solvability","diff_cdf_solvability","diff_quantile_solvability"]
-            # self.plot_type_names = ["Mean Progress Curve", "Quantile Progress Curve", "Solve time cdf", "Scatter Plot", "cdf Solvability","Quantile Solvability","cdf Difference Plot", "Quanitle Difference Plot"]
-
+            
             for i,path_name in enumerate(self.all_path_names):
 
                 width = 350
@@ -3652,8 +3654,6 @@ class Plot_Window():
                     ro += 1
 
                 # panel.place(x=10,y=0)
-
-            i = 0
 
         def view_one_pot(self, path_name):
             self.postrep_window = tk.Toplevel()
