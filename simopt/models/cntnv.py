@@ -6,7 +6,7 @@ A detailed description of the model/problem can be found `here <https://simopt.r
 """
 import numpy as np
 
-from base import Model, Problem
+from ..base import Model, Problem
 
 
 class CntNV(Model):
@@ -39,29 +39,31 @@ class CntNV(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors={}):
+    def __init__(self, fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "CNTNEWS"
         self.n_rngs = 1
         self.n_responses = 1
         self.factors = fixed_factors
         self.specifications = {
             "purchase_price": {
-                "description": "Purchasing Cost per unit",
+                "description": "purchasing cost per unit",
                 "datatype": float,
                 "default": 5.0
             },
             "sales_price": {
-                "description": "Sales Price per unit",
+                "description": "sales price per unit",
                 "datatype": float,
                 "default": 9.0
             },
             "salvage_price": {
-                "description": "Salvage cost per unit",
+                "description": "salvage cost per unit",
                 "datatype": float,
                 "default": 1.0
             },
             "order_quantity": {
-                "description": "Order quantity",
+                "description": "order quantity",
                 "datatype": float,  # or int
                 "default": 0.5
             },
@@ -116,7 +118,7 @@ class CntNV(Model):
 
         Arguments
         ---------
-        rng_list : list of rng.MRG32k3a objects
+        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
         Returns
@@ -199,7 +201,7 @@ class CntNVMaxProfit(Problem):
         upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_value : float
+    optimal_value : tuple
         optimal objective function value
     optimal_solution : tuple
         optimal solution
@@ -211,7 +213,7 @@ class CntNVMaxProfit(Problem):
         combination of overriden model-level factors and defaults
     model_decision_factors : set of str
         set of keys for factors that are decision variables
-    rng_list : list of rng.MRG32k3a objects
+    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
@@ -236,7 +238,11 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CNTNEWS-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="CNTNEWS-1", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -260,12 +266,12 @@ class CntNVMaxProfit(Problem):
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
-                "description": "Initial solution from which solvers start.",
+                "description": "initial solution",
                 "datatype": tuple,
                 "default": (0,)
             },
             "budget": {
-                "description": "Max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
             }
@@ -336,7 +342,7 @@ class CntNVMaxProfit(Problem):
     def response_dict_to_stoch_constraints(self, response_dict):
         """
         Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
+        of left-hand sides of stochastic constraints: E[Y] <= 0
 
         Arguments
         ---------
@@ -416,7 +422,7 @@ class CntNVMaxProfit(Problem):
 
         Arguments
         ---------
-        rand_sol_rng : rng.MRG32k3a object
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
         Returns
