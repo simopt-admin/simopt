@@ -49,7 +49,7 @@ solver_unabbreviated_directory = {
     "STRONG (SBCN)": STRONG,
     "SPSA (SBCN)": SPSA,
     "ADAM (SBCN)": ADAM,
-    "Adaptive Line-search with Oracle Estimations (SBCN)": ALOE
+    "ALOE (SBCN)": ALOE
 }
 
 problem_directory = {
