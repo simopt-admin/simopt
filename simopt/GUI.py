@@ -3233,7 +3233,7 @@ class Plot_Window():
             """
 
             # self.frame.pack(fill='both')
-
+        
         def test_funct(self):
             for i in self.solver_menu.curselection():
                 print(self.solver_menu.get(i))
@@ -3315,25 +3315,26 @@ class Plot_Window():
                 #for sublist in self.metaList.experiments:
                     #for item in sublist:
                         #print(item.solver.name)
-            if self.metaList != None:
-                exp = []
-                exp2 = self.metaList.experiments
-                for sublist in self.metaList.experiments:
-                    for item in sublist:
-                        exp.append(item)
+                        
+            # if self.metaList != None:
+            #     exp = []
+            #     exp2 = self.metaList.experiments
+            #     for sublist in self.metaList.experiments:
+            #         for item in sublist:
+            #             exp.append(item)
 
             if self.plot_type_list[i] == "All Progress Curves":
-                path_name = plot_progress_curves(exp,plot_type = "all", normalize = bool(param_value_list[1]), all_in_one = bool(param_value_list[0]))
+                path_name = plot_progress_curves(exp, plot_type = "all", normalize = bool(param_value_list[1]), all_in_one = bool(param_value_list[0]))
                 param_list = {"normalize":bool(param_value_list[1])}
             if self.plot_type_list[i] == "Mean Progress Curve":
                 # print("n_bootstraps", param_value_list[4])
                 # print("conf_level",param_value_list[5])
-                path_name = plot_progress_curves(exp,plot_type = "mean", normalize = bool(param_value_list[3]), all_in_one = bool(param_value_list[1]), plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[2]), n_bootstraps = int(param_value_list[4]), conf_level = param_value_list[5])
+                path_name = plot_progress_curves(exp, plot_type = "mean", normalize = bool(param_value_list[3]), all_in_one = bool(param_value_list[1]), plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[2]), n_bootstraps = int(param_value_list[4]), conf_level = param_value_list[5])
                 param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[2]), "normalize":bool(param_value_list[3]),"n_bootstraps":int(param_value_list[4]), "conf_level":param_value_list[5]}
             elif self.plot_type_list[i] == "Quantile Progress Curve":
                 # print("n_bootstraps", param_value_list[5])
                 # print("conf_level",param_value_list[6])
-                path_name = plot_progress_curves(exp,plot_type = "quantile",  beta = param_value_list[3], normalize = bool(param_value_list[4]), plot_CIs = bool(param_value_list[0]), all_in_one = bool(param_value_list[1]), print_max_hw = bool(param_value_list[2]),n_bootstraps = int(param_value_list[5]), conf_level = param_value_list[6] )
+                path_name = plot_progress_curves(exp, plot_type = "quantile",  beta = param_value_list[3], normalize = bool(param_value_list[4]), plot_CIs = bool(param_value_list[0]), all_in_one = bool(param_value_list[1]), print_max_hw = bool(param_value_list[2]),n_bootstraps = int(param_value_list[5]), conf_level = param_value_list[6] )
                 param_list = {"plot CIs":bool(param_value_list[0]), "print max hw":bool(param_value_list[2]), "normalize":bool(param_value_list[4]), "beta":param_value_list[3],"n_bootstraps":int(param_value_list[5]), "conf_level":param_value_list[6]}
             elif self.plot_type_list[i] == "Solve time CDF":
                 path_name = plot_solvability_cdfs(exp, solve_tol = param_value_list[2], plot_CIs = bool(param_value_list[0]), print_max_hw = bool(param_value_list[1]), n_bootstraps = int(param_value_list[3]), conf_level = param_value_list[4] )
