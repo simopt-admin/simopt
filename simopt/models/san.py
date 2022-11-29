@@ -282,7 +282,7 @@ class SANLongestPath(Problem):
             "arc_costs":{
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
@@ -416,7 +416,7 @@ class SANLongestPath(Problem):
         # det_objectives_gradients = (-1 / (np.array(x) ** 2),)
         
         det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2))
+        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
