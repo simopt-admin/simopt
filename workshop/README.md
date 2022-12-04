@@ -33,11 +33,13 @@ then you don’t.
 7. In VSCode, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
 
 8. Test the python interpreter:
-* In the Explorer panel of VSCode editor click on the New File icon ![icon1](./figs/icon-1.png), and type `hello.py`.
+* In the Explorer panel of VSCode editor click on the New File icon, and type `hello.py`.
+![screen-addfile](./figs/screen-addfile.png)
 * In the new file in the next panel, type
   * `msg = "Hello World"`
   * `print(msg)`
 * Hit run (the triangular play button) at the top right corner of the file.
+![screen-py](./figs/screen-py.png)
 
 9. Test the jupyter interpreter:
 * In the VSCode editor, click on the add new file icon, and type `hello.ipynb`.
@@ -45,9 +47,18 @@ then you don’t.
   * `msg = "Hello World"`
   * `print(msg)`
 * Hit run icon  on the left side of the block in the notebook.
+![screen-ipy](./figs/screen-ipy.png)
 * You may get a dialog box asking you to install the ipykernel for python notebooks. If so, then perform the following step (recall Step 5), but otherwise, go on to Step 10 below.
+  * From within VSCode, select the python interpreter on the top-right corner of the panel that looks like ![icon-3](./figs/icon-3.png) and from the list of available interpreters in your local computer, select the one that says Conda on the right.
+  * Select a Python 3 interpreter by opening the Command Palette (Ctrl+Shift+P or Command+Shift+P), start typing the Python: Select Interpreter command to search, then select that command.
 
-10. From within VSCode, select the python interpreter on the top-right corner of the panel that looks like 
+10. Open a terminal inside VSCode by clicking on Terminal > New Terminal from the menu. Inside the terminal, type the following to create a virtual environment: 
+  * `python -m venv venv`
+  * `venv\Scripts\activate` or on a Mac, `source venv/bin/activate`
+  * `python -m pip install simoptlib`
+  * `python -m simopt.GUI`
+
+11. Download the SimOpt zip file **compressed-simopt-library.zip** from the workshop branch on GitHub.
 
 
 
