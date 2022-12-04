@@ -97,12 +97,12 @@ class ASTRODF(Solver):
             #     "default": 10
             # },
             "lambda_min": {
-                "description": "minimum sample size value",
+                "description": "minimum sample size",
                 "datatype": int,
                 "default": 5
             },
             "simple_solve": {
-                "description": "solve subproblem with Cauchy point (rough approximate)",
+                "description": "solve the subproblem approximately with Cauchy point",
                 "datatype": bool,
                 "default": True
             },
@@ -217,7 +217,7 @@ class ASTRODF(Solver):
         
         j = 0
         budget = problem.factors["budget"]
-        lambda_max = budget / (10 * problem.dim)
+        lambda_max = budget / (5 * problem.dim)
 
         while True:
             fval = []
@@ -405,7 +405,7 @@ class ASTRODF(Solver):
         gamma_2 = self.factors["gamma_2"]
         simple_solve = self.factors["simple_solve"]
         lambda_min = self.factors["lambda_min"]
-        lambda_max = budget_limit / (10 * problem.dim)
+        lambda_max = budget_limit / (5 * problem.dim)
         pilot_run = int(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
 
 
@@ -560,10 +560,15 @@ class ASTRODF(Solver):
             
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
+        print(delta_max)
+        # delta_max = 100.0
         
         visited_pts_list = []
         k = 0        
-        delta_k = 10 ** (ceil(log(delta_max, 10)) / problem.dim)
+        delta_k = 10 ** (ceil(log(delta_max* 2, 10)-1) / problem.dim)
+        
+        # delta_k = 0.05 * delta_max
+        print(delta_k)
         new_x = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
