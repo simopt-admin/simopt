@@ -66,15 +66,20 @@ class ASTRODF(Solver):
                 "datatype": bool,
                 "default": True
             },
+            "delta_max": {
+                "description": "maximum trust-region radius allowed",
+                "datatype": float,
+                "default": 100.0
+            },
             "eta_1": {
                 "description": "threshhold for a successful iteration",
                 "datatype": float,
-                "default": 0.2
+                "default": 0.1
             },
             "eta_2": {
                 "description": "threshhold for a very successful iteration",
                 "datatype": float,
-                "default": 0.5
+                "default": 0.8
             },
             "gamma_1": {
                 "description": "trust-region radius increase rate after a very successful iteration",
@@ -84,7 +89,7 @@ class ASTRODF(Solver):
             "gamma_2": {
                 "description": "trust-region radius decrease rate after an unsuccessful iteration",
                 "datatype": float,
-                "default": 0.75
+                "default": 0.6
             },
             # "mu": {
             #     "description": "trust-region radius ratio upper bound in contraction loop",
@@ -100,11 +105,6 @@ class ASTRODF(Solver):
                 "description": "minimum sample size value",
                 "datatype": int,
                 "default": 5
-            },
-            "reps_max": {
-                "description": "maximum sample size value",
-                "datatype": int,
-                "default": 30
             },
             "simple_solve": {
                 "description": "solve subproblem with Cauchy point (rough approximate)",
@@ -129,17 +129,20 @@ class ASTRODF(Solver):
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
+            "delta_max": self.check_delta_max,
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
             # "beta": self.check_beta,
             # "mu": self.check_mu,
-            "lambda_min": self.check_lambda_min,
-            "reps_max": self.check_reps_max,
+            "lambda_min": self.check_lambda_min
             # "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
+    
+    def check_delta_max(self):
+        return self.factors["delta_max"] > 0
     
     def check_eta_1(self):
         return self.factors["eta_1"] > 0
@@ -161,9 +164,6 @@ class ASTRODF(Solver):
 
     def check_lambda_min(self):
         return self.factors["lambda_min"] > 2
-    
-    def check_reps_max(self):
-        return self.factors["reps_max"] > self.factors["lambda_min"]
 
     # def check_criticality_threshold(self):
     #     return self.factors["criticality_threshold"] > 0
@@ -202,13 +202,10 @@ class ASTRODF(Solver):
     # compute the sample size based on adaptive sampling stopping rule using the optimality gap
     def get_stopping_time(self, k, sig2, delta, kappa, dim):
         if kappa == 0: kappa = 1
-        lambda_min = self.factors["lambda_min"]
-        reps_max = self.factors["reps_max"]
-        lambda_k = max(lambda_min, 2 * log(dim, 10)) * max(log(k + 0.1, 10) ** (1.01), 1)
+        lambda_k = max(self.factors["lambda_min"], 2 * log(dim + .5, 10)) * max(log(k + 0.1, 10) ** (1.01), 1)
     
         # compute sample size
-        N_k = ceil(min(reps_max, max(lambda_k, lambda_k * sig2 / (kappa ** 2 * delta ** 4))))
-        
+        N_k = ceil(max(lambda_k, lambda_k * sig2 / (kappa ** 2 * delta ** 4)))
         return N_k
 
     # construct the "qualified" local model for each iteration k with the center point x_k
@@ -216,15 +213,20 @@ class ASTRODF(Solver):
     # the criticality condition keeps the model gradient norm and the trust-region size in lock-step
     def construct_model(self, x_k, delta, k, problem, expended_budget, kappa, new_solution, visited_pts_list):
         interpolation_solns = []
+        
+        ## inner loop parameters
         w = 0.85 #self.factors["w"] 
         mu = 1000#self.factors["mu"]
         beta = 10#self.factors["beta"]
-        lambda_min = self.factors["lambda_min"]
-        skip_criticality = True#self.factors["skip_criticality"]
         criticality_threshold = 0.1#self.factors["criticality_threshold"]
+        skip_criticality = True#self.factors["skip_criticality"]
+        
         reuse_points = self.factors["reuse_points"]
+        lambda_min = self.factors["lambda_min"]
+        
         j = 0
         budget = problem.factors["budget"]
+        lambda_max = budget / (10 * problem.dim)
 
         while True:
             fval = []
@@ -277,7 +279,8 @@ class ASTRODF(Solver):
                     sig2 = new_solution.objectives_var
                     # adaptive sampling
                     while True:
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= 0.1*budget:
+                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
+                        sample_size >= lambda_max or expended_budget >= budget:
                             break
                         problem.simulate(new_solution, 1)
                         expended_budget += 1
@@ -291,7 +294,8 @@ class ASTRODF(Solver):
                     sig2 = visited_pts_list[f_index].objectives_var
                     # adaptive sampling
                     while True:
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= 0.1*budget:
+                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
+                            sample_size >= lambda_max or expended_budget >= budget:
                             break
                         problem.simulate(visited_pts_list[f_index], 1)
                         expended_budget += 1
@@ -315,7 +319,8 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = new_solution.objectives_var
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= 0.1*budget:
+                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
+                            sample_size >= lambda_max or expended_budget >= budget:
                             break
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
@@ -408,10 +413,9 @@ class ASTRODF(Solver):
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
         simple_solve = self.factors["simple_solve"]
-        print("simple_solve is \n"+str(simple_solve))
-        print(simple_solve)
-        
         lambda_min = self.factors["lambda_min"]
+        lambda_max = budget_limit / (10 * problem.dim)
+        pilot_run = int(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
 
 
         if k == 1:
@@ -421,7 +425,6 @@ class ASTRODF(Solver):
 
             # calculate kappa
             # pilot run
-            pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
             problem.simulate(new_solution, pilot_run)
             expended_budget += pilot_run
             sample_size = pilot_run
@@ -432,7 +435,8 @@ class ASTRODF(Solver):
                 fn = new_solution.objectives_mean
                 sig2 = new_solution.objectives_var
                 # ...
-                if sample_size >= self.get_stopping_time(k, sig2, delta_k, fn / (delta_k ** 2), problem.dim) or expended_budget >= budget_limit:
+                if sample_size >= self.get_stopping_time(k, sig2, delta_k, fn / (delta_k ** 2), problem.dim) or \
+                    sample_size >= lambda_max or expended_budget >= budget_limit:
                     kappa = fn / (delta_k ** 2)
                     break
 
@@ -470,18 +474,19 @@ class ASTRODF(Solver):
         visited_pts_list.append(candidate_solution)
 
         # pilot run
-        pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
         problem.simulate(candidate_solution, pilot_run)
         expended_budget += pilot_run
         sample_size = pilot_run
 
         # adaptive sampling
+        # TODO: need to make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         while True:
             problem.simulate(candidate_solution, 1)
             expended_budget += 1
             sample_size += 1
             sig2 = candidate_solution.objectives_var
-            if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or expended_budget >= budget_limit:
+            if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
+                sample_size >= lambda_max or expended_budget >= budget_limit:
                 break
 
         # calculate success ratio
@@ -523,6 +528,10 @@ class ASTRODF(Solver):
         return final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list
 
 
+    def delta_max_to_delta_0(self, delta_max, dim):
+        delta_0 = delta_max/(5.0 * ceil(log(dim + .5, 10)) * dim)
+        return delta_0
+        
     # start the search and stop when the budget is exhausted
     def solve(self, problem):
         """
@@ -560,23 +569,30 @@ class ASTRODF(Solver):
             
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
+        # print(delta_max)
+        # delta_max = self.factors["delta_max"]
         
         visited_pts_list = []
-        k = 1
+        k = 0
 
-        # parameter tuning runs
-        delta_start = delta_max * 0.05
-        # delta_candidate = [0.1 * delta_start, delta_start, delta_start / 0.1]
-        delta_candidate = [delta_start / 0.05]
-        # run the first iteration with three choices of the initial trust region radius
-        # return the one (of three) that more quickly progresses in search
-        final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = self.iterate(k, \
-        delta_candidate[0], delta_max, problem, visited_pts_list, problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns =[], intermediate_budgets=[], kappa=1, new_solution=[])
-        expended_budget_best = expended_budget
+        # # parameter tuning runs
+        # # delta_start = delta_max * 0.05
+        # # delta_candidate = [0.1 * delta_start, delta_start, delta_start / 0.1]
+        # delta_candidate = [1, 2, 10]*delta_max
+        # # run the first iteration with three choices of the initial trust region radius
+        # # return the one (of three) that more quickly progresses in search
+        # delta_max = delta_candidate[0]
+        # final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
+        #     self.iterate(k, self.delta_max_to_delta_0(delta_max, problem.dim), delta_max, problem, visited_pts_list, \
+        #                  problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns =[], intermediate_budgets=[], kappa=1, new_solution=[])
+        # expended_budget_best = expended_budget
+        
         
         # for i in range(1, 3):
-        #     final_ob_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt, new_solution_pt, visited_pts_list = self.iterate(k, \
-        #         delta_candidate[i], delta_max, problem, visited_pts_list, problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns=[], intermediate_budgets=[], kappa=1, new_solution=[])
+        #     delta_max_pt = delta_candidate[i]
+        #     final_ob_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt, new_solution_pt, visited_pts_list = \
+        #         self.iterate(k, self.delta_max_to_delta_0(delta_max_pt, problem.dim), delta_max_pt, problem, visited_pts_list, \
+        #                      problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns=[], intermediate_budgets=[], kappa=1, new_solution=[])
         #     expended_budget += expended_budget_pt
         #     if -1 * problem.minmax[0] * final_ob_pt < -1 * problem.minmax[0] * final_ob:
         #         delta_k = delta_pt
@@ -587,14 +603,23 @@ class ASTRODF(Solver):
         #         new_x = new_x_pt
         #         new_solution = new_solution_pt
         #         kappa = kappa_pt
+        #         delta_max = delta_max_pt
 
-        # continue the search from the best initial trust-region after parameter tuning
-        intermediate_budgets = (intermediate_budgets + np.ones(len(intermediate_budgets))*(expended_budget - expended_budget_best)).tolist()
-        intermediate_budgets[0] = 0
-
+        # # continue the search from the best initial trust-region after parameter tuning
+        # intermediate_budgets = (intermediate_budgets + np.ones(len(intermediate_budgets))*(expended_budget - expended_budget_best)).tolist()
+        # intermediate_budgets[0] = 0
+        
+        
+        # print(delta_max)
+        # delta_k = delta_max / (5.0 * ceil(log(problem.dim + .5, 10)) * problem.dim) # for lower dimensional problems, keep the initial delta large
+        delta_k = 10**(ceil(log(delta_max,10))/problem.dim)
+        new_x = problem.factors["initial_solution"]
+        expended_budget, kappa = 0, 0
+        new_solution, recommended_solns, intermediate_budgets = [], [], [] 
         while expended_budget < budget:
             k += 1
-            final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = self.iterate(k,
-                delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget, recommended_solns, intermediate_budgets, kappa, new_solution)
+            final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
+                self.iterate(k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget, \
+                             recommended_solns, intermediate_budgets, kappa, new_solution)
 
         return recommended_solns, intermediate_budgets
