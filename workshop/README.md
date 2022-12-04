@@ -33,7 +33,7 @@ then you don’t.
 7. In VSCode, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
 
 8. Test the python interpreter:
-* In the Explorer panel of VSCode editor click on the New File icon ![icon1](./fig/icon-1.png), and type `hello.py`.
+* In the Explorer panel of VSCode editor click on the New File icon ![icon1](./figs/icon-1.png), and type `hello.py`.
 * In the new file in the next panel, type
   * `msg = "Hello World"`
   * `print(msg)`
