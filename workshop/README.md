@@ -49,7 +49,7 @@ then you don’t.
 * Hit run icon  on the left side of the block in the notebook.
 ![screen-ipy](./figs/screen-ipy.png)
 * You may get a dialog box asking you to install the ipykernel for python notebooks. If so, then perform the following step (recall Step 5), but otherwise, go on to Step 10 below.
-  * From within VSCode, select the python interpreter on the top-right corner of the panel that looks like ![icon-3](./figs/icon-3.png) and from the list of available interpreters in your local computer, select the one that says Conda on the right.
+  * From within VSCode, select the python interpreter on the top-right corner of the panel that looks like ![icon-3](./figs/icon-1.png) and from the list of available interpreters in your local computer, select the one that says Conda on the right.
   * Select a Python 3 interpreter by opening the Command Palette (Ctrl+Shift+P or Command+Shift+P), start typing the Python: Select Interpreter command to search, then select that command.
 
 10. Open a terminal inside VSCode by clicking on Terminal > New Terminal from the menu. Inside the terminal, type the following to create a virtual environment: 
