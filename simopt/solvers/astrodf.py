@@ -3,7 +3,7 @@ Summary
 -------
 The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
-This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is also therefore not needed.
+This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is therefore not needed and removed from this version as well.
 """
 from numpy.linalg import pinv
 from numpy.linalg import norm
@@ -66,11 +66,6 @@ class ASTRODF(Solver):
                 "datatype": bool,
                 "default": True
             },
-            "delta_max": {
-                "description": "maximum trust-region radius allowed",
-                "datatype": float,
-                "default": 100.0
-            },
             "eta_1": {
                 "description": "threshhold for a successful iteration",
                 "datatype": float,
@@ -129,7 +124,6 @@ class ASTRODF(Solver):
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
-            "delta_max": self.check_delta_max,
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
@@ -140,9 +134,6 @@ class ASTRODF(Solver):
             # "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
-    
-    def check_delta_max(self):
-        return self.factors["delta_max"] > 0
     
     def check_eta_1(self):
         return self.factors["eta_1"] > 0
@@ -569,50 +560,10 @@ class ASTRODF(Solver):
             
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
-        # print(delta_max)
-        # delta_max = self.factors["delta_max"]
         
         visited_pts_list = []
-        k = 0
-
-        # # parameter tuning runs
-        # # delta_start = delta_max * 0.05
-        # # delta_candidate = [0.1 * delta_start, delta_start, delta_start / 0.1]
-        # delta_candidate = [1, 2, 10]*delta_max
-        # # run the first iteration with three choices of the initial trust region radius
-        # # return the one (of three) that more quickly progresses in search
-        # delta_max = delta_candidate[0]
-        # final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
-        #     self.iterate(k, self.delta_max_to_delta_0(delta_max, problem.dim), delta_max, problem, visited_pts_list, \
-        #                  problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns =[], intermediate_budgets=[], kappa=1, new_solution=[])
-        # expended_budget_best = expended_budget
-        
-        
-        # for i in range(1, 3):
-        #     delta_max_pt = delta_candidate[i]
-        #     final_ob_pt, delta_pt, recommended_solns_pt, intermediate_budgets_pt, expended_budget_pt, new_x_pt, kappa_pt, new_solution_pt, visited_pts_list = \
-        #         self.iterate(k, self.delta_max_to_delta_0(delta_max_pt, problem.dim), delta_max_pt, problem, visited_pts_list, \
-        #                      problem.factors["initial_solution"], 0, budget * 0.01, recommended_solns=[], intermediate_budgets=[], kappa=1, new_solution=[])
-        #     expended_budget += expended_budget_pt
-        #     if -1 * problem.minmax[0] * final_ob_pt < -1 * problem.minmax[0] * final_ob:
-        #         delta_k = delta_pt
-        #         final_ob = final_ob_pt
-        #         recommended_solns = recommended_solns_pt
-        #         intermediate_budgets = intermediate_budgets_pt
-        #         expended_budget_best = expended_budget_pt
-        #         new_x = new_x_pt
-        #         new_solution = new_solution_pt
-        #         kappa = kappa_pt
-        #         delta_max = delta_max_pt
-
-        # # continue the search from the best initial trust-region after parameter tuning
-        # intermediate_budgets = (intermediate_budgets + np.ones(len(intermediate_budgets))*(expended_budget - expended_budget_best)).tolist()
-        # intermediate_budgets[0] = 0
-        
-        
-        # print(delta_max)
-        # delta_k = delta_max / (5.0 * ceil(log(problem.dim + .5, 10)) * problem.dim) # for lower dimensional problems, keep the initial delta large
-        delta_k = 10**(ceil(log(delta_max,10))/problem.dim)
+        k = 0        
+        delta_k = 10 ** (ceil(log(delta_max, 10)) / problem.dim)
         new_x = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
