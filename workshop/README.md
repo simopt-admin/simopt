@@ -42,7 +42,7 @@ then you don’t.
 ![screen-py](./figs/screen-py.png)
 
 9. Test the jupyter interpreter:
-* In the VSCode editor, click on the add new file icon, and type `hello.ipynb`.
+* In the VS Code editor, click on the add new file icon, and type `hello.ipynb`.
 * In the new notebook file, type
   * `msg = "Hello World"`
   * `print(msg)`
