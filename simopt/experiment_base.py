@@ -524,6 +524,7 @@ class ProblemSolver(object):
         self.all_post_replicates = [[[] for _ in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
+            print(f"Postreplicating macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             for budget_index in range(len(self.all_intermediate_budgets[mrep])):
                 x = self.all_recommended_xs[mrep][budget_index]
                 fresh_soln = Solution(x, self.problem)
@@ -898,6 +899,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
+    print(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
         # Stream 0: reserved for post-replications.
@@ -918,14 +920,17 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
+    print("Finding f(x*)...")
     if proxy_opt_val is not None:
         if proxy_opt_x is None:
             xstar = None
         else:
             xstar = proxy_opt_x  # Assuming the provided x is optimal in this case.
+        print("\t...using provided proxy f(x*).")
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
+        print("\t...using provided proxy x*.")
         xstar = proxy_opt_x
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -934,12 +939,14 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
+        print("\t...using coded f(x*).")
         xstar = None
         # NOTE: optimal_value is a tuple.
         # Currently hard-coded for single objective case, i.e., optimal_value[0].
         xstar_postreps = [ref_experiment.problem.optimal_value[0]] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
+        print("\t...using coded x*.")
         xstar = ref_experiment.problem.optimal_solution
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -949,6 +956,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
+        print("\t...using best postreplicated solution as proxy for x*.")
         # TO DO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
