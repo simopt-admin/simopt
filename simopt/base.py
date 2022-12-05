@@ -260,6 +260,7 @@ class Problem(object):
         Subset of user-specified non-decision factors to pass through to the model.
     """
     def __init__(self, fixed_factors, model_fixed_factors):
+        print(self.name)
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -622,6 +623,8 @@ class Problem(object):
                 # to those of deterministic components of objectives.
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
                 if self.gradient_available:
+                    print(self.response_dict_to_objectives_gradients(vector_gradients))
+                    print(solution.det_objectives_gradients)
                     solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives_gradients(vector_gradients), solution.det_objectives_gradients)]
                     # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
@@ -823,11 +826,13 @@ class Solution(object):
     """
     def __init__(self, x, problem):
         super().__init__()
+        print(x)
         self.x = x
         self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
         self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
+        print(self.det_objectives_gradients)
         self.det_stoch_constraints, self.det_stoch_constraints_gradients = problem.deterministic_stochastic_constraints_and_gradients(self.x)
         init_size = 100  # Initialize numpy arrays to store up to 100 replications.
         self.storage_size = init_size
