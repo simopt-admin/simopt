@@ -197,11 +197,14 @@ class ExampleProblem(Problem):
             "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = ExampleModel(self.model_fixed_factors)
-        self.dim = len(self.model.factors["x"])
+        # print(self.factors)
+        self.dim = len(np.array(self.factors["initial_solution"]))
         self.lower_bounds = (-np.inf,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = ExampleModel(self.model_fixed_factors)
+        # self.dim = len(self.model.factors["x"])
+        
 
     def vector_to_factor_dict(self, vector):
         """
