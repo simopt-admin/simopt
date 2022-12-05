@@ -278,11 +278,17 @@ class SANLongestPath(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
+            },
+            "arc_costs": {
+                "description": "Cost associated to each arc.",
+                "datatype": tuple,
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "arc_costs": self.check_arc_costs
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -290,6 +296,12 @@ class SANLongestPath(Problem):
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
+
+    def check_arc_costs(self):
+        positive = True
+        for x in list(self.factors["arc_costs"]):
+            positive = positive & x > 0
+        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
 
     def vector_to_factor_dict(self, vector):
         """
@@ -400,8 +412,8 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(1 / np.array(x)),)
-        det_objectives_gradients = (-1 / (np.array(x) ** 2),)
+        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
+        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):

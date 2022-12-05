@@ -73,12 +73,12 @@ class ALOE(Solver):
             },
             "theta": {
                 "description": "constant in the Armijo condition",
-                "datatype": int,
+                "datatype": float,
                 "default": 0.2
             },
             "gamma": {
                 "description": "constant for shrinking the step size",
-                "datatype": int,
+                "datatype": float,
                 "default": 0.8
             },
             "alpha_max": {

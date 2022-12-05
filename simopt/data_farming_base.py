@@ -122,7 +122,7 @@ class DataFarmingExperiment(object):
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-16")
+        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
@@ -244,7 +244,7 @@ class DataFarmingMetaExperiment(object):
             # Append design to base filename.
             design_filename = solver_factor_settings_filename + "_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-16")
+        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.

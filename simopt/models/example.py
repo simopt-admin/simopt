@@ -48,7 +48,7 @@ class ExampleModel(Model):
             "x": {
                 "description": "point to evaluate",
                 "datatype": tuple,
-                "default": (0.0,)
+                "default": (2.0, 2.0)
             }
         }
         self.check_factor_list = {
@@ -82,11 +82,11 @@ class ExampleModel(Model):
         # Designate random number generator for stochastic noise.
         noise_rng = rng_list[0]
         x = np.array(self.factors["x"])
-        fn_eval_at_x = x**2 + noise_rng.normalvariate()
+        fn_eval_at_x = np.linalg.norm(x) ** 2 + noise_rng.normalvariate()
 
         # Compose responses and gradients.
         responses = {"est_f(x)": fn_eval_at_x}
-        gradients = {"est_f(x)": {"x": 2 * x}}
+        gradients = {"est_f(x)": {"x": tuple(2 * x)}}
         return responses, gradients
 
 
@@ -174,8 +174,6 @@ class ExampleProblem(Problem):
         self.constraint_type = "unconstrained"
         self.variable_type = "continuous"
         self.gradient_available = True
-        self.optimal_value = (0,)
-        self.optimal_solution = (0,)
         self.model_default_factors = {}
         self.model_fixed_factors = {}
         self.model_decision_factors = {"x"}
@@ -184,7 +182,7 @@ class ExampleProblem(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (2,)
+                "default": (2.0, 2.0)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -197,11 +195,14 @@ class ExampleProblem(Problem):
             "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = ExampleModel(self.model_fixed_factors)
-        self.dim = len(self.model.factors["x"])
+        self.dim = len(self.factors["initial_solution"])
         self.lower_bounds = (-np.inf,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
+        # Instantiate model with fixed factors and overwritten defaults.
+        self.model = ExampleModel(self.model_fixed_factors)
+        self.optimal_value = (0,)  # Change if f is changed.
+        self.optimal_solution = (0,) * self.dim  # Change if f is changed.
+
 
     def vector_to_factor_dict(self, vector):
         """
@@ -293,7 +294,7 @@ class ExampleProblem(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):

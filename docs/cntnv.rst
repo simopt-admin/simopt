@@ -14,8 +14,8 @@ Sources of Randomness:
 ----------------------
 
 Each day's random demand for liquid product follows Burr Type XII distribution and is denoted by :math:`D`.
-Ther parameters of the Burr Type XII distribution are :math:`α` and :math:`β` so that its cumulative
-distribution function is given by :math:`F(x) = 1 - (1-x^α)^{-β}` where :math:`x, α,` and
+The parameters of the Burr Type XII distribution are :math:`α` and :math:`β` so that its cumulative
+distribution function is given by :math:`F(x) = 1 - (1+x^α)^{-β}` where :math:`x, α,` and
 :math:`β` are all positive.
 
 Model Factors: 
@@ -102,10 +102,10 @@ If random solutions are needed, generate :math:`x` from an Exponential distribut
 Optimal Solution:
 -----------------
 
-Global minimum at :math:`x* = (1/((1-r^)^{1/β})-1)^{1/α}`.
+Global minimum at :math:`x* = (1/((1-r)^{1/β})-1)^{1/α}`.
 For the default factors, the optimal solution is :math:`x*` = 0.1878.
 
 Optimal Objective Function Value:
 ---------------------------------
 
-The maximum expected profit is 0.4635.
+For the default factors, the maximum expected profit is 0.4635.

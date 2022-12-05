@@ -72,6 +72,10 @@ Problem Factors:
 
   * Default: 10000
 
+* arc_costs: Cost associated to each arc.
+
+  * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+
 Fixed Model Factors:
 --------------------
 * N/A

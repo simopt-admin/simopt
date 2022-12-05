@@ -254,7 +254,7 @@ class CntNVMaxProfit(Problem):
         self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = (0.1878,)  # TO DO: Generalize to function of factors.
+        self.optimal_solution = None  # (0.1878,)  # TO DO: Generalize to function of factors.
         self.model_default_factors = {
             "purchase_price": 5.0,
             "sales_price": 9.0,
