@@ -8,7 +8,7 @@ This version does not require a delta_max, instead it estimates the maximum step
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
-from math import log, ceil
+from math import log, ceil, sqrt
 import warnings
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
@@ -84,38 +84,18 @@ class ASTRODF(Solver):
             "gamma_2": {
                 "description": "trust-region radius decrease rate after an unsuccessful iteration",
                 "datatype": float,
-                "default": 0.6
+                "default": 0.5
             },
-            # "mu": {
-            #     "description": "trust-region radius ratio upper bound in contraction loop",
-            #     "datatype": int,
-            #     "default": 1000
-            # },
-            # "beta": {
-            #     "description": "trust-region radius ratio lower bound in contraction loop",
-            #     "datatype": int,
-            #     "default": 10
-            # },
             "lambda_min": {
                 "description": "minimum sample size",
                 "datatype": int,
-                "default": 5
+                "default": 4
             },
             "simple_solve": {
                 "description": "solve the subproblem approximately with Cauchy point",
                 "datatype": bool,
                 "default": True
             },
-            # "skip_criticality": {
-            #     "description": "skip contraction loop if not near critical region",
-            #     "datatype": bool,
-            #     "default": True
-            # },
-            # "criticality_threshold": {
-            #     "description": "threshold on gradient norm indicating near-critical region",
-            #     "datatype": float,
-            #     "default": 0.1
-            # },
             "reuse_points": {
                 "description": "reuse the previously visited points",
                 "datatype": bool,
@@ -128,10 +108,7 @@ class ASTRODF(Solver):
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
-            # "beta": self.check_beta,
-            # "mu": self.check_mu,
             "lambda_min": self.check_lambda_min
-            # "criticality_threshold": self.check_criticality_threshold
         }
         super().__init__(fixed_factors)
     
@@ -147,17 +124,8 @@ class ASTRODF(Solver):
     def check_gamma_2(self):
         return (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
 
-    # def check_beta(self):
-    #     return (self.factors["beta"] < self.factors["mu"] and self.factors["beta"] > 0)
-
-    # def check_mu(self):
-    #     return self.factors["mu"] > 0
-
     def check_lambda_min(self):
         return self.factors["lambda_min"] > 2
-
-    # def check_criticality_threshold(self):
-    #     return self.factors["criticality_threshold"] > 0
 
     # generate the coordinate vector corresponding to the variable number v_no
     def get_coordinate_vector(self, size, v_no):
@@ -217,7 +185,7 @@ class ASTRODF(Solver):
         
         j = 0
         budget = problem.factors["budget"]
-        lambda_max = budget / (5 * problem.dim)
+        lambda_max = budget / (15 * sqrt(problem.dim))
 
         while True:
             fval = []
@@ -405,7 +373,7 @@ class ASTRODF(Solver):
         gamma_2 = self.factors["gamma_2"]
         simple_solve = self.factors["simple_solve"]
         lambda_min = self.factors["lambda_min"]
-        lambda_max = budget_limit / (5 * problem.dim)
+        lambda_max = budget_limit / (15 * sqrt(problem.dim))
         pilot_run = int(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
 
 
@@ -517,12 +485,7 @@ class ASTRODF(Solver):
             final_ob = fval[0]
 
         return final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list
-
-
-    def delta_max_to_delta_0(self, delta_max, dim):
-        delta_0 = delta_max/(5.0 * ceil(log(dim + .5, 10)) * dim)
-        return delta_0
-        
+       
     # start the search and stop when the budget is exhausted
     def solve(self, problem):
         """
@@ -548,7 +511,7 @@ class ASTRODF(Solver):
         
         # Generate many dummy solutions without replication only to find a reasonable maximum radius
         dummy_solns = []
-        for i in range(1000*problem.dim):    
+        for i in range(1000 * problem.dim):    
             dummy_solns += [problem.get_random_solution(find_next_soln_rng)]       
         # Range for each dimension is calculated and compared with box constraints range if given 
         # TODO: just use box constraints range if given
@@ -560,15 +523,10 @@ class ASTRODF(Solver):
             
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
-        print(delta_max)
-        # delta_max = 100.0
         
         visited_pts_list = []
         k = 0        
-        delta_k = 10 ** (ceil(log(delta_max* 2, 10)-1) / problem.dim)
-        
-        # delta_k = 0.05 * delta_max
-        print(delta_k)
+        delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
         new_x = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
