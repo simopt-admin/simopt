@@ -966,7 +966,7 @@ class Experiment_Window(tk.Tk):
 
                 compatibility_result = self.my_experiment.check_compatibility()
                 for exp in self.experiment_object_list:
-                    if exp.problem.name == self.my_experiment.problem.name:
+                    if exp.problem.name == self.my_experiment.problem.name and exp.solver.name == self.my_experiment.solver.name:
                         if exp.problem != self.my_experiment.problem:
                             message = "Please Save the Problem for Unique Factors with a Unique Name"
                             tk.messagebox.showerror(title="Error Window", message=message)
