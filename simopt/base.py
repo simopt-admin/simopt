@@ -260,7 +260,6 @@ class Problem(object):
         Subset of user-specified non-decision factors to pass through to the model.
     """
     def __init__(self, fixed_factors, model_fixed_factors):
-        print(self.name)
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors

@@ -14,6 +14,7 @@ simopt/models/cntnv.py
 simopt/models/contam.py
 simopt/models/dualsourcing.py
 simopt/models/dynamnews.py
+simopt/models/example.py
 simopt/models/facilitysizing.py
 simopt/models/fixedsan.py
 simopt/models/hotel.py

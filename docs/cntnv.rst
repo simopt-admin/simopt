@@ -102,8 +102,8 @@ If random solutions are needed, generate :math:`x` from an Exponential distribut
 Optimal Solution:
 -----------------
 
-Global minimum at :math:`x* = (1/((1-r)^{1/β})-1)^{1/α}`.
-For the default factors, the optimal solution is :math:`x*` = 0.1878.
+Global minimum at :math:`x^* = (1/((1-r)^{1/β})-1)^{1/α}`.
+For the default factors, the optimal solution is :math:`x^*` = 0.1878.
 
 Optimal Objective Function Value:
 ---------------------------------
