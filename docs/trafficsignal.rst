@@ -9,8 +9,7 @@ According to the arrival node, each car will be randomly generated a destination
   :alt: The transition matrix has failed to display
   :width: 700
 
-Cars will automatically find the shortest road to arrive its destination.
-The traffic system opens at 8AM and closes at 10AM, and time is measured in seconds.
+Cars will automatically find the shortest road to arrive its destination. The traffic system opens at 8AM and closes at 10AM, and time is measured in seconds.
 When the traffic system closes, all cars in the queue leave immediately.
 
 Sources of Randomness:
@@ -19,10 +18,13 @@ There are 3 sources of randomness in this model:
 
 * The probability for each node to be selected as the arrival node is {\lambda_i}{\sum_{i=1}^{6}\lambda_i}.
 
-* The arrival time of the cars (except the first car) as an exponential distribution with lambda_i, i = 1,. . . , 6 that was selected as the arrival node for its previous car. The arrival time of the first car is always happening at 1 second.
+* The arrival time of the first car is always happening at 1 second. The arrival time of the cars (except the first car) as an exponential distribution with lambda_i, i = 1,. . . , 6 that was selected as the arrival node for its previous car. 
 
-* The transition probabiliyt matrix that cars end at each point from their current starting point
+* The probability for each node to selected as the destination for cars from different arrival nodes.
 
+.. image:: trafficsignal.png
+  :alt: The transition matrix has failed to display
+  :width: 700
 
 Model Factors:
 --------------
@@ -32,7 +34,7 @@ Model Factors:
 
 * runtime: The number of seconds that the traffic model runs.
 
-    * Default: 100
+    * Default: 7200
       
 * numintersections: The number of intersections in the traffic model.
 
