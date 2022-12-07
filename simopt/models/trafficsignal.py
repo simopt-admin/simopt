@@ -153,7 +153,7 @@ class TrafficLight(Model):
             "runtime": {
                 "description": "The number of seconds that the traffic model runs", 
                 "datatype": float,
-                "default": 100
+                "default": 7200
             },
 
             "numintersections": {
