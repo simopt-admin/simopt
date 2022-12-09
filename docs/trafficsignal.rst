@@ -95,6 +95,12 @@ Responses:
 
 References:
 ===========
+This model are adapted from the following articles: 
+
+Ito, H., K. Tsutsumida, T. Matsubayashi, T. Kurashima, and H. Toda. (2019). Coordinated traffic signal control via bayesian optimization for hierarchical conditional spaces. Proceedings of the 2019 Winter Simulation Conference, 3645–3656.
+
+Osorio, C., and L. Chong. (2012). An efficient simulation-based optimization algorithm for large-scale transportation problems. Proceedings of the 2012 Winter Simulation Conference, 1–11.
+
 
 Optimization Problem: Minimize Waiting Time (MinWaitingTime-1)
 ====================================================================
