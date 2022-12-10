@@ -8,20 +8,23 @@ The solver progressively builds local models (quadratic with diagonal Hessian) u
 Modifications & Implementation:
 -------------------------------
 
-**construct_model**: Take the model and accept it if its gradient is large relative to the trust-region radius.
+**construct_model**: Construct the "qualified" local model for each iteration k with the center point x_k, reconstruct with new points in a shrunk trust-region if the model fails the criticality condition. The criticality condition keeps the model gradient norm and the trust-region size in lock-step.
 
 **evaluate_model**: Find (proxy to) the subproblem solution.
 
 **get_stopping_time**: Decide whether to stop at the existing sample size for a given solution.
 
-**get_standard_basis**: Form the coordinate basis.
+**get_coordinate_vector**: Form the coordinate basis.
 
-**get_model_coefficients**: Solve system of linear equations (interpolation) to obtain model coefficients.
+**get_rotated_basis**: Form the rotated coordinates, where the first vector comes from the visited design points.
 
-**get_interpolation_points**: Choose coordinate bases.
+**get_model_coefficients**: Compute the model coefficients using (2d+1) design points and their function estimates by solving a system of linear equations (interpolation).
 
-**tune_parameters**: The initial trust-region radius is tuned before starting the search by choosing one of three choices.
+**get_coordinate_basis_interpolation_points**: Compute the interpolation points (2d+1) using the coordinate basis.
 
+**get_rotated_basis_interpolation_points**: Compute the interpolation points (2d+1) using the rotated coordinate basis to allow reusing one design point.
+
+**iterate**: Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data.
 
 Scope:
 ------
@@ -38,52 +41,36 @@ Solver Factors:
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
-
-* delta_max: Maximum value of the trust-region radius > 0.
-
-    * Default: 200
-
+    
 * eta_1: Threshhold for a successful iteration > 0, < 1.
 
     * Default: 0.1
 
 * eta_2: Threshhold for a very successful iteration > eta_1, < 1.
 
-    * Default: 0.5
+    * Default: 0.8
 
-* gamma_1: Very successful step trust-region radius increase > 1.
+* gamma_1: Trust-region radius increase rate after a very successful iteration > 1.
 
     * Default: 1.5
 
-* gamma_2: Unsuccessful step trust-region radius decrease < 1, > 0.
+* gamma_2: Trust-region radius decrease rate after an unsuccessful iteration < 1, > 0.
 
-    * Default: 0.75
-
-* w: Trust-region radius rate of shrinkage in contracation loop > 0, < 1.
-
-    * Default: 0.85
-
-* mu: Trust-region radius ratio upper bound in contraction loop > 0.
-
-    * Default: 1000
-
-* beta: Trust-region radius ratio lower bound in contraction loop < mu, > 0.
-
-    * Default: 10
+    * Default: 0.5
 
 * lambda_min: Minimum sample size value, integer > 2.
 
     * Default: 4
 
-* simple_solve: Subproblem solver with Cauchy point or the built-in solver? True - Cauchy point, False - built-in solver.
+* seasy_solve: Solve the subproblem approximately with Cauchy point.
 
     * Default: True
 
-* criticality_select: True - skip contraction loop if not near critical region, False - always run contraction loop.
+* reuse_points: Reuse the previously visited points.
 
     * Default: True
 
-* criticality_threshold: Threshold on gradient norm indicating near-critical region.
+* ps_sufficient_reduction: Use pattern search if with sufficient reduction, 0 always allows it, large value never does.
 
     * Default: 0.1
 
