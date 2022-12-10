@@ -147,7 +147,7 @@ class ASTRODF(Solver):
         arr[v_no] = 1.0
         return arr
 
-    # generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis))
+    # generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
     def get_rotated_basis(self, first_basis, rotate_index):
         rotate_matrix = np.array(first_basis)
         rotation = np.matrix([[0, -1], [1, 0]])
