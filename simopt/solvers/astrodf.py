@@ -3,7 +3,11 @@ Summary
 -------
 The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
-This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is therefore not needed and removed from this version as well.
+- Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution(). 
+- Parameter tuning on delta_max is therefore not needed and removed from this version as well.
+- No upper bound on sample size may be better - testing
+- It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
+- Added sufficient reduction for the pattern search
 """
 from numpy.linalg import pinv
 from numpy.linalg import norm
@@ -91,7 +95,7 @@ class ASTRODF(Solver):
                 "datatype": int,
                 "default": 4
             },
-            "simple_solve": {
+            "easy_solve": {
                 "description": "solve the subproblem approximately with Cauchy point",
                 "datatype": bool,
                 "default": True
@@ -100,7 +104,13 @@ class ASTRODF(Solver):
                 "description": "reuse the previously visited points",
                 "datatype": bool,
                 "default": True
+            },
+            "ps_sufficient_reduction": {
+                "description": "use pattern search if with sufficient reduction, 0 always allows it, large value never does",
+                "datatype": float,
+                "default": 0.1
             }
+            
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -108,7 +118,8 @@ class ASTRODF(Solver):
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
-            "lambda_min": self.check_lambda_min
+            "lambda_min": self.check_lambda_min,
+            "ps_sufficient_reduction": self.check_ps_sufficient_reduction
         }
         super().__init__(fixed_factors)
     
@@ -126,6 +137,9 @@ class ASTRODF(Solver):
 
     def check_lambda_min(self):
         return self.factors["lambda_min"] > 2
+    
+    def check_ps_sufficient_reduction(self):
+        return self.factors["ps_sufficient_reduction"] >= 0
 
     # generate the coordinate vector corresponding to the variable number v_no
     def get_coordinate_vector(self, size, v_no):
@@ -185,7 +199,8 @@ class ASTRODF(Solver):
         
         j = 0
         budget = problem.factors["budget"]
-        lambda_max = budget / (15 * sqrt(problem.dim))
+        lambda_max = budget - expended_budget
+        # lambda_max = budget / (15 * sqrt(problem.dim))
 
         while True:
             fval = []
@@ -228,11 +243,11 @@ class ASTRODF(Solver):
 
             # Evaluate the function estimate for the interpolation points
             for i in range(2 * problem.dim + 1):
-                # for X_0, we don't need to simulate the new solution
+                # for x_0, we don't need to simulate the new solution
                 if (k == 1) and (i == 0):
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
-                # if iteration k-1 is unsuccessful, we can reuse the replications for x_k
+                # reuse the replications for x_k (center point, i.e., the incumbent solution)
                 elif (i == 0):
                     sample_size = new_solution.n_reps
                     sig2 = new_solution.objectives_var
@@ -247,8 +262,8 @@ class ASTRODF(Solver):
                         sig2 = new_solution.objectives_var
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
-                # else if we reuse one design point, reuse the replications
-                elif (i == 1) and (norm(np.array(x_k) - np.array(visited_pts_list[f_index].x)) != 0) and reuse_points == True:
+                # else if reuse one design point, reuse the replications
+                elif (i == 1) and (norm(np.array(x_k) - norm(np.array(visited_pts_list[f_index].x))) != 0) and reuse_points == True:
                     sample_size = visited_pts_list[f_index].n_reps
                     sig2 = visited_pts_list[f_index].objectives_var
                     # adaptive sampling
@@ -262,12 +277,11 @@ class ASTRODF(Solver):
                         sig2 = visited_pts_list[f_index].objectives_var
                     fval.append(-1 * problem.minmax[0] * visited_pts_list[f_index].objectives_mean)
                     interpolation_solns.append(visited_pts_list[f_index])
-                # for new points, we need to run the simulation
+                # for new points, run the simulation with pilot run
                 else:
                     new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
                     visited_pts_list.append(new_solution)
-                    # pilot run # ??check if there is existing result
-                    pilot_run = int(max(lambda_min, .5 * problem.dim) - 1)
+                    pilot_run = ceil(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
                     problem.simulate(new_solution, pilot_run)
                     expended_budget += pilot_run
                     sample_size = pilot_run
@@ -371,40 +385,43 @@ class ASTRODF(Solver):
         eta_2 = self.factors["eta_2"]
         gamma_1 = self.factors["gamma_1"]
         gamma_2 = self.factors["gamma_2"]
-        simple_solve = self.factors["simple_solve"]
+        easy_solve = self.factors["easy_solve"]
         lambda_min = self.factors["lambda_min"]
-        lambda_max = budget_limit / (15 * sqrt(problem.dim))
-        pilot_run = int(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
-
+        lambda_max = budget_limit - expended_budget
+        # lambda_max = budget_limit / (15 * sqrt(problem.dim))
+        pilot_run = ceil(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
 
         if k == 1:
             new_solution = self.create_new_solution(tuple(new_x), problem)
             if len(visited_pts_list) == 0:
                 visited_pts_list.append(new_solution)
 
-            # calculate kappa
             # pilot run
             problem.simulate(new_solution, pilot_run)
             expended_budget += pilot_run
             sample_size = pilot_run
+            
+            # adaptive sampling
             while True:
                 problem.simulate(new_solution, 1)
                 expended_budget += 1
                 sample_size += 1
                 fn = new_solution.objectives_mean
                 sig2 = new_solution.objectives_var
-                # ...
                 if sample_size >= self.get_stopping_time(k, sig2, delta_k, fn / (delta_k ** 2), problem.dim) or \
                     sample_size >= lambda_max or expended_budget >= budget_limit:
+                    # calculate kappa
                     kappa = fn / (delta_k ** 2)
                     break
 
             recommended_solns.append(new_solution)
             intermediate_budgets.append(expended_budget)
+        
+        # build the local model (subproblem)
         fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, visited_pts_list = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, visited_pts_list)
-
-
-        if simple_solve:
+        
+        # solve the local model (subproblem)
+        if easy_solve:
             # Cauchy reduction
             if np.dot(np.multiply(grad, Hessian), grad) <= 0:
                 tau = 1
@@ -429,36 +446,37 @@ class ASTRODF(Solver):
             elif candidate_x[i] >= problem.upper_bounds[i]:
                 candidate_x[i] = problem.upper_bounds[i] - 0.01
 
+        # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
         candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
         visited_pts_list.append(candidate_solution)
 
-        # pilot run
+        # pilot run and adaptive sampling
         problem.simulate(candidate_solution, pilot_run)
         expended_budget += pilot_run
         sample_size = pilot_run
-
-        # adaptive sampling
-        # TODO: need to make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         while True:
             problem.simulate(candidate_solution, 1)
             expended_budget += 1
             sample_size += 1
             sig2 = candidate_solution.objectives_var
-            if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
-                sample_size >= lambda_max or expended_budget >= budget_limit:
+            stopping = self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim)
+            if sample_size >= stopping or sample_size >= lambda_max or expended_budget >= budget_limit:
                 break
-
+            
+        # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
+        # if (expended_budget >= budget_limit) and (sample_size < stopping):
+        #     final_ob = fval[0]
+        # else:
         # calculate success ratio
         fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
-
-        # replace the candidate x if the interpolation set has lower objective function value (pattern search)
-        if min(fval) < fval_tilde:
-            minpos = fval.index(min(fval))
+    
+        # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
+        if min(fval) < fval_tilde and fval[0] - min(fval) >= self.factors["ps_sufficient_reduction"] * delta_k ** 2:
             fval_tilde = min(fval)
-            candidate_x = Y[minpos][0]
-            candidate_solution = interpolation_solns[minpos]
-
-        # compute the success ratio
+            candidate_x = Y[fval.index(min(fval))][0]
+            candidate_solution = interpolation_solns[fval.index(min(fval))]
+    
+        # compute the success ratio rho
         if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) == 0:
             rho = 0
         else:
@@ -468,22 +486,22 @@ class ASTRODF(Solver):
             new_x = candidate_x
             new_solution = candidate_solution
             final_ob = candidate_solution.objectives_mean
-            delta_k = min(gamma_1 * delta_k, delta_max)
             recommended_solns.append(candidate_solution)
             intermediate_budgets.append(expended_budget)
+            delta_k = min(gamma_1 * delta_k, delta_max)
         # successful: accept
         elif rho >= eta_1:
             new_x = candidate_x
             new_solution = candidate_solution
             final_ob = candidate_solution.objectives_mean
-            delta_k = min(delta_k, delta_max)
             recommended_solns.append(candidate_solution)
             intermediate_budgets.append(expended_budget)
+            delta_k = min(delta_k, delta_max)
         # unsuccessful: shrink and reject
         else:
             delta_k = min(gamma_2 * delta_k, delta_max)
             final_ob = fval[0]
-
+        
         return final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list
        
     # start the search and stop when the budget is exhausted
@@ -504,7 +522,7 @@ class ASTRODF(Solver):
             list of intermediate budgets when recommended solutions changes
         """
 
-        budget = problem.factors["budget"]
+        budget = problem.factors["budget"]        
         
         # Designate random number generator for random sampling 
         find_next_soln_rng = self.rng_list[1]
@@ -519,17 +537,18 @@ class ASTRODF(Solver):
         delta_max_arr = []
         for i in range(problem.dim):
             delta_max_arr += [min(max([sol[i] for sol in dummy_solns])-min([sol[i] for sol in dummy_solns]), 
-                                  problem.upper_bounds[0] - problem.lower_bounds[0])]
-            
+                                  problem.upper_bounds[0] - problem.lower_bounds[0])]          
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
         
+        # Reset iteration and data storage arrays
         visited_pts_list = []
         k = 0        
         delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
         new_x = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
+        
         while expended_budget < budget:
             k += 1
             final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
