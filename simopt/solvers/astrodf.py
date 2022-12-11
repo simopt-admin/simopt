@@ -224,7 +224,7 @@ class ASTRODF(Solver):
 
             # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
 
-            if (k == 1) or (norm(np.array(x_k) - norm(np.array(visited_pts_list[f_index].x)))==0) or reuse_points == False:
+            if (k == 1) or (norm(np.array(x_k) - np.array(visited_pts_list[f_index].x))==0) or reuse_points == False:
                 # Construct the interpolation set
                 Y = self.get_coordinate_basis_interpolation_points(x_k, delta_k, problem)
                 Z = self.get_coordinate_basis_interpolation_points(np.zeros(problem.dim), delta_k, problem)
@@ -266,7 +266,7 @@ class ASTRODF(Solver):
                     fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
                     interpolation_solns.append(new_solution)
                 # else if reuse one design point, reuse the replications
-                elif (i == 1) and (norm(np.array(x_k) - norm(np.array(visited_pts_list[f_index].x))) != 0) and reuse_points == True:
+                elif (i == 1) and (norm(np.array(x_k) - np.array(visited_pts_list[f_index].x)) != 0) and reuse_points == True:
                     sample_size = visited_pts_list[f_index].n_reps
                     sig2 = visited_pts_list[f_index].objectives_var
                     # adaptive sampling
