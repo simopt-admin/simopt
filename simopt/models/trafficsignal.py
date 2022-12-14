@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
 """
-Created on Dec 1
+Summary
+-------
+Simulate a single day of traffic for queuing problem.
 @author: kevin
+
 """
 import numpy as np
 import math
