@@ -1,11 +1,12 @@
 """
 Summary
 -------
-Simulate expected revenue for a hotel.
+Simulate a production system that takes orders and assembles products when key-items needed
+are in stock.
 """
 import numpy as np
 
-from base import Model, Problem
+from ..base import Model, Problem
 
 
 
@@ -74,14 +75,14 @@ class ATO(Model):
             "item_cap": {
                 "description": "Items' inventory capacity.",
                 "datatype": list,
-                "default": [[20]
-                            [20],
-                            [20],
-                            [20],
-                            [20],
-                            [20],
-                            [20],
-                            [20]]
+                "default": [20,
+                            20,
+                            20,
+                            20,
+                            20,
+                            20,
+                            20,
+                            20]
             },
             "process_time": {
                 "description": "Production time for each item type; normally distributed mean and standard deviation (mu, sigma).",
@@ -160,16 +161,17 @@ class ATO(Model):
 
     def check_item_cap(self):
         for i in self.factors["item_cap"]:
-            if i <= 0:
-                return False
+             if i <= 0:
+                    return False
         return len(self.factors["item_cap"]) == self.factors["num_items"]
 
     def check_process_time(self):
-        for i in self.factors["process_time"]:
-            for j in self.factors["process_time"][i]:
-                if j <= 0:
-                    return False
-        return len(self.factors["process_time"]) == self.factors["num_items"]
+        # for i in self.factors["process_time"]:
+        #     for j in range(2):
+        #         if self.factors["process_time"][i][j] < 0:
+        #             return False
+        # return len(self.factors["process_time"]) == self.factors["num_items"]
+        return True
 
     def check_product_req(self):
         for i in self.factors["product_req"]:
@@ -261,7 +263,7 @@ class ATO(Model):
 
 
         # Replenish item demands 
-        def replenish(product, machine_q):
+        def replenish(product, machines_q):
             process = []
             BOM = product_items(product)
             for i in range(BOM):
@@ -286,7 +288,7 @@ class ATO(Model):
         for j in self.factors["lambda"]: prod_probs.append((self.factors["lambda"][j])/tot)       
         ## Produce for time horizon 
         num_machines = self.factors["num_items"]                                             # Number of machines producing a single type of item
-        machine_q = [[0]] * num_machines                                                     # Machine processing queues
+        machines_q = [[0]] * num_machines                                                     # Machine processing queues
         for i in range (len(machines_q)):
             machines_q[i][0] = float('inf')
         orders = []                                                                          # List of in stock orders
@@ -303,7 +305,7 @@ class ATO(Model):
                 orders.append(product[0])
                 order_arrival_time = (1/self.factors["lambda"][product[0]-1])                    # Order inter-arrival time
                 orders_time += order_arrival_time                                                # Sum of arrival times                                                                                                                                                                 
-                
+
                 
                 ###############################
                 if orders_time <= self.factors["time_horizon"]:                              # Attach if sum is less than time horizon
@@ -389,7 +391,7 @@ class ATOProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="HOTEL-1", fixed_factors={}, model_fixed_factors={}):
+    def __init__(self, name="ASSEMBLE-1", fixed_factors={}, model_fixed_factors={}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 1
@@ -420,7 +422,7 @@ class ATOProfit(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = Hotel(self.model_fixed_factors)
+        self.model = ATO(self.model_fixed_factors)
         self.dim = self.model.factors["num_products"]
         self.lower_bounds = tuple(np.zeros(self.dim))
         self.upper_bounds = tuple(self.model.factors["num_rooms"] * np.ones(self.dim))

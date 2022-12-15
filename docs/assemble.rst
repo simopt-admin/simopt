@@ -4,18 +4,21 @@ Model: Production System (ProdSys)
 Description:
 ------------
 Orders for each of :math:`m` different products arrive according to :math:`m` independent
-Poisson processes with constant arrival rates :math:`(λj : 1 ≤ j ≤ m)`. Products are made up of a collection
-of items of different types. Product :math:`j` requires :math:`ajk` items of type :math:`k`, where :math:`k` ranges from :math:`1 to n`. Items
-are either key items or non-key items. If any of the key items are out of stock then the product
+Poisson processes with constant arrival rates :math:`(λ_j : 1 ≤ j ≤ m)`. Products are made up of a collection
+of items of different types. Product :math:`j` requires :math:`a_jk` items of type :math:`k`, where :math:`k` ranges
+from 1 to n`. Items are either key items or non-key items. If any of the key items are out of stock then the product
 order is lost. If all key items are in stock the order is assembled from all key items and the available
-non-key items. Each item sold brings a profit :math:`pk, k = 1, 2, . . . , n`, and each item in inventory has a
-holding cost per unit time of :math:`hk, k = 1, 2, . . . , n`. There are inventory capacities :math:`ck, k = 1, 2, . . . , n`
-for each item, so that :math:`0 ≤ xk ≤ ck`, where math:`xk` is the inventory level of item k, :math:`k = 1, 2, . . . , n`. The
-production time for each item is normally distributed with mean :math:`μk` and standard devaition :math:`σ`, :math:`k = 1, 2, . . . , n`,
+non-key items. Each item sold brings a profit :math:`p_k, k = 1, 2, . . . , n`, and each item in inventory has a
+holding cost per unit time of :math:`h_k, k = 1, 2, . . . , n`. There are inventory capacities
+:math:`c_k, k = 1, 2, . . . , n`
+for each item, so that :math:`0 ≤ x_k ≤ c_k`, where :math:`x_k` is the inventory level of item k,
+:math:`k = 1, 2, . . . , n`. The
+production time for each item is normally distributed with mean :math:`μ_k` and standard devaition
+:math:`σ_k`, :math:`k = 1, 2, . . . , n`,
 truncated at 0.
 
 The system operates under a continuous-review base stock policy under which each item has a
-target base stock :math:`bk, k = 1, 2, . . . , n` and each demand for an item triggers a replenishment order for
+target base stock :math:`b_k, k = 1, 2, . . . , n` and each demand for an item triggers a replenishment order for
 that item. Items are produced one at a time on dedicated machines, i.e., there are :math:`n` machines, each
 producing a single type of item.
 
@@ -24,7 +27,7 @@ Sources of Randomness:
 ----------------------
 2 sources of randomness exists: 
 Order product type depending on probabilities, 
-and normally distributed processing times for items with parameters :math:`mu` and standard devaition, :math:`sigma`.
+and normally distributed processing times for items with parameters :math:`μ` and :math:`σ`.
 
 Model Factors:
 --------------
