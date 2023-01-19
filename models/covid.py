@@ -521,8 +521,8 @@ class CovidMinInfect(Problem):
         -------
         vector : tuple
             vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["freq"])
+        # """
+        vector = (factor_dict["freq"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -540,6 +540,7 @@ class CovidMinInfect(Problem):
         objectives : tuple
             vector of objectives
         """
+        # print('response dict', response_dict)
         objectives = (response_dict["total_cases"],)
         return objectives
 
@@ -577,9 +578,9 @@ class CovidMinInfect(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (self.factors["pen_coef"] * (np.max(np.sum(np.dot(self.model.factors["group_size"][g],x[g]) for g in range(self.dim)) - self.factors["testing_cap"]))**2,)
+        # det_objectives = (self.factors["pen_coef"] * (np.max(np.sum(np.dot(self.model.factors["group_size"][g],x[g]) for g in range(self.dim)) - self.factors["testing_cap"]))**2,)
         det_objectives = ((0,),)
-        det_objectives_gradients = ((0,),)
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -636,5 +637,5 @@ class CovidMinInfect(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        x = tuple(rand_sol_rng.continuous_random_vector_from_simplex(self.dim))
         return x
