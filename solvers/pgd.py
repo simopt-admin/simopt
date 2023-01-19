@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class PGD(Solver):
+class PGD2(Solver):
     """
     Description.
 
@@ -54,7 +54,7 @@ class PGD(Solver):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
-        self.variable_type = "continuous"
+        self.variable_type = "deterministic"
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
@@ -196,13 +196,14 @@ class PGD(Solver):
         alpha_0 = self.factors["alpha_0"]
         epsilon_f = self.factors["epsilon_f"]
         s = self.factors["s"]
-        beta_1 = self.factors["beta_1"]
-        beta_2 = self.factors["beta_2"]
-        epsilon = self.factors["epsilon"]
 
         # Shrink the bounds to prevent floating errors.
-        lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
-        upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+        # lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
+        # upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
+
+        #TODO: check coefficient matrix for full rank
 
         # Cix <= di
         # Cex = de
@@ -217,10 +218,10 @@ class PGD(Solver):
 
         # Form a constraint coefficient matrix where all the equality constraints are put on top and
         # all the bound constraints in the bottom.
-        C = np.vstack((Ce, Ci, np.identity(upper_bound.shape[0]), -np.identity(lower_bound.shape[0])))
 
+        C = np.vstack((Ce, Ci, np.identity(upper_bound.shape[0]), -np.identity(lower_bound.shape[0])))
         # Form a constraint coefficient vector
-        d = np.vstack((de, di, lower_bound.T, upper_bound.T))
+        d = np.vstack((de, di, upper_bound[np.newaxis].T, -lower_bound[np.newaxis].T))
 
         # Active constraint index vector
         acidx = np.ndarray((0, 1))
@@ -230,8 +231,9 @@ class PGD(Solver):
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_x = new_solution.x
         # If the initial solution is not feasible, generate one using phase one simplex.
-        if not self._feasible(np.array(problem.factors["initial_solution"])):
+        if not self._feasible(np.array(problem.factors["initial_solution"]), problem):
             new_x = self.find_feasible_initial(problem, C, d)
             new_solution = self.create_new_solution(tuple(new_x), problem)
 
@@ -242,25 +244,24 @@ class PGD(Solver):
         # active working set that are equal to the
         # constraint value, i.e.
         # x>=0 is active if x=0.
-        cx = np.dot(C, new_solution.x)
+        # TODO: debug add_active_constraint
+        cx = np.dot(C, new_x)
+        # print('cx', cx)
+        # print("C", C)
+        # print('d', d)
         for j in range(cx.shape[0]):
             if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
-                self.add_active_constraint(j)
-        
-
+                # print('j', j)
+                acidx = self.add_active_constraint(j, acidx)
+        # print('acidx - initial', acidx)
         problem.simulate(new_solution, r)
         expended_budget += r
         best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        # Initialize the first moment vector, the second moment vector, and the timestep.
-        m = np.zeros(problem.dim)
-        v = np.zeros(problem.dim)
-        t = 0
 
         while expended_budget < problem.factors["budget"]:
-            t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
             forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
@@ -268,7 +269,7 @@ class PGD(Solver):
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
-            if problem.diradient_available:
+            if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
                 print('IPA grad', grad)
@@ -284,31 +285,70 @@ class PGD(Solver):
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
-
-            a = np.zeros(problem.dim)
-            # Loop through all the dimensions.
-            for i in range(problem.dim):
-                # Update biased first moment estimate.
-                m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
-                # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
-                # Compute bias-corrected first moment estimate.
-                mhat = m[i] / (1 - beta_1**t)
-                # Compute bias-corrected second raw moment estimate.
-                vhat = v[i] / (1 - beta_2**t)
-                a[i] = new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon)
    
             # Get a temp solution.
-            temp_x = new_x - a * grad
-
+            temp_x = new_x - grad
+            print('temp_x', temp_x)
+            # Update the active set
+            acidx = np.ndarray((0, 1))
+            cx = np.dot(C, temp_x)
+            for j in range(cx.shape[0]):
+                # TODO : isclose or not isclose
+                if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
+                    print('C', C[j])
+                    print('d[j]', d[j])
+                    acidx = self.add_active_constraint(j, acidx)
             # Project it onto the active set
             mask = np.isin(np.arange(C.shape[0]), acidx, assume_unique=True)
+            # print('acidx', acidx)
+            # print('temp_x', temp_x)
+            # print('mask', mask)
             proj_x = self.project_grad(temp_x, C[mask], d[mask])
 
             # Get new direction
-            dir = proj_x - temp_x
+            dir = proj_x - new_x
+
+            print('proj_x', proj_x)
+            print('temp_x', temp_x)
+            print('dir', dir)
+
+            # Ratio test to determine the maximum step size possible
+            ineq_idx = []
+            cx = np.dot(C, new_solution.x)
+            for j in range(cx.shape[0]):
+                if not np.isclose(cx[j], d[j], rtol=0, atol=atol):
+                    ineq_idx.append(j) # Find all constraints with strict inequality
+            mask = np.array(ineq_idx)
+            # TODO:
+            # g - Gx_k 
+            RHS = d[mask] - np.matmul(C[mask], temp_x.T)[:,np.newaxis]
+            # Gd_k
+            LHS = np.matmul(C[mask], dir[np.newaxis].T)
+            print("Cmask shape", C[mask].shape)
+            # print('dir shape', (dir[np.newaxis].T).shape)
+            print("dmask shape", d[mask].shape)
+            print("RHS", RHS)
+            print("LHS", LHS)
+            # Ratio Test
+            s = 1
+            min_ratio = np.inf
+            for i in range(len(mask)):
+                try:
+                    ratio = LHS[i] / RHS[i]
+                except:
+                    ratio = LHS[i] / RHS[i]
+                print('LHS i', LHS[i])
+                print("RHS i", RHS[i])
+                print('ratio', ratio)
+                if (ratio > 0) & (ratio < min_ratio):
+                    min_ratio = ratio
+            if min_ratio != np.inf:
+                s = min_ratio
         
             # Calculate the candidate solution.
+            print('max step size: ', s)
+            print('dir', dir)
+            print('new_x', new_x)
             candidate_x = new_x + s * dir
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
@@ -316,23 +356,34 @@ class PGD(Solver):
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            # Check the modified Armijo condition for sufficient decrease.
-            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(proj_grad)**2 + 2 * epsilon_f):
-                # Successful step.
-                new_solution = candidate_solution
-                s = min(1, s / gamma)
-            else:
+            # Use Armijo condition for line search
+            while not (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(dir)**2 + 2 * epsilon_f):
+                if expended_budget > problem.factors["budget"]:
+                    break
                 # Unsuccessful step.
                 s = gamma * s
-                # Udating active set
-                acidx = np.ndarray((0, 1))
-                cx = np.dot(C, new_solution.x)
-                for j in range(cx.shape[0]):
-                    if j < neq or np.isclose(cx[j], self.d[j], rtol=0, atol=atol):
-                        self.add_active_constraint(j)
+                # Calculate the candidate solution.
+                candidate_x = new_x + s * dir
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+                # Use r simulated observations to estimate the objective value.
+                problem.simulate(candidate_solution, r)
+                expended_budget += r
+            print('final step size', s)
+            # Successful step.
+            new_solution = candidate_solution
 
+            # Updating active set.
+            acidx = np.ndarray((0, 1))
+            cx = np.dot(C, new_solution.x)
+            for j in range(cx.shape[0]):
+                if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
+                    acidx = self.add_active_constraint(j, acidx)
+
+            print('new x', new_solution.x)
+            print("x sum:", np.sum(new_solution.x))
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+                print('objective', problem.minmax[0] * new_solution.objectives_mean)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -404,8 +455,9 @@ class PGD(Solver):
 
     def _feasible(self, x, problem):
         return (np.dot(problem.Ci, x) <= problem.di) & \
-            (np.allclose(np.dot(problem.H, x), problem.h, rtol=0, atol=1e-05)) & \
-            (x >= problem.lower_bounds) & (x <= problem.upper_bounds)
+            (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=1e-05)) & \
+            (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
+
 
     # Find the initial feasible solution
     # (if not user-provided) by solving the
@@ -471,24 +523,28 @@ class PGD(Solver):
         if not res.success:
             raise ValueError('ActiveSet: could not find feasible x0')
         x0 = res.x[:C.shape[1]].reshape(C.shape[1], 1)
-        if not self._feasible(x0):
+        if not self._feasible(x0, problem):
             raise ValueError('ActiveSet: could not find feasible x0')
         return x0
 
     # add constraint to the active set
     def add_active_constraint(self, cidx, acidx):
-        # save the contraint index
-        acidx = np.vstack((acidx, np.asarray(cidx).reshape(1,1)))
+        return np.vstack((acidx, np.array([cidx])))
     
-    # remove constraint from the active set
-    def remove_active_constraint(self, cidx, acidx):
-        # remove the constraint index
-        acidx = np.delete(acidx, (cidx), axis=0)
-
+    # # remove constraint from the active set
+    # def remove_active_constraint(self, cidx, acidx):
+    #     # remove the constraint index
+    #     acidx = np.delete(acidx, (cidx), axis=0)
+    # TODO: check correctness of the function
     def project_grad(self, x, A, b):
         """
         Project the vector x onto the hyperplane H: Ax = b.
         """
+        print('A', A)
+        print('b', b)
+        print('input x', x)
+        x = x[np.newaxis].T
         lamb = np.linalg.solve(A@A.T, A@x-b)
-        proj_grad = x - A.T@lamb
-        return proj_grad
+        proj_x = x - A.T@lamb
+        print('proj_x', proj_x.reshape((-1,)))
+        return proj_x.reshape((-1,))
