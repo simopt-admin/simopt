@@ -26,8 +26,8 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
-solver_name = "PGD"  # Random search solver
-problem_name = "FAKE-1"  # Continuous newsvendor problem
+solver_name = "PGD2"  # Random search solver
+problem_name = "FAKE-2"  # Continuous newsvendor problem
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")

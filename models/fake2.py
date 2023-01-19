@@ -44,7 +44,7 @@ class Fake2(Model):
             "x": {
                 "description": "x",
                 "datatype": tuple,
-                "default": (1, 0, 0, 0, 0)
+                "default": (1, 0)
             },
         }
         self.check_factor_list = {
@@ -169,12 +169,12 @@ class FakeProblem2(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (1, 0, 0, 0, 0)
+                "default": (1, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 100
             }
         }
         self.check_factor_list = {
@@ -185,8 +185,9 @@ class FakeProblem2(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Fake2(self.model_fixed_factors)
         self.dim = len(self.model.factors["x"])
-        self.lower_bounds = (-1,) * self.dim
-        self.upper_bounds = (1,) * self.dim
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
+        self.optimal_solution = None
         # self.optimal_solution = tuple(np.ones(self.dim) / self.dim)
         # Initialize linear constraint matrices.
         self.Ci = None
@@ -350,11 +351,17 @@ class FakeProblem2(Problem):
             return
         else:
             # TODO: come up with an example for this
-            self.Ci = [[1, 1, 1],
-                        [1, 1, 1],
-                        [1, 1, 1]]
-            self.Ce = [[1, 1, 1]]
-            self.di = [1, 1, 1]
-            self.Ce = [1]
+            # self.Ci = [[1],
+            #             [1],
+            #             [1]]
+            # self.di = [1, 1, 1]
+            # self.Ce = np.array([[1, 1, 1, 1, 1]])
+            # self.de = np.array([1]) # a simple linear constraint 1 x = 1
+            # self.Ci = np.array([[1, 1, 1, 1, 1]])
+            # self.di = np.array([1])
+            self.Ce = np.array([[1, 1]])
+            self.de = np.array([1]) # a simple linear constraint 1 x = 1
+            self.Ci = np.array([[1, 1]])
+            self.di = np.array([1])
 
 
