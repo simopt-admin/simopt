@@ -49,7 +49,7 @@ class MM1Queue(Model):
             fixed_factors = {}
         self.name = "MM1"
         self.n_rngs = 2
-        self.n_responses = 2
+        self.n_responses = 3
         self.specifications = {
             "lambda": {
                 "description": "rate parameter of interarrival time distribution",
