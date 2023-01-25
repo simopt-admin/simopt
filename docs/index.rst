@@ -12,42 +12,31 @@ For the purposes of this site, we define simulation as a very general technique 
 
 The paper  `Pasupathy and Henderson (2006) <https://www.informs-sim.org/wsc06papers/028.pdf>`_ explains the original motivation for the testbed, and the follow-up paper `Pasupathy and Henderson (2011) <https://www.informs-sim.org/wsc11papers/363.pdf>`_ describes an earlier interface for MATLAB implementations of problems and solvers. The paper `Dong et al. (2017) <https://www.informs-sim.org/wsc17papers/includes/files/179.pdf>`_  conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance. The recent Winter Simulation Conference paper `Eckman et al. (2019) <https://www.informs-sim.org/wsc19papers/374.pdf>`_ describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.
 
-The `models <models.html>`_ library contains the simulation logic to simulate a variety of systems and SO test problems built around these models. The `solvers <solvers.html>`_ library provides users with the latest SO solvers to solve different types of SO problems. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers.
+The `models <simopt.models.html>`_ library contains the simulation logic to simulate a variety of systems and SO test problems built around these models. The `solvers <simopt.solvers.html>`_ library provides users with the latest SO solvers to solve different types of SO problems. The two libraries are intended to help researchers evaluate and compare the finite-time performance of existing solvers.
 
 The source code consists of the following modules:
 
-* The `base.py <base.html>`_ module contains class definitions for models, problems, and solvers.
+* The `base.py <simopt.html#module-simopt.base>`_ module contains class definitions for models, problems, and solvers.
 
-* The `experiment_base.py <experiment_base.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
+* The `experiment_base.py <simopt.html#module-simopt.experiment_base>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
 
-* The `data_farming_base.py <data_farming_base.html>`_ module contains class definitions and functions for running data-farming experiments.
+* The `data_farming_base.py <simopt.html#module-simopt.data_farming_base>`_ module contains class definitions and functions for running data-farming experiments.
 
-* The `directory.py <directory.html>`_ module contains a listing of models, problems, and solvers in the library.
-
-The `rng <rng.html>`_ folder contains the source code for the MRG32k3a random number generator used throughout SimOpt.
-
-The experiments folder contains empty folders for storing data and plots produced by running experiments.
+* The `directory.py <simopt.html#module-simopt.directory>`_ module contains a listing of models, problems, and solvers in the library.
 
 Getting Started
 ----------------
 
-Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, and seaborn. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_solver\_problem.py.
+Please make sure you have the following dependencies installed: Python 3, numpy, scipy, matplotlib, seaborn, and mrg32k3a. Then clone the repo. To see an example of how to run an experiment on a solver and problem pair, please view or run demo/demo\_problem\_solver.py.
 
 Contents
--------------------
+--------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    
    modules
-   
 
-Indices and tables
--------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 Acknowledgments
 -------------------

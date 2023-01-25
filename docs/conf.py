@@ -22,6 +22,7 @@
 #
 import os
 import sys
+sys.path.insert(0, os.path.abspath('../simopt'))
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -55,7 +56,8 @@ autodoc_mock_imports = ['numpy',
                         'scipy',
                         'matplotlib',
                         'pandas',
-                        'seaborn'
+                        'seaborn',
+                        'mrg32k3a'
 ]
 
 napolean_numpy_docstring = True

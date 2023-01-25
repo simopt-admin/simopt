@@ -9,7 +9,7 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import random number generator.
-from rng.mrg32k3a import MRG32k3a
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 # Import model.
 
@@ -29,7 +29,7 @@ from rng.mrg32k3a import MRG32k3a
 
 # Working example for MM1 model.
 # -----------------------------------------------
-from models.mm1queue import MM1Queue
+from simopt.models.mm1queue import MM1Queue
 fixed_factors = {"lambda": 3.0, "mu": 8.0}
 mymodel = MM1Queue(fixed_factors)
 # -----------------------------------------------

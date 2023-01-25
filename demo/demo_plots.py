@@ -10,7 +10,7 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemSolver class and other useful functions
-from experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
+from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
 
 solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
 problem_names = {"SAN-1"} # CNTNEWS-1"} #, "SAN-1"}
