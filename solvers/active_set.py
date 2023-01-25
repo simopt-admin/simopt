@@ -8,7 +8,6 @@ projected gradient descent for problems with linear constraints
 from base import Solver
 from numpy.linalg import norm
 import numpy as np
-import cvxpy as cp
 from scipy.optimize import linprog
 import warnings
 warnings.filterwarnings("ignore")
@@ -68,25 +67,45 @@ class PGD2(Solver):
                 "datatype": int,
                 "default": 30
             },
-            "theta": {
-                "description": "Tolerance for sufficient decrease condition.",
-                "datatype": float,
-                "default": 0.2
-            },
-            "beta": {
-                "description": "Step size reduction factor in line search.",
-                "datatype": float,
+            "beta_1": {
+                "description": "Exponential decay of the rate for the first moment estimates.",
+                "datatype": int,
                 "default": 0.9
             },
+            "beta_2": {
+                "description": "Exponential decay rate for the second-moment estimates.",
+                "datatype": int,
+                "default": 0.999
+            },
+            "theta": {
+                "description": "Constant in the Armijo condition.",
+                "datatype": int,
+                "default": 0.2
+            },
+            "gamma": {
+                "description": "Constant for shrinking the step size.",
+                "datatype": int,
+                "default": 0.8
+            },
             "alpha_0": {
-                "description": "Maximum step size.",
-                "datatype": float,
-                "default": 10.0
+                "description": "Initial step size.",
+                "datatype": int,
+                "default": 0.1
+            },
+            "s": {
+                "description": "Initial step size after projection.",
+                "datatype": int,
+                "default": 0.1
             },
             "epsilon": {
                 "description": "A small value to prevent zero-division.",
                 "datatype": int,
                 "default": 10**(-8)
+            },
+            "epsilon_f": {
+                "description": "Additive constant in the Armijo condition.",
+                "datatype": int,
+                "default": 1  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
             "sensitivity": {
                 "description": "Shrinking scale for variable bounds.",
@@ -371,10 +390,8 @@ class PGD2(Solver):
 
         return recommended_solns, intermediate_budgets
 
+    # Finite difference for approximating gradients.
     def finite_diff(self, new_solution, BdsCheck, problem, stepsize, r):
-        '''
-        Finite difference for approximate gradients of new_solution.
-        '''
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
@@ -442,12 +459,10 @@ class PGD2(Solver):
             (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
 
 
-
+    # Find the initial feasible solution
+    # (if not user-provided) by solving the
+    # equality-constrained linear program
     def find_feasible_initial(self, problem, C, d):
-        '''
-        Find the initial feasible solution (if not user-provided) by solving the
-        equality-constrained linear program
-        '''
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
         neq = len(problem.Ci)
@@ -516,80 +531,20 @@ class PGD2(Solver):
     def add_active_constraint(self, cidx, acidx):
         return np.vstack((acidx, np.array([cidx])))
     
-    # TODO: complete the functions below and test correctness
-
-    def project_grad(self, problem, x, A, b):
+    # # remove constraint from the active set
+    # def remove_active_constraint(self, cidx, acidx):
+    #     # remove the constraint index
+    #     acidx = np.delete(acidx, (cidx), axis=0)
+    # TODO: check correctness of the function
+    def project_grad(self, x, A, b):
         """
-        Project the vector x' onto the hyperplane H: Ax = b by solving a quadratic projection problem:
-
-        min d^Td
-        s.t. A(x' + d) <= b
+        Project the vector x onto the hyperplane H: Ax = b.
         """
-        # Define variables
-        d = cp.Variable(problem.dim)
-
-        # Define objective
-        obj = cp.Minimize(cp.quad_form(d, np.identity(problem.dim)))
-
-        # Define constraints
-        constraints = [A @ (x + d) <= b]
-
-        # Form and solve problem
-        prob = cp.Problem(obj, constraints)
-        prob.solve(solver=cp.AUTOSOLVE)
-
-        # Get the projected vector
-        x_new = x + d.value
-
-        return x_new
-
-    def line_search(self, problem, expended_budget, grad, cur_sol, r, d, alpha, beta):
-        """
-        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible.
-
-        Arguments
-        ---------
-        problem :
-
-        expended_budget:
-
-        grad :
-
-        cur_sol : Solution object
-            current solution
-        r : float
-            maximum step size allowed
-        d : ndarray
-            search direction
-        alpha: float
-               tolerance for sufficient decrease condition
-        beta: float
-              step size reduction factor
-
-        Returns
-        -------
-        step_size : float
-                    computed step size
-        expended_budget : int
-                          updated expended_budget
-        """
-        x = cur_sol.x
-        fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
-        step_size = r
-        while True:
-            if expended_budget > problem.factors["budget"]:
-                    break
-            x_new = x + step_size * d
-            # Create a solution object for x_new.
-            x_new_solution = self.create_new_solution(tuple(x_new), problem)
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(x_new_solution, r)
-            expended_budget += r
-            # Check the sufficient decrease condition.
-            f_new = -1 * problem.minmax[0] * x_new_solution.objectives_mean
-            if f_new < fx + alpha * step_size * np.dot(grad, d):
-                break
-            step_size *= beta
-        return step_size, expended_budget
-
-
+        print('A', A)
+        print('b', b)
+        print('input x', x)
+        x = x[np.newaxis].T
+        lamb = np.linalg.solve(A@A.T, A@x-b)
+        proj_x = x - A.T@lamb
+        print('proj_x', proj_x.reshape((-1,)))
+        return proj_x.reshape((-1,))
