@@ -8,16 +8,15 @@ A detailed description of the model/problem can be found
 import numpy as np
 import copy
 from scipy.spatial import distance_matrix
-
-import heapq
+from decimal import * 
 
 from ..base import Model, Problem
 
 
 class BikeShare(Model):
     """
-    A model that simulates a day of bike sharing program. Returns the
-    total cost of distribution, total penalty incurred during the operation hours.
+    A model that simulates a day of bike sharing program. Returns 
+    total penalty incurred during the operation hours.
 
     Attributes
     ----------
@@ -51,27 +50,21 @@ class BikeShare(Model):
         self.n_responses = 1 # TODO: modify if more responses are added
         self.factors = fixed_factors 
 
-        locations = [[i, j] for i in range(15) for j in range(15)]
-        dist_mat = distance_matrix(locations, locations, p=1)
-
-        # locations = [[i, j] for i in range(2) for j in range(2)]
-        # dist_mat = distance_matrix(locations, locations, p=1)
-
         self.specifications = {
             "map_dim":{
                 "description": "dimsion of the grid map",
                 "datatype": int,
-                "default": 15
+                "default": 5
             },
             "num_bikes": {
                 "description": "total number of bikes in the city",
                 "datatype": int,
-                "default": 3200
+                "default": 375 #3200
             },
             "num_bikes_start":{
                 "description": "(decision var) number of bikes to start at each station at the beginning of the day",
                 "datatype": list,
-                "default": [14] * 175 + [15] * 50
+                "default": tuple([15] * 25)
             },
             "day_length": {
                 "description": "the length of a day in operation in hours",
@@ -81,7 +74,7 @@ class BikeShare(Model):
             "station_capacities": {
                 "description": "the capacity of each corresponding stations",
                 "datatype": list,
-                "default": [20] * 225 
+                "default": 18
             },
             "empty_penalty_constant": {
                 "description": "the penalty constant for when a station has no bike",
@@ -93,11 +86,6 @@ class BikeShare(Model):
                 "datatype": float,
                 "default": 50.0 
             },
-            "arrival_rates": {
-                "description": "user arrival rates to each corresponding stations (in this model, we assume a homogeneous Poisson process for each station)",
-                "datatype": list,
-                "default": [1/6] * 225 # mean interarrival time = 10min for each station
-            },
             "gamma_mean_const": {
                 "description": "scalar for the mean time it takes the user to return the bike",
                 "datatype": float,
@@ -106,7 +94,7 @@ class BikeShare(Model):
             "gamma_variance_const": {
                 "description": "scalar for the variance of time it takes the user to return the bike",
                 "datatype": float,
-                "default": 1/144
+                "default": 1/12
             },
             "gamma_mean_const_s": {
                 "description": "mean time it takes the user to return bike to the same station",
@@ -122,11 +110,6 @@ class BikeShare(Model):
                 "description": "constant multiple for the cost of rebalancing bikes",
                 "datatype": float,
                 "default": 5
-            },
-            "distance": {
-                "description": "An s x s matrix containing distance from each pair of stations",
-                "datatype": list,
-                "default": dist_mat 
             }
         }
 
@@ -138,13 +121,11 @@ class BikeShare(Model):
             "station_capacities": self.check_station_capacities,
             "empty_penalty_constant": self.check_empty_penalty_constant,
             "full_penalty_constant": self.check_full_penalty_constant,
-            "arrival_rates": self.check_arrival_rates,
             "gamma_mean_const": self.check_gamma_mean_const,
             "gamma_variance_const": self.check_gamma_variance_const,
             "gamma_mean_const_s": self.check_gamma_mean_const_s,
             "gamma_variance_const_s": self.check_gamma_variance_const_s,
-            "rebalancing_constant": self.check_rebalancing_constant,
-            "distance": self.check_distance,
+            "rebalancing_constant": self.check_rebalancing_constant
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -163,16 +144,13 @@ class BikeShare(Model):
         return self.factors["day_length"] >= 0 and self.factors["day_length"] <= 24
 
     def check_station_capacities(self):
-        return all (cap >= 0 for cap in self.factors["station_capacities"])
+        return self.factors["station_capacities"] >= 0
 
     def check_empty_penalty_constant(self):
         return self.factors["empty_penalty_constant"] > 0
 
     def check_full_penalty_constant(self):
         return self.factors["full_penalty_constant"] > 0
-
-    def check_arrival_rates(self):
-        return all(rates > 0 for rates in self.factors["arrival_rates"])
 
     def check_gamma_mean_const(self):
         return self.factors["gamma_mean_const"] > 0
@@ -189,8 +167,6 @@ class BikeShare(Model):
     def check_rebalancing_constant(self):
         return self.factors["rebalancing_constant"] > 0
 
-    def check_distance(self):
-        return True # TODO: check distances
 
     def replicate(self, rng_list):
         """
@@ -208,153 +184,233 @@ class BikeShare(Model):
             "total cost" = The total operations cost over a running day
         """
 
-        def gen_arrival_rate(alpha = 1/6):
+        def gen_arrival_rate(alpha = 4):
             """
             Return the time-dependent arrival rates of bikeville in the 
             morning, noon, and evening
             """
             dim = self.factors["map_dim"]
-            morning = np.ones(size=(dim, dim))
-            noon = np.ones(size=(dim, dim))
-            evening = np.ones(size=(dim, dim))
+            morning = np.ones(shape=(dim, dim))
+            noon = np.ones(shape=(dim, dim)) * 2
+            evening = np.ones(shape=(dim, dim))
 
-            for i in dim:
-                for j in dim:
-                    morning[i, j] = alpha + (np.abs(i - dim/2) + np.abs(j - dim/2)) * (1/dim)
-                    evening[i, j] = - (np.abs(i - dim/2) + np.abs(j - dim/2)) 
+            for i in range(dim):
+                for j in range(dim):
+                    morning[i, j] = alpha * (np.abs(i - dim//2) + np.abs(j - dim//2)) / dim
+                    evening[i, j] = alpha - alpha * (np.abs(i - dim//2) + np.abs(j - dim//2)) / dim
+            # print(morning, evening)
+            # print(morning, noon, evening)
             return morning.flatten(), noon.flatten(), evening.flatten()
+        
+        def gen_distance():
+            """
+            Returns:
+                list[list]: adjacency matrix containing distance between 
+                each pair of stations
+            """
+            dim = self.factors["map_dim"]
+            locations = [[i, j] for i in range(dim) for j in range(dim)]
+            dist_mat = distance_matrix(locations, locations, p=1)
+            return dist_mat
+        
+        def alias_init(dist):
+            """
+            Initialize the alias method (Adapted from Joe's implementation)
+            (referencing https://github.com/asmith26/Vose-Alias-Method/blob/main/vose_sampler/vose_sampler.py).
+            Parameters
+            ---------
+            dist : 'dictionary'
+                A probability distribution for discrete weighted random variables that maps the values to their probabilities.
+            Returns
+            -------
+            table_prob: dictionary
+                table of probabilities
+            table_alias : dictionary
+                table of alias
+            """
+            n = len(dist)
+            table_prob = {}
+            table_alias = {}
+            small = [] # stack for probabilities smaller that 1
+            large = [] # stack for probabilities greater than or equal to 1
 
-        events = {0: "arrive", 1: "return"} # list of events: 0 indexing arrival and 1 indexing return
+            # Construct and sort the scaled probabilities into their appropriate stacks
+            for val, prob in dist.items():
+                table_prob[val] = Decimal(prob) * n
+                if table_prob[val] < 1:
+                    small.append(val)
+                else:
+                    large.append(val)
+
+            # Construct the probability and alias tables
+            while small and large:
+                l = small.pop()
+                g = large.pop()
+                table_alias[l] = g
+                table_prob[g] = (table_prob[g] + table_prob[l] - Decimal(1))
+                if table_prob[g] < 1:
+                    small.append(g)
+                else:
+                    large.append(g)
+
+            # The remaining outcomes (of one stack) must have probability 1
+            while large:
+                table_prob[large.pop()] = Decimal(1)
+
+            while small:
+                table_prob[small.pop()] = Decimal(1)
+            return table_prob, table_alias
+
+
+        def alias(table_prob, table_alias):
+            """Generate a discrete random variate in constant time.
+            Parameters
+            ---------
+            table_prob : dictionary
+                table of probabilities
+            table_alias : dictionary
+                table of alias
+            Returns
+            -------
+            int
+                a discrete random variate from the specified distribution.
+            """
+            # Determine which column of table_prob to inspect
+            i = int(np.floor(np.random.rand() * len(table_prob)))
+            # Determine which outcome to pick in that column
+            if np.random.rand() < table_prob[i]:
+                return i
+            else:
+                return table_alias[i]
 
         t = 0
-        event_list = [] # [time, event, station]
-
-        # print(self.factors["num_bikes_start"])
-        num_bikes = copy.deepcopy(self.factors["num_bikes_start"])
-        target_num_bikes = copy.deepcopy(self.factors["num_bikes_start"])
-        capacity = self.factors["station_capacities"]
-        arrival_rates = self.factors["arrival_rates"]
-
+        event_list = [] # [time, event, station]; event: 0 indexing arrival and 1 indexing return
+        
         num_stations = self.factors["map_dim"] ** 2
-        # switches indicating whether a station is empty or full or not
-        empty_since = [-1] * num_stations
-        full_since = [-1] * num_stations
 
-        penalty_full = 0
-        penalty_empty = 0
+        num_bikes = np.array(copy.deepcopy(self.factors["num_bikes_start"]))
+        capacity = [self.factors["station_capacities"]] * num_stations 
+        morning_arrival_rates, arrival_rates, evening_arrival_rates = gen_arrival_rate()
+        distance = gen_distance()
+        
+        # Generate prob for alias method 
+        morning_prob, evening_prob = {}, {}
+        norm_morn = morning_arrival_rates/sum(morning_arrival_rates)
+        norm_even = evening_arrival_rates/sum(evening_arrival_rates)
+        for i in range(len(arrival_rates)):
+            morning_prob[i] = norm_even[i]
+            evening_prob[i] = norm_morn[i]
+        morn_table_prob, morn_table_alias = alias_init(morning_prob)
+        even_table_prob, even_table_alias = alias_init(evening_prob)
+        
+        # Generate morning, mid-day, evening division
+        day_length = self.factors["day_length"]
+        morning = int(day_length * (1/3))
+        mid_day = morning * 2
+        
+        empty_count = 0 # Number of times a customer arrives and find station empty
+        full_count = 0 # Number of times a customer returns and find station full
+        grad = [0] * num_stations
 
-        # Generate the first event for each station in a day
-        for i, rate in enumerate(arrival_rates):
+        # Generate the first arrival event for each station in a day
+        for i, rate in enumerate(morning_arrival_rates):
             int_arr_time = rng_list[3].expovariate(rate)
             event_list.append([int_arr_time, 0, i])
 
-        # Simulate a working day
+        # Simulate a work day
         while t <= self.factors["day_length"]:
         
             event_list.sort(key = lambda x:x[0])
-            # print("events:", event_list)
-            # print("full since", full_since)
-            # print("empty since", empty_since)
-            # print("num bikes", num_bikes)
-            
             t, event, station = event_list.pop(0)
-            # print(t, events[event], station)
 
             # Arrival Event
             if event == 0:
                 # No bikes in the station
-                if num_bikes[station] -1 < 1:
-                    num_bikes[station] -= 1  
-                    empty_since[station] = t # customer is lost, start counting penalty hours
-                elif num_bikes[station] == capacity[station]:
-                    assert full_since[station] >= 0
-                    penalty_full += self.factors["full_penalty_constant"] * (t - full_since[station])
-                    full_since[station] = -1 
+                if num_bikes[station] < 1:
+                    empty_count += 1 # customer is lost, empty count increment
+                    grad[station] -= 1
                 else:
                     num_bikes[station] -= 1  
-                    station_to = int(rng_list[0].random() * num_stations)
+                    if t < morning:
+                        station_to = alias(morn_table_prob, morn_table_alias)
+                    elif t < mid_day:
+                        station_to = int(rng_list[0].random() * num_stations) if int(rng_list[0].random() * num_stations) < num_stations else num_stations - 1
+                    else:
+                        station_to = alias(even_table_prob, even_table_alias)
                     if station_to != station:
-                        dist = self.factors["distance"][station][station_to]
-                        mean = self.factors["gamma_mean_const"] * dist
-                        var = self.factors["gamma_variance_const"] * dist
-                        time_out = dist * rng_list[1].gammavariate(mean**2/var * 0.0001, mean/var) #TODO: check if this is correct
-                        print(time_out)
+                        dist = distance[station][station_to]
+                        mean = self.factors["gamma_mean_const"]
+                        var = self.factors["gamma_variance_const"] 
+                        time_out = dist * rng_list[1].gammavariate(mean**2/var, var/mean) 
                     else:
                         mean = self.factors["gamma_mean_const_s"]
                         var = self.factors["gamma_variance_const_s"]
-                        time_out = rng_list[2].gammavariate(mean**2/var * 0.0001, mean/var)
-                    # print("return time:", t + time_out)
+                        time_out = rng_list[1].gammavariate(mean**2/var, var/mean)
                     if (t + time_out) < self.factors["day_length"]:
                         event_list.append([t+time_out, 1, station_to])
-                # Generate the next arrival for this station
-                int_arr_time = rng_list[3].expovariate(arrival_rates[station])
-
+                # Different arrival rates during the day
+                if t <= morning:
+                    int_arr_time = rng_list[3].expovariate(morning_arrival_rates[station])
+                elif t <= mid_day:
+                    int_arr_time = rng_list[3].expovariate(arrival_rates[station])
+                else:
+                    int_arr_time = rng_list[3].expovariate(evening_arrival_rates[station])
                 event_list.append([t+int_arr_time, 0, station])
 
             # Return Event
             if event == 1:
-                if num_bikes[station] + 1 == capacity[station]:
-                    num_bikes[station] += 1
-                    full_since[station] = t
-                elif full_since[station] >= 0:
-                    dist = self.factors["distance"][station][station_to]
+                try:
+                    assert num_bikes[station] <= capacity[station]
+                except: # Debug check
+                    print(num_bikes)
+                    1/0
+                if num_bikes[station] == capacity[station]:
+                    full_count += 1
+                    grad[station] += 1
+                    new_station_to = station + 1 if station < num_stations/2 else station - 1
+                    assert new_station_to < num_stations
+                    dist = distance[station][new_station_to]
                     mean = self.factors["gamma_mean_const"] * dist
                     var = self.factors["gamma_variance_const"] * dist
-                    time_out = dist * rng_list[1].gammavariate(mean**2/var * 0.0001, mean/var)
-                    station_to = station + 1
-                    event_list.append([t+time_out, 1, station_to])
-                elif num_bikes[station] == 0:
-                    assert empty_since[station] >= 0
-                    penalty_empty += self.factors["empty_penalty_constant"] * (t - empty_since[station])
-                    empty_since[station] = -1
+                    time_out = dist * rng_list[1].gammavariate(mean**2/var, var/mean)
+                    event_list.append([t+time_out, 1, new_station_to])
                 else:
                     num_bikes[station] += 1
         
-        print("End simulation, start surplus calculation")
-        # print(self.factors["num_bikes_start"])
-        # print("target", target_num_bikes)
-        distribution_cost = 0
-        surplus_pointer = 0
-        lack_pointer = 0
+        ##### We have decided to ignore the distribution cost for now
+        ##### If needed, please comment this section back
+        # # Calculate the redistribution cost
+        # distribution_cost = 0
+        # surplus_pointer = 0
+        # lack_pointer = 0
+        # while surplus_pointer < num_stations and lack_pointer < num_stations:
+        #     if num_bikes[surplus_pointer] > target_num_bikes[surplus_pointer]:
+        #         surplus = num_bikes[surplus_pointer] - target_num_bikes[surplus_pointer]
+        #         while surplus > 0 and lack_pointer < num_stations:
+        #             if num_bikes[lack_pointer] < target_num_bikes[lack_pointer]:
+        #                 need = target_num_bikes[lack_pointer] - num_bikes[lack_pointer]
+        #                 # station needs more than the surplus
+        #                 if need >= surplus:
+        #                     num_distribute = surplus 
+        #                     surplus = 0
+        #                     num_bikes[lack_pointer] += surplus
+        #                 else:
+        #                     num_distribute = need 
+        #                     surplus -= need 
+        #                     lack_pointer += 1
+        #                 distribution_cost += distance[surplus_pointer][lack_pointer] * \
+        #                     self.factors["rebalancing_constant"] * num_distribute
+        #             else:
+        #                 lack_pointer += 1
+        #     surplus_pointer += 1
 
-        # print(num_bikes, len(num_bikes), sum(num_bikes), self.factors["num_bikes_start"])
-        print("Num bikes", sum(num_bikes))
-        # Calculate the redistribution cost
-        while surplus_pointer < num_stations and lack_pointer < num_stations:
-            print("surplus pointer", surplus_pointer)
-            if num_bikes[surplus_pointer] > target_num_bikes[surplus_pointer]:
-                surplus = num_bikes[surplus_pointer] - target_num_bikes[surplus_pointer]
-                print("surplus", surplus)
-                while surplus > 0 and lack_pointer < num_stations:
-                    print("lack pointer", lack_pointer)
-                    print(num_bikes[lack_pointer], target_num_bikes[lack_pointer])
-                    if num_bikes[lack_pointer] < target_num_bikes[lack_pointer]:
-                        need = target_num_bikes[lack_pointer] - num_bikes[lack_pointer]
-                        print("need", need)
-                        # station needs more than the surplus
-                        if need >= surplus:
-                            num_distribute = surplus 
-                            surplus = 0
-                            num_bikes[lack_pointer] += surplus
-                        else:
-                            num_distribute = need 
-                            surplus -= need 
-                            lack_pointer += 1
-                        print("debug checker", self.factors["distance"][surplus_pointer][lack_pointer], num_distribute)
-                        print("* redistribution cost", self.factors["distance"][surplus_pointer][lack_pointer] * \
-                            self.factors["rebalancing_constant"] * num_distribute)
-                        distribution_cost += self.factors["distance"][surplus_pointer][lack_pointer] * \
-                            self.factors["rebalancing_constant"] * num_distribute
-                    else:
-                        lack_pointer += 1
-            surplus_pointer += 1
-        penalty = penalty_empty + penalty_full
+        empty_penalty = self.factors["empty_penalty_constant"]
+        full_penalty = self.factors["full_penalty_constant"]
+        penalty = empty_penalty * empty_count + full_penalty * full_count
 
-        print(penalty, distribution_cost) 
-
-        responses = {"cost": penalty + distribution_cost}
-        gradient = {} # TODO: implement gradient
-
+        responses = {"cost": penalty}
+        gradient = {"cost": {"num_bikes_start": grad}}
+        
         return responses, gradient
        
 
@@ -432,15 +488,12 @@ class BikeShareMinCost(Problem):
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
-        # self.dim = 225
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        # self.lower_bounds = tuple(np.zeros(225))
-        # self.upper_bounds = tuple([30] * 225)
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -450,14 +503,13 @@ class BikeShareMinCost(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple([14] * 175 + [15] * 50)
+                "default": tuple([15] * 25)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
-            },
-            "": {}
+            }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -467,9 +519,9 @@ class BikeShareMinCost(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = BikeShare(self.model_fixed_factors)
 
-        self.dim = self.model.factors["num_bikes"]
-        self.lower_bounds = tuple(np.zeros(self.model.factors["num_bikes"]))
-        self.upper_bounds = tuple("station_capacities")
+        self.dim = self.model.factors["map_dim"]**2
+        self.lower_bounds = tuple(np.zeros(self.dim))
+        self.upper_bounds = tuple(self.model.factors["station_capacities"] * np.ones(self.dim))
 
     def vector_to_factor_dict(self, vector):
         """
@@ -486,7 +538,7 @@ class BikeShareMinCost(Problem):
             dictionary with factor keys and associated values
         """
         factor_dict = {
-            "num_bikes_start": vector[0]
+            "num_bikes_start": vector
         }
         return factor_dict
 
@@ -561,7 +613,7 @@ class BikeShareMinCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,) 
-        det_objectives_gradients = ((0),) # TODO: debug checks
+        det_objectives_gradients = ((0,) * self.dim, ) 
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -619,5 +671,20 @@ class BikeShareMinCost(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.integer_random_from_simplex(self.model.factors["map_dim"]**2, self.model.factors["num_bikes"]))
-        return x
+        x = rand_sol_rng.integer_random_vector_from_simplex(self.model.factors["map_dim"]**2, self.model.factors["num_bikes"])
+
+        capacity = self.model.factors["station_capacities"]
+        surplus = 0
+        for i, num in enumerate(x):
+            if num > capacity[i]:
+                surplus += num - capacity[i]
+                x[i] = capacity[i]
+
+        rand_x = np.random.permutation(len(x))
+        for i in rand_x:
+            if surplus <= 0:
+                break
+            elif x[i] < capacity[i]:
+                surplus = surplus - (capacity[i] - x[i])
+                x[i] = capacity[i] + min(0, surplus)
+        return tuple(x)
