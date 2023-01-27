@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class PGD(Solver):
+class PGD2(Solver):
     """
     Description.
 
@@ -49,7 +49,7 @@ class PGD(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="PGD", fixed_factors={}):
+    def __init__(self, name="pgd-usimplex", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"

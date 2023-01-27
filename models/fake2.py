@@ -36,7 +36,7 @@ class Fake2(Model):
     base.Model
     """
     def __init__(self, fixed_factors={}):
-        self.name = "FAKE"
+        self.name = "FAKE2"
         self.n_rngs = 0
         self.n_responses = 1
         self.factors = fixed_factors
@@ -174,7 +174,7 @@ class FakeProblem2(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
+                "default": 10000
             }
         }
         self.check_factor_list = {

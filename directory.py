@@ -21,7 +21,8 @@ from solvers.strong import STRONG
 from solvers.adam import ADAM
 from solvers.aloe import ALOE
 from solvers.adam2 import ADAM2
-from solvers.PGD_usimplex import PGD
+from solvers.pgd_usimplex import PGD2
+from solvers.pgd import PGD
 from solvers.aloe2 import ALOE2
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
@@ -44,6 +45,7 @@ from models.prodsys import ProdSys, ProdSysMinLeadTime
 from models.covid import COVID, CovidMinInfect
 from models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
 from models.fake import Fake, FakeProblem
+from models.fake2 import Fake2, FakeProblem2
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -84,7 +86,9 @@ problem_directory = {
     "COVID-1": CovidMinInfect,
     "VOLUNTEER-1": VolunteerDist,
     "VOLUNTEER-2": VolunteerSurvival,
-    "FAKE-1": FakeProblem
+    "FAKE-1": FakeProblem,
+    "FAKE2-1": FakeProblem2
+
 }
 problem_nonabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
@@ -127,7 +131,8 @@ model_directory = {
     "PRODSYS": ProdSys,
     "COVID": COVID,
     "VOLUNTEER": Volunteer,
-    "FAKE": Fake
+    "FAKE": Fake,
+    "FAKE2": Fake2
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",

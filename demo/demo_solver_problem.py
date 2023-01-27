@@ -26,8 +26,8 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
-solver_name = "PGD2"  # Random search solver
-problem_name = "FAKE-2"  # Continuous newsvendor problem
+solver_name = "PGD"  # Random search solver
+problem_name = "FAKE2-1"  # Continuous newsvendor problem
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -46,6 +46,16 @@ myexperiment.run(n_macroreps=5)
 # following pair of lines (and uncommmen the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
 # myexperiment = read_experiment_results(file_name_path)
+
+# #################
+# # plot the recommended solutions
+# import matplotlib.pyplot as plt
+# import numpy as np
+# sols = myexperiment.all_recommended_xs[0]
+# xs, ys = zip(*sols)
+# plt.scatter(xs, ys, c= np.arange(len(ys)), s= 50)
+# plt.show()
+
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.

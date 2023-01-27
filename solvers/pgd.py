@@ -2,19 +2,17 @@
 Summary
 -------
 PGD
-projected gradient descent for problems with linear constraints
+projected gradient descent for problems with linear constraints Ce@x <= de, Ci@x <= di
 """
 
 from base import Solver
-from numpy.linalg import norm
 import numpy as np
 import cvxpy as cp
-from scipy.optimize import linprog
 import warnings
 warnings.filterwarnings("ignore")
 
 
-class PGD2(Solver):
+class PGD(Solver):
     """
     Description.
 
@@ -66,9 +64,9 @@ class PGD2(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 10
             },
-            "theta": {
+            "alpha": {
                 "description": "Tolerance for sufficient decrease condition.",
                 "datatype": float,
                 "default": 0.2
@@ -83,16 +81,6 @@ class PGD2(Solver):
                 "datatype": float,
                 "default": 10.0
             },
-            "epsilon": {
-                "description": "A small value to prevent zero-division.",
-                "datatype": int,
-                "default": 10**(-8)
-            },
-            "sensitivity": {
-                "description": "Shrinking scale for variable bounds.",
-                "datatype": float,
-                "default": 10**(-7)
-            },
             "lambda": {
                 "description": "magnifying factor for n_r inside the finite difference function",
                 "datatype": int,
@@ -102,15 +90,9 @@ class PGD2(Solver):
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
             "r": self.check_r,
-            "beta_1": self.check_beta_1,
-            "beta_2": self.check_beta_2,
-            "theta": self.check_theta,
-            "gamma": self.check_gamma,
+            "alpha": self.check_alpha,
+            "beta": self.check_beta,
             "alpha_0": self.check_alpha_0,
-            "s": self.check_s,
-            "epsilon": self.check_epsilon,
-            "epsilon_f": self.check_epsilon_f,
-            "sensitivity": self.check_sensitivity,
             "lambda": self.check_lambda
         }
         super().__init__(fixed_factors)
@@ -118,32 +100,14 @@ class PGD2(Solver):
     def check_r(self):
         return self.factors["r"] > 0
 
-    def check_beta_1(self):
-        return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+    def check_alpha(self):
+        return self.factors["alpha"] > 0
 
-    def check_beta_2(self):
-        return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
-
-    def check_theta(self):
-        return self.factors["theta"] > 0 & self.factors["theta"] < 1
-
-    def check_gamma(self):
-        return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
+    def check_beta(self):
+        return self.factors["beta"] > 0 & self.factors["beta"] < 1
 
     def check_alpha_0(self):
         return self.factors["alpha_0"] > 0
-
-    def check_s(self):
-        return self.factors["s"] > 0 & self.factors["s"] < 1
-    
-    def check_epsilon(self):
-        return self.factors["epsilon"] > 0
-
-    def check_epsilon_f(self):
-        return self.factors["epsilon_f"] > 0
-
-    def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
     
     def check_lambda(self):
         return self.factors["lambda"] > 0
@@ -172,20 +136,15 @@ class PGD2(Solver):
 
         # Default values.
         r = self.factors["r"]
-        theta = self.factors["theta"]
-        gamma = self.factors["gamma"]
+        alpha = self.factors["alpha"]
+        beta = self.factors["beta"]
         alpha_0 = self.factors["alpha_0"]
-        epsilon_f = self.factors["epsilon_f"]
-        s = self.factors["s"]
 
-        # Shrink the bounds to prevent floating errors.
-        # lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
-        # upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+        # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
 
-        #TODO: check coefficient matrix for full rank
-
+        # Input inequality and equlaity constraint matrix and vector.
         # Cix <= di
         # Cex = de
         Ci = problem.Ci
@@ -193,54 +152,20 @@ class PGD2(Solver):
         Ce = problem.Ce
         de = problem.de
 
-        atol = 1e-05
-
-        neq = len(de) # number of equality constraints
-
-        # Form a constraint coefficient matrix where all the equality constraints are put on top and
-        # all the bound constraints in the bottom.
-
-        C = np.vstack((Ce, Ci, np.identity(upper_bound.shape[0]), -np.identity(lower_bound.shape[0])))
-        # Form a constraint coefficient vector
-        d = np.vstack((de, di, upper_bound[np.newaxis].T, -lower_bound[np.newaxis].T))
-
-        # Active constraint index vector
-        acidx = np.ndarray((0, 1))
-
-        # Initialize stepsize.
-        alpha = alpha_0
-
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         new_x = new_solution.x
-        # If the initial solution is not feasible, generate one using phase one simplex.
-        if not self._feasible(np.array(problem.factors["initial_solution"]), problem):
-            new_x = self.find_feasible_initial(problem, C, d)
-            new_solution = self.create_new_solution(tuple(new_x), problem)
-
-        # Initialize active set
-        # equality constraints always in active set.
-        # save the indeces into the full matrix.
-        # add any inequality constraints to the
-        # active working set that are equal to the
-        # constraint value, i.e.
-        # x>=0 is active if x=0.
-        # TODO: debug add_active_constraint
-        cx = np.dot(C, new_x)
-        # print('cx', cx)
-        # print("C", C)
-        # print('d', d)
-        for j in range(cx.shape[0]):
-            if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
-                # print('j', j)
-                acidx = self.add_active_constraint(j, acidx)
-        # print('acidx - initial', acidx)
         problem.simulate(new_solution, r)
         expended_budget += r
         best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+        # If the initial solution is not feasible, generate one using phase one simplex.
+        # if not self._feasible(new_x, problem):
+        if True:
+            new_x = self.find_feasible_initial(problem, Ce, Ci, de, di)
+            new_solution = self.create_new_solution(tuple(new_x), problem)
 
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
@@ -253,127 +178,67 @@ class PGD2(Solver):
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-                print('IPA grad', grad)
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, r)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-                # A while loop to prevent zero gradient
+                # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
                     if expended_budget > problem.factors["budget"]:
                         break
-                    grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                    grad = self.finite_diff(new_solution, BdsCheck, problem, r)
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
-   
+
+            # Line search to determine a step_size.
+            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, alpha_0, -grad, alpha, beta)
             # Get a temp solution.
-            temp_x = new_x - grad
-            print('temp_x', temp_x)
-            # Update the active set
-            acidx = np.ndarray((0, 1))
-            cx = np.dot(C, temp_x)
-            for j in range(cx.shape[0]):
-                # TODO : isclose or not isclose
-                if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
-                    print('C', C[j])
-                    print('d[j]', d[j])
-                    acidx = self.add_active_constraint(j, acidx)
-            # Project it onto the active set
-            mask = np.isin(np.arange(C.shape[0]), acidx, assume_unique=True)
-            # print('acidx', acidx)
-            # print('temp_x', temp_x)
-            # print('mask', mask)
-            proj_x = self.project_grad(temp_x, C[mask], d[mask])
+            temp_x = new_x - step_size * grad
 
-            # Get new direction
-            dir = proj_x - new_x
-
-            print('proj_x', proj_x)
-            print('temp_x', temp_x)
-            print('dir', dir)
-
-            # Ratio test to determine the maximum step size possible
-            ineq_idx = []
-            cx = np.dot(C, new_solution.x)
-            for j in range(cx.shape[0]):
-                if not np.isclose(cx[j], d[j], rtol=0, atol=atol):
-                    ineq_idx.append(j) # Find all constraints with strict inequality
-            mask = np.array(ineq_idx)
-            # TODO:
-            # g - Gx_k 
-            RHS = d[mask] - np.matmul(C[mask], temp_x.T)[:,np.newaxis]
-            # Gd_k
-            LHS = np.matmul(C[mask], dir[np.newaxis].T)
-            print("Cmask shape", C[mask].shape)
-            # print('dir shape', (dir[np.newaxis].T).shape)
-            print("dmask shape", d[mask].shape)
-            print("RHS", RHS)
-            print("LHS", LHS)
-            # Ratio Test
-            s = 1
-            min_ratio = np.inf
-            for i in range(len(mask)):
-                try:
-                    ratio = LHS[i] / RHS[i]
-                except:
-                    ratio = LHS[i] / RHS[i]
-                print('LHS i', LHS[i])
-                print("RHS i", RHS[i])
-                print('ratio', ratio)
-                if (ratio > 0) & (ratio < min_ratio):
-                    min_ratio = ratio
-            if min_ratio != np.inf:
-                s = min_ratio
-        
-            # Calculate the candidate solution.
-            print('max step size: ', s)
-            print('dir', dir)
-            print('new_x', new_x)
-            candidate_x = new_x + s * dir
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+            if self._feasible(temp_x, problem):
+                new_solution = self.create_new_solution(tuple(temp_x), problem)
+            else:
+                # If not feasible, project temp_x back to the feasible set.
+                proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
+                new_solution = self.create_new_solution(tuple(proj_x), problem)
 
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(candidate_solution, r)
+            problem.simulate(new_solution, r)
             expended_budget += r
 
-            # Use Armijo condition for line search
-            while not (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(dir)**2 + 2 * epsilon_f):
-                if expended_budget > problem.factors["budget"]:
-                    break
-                # Unsuccessful step.
-                s = gamma * s
-                # Calculate the candidate solution.
-                candidate_x = new_x + s * dir
-                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-                # Use r simulated observations to estimate the objective value.
-                problem.simulate(candidate_solution, r)
-                expended_budget += r
-            print('final step size', s)
-            # Successful step.
-            new_solution = candidate_solution
-
-            # Updating active set.
-            acidx = np.ndarray((0, 1))
-            cx = np.dot(C, new_solution.x)
-            for j in range(cx.shape[0]):
-                if j < neq or np.isclose(cx[j], d[j], rtol=0, atol=atol):
-                    acidx = self.add_active_constraint(j, acidx)
-
-            print('new x', new_solution.x)
-            print("x sum:", np.sum(new_solution.x))
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
-                print('objective', problem.minmax[0] * new_solution.objectives_mean)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
         return recommended_solns, intermediate_budgets
 
-    def finite_diff(self, new_solution, BdsCheck, problem, stepsize, r):
+
+    # TODO: check the input stepsizes
+    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
         '''
-        Finite difference for approximate gradients of new_solution.
+        Finite difference for approximating objective gradient at new_solution.
+
+        Arguments
+        ---------
+        new_solution : Solution object
+            a solution to the problem
+        BdsCheck : ndarray
+            an array that checks for lower/upper bounds at each dimension
+        problem : Problem object
+            simulation-optimization problem to solve
+        r : int 
+            number of replications taken at each solution
+        stepsize: float
+            step size for finite differences
+
+        Returns
+        -------
+        grad : ndarray
+            the estimated objective gradient at new_solution
+        """
         '''
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
@@ -397,7 +262,7 @@ class PGD2(Solver):
                 steph1 = np.abs(upper_bound[i] - x1[i])
             if x2[i] - steph2 < lower_bound[i]:
                 steph2 = np.abs(x2[i] - lower_bound[i])
-
+            
             # Decide stepsize.
             # Central diff.
             if BdsCheck[i] == 0:
@@ -424,7 +289,6 @@ class PGD2(Solver):
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
                 FnPlusMinus[i, 1] = fn2
-
             # Calculate gradient.
             if BdsCheck[i] == 0:
                 grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
@@ -437,148 +301,108 @@ class PGD2(Solver):
 
 
     def _feasible(self, x, problem):
+        """
+        Check whether a solution vector x is feasible to the problem.
+        
+        Arguments
+        ---------
+        x : ndarray
+            a solution vector
+        problem : Problem object
+            simulation-optimization problem to solve
+        """
         return (np.dot(problem.Ci, x) <= problem.di) & \
             (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=1e-05)) & \
             (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
-
-
-
-    def find_feasible_initial(self, problem, C, d):
-        '''
-        Find the initial feasible solution (if not user-provided) by solving the
-        equality-constrained linear program
-        '''
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
-        neq = len(problem.Ci)
-        nbds = len(lower_bound) + len(upper_bound)
-        # trivial solution if only bounds constraints
-        if nbds == C.shape[0]:
-            if len(lower_bound) > 0:
-                x0 = lower_bound
-            else:
-                x0 = upper_bound
-            if not self._feasible(x0, problem):
-                raise ValueError('ActiveSet: cannot find feasible x0')
-            return x0
-        # remove bounds constraints
-        if nbds:
-            Ce = self.C[:-nbds]
-            de = self.d[:-nbds]
-        else:
-            Ce = C
-            de = d
-        # add slack variables to inequality constraints
-        s = np.ones(shape=(Ce.shape[0],))
-        Ce = np.hstack((Ce, np.diag(s)[:, neq:]))
-        # initialize objective constraint
-        co = np.zeros(shape=(Ce.shape[1],))
-        # add artificial variables to equality constraints
-        s = np.ones(shape=(Ce.shape[0],))
-        Ce = np.hstack((Ce, np.diag(s)[:, :neq]))
-        co = np.hstack((co, np.ones(shape=(neq,))))
-        # add artificial variables to inequality constraints
-        # with a negative target
-        for i in range(neq, Ce.shape[0]):
-            if de[i] < 0:
-                col = np.zeros(shape=(Ce.shape[0], 1))
-                col[i] = 1
-                Ce = np.hstack((Ce, col))
-                co = np.hstack((co, [1]))
-        # convert bounds array to list
-        cl = lower_bound.tolist()
-        cu = upper_bound.tolist()
-        # create a list of bounds 2-tuples
-        bds = []
-        for i in range(Ce.shape[1]):
-            if i < problem.dim:
-                if len(cl) and len(cu):
-                    bd = (cl[i], cu[i])
-                elif len(cl):
-                    bd = (cl[i], np.Inf)
-                elif len(cu):
-                    bd = (0, cu[i])
-                else:
-                    bd = (0, np.Inf)
-            else:
-                bd = (0, np.Inf)
-            bds.append(bd)
-        # solve the linear programs
-        res = linprog(co, A_eq=Ce, b_eq=de, bounds=bds, method='interior-point')
-        if not res.success:
-            raise ValueError('ActiveSet: could not find feasible x0')
-        x0 = res.x[:C.shape[1]].reshape(C.shape[1], 1)
-        if not self._feasible(x0, problem):
-            raise ValueError('ActiveSet: could not find feasible x0')
-        return x0
-
-    # add constraint to the active set
-    def add_active_constraint(self, cidx, acidx):
-        return np.vstack((acidx, np.array([cidx])))
     
-    # TODO: complete the functions below and test correctness
-
-    def project_grad(self, problem, x, A, b):
+    def project_grad(self, problem, x, Ae, Ai, be, bi):
         """
-        Project the vector x' onto the hyperplane H: Ax = b by solving a quadratic projection problem:
+        Project the vector x onto the hyperplane H: Ax = b by solving a quadratic projection problem:
 
         min d^Td
-        s.t. A(x' + d) <= b
+        s.t. Ae(x + d) = be
+             Ai(x + d) <= bi
+             (x + d) >= lb
+             (x + d) <= ub
+        
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        x : ndarray
+            vector to be projected
+        Ae: ndarray
+            equality constraint coefficient matrix
+        be: ndarray
+            equality constraint coefficient vector
+        Ai: ndarray
+            inequality constraint coefficient matrix
+        bi: ndarray
+            inequality constraint coefficient vector 
+        Returns
+        -------
+        x_new : ndarray
+            the projected vector
         """
-        # Define variables
+        # Define variables.
         d = cp.Variable(problem.dim)
 
-        # Define objective
+        # Define objective.
         obj = cp.Minimize(cp.quad_form(d, np.identity(problem.dim)))
 
-        # Define constraints
-        constraints = [A @ (x + d) <= b]
+        # Define constraints.
+        constraints = [Ae @ (x + d) == be,
+                        Ai @ (x + d) <= bi,
+                        (x + d) >= problem.lower_bounds,
+                        (x + d) <= problem.upper_bounds]
 
-        # Form and solve problem
+        # Form and solve problem.
         prob = cp.Problem(obj, constraints)
-        prob.solve(solver=cp.AUTOSOLVE)
+        prob.solve()
 
-        # Get the projected vector
+        # Get the projected vector.
         x_new = x + d.value
 
         return x_new
 
-    def line_search(self, problem, expended_budget, grad, cur_sol, r, d, alpha, beta):
+    def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
         A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible.
 
         Arguments
         ---------
-        problem :
-
-        expended_budget:
-
-        grad :
-
+        problem : Problem object
+            simulation-optimization problem to solve
+        expended_budget: int
+            current expended budget
+        r : int
+            number of replications taken at each solution
+        grad : ndarray
+            objective gradient of cur_sol
         cur_sol : Solution object
             current solution
-        r : float
+        alpha_0 : float
             maximum step size allowed
         d : ndarray
             search direction
         alpha: float
-               tolerance for sufficient decrease condition
+            tolerance for sufficient decrease condition
         beta: float
-              step size reduction factor
+            step size reduction factor
 
         Returns
         -------
         step_size : float
-                    computed step size
+            computed step size
         expended_budget : int
-                          updated expended_budget
+            updated expended budget
         """
         x = cur_sol.x
         fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
-        step_size = r
+        step_size = alpha_0
         while True:
             if expended_budget > problem.factors["budget"]:
-                    break
+                break
             x_new = x + step_size * d
             # Create a solution object for x_new.
             x_new_solution = self.create_new_solution(tuple(x_new), problem)
@@ -592,4 +416,51 @@ class PGD2(Solver):
             step_size *= beta
         return step_size, expended_budget
 
+    # TODO: test this function and use cvxpy instead.
+    def find_feasible_initial(self, problem, Ae, Ai, be, bi):
+        '''
+        Find an initial feasible solution (if not user-provided)
+        by solving phase one simplex.
 
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        C: ndarray
+            constraint coefficient matrix
+        d: ndarray
+            constraint coefficient vector
+
+        Returns
+        -------
+        x0 : ndarray
+            an initial feasible solution
+        '''
+        # Define decision variables.
+        x = cp.Variable(problem.dim)
+
+        # Define objective function.
+        obj = cp.Minimize(0)
+
+        # Define constraints.
+        constraints = [Ae @ x == be,
+                       Ai @ x <= bi,
+                        x >= problem.lower_bounds,
+                        x <= problem.upper_bounds]
+        
+        # Create problem.
+        model = cp.Problem(obj, constraints)
+
+        # Solve problem.
+        model.solve()
+        print(model.constraints)
+
+        # Check for optimality.
+        if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
+            raise ValueError("Simplex phase 1: could not find feasible x0")
+        x0 = x.value
+        print('Initial feasible pt', x0)
+        if not self._feasible(x.value, problem):
+            raise ValueError("Simplex phase 1: could not find feasible x0")
+
+        return x0
