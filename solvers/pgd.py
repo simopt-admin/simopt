@@ -367,7 +367,7 @@ class PGD(Solver):
 
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
-        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible.
+        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. #TODO : change step size
 
         Arguments
         ---------
