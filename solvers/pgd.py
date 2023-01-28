@@ -162,8 +162,8 @@ class PGD(Solver):
         intermediate_budgets.append(expended_budget)
 
         # If the initial solution is not feasible, generate one using phase one simplex.
-        # if not self._feasible(new_x, problem):
-        if True:
+        if not self._feasible(new_x, problem):
+        # if True:
             new_x = self.find_feasible_initial(problem, Ce, Ci, de, di)
             new_solution = self.create_new_solution(tuple(new_x), problem)
 
@@ -191,7 +191,7 @@ class PGD(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
-            # Line search to determine a step_size.
+            # Line search to determine a step_size. #TODO: change input step size
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, alpha_0, -grad, alpha, beta)
             # Get a temp solution.
             temp_x = new_x - step_size * grad
@@ -216,7 +216,6 @@ class PGD(Solver):
         return recommended_solns, intermediate_budgets
 
 
-    # TODO: check the input stepsizes
     def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
         '''
         Finite difference for approximating objective gradient at new_solution.
@@ -365,9 +364,10 @@ class PGD(Solver):
 
         return x_new
 
+    #TODO : change sufficient decrease condition similar to ALOE
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
-        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. #TODO : change step size
+        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. 
 
         Arguments
         ---------
