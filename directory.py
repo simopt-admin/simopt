@@ -24,6 +24,7 @@ from solvers.adam2 import ADAM2
 from solvers.pgd_usimplex import PGD2
 from solvers.pgd import PGD
 from solvers.aloe2 import ALOE2
+from solvers.active_set import ACTIVESET
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -56,7 +57,8 @@ solver_directory = {
     "ALOE": ALOE,
     "ADAM2": ADAM2,
     "PGD": PGD,
-    "ALOE2": ALOE2
+    "ALOE2": ALOE2,
+    "ACTIVESET": ACTIVESET
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,

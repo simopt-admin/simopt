@@ -2,7 +2,7 @@
 Summary
 -------
 PGD
-projected gradient descent for problems with linear constraints Ce@x <= de, Ci@x <= di
+projected gradient descent for problems with linear constraints, i.e., Ce@x == de, Ci@x <= di
 """
 
 from base import Solver
@@ -86,6 +86,12 @@ class PGD(Solver):
                 "datatype": int,
                 "default": 2
             },
+            "tol": {
+                "description": "floating point comparison tolerance",
+                "datatype": float,
+                "default": 1e-7
+            },
+            
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -93,7 +99,8 @@ class PGD(Solver):
             "alpha": self.check_alpha,
             "beta": self.check_beta,
             "alpha_0": self.check_alpha_0,
-            "lambda": self.check_lambda
+            "lambda": self.check_lambda,
+            "tol": self.check_tol
         }
         super().__init__(fixed_factors)
 
@@ -111,6 +118,9 @@ class PGD(Solver):
     
     def check_lambda(self):
         return self.factors["lambda"] > 0
+
+    def check_tol(self):
+        return self.factors["tol"] > 0
 
     def solve(self, problem):
         """
@@ -139,6 +149,8 @@ class PGD(Solver):
         alpha = self.factors["alpha"]
         beta = self.factors["beta"]
         alpha_0 = self.factors["alpha_0"]
+        tol = self.factors["tol"]
+        max_step = alpha_0 # Maximum step size
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
@@ -155,17 +167,18 @@ class PGD(Solver):
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         new_x = new_solution.x
+
+        # If the initial solution is not feasible, generate one using phase one simplex.
+        if not self._feasible(new_x, problem, tol):
+            new_x = self.find_feasible_initial(problem, Ce, Ci, de, di, tol)
+            new_solution = self.create_new_solution(tuple(new_x), problem)
+        
+        # Use r simulated observations to estimate the objective value.
         problem.simulate(new_solution, r)
         expended_budget += r
         best_solution = new_solution
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
-
-        # If the initial solution is not feasible, generate one using phase one simplex.
-        if not self._feasible(new_x, problem):
-        # if True:
-            new_x = self.find_feasible_initial(problem, Ce, Ci, de, di)
-            new_solution = self.create_new_solution(tuple(new_x), problem)
 
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
@@ -191,12 +204,14 @@ class PGD(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
-            # Line search to determine a step_size. #TODO: change input step size
-            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, alpha_0, -grad, alpha, beta)
+            # Line search to determine a step_size.
+            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
             # Get a temp solution.
             temp_x = new_x - step_size * grad
+            # Update maximum step size for the next iteration.
+            max_step = step_size
 
-            if self._feasible(temp_x, problem):
+            if self._feasible(temp_x, problem, tol):
                 new_solution = self.create_new_solution(tuple(temp_x), problem)
             else:
                 # If not feasible, project temp_x back to the feasible set.
@@ -209,6 +224,7 @@ class PGD(Solver):
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+                print('x', new_solution.x)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -237,7 +253,6 @@ class PGD(Solver):
         -------
         grad : ndarray
             the estimated objective gradient at new_solution
-        """
         '''
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
@@ -298,21 +313,25 @@ class PGD(Solver):
 
         return grad
 
-
-    def _feasible(self, x, problem):
+    def _feasible(self, x, problem, tol):
         """
-        Check whether a solution vector x is feasible to the problem.
+        Check whether a solution x is feasible to the problem.
         
         Arguments
         ---------
-        x : ndarray
+        x : tuple
             a solution vector
         problem : Problem object
             simulation-optimization problem to solve
+        tol: float
+            Floating point comparison tolerance
         """
-        return (np.dot(problem.Ci, x) <= problem.di) & \
-            (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=1e-05)) & \
-            (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
+        res = True
+        if (problem.Ci is not None) and (problem.di is not None):
+            res = res & np.all(problem.Ci @ x <= problem.di + tol)
+        if (problem.Ce is not None) and (problem.de is not None):
+            res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
+        return res & (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
     
     def project_grad(self, problem, x, Ae, Ai, be, bi):
         """
@@ -350,10 +369,24 @@ class PGD(Solver):
         obj = cp.Minimize(cp.quad_form(d, np.identity(problem.dim)))
 
         # Define constraints.
-        constraints = [Ae @ (x + d) == be,
-                        Ai @ (x + d) <= bi,
-                        (x + d) >= problem.lower_bounds,
-                        (x + d) <= problem.upper_bounds]
+        constraints = []
+
+        if (Ae is not None) and (be is not None):
+            constraints.append(Ae @ (x + d) == be.ravel())
+        if (Ai is not None) and (bi is not None):
+            constraints.append(Ai @ (x + d) <= bi.ravel())
+
+        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds)
+        # Removing redundant bound constraints.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        if len(ub_inf_idx) > 0:
+            for i in ub_inf_idx:
+                constraints.append((x + d)[i] <= upper_bound[i])
+        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        if len(lb_inf_idx) > 0:
+            for i in lb_inf_idx:
+                constraints.append((x + d)[i] >= lower_bound[i])
 
         # Form and solve problem.
         prob = cp.Problem(obj, constraints)
@@ -364,7 +397,6 @@ class PGD(Solver):
 
         return x_new
 
-    #TODO : change sufficient decrease condition similar to ALOE
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
         A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. 
@@ -400,6 +432,7 @@ class PGD(Solver):
         x = cur_sol.x
         fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
         step_size = alpha_0
+        count = 0
         while True:
             if expended_budget > problem.factors["budget"]:
                 break
@@ -414,10 +447,13 @@ class PGD(Solver):
             if f_new < fx + alpha * step_size * np.dot(grad, d):
                 break
             step_size *= beta
+            count +=1
+        # Enlarge the step size if satisfying the sufficient decrease on the first try.
+        if count == 1:
+            step_size /= beta
         return step_size, expended_budget
 
-    # TODO: test this function and use cvxpy instead.
-    def find_feasible_initial(self, problem, Ae, Ai, be, bi):
+    def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
         '''
         Find an initial feasible solution (if not user-provided)
         by solving phase one simplex.
@@ -435,32 +471,48 @@ class PGD(Solver):
         -------
         x0 : ndarray
             an initial feasible solution
+        tol: float
+            Floating point comparison tolerance
         '''
+        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds)
+
         # Define decision variables.
         x = cp.Variable(problem.dim)
 
+        # Define constraints.
+        constraints = []
+
+        if (Ae is not None) and (be is not None):
+            constraints.append(Ae @ x == be.ravel())
+        if (Ai is not None) and (bi is not None):
+            constraints.append(Ai @ x <= bi.ravel())
+
+        # Removing redundant bound constraints.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        if len(ub_inf_idx) > 0:
+            for i in ub_inf_idx:
+                constraints.append(x[i] <= upper_bound[i])
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+        if len(lb_inf_idx) > 0:
+            for i in lb_inf_idx:
+                constraints.append(x[i] >= lower_bound[i])
+
         # Define objective function.
         obj = cp.Minimize(0)
-
-        # Define constraints.
-        constraints = [Ae @ x == be,
-                       Ai @ x <= bi,
-                        x >= problem.lower_bounds,
-                        x <= problem.upper_bounds]
         
-        # Create problem.
+        # # Create problem.
         model = cp.Problem(obj, constraints)
 
         # Solve problem.
-        model.solve()
-        print(model.constraints)
+        model.solve(solver = cp.SCIPY)
 
         # Check for optimality.
         if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
-            raise ValueError("Simplex phase 1: could not find feasible x0")
+            raise ValueError("Could not find feasible x0")
         x0 = x.value
         print('Initial feasible pt', x0)
-        if not self._feasible(x.value, problem):
-            raise ValueError("Simplex phase 1: could not find feasible x0")
+        if not self._feasible(x0, problem, tol):
+            raise ValueError("Could not find feasible x0")
 
         return x0
