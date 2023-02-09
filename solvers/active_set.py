@@ -49,11 +49,11 @@ class ACTIVESET(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="PGD", fixed_factors={}):
+    def __init__(self, name="ACTIVESET", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "deterministic"
+        self.constraint_type = "deterministic"
+        self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
@@ -169,19 +169,25 @@ class ACTIVESET(Solver):
         ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
         lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
 
-        if (Ce is not None) and (de is not None):
+
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de, di))
+        elif (Ce is not None) and (de is not None):
             C = Ce
             d = de
-        elif (Ci is not None) and (di is not None):
-            C = np.vstack((Ci))
-            d = np.vstack((di))
-        elif len(ub_inf_idx) > 0:
-            C = np.vstack((np.identity(upper_bound.shape[0])))
-            d = np.vstack((upper_bound[np.newaxis].T))
-        elif len(lb_inf_idx) > 0:
-            C = np.vstack((-np.identity(lower_bound.shape[0])))
-            d = np.vstack((lower_bound[np.newaxis].T))
+        else:
+            C = Ci
+            d = di
+
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, lower_bound[np.newaxis].T))
         
+
         # Number of equality constraints.
         if (Ce is not None) and (de is not None):
             neq = len(de)
@@ -205,15 +211,14 @@ class ACTIVESET(Solver):
         intermediate_budgets.append(expended_budget)
 
         # Active constraint index vector
-        acidx = []
+        acidx = set()
         # Initialize the active set to be the set of indices of the tight constraints.
         cx = np.dot(C, new_x)
         for j in range(cx.shape[0]):
             if j < neq or np.isclose(cx[j], d[j], rtol=0, atol= tol):
-                acidx.append(j)
+                acidx.add(j)
 
         while expended_budget < problem.factors["budget"]:
-            print('new_x', new_x)
             new_x = new_solution.x
             # Check variable bounds.
             forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
@@ -240,21 +245,23 @@ class ACTIVESET(Solver):
             # Find the search direction and Lagrange multipliers of the direction-finding problem.
             dir, lmbd, = self.compute_search_direction(acidx, grad, problem, C)
             print('dir', dir)
+            print('lmbd', lmbd)
 
             # If the optimal search direction is 0
-            if np.all(dir == 0):
+            print('dir norm',np.linalg.norm(dir) )
+            if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
+                print('ineq lmbd', lmbd[neq:])
                 if np.all(lmbd[neq:] >= 0):
                     break
-                # Otherwise, drop one of the inequality constraints in the active set with negative Lagrange multiplier
+                # Otherwise, drop one of the inequality constraints in the active set with negative Lagrange multiplier.
                 else:
-                    print('argmin', np.argmin(lmbd[neq:][lmbd[neq:] < 0]))
-                    q = neq - 1 + np.argmin(lmbd[neq:][lmbd[neq:] < 0]) # TODO: test this line!
-                    print('q', q)
+                    q = neq + 1 + np.argmin(lmbd[neq:][lmbd[neq:] < 0])
+                    print('dropped constraint', q)
                     acidx.remove(q)
                     candidate_x = new_x
             else:
-                idx = list(set(np.arange(C.shape[0])) - set(acidx))
+                idx = list(set(np.arange(C.shape[0])) - set(acidx)) # Constraints that are not in the active set.
                 # If all constraints are feasible.
                 if np.all(C[idx,:] @ dir <= 0):
                     # Line search to determine a step_size.
@@ -268,38 +275,49 @@ class ACTIVESET(Solver):
                 else:
                     # Get all indices not in the active set such that Ai^Td>0
                     r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0])))
-                    print('ridx', r_idx)
+                    print('r_idx', r_idx)
                     # Compute the ratio test
                     ra = d[r_idx,:].flatten() - C[r_idx, :] @ new_x
                     ra_d = C[r_idx, :] @ dir
 
-                    s_star = float("inf")
+                    s_star = 1
                     q = -1
 
                     for i in range(len(ra)):
                         if ra_d[i] > 0:
                             s = ra[i]/ra_d[i]
+                            print('s', s)
                             if s < s_star:
+                                print('here')
                                 s_star = s
-                                q = i
-                    print('ra', ra)
-                    print('ra_d', ra_d)
-                    print(s_star)
-                    # Line search to determine a step_size.
-                    step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, -grad, alpha, beta)
+                                q = r_idx[i]
+                    print('s_star', s_star)
+                    # If there is no blocking constraint
+                    if q == -1:
+                        # Line search to determine a step_size.
+                        step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
+                    else:
+                        # Line search to determine a step_size.
+                        step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, 1, dir, alpha, beta)
+                        print('step size', step_size)
+                        print('blocking constraint', q)
+                        # Add blocking constraint to the active set.
+                        acidx.add(q)
+
                     # Calculate candidate_x.
                     candidate_x = new_x + step_size * dir
                     # Update maximum step size for the next iteration.
                     max_step = step_size
-                    # Add a blocking constraint to the active set.
-                    acidx.append(q)
+
         
             # Calculate the candidate solution.
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+            new_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(candidate_solution, r)
+            problem.simulate(new_solution, r)
             expended_budget += r
+            print('acidx', acidx)
+            print('newx',new_solution.x)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -335,9 +353,11 @@ class ACTIVESET(Solver):
         # Define variables.
         d = cp.Variable(problem.dim)
 
+        print('active set C ', C[list(acidx), :])
+        print('grad', grad)
         # Define constraints.
-        constraints = [C[acidx, :] @ d == 0,
-                      cp.norm(d) <= 1]
+        constraints = [C[list(acidx), :] @ d == 0,
+                      cp.norm(d, 1) <= 1]
         
         # Define objective.
         obj = cp.Minimize(grad @ d)
@@ -346,9 +366,6 @@ class ACTIVESET(Solver):
 
         # Get Lagrange multipliers
         lmbd = prob.constraints[0].dual_value
-
-        print('dir', d.value)
-        print('lmbd', lmbd)
 
         return d.value, lmbd
 
@@ -485,9 +502,9 @@ class ACTIVESET(Solver):
                 break
             step_size *= beta
             count +=1
-        # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 1:
-            step_size /= beta
+        # # Enlarge the step size if satisfying the sufficient decrease on the first try.
+        # if count == 1:
+        #     step_size /= beta
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
@@ -548,7 +565,6 @@ class ACTIVESET(Solver):
         if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
             raise ValueError("Could not find feasible x0")
         x0 = x.value
-        print('Initial feasible pt', x0)
         if not self._feasible(x0, problem, tol):
             raise ValueError("Could not find feasible x0")
 

@@ -52,8 +52,8 @@ class PGD(Solver):
     def __init__(self, name="PGD", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "deterministic"
+        self.constraint_type = "deterministic"
+        self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
@@ -203,7 +203,6 @@ class PGD(Solver):
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
-            print('grad', grad)
             # Line search to determine a step_size.
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
             # Get a temp solution.
@@ -510,7 +509,6 @@ class PGD(Solver):
         if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
             raise ValueError("Could not find feasible x0")
         x0 = x.value
-        print('Initial feasible pt', x0)
         if not self._feasible(x0, problem, tol):
             raise ValueError("Could not find feasible x0")
 
