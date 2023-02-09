@@ -122,6 +122,8 @@ class ChessMatchmaking(Model):
         waiting_players = []
         total_diff = 0
         elo_diffs = []
+        player_tracker = []
+        del_player = 0
         # Simulate arrival and matching and players.
         for player in range(self.factors["num_players"]):
             # Generate interarrival time of the player.
@@ -136,13 +138,15 @@ class ChessMatchmaking(Model):
                 if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
                     total_diff += abs(player_rating - waiting_players[p])
                     elo_diffs.append(abs(player_rating - waiting_players[p]))
-                    del waiting_players[p]
-                    break
+                    del_player = p
                 else:
-                    wait_times[p] += time
+                    wait_times[player_tracker[p]] += time
+            del waiting_players[del_player]
+            del player_tracker[del_player]
             # If incoming player is not matched, add them to the waiting pool.
             if old_total == total_diff:
                 waiting_players.append(player_rating)
+                player_tracker.append(player)
         # Compose responses and gradients.
         responses = {"avg_diff": np.mean(elo_diffs),
                      "avg_wait_time": np.mean(wait_times)
