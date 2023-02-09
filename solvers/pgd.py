@@ -203,7 +203,7 @@ class PGD(Solver):
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
-
+            print('grad', grad)
             # Line search to determine a step_size.
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
             # Get a temp solution.
@@ -224,7 +224,6 @@ class PGD(Solver):
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
-                print('x', new_solution.x)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

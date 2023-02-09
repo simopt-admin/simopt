@@ -172,7 +172,7 @@ class ACTIVESET(Solver):
         if (Ce is not None) and (de is not None):
             C = Ce
             d = de
-        elif (Ce is not None) and (de is not None):
+        elif (Ci is not None) and (di is not None):
             C = np.vstack((Ci))
             d = np.vstack((di))
         elif len(ub_inf_idx) > 0:
@@ -181,9 +181,12 @@ class ACTIVESET(Solver):
         elif len(lb_inf_idx) > 0:
             C = np.vstack((-np.identity(lower_bound.shape[0])))
             d = np.vstack((lower_bound[np.newaxis].T))
-
+        
         # Number of equality constraints.
-        neq = len(de) 
+        if (Ce is not None) and (de is not None):
+            neq = len(de)
+        else:
+            neq = 0
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
@@ -210,6 +213,7 @@ class ACTIVESET(Solver):
                 acidx.append(j)
 
         while expended_budget < problem.factors["budget"]:
+            print('new_x', new_x)
             new_x = new_solution.x
             # Check variable bounds.
             forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
@@ -297,8 +301,6 @@ class ACTIVESET(Solver):
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            print('candidate_x', candidate_x)
-
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
@@ -335,7 +337,7 @@ class ACTIVESET(Solver):
 
         # Define constraints.
         constraints = [C[acidx, :] @ d == 0,
-                      cp.norm(d, 1) <= 1]
+                      cp.norm(d) <= 1]
         
         # Define objective.
         obj = cp.Minimize(grad @ d)
