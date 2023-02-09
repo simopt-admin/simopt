@@ -125,7 +125,7 @@ class ChessMatchmaking(Model):
         # Simulate arrival and matching and players.
         for player in range(self.factors["num_players"]):
             # Generate interarrival time of the player.
-            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
+            time = arrival_rng.expovariate(self.factors["poisson_rate"])
             # Generate rating of the player via acceptance/rejection (not truncation).
             player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
             while player_rating < 0 or player_rating > 2400:

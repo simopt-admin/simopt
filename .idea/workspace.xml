@@ -1,46 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3c955668-7cb9-433a-8347-17145bf612ca" name="Default Changelist" comment="" />
+    <list default="true" id="3c955668-7cb9-433a-8347-17145bf612ca" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/simopt/models/chessmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/simopt/models/chessmm.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/simopt/base.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3945">
-              <caret line="267" column="29" selection-start-line="267" selection-start-column="29" selection-end-line="267" selection-end-column="29" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/simopt/models/cntnv.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1199">
-              <caret line="51" column="3" selection-start-line="51" selection-start-column="3" selection-end-line="51" selection-end-column="3" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/simopt/docs/sscont.rst">
-          <provider selected="true" editor-type-id="restructured-text-editor" />
-        </entry>
-      </file>
-    </leaf>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
     <option name="width" value="1440" />
     <option name="height" value="900" />
   </component>
+  <component name="ProjectId" id="2LVi41doXHg5xQPaZeZwxF1d0b2" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -89,17 +68,9 @@
       </pane>
     </panes>
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
   </component>
   <component name="RunManager">
     <configuration name="cntnv" type="PythonConfigurationType" factoryName="Python" temporary="true">
@@ -129,12 +100,12 @@
       </list>
     </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="d31251a0-2782-4887-99d4-e87254de6acf" name="Default Changelist" comment="" />
       <created>1642958255861</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
