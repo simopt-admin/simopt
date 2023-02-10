@@ -45,7 +45,8 @@ class Fake2(Model):
                 "description": "x",
                 "datatype": tuple,
                 # "default": (1, 0, 0, 0, 0)
-                "default": (1, 0)
+                "default": (1, 0, 0)
+                # "default": (1, 0)
             },
         }
         self.check_factor_list = {
@@ -172,12 +173,13 @@ class FakeProblem2(Problem):
                 "datatype": tuple,
                 # "default": (-5, 0, 0, 0, 0)
                 # "default": (1, 0, 0, 0, 0)
-                "default": (1, 0)
+                "default": (1, 0, 0)
+                # "default": (1, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 1000
             }
         }
         self.check_factor_list = {
@@ -385,9 +387,15 @@ class FakeProblem2(Problem):
             # self.Ce = np.array([[1, 1, 1, 1, 1]])
             # self.de = np.array([1]) # a simple linear constraint 1 x = 1
             # self.Ci = np.array([[1, 1, 1, 1, 1]])
+            # self.di = np.array([1])
 
-            self.Ce = np.array([[1, 1]])
+            self.Ce = np.array([[1, 1, 1]])
             self.de = np.array([1]) # a simple linear constraint 1 x = 1
+            self.Ci = np.array([[1, 1, 1]])
+            self.di = np.array([1])
+
+            # self.Ce = np.array([[1, 1]])
+            # self.de = np.array([1]) # a simple linear constraint 1 x = 1
             # self.Ci = np.array([[1, 1]])
             # self.di = np.array([1])
 

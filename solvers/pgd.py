@@ -203,8 +203,13 @@ class PGD(Solver):
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
+
             # Line search to determine a step_size.
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+            print('grad ', grad)
+            print('newx ', new_x)
+            print('stepsize ', step_size)
+            print('max step ', max_step)
             # Get a temp solution.
             temp_x = new_x - step_size * grad
             # Update maximum step size for the next iteration.
@@ -447,8 +452,8 @@ class PGD(Solver):
             step_size *= beta
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 1:
-            step_size /= beta
+        if count == 0:
+            step_size /= beta ## BUG might want to decrease instead
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
@@ -499,7 +504,7 @@ class PGD(Solver):
         # Define objective function.
         obj = cp.Minimize(0)
         
-        # # Create problem.
+        # Create problem.
         model = cp.Problem(obj, constraints)
 
         # Solve problem.
