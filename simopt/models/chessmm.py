@@ -145,6 +145,7 @@ class ChessMatchmaking(Model):
                 else:
                     wait_times[p] += time
             # If incoming player is not matched, add them to the waiting pool.
+            #testing
             if old_total == total_diff:
                 waiting_players.append(player_rating)
         # Compose responses and gradients.
