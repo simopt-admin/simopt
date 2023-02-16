@@ -44,19 +44,24 @@ class ChessMatchmaking(Model):
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
-        self.name = "CHESS"
+        self.name = "VALORANT"
         self.n_rngs = 2
         self.n_responses = 2
         self.specifications = {
-            "elo_mean": {
-                "description": "mean of normal distribution for Elo rating",
+            "elo_max": {
+                "description": "maximum value of triangular distribution for Elo rating",
                 "datatype": float,
-                "default": 1200.0
+                "default": 2500.0
             },
-            "elo_sd": {
-                "description": "standard deviation of normal distribution for Elo rating",
+            "elo_min": {
+                "description": "minimum value of triangular distribution for Elo rating",
                 "datatype": float,
-                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+                "default": 0.0
+            },
+            "elo_mode": {
+                "description": "mode of triangular distribution for Elo rating",
+                "datatype": float,
+                "default": 700
             },
             "poisson_rate": {
                 "description": "rate of Poisson process for player arrivals",
@@ -75,8 +80,9 @@ class ChessMatchmaking(Model):
             }
         }
         self.check_factor_list = {
-            "elo_mean": self.check_elo_mean,
-            "elo_sd": self.check_elo_sd,
+            "elo_max": self.check_elo_max,
+            "elo_min": self.check_elo_min,
+            "elo_mode": self.check_elo_mode,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
             "allowable_diff": self.check_allowable_diff
@@ -84,11 +90,13 @@ class ChessMatchmaking(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_elo_mean(self):
-        return self.factors["elo_mean"] > 0
+    def check_elo_max(self):
+        return self.factors["elo_max"] > 0
 
-    def check_elo_sd(self):
-        return self.factors["elo_sd"] > 0
+    def check_elo_mode(self):
+        return self.factors["elo_min"] > 0
+    def check_elo_min(self):
+        return self.factors["elo_mode"] >= 0
 
     def check_poisson_rate(self):
         return self.factors["poisson_rate"] > 0
@@ -129,7 +137,7 @@ class ChessMatchmaking(Model):
         # Simulate arrival and matching and players.
         for player in range(self.factors["num_players"]):
             # Generate interarrival time of the player.
-            time = arrival_rng.poissonvariate(1 / self.factors["poisson_rate"])
+            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
             # Generate rating of the player via acceptance/rejection (not truncation).
             player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
             while player_rating < 0 or player_rating > 2400:
