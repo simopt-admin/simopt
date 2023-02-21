@@ -29,9 +29,9 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 # Working example for MM1 model.
 # -----------------------------------------------
-from simopt.models.mm1queue import MM1Queue
-fixed_factors = {"lambda": 3.0, "mu": 8.0}
-mymodel = MM1Queue(fixed_factors)
+from simopt.models.cntnv import CntNV
+fixed_factors = {"sales_price": 10.0}
+mymodel = CntNV(fixed_factors)
 # -----------------------------------------------
 
 # The rest of this script requires no changes.
