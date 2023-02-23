@@ -463,7 +463,8 @@ class MRG32k3a(random.Random):
         Parameters
         ---------
         dist : 'dictionary'
-            A probability distribution for discrete weighted random variables that maps the values to their probabilities.
+            A probability distribution for discrete weighted 
+            random variables that maps the values to their probabilities.
 
         Returns
         -------
@@ -471,6 +472,8 @@ class MRG32k3a(random.Random):
             table of probabilities
         table_alias : dictionary
             table of alias
+        value_list : list
+            list of possible values of the distribution
         """
         n = len(dist)
         table_prob = {}
@@ -503,10 +506,12 @@ class MRG32k3a(random.Random):
 
         while small:
             table_prob[small.pop()] = Decimal(1)
-        return table_prob, table_alias
+        
+        value_list = list(table_prob.keys())
+        return table_prob, table_alias, value_list
 
 
-    def alias(self, table_prob, table_alias):
+    def alias(self, table_prob, table_alias, value_list):
         """Generate a discrete random variate in constant time.
 
         Parameters
@@ -515,19 +520,21 @@ class MRG32k3a(random.Random):
             table of probabilities
         table_alias : dictionary
             table of alias
-
+        value_list : list
+            list of possible values of the distribution
+        
         Returns
         -------
         int
             a discrete random variate from the specified distribution.
         """
         # Determine which column of table_prob to inspect
-        i = int(np.floor(self.random() * len(table_prob))) + 1
+        i = int(np.floor(self.random() * len(table_prob)))
         # Determine which outcome to pick in that column
-        if self.random() < table_prob[i]:
-            return i
+        if self.random() < table_prob[value_list[i]]:
+            return value_list[i]
         else:
-            return table_alias[i]
+            return table_alias[value_list[i]]
 
     def integer_random_vector_from_simplex(self, n_elements, summation, with_zero=False):
         """Generate a random vector with a specified number of non-negative integer
