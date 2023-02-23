@@ -1,7 +1,7 @@
 """
 Summary
 -------
-Simulate matching of chess players on an online platform.
+Simulate matching of Valorant players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`_.
 """
@@ -11,10 +11,10 @@ from scipy import special
 from ..base import Model, Problem
 
 
-class ChessMatchmaking(Model):
+class ValorantMatchmaking(Model):
     """
     A model that simulates a matchmaking problem with a
-    Elo (truncated normal) distribution of players and Poisson arrivals.
+    Elo (non-stationary triangular distribution) of players and Poisson arrivals.
     Returns the average difference between matched players.
 
     Attributes
@@ -59,14 +59,14 @@ class ChessMatchmaking(Model):
                 "default": 0.0
             },
             "elo_mode": {
-                "description": "mode of triangular distribution for Elo rating",
-                "datatype": float,
-                "default": 700
+                "description": "the mode of the triangular distribution of elos according to the time of day",
+                "datatype": list,
+                "default": [1300, 1200, 1800, 2000, 1900, 2600, 1400, 1200]
             },
             "poisson_rate": {
-                "description": "rate of Poisson process for player arrivals",
-                "datatype": float,
-                "default": 1.0
+                "description": "rate of Poisson process for player arrivals according to the time of day",
+                "datatype": list,
+                "default": [20, 15, 18, 20, 20, 23, 30, 25]
             },
             "num_players": {
                 "description": "number of players",
@@ -77,6 +77,31 @@ class ChessMatchmaking(Model):
                 "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
                 "default": 150.0
+            },
+            "team_num": {
+                "description": "number of players on a team",
+                "datatype": int,
+                "default": 5
+            },
+            "kd_mean": {
+                "description": "The mean kill/death ratio for multivariate normal distribution of k/d and win rate of players",
+                "datatype": float,
+                "default": 1.0
+            },
+            "kd_cov": {
+                "description": "The co-variance of k/d for multivariate normal distribution of k/d and win rate of players",
+                "datatype": float,
+                "default": 0.2
+            },
+            "wr_mean": {
+                "description": "The mean win percentage for multivariate normal distribution of k/d and win rate of players",
+                "datatype": float,
+                "default": 50.0
+            },
+            "wr_cov": {
+                "description": "The co-variance of win rate for multivariate normal distribution of k/d and win rate of players",
+                "datatype": float,
+                "default": 5.0
             }
         }
         self.check_factor_list = {
@@ -84,7 +109,12 @@ class ChessMatchmaking(Model):
             "elo_min": self.check_elo_min,
             "elo_mode": self.check_elo_mode,
             "poisson_rate": self.check_poisson_rate,
+            "team_num": self.check_team_num,
             "num_players": self.check_num_players,
+            "kd_mean": self.check_kd_mean,
+            "kd_cov": self.check_kd_cov,
+            "wr_mean": self.check_wr_mean,
+            "wr_cov": self.check_wr_cov,
             "allowable_diff": self.check_allowable_diff
         }
         # Set factors of the simulation model.
@@ -93,15 +123,37 @@ class ChessMatchmaking(Model):
     def check_elo_max(self):
         return self.factors["elo_max"] > 0
 
-    def check_elo_mode(self):
-        return self.factors["elo_min"] > 0
     def check_elo_min(self):
         return self.factors["elo_mode"] >= 0
 
+    def check_elo_mode(self):
+        for i in range(len(self.factors["elo_mode"])):
+            if self.factors["elo_mode"][i] < 0:
+                return False
+        return True
+
     def check_poisson_rate(self):
-        return self.factors["poisson_rate"] > 0
+        for i in range(len(self.factors["poisson_rate"])):
+            if self.factors["poisson_rate"][i] < 0:
+                return False
+        return True
+
+    def check_team_num(self):
+        return self.factors["team_num"] > 0
 
     def check_num_players(self):
+        return self.factors["num_players"] > 0
+
+    def check_kd_mean(self):
+        return self.factors["num_players"] > 0
+
+    def check_kd_cov(self):
+        return self.factors["num_players"] > 0
+
+    def check_wr_mean(self):
+        return self.factors["num_players"] > 0
+
+    def check_wr_cov(self):
         return self.factors["num_players"] > 0
 
     def check_allowable_diff(self):
