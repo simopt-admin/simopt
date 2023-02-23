@@ -44,9 +44,9 @@ class Fake2(Model):
             "x": {
                 "description": "x",
                 "datatype": tuple,
-                # "default": (1, 0, 0, 0, 0)
+                "default": (1, 0, 0, 0, 0)
                 # "default": (1, 0, 0)
-                "default": (1, 0)
+                # "default": (1, 0)
             },
         }
         self.check_factor_list = {
@@ -172,14 +172,14 @@ class FakeProblem2(Problem):
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
                 # "default": (-5, 0, 0, 0, 0)
-                # "default": (1, 0, 0, 0, 0)
+                "default": (1, 0, 0, 0, 0)
                 # "default": (1, 0, 0)
-                "default": (1, 0)
+                # "default": (1, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 10000
             }
         }
         self.check_factor_list = {
@@ -190,10 +190,10 @@ class FakeProblem2(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Fake2(self.model_fixed_factors)
         self.dim = len(self.model.factors["x"])
-        self.lower_bounds = (0,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
-        # self.lower_bounds = (-1, ) * self.dim
-        # self.upper_bounds = (2, ) * self.dim
+        # self.lower_bounds = (0,) * self.dim
+        # self.upper_bounds = (np.inf,) * self.dim
+        self.lower_bounds = (-1, ) * self.dim
+        self.upper_bounds = (2, ) * self.dim
         self.optimal_solution = None
         # self.optimal_solution = tuple(np.ones(self.dim) / self.dim)
         self.set_linear_constraints()
@@ -290,28 +290,28 @@ class FakeProblem2(Problem):
         # det_objectives = (np.sum(np.array(x)**2),)
         # det_objectives_gradients = (2*np.array(x),)
 
-        det_objectives = (-2*x[0]-6*x[1]+x[0]**2 -2*x[0]*x[1]+2*x[1]**2,)
-        det_objectives_gradients = (np.array([-2+2*x[0]-2*x[1], -6-2*x[0]+4*x[1]]),)
+        # det_objectives = (-2*x[0]-6*x[1]+x[0]**2 -2*x[0]*x[1]+2*x[1]**2,)
+        # det_objectives_gradients = (np.array([-2+2*x[0]-2*x[1], -6-2*x[0]+4*x[1]]),)
 
-        # # Generalization of the Rosenrock function
-        # f = 0
-        # g = np.zeros(self.dim)
-        # t1 = x[0]
-        # t3 = t1 - 1
-        # t0 = 200*(x[1] - t1*t1)
-        # g[0] = 2*(t3 - t0*t1)
-        # f = 0.0025*t0*t0 + t3*t3
-        # for i in range(1, self.dim-1):
-        #    t1 = x[i]
-        #    t2 = 200*(x[i+1] - t1*t1)
-        #    t3 = t1 - 1
-        #    g[i] = 2*(t3 - t2*t1) + t0
-        #    f += 0.0025*t2*t2 + t3*t3
-        #    t0 = t2
-        # g[self.dim - 1] = 200*(x[self.dim - 1] - x[self.dim-2]*x[self.dim-2])
+        # Generalized Rosenrock function
+        f = 0
+        g = np.zeros(self.dim)
+        t1 = x[0]
+        t3 = t1 - 1
+        t0 = 200*(x[1] - t1*t1)
+        g[0] = 2*(t3 - t0*t1)
+        f = 0.0025*t0*t0 + t3*t3
+        for i in range(1, self.dim-1):
+           t1 = x[i]
+           t2 = 200*(x[i+1] - t1*t1)
+           t3 = t1 - 1
+           g[i] = 2*(t3 - t2*t1) + t0
+           f += 0.0025*t2*t2 + t3*t3
+           t0 = t2
+        g[self.dim - 1] = 200*(x[self.dim - 1] - x[self.dim-2]*x[self.dim-2])
 
-        # det_objectives = (f, )
-        # det_objectives_gradients = (g, )
+        det_objectives = (f, )
+        det_objectives_gradients = (g, )
 
         return det_objectives, det_objectives_gradients
 
@@ -381,8 +381,8 @@ class FakeProblem2(Problem):
         if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
             return
         else:
-            self.Ci = np.array([[1, 1],[-1, 2]])
-            self.di = np.array([[2], [2]])
+            # self.Ci = np.array([[1, 1],[-1, 2]])
+            # self.di = np.array([[2], [2]])
 
             # self.Ce = np.array([[1, 1, 1, 1, 1]])
             # self.de = np.array([1]) # a simple linear constraint 1 x = 1
@@ -399,15 +399,15 @@ class FakeProblem2(Problem):
             # self.Ci = np.array([[1, 1]])
             # self.di = np.array([1])
 
-            # # inequality constraint matrix
-            # self.Ci = np.array([[1, 1, 1, 1, 1],
-            #             [1, 1, 1, 0, -1],
-            #             [1, 0, -1, -1, 1],
-            #             [1, -1, 0, 1, 0], 
-            #             [-1, -1, -1, -1, -1],
-            #             [-1, -1, -1, 0, 1],
-            #             [-1, 0, 1, 1, -1],
-            #             [-1, 1, 0, -1, 0]])
-            # # inequality constraint vector
-            # self.di = np.array([[5, 3, 0, 1, -3, 1, 2, 1]])
+            # # # inequality constraint matrix
+            self.Ci = np.array([[1, 1, 1, 1, 1],
+                        [1, 1, 1, 0, -1],
+                        [1, 0, -1, -1, 1],
+                        [1, -1, 0, 1, 0], 
+                        [-1, -1, -1, -1, -1],
+                        [-1, -1, -1, 0, 1],
+                        [-1, 0, 1, 1, -1],
+                        [-1, 1, 0, -1, 0]])
+            # inequality constraint vector
+            self.di = np.array([[5, 3, 0, 1, -3, 1, 2, 1]])
 

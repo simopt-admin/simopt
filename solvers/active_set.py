@@ -170,14 +170,15 @@ class ACTIVESET(Solver):
         # all the bound constraints in the bottom and a constraint coefficient vector.  
         if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
             C = np.vstack((Ce,  Ci))
-            d = np.vstack((de, di))
+            d = np.vstack((de.T, di.T))
         elif (Ce is not None) and (de is not None):
             C = Ce
-            d = de
+            d = de.T
         else:
             C = Ci
-            d = di
-
+            d = di.T
+        
+        print(np.identity(upper_bound.shape[0]))
         if len(ub_inf_idx) > 0:
             C = np.vstack((C, np.identity(upper_bound.shape[0])))
             d = np.vstack((d, upper_bound[np.newaxis].T))
@@ -216,6 +217,7 @@ class ACTIVESET(Solver):
         print('newx', new_x)
         print('d', d)
         for j in range(cx.shape[0]):
+            print('dj', d[j])
             if j < neq or np.isclose(cx[j], d[j], rtol=0, atol= tol):
                 print('j', j)
                 acidx.append(j)
@@ -223,8 +225,8 @@ class ACTIVESET(Solver):
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
-            forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
-            backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
+            forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
+            backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
@@ -256,8 +258,10 @@ class ACTIVESET(Solver):
             print('dir', dir)
             print('lmbd', lmbd)
 
-            # If the optimal search direction is 0
-            if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
+            # If the optimal search direction is 0 ##TODO - change this condition to grad(x)^Tdir = 0
+            print('np.dot(grad, dir)', np.dot(grad, dir))
+            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=1e-2)):
+            # if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
                 if np.all(lmbd[neq:] >= 0):
                     print('lmbd', lmbd)
@@ -333,6 +337,7 @@ class ACTIVESET(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+        print('solutions', [sol.x for sol in recommended_solns])
         print('budget', expended_budget)
         return recommended_solns, intermediate_budgets
 
@@ -363,14 +368,15 @@ class ACTIVESET(Solver):
         d = cp.Variable(problem.dim)
 
         # Define constraints.
-        constraints = [C[acidx, :] @ d == 0,
-                      cp.norm(d, 1) <= 1]
+        constraints = [C[acidx, :] @ d == 0]
         
         # Define objective.
-        obj = cp.Minimize(grad @ d)
+        obj = cp.Minimize(grad @ d + 0.5 * cp.quad_form(d, np.identity(problem.dim)))
         prob = cp.Problem(obj, constraints)
         prob.solve()
-
+        print('grad', grad)
+        print('acidx', acidx)
+        print('status', prob.status)
         # Get Lagrange multipliers
         lmbd = prob.constraints[0].dual_value
 
@@ -510,8 +516,8 @@ class ACTIVESET(Solver):
             step_size *= beta
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 1:
-            step_size /= beta
+        if count == 0:
+            step_size *= beta
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):

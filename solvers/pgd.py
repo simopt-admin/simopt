@@ -206,13 +206,9 @@ class PGD(Solver):
 
             # Line search to determine a step_size.
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
-            print('grad ', grad)
-            print('newx ', new_x)
-            print('stepsize ', step_size)
-            print('max step ', max_step)
+
             # Get a temp solution.
             temp_x = new_x - step_size * grad
-            print('tempx', temp_x)
             # Update maximum step size for the next iteration.
             max_step = step_size
 
@@ -374,7 +370,6 @@ class PGD(Solver):
 
         # Define constraints.
         constraints = []
-
         if (Ae is not None) and (be is not None):
             constraints.append(Ae @ (x + d) == be.ravel())
         if (Ai is not None) and (bi is not None):
@@ -454,7 +449,7 @@ class PGD(Solver):
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
         if count == 0:
-            step_size *= beta ## BUG might want to decrease instead
+            step_size *= beta
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
