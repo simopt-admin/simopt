@@ -185,7 +185,7 @@ class ACTIVESET(Solver):
             d = np.vstack((d, upper_bound[np.newaxis].T))
         if len(lb_inf_idx) > 0:
             C = np.vstack((C, -np.identity(lower_bound.shape[0])))
-            d = np.vstack((d, lower_bound[np.newaxis].T))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
         
 
         # Number of equality constraints.
@@ -220,6 +220,7 @@ class ACTIVESET(Solver):
 
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
+            print('newx', new_x)
             # Check variable bounds.
             forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
             backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
@@ -254,52 +255,43 @@ class ACTIVESET(Solver):
             print('dir', dir)
             print('lmbd', lmbd)
 
-            # If the optimal search direction is 0 ##TODO - change this condition to grad(x)^Tdir = 0
+            # If the optimal search direction is 0
             print('np.dot(grad, dir)', np.dot(grad, dir))
-            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=1e-2)):
+            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=1e-5)): # TODO: change this tolerance to a problem factor
             # if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
                 if np.all(lmbd[neq:] >= 0):
-                    print('lmbd', lmbd)
-                    print('terminated dir', dir)
-                    print('terminated')
                     break
                 # Otherwise, drop the inequality constraint in the active set with the most negative Lagrange multiplier.
                 else:
                     q = acidx[neq + np.argmin(lmbd[neq:][lmbd[neq:] < 0])]
                     print('dropped constraint', q)
                     acidx.remove(q)
-                    candidate_x = new_x
             else:
                 idx = list(set(np.arange(C.shape[0])) - set(acidx)) # Constraints that are not in the active set.
                 # If all constraints are feasible.
                 if np.all(C[idx,:] @ dir <= 0):
-                    print('all feasible + lin search')
                     # Line search to determine a step_size.
-                    # step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+                    step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
                     # Calculate candidate_x.
-                    candidate_x = new_x + 1 * dir
+                    candidate_x = new_x + step_size * dir
                     # Update maximum step size for the next iteration.
                     max_step = step_size
 
                 # Ratio test to determine the maximum step size possible
                 else:
-                    print('ratio test')
                     # Get all indices not in the active set such that Ai^Td>0
-
-                    r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0]))) # TODO: shrink bound for C@dir
+                    r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0])))
                     # Compute the ratio test
                     ra = d[r_idx,:].flatten() - C[r_idx, :] @ new_x
                     ra_d = C[r_idx, :] @ dir
-                    print('ra', ra)
-                    print('rad', ra_d) 
                     # Initialize maximum step size.
                     s_star = np.inf
                     # Initialize blocking constraint index.
                     q = -1
                     # Perform ratio test.
                     for i in range(len(ra)):
-                        if ra_d[i] > 0:
+                        if ra_d[i] - tol > 0:
                             s = ra[i]/ra_d[i]
                             if s < s_star:
                                 s_star = s
@@ -308,34 +300,37 @@ class ACTIVESET(Solver):
                     if s_star >= 1:
                         # Line search to determine a step_size.
                         step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
+
                     # If there is a blocking constraint (i.e., s_star < 1)
                     else:
-                        # Line search to determine a step_size.
-                        step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
                         # Add blocking constraint to the active set.
                         if q not in acidx:
                             acidx.append(q)
+                        # No need to do line search if s_star is 0.
+                        if s_star > 0:
+                            # Line search to determine a step_size.
+                            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
+                        else:
+                            step_size = 0
                     print('s_star', s_star)
                     print('step size', step_size)
 
+                if step_size != 0:
                     # Calculate candidate_x.
                     candidate_x = new_x + step_size * dir
-        
-            # Calculate the candidate solution.
-            new_solution = self.create_new_solution(tuple(candidate_x), problem)
-
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(new_solution, r)
-            expended_budget += r
+                    # Calculate the candidate solution.
+                    new_solution = self.create_new_solution(tuple(candidate_x), problem)
+                    # Use r simulated observations to estimate the objective value.
+                    problem.simulate(new_solution, r)
+                    expended_budget += r
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
-                print('new solution ', new_solution.x)
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+
         print('solutions', [sol.x for sol in recommended_solns])
-        print('budget', expended_budget)
         return recommended_solns, intermediate_budgets
 
 
@@ -377,7 +372,10 @@ class ACTIVESET(Solver):
         # Get Lagrange multipliers
         lmbd = prob.constraints[0].dual_value
 
-        return d.value, lmbd
+        dir = np.array(d.value)
+        dir[np.abs(dir) < self.factors["tol"]] = 0
+
+        return dir, lmbd
 
 
     def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):

@@ -540,8 +540,7 @@ class VolunteerDist(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(x) <= 1 + 10**(-5)) or (np.sum(x) >= 1 - 10**(-5))
-
+        return np.sum(x) <= 1
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.

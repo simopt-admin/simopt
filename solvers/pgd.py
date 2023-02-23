@@ -229,6 +229,8 @@ class PGD(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
+        print('solutions', [sol.x for sol in recommended_solns])
+
         return recommended_solns, intermediate_budgets
 
 
@@ -449,7 +451,7 @@ class PGD(Solver):
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
         if count == 0:
-            step_size *= beta
+            step_size /= beta
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):

@@ -179,7 +179,7 @@ class FakeProblem2(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 30000
             }
         }
         self.check_factor_list = {
@@ -287,31 +287,31 @@ class FakeProblem2(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        # det_objectives = (np.sum(np.array(x)**2),)
-        # det_objectives_gradients = (2*np.array(x),)
+        det_objectives = (np.sum(np.array(x)**2),)
+        det_objectives_gradients = (2*np.array(x),)
 
         # det_objectives = (-2*x[0]-6*x[1]+x[0]**2 -2*x[0]*x[1]+2*x[1]**2,)
         # det_objectives_gradients = (np.array([-2+2*x[0]-2*x[1], -6-2*x[0]+4*x[1]]),)
 
-        # Generalized Rosenrock function
-        f = 0
-        g = np.zeros(self.dim)
-        t1 = x[0]
-        t3 = t1 - 1
-        t0 = 200*(x[1] - t1*t1)
-        g[0] = 2*(t3 - t0*t1)
-        f = 0.0025*t0*t0 + t3*t3
-        for i in range(1, self.dim-1):
-           t1 = x[i]
-           t2 = 200*(x[i+1] - t1*t1)
-           t3 = t1 - 1
-           g[i] = 2*(t3 - t2*t1) + t0
-           f += 0.0025*t2*t2 + t3*t3
-           t0 = t2
-        g[self.dim - 1] = 200*(x[self.dim - 1] - x[self.dim-2]*x[self.dim-2])
+        # # Generalized Rosenbrock function - global optimal [  1;  1;  1;  1;  1 ]
+        # f = 0
+        # g = np.zeros(self.dim)
+        # t1 = x[0]
+        # t3 = t1 - 1
+        # t0 = 200*(x[1] - t1*t1)
+        # g[0] = 2*(t3 - t0*t1)
+        # f = 0.0025*t0*t0 + t3*t3
+        # for i in range(1, self.dim-1):
+        #    t1 = x[i]
+        #    t2 = 200*(x[i+1] - t1*t1)
+        #    t3 = t1 - 1
+        #    g[i] = 2*(t3 - t2*t1) + t0
+        #    f += 0.0025*t2*t2 + t3*t3
+        #    t0 = t2
+        # g[self.dim - 1] = 200*(x[self.dim - 1] - x[self.dim-2]*x[self.dim-2])
 
-        det_objectives = (f, )
-        det_objectives_gradients = (g, )
+        # det_objectives = (f, )
+        # det_objectives_gradients = (g, )
 
         return det_objectives, det_objectives_gradients
 
@@ -384,10 +384,10 @@ class FakeProblem2(Problem):
             # self.Ci = np.array([[1, 1],[-1, 2]])
             # self.di = np.array([[2], [2]])
 
-            # self.Ce = np.array([[1, 1, 1, 1, 1]])
-            # self.de = np.array([1]) # a simple linear constraint 1 x = 1
-            # self.Ci = np.array([[1, 1, 1, 1, 1]])
-            # self.di = np.array([1])
+            self.Ce = np.array([[1, 1, 1, 1, 1]])
+            self.de = np.array([1]) # a simple linear constraint 1 x = 1
+            self.Ci = np.array([[1, 1, 1, 1, 1]])
+            self.di = np.array([1])
 
             # self.Ce = np.array([[1, 1, 1]])
             # self.de = np.array([1]) # a simple linear constraint 1 x = 1
@@ -399,15 +399,16 @@ class FakeProblem2(Problem):
             # self.Ci = np.array([[1, 1]])
             # self.di = np.array([1])
 
-            # # # inequality constraint matrix
-            self.Ci = np.array([[1, 1, 1, 1, 1],
-                        [1, 1, 1, 0, -1],
-                        [1, 0, -1, -1, 1],
-                        [1, -1, 0, 1, 0], 
-                        [-1, -1, -1, -1, -1],
-                        [-1, -1, -1, 0, 1],
-                        [-1, 0, 1, 1, -1],
-                        [-1, 1, 0, -1, 0]])
-            # inequality constraint vector
-            self.di = np.array([[5, 3, 0, 1, -3, 1, 2, 1]])
+            # ## Constraints for Rosenbrock
+            # # inequality constraint matrix
+            # self.Ci = np.array([[1, 1, 1, 1, 1],
+            #             [1, 1, 1, 0, -1],
+            #             [1, 0, -1, -1, 1],
+            #             [1, -1, 0, 1, 0], 
+            #             [-1, -1, -1, -1, -1],
+            #             [-1, -1, -1, 0, 1],
+            #             [-1, 0, 1, 1, -1],
+            #             [-1, 1, 0, -1, 0]])
+            # # inequality constraint vector
+            # self.di = np.array([[5, 3, 0, 1, -3, 1, 2, 1]])
 
