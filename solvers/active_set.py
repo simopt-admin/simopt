@@ -257,7 +257,7 @@ class ACTIVESET(Solver):
 
             # If the optimal search direction is 0
             print('np.dot(grad, dir)', np.dot(grad, dir))
-            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=1e-5)): # TODO: change this tolerance to a problem factor
+            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=tol)): # TODO: change this tolerance to a problem factor
             # if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
                 if np.all(lmbd[neq:] >= 0):
@@ -298,6 +298,7 @@ class ACTIVESET(Solver):
                                 q = r_idx[i]
                     # If there is no blocking constraint (i.e., s_star >= 1)
                     if s_star >= 1:
+                        print('no blocking constraint')
                         # Line search to determine a step_size.
                         step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
 
@@ -512,7 +513,7 @@ class ACTIVESET(Solver):
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
         if count == 0:
-            step_size *= beta
+            step_size /= beta
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):

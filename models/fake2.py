@@ -179,7 +179,7 @@ class FakeProblem2(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 30000
+                "default": 10000
             }
         }
         self.check_factor_list = {
