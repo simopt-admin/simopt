@@ -149,6 +149,7 @@ class ACTIVESET(Solver):
         beta = self.factors["beta"]
         alpha_0 = self.factors["alpha_0"]
         tol = self.factors["tol"]
+        max_step = alpha_0 # Maximum step size
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
@@ -213,13 +214,8 @@ class ACTIVESET(Solver):
         acidx = []
         # Initialize the active set to be the set of indices of the tight constraints.
         cx = np.dot(C, new_x)
-        print('C', C)
-        print('newx', new_x)
-        print('d', d)
         for j in range(cx.shape[0]):
-            print('dj', d[j])
             if j < neq or np.isclose(cx[j], d[j], rtol=0, atol= tol):
-                print('j', j)
                 acidx.append(j)
 
         while expended_budget < problem.factors["budget"]:
@@ -280,9 +276,9 @@ class ACTIVESET(Solver):
                 if np.all(C[idx,:] @ dir <= 0):
                     print('all feasible + lin search')
                     # Line search to determine a step_size.
-                    step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+                    # step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
                     # Calculate candidate_x.
-                    candidate_x = new_x + step_size * dir
+                    candidate_x = new_x + 1 * dir
                     # Update maximum step size for the next iteration.
                     max_step = step_size
 
@@ -290,10 +286,13 @@ class ACTIVESET(Solver):
                 else:
                     print('ratio test')
                     # Get all indices not in the active set such that Ai^Td>0
-                    r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0])))
+
+                    r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0]))) # TODO: shrink bound for C@dir
                     # Compute the ratio test
                     ra = d[r_idx,:].flatten() - C[r_idx, :] @ new_x
                     ra_d = C[r_idx, :] @ dir
+                    print('ra', ra)
+                    print('rad', ra_d) 
                     # Initialize maximum step size.
                     s_star = np.inf
                     # Initialize blocking constraint index.
@@ -321,8 +320,6 @@ class ACTIVESET(Solver):
 
                     # Calculate candidate_x.
                     candidate_x = new_x + step_size * dir
-                    # Update maximum step size for the next iteration.
-                    max_step = step_size
         
             # Calculate the candidate solution.
             new_solution = self.create_new_solution(tuple(candidate_x), problem)
