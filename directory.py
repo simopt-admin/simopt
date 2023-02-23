@@ -47,6 +47,7 @@ from models.covid import COVID, CovidMinInfect
 from models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
 from models.fake import Fake, FakeProblem
 from models.fake2 import Fake2, FakeProblem2
+from models.SMF import SMF, SMF_Max
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -89,7 +90,8 @@ problem_directory = {
     "VOLUNTEER-1": VolunteerDist,
     "VOLUNTEER-2": VolunteerSurvival,
     "FAKE-1": FakeProblem,
-    "FAKE2-1": FakeProblem2
+    "FAKE2-1": FakeProblem2,
+    "SMF-1": SMF_Max
 
 }
 problem_nonabbreviated_directory = {

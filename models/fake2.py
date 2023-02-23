@@ -45,8 +45,8 @@ class Fake2(Model):
                 "description": "x",
                 "datatype": tuple,
                 # "default": (1, 0, 0, 0, 0)
-                "default": (1, 0, 0)
-                # "default": (1, 0)
+                # "default": (1, 0, 0)
+                "default": (1, 0)
             },
         }
         self.check_factor_list = {
@@ -173,8 +173,8 @@ class FakeProblem2(Problem):
                 "datatype": tuple,
                 # "default": (-5, 0, 0, 0, 0)
                 # "default": (1, 0, 0, 0, 0)
-                "default": (1, 0, 0)
-                # "default": (1, 0)
+                # "default": (1, 0, 0)
+                "default": (1, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -287,11 +287,11 @@ class FakeProblem2(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(np.array(x)**2),)
-        det_objectives_gradients = (2*np.array(x),)
+        # det_objectives = (np.sum(np.array(x)**2),)
+        # det_objectives_gradients = (2*np.array(x),)
 
-        # det_objectives = (-2*x[0]-6*x[1]+x[0]**2 -2*x[0]*x[1]+2*x[1]**2,)
-        # det_objectives_gradients = (np.array([-2+2*x[0]-2*x[1], -6-2*x[1]+4*x[1]]),)
+        det_objectives = (-2*x[0]-6*x[1]+x[0]**2 -2*x[0]*x[1]+2*x[1]**2,)
+        det_objectives_gradients = (np.array([-2+2*x[0]-2*x[1], -6-2*x[0]+4*x[1]]),)
 
         # # Generalization of the Rosenrock function
         # f = 0
@@ -381,18 +381,18 @@ class FakeProblem2(Problem):
         if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
             return
         else:
-            # self.Ci = np.array([[1, 1],[-1, 2]])
-            # self.di = np.array([[2], [2]])
+            self.Ci = np.array([[1, 1],[-1, 2]])
+            self.di = np.array([[2], [2]])
 
             # self.Ce = np.array([[1, 1, 1, 1, 1]])
             # self.de = np.array([1]) # a simple linear constraint 1 x = 1
             # self.Ci = np.array([[1, 1, 1, 1, 1]])
             # self.di = np.array([1])
 
-            self.Ce = np.array([[1, 1, 1]])
-            self.de = np.array([1]) # a simple linear constraint 1 x = 1
-            self.Ci = np.array([[1, 1, 1]])
-            self.di = np.array([1])
+            # self.Ce = np.array([[1, 1, 1]])
+            # self.de = np.array([1]) # a simple linear constraint 1 x = 1
+            # self.Ci = np.array([[1, 1, 1]])
+            # self.di = np.array([1])
 
             # self.Ce = np.array([[1, 1]])
             # self.de = np.array([1]) # a simple linear constraint 1 x = 1

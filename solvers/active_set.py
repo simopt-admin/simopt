@@ -260,6 +260,9 @@ class ACTIVESET(Solver):
             if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
                 if np.all(lmbd[neq:] >= 0):
+                    print('lmbd', lmbd)
+                    print('terminated dir', dir)
+                    print('terminated')
                     break
                 # Otherwise, drop the inequality constraint in the active set with the most negative Lagrange multiplier.
                 else:
@@ -330,7 +333,7 @@ class ACTIVESET(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-
+        print('budget', expended_budget)
         return recommended_solns, intermediate_budgets
 
 

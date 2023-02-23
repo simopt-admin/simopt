@@ -183,8 +183,8 @@ class PGD(Solver):
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
-            forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
-            backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
+            forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
+            backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
@@ -212,6 +212,7 @@ class PGD(Solver):
             print('max step ', max_step)
             # Get a temp solution.
             temp_x = new_x - step_size * grad
+            print('tempx', temp_x)
             # Update maximum step size for the next iteration.
             max_step = step_size
 
@@ -453,7 +454,7 @@ class PGD(Solver):
             count +=1
         # Enlarge the step size if satisfying the sufficient decrease on the first try.
         if count == 0:
-            step_size /= beta ## BUG might want to decrease instead
+            step_size *= beta ## BUG might want to decrease instead
         return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
