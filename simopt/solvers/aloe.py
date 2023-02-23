@@ -174,9 +174,9 @@ class ALOE(Solver):
         alpha_0 = self.factors["alpha_0"]
         epsilon_f = self.factors["epsilon_f"]
 
-        # Shrink the bounds to prevent floating errors.
-        lower_bound = np.array(problem.lower_bounds) + np.array((self.factors['sensitivity'],) * problem.dim)
-        upper_bound = np.array(problem.upper_bounds) - np.array((self.factors['sensitivity'],) * problem.dim)
+        # Upper bound and lower bound.
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
 
         # Initialize stepsize.
         alpha = alpha_0
@@ -192,8 +192,8 @@ class ALOE(Solver):
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
-            forward = [int(new_x[i] == lower_bound[i]) for i in range(problem.dim)]
-            backward = [int(new_x[i] == upper_bound[i]) for i in range(problem.dim)]
+            forward = np.isclose(new_x, lower_bound, atol = self.factors["sensitivity"]).astype(int)
+            backward = np.isclose(new_x, upper_bound, atol = self.factors["sensitivity"]).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
