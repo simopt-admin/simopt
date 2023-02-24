@@ -181,10 +181,10 @@ class Volunteer(Model):
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
 
         # Generate the locations of the volunteers following a Poisson point process.
-        prob2, alias2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))
+        prob2, alias2, value_list2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))
         for _ in range(num_vol):
             # Generate the coordinates of the square the volunteer is located in.
-            u4 = vol_sq_rng.alias(prob2, alias2)
+            u4 = vol_sq_rng.alias(prob2, alias2, value_list2)
             x = u4 // np.sqrt(self.factors["num_squares"])
             y = u4 % np.sqrt(self.factors["num_squares"])
             vol_locs_idx.append((x, y))
@@ -195,7 +195,7 @@ class Volunteer(Model):
                         (y + u6) * self.factors["square_length"]))
 
         flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
-        prob1, alias1 = OHCA_sq_rng.alias_init(dict(enumerate(flat_p_OHCA, 1)))    
+        prob1, alias1, value_list1 = OHCA_sq_rng.alias_init(dict(enumerate(flat_p_OHCA, 1)))    
         sum_flag = 0
         flag_grads = []
         sum_p = 0
@@ -203,7 +203,7 @@ class Volunteer(Model):
         # Generate the location of an OHCA.
         for i in range(self.factors["num_OHCA"]):
             # Generate the square containing the OHCA.
-            u1 = OHCA_sq_rng.alias(prob1, alias1)
+            u1 = OHCA_sq_rng.alias(prob1, alias1, value_list1)
             x = u1 // np.sqrt(self.factors["num_squares"])
             y = u1 % np.sqrt(self.factors["num_squares"])
             # Find a random location in the square.

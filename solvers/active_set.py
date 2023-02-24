@@ -2,7 +2,7 @@
 Summary
 -------
 ACTIVESET
-active set method for problems with linear constraints i.e., Ce@x == de, Ci@x <= di
+active set method for problems with linear constraints i.e., Ce@x = de, Ci@x <= di
 """
 
 from base import Solver

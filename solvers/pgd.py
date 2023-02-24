@@ -2,7 +2,7 @@
 Summary
 -------
 PGD
-projected gradient descent for problems with linear constraints, i.e., Ce@x == de, Ci@x <= di
+projected gradient descent for problems with linear constraints, i.e., Ce@x = de, Ci@x <= di
 """
 
 from base import Solver

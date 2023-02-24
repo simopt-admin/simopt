@@ -21,7 +21,6 @@ from solvers.strong import STRONG
 from solvers.adam import ADAM
 from solvers.aloe import ALOE
 from solvers.adam2 import ADAM2
-from solvers.pgd_usimplex import PGD2
 from solvers.pgd import PGD
 from solvers.aloe2 import ALOE2
 from solvers.active_set import ACTIVESET
