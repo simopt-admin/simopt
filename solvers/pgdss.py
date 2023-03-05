@@ -1,18 +1,20 @@
 """
 Summary
 -------
-ACTIVESET
-active set method for problems with linear constraints i.e., Ce@x = de, Ci@x <= di
+PGD-SS
+projected gradient descent combining adaptive step search
+for problems with linear constraints, i.e., Ce@x = de, Ci@x <= di
 """
 
 from base import Solver
 import numpy as np
+from numpy.linalg import norm
 import cvxpy as cp
 import warnings
 warnings.filterwarnings("ignore")
 
 
-class ACTIVESET(Solver):
+class PGDSS(Solver):
     """
     Description.
 
@@ -49,7 +51,7 @@ class ACTIVESET(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ACTIVESET", fixed_factors={}):
+    def __init__(self, name="PGD-SS", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -66,20 +68,30 @@ class ACTIVESET(Solver):
                 "datatype": int,
                 "default": 30
             },
-            "alpha": {
-                "description": "tolerance for sufficient decrease condition.",
-                "datatype": float,
+            "theta": {
+                "description": "constant in the Armijo condition.",
+                "datatype": int,
                 "default": 0.2
             },
-            "beta": {
-                "description": "step size reduction factor in line search.",
-                "datatype": float,
-                "default": 0.9
+            "gamma": {
+                "description": "constant for shrinking the step size.",
+                "datatype": int,
+                "default": 0.8
             },
             "alpha_max": {
                 "description": "maximum step size.",
-                "datatype": float,
-                "default": 10.0
+                "datatype": int,
+                "default": 30
+            },
+            "alpha_0": {
+                "description": "initial step size.",
+                "datatype": int,
+                "default": 1
+            },
+            "epsilon_f": {
+                "description": "additive constant in the Armijo condition.",
+                "datatype": int,
+                "default": 1e-3  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
             "lambda": {
                 "description": "magnifying factor for r inside the finite difference function",
@@ -87,48 +99,48 @@ class ACTIVESET(Solver):
                 "default": 2
             },
             "tol": {
-                "description": "floating point tolerance for checking tightness of constraints",
+                "description": "floating point comparison tolerance",
                 "datatype": float,
                 "default": 1e-7
             },
-            "tol2": {
-                "description": "floating point tolerance for checking closeness of dot product to zero",
-                "datatype": float,
-                "default": 1e-7
-            },
+            
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
             "r": self.check_r,
-            "alpha": self.check_alpha,
-            "beta": self.check_beta,
+            "theta": self.check_theta,
+            "gamma": self.check_gamma,
             "alpha_max": self.check_alpha_max,
+            "alpha_0": self.check_alpha_0,
+            "epsilon_f": self.check_epsilon_f,
             "lambda": self.check_lambda,
-            "tol": self.check_tol,
-            "tol2": self.check_tol2
+            "tol": self.check_tol
         }
         super().__init__(fixed_factors)
 
     def check_r(self):
         return self.factors["r"] > 0
 
-    def check_alpha(self):
-        return self.factors["alpha"] > 0
+    def check_theta(self):
+        return self.factors["theta"] > 0 & self.factors["theta"] < 1
 
-    def check_beta(self):
-        return self.factors["beta"] > 0 & self.factors["beta"] < 1
+    def check_gamma(self):
+        return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
 
     def check_alpha_max(self):
         return self.factors["alpha_max"] > 0
-    
-    def check_lambda(self):
-        return self.factors["lambda"] > 0
+
+    def check_alpha_0(self):
+        return self.factors["alpha_0"] > 0
+
+    def check_epsilon_f(self):
+        return self.factors["epsilon_f"] > 0
 
     def check_tol(self):
         return self.factors["tol"] > 0
     
-    def check_tol2(self):
-        return self.factors["tol2"] > 0
+    def check_lambda(self):
+        return self.factors["lambda"] > 0
 
     def solve(self, problem):
         """
@@ -154,15 +166,19 @@ class ACTIVESET(Solver):
 
         # Default values.
         r = self.factors["r"]
-        alpha = self.factors["alpha"]
-        beta = self.factors["beta"]
         tol = self.factors["tol"]
-        tol2 = self.factors["tol2"]
-        max_step = self.factors["alpha_max"] # Maximum step size
+        theta = self.factors["theta"]
+        gamma = self.factors["gamma"]
+        alpha_max = self.factors["alpha_max"]
+        alpha_0 = self.factors["alpha_0"]
+        epsilon_f = self.factors["epsilon_f"]
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
+    
+        # Initialize stepsize.
+        alpha = alpha_0
 
         # Input inequality and equlaity constraint matrix and vector.
         # Cix <= di
@@ -171,39 +187,6 @@ class ACTIVESET(Solver):
         di = problem.di
         Ce = problem.Ce
         de = problem.de
-
-        # Remove redundant upper/lower bounds.
-        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
-        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
-
-        print(Ce)
-        print(de)
-
-        # Form a constraint coefficient matrix where all the equality constraints are put on top and
-        # all the bound constraints in the bottom and a constraint coefficient vector.  
-        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
-            C = np.vstack((Ce,  Ci))
-            d = np.vstack((de.T, di.T))
-        elif (Ce is not None) and (de is not None):
-            C = Ce
-            d = de.T
-        else:
-            C = Ci
-            d = di.T
-        
-        if len(ub_inf_idx) > 0:
-            C = np.vstack((C, np.identity(upper_bound.shape[0])))
-            d = np.vstack((d, upper_bound[np.newaxis].T))
-        if len(lb_inf_idx) > 0:
-            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
-            d = np.vstack((d, -lower_bound[np.newaxis].T))
-        
-
-        # Number of equality constraints.
-        if (Ce is not None) and (de is not None):
-            neq = len(de)
-        else:
-            neq = 0
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
@@ -221,14 +204,6 @@ class ACTIVESET(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
-        # Active constraint index vector.
-        acidx = []
-        # Initialize the active set to be the set of indices of the tight constraints.
-        cx = np.dot(C, new_x)
-        for j in range(cx.shape[0]):
-            if j < neq or np.isclose(cx[j], d[j], rtol=0, atol= tol):
-                acidx.append(j)
-
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
@@ -242,87 +217,43 @@ class ACTIVESET(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = alpha)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-                # A while loop to prevent zero gradient
+                # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
                     if expended_budget > problem.factors["budget"]:
                         break
-                    grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                    grad = self.finite_diff(new_solution, BdsCheck, problem, r)
                     expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
-            # If the active set is empty, search on negative gradient.
-            if len(acidx) == 0:
-                dir = -grad
-            else:
-                # Find the search direction and Lagrange multipliers of the direction-finding problem.
-                dir, lmbd, = self.compute_search_direction(acidx, grad, problem, C)
+            # Get a temp solution.
+            temp_x = new_x - alpha * grad
+            temp_solution = self.create_new_solution(tuple(temp_x), problem)
+            # Use r simulated observations to estimate the objective value.
+            problem.simulate(temp_solution, r)
+            expended_budget += r
 
-            # If the optimal search direction is 0
-            if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=tol2)):
-                # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
-                if np.all(lmbd[neq:] >= 0):
-                    break
-                # Otherwise, drop the inequality constraint in the active set with the most negative Lagrange multiplier.
+            # Check the modified Armijo condition for sufficient decrease.
+            if (-1 * problem.minmax[0] * temp_solution.objectives_mean) <= (
+                    -1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f):
+                # Successful step - perform projection
+                if self._feasible(temp_x, problem, tol):
+                    new_solution = self.create_new_solution(tuple(temp_x), problem)
                 else:
-                    q = acidx[neq + np.argmin(lmbd[neq:][lmbd[neq:] < 0])]
-                    acidx.remove(q)
+                    # If not feasible, project temp_x back to the feasible set.
+                    proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
+                    new_solution = self.create_new_solution(tuple(proj_x), problem)
+                # Use r simulated observations to estimate the objective value.
+                problem.simulate(new_solution, r)
+                expended_budget += r
+                
+                # Enlarge step size.
+                alpha = min(alpha_max, alpha / gamma)
             else:
-                idx = list(set(np.arange(C.shape[0])) - set(acidx)) # Constraints that are not in the active set.
-                # If all constraints are feasible.
-                if np.all(C[idx,:] @ dir <= 0):
-                    # Line search to determine a step_size.
-                    step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
-                    # Calculate candidate_x.
-                    candidate_x = new_x + step_size * dir
-                    # Update maximum step size for the next iteration.
-                    max_step = step_size
-
-                # Ratio test to determine the maximum step size possible
-                else:
-                    # Get all indices not in the active set such that Ai^Td>0
-                    r_idx = list(set(idx).intersection(set((C @ dir > 0).nonzero()[0])))
-                    # Compute the ratio test
-                    ra = d[r_idx,:].flatten() - C[r_idx, :] @ new_x
-                    ra_d = C[r_idx, :] @ dir
-                    # Initialize maximum step size.
-                    s_star = np.inf
-                    # Initialize blocking constraint index.
-                    q = -1
-                    # Perform ratio test.
-                    for i in range(len(ra)):
-                        if ra_d[i] - tol > 0:
-                            s = ra[i]/ra_d[i]
-                            if s < s_star:
-                                s_star = s
-                                q = r_idx[i]
-                    # If there is no blocking constraint (i.e., s_star >= 1)
-                    if s_star >= 1:
-                        # Line search to determine a step_size.
-                        step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-
-                    # If there is a blocking constraint (i.e., s_star < 1)
-                    else:
-                        # Add blocking constraint to the active set.
-                        if q not in acidx:
-                            acidx.append(q)
-                        # No need to do line search if s_star is 0.
-                        if s_star > 0:
-                            # Line search to determine a step_size.
-                            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-                        else:
-                            step_size = 0
-
-                if step_size != 0:
-                    # Calculate candidate_x.
-                    candidate_x = new_x + step_size * dir
-                    # Calculate the candidate solution.
-                    new_solution = self.create_new_solution(tuple(candidate_x), problem)
-                    # Use r simulated observations to estimate the objective value.
-                    problem.simulate(new_solution, r)
-                    expended_budget += r
+                # Unsuccessful step - reduce step size.
+                alpha = gamma * alpha
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -330,48 +261,8 @@ class ACTIVESET(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
+        print('solutions', [sol.x for sol in recommended_solns])
         return recommended_solns, intermediate_budgets
-
-
-    def compute_search_direction(self, acidx, grad, problem, C):
-        '''
-        Compute a search direction by solving a direction-finding quadratic subproblem at solution x.
-
-        Arguments
-        ---------
-        acidx: list
-            list of indices of active constraints
-        grad : ndarray
-            the estimated objective gradient at new_solution
-        problem : Problem object
-            simulation-optimization problem to solve
-        C : ndarray
-            constraint matrix
-
-        Returns
-        -------
-        d : ndarray
-            search direction
-        lmbd : ndarray
-            Lagrange multipliers for this LP
-        '''
-        # Define variables.
-        d = cp.Variable(problem.dim)
-
-        # Define constraints.
-        constraints = [C[acidx, :] @ d == 0]
-        
-        # Define objective.
-        obj = cp.Minimize(grad @ d + 0.5 * cp.quad_form(d, np.identity(problem.dim)))
-        prob = cp.Problem(obj, constraints)
-        prob.solve()
-        # Get Lagrange multipliers
-        lmbd = prob.constraints[0].dual_value
-
-        dir = np.array(d.value)
-        dir[np.abs(dir) < self.factors["tol"]] = 0
-
-        return dir, lmbd
 
 
     def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
@@ -454,7 +345,90 @@ class ACTIVESET(Solver):
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
 
         return grad
+
+    def _feasible(self, x, problem, tol):
+        """
+        Check whether a solution x is feasible to the problem.
+        
+        Arguments
+        ---------
+        x : tuple
+            a solution vector
+        problem : Problem object
+            simulation-optimization problem to solve
+        tol: float
+            Floating point comparison tolerance
+        """
+        res = True
+        if (problem.Ci is not None) and (problem.di is not None):
+            res = res & np.all(problem.Ci @ x <= problem.di + tol)
+        if (problem.Ce is not None) and (problem.de is not None):
+            res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
+        return res & (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
     
+    def project_grad(self, problem, x, Ae, Ai, be, bi):
+        """
+        Project the vector x onto the hyperplane H: Ae x = be, Ai x <= bi by solving a quadratic projection problem:
+
+        min d^Td
+        s.t. Ae(x + d) = be
+             Ai(x + d) <= bi
+             (x + d) >= lb
+             (x + d) <= ub
+        
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        x : ndarray
+            vector to be projected
+        Ae: ndarray
+            equality constraint coefficient matrix
+        be: ndarray
+            equality constraint coefficient vector
+        Ai: ndarray
+            inequality constraint coefficient matrix
+        bi: ndarray
+            inequality constraint coefficient vector 
+        Returns
+        -------
+        x_new : ndarray
+            the projected vector
+        """
+        # Define variables.
+        d = cp.Variable(problem.dim)
+
+        # Define objective.
+        obj = cp.Minimize(cp.quad_form(d, np.identity(problem.dim)))
+
+        # Define constraints.
+        constraints = []
+        if (Ae is not None) and (be is not None):
+            constraints.append(Ae @ (x + d) == be.ravel())
+        if (Ai is not None) and (bi is not None):
+            constraints.append(Ai @ (x + d) <= bi.ravel())
+
+        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds)
+        # Removing redundant bound constraints.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        if len(ub_inf_idx) > 0:
+            for i in ub_inf_idx:
+                constraints.append((x + d)[i] <= upper_bound[i])
+        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        if len(lb_inf_idx) > 0:
+            for i in lb_inf_idx:
+                constraints.append((x + d)[i] >= lower_bound[i])
+
+        # Form and solve problem.
+        prob = cp.Problem(obj, constraints)
+        prob.solve()
+
+        # Get the projected vector.
+        x_new = x + d.value
+
+        return x_new
+
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
         A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. 
@@ -551,7 +525,7 @@ class ACTIVESET(Solver):
         if len(ub_inf_idx) > 0:
             for i in ub_inf_idx:
                 constraints.append(x[i] <= upper_bound[i])
-        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
         if len(lb_inf_idx) > 0:
             for i in lb_inf_idx:
                 constraints.append(x[i] >= lower_bound[i])
@@ -573,23 +547,3 @@ class ACTIVESET(Solver):
             raise ValueError("Could not find feasible x0")
 
         return x0
-
-    def _feasible(self, x, problem, tol):
-        """
-        Check whether a solution x is feasible to the problem.
-        
-        Arguments
-        ---------
-        x : tuple
-            a solution vector
-        problem : Problem object
-            simulation-optimization problem to solve
-        tol: float
-            Floating point comparison tolerance
-        """
-        res = True
-        if (problem.Ci is not None) and (problem.di is not None):
-            res = res & np.all(problem.Ci @ x <= problem.di + tol)
-        if (problem.Ce is not None) and (problem.de is not None):
-            res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
-        return res & (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))

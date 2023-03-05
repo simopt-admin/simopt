@@ -190,10 +190,10 @@ class FakeProblem2(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Fake2(self.model_fixed_factors)
         self.dim = len(self.model.factors["x"])
-        # self.lower_bounds = (0,) * self.dim
-        # self.upper_bounds = (np.inf,) * self.dim
-        self.lower_bounds = (-1, ) * self.dim
-        self.upper_bounds = (2, ) * self.dim
+        self.lower_bounds = (0,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
+        # self.lower_bounds = (-1, ) * self.dim
+        # self.upper_bounds = (2, ) * self.dim
         self.optimal_solution = None
         # self.optimal_solution = tuple(np.ones(self.dim) / self.dim)
         self.set_linear_constraints()

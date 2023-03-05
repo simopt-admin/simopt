@@ -25,9 +25,9 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
-solver_name = "RNDSRCH"  # Random search solver
+# solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ACTIVESET"
-# solver_name = "PGD"
+solver_name = "PGD-SS"
 problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
 # -----------------------------------------------
@@ -42,7 +42,7 @@ print(f"Results will be stored as {file_name_path}.")
 myexperiment = ProblemSolver(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=1)
+myexperiment.run(n_macroreps=5)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)

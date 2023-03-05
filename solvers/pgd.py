@@ -57,32 +57,32 @@ class PGD(Solver):
         self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
-                "description": "Use CRN across solutions?",
+                "description": "use CRN across solutions?",
                 "datatype": bool,
                 "default": True
             },
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 10
+                "default": 50
             },
             "alpha": {
-                "description": "Tolerance for sufficient decrease condition.",
+                "description": "tolerance for sufficient decrease condition.",
                 "datatype": float,
                 "default": 0.2
             },
             "beta": {
-                "description": "Step size reduction factor in line search.",
+                "description": "step size reduction factor in line search.",
                 "datatype": float,
                 "default": 0.9
             },
-            "alpha_0": {
-                "description": "Maximum step size.",
+            "alpha_max": {
+                "description": "maximum step size.",
                 "datatype": float,
                 "default": 10.0
             },
             "lambda": {
-                "description": "magnifying factor for n_r inside the finite difference function",
+                "description": "magnifying factor for r inside the finite difference function",
                 "datatype": int,
                 "default": 2
             },
@@ -98,7 +98,7 @@ class PGD(Solver):
             "r": self.check_r,
             "alpha": self.check_alpha,
             "beta": self.check_beta,
-            "alpha_0": self.check_alpha_0,
+            "alpha_max": self.check_alpha_max,
             "lambda": self.check_lambda,
             "tol": self.check_tol
         }
@@ -113,8 +113,8 @@ class PGD(Solver):
     def check_beta(self):
         return self.factors["beta"] > 0 & self.factors["beta"] < 1
 
-    def check_alpha_0(self):
-        return self.factors["alpha_0"] > 0
+    def check_alpha_max(self):
+        return self.factors["alpha_max"] > 0
     
     def check_lambda(self):
         return self.factors["lambda"] > 0
@@ -148,9 +148,9 @@ class PGD(Solver):
         r = self.factors["r"]
         alpha = self.factors["alpha"]
         beta = self.factors["beta"]
-        alpha_0 = self.factors["alpha_0"]
         tol = self.factors["tol"]
-        max_step = alpha_0 # Maximum step size
+        max_step = self.factors["alpha_max"]
+
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
@@ -212,6 +212,7 @@ class PGD(Solver):
             # Update maximum step size for the next iteration.
             max_step = step_size
 
+            # Check feasibility of temp_x.
             if self._feasible(temp_x, problem, tol):
                 new_solution = self.create_new_solution(tuple(temp_x), problem)
             else:
@@ -337,7 +338,7 @@ class PGD(Solver):
     
     def project_grad(self, problem, x, Ae, Ai, be, bi):
         """
-        Project the vector x onto the hyperplane H: Ax = b by solving a quadratic projection problem:
+        Project the vector x onto the hyperplane H: Ae x = be, Ai x <= bi by solving a quadratic projection problem:
 
         min d^Td
         s.t. Ae(x + d) = be

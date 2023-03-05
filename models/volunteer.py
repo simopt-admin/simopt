@@ -68,7 +68,7 @@ class Volunteer(Model):
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
                 "datatype": list,
-                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist() # TODO: for high dimension case -either copy the entire matrix here or incorporate generation of the matrix here
                 "default": [[0.1, 0.1],[0.1, 0.7]]
             },
             "p_vol": {
@@ -200,7 +200,7 @@ class Volunteer(Model):
         flag_grads = []
         sum_p = 0
         p_grads = []
-        # Generate the location of an OHCA.
+        # Generate the location of an OHCA in each iteration.
         for i in range(self.factors["num_OHCA"]):
             # Generate the square containing the OHCA.
             u1 = OHCA_sq_rng.alias(prob1, alias1, value_list1)
@@ -230,32 +230,32 @@ class Volunteer(Model):
                 thre_dist_flag = 1
             sum_flag += thre_dist_flag
 
-            # Compute gradient estimator for thre_dist_flag
-            for j in range(200):
-                # Get actual coordinate of the point
-                temp_x = OHCA_loc[0] + xs[j]
-                temp_y = OHCA_loc[1] + ys[j]
-                if temp_x > 0 and temp_y > 0 and temp_x < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]) and temp_y < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]):
-                    # Get index of the square
-                    idx_sq = int(np.sqrt(self.factors["num_squares"]) * int(temp_x / self.factors["square_length"]) + int(temp_y / self.factors["square_length"]))
-                    # Update pts
-                    pts[idx_sq] += 1
-            frac_sq = np.zeros(self.factors["num_squares"])
-            # Find max possible points in a square.
-            count = 0
-            for x,y in zip(xs, ys):
-                if x > -self.factors["thre_dist"]/4 and y > -self.factors["thre_dist"]/4 and x < self.factors["thre_dist"]/4 and y < self.factors["thre_dist"]/4:
-                    count += 1
-            max_possible = (self.factors["square_length"] / self.factors["thre_dist"] * 4)**2 * count
-            for i in range(self.factors["num_squares"]):
-                # Fraction of square i covered by circle can be approximated by pts[i]/max possible.
-                frac_sq[i] = pts[i] / max_possible
-            # Estimated mean number of volunteers in the circle with radius "thre_dist".
-            vol_in_circle = np.sum(np.multiply(self.factors["p_vol"], frac_sq))
-            flag_grad = np.zeros(self.factors["num_squares"])
-            for i in range(self.factors["num_squares"]):
-                flag_grad[i] = -np.exp(-self.factors["mean_vol"] * vol_in_circle) * self.factors["mean_vol"] * frac_sq[i]
-            flag_grads.append(flag_grad)
+            # # Compute gradient estimator for thre_dist_flag
+            # for j in range(200):
+            #     # Get actual coordinate of the point
+            #     temp_x = OHCA_loc[0] + xs[j]
+            #     temp_y = OHCA_loc[1] + ys[j]
+            #     if temp_x > 0 and temp_y > 0 and temp_x < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]) and temp_y < self.factors["square_length"] * np.sqrt(self.factors["num_squares"]):
+            #         # Get index of the square
+            #         idx_sq = int(np.sqrt(self.factors["num_squares"]) * int(temp_x / self.factors["square_length"]) + int(temp_y / self.factors["square_length"]))
+            #         # Update pts
+            #         pts[idx_sq] += 1
+            # frac_sq = np.zeros(self.factors["num_squares"])
+            # # Find max possible points in a square.
+            # count = 0
+            # for x,y in zip(xs, ys):
+            #     if x > -self.factors["thre_dist"]/4 and y > -self.factors["thre_dist"]/4 and x < self.factors["thre_dist"]/4 and y < self.factors["thre_dist"]/4:
+            #         count += 1
+            # max_possible = (self.factors["square_length"] / self.factors["thre_dist"] * 4)**2 * count
+            # for i in range(self.factors["num_squares"]):
+            #     # Fraction of square i covered by circle can be approximated by pts[i]/max possible.
+            #     frac_sq[i] = pts[i] / max_possible
+            # # Estimated mean number of volunteers in the circle with radius "thre_dist".
+            # vol_in_circle = np.sum(np.multiply(self.factors["p_vol"], frac_sq))
+            # flag_grad = np.zeros(self.factors["num_squares"])
+            # for i in range(self.factors["num_squares"]):
+            #     flag_grad[i] = -np.exp(-self.factors["mean_vol"] * vol_in_circle) * self.factors["mean_vol"] * frac_sq[i]
+            # flag_grads.append(flag_grad)
             
             # Use the survival function to calculate the probability of survival.
             # Convert distance to time: 3 min + D/(6km/hr).
@@ -376,7 +376,7 @@ class VolunteerDist(Problem):
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 1000
+                "default": 10000
             },
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
@@ -395,6 +395,7 @@ class VolunteerDist(Problem):
         self.dim = self.model.factors["num_squares"]
         self.lower_bounds = tuple(np.zeros(self.dim))
         self.upper_bounds = tuple(np.ones(self.dim))
+        self.set_linear_constraints()
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
@@ -560,6 +561,18 @@ class VolunteerDist(Problem):
         else:
             x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
+    
+    def set_linear_constraints(self):
+        # Initialize linear constraint matrices.
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
+        if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
+            return
+        else:
+            self.Ce = np.ones(self.dim)
+            self.de = np.array([1])
 
 
 """
@@ -638,7 +651,7 @@ class VolunteerSurvival(Problem):
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
-        self.constraint_type = "box"
+        self.constraint_type = "deterministic"
         self.variable_type = "continuous"
         self.gradient_available = True
         self.optimal_value = None
@@ -676,6 +689,7 @@ class VolunteerSurvival(Problem):
         self.dim = self.model.factors["num_squares"]
         self.lower_bounds = tuple(np.zeros(self.dim))
         self.upper_bounds = tuple(np.ones(self.dim))
+        self.set_linear_constraints()
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
@@ -821,7 +835,7 @@ class VolunteerSurvival(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(x) <= 1 + 10**(-5)) or (np.sum(x) >= 1 - 10**(-5))
+        return np.sum(x) == 1
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -842,3 +856,15 @@ class VolunteerSurvival(Problem):
         else:
             x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
+    
+    def set_linear_constraints(self):
+        # Initialize linear constraint matrices.
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
+        if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
+            return
+        else:
+            self.Ce = np.ones(self.dim)
+            self.de = np.array([1])

@@ -20,8 +20,8 @@ from experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_pro
 # Specify the names of the solver and problem to test.
 # These names are strings and should match those input to directory.py.
 # Ex:
-solver_names = ["RNDSRCH", "PGD"]
-problem_names = ["VOLUNTEER-1", "VOLUNTEER-2"]
+solver_names = ["RNDSRCH", "PGD", "PGD-SS", "ACTIVESET"]
+problem_names = ["VOLUNTEER-2"]
 
 
 # Initialize an instance of the experiment class.
@@ -39,7 +39,10 @@ mymetaexperiment.post_normalize(n_postreps_init_opt=20)
 
 print("Plotting results.")
 # Produce basic plots of the solvers on the problems.
-# plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
+plot_progress_curves(experiments=mymetaexperiment.experiments, plot_type="all", normalize=False)
+plot_progress_curves(experiments=mymetaexperiment.experiments, plot_type="mean", normalize=False)
+plot_progress_curves(experiments=mymetaexperiment.experiments, plot_type="quantile", beta=0.90, normalize=False)
+plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
 
 # Plots will be saved in the folder experiments/plots.
 print("Finished. Plots can be found in experiments/plots folder.")
