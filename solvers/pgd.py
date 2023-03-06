@@ -151,7 +151,6 @@ class PGD(Solver):
         tol = self.factors["tol"]
         max_step = self.factors["alpha_max"]
 
-
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
@@ -219,6 +218,10 @@ class PGD(Solver):
                 # If not feasible, project temp_x back to the feasible set.
                 proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
                 new_solution = self.create_new_solution(tuple(proj_x), problem)
+
+            print('tempx', temp_x)
+            print(np.sum(proj_x))
+            print('projx', proj_x)
 
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
@@ -380,22 +383,31 @@ class PGD(Solver):
 
         upper_bound = np.array(problem.upper_bounds)
         lower_bound = np.array(problem.lower_bounds)
+        print('ub', upper_bound)
+        print('lb', lower_bound)
         # Removing redundant bound constraints.
         ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
         if len(ub_inf_idx) > 0:
             for i in ub_inf_idx:
                 constraints.append((x + d)[i] <= upper_bound[i])
-        lb_inf_idx = np.where(~np.isinf(lower_bound))
+                print('ub', upper_bound[i], i)
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
         if len(lb_inf_idx) > 0:
             for i in lb_inf_idx:
                 constraints.append((x + d)[i] >= lower_bound[i])
+                print('lb', lower_bound[i], i)
 
         # Form and solve problem.
         prob = cp.Problem(obj, constraints)
         prob.solve()
 
+        dir = d.value
+
         # Get the projected vector.
-        x_new = x + d.value
+        x_new = x + dir
+
+        # Avoid floating point error
+        x_new[np.abs(x_new) < self.factors["tol"]] = 0
 
         return x_new
 

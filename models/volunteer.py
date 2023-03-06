@@ -370,8 +370,8 @@ class VolunteerDist(Problem):
             "initial_solution": {
                 "description": "Initial solution.",
                 "datatype": tuple,
-                # "default": tuple((1/400 * np.ones(400)).tolist())
-                "default": tuple((1/4 * np.ones(4)).tolist())
+                "default": tuple((1/400 * np.ones(400)).tolist())
+                # "default": tuple((1/4 * np.ones(4)).tolist())
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -381,8 +381,8 @@ class VolunteerDist(Problem):
             "p_OHCA": {
                 "description": "Probability of an OHCA occurs in each square.",
                 "datatype": list,
-                # "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
-                "default": [[0.1, 0.1],[0.1, 0.7]]
+                "default": np.genfromtxt('p_OHCA.csv', delimiter=',').tolist()
+                # "default": [[0.1, 0.1],[0.1, 0.7]]
             }
         }
         self.check_factor_list = {

@@ -66,7 +66,7 @@ class PGDSS(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 50
             },
             "theta": {
                 "description": "constant in the Armijo condition.",
@@ -81,12 +81,12 @@ class PGDSS(Solver):
             "alpha_max": {
                 "description": "maximum step size.",
                 "datatype": int,
-                "default": 30
+                "default": 10
             },
             "alpha_0": {
                 "description": "initial step size.",
                 "datatype": int,
-                "default": 1
+                "default": 0.1
             },
             "epsilon_f": {
                 "description": "additive constant in the Armijo condition.",
@@ -230,25 +230,31 @@ class PGDSS(Solver):
 
             # Get a temp solution.
             temp_x = new_x - alpha * grad
-            temp_solution = self.create_new_solution(tuple(temp_x), problem)
+
+            if self._feasible(temp_x, problem, tol):
+                candidate_solution = self.create_new_solution(tuple(temp_x), problem)
+                # Get search direction
+                dir = -grad
+            else:
+                # If not feasible, project temp_x back to the feasible set.
+                proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
+                candidate_solution = self.create_new_solution(tuple(proj_x), problem)
+                # Get search direction
+                dir = proj_x - new_x
+
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(temp_solution, r)
+            problem.simulate(candidate_solution, r)
             expended_budget += r
 
+            print('temp', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
+            print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
+            print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
+
             # Check the modified Armijo condition for sufficient decrease.
-            if (-1 * problem.minmax[0] * temp_solution.objectives_mean) <= (
-                    -1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f):
-                # Successful step - perform projection
-                if self._feasible(temp_x, problem, tol):
-                    new_solution = self.create_new_solution(tuple(temp_x), problem)
-                else:
-                    # If not feasible, project temp_x back to the feasible set.
-                    proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
-                    new_solution = self.create_new_solution(tuple(proj_x), problem)
-                # Use r simulated observations to estimate the objective value.
-                problem.simulate(new_solution, r)
-                expended_budget += r
-                
+            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
+                    -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
+                # Successful step
+                new_solution = candidate_solution
                 # Enlarge step size.
                 alpha = min(alpha_max, alpha / gamma)
             else:
@@ -415,7 +421,7 @@ class PGDSS(Solver):
         if len(ub_inf_idx) > 0:
             for i in ub_inf_idx:
                 constraints.append((x + d)[i] <= upper_bound[i])
-        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
         if len(lb_inf_idx) > 0:
             for i in lb_inf_idx:
                 constraints.append((x + d)[i] >= lower_bound[i])
@@ -426,6 +432,9 @@ class PGDSS(Solver):
 
         # Get the projected vector.
         x_new = x + d.value
+
+        # Avoid floating point error
+        x_new[np.abs(x_new) < self.factors["tol"]] = 0
 
         return x_new
 

@@ -195,10 +195,6 @@ class PGD2(Solver):
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-                # print('IPA grad', grad)
-                # grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
-                # expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-                # print('finite diff grad', grad)
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
@@ -224,6 +220,10 @@ class PGD2(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
             expended_budget += r
+
+            print('proj_grad', proj_grad)
+            print('grad', grad)
+            print('alpha', alpha)
 
             # Check the modified Armijo condition for sufficient decrease.
             if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(proj_grad)**2 + 2 * epsilon_f):
