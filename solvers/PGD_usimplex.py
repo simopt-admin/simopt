@@ -64,7 +64,7 @@ class PGD2(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 50
             },
             "theta": {
                 "description": "Constant in the Armijo condition.",
@@ -195,7 +195,7 @@ class PGD2(Solver):
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-                print('IPA grad', grad)
+                # print('IPA grad', grad)
                 # grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
                 # expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # print('finite diff grad', grad)

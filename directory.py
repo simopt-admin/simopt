@@ -25,6 +25,7 @@ from solvers.pgd import PGD
 from solvers.aloe2 import ALOE2
 from solvers.active_set import ACTIVESET
 from solvers.pgdss import PGDSS
+from solvers.PGD_usimplex import PGD2
 # import models and problems
 from models.cntnv import CntNV, CntNVMaxProfit
 from models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -60,7 +61,8 @@ solver_directory = {
     "PGD": PGD,
     "PGD-SS": PGDSS,
     "ALOE2": ALOE2,
-    "ACTIVESET": ACTIVESET
+    "ACTIVESET": ACTIVESET,
+    "PGD-usimplex":  PGD2
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,
