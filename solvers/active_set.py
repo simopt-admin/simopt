@@ -176,9 +176,6 @@ class ACTIVESET(Solver):
         ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
         lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
 
-        print(Ce)
-        print(de)
-
         # Form a constraint coefficient matrix where all the equality constraints are put on top and
         # all the bound constraints in the bottom and a constraint coefficient vector.  
         if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
@@ -315,7 +312,7 @@ class ACTIVESET(Solver):
                         else:
                             step_size = 0
 
-                if step_size != 0:
+                if not np.isclose(step_size, 0, rtol=0, atol=tol):
                     # Calculate candidate_x.
                     candidate_x = new_x + step_size * dir
                     # Calculate the candidate solution.
@@ -323,6 +320,9 @@ class ACTIVESET(Solver):
                     # Use r simulated observations to estimate the objective value.
                     problem.simulate(new_solution, r)
                     expended_budget += r
+                    print('dir', dir)
+                    print('step size', step_size)
+                    print('candidate_x', candidate_x)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):

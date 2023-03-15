@@ -46,8 +46,8 @@ class Volunteer(Model):
             "mean_vol": {
                 "description": "Mean number of available volunteers.",
                 "datatype": int,
-                # "default": 1600
-                "default": 10
+                "default": 1600
+                # "default": 100
             },
             "thre_dist": {
                 "description": "The distance within which a volunteer can reach a call within the time threshold in meters.",
@@ -80,7 +80,7 @@ class Volunteer(Model):
             "num_OHCA": {
                 "description": "Number of OHCAs to generate.",
                 "datatype": int,
-                "default": 10
+                "default": 30
             },
         }
         self.check_factor_list = {

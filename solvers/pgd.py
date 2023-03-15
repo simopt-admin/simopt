@@ -89,7 +89,7 @@ class PGD(Solver):
             "tol": {
                 "description": "floating point comparison tolerance",
                 "datatype": float,
-                "default": 1e-7
+                "default": 1e-5
             },
             
         }
@@ -205,6 +205,7 @@ class PGD(Solver):
 
             # Line search to determine a step_size.
             step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+            print('expended_budget', expended_budget)
 
             # Get a temp solution.
             temp_x = new_x - step_size * grad
@@ -226,6 +227,9 @@ class PGD(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
+
+            print('newsol', problem.minmax[0] * new_solution.objectives_mean)
+            print('best sol',  problem.minmax[0] * best_solution.objectives_mean)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -383,19 +387,16 @@ class PGD(Solver):
 
         upper_bound = np.array(problem.upper_bounds)
         lower_bound = np.array(problem.lower_bounds)
-        print('ub', upper_bound)
-        print('lb', lower_bound)
+
         # Removing redundant bound constraints.
         ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
         if len(ub_inf_idx) > 0:
             for i in ub_inf_idx:
                 constraints.append((x + d)[i] <= upper_bound[i])
-                print('ub', upper_bound[i], i)
         lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
         if len(lb_inf_idx) > 0:
             for i in lb_inf_idx:
                 constraints.append((x + d)[i] >= lower_bound[i])
-                print('lb', lower_bound[i], i)
 
         # Form and solve problem.
         prob = cp.Problem(obj, constraints)

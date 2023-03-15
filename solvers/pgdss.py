@@ -246,10 +246,11 @@ class PGDSS(Solver):
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            print('temp', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
+            print(candidate_solution.x)
+            print(new_solution.x)
+            print('candidate', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
             print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
             print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
-
             # Check the modified Armijo condition for sufficient decrease.
             if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
                     -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
