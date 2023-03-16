@@ -154,31 +154,64 @@ class Volunteer(Model):
         OHCA_loc = None
         vol_locs = []
         vol_locs_idx = []
-        pts = np.zeros(self.factors["num_squares"])
-
-        # Generate points that are equally spaced within a circle of radius "thre_dist" using sunflow seed arrangment.
-        phi = (1 + sqrt(5)) / 2  # golden ratio
-        def sunflower(n, alpha=0):
-            xs = []
-            ys = []
-            angle_stride = 2 * pi / phi ** 2
-            b = round(alpha * sqrt(n))  # number of boundary points
-            for k in range(1, n + 1):
-                r = radius(k, n, b)
-                theta = k * angle_stride
-                xs.append(r * cos(theta))
-                ys.append(r * sin(theta))
-            return xs, ys
-        def radius(k, n, b):
-            if k > n - b:
-                return self.factors["thre_dist"]
-            else:
-                return sqrt(k - 0.5) / sqrt(n - (b + 1) / 2) * self.factors["thre_dist"]     
-        # Store coordinates of 200 points.
-        xs, ys = sunflower(200, alpha=2)
-
+        
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
+
+        u = vol_sq_rng.uniform()
+        x = int(u * 1e+6 // 1000) /1000
+        y = int(u * 1e+6 % 1000) / 1000
+
+        sort_p_vol = np.sort(self.factors["p_vol"])[::-1]
+        sort_p_idx = np.argsort(self.factors["p_vol"])[::-1]
+
+        temp_x = x
+        temp_y = y
+        sort_x_idx = -1
+        sort_y_idx = -1
+        for i in range(len(sort_p_vol)):
+            if (temp_x - sort_p_vol[i]) > 0:
+                temp_x -= sort_p_vol[i]
+            else:
+                sort_x_idx = i
+                break
+        for i in range(len(sort_p_vol)):
+            if (temp_y - sort_p_vol[i]) > 0:
+                temp_y -= sort_p_vol[i]
+            else:
+                sort_y_idx = i
+                break
+        x_idx = sort_p_idx[sort_x_idx]
+        y_idx = sort_p_idx[sort_y_idx]       
+            
+
+
+        
+
+
+        # pts = np.zeros(self.factors["num_squares"])
+
+        # # Generate points that are equally spaced within a circle of radius "thre_dist" using sunflow seed arrangment.
+        # phi = (1 + sqrt(5)) / 2  # golden ratio
+        # def sunflower(n, alpha=0):
+        #     xs = []
+        #     ys = []
+        #     angle_stride = 2 * pi / phi ** 2
+        #     b = round(alpha * sqrt(n))  # number of boundary points
+        #     for k in range(1, n + 1):
+        #         r = radius(k, n, b)
+        #         theta = k * angle_stride
+        #         xs.append(r * cos(theta))
+        #         ys.append(r * sin(theta))
+        #     return xs, ys
+        # def radius(k, n, b):
+        #     if k > n - b:
+        #         return self.factors["thre_dist"]
+        #     else:
+        #         return sqrt(k - 0.5) / sqrt(n - (b + 1) / 2) * self.factors["thre_dist"]     
+        # # Store coordinates of 200 points.
+        # xs, ys = sunflower(200, alpha=2)
+
 
         # Generate the locations of the volunteers following a Poisson point process.
         prob2, alias2, value_list2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))

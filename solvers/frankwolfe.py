@@ -1,19 +1,20 @@
 """
 Summary
 -------
-PGD-SS
-projected gradient descent combining adaptive step search
+Frank-Wolfe
+The Away-Step Frank-Wolfe with adaptive step search
 for problems with linear constraints, i.e., Ce@x = de, Ci@x <= di
 """
 
 from base import Solver
 import numpy as np
+from numpy.linalg import norm
 import cvxpy as cp
 import warnings
 warnings.filterwarnings("ignore")
 
 
-class PGDSS(Solver):
+class FrankWolfe(Solver):
     """
     Description.
 
@@ -50,7 +51,7 @@ class PGDSS(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="PGD-SS", fixed_factors={}):
+    def __init__(self, name="AFW", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -372,9 +373,9 @@ class PGDSS(Solver):
             res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
         return res & (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
     
-    def project_grad(self, problem, x, Ae, Ai, be, bi):
+    def search_dir(self, problem, x, Ae, Ai, be, bi, grad):
         """
-        Project the vector x onto the hyperplane H: Ae x = be, Ai x <= bi by solving a quadratic projection problem:
+        Compute a search direction by solving a direction-finding linear subproblem at solution x.
 
         min d^Td
         s.t. Ae(x + d) = be
@@ -405,7 +406,7 @@ class PGDSS(Solver):
         d = cp.Variable(problem.dim)
 
         # Define objective.
-        obj = cp.Minimize(cp.quad_form(d, np.identity(problem.dim)))
+        obj = cp.Minimize(grad @ d)
 
         # Define constraints.
         constraints = []
@@ -430,13 +431,10 @@ class PGDSS(Solver):
         prob = cp.Problem(obj, constraints)
         prob.solve()
 
-        # Get the projected vector.
-        x_new = x + d.value
+        dir = np.array(d.value)
+        dir[np.abs(dir) < self.factors["tol"]] = 0
 
-        # Avoid floating point error
-        x_new[np.abs(x_new) < self.factors["tol"]] = 0
-
-        return x_new
+        return dir
 
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
