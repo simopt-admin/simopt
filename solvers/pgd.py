@@ -212,19 +212,22 @@ class PGD(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
+            # Get search direction by taking negative normalized gradient.
+            dir = -grad / np.linalg.norm(grad)
+
             # Get a temp solution.
-            temp_x = new_x - max_step * grad
+            temp_x = new_x + max_step * dir
 
             # Check feasibility of temp_x.
             if self._feasible(temp_x, problem, tol):
                 # Perform line search.
-                new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+                new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
                 # Update maximum step size for the next iteration.
                 max_step = step_size
             else:
                 # If not feasible, project temp_x back to the feasible set.
                 proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
-                # Get search direction
+                # Get new search direction based on projection.
                 dir = proj_x - new_x
                 # Perform line search.
                 new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, 1, dir, alpha, beta)

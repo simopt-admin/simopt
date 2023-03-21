@@ -264,7 +264,6 @@ class ACTIVESET(Solver):
             else:
                 # Find the search direction and Lagrange multipliers of the direction-finding problem.
                 dir, lmbd, = self.compute_search_direction(acidx, grad, problem, C)
-
             # If the optimal search direction is 0
             if (np.isclose(np.dot(grad, dir), 0, rtol=0, atol=tol2)):
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
@@ -305,7 +304,6 @@ class ACTIVESET(Solver):
                     if s_star >= 1:
                         # Line search to determine a step_size.
                         new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-
                     # If there is a blocking constraint (i.e., s_star < 1)
                     else:
                         # Add blocking constraint to the active set.

@@ -236,18 +236,19 @@ class PGDSS(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
+            # Get search direction by taking negative normalized gradient.
+            dir = -grad / np.linalg.norm(grad)
+
             # Get a temp solution.
-            temp_x = new_x - alpha * grad
+            temp_x = new_x + alpha * dir
 
             if self._feasible(temp_x, problem, tol):
                 candidate_solution = self.create_new_solution(tuple(temp_x), problem)
-                # Get search direction
-                dir = -grad
             else:
                 # If not feasible, project temp_x back to the feasible set.
                 proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
                 candidate_solution = self.create_new_solution(tuple(proj_x), problem)
-                # Get search direction
+                # Get new search direction based on projection.
                 dir = proj_x - new_x
 
             # Use r simulated observations to estimate the objective value.
@@ -264,8 +265,6 @@ class PGDSS(Solver):
             else:
                 # Unsuccessful step - reduce step size.
                 alpha = gamma * alpha
-
-            print('alpha', alpha)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
