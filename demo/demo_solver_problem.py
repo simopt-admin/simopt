@@ -27,12 +27,13 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ACTIVESET"
-# solver_name = "PGD-SS"
-solver_name = "PGD"
-# solver_name = "PGD-usimplex"
+solver_name = "PGD-SS"
+# solver_name = "PGD"
 # problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
-problem_name = "SAN-1"
+# problem_name = "SAN-1"
+problem_name = "SMF-1"
+
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -64,9 +65,9 @@ myexperiment.run(n_macroreps=5)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=10)
+myexperiment.post_replicate(n_postreps=30)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=10)
+post_normalize([myexperiment], n_postreps_init_opt=30)
 
 print("Plotting results.")
 # Produce basic plots of the solver on the problem.

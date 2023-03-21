@@ -85,7 +85,7 @@ class PGDSS(Solver):
             "alpha_0": {
                 "description": "initial step size.",
                 "datatype": int,
-                "default": 0.1
+                "default": 1
             },
             "epsilon_f": {
                 "description": "additive constant in the Armijo condition.",
@@ -106,7 +106,7 @@ class PGDSS(Solver):
                 "description": "step size for finite difference",
                 "datatype": float,
                 "default": 1
-            },
+            }
             
         }
         self.check_factor_list = {
@@ -254,11 +254,6 @@ class PGDSS(Solver):
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            print(candidate_solution.x)
-            print(new_solution.x)
-            print('candidate', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
-            print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
-            print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
             # Check the modified Armijo condition for sufficient decrease.
             if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
                     -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
@@ -269,6 +264,8 @@ class PGDSS(Solver):
             else:
                 # Unsuccessful step - reduce step size.
                 alpha = gamma * alpha
+
+            print('alpha', alpha)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -446,62 +443,6 @@ class PGDSS(Solver):
         x_new[np.abs(x_new) < self.factors["tol"]] = 0
 
         return x_new
-
-    def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
-        """
-        A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. 
-
-        Arguments
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-        expended_budget: int
-            current expended budget
-        r : int
-            number of replications taken at each solution
-        grad : ndarray
-            objective gradient of cur_sol
-        cur_sol : Solution object
-            current solution
-        alpha_0 : float
-            maximum step size allowed
-        d : ndarray
-            search direction
-        alpha: float
-            tolerance for sufficient decrease condition
-        beta: float
-            step size reduction factor
-
-        Returns
-        -------
-        step_size : float
-            computed step size
-        expended_budget : int
-            updated expended budget
-        """
-        x = cur_sol.x
-        fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
-        step_size = alpha_0
-        count = 0
-        while True:
-            if expended_budget > problem.factors["budget"]:
-                break
-            x_new = x + step_size * d
-            # Create a solution object for x_new.
-            x_new_solution = self.create_new_solution(tuple(x_new), problem)
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(x_new_solution, r)
-            expended_budget += r
-            # Check the sufficient decrease condition.
-            f_new = -1 * problem.minmax[0] * x_new_solution.objectives_mean
-            if f_new < fx + alpha * step_size * np.dot(grad, d):
-                break
-            step_size *= beta
-            count +=1
-        # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 0:
-            step_size /= beta
-        return step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
         '''

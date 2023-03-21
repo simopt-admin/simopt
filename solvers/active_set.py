@@ -96,6 +96,11 @@ class ACTIVESET(Solver):
                 "datatype": float,
                 "default": 1e-7
             },
+            "finite_diff_step": {
+                "description": "step size for finite difference",
+                "datatype": float,
+                "default": 1
+            }
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -105,7 +110,8 @@ class ACTIVESET(Solver):
             "alpha_max": self.check_alpha_max,
             "lambda": self.check_lambda,
             "tol": self.check_tol,
-            "tol2": self.check_tol2
+            "tol2": self.check_tol2,
+            "finite_diff_step": self.check_finite_diff_step
         }
         super().__init__(fixed_factors)
 
@@ -129,6 +135,9 @@ class ACTIVESET(Solver):
     
     def check_tol2(self):
         return self.factors["tol2"] > 0
+    
+    def check_finite_diff_step(self):
+        return self.factors["finite_diff_step"] > 0
 
     def solve(self, problem):
         """
@@ -194,7 +203,6 @@ class ACTIVESET(Solver):
         if len(lb_inf_idx) > 0:
             C = np.vstack((C, -np.identity(lower_bound.shape[0])))
             d = np.vstack((d, -lower_bound[np.newaxis].T))
-        
 
         # Number of equality constraints.
         if (Ce is not None) and (de is not None):
@@ -239,7 +247,7 @@ class ACTIVESET(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r, stepsize = self.factors["finite_diff_step"])
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # A while loop to prevent zero gradient
                 while np.all((grad == 0)):
@@ -271,9 +279,7 @@ class ACTIVESET(Solver):
                 # If all constraints are feasible.
                 if np.all(C[idx,:] @ dir <= 0):
                     # Line search to determine a step_size.
-                    step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
-                    # Calculate candidate_x.
-                    candidate_x = new_x + step_size * dir
+                    new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
                     # Update maximum step size for the next iteration.
                     max_step = step_size
 
@@ -298,7 +304,7 @@ class ACTIVESET(Solver):
                     # If there is no blocking constraint (i.e., s_star >= 1)
                     if s_star >= 1:
                         # Line search to determine a step_size.
-                        step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
+                        new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
 
                     # If there is a blocking constraint (i.e., s_star < 1)
                     else:
@@ -308,21 +314,7 @@ class ACTIVESET(Solver):
                         # No need to do line search if s_star is 0.
                         if s_star > 0:
                             # Line search to determine a step_size.
-                            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-                        else:
-                            step_size = 0
-
-                if not np.isclose(step_size, 0, rtol=0, atol=tol):
-                    # Calculate candidate_x.
-                    candidate_x = new_x + step_size * dir
-                    # Calculate the candidate solution.
-                    new_solution = self.create_new_solution(tuple(candidate_x), problem)
-                    # Use r simulated observations to estimate the objective value.
-                    problem.simulate(new_solution, r)
-                    expended_budget += r
-                    print('dir', dir)
-                    print('step size', step_size)
-                    print('candidate_x', candidate_x)
+                            new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -482,6 +474,8 @@ class ACTIVESET(Solver):
 
         Returns
         -------
+        x_new_solution : Solution
+            a solution obtained by line search
         step_size : float
             computed step size
         expended_budget : int
@@ -505,11 +499,8 @@ class ACTIVESET(Solver):
             if f_new < fx + alpha * step_size * np.dot(grad, d):
                 break
             step_size *= beta
-            count +=1
-        # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 0:
-            step_size /= beta
-        return step_size, expended_budget
+            count += 1
+        return x_new_solution, step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
         '''

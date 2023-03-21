@@ -91,6 +91,11 @@ class PGD(Solver):
                 "datatype": float,
                 "default": 1e-5
             },
+            "finite_diff_step": {
+                "description": "step size for finite difference",
+                "datatype": float,
+                "default": 1
+            }
             
         }
         self.check_factor_list = {
@@ -100,7 +105,8 @@ class PGD(Solver):
             "beta": self.check_beta,
             "alpha_max": self.check_alpha_max,
             "lambda": self.check_lambda,
-            "tol": self.check_tol
+            "tol": self.check_tol,
+            "finite_diff_step": self.check_finite_diff_step
         }
         super().__init__(fixed_factors)
 
@@ -121,6 +127,9 @@ class PGD(Solver):
 
     def check_tol(self):
         return self.factors["tol"] > 0
+    
+    def check_finite_diff_step(self):
+        return self.factors["finite_diff_step"] > 0
 
     def solve(self, problem):
         """
@@ -192,7 +201,7 @@ class PGD(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, r)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = self.factors["finite_diff_step"])
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
@@ -221,9 +230,6 @@ class PGD(Solver):
                 new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, 1, dir, alpha, beta)
                 # Update maximum step size for the next iteration.
                 max_step = step_size
-
-            print('newsol', problem.minmax[0] * new_solution.objectives_mean)
-            print('best sol',  problem.minmax[0] * best_solution.objectives_mean)
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -448,9 +454,6 @@ class PGD(Solver):
             if expended_budget > problem.factors["budget"]:
                 break
             x_new = x + step_size * d
-            print('x', x)
-            print('d', d)
-            print('xnew', x_new)
             # Create a solution object for x_new.
             x_new_solution = self.create_new_solution(tuple(x_new), problem)
             # Use r simulated observations to estimate the objective value.
@@ -461,7 +464,7 @@ class PGD(Solver):
             if f_new < fx + alpha * step_size * np.dot(grad, d):
                 break
             step_size *= beta
-            count +=1
+            count += 1
         return x_new_solution, step_size, expended_budget,
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):

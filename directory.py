@@ -37,7 +37,7 @@ from models.dynamnews import DynamNews, DynamNewsMaxProfit
 from models.dualsourcing import DualSourcing, DualSourcingMinCost
 from models.contam import Contamination, ContaminationTotalCostDisc, ContaminationTotalCostCont
 from models.chessmm import ChessMatchmaking, ChessAvgDifference
-from models.san import SAN, SANLongestPath
+from models.san import SAN, SANLongestPath, SANLongestPathConstr
 from models.hotel import Hotel, HotelRevenue
 from models.tableallocation import TableAllocation, TableAllocationMaxRev
 from models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
@@ -83,6 +83,7 @@ problem_directory = {
     "CONTAM-2": ContaminationTotalCostCont,
     "CHESS-1": ChessAvgDifference,
     "SAN-1": SANLongestPath,
+    "SAN-2": SANLongestPathConstr,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
