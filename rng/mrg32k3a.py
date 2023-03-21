@@ -494,7 +494,7 @@ class MRG32k3a(random.Random):
             l = small.pop()
             g = large.pop()
             table_alias[l] = g
-            table_prob[g] = (table_prob[g] + table_prob[l] - Decimal(1))
+            table_prob[g] = (table_prob[g] + table_prob[l]) - Decimal(1)
             if table_prob[g] < 1:
                 small.append(g)
             else:

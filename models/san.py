@@ -108,7 +108,7 @@ class SAN(Model):
 
         Arguments
         ---------
-        rng_list : list of rng.MRG32k3a objects
+        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a
             rngs for model to use when simulating a replication
 
         Returns
@@ -158,6 +158,7 @@ class SAN(Model):
                     T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
                     prev[j - 1] = vi
         longest_path = T[self.factors["num_nodes"] - 1]
+        # print('arcmeans', self.factors["arc_means"])
 
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
@@ -214,7 +215,7 @@ class SANLongestPath(Problem):
         upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_value : float
+    optimal_value : tuple
         optimal objective function value
     optimal_solution : tuple
         optimal solution
@@ -226,7 +227,7 @@ class SANLongestPath(Problem):
         combination of overriden model-level factors and defaults
     model_decision_factors : set of str
         set of keys for factors that are decision variables
-    rng_list : list of rng.MRG32k3a objects
+    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used to generate a random initial solution
         or a random problem instance
     factors : dict
@@ -278,11 +279,17 @@ class SANLongestPath(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000
+            },
+            "arc_costs": {
+                "description": "Cost associated to each arc.",
+                "datatype": tuple,
+                "default": (1,) * 13
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "arc_costs": self.check_arc_costs
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -290,6 +297,16 @@ class SANLongestPath(Problem):
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
+        self.Ci=-1*np.ones(13)
+        self.Ce= None
+        self.di=np.array([-13])
+        self.de= None
+
+    def check_arc_costs(self):
+        positive = True
+        for x in list(self.factors["arc_costs"]):
+            positive = positive & x > 0
+        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
 
     def vector_to_factor_dict(self, vector):
         """
@@ -400,8 +417,10 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(1 / np.array(x)),)
-        det_objectives_gradients = (-1 / (np.array(x) ** 2),)
+        det_objectives = (0,)
+        det_objectives_gradients = ((0,) * self.dim,)
+        # det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
+        # det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -426,7 +445,7 @@ class SANLongestPath(Problem):
 
         Arguments
         ---------
-        rand_sol_rng : rng.MRG32k3a object
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
         Returns

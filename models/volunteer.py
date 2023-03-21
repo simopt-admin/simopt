@@ -46,8 +46,8 @@ class Volunteer(Model):
             "mean_vol": {
                 "description": "Mean number of available volunteers.",
                 "datatype": int,
-                "default": 1600
-                # "default": 100
+                # "default": 1600
+                "default": 100
             },
             "thre_dist": {
                 "description": "The distance within which a volunteer can reach a call within the time threshold in meters.",
@@ -147,46 +147,120 @@ class Volunteer(Model):
         OHCA_loc_lon_rng = rng_list[5]
         OHCA_sq_rng = rng_list[6]
 
+        # Flattened p_OHCA.
+        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
+
         # Initialize quantities to track:
         # - Location of an OHCA.
         # - Locations of the volunteers.
         # - Number of points in each square.
+        # - Summation of survial probabilities for all OHCAs.
+        # - List of survival probabilitiy gradients.
+        # - Summation of probability of exceeding threshold for all OHCAs.(Unused)
+        # - List of probabilitiy of exceeding threshold gradients. (Unused)
         OHCA_loc = None
         vol_locs = []
         vol_locs_idx = []
+        sum_p = 0
+        p_grads = []
+        sum_flag = 0
+        flag_grads = []
         
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
 
-        u = vol_sq_rng.uniform()
-        x = int(u * 1e+6 // 1000) /1000
-        y = int(u * 1e+6 % 1000) / 1000
-
         sort_p_vol = np.sort(self.factors["p_vol"])[::-1]
-        sort_p_idx = np.argsort(self.factors["p_vol"])[::-1]
+        sort_p_vol_idx = np.argsort(self.factors["p_vol"])[::-1]
 
-        temp_x = x
-        temp_y = y
-        sort_x_idx = -1
-        sort_y_idx = -1
-        for i in range(len(sort_p_vol)):
-            if (temp_x - sort_p_vol[i]) > 0:
-                temp_x -= sort_p_vol[i]
-            else:
-                sort_x_idx = i
-                break
-        for i in range(len(sort_p_vol)):
-            if (temp_y - sort_p_vol[i]) > 0:
-                temp_y -= sort_p_vol[i]
-            else:
-                sort_y_idx = i
-                break
-        x_idx = sort_p_idx[sort_x_idx]
-        y_idx = sort_p_idx[sort_y_idx]       
+        # Generate volunteer locations.
+        for _ in range(num_vol):
+            u = vol_sq_rng.uniform(0, 1)
+            x = int(u * 1e+6 // 1000) /1000
+            y = int(u * 1e+6 % 1000) / 1000
+
+            temp_x = x
+            temp_y = y
+            sort_x_idx = -1
+            sort_y_idx = -1
+            for i in range(len(sort_p_vol)):
+                if (temp_x - sort_p_vol[i]) > 0:
+                    temp_x -= sort_p_vol[i]
+                else:
+                    sort_x_idx = i
+                    break
+            for i in range(len(sort_p_vol)):
+                if (temp_y - sort_p_vol[i]) > 0:
+                    temp_y -= sort_p_vol[i]
+                else:
+                    sort_y_idx = i
+                    break
+            x_idx = sort_p_vol_idx[sort_x_idx]
+            y_idx = sort_p_vol_idx[sort_y_idx]
+
+            x_coord = x_idx // np.sqrt(self.factors["num_squares"]) + temp_x / sort_p_vol[sort_x_idx]
+            y_coord = y_idx % np.sqrt(self.factors["num_squares"]) + temp_y / sort_p_vol[sort_y_idx]
             
+            vol_locs_idx.append((x_idx // np.sqrt(self.factors["num_squares"]), y_idx % np.sqrt(self.factors["num_squares"])))
+            vol_locs.append((x_coord * self.factors["square_length"], y_coord * self.factors["square_length"]))
 
 
-        
+        sort_p_OHCA = np.sort(flat_p_OHCA)[::-1]
+        sort_p_OHCA_idx = np.argsort(flat_p_OHCA)[::-1]
+        # Generate the location of OHCAs.
+        for i in range(self.factors["num_OHCA"]):
+            u = OHCA_sq_rng.uniform(0, 1)
+            x = int(u * 1e+6 // 1000) /1000
+            y = int(u * 1e+6 % 1000) / 1000
+
+            temp_x = x
+            temp_y = y
+            sort_x_idx = -1
+            sort_y_idx = -1
+            for i in range(len(sort_p_OHCA)):
+                if (temp_x - sort_p_OHCA[i]) > 0:
+                    temp_x -= sort_p_OHCA_idx[i]
+                else:
+                    sort_x_idx = i
+                    break
+            for i in range(len(sort_p_OHCA)):
+                if (temp_y - sort_p_OHCA[i]) > 0:
+                    temp_y -= sort_p_OHCA[i]
+                else:
+                    sort_y_idx = i
+                    break
+            x_idx = sort_p_OHCA_idx[sort_x_idx]
+            y_idx = sort_p_OHCA_idx[sort_y_idx]
+            x_coord = x_idx // np.sqrt(self.factors["num_squares"]) + temp_x / sort_p_OHCA[sort_x_idx]
+            y_coord = y_idx % np.sqrt(self.factors["num_squares"]) + temp_y / sort_p_OHCA[sort_y_idx]
+            OHCA_loc = ((x_coord * self.factors["square_length"], y_coord * self.factors["square_length"]))
+
+            # Calculate the distance of the closest volunteer to the location of an OHCA.
+            dists = []
+            vol_cnt = {}
+            for i in range(num_vol):
+                dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
+                dists.append(dist)
+                vol_coord = (vol_locs_idx[i][0], vol_locs_idx[i][1])
+                if vol_coord in vol_cnt:
+                    vol_cnt[vol_coord] += 1
+                else:
+                    vol_cnt[vol_coord] = 1
+            min_dist = np.min(dists)
+
+            # Use the survival function to calculate the probability of survival.
+            # Convert distance to time: 3 min + D/(6km/hr).
+            t = 3 + min_dist / (6000 / 60)
+            p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
+            sum_p += p_survival
+
+            # Compute gradient estimator for p_survival.
+            p_grad = np.zeros(self.factors["num_squares"])
+            for i in range(self.factors["num_squares"]):
+                x = i // np.sqrt(self.factors["num_squares"])
+                y = i % np.sqrt(self.factors["num_squares"])
+                if self.factors["p_vol"][i] > 0:
+                    p_grad[i] = p_survival * vol_cnt.get((x, y), 0) / self.factors["p_vol"][i]
+            p_grads.append(p_grad)
 
 
         # pts = np.zeros(self.factors["num_squares"])
@@ -213,55 +287,55 @@ class Volunteer(Model):
         # xs, ys = sunflower(200, alpha=2)
 
 
-        # Generate the locations of the volunteers following a Poisson point process.
-        prob2, alias2, value_list2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))
-        for _ in range(num_vol):
-            # Generate the coordinates of the square the volunteer is located in.
-            u4 = vol_sq_rng.alias(prob2, alias2, value_list2)
-            x = u4 // np.sqrt(self.factors["num_squares"])
-            y = u4 % np.sqrt(self.factors["num_squares"])
-            vol_locs_idx.append((x, y))
-            # Find a random location in the square.
-            u5 = vol_loc_lat_rng.uniform(0, 1)
-            u6 = vol_loc_lon_rng.uniform(0, 1)
-            vol_locs.append(((x + u5) * self.factors["square_length"], 
-                        (y + u6) * self.factors["square_length"]))
+        # # Generate the locations of the volunteers following a Poisson point process.
+        # prob2, alias2, value_list2 = vol_sq_rng.alias_init(dict(enumerate(list(self.factors["p_vol"]), 1)))
+        # for _ in range(num_vol):
+        #     # Generate the coordinates of the square the volunteer is located in.
+        #     u4 = vol_sq_rng.alias(prob2, alias2, value_list2)
+        #     x = u4 // np.sqrt(self.factors["num_squares"])
+        #     y = u4 % np.sqrt(self.factors["num_squares"])
+        #     vol_locs_idx.append((x, y))
+        #     # Find a random location in the square.
+        #     u5 = vol_loc_lat_rng.uniform(0, 1)
+        #     u6 = vol_loc_lon_rng.uniform(0, 1)
+        #     vol_locs.append(((x + u5) * self.factors["square_length"], 
+        #                 (y + u6) * self.factors["square_length"]))
 
-        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
-        prob1, alias1, value_list1 = OHCA_sq_rng.alias_init(dict(enumerate(flat_p_OHCA, 1)))    
-        sum_flag = 0
-        flag_grads = []
-        sum_p = 0
-        p_grads = []
-        # Generate the location of an OHCA in each iteration.
-        for i in range(self.factors["num_OHCA"]):
-            # Generate the square containing the OHCA.
-            u1 = OHCA_sq_rng.alias(prob1, alias1, value_list1)
-            x = u1 // np.sqrt(self.factors["num_squares"])
-            y = u1 % np.sqrt(self.factors["num_squares"])
-            # Find a random location in the square.
-            u2 = OHCA_loc_lat_rng.uniform(0, 1)
-            u3 = OHCA_loc_lon_rng.uniform(0, 1)
-            OHCA_loc = ((x + u3) * self.factors["square_length"], 
-                        (y + u2) * self.factors["square_length"])
-            # Calculate the distance of the closest volunteer to the location of an OHCA.
-            dists = []
-            vol_cnt = {}
-            for i in range(num_vol):
-                dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
-                dists.append(dist)
-                vol_coord = (vol_locs_idx[i][0], vol_locs_idx[i][1])
-                if vol_coord in vol_cnt:
-                    vol_cnt[vol_coord] += 1
-                else:
-                    vol_cnt[vol_coord] = 1
-            min_dist = np.min(dists)
-            # closest_loc = vol_locs[np.argmin(dists)]
-            thre_dist_flag = 0
-            # Check the minimum distance against the threshold distance.
-            if min_dist > self.factors["thre_dist"]:
-                thre_dist_flag = 1
-            sum_flag += thre_dist_flag
+        # flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
+        # prob1, alias1, value_list1 = OHCA_sq_rng.alias_init(dict(enumerate(flat_p_OHCA, 1)))    
+        # sum_flag = 0
+        # flag_grads = []
+        # sum_p = 0
+        # p_grads = []
+        # # Generate the location of an OHCA in each iteration.
+        # for i in range(self.factors["num_OHCA"]):
+        #     # Generate the square containing the OHCA.
+        #     u1 = OHCA_sq_rng.alias(prob1, alias1, value_list1)
+        #     x = u1 // np.sqrt(self.factors["num_squares"])
+        #     y = u1 % np.sqrt(self.factors["num_squares"])
+        #     # Find a random location in the square.
+        #     u2 = OHCA_loc_lat_rng.uniform(0, 1)
+        #     u3 = OHCA_loc_lon_rng.uniform(0, 1)
+        #     OHCA_loc = ((x + u3) * self.factors["square_length"], 
+        #                 (y + u2) * self.factors["square_length"])
+        #     # Calculate the distance of the closest volunteer to the location of an OHCA.
+        #     dists = []
+        #     vol_cnt = {}
+        #     for i in range(num_vol):
+        #         dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
+        #         dists.append(dist)
+        #         vol_coord = (vol_locs_idx[i][0], vol_locs_idx[i][1])
+        #         if vol_coord in vol_cnt:
+        #             vol_cnt[vol_coord] += 1
+        #         else:
+        #             vol_cnt[vol_coord] = 1
+        #     min_dist = np.min(dists)
+        #     # closest_loc = vol_locs[np.argmin(dists)]
+        #     thre_dist_flag = 0
+        #     # Check the minimum distance against the threshold distance.
+        #     if min_dist > self.factors["thre_dist"]:
+        #         thre_dist_flag = 1
+        #     sum_flag += thre_dist_flag
 
             # # Compute gradient estimator for thre_dist_flag
             # for j in range(200):
@@ -290,20 +364,20 @@ class Volunteer(Model):
             #     flag_grad[i] = -np.exp(-self.factors["mean_vol"] * vol_in_circle) * self.factors["mean_vol"] * frac_sq[i]
             # flag_grads.append(flag_grad)
             
-            # Use the survival function to calculate the probability of survival.
-            # Convert distance to time: 3 min + D/(6km/hr).
-            t = 3 + min_dist / (6000 / 60)
-            p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
-            sum_p += p_survival
+            # # Use the survival function to calculate the probability of survival.
+            # # Convert distance to time: 3 min + D/(6km/hr).
+            # t = 3 + min_dist / (6000 / 60)
+            # p_survival = (1 + np.exp(0.679 + 0.262*t))**(-1)
+            # sum_p += p_survival
 
-            # Compute gradient estimator for p_survival.
-            p_grad = np.zeros(self.factors["num_squares"])
-            for i in range(self.factors["num_squares"]):
-                x = i // np.sqrt(self.factors["num_squares"])
-                y = i % np.sqrt(self.factors["num_squares"])
-                if self.factors["p_vol"][i] > 0:
-                    p_grad[i] = p_survival * vol_cnt.get((x, y), 0) / self.factors["p_vol"][i]
-            p_grads.append(p_grad)
+            # # Compute gradient estimator for p_survival.
+            # p_grad = np.zeros(self.factors["num_squares"])
+            # for i in range(self.factors["num_squares"]):
+            #     x = i // np.sqrt(self.factors["num_squares"])
+            #     y = i % np.sqrt(self.factors["num_squares"])
+            #     if self.factors["p_vol"][i] > 0:
+            #         p_grad[i] = p_survival * vol_cnt.get((x, y), 0) / self.factors["p_vol"][i]
+            # p_grads.append(p_grad)
 
         # Compose responses and gradients.
         responses = {"thre_dist_flag": sum_flag / self.factors["num_OHCA"],
@@ -393,7 +467,7 @@ class VolunteerDist(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -686,7 +760,7 @@ class VolunteerSurvival(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}

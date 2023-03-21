@@ -203,30 +203,24 @@ class PGD(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
-            # Line search to determine a step_size.
-            step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
-            print('expended_budget', expended_budget)
-
             # Get a temp solution.
-            temp_x = new_x - step_size * grad
-            # Update maximum step size for the next iteration.
-            max_step = step_size
+            temp_x = new_x - max_step * grad
 
             # Check feasibility of temp_x.
             if self._feasible(temp_x, problem, tol):
-                new_solution = self.create_new_solution(tuple(temp_x), problem)
+                # Perform line search.
+                new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, -grad, alpha, beta)
+                # Update maximum step size for the next iteration.
+                max_step = step_size
             else:
                 # If not feasible, project temp_x back to the feasible set.
                 proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
-                new_solution = self.create_new_solution(tuple(proj_x), problem)
-
-            print('tempx', temp_x)
-            print(np.sum(proj_x))
-            print('projx', proj_x)
-
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(new_solution, r)
-            expended_budget += r
+                # Get search direction
+                dir = proj_x - new_x
+                # Perform line search.
+                new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, 1, dir, alpha, beta)
+                # Update maximum step size for the next iteration.
+                max_step = step_size
 
             print('newsol', problem.minmax[0] * new_solution.objectives_mean)
             print('best sol',  problem.minmax[0] * best_solution.objectives_mean)
@@ -439,6 +433,8 @@ class PGD(Solver):
 
         Returns
         -------
+        x_new_solution : Solution
+            a solution obtained by line search
         step_size : float
             computed step size
         expended_budget : int
@@ -452,6 +448,9 @@ class PGD(Solver):
             if expended_budget > problem.factors["budget"]:
                 break
             x_new = x + step_size * d
+            print('x', x)
+            print('d', d)
+            print('xnew', x_new)
             # Create a solution object for x_new.
             x_new_solution = self.create_new_solution(tuple(x_new), problem)
             # Use r simulated observations to estimate the objective value.
@@ -463,10 +462,7 @@ class PGD(Solver):
                 break
             step_size *= beta
             count +=1
-        # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 0:
-            step_size /= beta
-        return step_size, expended_budget
+        return x_new_solution, step_size, expended_budget,
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
         '''

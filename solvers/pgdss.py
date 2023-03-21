@@ -102,6 +102,11 @@ class PGDSS(Solver):
                 "datatype": float,
                 "default": 1e-7
             },
+            "finite_diff_step": {
+                "description": "step size for finite difference",
+                "datatype": float,
+                "default": 1
+            },
             
         }
         self.check_factor_list = {
@@ -113,7 +118,8 @@ class PGDSS(Solver):
             "alpha_0": self.check_alpha_0,
             "epsilon_f": self.check_epsilon_f,
             "lambda": self.check_lambda,
-            "tol": self.check_tol
+            "tol": self.check_tol,
+            "finite_diff_step": self.check_finite_diff_step
         }
         super().__init__(fixed_factors)
 
@@ -140,6 +146,9 @@ class PGDSS(Solver):
     
     def check_lambda(self):
         return self.factors["lambda"] > 0
+
+    def check_finite_diff_step(self):
+        return self.factors["finite_diff_step"] > 0
 
     def solve(self, problem):
         """
@@ -216,7 +225,7 @@ class PGDSS(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = alpha)
+                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = self.factors["finite_diff_step"])
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):

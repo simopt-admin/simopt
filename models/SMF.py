@@ -46,6 +46,9 @@ class SMF(Model):
         self.name = "SMF"
         self.n_rngs = 1
         self.n_responses = 1
+        cov_fac=np.zeros((20,20))
+        np.fill_diagonal(cov_fac,4)
+        cov_fac=cov_fac.tolist()
         self.specifications = {
             "num_nodes": {
             "description": "number of nodes, 0 being the source, highest being the sink",
@@ -80,27 +83,28 @@ class SMF(Model):
             "cov_noise":{
                 "description": "Covariance matrix of noise",
                 "datatype": list,
-                "default": [[1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2],
-                ]
+                "default": cov_fac
+                # [[1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2,0],
+                # [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.2],]
+                
             }
 
         }
@@ -153,7 +157,7 @@ class SMF(Model):
         return len(self.factors["mean_noise"])==len(self.factors["arcs"])
 
     def check_cov(self):
-        return self.factors["cov_noise"].shape==(len(self.factors["arcs"]),len(self.factors["arcs"]))
+        return np.array(self.factors["cov_noise"]).shape==(len(self.factors["arcs"]),len(self.factors["arcs"]))
 
     def check_s(self):
         return self.factors["source_index"]>=0 and self.factors["source_index"]<=self.factors["num_nodes"]
@@ -193,8 +197,7 @@ class SMF(Model):
             noise=exp_rng.mvnormalvariate(self.factors["mean_noise"],np.array(self.factors["cov_noise"]))
         capacities=[]
         for i in range(len(noise)):
-            capacities.append(max(int(self.factors["assigned_capacities"][i]),0))
-        print('capacities', capacities)
+            capacities.append(max(1000*(self.factors["assigned_capacities"][i]-noise[i]),0))
         # Add arcs in bulk.
         all_arcs = solver.add_arcs_with_capacity(start_nodes, end_nodes, capacities)
         status=solver.solve(self.factors["source_index"],self.factors["sink_index"])
@@ -208,11 +211,24 @@ class SMF(Model):
         # solution_flows = solver.flows(all_arcs)
         # for arc, flow, capacity in zip(all_arcs, solution_flows, capacities):
         #     print(f'{solver.tail(arc)} / {solver.head(arc)}   {flow:3}  / {capacity:3}')
-        # print('Source side min-cut:', solver.get_source_side_min_cut())
         # print('Sink side min-cut:', solver.get_sink_side_min_cut())
         # Compose responses and gradients.
-        responses = {"Max Flow": solver.optimal_flow(),"flow":solver.flows(all_arcs)}
+
+        gradient=np.zeros(len(self.factors["arcs"]))
+        grad_arclist=[]
+        min_cut_nodes=solver.get_source_side_min_cut()
+        for i in min_cut_nodes:
+            for j in range(self.factors['num_nodes']):
+                if j not in min_cut_nodes:
+                    grad_arc=(i,j)
+                    if (i,j) in self.factors['arcs']:
+                        grad_arclist.append(grad_arc)
+        for arc in grad_arclist:
+            gradient[self.factors['arcs'].index(arc)]=1/1000
+
+        responses = {"Max Flow": solver.optimal_flow()/1000}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients["Max Flow"]["assigned_capacities"]=gradient
         return responses,gradients
 
 
@@ -299,7 +315,7 @@ class SMF_Max(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -314,7 +330,7 @@ class SMF_Max(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 2000
+                "default": 10000
             },
             "cap": {
                 "description": "total set-capacity to be allocated to arcs.",
@@ -374,7 +390,7 @@ class SMF_Max(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["assigned_capacities"],)
+        vector = tuple(factor_dict["assigned_capacities"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):

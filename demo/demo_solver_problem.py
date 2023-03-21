@@ -30,8 +30,9 @@ from experiment_base import ProblemSolver, read_experiment_results, post_normali
 # solver_name = "PGD-SS"
 solver_name = "PGD"
 # solver_name = "PGD-usimplex"
-problem_name = "VOLUNTEER-2"  
+# problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
+problem_name = "SAN-1"
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
