@@ -13,7 +13,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 from rng.mrg32k3a import MRG32k3a
 
 # Import the Solution class.
-from base import Solution
+from simopt.base import Solution
 import numpy as np
 
 # Import problem.
@@ -43,18 +43,18 @@ import numpy as np
 
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
-from models.cntnv import CntNVMaxProfit
+from simopt.models.cntnv import CntNVMaxProfit
 fixed_factors = {"initial_solution": (2,), "budget": 500}
 myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
 x = (3,)
 mysolution = Solution(x, myproblem)
 
-from models.fake import FakeProblem
+from simopt.models.fake import FakeProblem
 myproblem = FakeProblem()
 x = (1, 0)
 mysolution = Solution(x, myproblem)
 
-from models.volunteer import VolunteerDist
+from simopt.models.volunteer import VolunteerDist
 myproblem = VolunteerDist()
 x = tuple((1/4 * np.ones(4)).tolist())
 mysolution = Solution(x, myproblem)
