@@ -80,7 +80,7 @@ class Volunteer(Model):
             "num_OHCA": {
                 "description": "Number of OHCAs to generate.",
                 "datatype": int,
-                "default": 20
+                "default": 30
             },
         }
         self.check_factor_list = {
@@ -140,20 +140,15 @@ class Volunteer(Model):
         """
         # Designate separate random number generators.
         num_vol_rng = rng_list[0]
-        vol_x_rng = rng_list[1]
-        vol_y_rng = rng_list[2]
-        OHCA_x_rng = rng_list[3]
-        OHCA_y_rng = rng_list[4]
+        vol_sq_rng = rng_list[1]
+        vol_loc_lon_rng = rng_list[2]
+        vol_loc_lat_rng = rng_list[3]
+        OHCA_loc_lat_rng = rng_list[4]
+        OHCA_loc_lon_rng = rng_list[5]
+        OHCA_sq_rng = rng_list[6]
 
-
-        # Retrieve the distributions for OHCA and volunteers.
-        p_OHCA = np.array(self.factors["p_OHCA"])
-        # Marginal distribution of OHCA over x axis.
-        mar_x_p_OHCA = np.sum(self.factors["p_OHCA"], axis = 0)
-        p_vol = np.array(self.factors["p_vol"])[:np.newaxis].reshape((int(np.sqrt(self.factors["num_squares"])),
-                                                          int(np.sqrt(self.factors["num_squares"]))))
-        # Marginal distribution of volunteers over x axis.
-        mar_x_p_vol= np.sum(p_vol, axis = 0)
+        # Flattened p_OHCA.
+        flat_p_OHCA = list(chain.from_iterable(self.factors["p_OHCA"]))
 
         # Initialize quantities to track:
         # - Location of an OHCA.
@@ -170,60 +165,86 @@ class Volunteer(Model):
         p_grads = []
         sum_flag = 0
         flag_grads = []
-        vol_cnt = {}
-
+        
         # Generate number of volunteers through a Poisson random variable.
         num_vol = num_vol_rng.poissonvariate(self.factors["mean_vol"])
 
+        sort_p_vol = np.sort(self.factors["p_vol"])[::-1]
+        sort_p_vol_idx = np.argsort(self.factors["p_vol"])[::-1]
+
         # Generate volunteer locations.
         for _ in range(num_vol):
-            u1 = vol_x_rng.uniform(0, 1)
-            u2 = vol_y_rng.uniform(0, 1)
+            u = vol_sq_rng.uniform(0, 1)
+            x = int(u * 1e+6 // 1000) /1000
+            y = int(u * 1e+6 % 1000) / 1000
 
-            # Generate x coordinate using the marginal distribution over x axis.
-            x_cum_sum = np.cumsum(mar_x_p_vol)
-            sq_x = np.searchsorted(x_cum_sum, u1)
-            x_coord = ((u1 - np.sum(mar_x_p_vol[:sq_x])) / mar_x_p_vol[sq_x] + sq_x) * self.factors["square_length"]
+            temp_x = x
+            temp_y = y
+            sort_x_idx = -1
+            sort_y_idx = -1
+            for i in range(len(sort_p_vol)):
+                if (temp_x - sort_p_vol[i]) > 0:
+                    temp_x -= sort_p_vol[i]
+                else:
+                    sort_x_idx = i
+                    break
+            for i in range(len(sort_p_vol)):
+                if (temp_y - sort_p_vol[i]) > 0:
+                    temp_y -= sort_p_vol[i]
+                else:
+                    sort_y_idx = i
+                    break
+            x_idx = sort_p_vol_idx[sort_x_idx]
+            y_idx = sort_p_vol_idx[sort_y_idx]
 
-            # Generate y coordinate using the normalized y axis distribution identified by sq_x.
-            y_p_vol = p_vol[:, sq_x] / p_vol[:, sq_x].sum()
-            y_cum_sum = np.cumsum(y_p_vol)
-            sq_y = np.searchsorted(y_cum_sum, u2)
-            y_coord = ((u2 - np.sum(y_p_vol[:sq_y])) / y_p_vol[sq_y] + sq_y) * self.factors["square_length"]
+            x_coord = x_idx // np.sqrt(self.factors["num_squares"]) + temp_x / sort_p_vol[sort_x_idx]
+            y_coord = y_idx % np.sqrt(self.factors["num_squares"]) + temp_y / sort_p_vol[sort_y_idx]
+            
+            vol_locs_idx.append((x_idx // np.sqrt(self.factors["num_squares"]), y_idx % np.sqrt(self.factors["num_squares"])))
+            vol_locs.append((x_coord * self.factors["square_length"], y_coord * self.factors["square_length"]))
 
-            vol_sq = (sq_x, sq_y)
-            vol_locs_idx.append(vol_sq)
-            # Update volunteer count in each square
-            if vol_sq in vol_cnt:
-                vol_cnt[vol_sq] += 1
-            else:
-                vol_cnt[vol_sq] = 1
-            # Add actual volunteer coordinates
-            vol_locs.append((x_coord, y_coord))
 
+        sort_p_OHCA = np.sort(flat_p_OHCA)[::-1]
+        sort_p_OHCA_idx = np.argsort(flat_p_OHCA)[::-1]
         # Generate the location of OHCAs.
         for i in range(self.factors["num_OHCA"]):
-            u3 = OHCA_x_rng.uniform(0, 1)
-            u4 = OHCA_y_rng.uniform(0, 1)
+            u = OHCA_sq_rng.uniform(0, 1)
+            x = int(u * 1e+6 // 1000) /1000
+            y = int(u * 1e+6 % 1000) / 1000
 
-            # Generate x coordinate using the marginal distribution over x axis.
-            x_cum_sum = np.cumsum(mar_x_p_OHCA)
-            sq_x = np.searchsorted(x_cum_sum, u3)
-            x_coord = ((u3 - np.sum(mar_x_p_OHCA[:sq_x])) / mar_x_p_OHCA[sq_x] + sq_x) * self.factors["square_length"]
+            temp_x = x
+            temp_y = y
+            sort_x_idx = -1
+            sort_y_idx = -1
+            for i in range(len(sort_p_OHCA)):
+                if (temp_x - sort_p_OHCA[i]) > 0:
+                    temp_x -= sort_p_OHCA_idx[i]
+                else:
+                    sort_x_idx = i
+                    break
+            for i in range(len(sort_p_OHCA)):
+                if (temp_y - sort_p_OHCA[i]) > 0:
+                    temp_y -= sort_p_OHCA[i]
+                else:
+                    sort_y_idx = i
+                    break
+            x_idx = sort_p_OHCA_idx[sort_x_idx]
+            y_idx = sort_p_OHCA_idx[sort_y_idx]
+            x_coord = x_idx // np.sqrt(self.factors["num_squares"]) + temp_x / sort_p_OHCA[sort_x_idx]
+            y_coord = y_idx % np.sqrt(self.factors["num_squares"]) + temp_y / sort_p_OHCA[sort_y_idx]
+            OHCA_loc = ((x_coord * self.factors["square_length"], y_coord * self.factors["square_length"]))
 
-            # Generate y coordinate using the normalized y axis distribution identified by sq_x.
-            y_p_OHCA = p_OHCA[:, sq_x] / p_OHCA[:, sq_x].sum()
-            y_cum_sum = np.cumsum(y_p_OHCA)
-            sq_y = np.searchsorted(y_cum_sum, u4)
-            y_coord = ((u4 - np.sum(y_p_OHCA[:sq_y])) / y_p_OHCA[sq_y] + sq_y) * self.factors["square_length"]
-
-            OHCA_loc = (x_coord, y_coord)
-
-            # Calculate the distance of the closest volunteer to the location of this generated OHCA.
+            # Calculate the distance of the closest volunteer to the location of an OHCA.
             dists = []
+            vol_cnt = {}
             for i in range(num_vol):
                 dist = np.sqrt((vol_locs[i][0] - OHCA_loc[0])**2 + (vol_locs[i][1] - OHCA_loc[1])**2)
                 dists.append(dist)
+                vol_coord = (vol_locs_idx[i][0], vol_locs_idx[i][1])
+                if vol_coord in vol_cnt:
+                    vol_cnt[vol_coord] += 1
+                else:
+                    vol_cnt[vol_coord] = 1
             min_dist = np.min(dists)
 
             # Use the survival function to calculate the probability of survival.
@@ -446,7 +467,7 @@ class VolunteerDist(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -739,7 +760,7 @@ class VolunteerSurvival(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = True
+        self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -775,10 +796,7 @@ class VolunteerSurvival(Problem):
         self.dim = self.model.factors["num_squares"]
         self.lower_bounds = tuple(np.zeros(self.dim))
         self.upper_bounds = tuple(np.ones(self.dim))
-        self.Ce = np.ones(self.dim)
-        self.de = np.array([1])
-        self.Ci = None
-        self.di = None
+        self.set_linear_constraints()
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
@@ -940,11 +958,20 @@ class VolunteerSurvival(Problem):
         x : tuple
             vector of decision variables
         """
-        # if rand_sol_rng.random() < 0.5:
-        #     x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
-        # else:
-        #     x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
-
-        x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        if rand_sol_rng.random() < 0.5:
+            x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
+        else:
+            x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
     
+    def set_linear_constraints(self):
+        # Initialize linear constraint matrices.
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
+        if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
+            return
+        else:
+            self.Ce = np.ones(self.dim)
+            self.de = np.array([1])

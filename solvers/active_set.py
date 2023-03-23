@@ -99,7 +99,7 @@ class ACTIVESET(Solver):
             "finite_diff_step": {
                 "description": "step size for finite difference",
                 "datatype": float,
-                "default": 1
+                "default": 1e-5
             }
         }
         self.check_factor_list = {
@@ -247,7 +247,7 @@ class ACTIVESET(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r, stepsize = self.factors["finite_diff_step"])
+                grad = self.finite_diff(new_solution, BdsCheck, problem, r, self.factors["finite_diff_step"])
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # A while loop to prevent zero gradient
                 while np.all((grad == 0)):
@@ -430,6 +430,7 @@ class ACTIVESET(Solver):
                 # First column is f(x+h,y).
                 FnPlusMinus[i, 0] = fn1
             x2_solution = self.create_new_solution(tuple(x2), problem)
+            print('x2', x2)
             if BdsCheck[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean

@@ -129,7 +129,7 @@ class SAN(Model):
             graph_in[a[1]].add(a[0])
             graph_out[a[0]].add(a[1])
         indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
-        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
+
         queue = []
         topo_order = []
         for n in range(self.factors["num_nodes"]):
@@ -158,7 +158,6 @@ class SAN(Model):
                     T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
                     prev[j - 1] = vi
         longest_path = T[self.factors["num_nodes"] - 1]
-        # print('arcmeans', self.factors["arc_means"])
 
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
@@ -213,6 +212,14 @@ class SANLongestPath(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : tuple
@@ -283,7 +290,7 @@ class SANLongestPath(Problem):
             "arc_costs": {
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
-                "default": (1,) * 13
+                "default": (1, ) * 13
             }
         }
         self.check_factor_list = {
@@ -295,8 +302,8 @@ class SANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
+        self.lower_bounds = (1e-2, ) * self.dim
+        self.upper_bounds = (np.inf, ) * self.dim
 
     def check_arc_costs(self):
         positive = True
@@ -484,6 +491,14 @@ class SANLongestPathConstr(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : tuple
@@ -568,10 +583,10 @@ class SANLongestPathConstr(Problem):
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
-        self.Ci=-1*np.ones(13)
-        self.Ce= None
-        self.di=np.array([-30])
-        self.de= None
+        self.Ci = -1 * np.ones(13)
+        self.Ce = None
+        self.di = np.array([-30])
+        self.de = None
 
     def check_arc_costs(self):
         positive = True
@@ -722,5 +737,5 @@ class SANLongestPathConstr(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple([rand_sol_rng.lognormalvariate(lq = 0.1, uq = 10) for _ in range(self.dim)])
         return x
