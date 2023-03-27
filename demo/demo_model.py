@@ -30,7 +30,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 # Working example for MM1 model.
 # -----------------------------------------------
 from simopt.models.cntnv import CntNV
-fixed_factors = {"sales_price": 10.0}
+fixed_factors = {}
 mymodel = CntNV(fixed_factors)
 # -----------------------------------------------
 
