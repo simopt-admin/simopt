@@ -44,9 +44,9 @@ class Fake2(Model):
             "x": {
                 "description": "x",
                 "datatype": tuple,
-                "default": (1, 0, 0, 0, 0)
+                # "default": (1, 0, 0, 0, 0)
                 # "default": (1, 0, 0)
-                # "default": (1, 0)
+                "default": (1, 0)
             },
         }
         self.check_factor_list = {
@@ -172,9 +172,9 @@ class FakeProblem2(Problem):
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
                 # "default": (-5, 0, 0, 0, 0)
-                "default": (1, 0, 0, 0, 0)
+                # "default": (1, 0, 0, 0, 0)
                 # "default": (1, 0, 0)
-                # "default": (1, 0)
+                "default": (1, 0)
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -190,17 +190,22 @@ class FakeProblem2(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Fake2(self.model_fixed_factors)
         self.dim = len(self.model.factors["x"])
-        self.lower_bounds = (-np.inf,) * self.dim
-        # self.lower_bounds = (0,) * self.dim
+        # self.lower_bounds = (-np.inf,) * self.dim
+        self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
         # self.lower_bounds = (-1, ) * self.dim
         # self.upper_bounds = (2, ) * self.dim
         self.optimal_solution = None
         # self.optimal_solution = tuple(np.ones(self.dim) / self.dim)
-        self.Ci = None
-        self.Ce = None
-        self.di = None
-        self.de = None
+        # self.Ci = None
+        # self.Ce = None
+        # self.di = None
+        # self.de = None
+        self.Ce = np.array([[1, 1]])
+        self.de = np.array([1]) # a simple linear constraint 1 x = 1
+        self.Ci = np.array([[1, 1]])
+        self.di = np.array([1])
+
 
     def vector_to_factor_dict(self, vector):
         """

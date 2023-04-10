@@ -65,30 +65,30 @@ class PGDSS(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 50
+                "default": 30
             },
             "theta": {
-                "description": "constant in the Armijo condition.",
+                "description": "constant in the Armijo condition",
                 "datatype": int,
                 "default": 0.2
             },
             "gamma": {
-                "description": "constant for shrinking the step size.",
+                "description": "constant for shrinking the step size",
                 "datatype": int,
                 "default": 0.8
             },
             "alpha_max": {
-                "description": "maximum step size.",
+                "description": "maximum step size",
                 "datatype": int,
                 "default": 10
             },
             "alpha_0": {
-                "description": "initial step size.",
+                "description": "initial step size",
                 "datatype": int,
                 "default": 1
             },
             "epsilon_f": {
-                "description": "additive constant in the Armijo condition.",
+                "description": "additive constant in the Armijo condition",
                 "datatype": int,
                 "default": 1e-3  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
@@ -105,7 +105,7 @@ class PGDSS(Solver):
             "finite_diff_step": {
                 "description": "step size for finite difference",
                 "datatype": float,
-                "default": 1
+                "default": 1e-5
             }
             
         }
@@ -275,7 +275,6 @@ class PGDSS(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
-        print('solutions', [sol.x for sol in recommended_solns])
         return recommended_solns, intermediate_budgets
 
 

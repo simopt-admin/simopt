@@ -24,6 +24,7 @@ from .solvers.pgd import PGD
 from .solvers.active_set import ACTIVESET
 from .solvers.pgdss import PGDSS
 from .solvers.PGD_usimplex import PGD2
+from .solvers.dsearch import DS
 # import models and problems
 from .models.cntnv import CntNV, CntNVMaxProfit
 from .models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -42,7 +43,7 @@ from .models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
 from .models.fixedsan import FixedSAN, FixedSANLongestPath
 from .models.voting import Voting, MinVotingMaxWaitTime
 from .models.prodsys import ProdSys, ProdSysMinLeadTime
-from .models.covid import COVID, CovidMinInfect
+from .models.covid_old import COVID, CovidMinInfect
 from .models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
 from .models.fake2 import Fake2, FakeProblem2
 from .models.smf import SMF, SMF_Max
@@ -57,7 +58,8 @@ solver_directory = {
     "PGD": PGD,
     "PGD-SS": PGDSS,
     "ACTIVESET": ACTIVESET,
-    "PGD-usimplex":  PGD2
+    "PGD-usimplex": PGD2,
+    "DS": DS
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,

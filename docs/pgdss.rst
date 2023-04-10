@@ -1,17 +1,17 @@
-Solver: Projected Gradient Descent (PGD)
+Solver: Projected Gradient Descent With Adaptive Step Search (PGDSS)
 =============================================================================================
 
 Description:
 ------------
 The solver is dedicated for problems with linear constraints in the form of :math:`C_e x = de, C_i x \leq di`. 
-It is based on the standard line-search gradient descent algorithm with new solutions being projected back to the feasible region.
+It is based on the gradient descent algorithm with new solutions being projected back to the feasible region and
+integrates the adaptive step search method similar to ALOE.
+
 
 Modifications & Implementation:
 -------------------------------
 
 **find_feasible_initial**: Find an initial feasible solution if one is not provided.
-
-**line_search**: A back-tracking line search method.
 
 **project_grad**: Project the vector x onto the feasible hyperplane 
 by solving a quadratic projection problem below. (`x + d`) will be the projected vector.
@@ -51,17 +51,25 @@ Solver Factors:
 
     * Default: 30
 
-* alpha: Tolerance for sufficient decrease condition.
+* theta: Constant in the Armijo condition.
 
     * Default: 0.2
 
-* beta: Step size reduction factor in line search.
+* gamma: Constant for shrinking the step size.
 
-    * Default: 0.9
+    * Default: 0.8
 
 * alpha_max: Maximum step size
 
     * Default: 10.0
+
+* alpha_0: initial step size.
+
+    * Default: 1
+
+* epsilon_f: Additive constant in the Armijo condition.
+
+    * Default: 1
 
 * lambda: Magnifying factor for r inside the finite difference function
 

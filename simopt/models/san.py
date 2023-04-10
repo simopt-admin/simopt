@@ -570,6 +570,11 @@ class SANLongestPathConstr(Problem):
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
                 "default": (1,) * 13
+            },
+            "sum_lb": {
+                "description": "Lower bound for the sum of arc means",
+                "datatype": float,
+                "default": 30.0
             }
         }
         self.check_factor_list = {
@@ -585,7 +590,7 @@ class SANLongestPathConstr(Problem):
         self.upper_bounds = (np.inf,) * self.dim
         self.Ci = -1 * np.ones(13)
         self.Ce = None
-        self.di = np.array([-30])
+        self.di = np.array(-[self.factors["sum_lb"]])
         self.de = None
 
     def check_arc_costs(self):
@@ -737,5 +742,9 @@ class SANLongestPathConstr(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(lq = 0.1, uq = 10) for _ in range(self.dim)])
+        while True:
+            x = [rand_sol_rng.lognormalvariate(lq = 0.1, uq = 10) for _ in range(self.dim)]
+            if np.sum(x) >= self.factors['sum_lb']:
+                break
+        x= tuple(x)
         return x

@@ -26,13 +26,14 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
-solver_name = "ACTIVESET"
+# solver_name = "ACTIVESET"
 # solver_name = "PGD-SS"
-# solver_name = "PGD"
+solver_name = "PGD"
+# solver_name = "DS"
 # problem_name = "VOLUNTEER-2"  
-problem_name = "FAKE2-1" 
+# problem_name = "FAKE2-1" 
 # problem_name = "SAN-1"
-# problem_name = "SMF-1"
+problem_name = "SMF-1"
 
 # -----------------------------------------------
 

@@ -172,13 +172,15 @@ class SMF(Model):
         capacities = []
         for i in range(len(noise)):
             capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
+        # Add arcs in bulk.
+        solver.add_arcs_with_capacity(start_nodes, end_nodes, capacities)
         status = solver.solve(self.factors["source_index"], self.factors["sink_index"])
         if status != solver.OPTIMAL:
             print('There was an issue with the max flow input.')
             print(f'Status: {status}')
             exit(1)
 
-        # Construct gradient vector (=1 if has a outflow from min-cut nodes)
+        # Construct gradient vector (=1 if has a outflow from min-cut nodes).
         gradient = np.zeros(len(self.factors["arcs"]))
         grad_arclist = []
         min_cut_nodes = solver.get_source_side_min_cut()
@@ -189,7 +191,7 @@ class SMF(Model):
                     if (i, j) in self.factors['arcs']:
                         grad_arclist.append(grad_arc)
         for arc in grad_arclist:
-            gradient[self.factors['arcs'].index(arc)] = 1 / 1000
+            gradient[self.factors['arcs'].index(arc)] = 1
 
         responses = {"Max Flow": solver.optimal_flow() / 1000}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}

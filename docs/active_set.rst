@@ -3,7 +3,8 @@ Solver: Active-set Method (ACTIVE-SET)
 
 Description:
 ------------
-The solver is dedicated for problems with linear constraints in the form of Ce@x = de, Ci@x <= di. It is based on the active-set method.
+The solver is dedicated for problems with linear constraints in the form of :math:`C_e x = de, C_i x \leq di`.
+It employs the active-set method mentioned in Jorge Norcedal's Numerical Optimization.
 
 Modifications & Implementation:
 -------------------------------
@@ -13,15 +14,19 @@ Modifications & Implementation:
 **line_search**: A back-tracking line search method.
 
 **compute_search_direction**: Compute a search direction by solving a direction-finding quadratic subproblem at solution x.
+It takes the index set of the active constraints (`W`), objective gradient at solution x (`g(x)`), and the concatenated constraint
+coefficient matrix (`C`) as inputs and returns the optimal search direction along with the Lagrange multipliers of the active constraints.
+
+.. math::
+
+    \begin{align}
+    \min && (1/2)|| d ||^2+ g(x)^T d \\\\
+    \text{s.t.} & C_k^T d = 0, \quad \forall k \in W \\
+    \end{align}
 
 **_feasible**:  Check whether a solution x is feasible to the problem.
 
 **finite_diff**: Approximate objective gradient using the finite difference method.
-
-A step-by-step description of the solver is detailed below:
-1.
-2.
-3.
 
 Scope:
 ------
@@ -67,6 +72,10 @@ Solver Factors:
 
     * Default: 1e-7
 
+* finite_diff_step: Step size for finite difference
+
+    * Default: 1e-5
+
 References:
 ===========
-Numerical Optimization by Jorge Norcedal.
+Nocedal, J., & Wright, S. J. (2006). Numerical optimization (2nd ed.). Springer.

@@ -438,7 +438,6 @@ class ACTIVESET(Solver):
                 # First column is f(x+h,y).
                 FnPlusMinus[i, 0] = fn1
             x2_solution = self.create_new_solution(tuple(x2), problem)
-            print('x2', x2)
             if BdsCheck[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
@@ -492,6 +491,7 @@ class ACTIVESET(Solver):
         fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
         step_size = alpha_0
         count = 0
+        x_new_solution = self.create_new_solution(tuple(x), problem)
         while True:
             if expended_budget > problem.factors["budget"]:
                 break
