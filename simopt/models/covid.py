@@ -815,6 +815,14 @@ class CovidMinInfectVac(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -909,6 +917,10 @@ class CovidMinInfectVac(Problem):
         self.dim = len(self.model.factors["group_size"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_vaccine_cap(self):
         return self.factors["vaccine_cap"] > 0
@@ -1173,6 +1185,14 @@ class CovidMinInfectVac2(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -1266,6 +1286,10 @@ class CovidMinInfectVac2(Problem):
         self.dim = len(self.model.factors["group_size"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_vaccine_cap(self):
         return self.factors["vaccine_cap"] > 0
@@ -1529,6 +1553,14 @@ class CovidMinInfectVac3(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -1622,6 +1654,10 @@ class CovidMinInfectVac3(Problem):
         self.dim = len(self.model.factors["group_size"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_vaccine_cap(self):
         return self.factors["vaccine_cap"] > 0
@@ -1883,6 +1919,14 @@ class CovidMinInfectVac4(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : float
@@ -1982,6 +2026,10 @@ class CovidMinInfectVac4(Problem):
         self.dim = len(self.model.factors["group_size"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_vaccine_cap(self):
         return self.factors["vaccine_cap"] > 0

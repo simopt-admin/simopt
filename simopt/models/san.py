@@ -304,6 +304,10 @@ class SANLongestPath(Problem):
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (1e-2, ) * self.dim
         self.upper_bounds = (np.inf, ) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_arc_costs(self):
         positive = True
