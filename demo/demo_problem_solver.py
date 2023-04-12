@@ -28,12 +28,13 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ACTIVESET"
 # solver_name = "PGD-SS"
-solver_name = "PGD"
+# solver_name = "PGD"
 # solver_name = "DS"
+solver_name = "NELDMD"
 # problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
-# problem_name = "SAN-1"
-problem_name = "SMF-1"
+problem_name = "SAN-2"
+# problem_name = "SMF-1"
 
 # -----------------------------------------------
 

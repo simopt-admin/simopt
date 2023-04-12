@@ -8,7 +8,6 @@ A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
 """
 import numpy as np
-import cvxpy as cp
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -57,7 +56,7 @@ class NelderMead(Solver):
             fixed_factors = {}
         self.name = name
         self.objective_type = "single"
-        self.constraint_type = "deterministic"
+        self.constraint_type = "box"
         self.variable_type = "continuous"
         self.gradient_needed = False
         self.specifications = {
@@ -100,12 +99,7 @@ class NelderMead(Solver):
                 "description": "fraction of the distance between bounds used to select initial points",
                 "datatype": float,
                 "default": 1 / 10
-            },
-            "tol": {
-                "description": "floating point tolerance for checking tightness of constraints",
-                "datatype": float,
-                "default": 1e-7
-            },
+            }
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -115,8 +109,7 @@ class NelderMead(Solver):
             "betap": self.check_betap,
             "delta": self.check_delta,
             "sensitivity": self.check_sensitivity,
-            "initial_spread": self.check_initial_spread,
-            "tol": self.check_tol
+            "initial_spread": self.check_initial_spread
         }
         super().__init__(fixed_factors)
 
@@ -140,9 +133,6 @@ class NelderMead(Solver):
 
     def check_initial_spread(self):
         return self.factors["initial_spread"] > 0
-    
-    def check_tol(self):
-        return self.factors["tol"] > 0
 
     def solve(self, problem):
         """
@@ -167,87 +157,44 @@ class NelderMead(Solver):
         if problem.factors["budget"] < self.factors["r"] * n_pts:
             print('Budget is too small for a good quality run of Nelder-Mead.')
             return
-        
+        # Shrink variable bounds to avoid floating errors.
+        if problem.lower_bounds is not None and problem.lower_bounds != (-np.inf,) * problem.dim:
+            self.lower_bounds = tuple(map(lambda i: i + self.factors["sensitivity"], problem.lower_bounds))
+        else:
+            self.lower_bounds = None
+        if problem.upper_bounds is not None and problem.upper_bounds != (np.inf,) * problem.dim:
+            self.upper_bounds = tuple(map(lambda i: i - self.factors["sensitivity"], problem.upper_bounds))
+        else:
+            self.upper_bounds = None
+        # Initial dim + 1 points.
+        sol = []
+        sol.append(self.create_new_solution(problem.factors["initial_solution"], problem))
+        if self.lower_bounds is None or self.upper_bounds is None:
+            for _ in range(1, n_pts):
+                rand_x = problem.get_random_solution(get_rand_soln_rng)
+                sol.append(self.create_new_solution(rand_x, problem))
+        else:  # Restrict starting shape/location.
+            for i in range(problem.dim):
+                distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
+                new_pt = list(problem.factors["initial_solution"])
+                new_pt[i] += distance
+                # Try opposite direction if out of bounds.
+                if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
+                    new_pt[i] -= 2 * distance
+                # Set to bound if neither direction works.
+                if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
+                    if problem.minmax[i] == -1:
+                        new_pt[i] = self.lower_bounds[i]
+                    else:
+                        new_pt[i] = self.upper_bounds[i]
+                sol.append(self.create_new_solution(new_pt, problem))
+
         # Initialize lists to track budget and best solutions.
         intermediate_budgets = []
         recommended_solns = []
-
         # Track overall budget spent.
         budget_spent = 0
         r = self.factors["r"]  # For increasing replications.
-        tol = self.factors["tol"]
-
-        
-        # Upper bound and lower bound.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
-
-        # Input inequality and equlaity constraint matrix and vector.
-        # Cix <= di
-        # Cex = de
-        Ci = problem.Ci
-        di = problem.di
-        Ce = problem.Ce
-        de = problem.de
-
-        # Remove redundant upper/lower bounds.
-        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
-        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
-
-        # Form a constraint coefficient matrix where all the equality constraints are put on top and
-        # all the bound constraints in the bottom and a constraint coefficient vector.  
-        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
-            C = np.vstack((Ce,  Ci))
-            d = np.vstack((de.T, di.T))
-        elif (Ce is not None) and (de is not None):
-            C = Ce
-            d = de.T
-        elif (Ci is not None) and (di is not None):
-            C = Ci
-            d = di.T
-        else:
-          C = np.empty([problem.dim, 1])
-          d = np.empty([1, 1])
-        
-        if len(ub_inf_idx) > 0:
-            C = np.vstack((C, np.identity(upper_bound.shape[0])))
-            d = np.vstack((d, upper_bound[np.newaxis].T))
-        if len(lb_inf_idx) > 0:
-            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
-            d = np.vstack((d, -lower_bound[np.newaxis].T))
-
-        # Checker for whether the problem is unconstrained.
-        unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
-
-        # Initial dim + 1 points. # TODO - change this.
-        sol = []
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        new_x = new_solution.x
-
-        if (not unconstr_flag) & (not self._feasible(new_x, problem, tol)):
-            new_x = self.find_feasible_initial(problem, Ce, Ci, de, di, tol)
-            new_solution = self.create_new_solution(tuple(new_x), problem)
-
-        sol.append(new_solution)
-
-        for _ in range(1, n_pts):
-            rand_x = problem.get_random_solution(get_rand_soln_rng)
-            sol.append(self.create_new_solution(rand_x, problem))
-        # else:  # Restrict starting shape/location.
-        #     for i in range(problem.dim):
-        #         distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
-        #         new_pt = list(problem.factors["initial_solution"])
-        #         new_pt[i] += distance
-        #         # Try opposite direction if out of bounds.
-        #         if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-        #             new_pt[i] -= 2 * distance
-        #         # Set to bound if neither direction works.
-        #         if new_pt[i] > self.upper_bounds[i] or new_pt[i] < self.lower_bounds[i]:
-        #             if problem.minmax[i] == -1:
-        #                 new_pt[i] = self.lower_bounds[i]
-        #             else:
-        #                 new_pt[i] = self.upper_bounds[i]
-        #         sol.append(self.create_new_solution(new_pt, problem))
 
         # Start Solving.
         # Evaluate solutions in initial structure.
@@ -269,20 +216,18 @@ class NelderMead(Solver):
             p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"]) * i for i in p_cent),
                                tuple(self.factors["alpha"] * i for i in p_high.x)))  # Reflection.
             p_refl_copy = p_refl
-            if not self._feasible(p_refl, problem, tol):
-                p_refl = self.check_const(p_refl, orig_pt.x,  C, d, tol)
+            p_refl = self.check_const(p_refl, orig_pt.x)
 
             # Shrink towards best if out of bounds.
-            if not np.allclose(p_refl, p_refl_copy):
-                while not np.allclose(p_refl, p_refl_copy):
+            if p_refl != p_refl_copy:
+                while p_refl != p_refl_copy:
                     p_low = sort_sol[0]
                     for i in range(1, len(sort_sol)):
                         p_new2 = p_low
                         p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
                                           tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
-                        if not self._feasible(p_new, problem, tol):
-                            p_new = self.check_const(p_new, p_new2.x, C, d, tol)
-                        p_new = Solution(tuple(p_new), problem)
+                        p_new = self.check_const(p_new, p_new2.x)
+                        p_new = Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         problem.simulate(p_new, r)
                         budget_spent += r
@@ -298,12 +243,11 @@ class NelderMead(Solver):
                     orig_pt = p_high  # Save the original point.
                     p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"]) * i for i in p_cent),
                                        tuple(self.factors["alpha"] * i for i in p_high.x)))  # Reflection.
-                    p_refl_copy = np.array(p_refl)
-                    if not self._feasible(p_refl, problem, tol):
-                        p_refl = self.check_const(p_refl, orig_pt.x,  C, d, tol)
+                    p_refl_copy = p_refl
+                    p_refl = self.check_const(p_refl, orig_pt.x)
 
             # Evaluate reflected point.
-            p_refl = Solution(tuple(p_refl), problem)
+            p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
             problem.simulate(p_refl, r)
             budget_spent += r
@@ -329,11 +273,10 @@ class NelderMead(Solver):
                 p_exp2 = p_refl
                 p_exp = tuple(map(lambda i, j: i + j, tuple(self.factors["gammap"] * i for i in p_refl.x),
                                   tuple((1 - self.factors["gammap"]) * i for i in p_cent)))
-                if not self._feasible(p_exp, problem, tol):
-                    p_exp = self.check_const(p_exp, p_exp2.x, C, d, tol)
+                p_exp = self.check_const(p_exp, p_exp2.x)
 
                 # Evaluate expansion point.
-                p_exp = Solution(tuple(p_exp), problem)
+                p_exp = Solution(p_exp, problem)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_exp, r)
                 budget_spent += r
@@ -345,11 +288,9 @@ class NelderMead(Solver):
 
                     # Sort & end updating.
                     sort_sol = self.sort_and_end_update(problem, sort_sol)
-                    print('pexp', p_exp.x)
-                    print('pexp', p_exp.objectives_mean)
+
                     # Record data from expansion point (new best).
                     if budget_spent <= problem.factors["budget"]:
-                        print('here')
                         intermediate_budgets.append(budget_spent)
                         recommended_solns.append(p_exp)
                 else:
@@ -373,11 +314,10 @@ class NelderMead(Solver):
                 p_cont2 = p_high
                 p_cont = tuple(map(lambda i, j: i + j, tuple(self.factors["betap"] * i for i in p_high.x),
                                    tuple((1 - self.factors["betap"]) * i for i in p_cent)))
-                if not self._feasible(p_cont, problem, tol):
-                    p_cont = self.check_const(p_cont, p_cont2.x, C, d, tol)
+                p_cont = self.check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
-                p_cont = Solution(tuple(p_cont), problem)
+                p_cont = Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_cont, r)
                 budget_spent += r
@@ -406,9 +346,8 @@ class NelderMead(Solver):
                         p_new2 = p_low
                         p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
                                           tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
-                        if not self._feasible(p_new, problem, tol):
-                            p_new = self.check_const(p_new, p_new2.x, C, d, tol)
-                        p_new = Solution(tuple(p_new), problem)
+                        p_new = self.check_const(p_new, p_new2.x)
+                        p_new = Solution(p_new, problem)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         problem.simulate(p_new, r)
                         budget_spent += r
@@ -428,7 +367,7 @@ class NelderMead(Solver):
                     if new_best == 1 and budget_spent <= problem.factors["budget"]:
                         intermediate_budgets.append(budget_spent)
                         recommended_solns.append(sort_sol[0])
-        print('sol list', [sol.x for sol in recommended_solns])
+
         return recommended_solns, intermediate_budgets
 
     # HELPER FUNCTIONS
@@ -436,126 +375,21 @@ class NelderMead(Solver):
     def sort_and_end_update(self, problem, sol):
         sort_sol = sorted(sol, key=lambda s: tuple([-1 * i for i in problem.minmax]) * s.objectives_mean)
         return sort_sol
-    
-    def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
-        '''
-        Find an initial feasible solution (if not user-provided)
-        by solving phase one simplex.
 
-        Arguments
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-        C: ndarray
-            constraint coefficient matrix
-        d: ndarray
-            constraint coefficient vector
-
-        Returns
-        -------
-        x0 : ndarray
-            an initial feasible solution
-        tol: float
-            Floating point comparison tolerance
-        '''
-        upper_bound = np.array(problem.upper_bounds)
-        lower_bound = np.array(problem.lower_bounds)
-
-        # Define decision variables.
-        x = cp.Variable(problem.dim)
-
-        # Define constraints.
-        constraints = []
-
-        if (Ae is not None) and (be is not None):
-            constraints.append(Ae @ x == be.ravel())
-        if (Ai is not None) and (bi is not None):
-            constraints.append(Ai @ x <= bi.ravel())
-
-        # Removing redundant bound constraints.
-        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
-        if len(ub_inf_idx) > 0:
-            for i in ub_inf_idx:
-                constraints.append(x[i] <= upper_bound[i])
-        lb_inf_idx = np.where(~np.isinf(lower_bound))
-        if len(lb_inf_idx) > 0:
-            for i in lb_inf_idx:
-                constraints.append(x[i] >= lower_bound[i])
-
-        # Define objective function.
-        obj = cp.Minimize(0)
-        
-        # Create problem.
-        model = cp.Problem(obj, constraints)
-
-        # Solve problem.
-        model.solve(solver = cp.SCIPY)
-
-        # Check for optimality.
-        if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
-            raise ValueError("Could not find feasible x0")
-        x0 = x.value
-        if not self._feasible(x0, problem, tol):
-            raise ValueError("Could not find feasible x0")
-
-        return x0
-    
-    def _feasible(self, x, problem, tol):
-        """
-        Check whether a solution x is feasible to the problem.
-        
-        Arguments
-        ---------
-        x : tuple
-            a solution vector
-        problem : Problem object
-            simulation-optimization problem to solve
-        tol: float
-            Floating point comparison tolerance
-        """
-        x = np.asarray(x)
-        lb = np.asarray(problem.lower_bounds)
-        ub = np.asarray(problem.upper_bounds)
-        res = True
-        if (problem.Ci is not None) and (problem.di is not None):
-            res = res & np.all(problem.Ci @ x <= problem.di + tol)
-        if (problem.Ce is not None) and (problem.de is not None):
-            res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
-        return res & (np.all(x >= lb)) & (np.all(x <= ub))
-
-    def check_const(self, candidate_x, cur_x, C, d, tol):
-        dir = np.array(candidate_x) - np.array(cur_x)
-        ra = d.flatten() - C @ cur_x
-        ra_d = C @ dir
-        # Initialize maximum step size.
-        s_star = np.inf
-        # Perform ratio test.
-        for i in range(len(ra)):
-            if ra_d[i] - tol > 0:
-                s = ra[i]/ra_d[i]
-                if s < s_star:
-                    s_star = s
-
-        new_x = cur_x + min(1, s_star) * dir
-
-        return new_x
-    
-
-
-    # # Check & modify (if needed) the new point based on bounds.
-    # def check_const(self, pt, pt2):
-    #     col = len(pt2)
-    #     step = tuple(map(lambda i, j: i - j, pt, pt2))
-    #     tmax = np.ones(col)
-    #     for i in range(col):
-    #         if step[i] > 0 and self.upper_bounds is not None:  # Move pt to ub.
-    #             tmax[i] = (self.upper_bounds[i] - pt2[i]) / step[i]
-    #         elif step[i] < 0 and self.lower_bounds is not None:  # Move pt to lb.
-    #             tmax[i] = (self.lower_bounds[i] - pt2[i]) / step[i]
-    #     t = min(1, min(tmax))
-    #     modified = list(map(lambda i, j: i + t * j, pt2, step))
-    #     # Remove rounding error.
-    #     for i in range(col):
-    #         if abs(modified[i]) < self.factors["sensitivity"]:
-    #             modified[i] = 0
-    #     return tuple(modified)
+    # Check & modify (if needed) the new point based on bounds.
+    def check_const(self, pt, pt2):
+        col = len(pt2)
+        step = tuple(map(lambda i, j: i - j, pt, pt2))
+        tmax = np.ones(col)
+        for i in range(col):
+            if step[i] > 0 and self.upper_bounds is not None:  # Move pt to ub.
+                tmax[i] = (self.upper_bounds[i] - pt2[i]) / step[i]
+            elif step[i] < 0 and self.lower_bounds is not None:  # Move pt to lb.
+                tmax[i] = (self.lower_bounds[i] - pt2[i]) / step[i]
+        t = min(1, min(tmax))
+        modified = list(map(lambda i, j: i + t * j, pt2, step))
+        # Remove rounding error.
+        for i in range(col):
+            if abs(modified[i]) < self.factors["sensitivity"]:
+                modified[i] = 0
+        return tuple(modified)
