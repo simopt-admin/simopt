@@ -585,9 +585,12 @@ class ACTIVESET(Solver):
         tol: float
             Floating point comparison tolerance
         """
+        x = np.asarray(x)
+        lb = np.asarray(problem.lower_bounds)
+        ub = np.asarray(problem.upper_bounds)
         res = True
         if (problem.Ci is not None) and (problem.di is not None):
             res = res & np.all(problem.Ci @ x <= problem.di + tol)
         if (problem.Ce is not None) and (problem.de is not None):
             res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
-        return res & (np.all(x >= problem.lower_bounds)) & (np.all(x <= problem.upper_bounds))
+        return res & (np.all(x >= lb)) & (np.all(x <= ub))

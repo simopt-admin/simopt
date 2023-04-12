@@ -568,7 +568,7 @@ class SANLongestPathConstr(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 2000
+                "default": 10000
             },
             "arc_costs": {
                 "description": "Cost associated to each arc.",
@@ -594,7 +594,7 @@ class SANLongestPathConstr(Problem):
         self.upper_bounds = (np.inf,) * self.dim
         self.Ci = -1 * np.ones(13)
         self.Ce = None
-        self.di = np.array(-[self.factors["sum_lb"]])
+        self.di = -1 * np.array([self.factors["sum_lb"]])
         self.de = None
 
     def check_arc_costs(self):
