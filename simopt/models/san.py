@@ -285,7 +285,7 @@ class SANLongestPath(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 2000
+                "default": 10000
             },
             "arc_costs": {
                 "description": "Cost associated to each arc.",
@@ -578,7 +578,7 @@ class SANLongestPathConstr(Problem):
             "sum_lb": {
                 "description": "Lower bound for the sum of arc means",
                 "datatype": float,
-                "default": 30.0
+                "default": 100.0
             }
         }
         self.check_factor_list = {

@@ -206,7 +206,7 @@ class NelderMead(Solver):
             C = Ci
             d = di.T
         else:
-          C = np.empty([problem.dim, 1])
+          C = np.empty([1, problem.dim])
           d = np.empty([1, 1])
         
         if len(ub_inf_idx) > 0:
@@ -345,11 +345,11 @@ class NelderMead(Solver):
 
                     # Sort & end updating.
                     sort_sol = self.sort_and_end_update(problem, sort_sol)
-                    print('pexp', p_exp.x)
-                    print('pexp', p_exp.objectives_mean)
+                    # print('pexp', p_exp.x)
+                    # print('pexp', p_exp.objectives_mean)
                     # Record data from expansion point (new best).
                     if budget_spent <= problem.factors["budget"]:
-                        print('here')
+                        # print('here')
                         intermediate_budgets.append(budget_spent)
                         recommended_solns.append(p_exp)
                 else:
@@ -539,23 +539,3 @@ class NelderMead(Solver):
         new_x = cur_x + min(1, s_star) * dir
 
         return new_x
-    
-
-
-    # # Check & modify (if needed) the new point based on bounds.
-    # def check_const(self, pt, pt2):
-    #     col = len(pt2)
-    #     step = tuple(map(lambda i, j: i - j, pt, pt2))
-    #     tmax = np.ones(col)
-    #     for i in range(col):
-    #         if step[i] > 0 and self.upper_bounds is not None:  # Move pt to ub.
-    #             tmax[i] = (self.upper_bounds[i] - pt2[i]) / step[i]
-    #         elif step[i] < 0 and self.lower_bounds is not None:  # Move pt to lb.
-    #             tmax[i] = (self.lower_bounds[i] - pt2[i]) / step[i]
-    #     t = min(1, min(tmax))
-    #     modified = list(map(lambda i, j: i + t * j, pt2, step))
-    #     # Remove rounding error.
-    #     for i in range(col):
-    #         if abs(modified[i]) < self.factors["sensitivity"]:
-    #             modified[i] = 0
-    #     return tuple(modified)

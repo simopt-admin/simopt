@@ -167,18 +167,10 @@ class FrankWolfe(Solver):
         # Default values.
         r = self.factors["r"]
         tol = self.factors["tol"]
-        theta = self.factors["theta"]
-        gamma = self.factors["gamma"]
-        alpha_max = self.factors["alpha_max"]
-        alpha_0 = self.factors["alpha_0"]
-        epsilon_f = self.factors["epsilon_f"]
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
-    
-        # Initialize stepsize.
-        alpha = alpha_0
 
         # Input inequality and equlaity constraint matrix and vector.
         # Cix <= di
@@ -188,12 +180,11 @@ class FrankWolfe(Solver):
         Ce = problem.Ce
         de = problem.de
 
-        # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        new_x = new_solution.x
+        # Checker for whether the problem is unconstrained.
+        unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
 
         # If the initial solution is not feasible, generate one using phase one simplex.
-        if not self._feasible(new_x, problem, tol):
+        if (not unconstr_flag) & (not self._feasible(new_x, problem, tol)):
             new_x = self.find_feasible_initial(problem, Ce, Ci, de, di, tol)
             new_solution = self.create_new_solution(tuple(new_x), problem)
         
@@ -242,22 +233,6 @@ class FrankWolfe(Solver):
             expended_budget += r
 
             k += 1
-
-            # print(candidate_solution.x)
-            # print(new_solution.x)
-            # print('candidate', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
-            # print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
-            # print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
-            # # Check the modified Armijo condition for sufficient decrease.
-            # if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
-            #         -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
-            #     # Successful step
-            #     new_solution = candidate_solution
-            #     # Enlarge step size.
-            #     alpha = min(alpha_max, alpha / gamma)
-            # else:
-            #     # Unsuccessful step - reduce step size.
-            #     alpha = gamma * alpha
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):

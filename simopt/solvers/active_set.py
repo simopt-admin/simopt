@@ -197,7 +197,7 @@ class ACTIVESET(Solver):
             C = Ci
             d = di.T
         else:
-          C = np.empty([problem.dim, 1])
+          C = np.empty([1, problem.dim])
           d = np.empty([1, 1])
         
         if len(ub_inf_idx) > 0:
