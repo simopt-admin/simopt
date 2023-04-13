@@ -2,21 +2,20 @@
 Summary
 -------
 Frank-Wolfe
-The Away-Step Frank-Wolfe with adaptive step search
+The Frank-Wolfe algorithm with adaptive step search
 for problems with linear constraints, i.e., Ce@x = de, Ci@x <= di
 """
-
-from base import Solver
 import numpy as np
-from numpy.linalg import norm
 import cvxpy as cp
 import warnings
 warnings.filterwarnings("ignore")
 
+from ..base import Solver
+
 
 class FrankWolfe(Solver):
     """
-    Description.
+    The Frank-Wolfe solver with adaptive step search.
 
     Attributes
     ----------
@@ -51,7 +50,7 @@ class FrankWolfe(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="AFW", fixed_factors={}):
+    def __init__(self, name="FW", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -167,6 +166,14 @@ class FrankWolfe(Solver):
         # Default values.
         r = self.factors["r"]
         tol = self.factors["tol"]
+        theta = self.factors["theta"]
+        gamma = self.factors["gamma"]
+        alpha_max = self.factors["alpha_max"]
+        alpha_0 = self.factors["alpha_0"]
+        epsilon_f = self.factors["epsilon_f"]
+
+        # Initialize stepsize.
+        alpha = alpha_0
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
@@ -182,6 +189,10 @@ class FrankWolfe(Solver):
 
         # Checker for whether the problem is unconstrained.
         unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
+        
+        # Start with the initial solution.
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_x = new_solution.x
 
         # If the initial solution is not feasible, generate one using phase one simplex.
         if (not unconstr_flag) & (not self._feasible(new_x, problem, tol)):
@@ -195,6 +206,7 @@ class FrankWolfe(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+        # Initiaze the iteration counter.
         k = 0
 
         while expended_budget < problem.factors["budget"]:
@@ -223,15 +235,32 @@ class FrankWolfe(Solver):
 
             # Compute search direction
             dir = self.search_dir(problem, new_x, Ce, Ci, de, di, grad)
+
+
             # Update the parameter vector with a step in the search direction
             alpha = 2 / (k + 2)
-            new_x = new_x + alpha * dir
-            new_solution = self.create_new_solution(new_x, problem)
 
+            # Obtain candidate solution.
+            candidate_x = new_x + alpha * dir
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(new_solution, r)
+            problem.simulate(candidate_solution, r)
             expended_budget += r
 
+            new_solution = candidate_solution
+
+            # # Check the modified Armijo condition for sufficient decrease.
+            # if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
+            #         -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
+            #     # Successful step
+            #     new_solution = candidate_solution
+            #     # Enlarge step size.
+            #     alpha = min(alpha_max, alpha / gamma)
+            # else:
+            #     # Unsuccessful step - reduce step size.
+            #     alpha = gamma * alpha
+
+            # Update the number of iterations.
             k += 1
 
             # Append new solution.

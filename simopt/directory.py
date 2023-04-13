@@ -25,6 +25,7 @@ from .solvers.active_set import ACTIVESET
 from .solvers.pgdss import PGDSS
 from .solvers.PGD_usimplex import PGD2
 from .solvers.dsearch import DS
+from .solvers.frankwolfe import FrankWolfe
 # import models and problems
 from .models.cntnv import CntNV, CntNVMaxProfit
 from .models.mm1queue import MM1Queue, MM1MinMeanSojournTime
@@ -59,7 +60,8 @@ solver_directory = {
     "PGD-SS": PGDSS,
     "ACTIVESET": ACTIVESET,
     "PGD-usimplex": PGD2,
-    "DS": DS
+    "DS": DS,
+    "FW": FrankWolfe
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,
