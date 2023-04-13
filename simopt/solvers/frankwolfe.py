@@ -204,6 +204,8 @@ class FrankWolfe(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+        k = 0
+
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
@@ -228,39 +230,34 @@ class FrankWolfe(Solver):
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
-            # Get a temp solution.
-            temp_x = new_x - alpha * grad
-
-            if self._feasible(temp_x, problem, tol):
-                candidate_solution = self.create_new_solution(tuple(temp_x), problem)
-                # Get search direction
-                dir = -grad
-            else:
-                # If not feasible, project temp_x back to the feasible set.
-                proj_x = self.project_grad(problem, temp_x, Ce, Ci, de, di)
-                candidate_solution = self.create_new_solution(tuple(proj_x), problem)
-                # Get search direction
-                dir = proj_x - new_x
+            # Compute search direction
+            dir = self.search_dir(problem, new_x, Ce, Ci, de, di, grad)
+            # Update the parameter vector with a step in the search direction
+            alpha = 2 / (k + 2)
+            new_x = new_x + alpha * dir
+            new_solution = self.create_new_solution(new_x, problem)
 
             # Use r simulated observations to estimate the objective value.
-            problem.simulate(candidate_solution, r)
+            problem.simulate(new_solution, r)
             expended_budget += r
 
-            print(candidate_solution.x)
-            print(new_solution.x)
-            print('candidate', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
-            print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
-            print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
-            # Check the modified Armijo condition for sufficient decrease.
-            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
-                    -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
-                # Successful step
-                new_solution = candidate_solution
-                # Enlarge step size.
-                alpha = min(alpha_max, alpha / gamma)
-            else:
-                # Unsuccessful step - reduce step size.
-                alpha = gamma * alpha
+            k += 1
+
+            # print(candidate_solution.x)
+            # print(new_solution.x)
+            # print('candidate', -1 * problem.minmax[0] * candidate_solution.objectives_mean)
+            # print('new', -1 * problem.minmax[0] * new_solution.objectives_mean)
+            # print('RHS', -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f)
+            # # Check the modified Armijo condition for sufficient decrease.
+            # if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
+            #         -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
+            #     # Successful step
+            #     new_solution = candidate_solution
+            #     # Enlarge step size.
+            #     alpha = min(alpha_max, alpha / gamma)
+            # else:
+            #     # Unsuccessful step - reduce step size.
+            #     alpha = gamma * alpha
 
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
@@ -380,7 +377,7 @@ class FrankWolfe(Solver):
         """
         Compute a search direction by solving a direction-finding linear subproblem at solution x.
 
-        min d^Td
+        min d^Tgrad
         s.t. Ae(x + d) = be
              Ai(x + d) <= bi
              (x + d) >= lb
