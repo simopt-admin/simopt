@@ -1,0 +1,4276 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d1" for="edge" attr.name="weight" attr.type="double"/>
+<key id="d0" for="node" attr.name="cost" attr.type="double"/>
+<graph edgedefault="directed"><node id="mog_knight">
+  <data key="d0">54.88135039273247</data>
+</node>
+<node id="jpop23mn">
+  <data key="d0">71.51893663724195</data>
+</node>
+<node id="charm803">
+  <data key="d0">60.276337607164386</data>
+</node>
+<node id="alephnul">
+  <data key="d0">54.48831829968969</data>
+</node>
+<node id="ButterflyAttack">
+  <data key="d0">42.36547993389047</data>
+</node>
+<node id="TheRedditPope">
+  <data key="d0">64.58941130666561</data>
+</node>
+<node id="michaelk4289">
+  <data key="d0">43.75872112626925</data>
+</node>
+<node id="FortHouston">
+  <data key="d0">89.17730007820798</data>
+</node>
+<node id="Treassach">
+  <data key="d0">96.36627605010293</data>
+</node>
+<node id="OverTheShill">
+  <data key="d0">38.34415188257777</data>
+</node>
+<node id="nc_cyclist">
+  <data key="d0">79.17250380826646</data>
+</node>
+<node id="kindlx">
+  <data key="d0">52.88949197529045</data>
+</node>
+<node id="Ambiwlans">
+  <data key="d0">56.80445610939323</data>
+</node>
+<node id="Wrong_on_Internet">
+  <data key="d0">92.5596638292661</data>
+</node>
+<node id="blatantninja">
+  <data key="d0">7.103605819788694</data>
+</node>
+<node id="surfnaked">
+  <data key="d0">8.712929970154072</data>
+</node>
+<node id="ThatDamnWalrus">
+  <data key="d0">2.021839744032572</data>
+</node>
+<node id="sivervipa">
+  <data key="d0">83.2619845547938</data>
+</node>
+<node id="AnOnlineHandle">
+  <data key="d0">77.81567509498505</data>
+</node>
+<node id="eedna">
+  <data key="d0">87.00121482468191</data>
+</node>
+<node id="pixl_graphix">
+  <data key="d0">97.8618342232764</data>
+</node>
+<node id="MacDegger">
+  <data key="d0">79.91585642167236</data>
+</node>
+<node id="mrjderp">
+  <data key="d0">46.147936225293186</data>
+</node>
+<node id="Ikimasen">
+  <data key="d0">78.05291762864555</data>
+</node>
+<node id="poonhounds">
+  <data key="d0">11.827442586893323</data>
+</node>
+<node id="needed_to_vote">
+  <data key="d0">63.99210213275238</data>
+</node>
+<node id="PDB">
+  <data key="d0">14.33532874090464</data>
+</node>
+<node id="WetEbolaFart">
+  <data key="d0">94.46689170495839</data>
+</node>
+<node id="hoosakiwi">
+  <data key="d0">52.184832175007166</data>
+</node>
+<node id="codoublez">
+  <data key="d0">41.46619399905236</data>
+</node>
+<node id="Origin_Of_Storms">
+  <data key="d0">26.455561210462697</data>
+</node>
+<node id="The_Drizzle_Returns">
+  <data key="d0">77.42336894342166</data>
+</node>
+<node id="kikowatzy">
+  <data key="d0">45.615033221654855</data>
+</node>
+<node id="CorporateDroog">
+  <data key="d0">56.84339488686485</data>
+</node>
+<node id="coolislandbreeze">
+  <data key="d0">1.8789800436355142</data>
+</node>
+<node id="mellowmonk">
+  <data key="d0">61.76354970758771</data>
+</node>
+<node id="lego_mannequin">
+  <data key="d0">61.20957227224214</data>
+</node>
+<node id="AndTheMeltdowns">
+  <data key="d0">61.69339968747569</data>
+</node>
+<node id="OneOverX">
+  <data key="d0">94.37480785146242</data>
+</node>
+<node id="emrosto0l">
+  <data key="d0">68.18202991034835</data>
+</node>
+<node id="Earthtone_Coalition">
+  <data key="d0">35.9507900573786</data>
+</node>
+<node id="Onewomanslife">
+  <data key="d0">43.703195379934144</data>
+</node>
+<node id="Jutboy">
+  <data key="d0">69.76311959272648</data>
+</node>
+<node id="psiphre">
+  <data key="d0">6.022547162926983</data>
+</node>
+<node id="bottle87">
+  <data key="d0">66.67667154456677</data>
+</node>
+<node id="vtron">
+  <data key="d0">67.06378696181594</data>
+</node>
+<node id="HobGobbin">
+  <data key="d0">21.03825610738409</data>
+</node>
+<node id="CudiHaze">
+  <data key="d0">12.892629765485331</data>
+</node>
+<node id="Arandmoor">
+  <data key="d0">31.542835092418386</data>
+</node>
+<node id="Eric_the_Barbarian">
+  <data key="d0">36.37107709426226</data>
+</node>
+<node id="FishstickIsles">
+  <data key="d0">57.019677041787965</data>
+</node>
+<node id="IlliniLeft">
+  <data key="d0">43.86015134623204</data>
+</node>
+<node id="Tjebbe">
+  <data key="d0">98.83738380592261</data>
+</node>
+<node id="retiredknight">
+  <data key="d0">10.204481074802807</data>
+</node>
+<node id="rustyrebar">
+  <data key="d0">20.88767560948347</data>
+</node>
+<node id="LFBR">
+  <data key="d0">16.130951788499626</data>
+</node>
+<node id="Wacocaine">
+  <data key="d0">65.31083254653984</data>
+</node>
+<node id="LUUUKE12">
+  <data key="d0">25.329160253978213</data>
+</node>
+<node id="bryf50">
+  <data key="d0">46.63107728563063</data>
+</node>
+<node id="Appathy">
+  <data key="d0">24.442559200160275</data>
+</node>
+<node id="shinkouhyou">
+  <data key="d0">15.896958364551972</data>
+</node>
+<node id="uberares">
+  <data key="d0">11.037514116430513</data>
+</node>
+<node id="maquila">
+  <data key="d0">65.63295894652734</data>
+</node>
+<node id="jodycwilliams">
+  <data key="d0">13.81829513486138</data>
+</node>
+<node id="Skreat">
+  <data key="d0">19.65823616800535</data>
+</node>
+<node id="PhillAholic">
+  <data key="d0">36.872517066096414</data>
+</node>
+<node id="Swiss_Cheese9797">
+  <data key="d0">82.09932298479352</data>
+</node>
+<node id="BlackSpidy">
+  <data key="d0">9.710127579306127</data>
+</node>
+<node id="DefendedCobra29">
+  <data key="d0">83.7944907498804</data>
+</node>
+<node id="Splint333">
+  <data key="d0">9.609840789396307</data>
+</node>
+<node id="Rightard">
+  <data key="d0">97.64594650133958</data>
+</node>
+<node id="syanda">
+  <data key="d0">46.86512016477016</data>
+</node>
+<node id="donaldtrumptwat">
+  <data key="d0">97.67610881903371</data>
+</node>
+<node id="MrZimothy">
+  <data key="d0">60.4845519745046</data>
+</node>
+<node id="xmasskull2">
+  <data key="d0">73.92635793983017</data>
+</node>
+<node id="toofastkindafurious">
+  <data key="d0">3.9187792254320675</data>
+</node>
+<node id="Duke_Newcombe">
+  <data key="d0">28.280696257640958</data>
+</node>
+<node id="tuseroni">
+  <data key="d0">12.01965612131689</data>
+</node>
+<node id="menstreusel">
+  <data key="d0">29.614019752214492</data>
+</node>
+<node id="Big_Fat_Ones">
+  <data key="d0">11.872771895424405</data>
+</node>
+<node id="masklinn">
+  <data key="d0">31.798317939397602</data>
+</node>
+<node id="boringdude00">
+  <data key="d0">41.426299451466996</data>
+</node>
+<node id="Ian1732">
+  <data key="d0">6.4147496348784365</data>
+</node>
+<node id="mjfgates">
+  <data key="d0">69.24721193700198</data>
+</node>
+<node id="tau-lepton">
+  <data key="d0">56.660145420657514</data>
+</node>
+<node id="Keltino">
+  <data key="d0">26.53894909394454</data>
+</node>
+<node id="benny24c">
+  <data key="d0">52.32480534666997</data>
+</node>
+<node id="fizzlefist">
+  <data key="d0">9.394051075844168</data>
+</node>
+<node id="vincentrevelations">
+  <data key="d0">57.59464955561793</data>
+</node>
+<node id="revoman">
+  <data key="d0">92.92961975762141</data>
+</node>
+<node id="MrFaggotHands">
+  <data key="d0">31.856895245132367</data>
+</node>
+<node id="MrHankeytheXmasPoo">
+  <data key="d0">66.74103799636816</data>
+</node>
+<node id="entropicresonance">
+  <data key="d0">13.179786240439217</data>
+</node>
+<node id="The_Mexorcist26">
+  <data key="d0">71.63272041185655</data>
+</node>
+<node id="witness_protection">
+  <data key="d0">28.94060929472011</data>
+</node>
+<node id="deadbird17">
+  <data key="d0">18.319136200711682</data>
+</node>
+<node id="Jewnadian">
+  <data key="d0">58.65129348100832</data>
+</node>
+<node id="ReallyCleverMoniker">
+  <data key="d0">2.0107546187493552</data>
+</node>
+<node id="af22man">
+  <data key="d0">82.89400292173632</data>
+</node>
+<node id="s1wg4u">
+  <data key="d0">0.46954761925470656</data>
+</node>
+<node id="onemanclic">
+  <data key="d0">67.781653679623</data>
+</node>
+<node id="misandry_kills">
+  <data key="d0">27.000797319216485</data>
+</node>
+<node id="Morten14">
+  <data key="d0">73.5194022122595</data>
+</node>
+<node id="psno1994">
+  <data key="d0">96.21885451174383</data>
+</node>
+<node id="test822">
+  <data key="d0">24.875314351995804</data>
+</node>
+<node id="unclefisty">
+  <data key="d0">57.61573344178369</data>
+</node>
+<node id="smokinbluebear">
+  <data key="d0">59.2041931271839</data>
+</node>
+<node id="forwormsbravepercy">
+  <data key="d0">57.22519057908734</data>
+</node>
+<node id="JustinCayce">
+  <data key="d0">22.308163264061832</data>
+</node>
+<node id="schfourteen-teen">
+  <data key="d0">95.2749011516985</data>
+</node>
+<node id="Jackpot777">
+  <data key="d0">44.71253786176273</data>
+</node>
+<node id="tehmagik">
+  <data key="d0">84.64086724711278</data>
+</node>
+<node id="ThanatosNow">
+  <data key="d0">69.94792753175044</data>
+</node>
+<node id="MarinTaranu">
+  <data key="d0">29.743695085513366</data>
+</node>
+<node id="BobbyTomale">
+  <data key="d0">81.37978197024772</data>
+</node>
+<node id="kingssman">
+  <data key="d0">39.65057408469846</data>
+</node>
+<node id="Drogmyre">
+  <data key="d0">88.11031971111616</data>
+</node>
+<node id="typicalwhitegirl">
+  <data key="d0">58.12728726358587</data>
+</node>
+<node id="GoodMusicIsHardWork">
+  <data key="d0">88.17353618548528</data>
+</node>
+<node id="adamcognac">
+  <data key="d0">69.25315900777659</data>
+</node>
+<node id="Phyltre">
+  <data key="d0">72.52542798196406</data>
+</node>
+<node id="jonbyars06">
+  <data key="d0">50.13243819267023</data>
+</node>
+<node id="NRA4eva">
+  <data key="d0">95.6083634723224</data>
+</node>
+<node id="TheRoadHome">
+  <data key="d0">64.39901992296375</data>
+</node>
+<node id="Thorium233">
+  <data key="d0">42.38550485581797</data>
+</node>
+<node id="Isakill">
+  <data key="d0">60.639321412792434</data>
+</node>
+<node id="Hoyata21">
+  <data key="d0">1.9193198309333526</data>
+</node>
+<node id="I_done_a_plop-plop">
+  <data key="d0">30.15748166745493</data>
+</node>
+<node id="WildPepperoni">
+  <data key="d0">66.01735374926851</data>
+</node>
+<node id="zhokar85">
+  <data key="d0">29.007760721044406</data>
+</node>
+<node id="60secondwarlord">
+  <data key="d0">61.801542899884154</data>
+</node>
+<node id="19Kilo">
+  <data key="d0">42.87687009457662</data>
+</node>
+<node id="absentmindedjwc">
+  <data key="d0">13.547406422245023</data>
+</node>
+<node id="thelaststormcrow">
+  <data key="d0">29.828232595603076</data>
+</node>
+<node id="androidpk">
+  <data key="d0">56.99649107012649</data>
+</node>
+<node id="Internetologist">
+  <data key="d0">59.08727612481732</data>
+</node>
+<node id="suraj1989">
+  <data key="d0">57.43252488495788</data>
+</node>
+<node id="bayoubomber">
+  <data key="d0">65.32008198571336</data>
+</node>
+<node id="Biwin">
+  <data key="d0">65.21032700016889</data>
+</node>
+<node id="zeroexev29">
+  <data key="d0">43.14184354339739</data>
+</node>
+<node id="hilltoptheologian">
+  <data key="d0">89.6546595851063</data>
+</node>
+<node id="Excitonex">
+  <data key="d0">36.75618700478965</data>
+</node>
+<node id="The_Write_Stuff">
+  <data key="d0">43.58649252656268</data>
+</node>
+<node id="Hypocrite_Redditor">
+  <data key="d0">89.19233550156721</data>
+</node>
+<node id="PaulJosephGoebbels">
+  <data key="d0">80.61939890460857</data>
+</node>
+<node id="Migratory_Coconut">
+  <data key="d0">70.38885835403663</data>
+</node>
+<node id="thekeeper228">
+  <data key="d0">10.022688731230112</data>
+</node>
+<node id="rockyali">
+  <data key="d0">91.94826137446735</data>
+</node>
+<node id="ammonthenephite">
+  <data key="d0">71.42412995491114</data>
+</node>
+<node id="Rorkimaru">
+  <data key="d0">99.88470065678665</data>
+</node>
+<node id="nordic_viking">
+  <data key="d0">14.944830465799374</data>
+</node>
+<node id="greenascanbe">
+  <data key="d0">86.81260573682142</data>
+</node>
+<node id="Mentalpopcorn">
+  <data key="d0">16.249293467637482</data>
+</node>
+<node id="SupaHotFya">
+  <data key="d0">61.55595642838442</data>
+</node>
+<node id="IRNobody">
+  <data key="d0">12.381998284944151</data>
+</node>
+<node id="lonesomerhodes">
+  <data key="d0">84.80082293222344</data>
+</node>
+<node id="davebilliams">
+  <data key="d0">80.73189587250107</data>
+</node>
+<node id="Pykors">
+  <data key="d0">56.91007386145933</data>
+</node>
+<node id="throwawaysarebetter">
+  <data key="d0">40.71832972259997</data>
+</node>
+<node id="dandaman0345">
+  <data key="d0">6.916699545513804</data>
+</node>
+<node id="askacanadian">
+  <data key="d0">69.74287731445636</data>
+</node>
+<node id="AndyTheAbsurd">
+  <data key="d0">45.35426826780689</data>
+</node>
+<node id="BromeotheBard">
+  <data key="d0">72.20555994703479</data>
+</node>
+<node id="noworknetwork">
+  <data key="d0">86.63823259286292</data>
+</node>
+<node id="Odin707">
+  <data key="d0">97.55215050028858</data>
+</node>
+<node id="imheretomeetmen">
+  <data key="d0">85.5803342392611</data>
+</node>
+<node id="wrcftw">
+  <data key="d0">1.1714084185001972</data>
+</node>
+<node id="Felixlives">
+  <data key="d0">35.99780644783639</data>
+</node>
+<node id="Eradicator_1729">
+  <data key="d0">72.9990562424058</data>
+</node>
+<node id="darthfederer1">
+  <data key="d0">17.162967726144053</data>
+</node>
+<node id="thetasigma1355">
+  <data key="d0">52.10366062041293</data>
+</node>
+<node id="ViperRT10Matt">
+  <data key="d0">5.433798833925363</data>
+</node>
+<node id="MANCREEP">
+  <data key="d0">19.999652489640006</data>
+</node>
+<node id="lifetimeofnot">
+  <data key="d0">1.8521794460613972</data>
+</node>
+<node id="Neverborn">
+  <data key="d0">79.36977033574206</data>
+</node>
+<node id="faeriechyld">
+  <data key="d0">22.392468806038014</data>
+</node>
+<node id="cunnl01">
+  <data key="d0">34.53516806969027</data>
+</node>
+<node id="joecity856">
+  <data key="d0">92.80812934655908</data>
+</node>
+<node id="gazoogle">
+  <data key="d0">70.44144019235328</data>
+</node>
+<node id="searingsky">
+  <data key="d0">3.1838929531307847</data>
+</node>
+<node id="Saephon">
+  <data key="d0">16.469415649791273</data>
+</node>
+<node id="ILL_PM_YOU_MY_DICK">
+  <data key="d0">62.14784014997635</data>
+</node>
+<node id="RadioHitandRun">
+  <data key="d0">57.72285886041676</data>
+</node>
+<node id="terrible_comments">
+  <data key="d0">23.78928213745086</data>
+</node>
+<node id="Jester76">
+  <data key="d0">93.42139979247938</data>
+</node>
+<node id="AniGamor">
+  <data key="d0">61.3965955965896</data>
+</node>
+<node id="Badfickle">
+  <data key="d0">53.56328030249583</data>
+</node>
+<node id="pixelperfect3">
+  <data key="d0">58.9909976354571</data>
+</node>
+<node id="tastytreats04">
+  <data key="d0">73.01220295167697</data>
+</node>
+<node id="bardwick">
+  <data key="d0">31.194499547960184</data>
+</node>
+<node id="Armenoid">
+  <data key="d0">39.82210622160919</data>
+</node>
+<node id="gibbie99">
+  <data key="d0">20.984374897512215</data>
+</node>
+<node id="Bike-o-king">
+  <data key="d0">18.619300588033617</data>
+</node>
+<node id="canteloupy">
+  <data key="d0">94.43723899839335</data>
+</node>
+<node id="Defreshs10">
+  <data key="d0">73.95507950492876</data>
+</node>
+<node id="el_guapo_malo">
+  <data key="d0">49.04588086175671</data>
+</node>
+<node id="headlessparrot">
+  <data key="d0">22.741462797332325</data>
+</node>
+<node id="StrictScrutiny">
+  <data key="d0">25.435648177039294</data>
+</node>
+<node id="ILikeBumblebees">
+  <data key="d0">5.802916032387562</data>
+</node>
+<node id="dunefrankherbert">
+  <data key="d0">43.44166255581208</data>
+</node>
+<node id="gielbondhu">
+  <data key="d0">31.179588199410258</data>
+</node>
+<node id="Crying_Reaper">
+  <data key="d0">69.63434888154595</data>
+</node>
+<node id="drax117">
+  <data key="d0">37.775183929248094</data>
+</node>
+<node id="underthedock">
+  <data key="d0">17.960367755963482</data>
+</node>
+<node id="bipolarcarebear">
+  <data key="d0">2.467872839133123</data>
+</node>
+<node id="happymage102">
+  <data key="d0">6.724963146324859</data>
+</node>
+<node id="Imapopulistnow">
+  <data key="d0">67.93927734985672</data>
+</node>
+<node id="User-1234">
+  <data key="d0">45.36968445560453</data>
+</node>
+<node id="The_Yar">
+  <data key="d0">53.65792111087222</data>
+</node>
+<node id="cyrusm">
+  <data key="d0">89.6671293040342</data>
+</node>
+<node id="not_a_banana">
+  <data key="d0">99.03389473967043</data>
+</node>
+<node id="Mshotts">
+  <data key="d0">21.689698439847394</data>
+</node>
+<node id="lolwutermelon">
+  <data key="d0">66.30782031001007</data>
+</node>
+<node id="GonzoNation">
+  <data key="d0">26.332237673715063</data>
+</node>
+<node id="sympathico">
+  <data key="d0">2.065099946572868</data>
+</node>
+<node id="octopornopus">
+  <data key="d0">75.83786538361414</data>
+</node>
+<node id="rotll">
+  <data key="d0">32.00171508224678</data>
+</node>
+<node id="PeterGibbons316">
+  <data key="d0">38.3463894171898</data>
+</node>
+<node id="armahillo">
+  <data key="d0">58.831711355360575</data>
+</node>
+<node id="sagan_drinks_cosmos">
+  <data key="d0">83.10484552361905</data>
+</node>
+<node id="YoRpFiSh">
+  <data key="d0">62.89818435911487</data>
+</node>
+<node id="Kerbobotat">
+  <data key="d0">87.26506554473953</data>
+</node>
+<node id="Dionysiandogma">
+  <data key="d0">27.354203481563577</data>
+</node>
+<node id="argv_minus_one">
+  <data key="d0">79.80468339125638</data>
+</node>
+<node id="FrogMasta27">
+  <data key="d0">18.56359443059522</data>
+</node>
+<node id="jkff">
+  <data key="d0">95.27916569719446</data>
+</node>
+<node id="Sloppy1sts">
+  <data key="d0">68.74882763878153</data>
+</node>
+<node id="troppoveloce">
+  <data key="d0">21.550767711355846</data>
+</node>
+<node id="TheLightningbolt">
+  <data key="d0">94.73705904889242</data>
+</node>
+<node id="MutthaFuzza">
+  <data key="d0">73.08558067701578</data>
+</node>
+<node id="neotropic9">
+  <data key="d0">25.39416425950258</data>
+</node>
+<node id="Solidarieta">
+  <data key="d0">21.331197736748198</data>
+</node>
+<node id="tehdave86">
+  <data key="d0">51.82007139306633</data>
+</node>
+<node id="bibimbapYourWorld">
+  <data key="d0">2.5662718054531575</data>
+</node>
+<node id="OneOfDozens">
+  <data key="d0">20.74700754411094</data>
+</node>
+<node id="ndiamondn">
+  <data key="d0">42.46854687515062</data>
+</node>
+<node id="MattHoppe1">
+  <data key="d0">37.41699803342256</data>
+</node>
+<node id="pinata_penis_pump">
+  <data key="d0">46.35754243648107</data>
+</node>
+<node id="FearlessFreep">
+  <data key="d0">27.76287062947319</data>
+</node>
+<node id="MrFlesh">
+  <data key="d0">58.67843464581688</data>
+</node>
+<node id="santa4nt">
+  <data key="d0">86.38556059232315</data>
+</node>
+<node id="bac10us">
+  <data key="d0">11.75318559620331</data>
+</node>
+<node id="Got_da_noog">
+  <data key="d0">51.73791071541142</data>
+</node>
+<node id="RMaximus">
+  <data key="d0">13.206810634515332</data>
+</node>
+<node id="some_a_hole">
+  <data key="d0">71.68596811925937</data>
+</node>
+<node id="sailorbrendan">
+  <data key="d0">39.60597028072937</data>
+</node>
+<node id="JamzzG">
+  <data key="d0">56.5421311858509</data>
+</node>
+<node id="masaoshigeta">
+  <data key="d0">18.32798362140786</data>
+</node>
+<node id="ShameNap">
+  <data key="d0">14.484775934337723</data>
+</node>
+<node id="Evanescent_contrail">
+  <data key="d0">48.80562806489546</data>
+</node>
+<node id="interjecting-sense">
+  <data key="d0">35.561273784995564</data>
+</node>
+<node id="LifeBeginsAt10kRPM">
+  <data key="d0">94.04319452528131</data>
+</node>
+<node id="billpullmanrocks">
+  <data key="d0">76.53252538069653</data>
+</node>
+<node id="tikevin83">
+  <data key="d0">74.86636198505472</data>
+</node>
+<node id="EDante">
+  <data key="d0">90.37197397459335</data>
+</node>
+<node id="DorkJedi">
+  <data key="d0">8.342243544201855</data>
+</node>
+<node id="PapaFish">
+  <data key="d0">55.219246992240656</data>
+</node>
+<node id="mesodude">
+  <data key="d0">58.44760689557689</data>
+</node>
+<node id="ScubaSteve58001">
+  <data key="d0">96.19363785472291</data>
+</node>
+<node id="playaspec">
+  <data key="d0">29.214752679254886</data>
+</node>
+<node id="Hogansantihero">
+  <data key="d0">24.08287799154468</data>
+</node>
+<node id="thirtythr33">
+  <data key="d0">10.029394226549782</data>
+</node>
+<node id="Boxu">
+  <data key="d0">1.6429629591474204</data>
+</node>
+<node id="FeedMeACat">
+  <data key="d0">92.95293167921905</data>
+</node>
+<node id="kickingpplisfun">
+  <data key="d0">66.99165465909101</data>
+</node>
+<node id="NottaGrammerNasi">
+  <data key="d0">78.51529120231378</data>
+</node>
+<node id="jeremycb29">
+  <data key="d0">28.17301057539491</data>
+</node>
+<node id="joneSee">
+  <data key="d0">58.64101661863267</data>
+</node>
+<node id="DstoneHP89">
+  <data key="d0">6.395526612098113</data>
+</node>
+<node id="The_Gregor">
+  <data key="d0">48.56275959346229</data>
+</node>
+<node id="BlueJadeLei">
+  <data key="d0">97.74951397444468</data>
+</node>
+<node id="TheForceMajeure">
+  <data key="d0">87.65052453165907</data>
+</node>
+<node id="l00pee">
+  <data key="d0">33.81589518368456</data>
+</node>
+<node id="adusoccr">
+  <data key="d0">96.15701545414986</data>
+</node>
+<node id="toepaydoe">
+  <data key="d0">23.170162647120453</data>
+</node>
+<node id="LEGALIZER">
+  <data key="d0">94.93188224156815</data>
+</node>
+<node id="thingmabobby">
+  <data key="d0">94.13777047064985</data>
+</node>
+<node id="ogenrwot">
+  <data key="d0">79.92025873523917</data>
+</node>
+<node id="frenzyboard">
+  <data key="d0">63.044793686679114</data>
+</node>
+<node id="LearnsSomethingNew">
+  <data key="d0">87.4287966624947</data>
+</node>
+<node id="libsmak">
+  <data key="d0">29.302028450779673</data>
+</node>
+<node id="TheRadicalAntichrist">
+  <data key="d0">84.89435553129182</data>
+</node>
+<node id="sandflea">
+  <data key="d0">61.78766919175238</data>
+</node>
+<node id="SpinningHead">
+  <data key="d0">1.323685775889949</data>
+</node>
+<node id="murkloar">
+  <data key="d0">34.72335179322196</data>
+</node>
+<node id="neurn2">
+  <data key="d0">14.814086094816503</data>
+</node>
+<node id="Grizzlyguy">
+  <data key="d0">98.18293898182532</data>
+</node>
+<node id="u2canfail">
+  <data key="d0">47.837030703998806</data>
+</node>
+<node id="zombiebearhug">
+  <data key="d0">49.73913654986627</data>
+</node>
+<node id="annata">
+  <data key="d0">63.94725163987236</data>
+</node>
+<node id="Peter_Jennings_Lungs">
+  <data key="d0">36.85846061296175</data>
+</node>
+<node id="apullin">
+  <data key="d0">13.690027168559894</data>
+</node>
+<node id="vooffle">
+  <data key="d0">82.21177331942455</data>
+</node>
+<node id="coberh">
+  <data key="d0">18.984791190275796</data>
+</node>
+<node id="thisnameismeta">
+  <data key="d0">51.131898254645606</data>
+</node>
+<node id="burnadams">
+  <data key="d0">22.431702897473926</data>
+</node>
+<node id="ehsahr">
+  <data key="d0">9.784448449403405</data>
+</node>
+<node id="DBDude">
+  <data key="d0">86.21915174216834</data>
+</node>
+<node id="thewarehouse">
+  <data key="d0">97.29194890231302</data>
+</node>
+<node id="haberdasher42">
+  <data key="d0">96.08346580630001</data>
+</node>
+<node id="HastenTheRapture">
+  <data key="d0">90.6555499221179</data>
+</node>
+<node id="a_dose_of_reason">
+  <data key="d0">77.40473326986388</data>
+</node>
+<node id="Freeman001">
+  <data key="d0">33.31451520286419</data>
+</node>
+<node id="Lichruler">
+  <data key="d0">8.110138998799677</data>
+</node>
+<node id="183747">
+  <data key="d0">40.72411714138073</data>
+</node>
+<node id="eckinlighter">
+  <data key="d0">23.223414217094273</data>
+</node>
+<node id="bassinhound">
+  <data key="d0">13.248763475798297</data>
+</node>
+<node id="Hurrah_for_Karamazov">
+  <data key="d0">5.342718178682526</data>
+</node>
+<node id="dairydog91">
+  <data key="d0">72.55943642105788</data>
+</node>
+<node id="dmclone">
+  <data key="d0">1.1427458625031028</data>
+</node>
+<node id="cnrfvfjkrhwerfh">
+  <data key="d0">77.05807485027762</data>
+</node>
+<node id="robin1961">
+  <data key="d0">14.694664540037506</data>
+</node>
+<node id="CaptainIndustry">
+  <data key="d0">7.952208258675575</data>
+</node>
+<node id="phillymjs">
+  <data key="d0">8.960303423860537</data>
+</node>
+<node id="malenkylizards">
+  <data key="d0">67.20478073539144</data>
+</node>
+<node id="papipapichulo">
+  <data key="d0">24.536720985284475</data>
+</node>
+<node id="YoureAllRobots">
+  <data key="d0">42.05394666800984</data>
+</node>
+<node id="gth829c">
+  <data key="d0">55.73687913239169</data>
+</node>
+<node id="moxy801">
+  <data key="d0">86.05511738287937</data>
+</node>
+<node id="ShillCrusher">
+  <data key="d0">72.70442627113283</data>
+</node>
+<node id="panascope">
+  <data key="d0">27.032790523871462</data>
+</node>
+<node id="Velshtein">
+  <data key="d0">13.14827992911276</data>
+</node>
+<node id="InoffensiveAsFuck">
+  <data key="d0">5.537432042119795</data>
+</node>
+<node id="enthreeoh">
+  <data key="d0">30.15986344809425</data>
+</node>
+<node id="Cluricaun">
+  <data key="d0">26.211814923967825</data>
+</node>
+<node id="2Ejy4u">
+  <data key="d0">45.614056680047966</data>
+</node>
+<node id="toofine">
+  <data key="d0">68.32813355476804</data>
+</node>
+<node id="thehungriestnunu">
+  <data key="d0">69.56254456388572</data>
+</node>
+<node id="Terrible_Detective45">
+  <data key="d0">28.351884658216665</data>
+</node>
+<node id="HulkingBrute">
+  <data key="d0">37.99269559001205</data>
+</node>
+<node id="Stooby">
+  <data key="d0">18.115096173690304</data>
+</node>
+<node id="dirtyjersey84">
+  <data key="d0">78.85455123065186</data>
+</node>
+<node id="you_know_how_I_know">
+  <data key="d0">5.68480764332403</data>
+</node>
+<node id="meltingpine">
+  <data key="d0">69.69972417249873</data>
+</node>
+<node id="GermanPanda">
+  <data key="d0">77.86953959411034</data>
+</node>
+<node id="Evil_This">
+  <data key="d0">77.74075618487531</data>
+</node>
+<node id="Warfinder">
+  <data key="d0">25.942256434535494</data>
+</node>
+<node id="epsilonleqzero">
+  <data key="d0">37.38131379325614</data>
+</node>
+<node id="dongsalad89">
+  <data key="d0">58.7599635196389</data>
+</node>
+<node id="tobias_the_letdown">
+  <data key="d0">27.282190242446703</data>
+</node>
+<node id="iamacontrarian">
+  <data key="d0">37.085279921788874</data>
+</node>
+<node id="mattinva">
+  <data key="d0">19.705428018563964</data>
+</node>
+<node id="SHOW_ME_YOUR_CLIT">
+  <data key="d0">45.98558837560074</data>
+</node>
+<node id="hulking_menace">
+  <data key="d0">4.461230125411408</data>
+</node>
+<node id="pedroelsantos">
+  <data key="d0">79.9795884570618</data>
+</node>
+<node id="raznog">
+  <data key="d0">7.695644698663273</data>
+</node>
+<node id="shellshoq">
+  <data key="d0">51.88351488315261</data>
+</node>
+<node id="deeva">
+  <data key="d0">30.68100995451961</data>
+</node>
+<node id="UofSins">
+  <data key="d0">57.75429488313755</data>
+</node>
+<node id="rarianrakista">
+  <data key="d0">95.9433340833425</data>
+</node>
+<node id="brown3jh">
+  <data key="d0">64.55702444560039</data>
+</node>
+<node id="FatherVic">
+  <data key="d0">3.5362435755490917</data>
+</node>
+<node id="OrientalTeaBag">
+  <data key="d0">43.04024395080612</data>
+</node>
+<node id="SporkOfThor">
+  <data key="d0">51.00168523182502</data>
+</node>
+<node id="comradebillyboy">
+  <data key="d0">53.6177494703452</data>
+</node>
+<node id="sonofagunn">
+  <data key="d0">68.13925106038378</data>
+</node>
+<node id="itwasagraveyardgraph">
+  <data key="d0">27.759609773176606</data>
+</node>
+<node id="joshamania">
+  <data key="d0">12.88605654663202</data>
+</node>
+<node id="hold-up">
+  <data key="d0">39.26756765470943</data>
+</node>
+<node id="robbiekomrs">
+  <data key="d0">95.64057227959488</data>
+</node>
+<node id="Glarbluk">
+  <data key="d0">18.713089175084473</data>
+</node>
+<node id="StruckingFuggle">
+  <data key="d0">90.3983954928237</data>
+</node>
+<node id="Jaqqarhan">
+  <data key="d0">54.38059500773264</data>
+</node>
+<node id="RamboGoesMeow">
+  <data key="d0">45.69114216457658</data>
+</node>
+<node id="jgh86001">
+  <data key="d0">88.20414102298896</data>
+</node>
+<node id="The_Arctic_Fox">
+  <data key="d0">45.860396176858586</data>
+</node>
+<node id="bottiglie">
+  <data key="d0">72.41676366115432</data>
+</node>
+<node id="dongsalad99">
+  <data key="d0">39.9025321703102</data>
+</node>
+<node id="seancanada">
+  <data key="d0">90.40443929009577</data>
+</node>
+<node id="SnowWhiteMemorial">
+  <data key="d0">69.00250201912273</data>
+</node>
+<node id="jaspersgroove">
+  <data key="d0">69.96220542505168</data>
+</node>
+<node id="ThePerfectParadigm">
+  <data key="d0">32.77204015571189</data>
+</node>
+<node id="ry4n4re4l">
+  <data key="d0">75.67786427368893</data>
+</node>
+<node id="drays">
+  <data key="d0">63.60610554471413</data>
+</node>
+<node id="Bochinsky">
+  <data key="d0">24.002027337970954</data>
+</node>
+<node id="randomrealitycheck">
+  <data key="d0">16.053882248525642</data>
+</node>
+<node id="CeasarTheFirst">
+  <data key="d0">79.63914745173317</data>
+</node>
+<node id="DongleNocker">
+  <data key="d0">95.91666030352225</data>
+</node>
+<node id="clavalle">
+  <data key="d0">45.81388272600429</data>
+</node>
+<node id="truthseeker2083">
+  <data key="d0">59.09841653236849</data>
+</node>
+<node id="gunch">
+  <data key="d0">85.77226441935547</data>
+</node>
+<node id="nonrate">
+  <data key="d0">45.722345335385704</data>
+</node>
+<node id="myringotomy">
+  <data key="d0">95.18744768327362</data>
+</node>
+<node id="lakerswiz">
+  <data key="d0">57.575116204487244</data>
+</node>
+<node id="awa64">
+  <data key="d0">82.07671207013149</data>
+</node>
+<node id="charonn0">
+  <data key="d0">90.88437184127383</data>
+</node>
+<node id="cmileto">
+  <data key="d0">81.55238187685688</data>
+</node>
+<node id="pimaxiu">
+  <data key="d0">15.941446344895594</data>
+</node>
+<node id="bloodthirstyman">
+  <data key="d0">62.88984390617004</data>
+</node>
+<node id="bluebeanhero">
+  <data key="d0">39.84342586196771</data>
+</node>
+<node id="Guild_Wars_2">
+  <data key="d0">6.271295202334571</data>
+</node>
+<node id="supaphly42">
+  <data key="d0">42.403225188984194</data>
+</node>
+<node id="buttpincher">
+  <data key="d0">25.86840668894077</data>
+</node>
+<node id="Barbariandude">
+  <data key="d0">84.90383084285108</data>
+</node>
+<node id="Sleekery">
+  <data key="d0">3.330462654669619</data>
+</node>
+<node id="ajd8b">
+  <data key="d0">95.89827218634736</data>
+</node>
+<node id="happyscrappy">
+  <data key="d0">35.536884847192965</data>
+</node>
+<node id="YankeeQuebec">
+  <data key="d0">35.67068904025429</data>
+</node>
+<node id="thebizarrojerry">
+  <data key="d0">1.632850268370789</data>
+</node>
+<node id="Wisdom_from_the_Ages">
+  <data key="d0">18.523232523618393</data>
+</node>
+<node id="jopesy">
+  <data key="d0">40.12595008036087</data>
+</node>
+<node id="souurdiesel">
+  <data key="d0">92.9291417302714</data>
+</node>
+<node id="wheeler1432">
+  <data key="d0">9.961493022127133</data>
+</node>
+<node id="Lighting">
+  <data key="d0">94.53015334790796</data>
+</node>
+<node id="tarantulus">
+  <data key="d0">86.94885305466322</data>
+</node>
+<node id="Nyrb">
+  <data key="d0">45.41623969075518</data>
+</node>
+<node id="uberpower">
+  <data key="d0">32.670088176826006</data>
+</node>
+<node id="ShakeGetInHere">
+  <data key="d0">23.274412927905686</data>
+</node>
+<node id="mxmxmxmx">
+  <data key="d0">61.446470647687434</data>
+</node>
+<node id="midway0512">
+  <data key="d0">3.307459147550562</data>
+</node>
+<node id="wermwouldNOT">
+  <data key="d0">1.5606064446828216</data>
+</node>
+<node id="neohellpoet">
+  <data key="d0">42.87957224982378</data>
+</node>
+<node id="atrich">
+  <data key="d0">6.807407397472021</data>
+</node>
+<node id="pok3_smot">
+  <data key="d0">25.19409882460929</data>
+</node>
+<node id="eskimoroll">
+  <data key="d0">22.116091534608383</data>
+</node>
+<node id="kaett">
+  <data key="d0">25.319119372285193</data>
+</node>
+<node id="small_L_Libertarian">
+  <data key="d0">13.105523121525774</data>
+</node>
+<node id="mastersoup">
+  <data key="d0">1.203622289765427</data>
+</node>
+<node id="shozy">
+  <data key="d0">11.548429713874809</data>
+</node>
+<node id="jivnik">
+  <data key="d0">61.848025951274785</data>
+</node>
+<node id="reeight">
+  <data key="d0">97.42562128180504</data>
+</node>
+<node id="Altair05">
+  <data key="d0">99.0345001560894</data>
+</node>
+<node id="row_guy">
+  <data key="d0">40.905409537306156</data>
+</node>
+<node id="Moon_Cricket05">
+  <data key="d0">16.295442604660536</data>
+</node>
+<node id="morbid126">
+  <data key="d0">63.87617573665293</data>
+</node>
+<node id="etfp">
+  <data key="d0">49.03053465487371</data>
+</node>
+<node id="Matthew37">
+  <data key="d0">98.94097772844314</data>
+</node>
+<node id="clearlynotlordnougat">
+  <data key="d0">6.53042071517802</data>
+</node>
+<node id="krunk7">
+  <data key="d0">78.32344383138131</data>
+</node>
+<node id="jekylljones">
+  <data key="d0">28.839849733149393</data>
+</node>
+<node id="BizarroDiggtard">
+  <data key="d0">24.1418620076574</data>
+</node>
+<node id="-ParticleMan-">
+  <data key="d0">66.25045715326759</data>
+</node>
+<node id="LucubrateIsh">
+  <data key="d0">24.606318499096446</data>
+</node>
+<node id="OmegaSeven">
+  <data key="d0">66.58591175591877</data>
+</node>
+<node id="MeghanAM">
+  <data key="d0">51.73085172022888</data>
+</node>
+<node id="nickelundertone">
+  <data key="d0">42.40889884358493</data>
+</node>
+<node id="Nivlac024">
+  <data key="d0">55.4687808661419</data>
+</node>
+<node id="Beelzebud">
+  <data key="d0">28.705151991962975</data>
+</node>
+<node id="Iamien">
+  <data key="d0">70.6574706272979</data>
+</node>
+<node id="maroger">
+  <data key="d0">41.485686933356405</data>
+</node>
+<node id="working_shibe">
+  <data key="d0">36.05455604858923</data>
+</node>
+<node id="dilly231">
+  <data key="d0">82.86569145557378</data>
+</node>
+<node id="RemoteBoner">
+  <data key="d0">92.49669119531922</data>
+</node>
+<node id="StumbleBees">
+  <data key="d0">4.600731088729693</data>
+</node>
+<node id="alhoward">
+  <data key="d0">23.262699282976552</data>
+</node>
+<node id="JumpingJazzJam">
+  <data key="d0">34.85193694925633</data>
+</node>
+<node id="Joyrock">
+  <data key="d0">81.49664793702473</data>
+</node>
+<node id="halo00to14">
+  <data key="d0">98.54914276432976</data>
+</node>
+<node id="WaffleAmongTheFence">
+  <data key="d0">96.89717046703518</data>
+</node>
+<node id="Crunkbutter">
+  <data key="d0">90.49483455499269</data>
+</node>
+<node id="newspeaker">
+  <data key="d0">29.65562650640299</data>
+</node>
+<node id="zulhadm">
+  <data key="d0">99.20112434144741</data>
+</node>
+<node id="Vandredd">
+  <data key="d0">24.942004105645122</data>
+</node>
+<node id="Zerowantuthri">
+  <data key="d0">10.590615488223222</data>
+</node>
+<node id="orus">
+  <data key="d0">95.09526110553941</data>
+</node>
+<node id="TychoBraheNose">
+  <data key="d0">23.34202554680963</data>
+</node>
+<node id="sir_fancypants">
+  <data key="d0">68.97682650777504</data>
+</node>
+<node id="Ovedya2011">
+  <data key="d0">5.835635898058866</data>
+</node>
+<node id="Ilves7">
+  <data key="d0">73.07090991274762</data>
+</node>
+<node id="laughingsnakecunt">
+  <data key="d0">88.17202123338397</data>
+</node>
+<node id="grapechicken">
+  <data key="d0">27.24368954659625</data>
+</node>
+<node id="Frostiken">
+  <data key="d0">37.90568960774286</data>
+</node>
+<node id="BornInATrailer">
+  <data key="d0">37.42961833209161</data>
+</node>
+<node id="stilesja">
+  <data key="d0">74.8788257540133</data>
+</node>
+<node id="Rodents210">
+  <data key="d0">23.780724253903884</data>
+</node>
+<node id="shaqrock">
+  <data key="d0">17.185309904764303</data>
+</node>
+<node id="elreina">
+  <data key="d0">44.92916486877381</data>
+</node>
+<node id="madcorp">
+  <data key="d0">30.44684073773195</data>
+</node>
+<node id="dannager">
+  <data key="d0">83.91891222586524</data>
+</node>
+<node id="Zombie_Lover">
+  <data key="d0">23.774182601563876</data>
+</node>
+<node id="Bp0116">
+  <data key="d0">50.23894574892614</data>
+</node>
+<node id="disposition5">
+  <data key="d0">94.25835996979303</data>
+</node>
+<node id="Mimehunter">
+  <data key="d0">63.39976977446607</data>
+</node>
+<node id="Teotwawki69">
+  <data key="d0">86.72894054624648</data>
+</node>
+<node id="fullchub">
+  <data key="d0">94.02096893547673</data>
+</node>
+<node id="official4chanuser">
+  <data key="d0">75.0764861886352</data>
+</node>
+<node id="rugtoad">
+  <data key="d0">69.95750602247513</data>
+</node>
+<node id="trout007">
+  <data key="d0">96.79655666042271</data>
+</node>
+<node id="Sindja">
+  <data key="d0">99.44007896476793</data>
+</node>
+<node id="IntelWarrior">
+  <data key="d0">45.182168266975964</data>
+</node>
+<node id="ZombieHitchens2012">
+  <data key="d0">7.086977818420836</data>
+</node>
+<node id="censoredandagain">
+  <data key="d0">29.279403144051884</data>
+</node>
+<node id="outphase84">
+  <data key="d0">15.235470568773046</data>
+</node>
+<node id="LukeChrisco">
+  <data key="d0">41.74863747960118</data>
+</node>
+<node id="Mikeuicus">
+  <data key="d0">13.128932847325602</data>
+</node>
+<node id="cuteman">
+  <data key="d0">60.4117804020882</data>
+</node>
+<node id="oh_no_a_hobo">
+  <data key="d0">38.28080591578541</data>
+</node>
+<node id="spoiled_generation">
+  <data key="d0">89.538588428821</data>
+</node>
+<node id="Garek">
+  <data key="d0">96.77946717985019</data>
+</node>
+<node id="invaderc1">
+  <data key="d0">54.688490166942216</data>
+</node>
+<node id="urnbabyurn">
+  <data key="d0">27.482356986759658</data>
+</node>
+<node id="mannercat">
+  <data key="d0">59.22304187618368</data>
+</node>
+<node id="deadmul3">
+  <data key="d0">89.67611582244098</data>
+</node>
+<node id="patrick95350">
+  <data key="d0">40.67333458357483</data>
+</node>
+<node id="aes0p81">
+  <data key="d0">55.20782766919709</data>
+</node>
+<node id="sadacal">
+  <data key="d0">27.16527676061459</data>
+</node>
+<node id="Forlarren">
+  <data key="d0">45.5444149450027</data>
+</node>
+<node id="Kharos">
+  <data key="d0">40.17135353795987</data>
+</node>
+<node id="1derful">
+  <data key="d0">24.8413465082971</data>
+</node>
+<node id="Ingens_Testibus">
+  <data key="d0">50.586638382530836</data>
+</node>
+<node id="DarthMaulkin">
+  <data key="d0">31.03808259798114</data>
+</node>
+<node id="JamesR624">
+  <data key="d0">37.303486388074745</data>
+</node>
+<node id="Vincent__Vega">
+  <data key="d0">52.49704422542643</data>
+</node>
+<node id="Darrkman">
+  <data key="d0">75.05950229289876</data>
+</node>
+<node id="mcstoopums">
+  <data key="d0">33.35074657912753</data>
+</node>
+<node id="BerateBirthers">
+  <data key="d0">92.41587666207636</data>
+</node>
+<node id="oshout">
+  <data key="d0">86.23185468359024</data>
+</node>
+<node id="ARGUMENTUM_EX_CULO">
+  <data key="d0">4.869029597552855</data>
+</node>
+<node id="crayonconfetti">
+  <data key="d0">25.364252425682277</data>
+</node>
+<node id="ericmm76">
+  <data key="d0">44.613551265920194</data>
+</node>
+<node id="urfrendlipiro">
+  <data key="d0">10.462788874247408</data>
+</node>
+<node id="NastyButler_">
+  <data key="d0">34.847598903349706</data>
+</node>
+<node id="TheMeatball">
+  <data key="d0">74.00975256176825</data>
+</node>
+<node id="TheBetterGaijin">
+  <data key="d0">68.05144811428259</data>
+</node>
+<node id="day465">
+  <data key="d0">62.238442856600486</data>
+</node>
+<node id="mastermike14">
+  <data key="d0">71.05284027223456</data>
+</node>
+<node id="BuckeyeBentley">
+  <data key="d0">20.492368695970175</data>
+</node>
+<node id="mvchamblin">
+  <data key="d0">34.169811486473215</data>
+</node>
+<node id="moose_testes">
+  <data key="d0">67.62424822774629</data>
+</node>
+<node id="TravvyJ">
+  <data key="d0">87.9234763031327</data>
+</node>
+<node id="poohster33">
+  <data key="d0">54.36780538280952</data>
+</node>
+<node id="Dunkcity239">
+  <data key="d0">28.269965094553662</data>
+</node>
+<node id="redditallreddy">
+  <data key="d0">3.023525800598259</data>
+</node>
+<node id="north0">
+  <data key="d0">71.03368289742133</data>
+</node>
+<node id="prismjism">
+  <data key="d0">0.7884103508440377</data>
+</node>
+<node id="CharlieDarwin2">
+  <data key="d0">37.267906982099554</data>
+</node>
+<node id="90preludeLad">
+  <data key="d0">53.05372145627818</data>
+</node>
+<node id="Drumlin">
+  <data key="d0">92.21114617671931</data>
+</node>
+<node id="brettyrocks">
+  <data key="d0">8.94945450329001</data>
+</node>
+<node id="NeonDisease">
+  <data key="d0">40.59423219682837</data>
+</node>
+<node id="boscoist">
+  <data key="d0">2.4313199710157773</data>
+</node>
+<node id="nuovo_donna">
+  <data key="d0">34.26109843415903</data>
+</node>
+<node id="orangeblood">
+  <data key="d0">62.22310588397949</data>
+</node>
+<node id="WaterOfForgetfulness">
+  <data key="d0">27.906794822859837</data>
+</node>
+<node id="swearno">
+  <data key="d0">20.97499496556351</data>
+</node>
+<node id="WinterAyars">
+  <data key="d0">11.570323332709364</data>
+</node>
+<node id="overzealous_farker">
+  <data key="d0">57.714024402034184</data>
+</node>
+<node id="kurb21">
+  <data key="d0">69.5270005904686</data>
+</node>
+<node id="zcc0nonA">
+  <data key="d0">67.19571405958223</data>
+</node>
+<node id="LittleBigKid2000">
+  <data key="d0">94.88610207205073</data>
+</node>
+<node id="Copper13">
+  <data key="d0">0.27032138935026984</data>
+</node>
+<node id="SorensonPA">
+  <data key="d0">64.7196653894036</data>
+</node>
+<node id="Sherman1865">
+  <data key="d0">60.03922370976396</data>
+</node>
+<node id="TheMagicMarkerMan">
+  <data key="d0">58.87396099702882</data>
+</node>
+<node id="Lnzy1">
+  <data key="d0">96.27703198402425</data>
+</node>
+<node id="Thorrtun">
+  <data key="d0">1.6871673370039697</data>
+</node>
+<node id="honkish">
+  <data key="d0">69.64824307014501</data>
+</node>
+<node id="ThisPenguinFlies">
+  <data key="d0">81.36786497018635</data>
+</node>
+<node id="ReverendSinatra">
+  <data key="d0">50.980719662158414</data>
+</node>
+<node id="grizzburger">
+  <data key="d0">33.396486959680914</data>
+</node>
+<node id="animeguru">
+  <data key="d0">79.0840163227405</data>
+</node>
+<node id="Electrorocket">
+  <data key="d0">9.724292563242464</data>
+</node>
+<node id="PaulNewhouse">
+  <data key="d0">44.203563772992524</data>
+</node>
+<node id="chihouse312">
+  <data key="d0">51.99523745708382</data>
+</node>
+<node id="Trying2BaWiseGuy">
+  <data key="d0">69.39564109345476</data>
+</node>
+<node id="noogan">
+  <data key="d0">9.088573203240946</data>
+</node>
+<node id="HeNeverLies4">
+  <data key="d0">22.775950153786095</data>
+</node>
+<node id="Genesis2001">
+  <data key="d0">41.030156269012565</data>
+</node>
+<node id="playoffss">
+  <data key="d0">62.329467302013065</data>
+</node>
+<node id="tsdeal">
+  <data key="d0">88.69607812174175</data>
+</node>
+<node id="rocketwidget">
+  <data key="d0">61.88261682413765</data>
+</node>
+<node id="graynow">
+  <data key="d0">13.346147093493443</data>
+</node>
+<node id="bobjohnsonmilw">
+  <data key="d0">98.05801327872824</data>
+</node>
+<node id="QuesoPantera">
+  <data key="d0">87.17857347554929</data>
+</node>
+<node id="vfc2000">
+  <data key="d0">50.2720761145324</data>
+</node>
+<node id="Atomic235">
+  <data key="d0">92.2347981796633</data>
+</node>
+<node id="userKname">
+  <data key="d0">54.13807937571357</data>
+</node>
+<node id="Epicurinal">
+  <data key="d0">92.33060678891631</data>
+</node>
+<node id="chunes">
+  <data key="d0">82.98973686033432</data>
+</node>
+<node id="blackProctologist">
+  <data key="d0">96.82864102942973</data>
+</node>
+<node id="Self_Manifesto">
+  <data key="d0">91.97828107781584</data>
+</node>
+<node id="voteferpedro">
+  <data key="d0">3.603381742856948</data>
+</node>
+<node id="sonovel">
+  <data key="d0">17.477200416093996</data>
+</node>
+<node id="fantasyfest">
+  <data key="d0">38.913467710118574</data>
+</node>
+<node id="skintigh">
+  <data key="d0">95.21426972954208</data>
+</node>
+<node id="Mister-Manager">
+  <data key="d0">30.002891947592957</data>
+</node>
+<node id="snappa0126">
+  <data key="d0">16.046764388760103</data>
+</node>
+<node id="Arel_Mor">
+  <data key="d0">88.630466608656</data>
+</node>
+<node id="JTibbs">
+  <data key="d0">44.63944154832029</data>
+</node>
+<node id="Lostbrother">
+  <data key="d0">90.78755943543261</data>
+</node>
+<node id="Perseus109">
+  <data key="d0">16.023046632014328</data>
+</node>
+<node id="garveyboy">
+  <data key="d0">66.11175115080995</data>
+</node>
+<node id="jstevewhite">
+  <data key="d0">44.02637528294918</data>
+</node>
+<node id="Arizhel">
+  <data key="d0">7.648676903028539</data>
+</node>
+<node id="CloakNStagger">
+  <data key="d0">69.64631446525006</data>
+</node>
+<node id="Liammozz">
+  <data key="d0">24.73987555391537</data>
+</node>
+<node id="gpia7r">
+  <data key="d0">3.9615522579517726</data>
+</node>
+<node id="CaptZ">
+  <data key="d0">5.994429824957326</data>
+</node>
+<node id="Eurynom0s">
+  <data key="d0">6.107853706678734</data>
+</node>
+<node id="Iloveagooddump">
+  <data key="d0">90.77329574850394</data>
+</node>
+<node id="defacemock">
+  <data key="d0">73.9883917829101</data>
+</node>
+<node id="dilespla">
+  <data key="d0">89.80623572137351</data>
+</node>
+<node id="mechanical_animal">
+  <data key="d0">67.25823112965213</data>
+</node>
+<node id="JauntyChapeau">
+  <data key="d0">52.89399290308832</data>
+</node>
+<node id="Shadow_Death">
+  <data key="d0">30.444636434737827</data>
+</node>
+<node id="very_old_guy">
+  <data key="d0">99.79622513286735</data>
+</node>
+<node id="A_Strawman">
+  <data key="d0">36.21890589393894</data>
+</node>
+<node id="DruknUncel">
+  <data key="d0">47.06489492139095</data>
+</node>
+<node id="grevemoeskr">
+  <data key="d0">37.824517492346175</data>
+</node>
+<node id="TheCodexx">
+  <data key="d0">97.95269293354586</data>
+</node>
+<node id="L_Cranston_Shadow">
+  <data key="d0">17.465838539500577</data>
+</node>
+<node id="bmlbytes">
+  <data key="d0">32.798800090807966</data>
+</node>
+<node id="Zenitram">
+  <data key="d0">68.03486660150016</data>
+</node>
+<node id="skrilledcheese">
+  <data key="d0">6.320761833863065</data>
+</node>
+<node id="TonyDiGerolamo">
+  <data key="d0">60.7249374011541</data>
+</node>
+<node id="MajorLazy">
+  <data key="d0">47.76465028764161</data>
+</node>
+<node id="teachingpigstosing">
+  <data key="d0">28.39999767621011</data>
+</node>
+<node id="vegandread">
+  <data key="d0">23.8413280924058</data>
+</node>
+<node id="vlovich">
+  <data key="d0">51.45127432987567</data>
+</node>
+<node id="Sloppy_Twat">
+  <data key="d0">36.792758053704134</data>
+</node>
+<node id="BadWolf990">
+  <data key="d0">45.65198912626553</data>
+</node>
+<node id="HPL72">
+  <data key="d0">33.747738176423994</data>
+</node>
+<node id="Ujio2107">
+  <data key="d0">97.04936935959776</data>
+</node>
+<node id="bobsomeguy">
+  <data key="d0">13.343943174560401</data>
+</node>
+<node id="Raiju">
+  <data key="d0">9.68039531783742</data>
+</node>
+<node id="Quasigriz_">
+  <data key="d0">34.339172879091606</data>
+</node>
+<node id="IUhoosier_KCCO">
+  <data key="d0">59.102690087049126</data>
+</node>
+<node id="Snickerzzz">
+  <data key="d0">65.91764718500282</data>
+</node>
+<node id="toshino_kyoko">
+  <data key="d0">39.72567471680421</data>
+</node>
+<node id="TheMegaBenson">
+  <data key="d0">99.92779939221711</data>
+</node>
+<node id="devils32391">
+  <data key="d0">35.18929961930426</data>
+</node>
+<node id="armeck">
+  <data key="d0">72.14066679599524</data>
+</node>
+<node id="Nixuz">
+  <data key="d0">63.758269453079286</data>
+</node>
+<node id="enzomatic75">
+  <data key="d0">81.30538632474607</data>
+</node>
+<node id="eromitlab">
+  <data key="d0">97.622566345382</data>
+</node>
+<node id="indoninja">
+  <data key="d0">88.97936564455402</data>
+</node>
+<node id="bortels">
+  <data key="d0">76.45619743577086</data>
+</node>
+<node id="kcd5">
+  <data key="d0">69.82484778182906</data>
+</node>
+<node id="Fixhotep">
+  <data key="d0">33.54981696758996</data>
+</node>
+<node id="Donbearpig">
+  <data key="d0">14.768557820670736</data>
+</node>
+<node id="MystikIncarnate">
+  <data key="d0">6.263600305980976</data>
+</node>
+<node id="BBK2008">
+  <data key="d0">24.190170420148483</data>
+</node>
+<node id="Feroshnikop">
+  <data key="d0">43.22814811812986</data>
+</node>
+<node id="shudmeyer">
+  <data key="d0">52.19962736299825</data>
+</node>
+<node id="coherent_thought">
+  <data key="d0">77.30835540548716</data>
+</node>
+<node id="Jacobmc1">
+  <data key="d0">95.8740923056593</data>
+</node>
+<node id="hall5714">
+  <data key="d0">11.732048038481102</data>
+</node>
+<node id="dallasdude">
+  <data key="d0">10.700414019379156</data>
+</node>
+<node id="macbackfat">
+  <data key="d0">58.969472301355076</data>
+</node>
+<node id="SapienChavez">
+  <data key="d0">74.5398073947293</data>
+</node>
+<node id="CrazyWiredKeyboard">
+  <data key="d0">84.81503803469849</data>
+</node>
+<node id="TheOriginalShummy">
+  <data key="d0">93.58320802167886</data>
+</node>
+<node id="mecrosis">
+  <data key="d0">98.3426242260642</data>
+</node>
+<node id="OldAngryWhiteMan">
+  <data key="d0">39.98016922245259</data>
+</node>
+<node id="AnselmoTheHunter">
+  <data key="d0">38.03351835275731</data>
+</node>
+<node id="mdavwa">
+  <data key="d0">14.780867669727238</data>
+</node>
+<node id="joeyramoney">
+  <data key="d0">68.49344386835594</data>
+</node>
+<node id="StingAuer">
+  <data key="d0">65.67619584408371</data>
+</node>
+<node id="chiropter">
+  <data key="d0">86.20625958512072</data>
+</node>
+<node id="DeceptiStang">
+  <data key="d0">9.725799478764063</data>
+</node>
+<node id="ugarten">
+  <data key="d0">49.77769078253418</data>
+</node>
+<node id="RyunosukeKusanagi">
+  <data key="d0">58.10819296720631</data>
+</node>
+<node id="pwn1god">
+  <data key="d0">24.15570400399184</data>
+</node>
+<node id="Gregs3RDleg">
+  <data key="d0">16.902540612916127</data>
+</node>
+<node id="SCROTOCTUS">
+  <data key="d0">85.95808364196215</data>
+</node>
+<node id="thescienceoflaw">
+  <data key="d0">5.853492223555879</data>
+</node>
+<node id="Tomji">
+  <data key="d0">47.06209039180729</data>
+</node>
+<node id="pegothejerk">
+  <data key="d0">11.583400130088528</data>
+</node>
+<node id="LukaCola">
+  <data key="d0">45.705876133136734</data>
+</node>
+<node id="powerchicken">
+  <data key="d0">97.99623263423094</data>
+</node>
+<node id="miked4o7">
+  <data key="d0">42.37063534554728</data>
+</node>
+<node id="Kind_Of_A_Dick">
+  <data key="d0">85.71249175045673</data>
+</node>
+<node id="SpareLiver">
+  <data key="d0">11.73155641831939</data>
+</node>
+<node id="bruhmanchillin">
+  <data key="d0">27.125207676186413</data>
+</node>
+<node id="IrishJoe">
+  <data key="d0">40.37927406673345</data>
+</node>
+<node id="ne99ne">
+  <data key="d0">39.98121400093307</data>
+</node>
+<node id="kindofabuzz">
+  <data key="d0">67.13834786701531</data>
+</node>
+<node id="liquidoblivion">
+  <data key="d0">34.47181273755076</data>
+</node>
+<node id="NotMeow">
+  <data key="d0">71.37668684100163</data>
+</node>
+<node id="eternityrequiem">
+  <data key="d0">63.91868992253925</data>
+</node>
+<node id="geargirl">
+  <data key="d0">39.91611452547731</data>
+</node>
+<node id="abowsh">
+  <data key="d0">43.17601276543193</data>
+</node>
+<node id="nowhathappenedwas">
+  <data key="d0">61.45276998103208</data>
+</node>
+<node id="Phirazo">
+  <data key="d0">7.004219014464463</data>
+</node>
+<node id="CertifiedJanitor">
+  <data key="d0">82.24067383556903</data>
+</node>
+<node id="wickedang3l">
+  <data key="d0">65.3421161113637</data>
+</node>
+<node id="monkeyparts">
+  <data key="d0">72.63424644178352</data>
+</node>
+<node id="kissthepan">
+  <data key="d0">53.692300108239046</data>
+</node>
+<node id="catmoon">
+  <data key="d0">11.047711099174473</data>
+</node>
+<node id="cynoclast">
+  <data key="d0">40.50356132969499</data>
+</node>
+<node id="Desi_M">
+  <data key="d0">40.53735828485561</data>
+</node>
+<node id="Cgn38">
+  <data key="d0">32.10429900432169</data>
+</node>
+<node id="RudeTurnip">
+  <data key="d0">2.995032490474936</data>
+</node>
+<node id="danbrewtan">
+  <data key="d0">73.72542425964774</data>
+</node>
+<node id="Xatencio">
+  <data key="d0">10.97844580625007</data>
+</node>
+<node id="atlasMuutaras">
+  <data key="d0">60.630813304508514</data>
+</node>
+<node id="Thewallmachine">
+  <data key="d0">70.32174964672157</data>
+</node>
+<node id="dawgbreath">
+  <data key="d0">63.47863229336947</data>
+</node>
+<node id="throwaway4587212">
+  <data key="d0">95.91422519779749</data>
+</node>
+<node id="SARmedic">
+  <data key="d0">10.329815508513862</data>
+</node>
+<node id="MrLister">
+  <data key="d0">86.71671591051991</data>
+</node>
+<node id="tomdarch">
+  <data key="d0">2.9190234848913255</data>
+</node>
+<node id="Lootaluck">
+  <data key="d0">53.4916854927084</data>
+</node>
+<node id="doesntakethehighroad">
+  <data key="d0">40.424361793925875</data>
+</node>
+<node id="Devistator">
+  <data key="d0">52.41838603937582</data>
+</node>
+<node id="Phred_Felps">
+  <data key="d0">36.50998770600098</data>
+</node>
+<node id="isleepinahammock">
+  <data key="d0">19.056691494006806</data>
+</node>
+<node id="jpurdy">
+  <data key="d0">1.912289744868978</data>
+</node>
+<node id="kestrellaz">
+  <data key="d0">51.814981379117434</data>
+</node>
+<node id="polpotspenis">
+  <data key="d0">84.27768626848423</data>
+</node>
+<node id="BaPef">
+  <data key="d0">37.32159557447942</data>
+</node>
+<node id="BabyFaceMagoo">
+  <data key="d0">22.286381801498024</data>
+</node>
+<node id="erveek">
+  <data key="d0">8.053200347184408</data>
+</node>
+<node id="TheUnholyWendigo">
+  <data key="d0">8.531092311870337</data>
+</node>
+<node id="Gilbygil11">
+  <data key="d0">22.13964462927722</data>
+</node>
+<node id="Wesside">
+  <data key="d0">10.001406092155518</data>
+</node>
+<node id="reaper527">
+  <data key="d0">26.503969836448206</data>
+</node>
+<node id="AllRightyGuy">
+  <data key="d0">6.614946211695472</data>
+</node>
+<node id="Im_in_timeout">
+  <data key="d0">6.560486720992564</data>
+</node>
+<node id="sluggdiddy">
+  <data key="d0">85.6276179622782</data>
+</node>
+<node id="thesilverpig">
+  <data key="d0">16.212026070883322</data>
+</node>
+<node id="Lady_Sex_Shampoo">
+  <data key="d0">55.9682405823448</data>
+</node>
+<node id="tylerthor">
+  <data key="d0">77.34555444490306</data>
+</node>
+<node id="sanemaniac">
+  <data key="d0">45.64095653390666</data>
+</node>
+<node id="TodaysIllusion">
+  <data key="d0">15.336887785934572</data>
+</node>
+<node id="masterbatesAlot">
+  <data key="d0">19.959614212011434</data>
+</node>
+<node id="EVERYTHING_IS_WALRUS">
+  <data key="d0">43.29842062811807</data>
+</node>
+<node id="Maxtrt">
+  <data key="d0">52.82340891785358</data>
+</node>
+<node id="Indon_Dasani">
+  <data key="d0">34.944029204853486</data>
+</node>
+<node id="MorePrecisePlease">
+  <data key="d0">78.14796002346614</data>
+</node>
+<node id="Clownbaby456">
+  <data key="d0">75.10216488563984</data>
+</node>
+<node id="skipperdude">
+  <data key="d0">92.7211807373118</data>
+</node>
+<node id="CylonbabyLiam">
+  <data key="d0">2.895254902696054</data>
+</node>
+<node id="CaptFluffyBunny">
+  <data key="d0">89.56912912102034</data>
+</node>
+<node id="WillNotDoYourTaxes">
+  <data key="d0">39.2568788462151</data>
+</node>
+<node id="mickeysf">
+  <data key="d0">87.83724953799941</data>
+</node>
+<node id="mlw4428">
+  <data key="d0">69.07847761565296</data>
+</node>
+<node id="Hexaploid">
+  <data key="d0">98.73487570739682</data>
+</node>
+<node id="JeremyRodriguez">
+  <data key="d0">75.9282451716668</data>
+</node>
+<node id="CheesewithWhine">
+  <data key="d0">36.45446259967866</data>
+</node>
+<node id="TimeZarg">
+  <data key="d0">50.10631728347521</data>
+</node>
+<node id="bourekas">
+  <data key="d0">37.63891551943512</data>
+</node>
+<node id="BagOnuts">
+  <data key="d0">36.49118360212381</data>
+</node>
+<node id="El_Glenn">
+  <data key="d0">26.090449938105976</data>
+</node>
+<node id="fugged_up_shib">
+  <data key="d0">49.59702953734696</data>
+</node>
+<node id="jordanlund">
+  <data key="d0">68.17399450693613</data>
+</node>
+<node id="waarduke">
+  <data key="d0">27.734027130524353</data>
+</node>
+<node id="asiltopbr">
+  <data key="d0">52.437981107721995</data>
+</node>
+<node id="platinumarks">
+  <data key="d0">11.738029417055717</data>
+</node>
+<node id="RealityRush">
+  <data key="d0">15.98452868541913</data>
+</node>
+<node id="xylotism">
+  <data key="d0">4.680635471218874</data>
+</node>
+<node id="FistofNorris">
+  <data key="d0">97.07314427706328</data>
+</node>
+<node id="polupvoter">
+  <data key="d0">0.3860351510261095</data>
+</node>
+<node id="silverist">
+  <data key="d0">17.85799680576563</data>
+</node>
+<node id="dylanagibson">
+  <data key="d0">61.286675311699234</data>
+</node>
+<node id="letdogsvote">
+  <data key="d0">8.13695988533053</data>
+</node>
+<node id="sdonaghy">
+  <data key="d0">88.18965030968323</data>
+</node>
+<node id="msdrahcir">
+  <data key="d0">71.96201578422881</data>
+</node>
+<node id="tedemang">
+  <data key="d0">96.63899714378934</data>
+</node>
+<node id="MrXhin">
+  <data key="d0">50.763554724076485</data>
+</node>
+<node id="MartinSchou">
+  <data key="d0">30.04036831584872</data>
+</node>
+<node id="blackjackjester">
+  <data key="d0">54.950057279527144</data>
+</node>
+<node id="jasonskjonsby">
+  <data key="d0">93.08187172979731</data>
+</node>
+<node id="Sunhawk">
+  <data key="d0">52.07614372418605</data>
+</node>
+<node id="mayowarlord">
+  <data key="d0">26.720703186231866</data>
+</node>
+<node id="occupythekitchen">
+  <data key="d0">87.73987891741196</data>
+</node>
+<node id="incognitaX">
+  <data key="d0">37.19187485124613</data>
+</node>
+<node id="riemannszeros">
+  <data key="d0">0.13833499989991394</data>
+</node>
+<node id="Shigy">
+  <data key="d0">24.768502249231595</data>
+</node>
+<node id="SomeoneIsWatchingYou">
+  <data key="d0">31.82335091770624</data>
+</node>
+<node id="axeman2013">
+  <data key="d0">85.87774682319022</data>
+</node>
+<node id="Condawg">
+  <data key="d0">45.8503167066445</data>
+</node>
+<node id="fyberoptyk">
+  <data key="d0">44.45872878113008</data>
+</node>
+<node id="JoeDaddyZZZ">
+  <data key="d0">33.61022663998874</data>
+</node>
+<node id="Thespus">
+  <data key="d0">88.06781230470796</data>
+</node>
+<node id="willbradley">
+  <data key="d0">94.50267769403914</data>
+</node>
+<node id="ze_ben">
+  <data key="d0">99.18903291546293</data>
+</node>
+<node id="Montmorency222">
+  <data key="d0">37.674126696098675</data>
+</node>
+<node id="ohyeathatsright">
+  <data key="d0">96.61474456271714</data>
+</node>
+<node id="TaylorS1986">
+  <data key="d0">79.18795696309013</data>
+</node>
+<node id="crustalmighty">
+  <data key="d0">67.56891476442668</data>
+</node>
+<node id="Re_Re_Think">
+  <data key="d0">24.488947942009943</data>
+</node>
+<node id="souldust">
+  <data key="d0">21.64572609442098</data>
+</node>
+<node id="captainburnz">
+  <data key="d0">16.604782452124567</data>
+</node>
+<node id="nicksvr4">
+  <data key="d0">92.27566102253654</data>
+</node>
+<node id="spacedawg_ie">
+  <data key="d0">29.407666238316608</data>
+</node>
+<node id="oneDRTYrusn">
+  <data key="d0">45.30942454488785</data>
+</node>
+<node id="CynicalCorkey">
+  <data key="d0">49.39578339872235</data>
+</node>
+<node id="oneineightbillion">
+  <data key="d0">77.81715954502542</data>
+</node>
+<node id="WeAreAllBrainWashed">
+  <data key="d0">84.42349615530242</data>
+</node>
+<node id="Meltz014">
+  <data key="d0">13.90727011486128</data>
+</node>
+<node id="satimy">
+  <data key="d0">42.69043602110737</data>
+</node>
+<node id="moderatelybadass">
+  <data key="d0">84.28548878354572</data>
+</node>
+<node id="ShirleyYouCant">
+  <data key="d0">81.80333057558384</data>
+</node>
+<node id="TheMajestic23">
+  <data key="d0">10.24137584524164</data>
+</node>
+<node id="GhostFish">
+  <data key="d0">15.6383348867963</data>
+</node>
+<node id="doodlelogic">
+  <data key="d0">30.41986915994078</data>
+</node>
+<node id="OmicronNine">
+  <data key="d0">7.5359069083340335</data>
+</node>
+<node id="jpe77">
+  <data key="d0">42.46630028405929</data>
+</node>
+<node id="EnigmaticTortoise">
+  <data key="d0">10.76177051495819</data>
+</node>
+<node id="rsmjr">
+  <data key="d0">56.8217593669845</data>
+</node>
+<node id="CorporationTshirt">
+  <data key="d0">24.65569398111561</data>
+</node>
+<node id="CowboyProgrammer">
+  <data key="d0">59.64330653496227</data>
+</node>
+<node id="uber_neutrino">
+  <data key="d0">11.752564290363765</data>
+</node>
+<node id="EricSchC1fr">
+  <data key="d0">97.58838684185334</data>
+</node>
+<node id="MarkRichterScale">
+  <data key="d0">93.25612038573404</data>
+</node>
+<node id="KawaiiBakemono">
+  <data key="d0">39.17969385646658</data>
+</node>
+<node id="AbridgementTooFar">
+  <data key="d0">24.217859412608544</data>
+</node>
+<node id="bettorworse">
+  <data key="d0">25.039821285357277</data>
+</node>
+<node id="drunkenvalley">
+  <data key="d0">48.3393535202392</data>
+</node>
+<node id="McGee112">
+  <data key="d0">3.9992801900716968</data>
+</node>
+<node id="MightyBulger">
+  <data key="d0">63.9705106075127</data>
+</node>
+<node id="robsnell">
+  <data key="d0">40.83029083397448</data>
+</node>
+<node id="Dregoran">
+  <data key="d0">37.74065725888873</data>
+</node>
+<node id="EditorialComplex">
+  <data key="d0">80.93649714891984</data>
+</node>
+<node id="shawnathon">
+  <data key="d0">70.903546018329</data>
+</node>
+<node id="Amori_A_Splooge">
+  <data key="d0">95.4333815392692</data>
+</node>
+<node id="Izithel">
+  <data key="d0">35.193624049569074</data>
+</node>
+<node id="apoutwest">
+  <data key="d0">89.75427646494055</data>
+</node>
+<node id="diablo_man">
+  <data key="d0">76.99671862500888</data>
+</node>
+<node id="Malfeasant">
+  <data key="d0">35.7424651594713</data>
+</node>
+<node id="oblication">
+  <data key="d0">62.16654364532578</data>
+</node>
+<node id="nullsucks">
+  <data key="d0">28.856995765169557</data>
+</node>
+<node id="EqualOrLessThan2">
+  <data key="d0">87.43999170748424</data>
+</node>
+<node id="SuitedAfro">
+  <data key="d0">11.242731721231126</data>
+</node>
+<node id="gravshift">
+  <data key="d0">21.243436129404103</data>
+</node>
+<node id="garyp714">
+  <data key="d0">18.303329207992114</data>
+</node>
+<node id="agrueeatedu">
+  <data key="d0">40.302600240428866</data>
+</node>
+<node id="tophermeyer">
+  <data key="d0">74.52329600321292</data>
+</node>
+<node id="billdietrich1">
+  <data key="d0">52.69074490521803</data>
+</node>
+<node id="APretentiousHipster">
+  <data key="d0">48.76763235382076</data>
+</node>
+<node id="omnichronos">
+  <data key="d0">0.05459648969956543</data>
+</node>
+<node id="yetkwai">
+  <data key="d0">42.54017253550547</data>
+</node>
+<node id="Tiby312">
+  <data key="d0">6.355377483615843</data>
+</node>
+<node id="throwaway_31415">
+  <data key="d0">20.825325212148382</data>
+</node>
+<node id="gonetosea">
+  <data key="d0">93.23939389604944</data>
+</node>
+<node id="Sol668">
+  <data key="d0">21.53982043432382</data>
+</node>
+<node id="TheBlackUnicorn">
+  <data key="d0">85.83376386342624</data>
+</node>
+<node id="Tumble85">
+  <data key="d0">80.28933715613343</data>
+</node>
+<node id="tableman">
+  <data key="d0">15.914623694224284</data>
+</node>
+<node id="bleachmartini">
+  <data key="d0">60.571195727027884</data>
+</node>
+<node id="cwestn">
+  <data key="d0">11.566187190501331</data>
+</node>
+<node id="OhDearOthello">
+  <data key="d0">72.78881583695114</data>
+</node>
+<node id="groove_la_chord">
+  <data key="d0">63.746227737220664</data>
+</node>
+<node id="ghostbackwards">
+  <data key="d0">81.19385616910193</data>
+</node>
+<node id="throwaways86">
+  <data key="d0">47.93845493891881</data>
+</node>
+<node id="mrwiffy">
+  <data key="d0">91.48630878333829</data>
+</node>
+<node id="CS_83">
+  <data key="d0">4.934894678843971</data>
+</node>
+<node id="Dogdays991">
+  <data key="d0">29.288856502701467</data>
+</node>
+<node id="reallyjay">
+  <data key="d0">71.5052597465167</data>
+</node>
+<node id="TeutonicDisorder">
+  <data key="d0">41.810921174800086</data>
+</node>
+<node id="LBJsPNS">
+  <data key="d0">17.29513542711564</data>
+</node>
+<node id="bo_knows">
+  <data key="d0">10.721074542854602</data>
+</node>
+<node id="yester64">
+  <data key="d0">81.73391114616214</data>
+</node>
+<node id="miasmic">
+  <data key="d0">47.31429784656442</data>
+</node>
+<node id="AndrewL78">
+  <data key="d0">88.22836719191073</data>
+</node>
+<node id="Punchee">
+  <data key="d0">73.3289134316726</data>
+</node>
+<node id="co99950">
+  <data key="d0">40.97262056307436</data>
+</node>
+<node id="nosayso">
+  <data key="d0">37.351101415568365</data>
+</node>
+<node id="socsa">
+  <data key="d0">51.56383466512517</data>
+</node>
+<node id="TitoAndronico">
+  <data key="d0">88.90599531897287</data>
+</node>
+<node id="MadeByMonkeys">
+  <data key="d0">73.72785797141678</data>
+</node>
+<node id="MacManus47">
+  <data key="d0">0.515296426902323</data>
+</node>
+<node id="Kanyin">
+  <data key="d0">69.41578513691256</data>
+</node>
+<node id="jellicle">
+  <data key="d0">91.95074069058207</data>
+</node>
+<node id="beauseph">
+  <data key="d0">71.04557595044916</data>
+</node>
+<node id="backgroundN015e">
+  <data key="d0">17.700578156749593</data>
+</node>
+<node id="nianbo">
+  <data key="d0">48.35181274274587</data>
+</node>
+<node id="chuck_cranston">
+  <data key="d0">14.031601792341942</data>
+</node>
+<node id="calvinsylveste">
+  <data key="d0">35.899527833963205</data>
+</node>
+<node id="41145and6">
+  <data key="d0">93.71170419405178</data>
+</node>
+<node id="cryptic_mythic">
+  <data key="d0">92.33053075587083</data>
+</node>
+<node id="FockSmulder">
+  <data key="d0">28.28368521760829</data>
+</node>
+<node id="Pearberr">
+  <data key="d0">33.96310441661991</data>
+</node>
+<node id="kerabatsos">
+  <data key="d0">60.02128681312939</data>
+</node>
+<node id="TehPopeOfDope">
+  <data key="d0">96.319729526038</data>
+</node>
+<node id="mdim">
+  <data key="d0">14.780133406539042</data>
+</node>
+<node id="shug7272">
+  <data key="d0">25.69166436866691</data>
+</node>
+<node id="barrio-libre">
+  <data key="d0">87.35568272907715</data>
+</node>
+<node id="kemikiao">
+  <data key="d0">49.18922317083445</data>
+</node>
+<node id="wmurray003">
+  <data key="d0">89.89610922270317</data>
+</node>
+<node id="gnovos">
+  <data key="d0">18.551789752317628</data>
+</node>
+<node id="misterrunon">
+  <data key="d0">53.26685874713607</data>
+</node>
+<node id="ivanvonbewski">
+  <data key="d0">32.62696326493724</data>
+</node>
+<node id="eazyd69">
+  <data key="d0">31.654255989247602</data>
+</node>
+<node id="ThatRedEyeAlien">
+  <data key="d0">44.68769639461991</data>
+</node>
+<node id="brs677">
+  <data key="d0">43.30774491012684</data>
+</node>
+<node id="streetkiller">
+  <data key="d0">35.734687967795445</data>
+</node>
+<node id="biergarten">
+  <data key="d0">91.49707703156186</data>
+</node>
+<node id="SeeShark">
+  <data key="d0">73.17441854328928</data>
+</node>
+<node id="rendevouspoo">
+  <data key="d0">72.75469913315297</data>
+</node>
+<node id="haveyouseenmyhair">
+  <data key="d0">28.99134495919554</data>
+</node>
+<node id="kinyutaka">
+  <data key="d0">57.770942431684034</data>
+</node>
+<node id="drewiepoodle">
+  <data key="d0">77.9179433301834</data>
+</node>
+<node id="GlassDarkly">
+  <data key="d0">79.5590368543213</data>
+</node>
+<node id="crimdelacrim">
+  <data key="d0">34.453046075431224</data>
+</node>
+<node id="S4ngin">
+  <data key="d0">77.08727565686479</data>
+</node>
+<node id="LakeStClair">
+  <data key="d0">73.5893896807733</data>
+</node>
+<node id="Liar_tuck">
+  <data key="d0">14.150648562190026</data>
+</node>
+<node id="frepost">
+  <data key="d0">86.59454685664772</data>
+</node>
+<node id="kthehun89">
+  <data key="d0">44.13214701804108</data>
+</node>
+<node id="NouberNou">
+  <data key="d0">48.641044888866546</data>
+</node>
+<node id="wesman9010">
+  <data key="d0">44.836917889799736</data>
+</node>
+<node id="J1b">
+  <data key="d0">56.78460014775075</data>
+</node>
+<node id="wwickeddogg">
+  <data key="d0">62.11692473670547</data>
+</node>
+<node id="bangorthebarbarian">
+  <data key="d0">49.81795657629434</data>
+</node>
+<node id="terp1987">
+  <data key="d0">86.67885432590955</data>
+</node>
+<node id="mindracer">
+  <data key="d0">62.77347561952844</data>
+</node>
+<node id="LazyCon">
+  <data key="d0">40.14279493055199</data>
+</node>
+<node id="Mudders_Milk_Man">
+  <data key="d0">41.6691756908711</data>
+</node>
+<node id="thenewyorkgod">
+  <data key="d0">81.08386151289514</data>
+</node>
+<node id="d33p_blu3">
+  <data key="d0">34.81919427465201</data>
+</node>
+<node id="ImInterested">
+  <data key="d0">21.145479578241357</data>
+</node>
+<node id="gmano">
+  <data key="d0">5.938318800578923</data>
+</node>
+<node id="whobetta">
+  <data key="d0">87.60268479205742</data>
+</node>
+<node id="feralkitten">
+  <data key="d0">91.854645119035</data>
+</node>
+<node id="nixed9">
+  <data key="d0">12.012018216347597</data>
+</node>
+<node id="bergie321">
+  <data key="d0">33.447374149611484</data>
+</node>
+<node id="Soulgee">
+  <data key="d0">17.537206951524386</data>
+</node>
+<node id="ReyRey5280">
+  <data key="d0">11.589846882587974</data>
+</node>
+<node id="MauriceReeves">
+  <data key="d0">89.98667430000302</data>
+</node>
+<node id="JoshSidekick">
+  <data key="d0">5.687725914535546</data>
+</node>
+<node id="Alpha_Zulu">
+  <data key="d0">98.04856634690069</data>
+</node>
+<node id="wwjd117">
+  <data key="d0">9.645086069738419</data>
+</node>
+<node id="DenverJr">
+  <data key="d0">86.34706491935857</data>
+</node>
+<node id="MrSamsonite">
+  <data key="d0">56.65061069891627</data>
+</node>
+<node id="Evenfall">
+  <data key="d0">36.791748781787334</data>
+</node>
+<node id="thechief05">
+  <data key="d0">34.23423766251579</data>
+</node>
+<node id="half_true">
+  <data key="d0">75.73641432377087</data>
+</node>
+<node id="bigroblee">
+  <data key="d0">31.45732950042872</data>
+</node>
+<node id="finebydesign">
+  <data key="d0">65.73189166171419</data>
+</node>
+<node id="loondawg">
+  <data key="d0">51.732608351608015</data>
+</node>
+<node id="fluffyjdawg">
+  <data key="d0">48.49656451580705</data>
+</node>
+<node id="sockpuppetzero">
+  <data key="d0">90.11621706491616</data>
+</node>
+<edge source="jpop23mn" target="AniGamor">
+  <data key="d1">0.5488135039273248</data>
+</edge>
+<edge source="charm803" target="MarkRichterScale">
+  <data key="d1">0.7151893663724195</data>
+</edge>
+<edge source="alephnul" target="misandry_kills">
+  <data key="d1">0.6027633760716439</data>
+</edge>
+<edge source="ButterflyAttack" target="reallyjay">
+  <data key="d1">0.5448831829968969</data>
+</edge>
+<edge source="TheRedditPope" target="comradebillyboy">
+  <data key="d1">0.4236547993389047</data>
+</edge>
+<edge source="blatantninja" target="RudeTurnip">
+  <data key="d1">0.6458941130666561</data>
+</edge>
+<edge source="ThatDamnWalrus" target="userKname">
+  <data key="d1">0.4375872112626925</data>
+</edge>
+<edge source="sivervipa" target="Arandmoor">
+  <data key="d1">0.8917730007820798</data>
+</edge>
+<edge source="MacDegger" target="mdim">
+  <data key="d1">0.9636627605010293</data>
+</edge>
+<edge source="Ikimasen" target="wwjd117">
+  <data key="d1">0.3834415188257777</data>
+</edge>
+<edge source="needed_to_vote" target="gnovos">
+  <data key="d1">0.7917250380826646</data>
+</edge>
+<edge source="PDB" target="day465">
+  <data key="d1">0.5288949197529045</data>
+</edge>
+<edge source="The_Drizzle_Returns" target="DongleNocker">
+  <data key="d1">0.5680445610939323</data>
+</edge>
+<edge source="kikowatzy" target="CharlieDarwin2">
+  <data key="d1">0.925596638292661</data>
+</edge>
+<edge source="coolislandbreeze" target="dunefrankherbert">
+  <data key="d1">0.07103605819788694</data>
+</edge>
+<edge source="mellowmonk" target="ReyRey5280">
+  <data key="d1">0.08712929970154071</data>
+</edge>
+<edge source="lego_mannequin" target="Badfickle">
+  <data key="d1">0.02021839744032572</data>
+</edge>
+<edge source="OneOverX" target="OneOverX">
+  <data key="d1">0.832619845547938</data>
+</edge>
+<edge source="emrosto0l" target="DarthMaulkin">
+  <data key="d1">0.7781567509498505</data>
+</edge>
+<edge source="psiphre" target="tehdave86">
+  <data key="d1">0.8700121482468192</data>
+</edge>
+<edge source="bottle87" target="retiredknight">
+  <data key="d1">0.978618342232764</data>
+</edge>
+<edge source="vtron" target="Dionysiandogma">
+  <data key="d1">0.7991585642167236</data>
+</edge>
+<edge source="HobGobbin" target="HobGobbin">
+  <data key="d1">0.46147936225293185</data>
+</edge>
+<edge source="CudiHaze" target="af22man">
+  <data key="d1">0.7805291762864555</data>
+</edge>
+<edge source="FishstickIsles" target="jellicle">
+  <data key="d1">0.11827442586893322</data>
+</edge>
+<edge source="Tjebbe" target="ne99ne">
+  <data key="d1">0.6399210213275238</data>
+</edge>
+<edge source="LFBR" target="LFBR">
+  <data key="d1">0.1433532874090464</data>
+</edge>
+<edge source="Wacocaine" target="CheesewithWhine">
+  <data key="d1">0.9446689170495839</data>
+</edge>
+<edge source="bryf50" target="fyberoptyk">
+  <data key="d1">0.5218483217500717</data>
+</edge>
+<edge source="Appathy" target="Internetologist">
+  <data key="d1">0.4146619399905236</data>
+</edge>
+<edge source="PhillAholic" target="riemannszeros">
+  <data key="d1">0.26455561210462697</data>
+</edge>
+<edge source="Swiss_Cheese9797" target="dongsalad99">
+  <data key="d1">0.7742336894342167</data>
+</edge>
+<edge source="Swiss_Cheese9797" target="dongsalad89">
+  <data key="d1">0.45615033221654855</data>
+</edge>
+<edge source="DefendedCobra29" target="dmclone">
+  <data key="d1">0.5684339488686485</data>
+</edge>
+<edge source="DefendedCobra29" target="GhostFish">
+  <data key="d1">0.018789800436355142</data>
+</edge>
+<edge source="Rightard" target="MacManus47">
+  <data key="d1">0.6176354970758771</data>
+</edge>
+<edge source="toofastkindafurious" target="mannercat">
+  <data key="d1">0.6120957227224214</data>
+</edge>
+<edge source="Duke_Newcombe" target="meltingpine">
+  <data key="d1">0.6169339968747569</data>
+</edge>
+<edge source="tuseroni" target="tomdarch">
+  <data key="d1">0.9437480785146242</data>
+</edge>
+<edge source="Big_Fat_Ones" target="WetEbolaFart">
+  <data key="d1">0.6818202991034834</data>
+</edge>
+<edge source="masklinn" target="Drumlin">
+  <data key="d1">0.359507900573786</data>
+</edge>
+<edge source="tau-lepton" target="FatherVic">
+  <data key="d1">0.43703195379934145</data>
+</edge>
+<edge source="tau-lepton" target="eazyd69">
+  <data key="d1">0.6976311959272649</data>
+</edge>
+<edge source="tau-lepton" target="spoiled_generation">
+  <data key="d1">0.06022547162926983</data>
+</edge>
+<edge source="benny24c" target="kcd5">
+  <data key="d1">0.6667667154456677</data>
+</edge>
+<edge source="vincentrevelations" target="blackjackjester">
+  <data key="d1">0.6706378696181594</data>
+</edge>
+<edge source="MrFaggotHands" target="Earthtone_Coalition">
+  <data key="d1">0.2103825610738409</data>
+</edge>
+<edge source="MrHankeytheXmasPoo" target="rockyali">
+  <data key="d1">0.1289262976548533</data>
+</edge>
+<edge source="The_Mexorcist26" target="terrible_comments">
+  <data key="d1">0.31542835092418386</data>
+</edge>
+<edge source="s1wg4u" target="Pearberr">
+  <data key="d1">0.3637107709426226</data>
+</edge>
+<edge source="Morten14" target="haberdasher42">
+  <data key="d1">0.5701967704178796</data>
+</edge>
+<edge source="psno1994" target="doodlelogic">
+  <data key="d1">0.43860151346232035</data>
+</edge>
+<edge source="test822" target="LUUUKE12">
+  <data key="d1">0.9883738380592262</data>
+</edge>
+<edge source="forwormsbravepercy" target="smokinbluebear">
+  <data key="d1">0.10204481074802807</data>
+</edge>
+<edge source="tehmagik" target="ammonthenephite">
+  <data key="d1">0.2088767560948347</data>
+</edge>
+<edge source="ThanatosNow" target="xmasskull2">
+  <data key="d1">0.16130951788499626</data>
+</edge>
+<edge source="MarinTaranu" target="jpurdy">
+  <data key="d1">0.6531083254653984</data>
+</edge>
+<edge source="BobbyTomale" target="ThePerfectParadigm">
+  <data key="d1">0.2532916025397821</data>
+</edge>
+<edge source="Drogmyre" target="Migratory_Coconut">
+  <data key="d1">0.4663107728563063</data>
+</edge>
+<edge source="typicalwhitegirl" target="codoublez">
+  <data key="d1">0.24442559200160274</data>
+</edge>
+<edge source="GoodMusicIsHardWork" target="animeguru">
+  <data key="d1">0.15896958364551972</data>
+</edge>
+<edge source="Phyltre" target="gmano">
+  <data key="d1">0.11037514116430513</data>
+</edge>
+<edge source="TheRoadHome" target="JamzzG">
+  <data key="d1">0.6563295894652734</data>
+</edge>
+<edge source="Thorium233" target="Punchee">
+  <data key="d1">0.1381829513486138</data>
+</edge>
+<edge source="Isakill" target="fizzlefist">
+  <data key="d1">0.1965823616800535</data>
+</edge>
+<edge source="Hoyata21" target="Tomji">
+  <data key="d1">0.3687251706609641</data>
+</edge>
+<edge source="WildPepperoni" target="JoeDaddyZZZ">
+  <data key="d1">0.8209932298479351</data>
+</edge>
+<edge source="19Kilo" target="SpinningHead">
+  <data key="d1">0.09710127579306127</data>
+</edge>
+<edge source="absentmindedjwc" target="Im_in_timeout">
+  <data key="d1">0.8379449074988039</data>
+</edge>
+<edge source="thelaststormcrow" target="JustinCayce">
+  <data key="d1">0.09609840789396307</data>
+</edge>
+<edge source="suraj1989" target="Mshotts">
+  <data key="d1">0.9764594650133958</data>
+</edge>
+<edge source="zeroexev29" target="TheMegaBenson">
+  <data key="d1">0.4686512016477016</data>
+</edge>
+<edge source="PaulJosephGoebbels" target="donaldtrumptwat">
+  <data key="d1">0.9767610881903371</data>
+</edge>
+<edge source="PaulJosephGoebbels" target="IrishJoe">
+  <data key="d1">0.604845519745046</data>
+</edge>
+<edge source="thekeeper228" target="poohster33">
+  <data key="d1">0.7392635793983017</data>
+</edge>
+<edge source="Rorkimaru" target="mog_knight">
+  <data key="d1">0.039187792254320675</data>
+</edge>
+<edge source="Mentalpopcorn" target="DenverJr">
+  <data key="d1">0.2828069625764096</data>
+</edge>
+<edge source="SupaHotFya" target="SpinningHead">
+  <data key="d1">0.1201965612131689</data>
+</edge>
+<edge source="IRNobody" target="abowsh">
+  <data key="d1">0.29614019752214493</data>
+</edge>
+<edge source="lonesomerhodes" target="Dunkcity239">
+  <data key="d1">0.11872771895424405</data>
+</edge>
+<edge source="davebilliams" target="sir_fancypants">
+  <data key="d1">0.317983179393976</data>
+</edge>
+<edge source="Pykors" target="DruknUncel">
+  <data key="d1">0.41426299451466997</data>
+</edge>
+<edge source="throwawaysarebetter" target="throwawaysarebetter">
+  <data key="d1">0.06414749634878436</data>
+</edge>
+<edge source="dandaman0345" target="Hogansantihero">
+  <data key="d1">0.6924721193700198</data>
+</edge>
+<edge source="askacanadian" target="bruhmanchillin">
+  <data key="d1">0.5666014542065752</data>
+</edge>
+<edge source="BromeotheBard" target="BromeotheBard">
+  <data key="d1">0.2653894909394454</data>
+</edge>
+<edge source="noworknetwork" target="noworknetwork">
+  <data key="d1">0.5232480534666997</data>
+</edge>
+<edge source="Odin707" target="occupythekitchen">
+  <data key="d1">0.09394051075844168</data>
+</edge>
+<edge source="darthfederer1" target="Kanyin">
+  <data key="d1">0.5759464955561793</data>
+</edge>
+<edge source="ViperRT10Matt" target="fantasyfest">
+  <data key="d1">0.9292961975762141</data>
+</edge>
+<edge source="faeriechyld" target="crustalmighty">
+  <data key="d1">0.31856895245132366</data>
+</edge>
+<edge source="Badfickle" target="Jackpot777">
+  <data key="d1">0.6674103799636817</data>
+</edge>
+<edge source="bardwick" target="toofine">
+  <data key="d1">0.13179786240439217</data>
+</edge>
+<edge source="Armenoid" target="Epicurinal">
+  <data key="d1">0.7163272041185655</data>
+</edge>
+<edge source="Defreshs10" target="TaylorS1986">
+  <data key="d1">0.2894060929472011</data>
+</edge>
+<edge source="el_guapo_malo" target="183747">
+  <data key="d1">0.18319136200711683</data>
+</edge>
+<edge source="StrictScrutiny" target="throwaway4587212">
+  <data key="d1">0.5865129348100832</data>
+</edge>
+<edge source="gielbondhu" target="FortHouston">
+  <data key="d1">0.020107546187493552</data>
+</edge>
+<edge source="Crying_Reaper" target="raznog">
+  <data key="d1">0.8289400292173631</data>
+</edge>
+<edge source="bipolarcarebear" target="half_true">
+  <data key="d1">0.004695476192547066</data>
+</edge>
+<edge source="happymage102" target="surfnaked">
+  <data key="d1">0.6778165367962301</data>
+</edge>
+<edge source="The_Yar" target="I_done_a_plop-plop">
+  <data key="d1">0.27000797319216485</data>
+</edge>
+<edge source="not_a_banana" target="EnigmaticTortoise">
+  <data key="d1">0.7351940221225949</data>
+</edge>
+<edge source="lolwutermelon" target="onemanclic">
+  <data key="d1">0.9621885451174382</data>
+</edge>
+<edge source="GonzoNation" target="bayoubomber">
+  <data key="d1">0.24875314351995803</data>
+</edge>
+<edge source="GonzoNation" target="ry4n4re4l">
+  <data key="d1">0.5761573344178369</data>
+</edge>
+<edge source="GonzoNation" target="vegandread">
+  <data key="d1">0.592041931271839</data>
+</edge>
+<edge source="sympathico" target="defacemock">
+  <data key="d1">0.5722519057908734</data>
+</edge>
+<edge source="octopornopus" target="michaelk4289">
+  <data key="d1">0.2230816326406183</data>
+</edge>
+<edge source="PeterGibbons316" target="bo_knows">
+  <data key="d1">0.952749011516985</data>
+</edge>
+<edge source="sagan_drinks_cosmos" target="TravvyJ">
+  <data key="d1">0.44712537861762736</data>
+</edge>
+<edge source="YoRpFiSh" target="tobias_the_letdown">
+  <data key="d1">0.8464086724711278</data>
+</edge>
+<edge source="Kerbobotat" target="Sunhawk">
+  <data key="d1">0.6994792753175043</data>
+</edge>
+<edge source="argv_minus_one" target="nc_cyclist">
+  <data key="d1">0.29743695085513366</data>
+</edge>
+<edge source="FrogMasta27" target="vfc2000">
+  <data key="d1">0.8137978197024772</data>
+</edge>
+<edge source="jkff" target="CorporateDroog">
+  <data key="d1">0.39650574084698464</data>
+</edge>
+<edge source="troppoveloce" target="joecity856">
+  <data key="d1">0.8811031971111616</data>
+</edge>
+<edge source="MutthaFuzza" target="Meltz014">
+  <data key="d1">0.5812728726358587</data>
+</edge>
+<edge source="Solidarieta" target="TonyDiGerolamo">
+  <data key="d1">0.8817353618548528</data>
+</edge>
+<edge source="bibimbapYourWorld" target="biergarten">
+  <data key="d1">0.6925315900777659</data>
+</edge>
+<edge source="pinata_penis_pump" target="dannager">
+  <data key="d1">0.7252542798196405</data>
+</edge>
+<edge source="FearlessFreep" target="bmlbytes">
+  <data key="d1">0.5013243819267023</data>
+</edge>
+<edge source="santa4nt" target="UofSins">
+  <data key="d1">0.9560836347232239</data>
+</edge>
+<edge source="Got_da_noog" target="oneDRTYrusn">
+  <data key="d1">0.6439901992296374</data>
+</edge>
+<edge source="RMaximus" target="WaterOfForgetfulness">
+  <data key="d1">0.4238550485581797</data>
+</edge>
+<edge source="some_a_hole" target="joneSee">
+  <data key="d1">0.6063932141279244</data>
+</edge>
+<edge source="masaoshigeta" target="masaoshigeta">
+  <data key="d1">0.019193198309333526</data>
+</edge>
+<edge source="interjecting-sense" target="gazoogle">
+  <data key="d1">0.30157481667454933</data>
+</edge>
+<edge source="billpullmanrocks" target="liquidoblivion">
+  <data key="d1">0.660173537492685</data>
+</edge>
+<edge source="tikevin83" target="bluebeanhero">
+  <data key="d1">0.29007760721044407</data>
+</edge>
+<edge source="EDante" target="Lady_Sex_Shampoo">
+  <data key="d1">0.6180154289988415</data>
+</edge>
+<edge source="DorkJedi" target="skintigh">
+  <data key="d1">0.42876870094576613</data>
+</edge>
+<edge source="PapaFish" target="ReverendSinatra">
+  <data key="d1">0.13547406422245023</data>
+</edge>
+<edge source="mesodude" target="MattHoppe1">
+  <data key="d1">0.29828232595603077</data>
+</edge>
+<edge source="mesodude" target="snappa0126">
+  <data key="d1">0.5699649107012649</data>
+</edge>
+<edge source="ScubaSteve58001" target="KawaiiBakemono">
+  <data key="d1">0.5908727612481732</data>
+</edge>
+<edge source="playaspec" target="EnigmaticTortoise">
+  <data key="d1">0.5743252488495788</data>
+</edge>
+<edge source="thirtythr33" target="CynicalCorkey">
+  <data key="d1">0.6532008198571336</data>
+</edge>
+<edge source="Boxu" target="nowhathappenedwas">
+  <data key="d1">0.6521032700016889</data>
+</edge>
+<edge source="FeedMeACat" target="agrueeatedu">
+  <data key="d1">0.43141843543397396</data>
+</edge>
+<edge source="kickingpplisfun" target="very_old_guy">
+  <data key="d1">0.896546595851063</data>
+</edge>
+<edge source="DstoneHP89" target="midway0512">
+  <data key="d1">0.36756187004789653</data>
+</edge>
+<edge source="l00pee" target="thetasigma1355">
+  <data key="d1">0.4358649252656268</data>
+</edge>
+<edge source="LEGALIZER" target="Dregoran">
+  <data key="d1">0.8919233550156721</data>
+</edge>
+<edge source="ogenrwot" target="sonofagunn">
+  <data key="d1">0.8061939890460857</data>
+</edge>
+<edge source="LearnsSomethingNew" target="sailorbrendan">
+  <data key="d1">0.7038885835403663</data>
+</edge>
+<edge source="TheRadicalAntichrist" target="drax117">
+  <data key="d1">0.10022688731230112</data>
+</edge>
+<edge source="sandflea" target="row_guy">
+  <data key="d1">0.9194826137446735</data>
+</edge>
+<edge source="neurn2" target="CertifiedJanitor">
+  <data key="d1">0.7142412995491114</data>
+</edge>
+<edge source="neurn2" target="dongsalad89">
+  <data key="d1">0.9988470065678665</data>
+</edge>
+<edge source="u2canfail" target="CheesewithWhine">
+  <data key="d1">0.14944830465799375</data>
+</edge>
+<edge source="zombiebearhug" target="Mikeuicus">
+  <data key="d1">0.8681260573682142</data>
+</edge>
+<edge source="apullin" target="BBK2008">
+  <data key="d1">0.16249293467637482</data>
+</edge>
+<edge source="coberh" target="poonhounds">
+  <data key="d1">0.6155595642838442</data>
+</edge>
+<edge source="thisnameismeta" target="outphase84">
+  <data key="d1">0.12381998284944151</data>
+</edge>
+<edge source="ehsahr" target="jodycwilliams">
+  <data key="d1">0.8480082293222344</data>
+</edge>
+<edge source="DBDude" target="TheBlackUnicorn">
+  <data key="d1">0.8073189587250107</data>
+</edge>
+<edge source="DBDude" target="epsilonleqzero">
+  <data key="d1">0.5691007386145933</data>
+</edge>
+<edge source="thewarehouse" target="Jester76">
+  <data key="d1">0.40718329722599966</data>
+</edge>
+<edge source="HastenTheRapture" target="Lnzy1">
+  <data key="d1">0.06916699545513805</data>
+</edge>
+<edge source="Freeman001" target="pimaxiu">
+  <data key="d1">0.6974287731445636</data>
+</edge>
+<edge source="Lichruler" target="cyrusm">
+  <data key="d1">0.45354268267806885</data>
+</edge>
+<edge source="bassinhound" target="EVERYTHING_IS_WALRUS">
+  <data key="d1">0.7220555994703479</data>
+</edge>
+<edge source="robin1961" target="skrilledcheese">
+  <data key="d1">0.8663823259286292</data>
+</edge>
+<edge source="CaptainIndustry" target="Grizzlyguy">
+  <data key="d1">0.9755215050028858</data>
+</edge>
+<edge source="papipapichulo" target="cunnl01">
+  <data key="d1">0.855803342392611</data>
+</edge>
+<edge source="gth829c" target="Beelzebud">
+  <data key="d1">0.011714084185001972</data>
+</edge>
+<edge source="moxy801" target="maroger">
+  <data key="d1">0.3599780644783639</data>
+</edge>
+<edge source="ShillCrusher" target="happyscrappy">
+  <data key="d1">0.729990562424058</data>
+</edge>
+<edge source="Velshtein" target="Jutboy">
+  <data key="d1">0.17162967726144052</data>
+</edge>
+<edge source="InoffensiveAsFuck" target="eternityrequiem">
+  <data key="d1">0.5210366062041293</data>
+</edge>
+<edge source="enthreeoh" target="enthreeoh">
+  <data key="d1">0.05433798833925363</data>
+</edge>
+<edge source="Cluricaun" target="mdavwa">
+  <data key="d1">0.19999652489640007</data>
+</edge>
+<edge source="thehungriestnunu" target="xylotism">
+  <data key="d1">0.01852179446061397</data>
+</edge>
+<edge source="Terrible_Detective45" target="trout007">
+  <data key="d1">0.7936977033574206</data>
+</edge>
+<edge source="Stooby" target="catmoon">
+  <data key="d1">0.22392468806038013</data>
+</edge>
+<edge source="dirtyjersey84" target="toepaydoe">
+  <data key="d1">0.3453516806969027</data>
+</edge>
+<edge source="GermanPanda" target="Zerowantuthri">
+  <data key="d1">0.9280812934655909</data>
+</edge>
+<edge source="Warfinder" target="Warfinder">
+  <data key="d1">0.7044144019235328</data>
+</edge>
+<edge source="iamacontrarian" target="bortels">
+  <data key="d1">0.03183892953130785</data>
+</edge>
+<edge source="mattinva" target="Peter_Jennings_Lungs">
+  <data key="d1">0.16469415649791275</data>
+</edge>
+<edge source="SHOW_ME_YOUR_CLIT" target="rocketwidget">
+  <data key="d1">0.6214784014997635</data>
+</edge>
+<edge source="hulking_menace" target="Malfeasant">
+  <data key="d1">0.5772285886041676</data>
+</edge>
+<edge source="deeva" target="TheForceMajeure">
+  <data key="d1">0.23789282137450862</data>
+</edge>
+<edge source="rarianrakista" target="alephnul">
+  <data key="d1">0.9342139979247938</data>
+</edge>
+<edge source="brown3jh" target="thescienceoflaw">
+  <data key="d1">0.613965955965896</data>
+</edge>
+<edge source="OrientalTeaBag" target="Skreat">
+  <data key="d1">0.5356328030249583</data>
+</edge>
+<edge source="itwasagraveyardgraph" target="TheMagicMarkerMan">
+  <data key="d1">0.589909976354571</data>
+</edge>
+<edge source="robbiekomrs" target="JoshSidekick">
+  <data key="d1">0.7301220295167696</data>
+</edge>
+<edge source="Glarbluk" target="deadbird17">
+  <data key="d1">0.31194499547960186</data>
+</edge>
+<edge source="StruckingFuggle" target="BlueJadeLei">
+  <data key="d1">0.3982210622160919</data>
+</edge>
+<edge source="Jaqqarhan" target="chunes">
+  <data key="d1">0.20984374897512215</data>
+</edge>
+<edge source="RamboGoesMeow" target="uberares">
+  <data key="d1">0.18619300588033616</data>
+</edge>
+<edge source="The_Arctic_Fox" target="kinyutaka">
+  <data key="d1">0.9443723899839336</data>
+</edge>
+<edge source="seancanada" target="OverTheShill">
+  <data key="d1">0.7395507950492876</data>
+</edge>
+<edge source="jaspersgroove" target="JeremyRodriguez">
+  <data key="d1">0.4904588086175671</data>
+</edge>
+<edge source="drays" target="fluffyjdawg">
+  <data key="d1">0.22741462797332324</data>
+</edge>
+<edge source="CeasarTheFirst" target="supaphly42">
+  <data key="d1">0.25435648177039294</data>
+</edge>
+<edge source="clavalle" target="jpurdy">
+  <data key="d1">0.05802916032387562</data>
+</edge>
+<edge source="truthseeker2083" target="satimy">
+  <data key="d1">0.4344166255581208</data>
+</edge>
+<edge source="gunch" target="SnowWhiteMemorial">
+  <data key="d1">0.3117958819941026</data>
+</edge>
+<edge source="myringotomy" target="Bochinsky">
+  <data key="d1">0.6963434888154595</data>
+</edge>
+<edge source="lakerswiz" target="polupvoter">
+  <data key="d1">0.3777518392924809</data>
+</edge>
+<edge source="awa64" target="armahillo">
+  <data key="d1">0.1796036775596348</data>
+</edge>
+<edge source="charonn0" target="User-1234">
+  <data key="d1">0.02467872839133123</data>
+</edge>
+<edge source="cmileto" target="BlackSpidy">
+  <data key="d1">0.06724963146324858</data>
+</edge>
+<edge source="bloodthirstyman" target="Onewomanslife">
+  <data key="d1">0.6793927734985673</data>
+</edge>
+<edge source="Guild_Wars_2" target="graynow">
+  <data key="d1">0.4536968445560453</data>
+</edge>
+<edge source="Sleekery" target="Ambiwlans">
+  <data key="d1">0.5365792111087222</data>
+</edge>
+<edge source="ajd8b" target="north0">
+  <data key="d1">0.8966712930403421</data>
+</edge>
+<edge source="YankeeQuebec" target="vlovich">
+  <data key="d1">0.9903389473967044</data>
+</edge>
+<edge source="YankeeQuebec" target="MrLister">
+  <data key="d1">0.21689698439847394</data>
+</edge>
+<edge source="thebizarrojerry" target="Ingens_Testibus">
+  <data key="d1">0.6630782031001008</data>
+</edge>
+<edge source="jopesy" target="Ian1732">
+  <data key="d1">0.26332237673715064</data>
+</edge>
+<edge source="wheeler1432" target="retiredknight">
+  <data key="d1">0.02065099946572868</data>
+</edge>
+<edge source="tarantulus" target="letdogsvote">
+  <data key="d1">0.7583786538361414</data>
+</edge>
+<edge source="Nyrb" target="EditorialComplex">
+  <data key="d1">0.32001715082246784</data>
+</edge>
+<edge source="uberpower" target="dawgbreath">
+  <data key="d1">0.38346389417189797</data>
+</edge>
+<edge source="wermwouldNOT" target="Evanescent_contrail">
+  <data key="d1">0.5883171135536057</data>
+</edge>
+<edge source="neohellpoet" target="neohellpoet">
+  <data key="d1">0.8310484552361904</data>
+</edge>
+<edge source="kaett" target="menstreusel">
+  <data key="d1">0.6289818435911487</data>
+</edge>
+<edge source="small_L_Libertarian" target="hoosakiwi">
+  <data key="d1">0.8726506554473953</data>
+</edge>
+<edge source="mastersoup" target="A_Strawman">
+  <data key="d1">0.27354203481563577</data>
+</edge>
+<edge source="shozy" target="reeight">
+  <data key="d1">0.7980468339125637</data>
+</edge>
+<edge source="jivnik" target="polpotspenis">
+  <data key="d1">0.1856359443059522</data>
+</edge>
+<edge source="morbid126" target="IlliniLeft">
+  <data key="d1">0.9527916569719446</data>
+</edge>
+<edge source="Matthew37" target="AndyTheAbsurd">
+  <data key="d1">0.6874882763878153</data>
+</edge>
+<edge source="Matthew37" target="Mister-Manager">
+  <data key="d1">0.21550767711355845</data>
+</edge>
+<edge source="clearlynotlordnougat" target="Big_Fat_Ones">
+  <data key="d1">0.9473705904889242</data>
+</edge>
+<edge source="jekylljones" target="waarduke">
+  <data key="d1">0.7308558067701578</data>
+</edge>
+<edge source="BizarroDiggtard" target="TheBetterGaijin">
+  <data key="d1">0.25394164259502583</data>
+</edge>
+<edge source="-ParticleMan-" target="StingAuer">
+  <data key="d1">0.21331197736748198</data>
+</edge>
+<edge source="OmegaSeven" target="Wisdom_from_the_Ages">
+  <data key="d1">0.5182007139306632</data>
+</edge>
+<edge source="MeghanAM" target="Biwin">
+  <data key="d1">0.025662718054531575</data>
+</edge>
+<edge source="nickelundertone" target="SporkOfThor">
+  <data key="d1">0.2074700754411094</data>
+</edge>
+<edge source="RemoteBoner" target="Evil_This">
+  <data key="d1">0.42468546875150626</data>
+</edge>
+<edge source="alhoward" target="teachingpigstosing">
+  <data key="d1">0.37416998033422555</data>
+</edge>
+<edge source="halo00to14" target="entropicresonance">
+  <data key="d1">0.4635754243648107</data>
+</edge>
+<edge source="WaffleAmongTheFence" target="TehPopeOfDope">
+  <data key="d1">0.2776287062947319</data>
+</edge>
+<edge source="Crunkbutter" target="ShakeGetInHere">
+  <data key="d1">0.5867843464581688</data>
+</edge>
+<edge source="newspeaker" target="throwaways86">
+  <data key="d1">0.8638556059232314</data>
+</edge>
+<edge source="orus" target="Thorrtun">
+  <data key="d1">0.11753185596203308</data>
+</edge>
+<edge source="TychoBraheNose" target="garveyboy">
+  <data key="d1">0.5173791071541142</data>
+</edge>
+<edge source="Ovedya2011" target="BuckeyeBentley">
+  <data key="d1">0.1320681063451533</data>
+</edge>
+<edge source="Ilves7" target="Barbariandude">
+  <data key="d1">0.7168596811925937</data>
+</edge>
+<edge source="laughingsnakecunt" target="searingsky">
+  <data key="d1">0.39605970280729375</data>
+</edge>
+<edge source="BornInATrailer" target="bergie321">
+  <data key="d1">0.565421311858509</data>
+</edge>
+<edge source="Rodents210" target="armeck">
+  <data key="d1">0.18327983621407862</data>
+</edge>
+<edge source="elreina" target="panascope">
+  <data key="d1">0.14484775934337724</data>
+</edge>
+<edge source="madcorp" target="bottiglie">
+  <data key="d1">0.48805628064895457</data>
+</edge>
+<edge source="madcorp" target="Jewnadian">
+  <data key="d1">0.3556127378499556</data>
+</edge>
+<edge source="Zombie_Lover" target="a_dose_of_reason">
+  <data key="d1">0.940431945252813</data>
+</edge>
+<edge source="Bp0116" target="witness_protection">
+  <data key="d1">0.7653252538069653</data>
+</edge>
+<edge source="disposition5" target="Nivlac024">
+  <data key="d1">0.7486636198505473</data>
+</edge>
+<edge source="fullchub" target="DongleNocker">
+  <data key="d1">0.9037197397459334</data>
+</edge>
+<edge source="official4chanuser" target="kemikiao">
+  <data key="d1">0.08342243544201855</data>
+</edge>
+<edge source="rugtoad" target="Desi_M">
+  <data key="d1">0.5521924699224066</data>
+</edge>
+<edge source="Sindja" target="rotll">
+  <data key="d1">0.5844760689557689</data>
+</edge>
+<edge source="IntelWarrior" target="JumpingJazzJam">
+  <data key="d1">0.961936378547229</data>
+</edge>
+<edge source="ZombieHitchens2012" target="Iloveagooddump">
+  <data key="d1">0.29214752679254885</data>
+</edge>
+<edge source="censoredandagain" target="Devistator">
+  <data key="d1">0.24082877991544682</data>
+</edge>
+<edge source="cuteman" target="Eradicator_1729">
+  <data key="d1">0.10029394226549782</data>
+</edge>
+<edge source="oh_no_a_hobo" target="Felixlives">
+  <data key="d1">0.016429629591474204</data>
+</edge>
+<edge source="Garek" target="randomrealitycheck">
+  <data key="d1">0.9295293167921905</data>
+</edge>
+<edge source="invaderc1" target="AnOnlineHandle">
+  <data key="d1">0.66991654659091</data>
+</edge>
+<edge source="urnbabyurn" target="DeceptiStang">
+  <data key="d1">0.7851529120231378</data>
+</edge>
+<edge source="deadmul3" target="streetkiller">
+  <data key="d1">0.2817301057539491</data>
+</edge>
+<edge source="patrick95350" target="patrick95350">
+  <data key="d1">0.5864101661863267</data>
+</edge>
+<edge source="aes0p81" target="pok3_smot">
+  <data key="d1">0.06395526612098112</data>
+</edge>
+<edge source="sadacal" target="grizzburger">
+  <data key="d1">0.4856275959346229</data>
+</edge>
+<edge source="Forlarren" target="SARmedic">
+  <data key="d1">0.9774951397444468</data>
+</edge>
+<edge source="Kharos" target="TheLightningbolt">
+  <data key="d1">0.8765052453165908</data>
+</edge>
+<edge source="JamesR624" target="SapienChavez">
+  <data key="d1">0.33815895183684563</data>
+</edge>
+<edge source="Vincent__Vega" target="zhokar85">
+  <data key="d1">0.9615701545414985</data>
+</edge>
+<edge source="Darrkman" target="nosayso">
+  <data key="d1">0.2317016264712045</data>
+</edge>
+<edge source="mcstoopums" target="MrFlesh">
+  <data key="d1">0.9493188224156814</data>
+</edge>
+<edge source="oshout" target="Vandredd">
+  <data key="d1">0.9413777047064986</data>
+</edge>
+<edge source="ARGUMENTUM_EX_CULO" target="Evenfall">
+  <data key="d1">0.7992025873523917</data>
+</edge>
+<edge source="crayonconfetti" target="LukeChrisco">
+  <data key="d1">0.6304479368667911</data>
+</edge>
+<edge source="ericmm76" target="60secondwarlord">
+  <data key="d1">0.874287966624947</data>
+</edge>
+<edge source="urfrendlipiro" target="urfrendlipiro">
+  <data key="d1">0.2930202845077967</data>
+</edge>
+<edge source="mastermike14" target="miked4o7">
+  <data key="d1">0.8489435553129182</data>
+</edge>
+<edge source="mvchamblin" target="jgh86001">
+  <data key="d1">0.6178766919175238</data>
+</edge>
+<edge source="moose_testes" target="buttpincher">
+  <data key="d1">0.01323685775889949</data>
+</edge>
+<edge source="redditallreddy" target="Shigy">
+  <data key="d1">0.34723351793221957</data>
+</edge>
+<edge source="prismjism" target="LucubrateIsh">
+  <data key="d1">0.14814086094816503</data>
+</edge>
+<edge source="90preludeLad" target="shinkouhyou">
+  <data key="d1">0.9818293898182532</data>
+</edge>
+<edge source="brettyrocks" target="brettyrocks">
+  <data key="d1">0.47837030703998806</data>
+</edge>
+<edge source="NeonDisease" target="syanda">
+  <data key="d1">0.4973913654986627</data>
+</edge>
+<edge source="nuovo_donna" target="nordic_viking">
+  <data key="d1">0.6394725163987236</data>
+</edge>
+<edge source="orangeblood" target="AndTheMeltdowns">
+  <data key="d1">0.3685846061296175</data>
+</edge>
+<edge source="swearno" target="schfourteen-teen">
+  <data key="d1">0.13690027168559893</data>
+</edge>
+<edge source="WinterAyars" target="mrjderp">
+  <data key="d1">0.8221177331942455</data>
+</edge>
+<edge source="overzealous_farker" target="JauntyChapeau">
+  <data key="d1">0.18984791190275796</data>
+</edge>
+<edge source="zcc0nonA" target="spacedawg_ie">
+  <data key="d1">0.511318982546456</data>
+</edge>
+<edge source="LittleBigKid2000" target="Excitonex">
+  <data key="d1">0.22431702897473926</data>
+</edge>
+<edge source="SorensonPA" target="The_Write_Stuff">
+  <data key="d1">0.09784448449403405</data>
+</edge>
+<edge source="Sherman1865" target="ndiamondn">
+  <data key="d1">0.8621915174216833</data>
+</edge>
+<edge source="honkish" target="SeeShark">
+  <data key="d1">0.9729194890231303</data>
+</edge>
+<edge source="grizzburger" target="CaptFluffyBunny">
+  <data key="d1">0.9608346580630002</data>
+</edge>
+<edge source="PaulNewhouse" target="Amori_A_Splooge">
+  <data key="d1">0.906555499221179</data>
+</edge>
+<edge source="Trying2BaWiseGuy" target="noogan">
+  <data key="d1">0.7740473326986388</data>
+</edge>
+<edge source="HeNeverLies4" target="billdietrich1">
+  <data key="d1">0.3331451520286419</data>
+</edge>
+<edge source="Genesis2001" target="MrZimothy">
+  <data key="d1">0.08110138998799676</data>
+</edge>
+<edge source="playoffss" target="Bike-o-king">
+  <data key="d1">0.40724117141380733</data>
+</edge>
+<edge source="bobjohnsonmilw" target="murkloar">
+  <data key="d1">0.23223414217094274</data>
+</edge>
+<edge source="QuesoPantera" target="RealityRush">
+  <data key="d1">0.13248763475798297</data>
+</edge>
+<edge source="Atomic235" target="loondawg">
+  <data key="d1">0.05342718178682526</data>
+</edge>
+<edge source="blackProctologist" target="nicksvr4">
+  <data key="d1">0.7255943642105788</data>
+</edge>
+<edge source="Self_Manifesto" target="incognitaX">
+  <data key="d1">0.011427458625031028</data>
+</edge>
+<edge source="voteferpedro" target="kingssman">
+  <data key="d1">0.7705807485027762</data>
+</edge>
+<edge source="sonovel" target="joeyramoney">
+  <data key="d1">0.14694664540037505</data>
+</edge>
+<edge source="Arel_Mor" target="kindlx">
+  <data key="d1">0.07952208258675575</data>
+</edge>
+<edge source="JTibbs" target="YoureAllRobots">
+  <data key="d1">0.08960303423860538</data>
+</edge>
+<edge source="Lostbrother" target="OhDearOthello">
+  <data key="d1">0.6720478073539145</data>
+</edge>
+<edge source="Perseus109" target="ImInterested">
+  <data key="d1">0.24536720985284477</data>
+</edge>
+<edge source="CaptZ" target="Imapopulistnow">
+  <data key="d1">0.42053946668009845</data>
+</edge>
+<edge source="Eurynom0s" target="StumbleBees">
+  <data key="d1">0.5573687913239169</data>
+</edge>
+<edge source="dilespla" target="dilespla">
+  <data key="d1">0.8605511738287938</data>
+</edge>
+<edge source="Shadow_Death" target="Shadow_Death">
+  <data key="d1">0.7270442627113283</data>
+</edge>
+<edge source="grevemoeskr" target="grapechicken">
+  <data key="d1">0.27032790523871464</data>
+</edge>
+<edge source="TheCodexx" target="Mimehunter">
+  <data key="d1">0.1314827992911276</data>
+</edge>
+<edge source="L_Cranston_Shadow" target="annata">
+  <data key="d1">0.05537432042119794</data>
+</edge>
+<edge source="MajorLazy" target="Eric_the_Barbarian">
+  <data key="d1">0.3015986344809425</data>
+</edge>
+<edge source="BadWolf990" target="jstevewhite">
+  <data key="d1">0.26211814923967824</data>
+</edge>
+<edge source="HPL72" target="Neverborn">
+  <data key="d1">0.45614056680047965</data>
+</edge>
+<edge source="Ujio2107" target="underthedock">
+  <data key="d1">0.6832813355476804</data>
+</edge>
+<edge source="bobsomeguy" target="jonbyars06">
+  <data key="d1">0.6956254456388572</data>
+</edge>
+<edge source="Raiju" target="bac10us">
+  <data key="d1">0.28351884658216664</data>
+</edge>
+<edge source="Quasigriz_" target="lifetimeofnot">
+  <data key="d1">0.3799269559001205</data>
+</edge>
+<edge source="IUhoosier_KCCO" target="androidpk">
+  <data key="d1">0.18115096173690304</data>
+</edge>
+<edge source="IUhoosier_KCCO" target="Liammozz">
+  <data key="d1">0.7885455123065187</data>
+</edge>
+<edge source="devils32391" target="moxy801">
+  <data key="d1">0.0568480764332403</data>
+</edge>
+<edge source="Nixuz" target="garyp714">
+  <data key="d1">0.6969972417249873</data>
+</edge>
+<edge source="enzomatic75" target="jstevewhite">
+  <data key="d1">0.7786953959411034</data>
+</edge>
+<edge source="eromitlab" target="FortHouston">
+  <data key="d1">0.7774075618487531</data>
+</edge>
+<edge source="indoninja" target="RadioHitandRun">
+  <data key="d1">0.25942256434535493</data>
+</edge>
+<edge source="Donbearpig" target="pedroelsantos">
+  <data key="d1">0.37381313793256143</data>
+</edge>
+<edge source="shudmeyer" target="Iamien">
+  <data key="d1">0.587599635196389</data>
+</edge>
+<edge source="coherent_thought" target="libsmak">
+  <data key="d1">0.272821902424467</data>
+</edge>
+<edge source="hall5714" target="robsnell">
+  <data key="d1">0.3708527992178887</data>
+</edge>
+<edge source="CrazyWiredKeyboard" target="MadeByMonkeys">
+  <data key="d1">0.19705428018563964</data>
+</edge>
+<edge source="CrazyWiredKeyboard" target="polpotspenis">
+  <data key="d1">0.4598558837560074</data>
+</edge>
+<edge source="TheOriginalShummy" target="sagan_drinks_cosmos">
+  <data key="d1">0.044612301254114084</data>
+</edge>
+<edge source="mecrosis" target="ShameNap">
+  <data key="d1">0.799795884570618</data>
+</edge>
+<edge source="OldAngryWhiteMan" target="revoman">
+  <data key="d1">0.07695644698663273</data>
+</edge>
+<edge source="AnselmoTheHunter" target="boringdude00">
+  <data key="d1">0.518835148831526</data>
+</edge>
+<edge source="chiropter" target="2Ejy4u">
+  <data key="d1">0.3068100995451961</data>
+</edge>
+<edge source="ugarten" target="kurb21">
+  <data key="d1">0.5775429488313755</data>
+</edge>
+<edge source="RyunosukeKusanagi" target="tastytreats04">
+  <data key="d1">0.9594333408334251</data>
+</edge>
+<edge source="pwn1god" target="CloakNStagger">
+  <data key="d1">0.6455702444560039</data>
+</edge>
+<edge source="Gregs3RDleg" target="happyscrappy">
+  <data key="d1">0.03536243575549092</data>
+</edge>
+<edge source="SCROTOCTUS" target="SnowWhiteMemorial">
+  <data key="d1">0.43040243950806123</data>
+</edge>
+<edge source="pegothejerk" target="McGee112">
+  <data key="d1">0.5100168523182502</data>
+</edge>
+<edge source="LukaCola" target="Wrong_on_Internet">
+  <data key="d1">0.536177494703452</data>
+</edge>
+<edge source="powerchicken" target="you_know_how_I_know">
+  <data key="d1">0.6813925106038379</data>
+</edge>
+<edge source="Kind_Of_A_Dick" target="u2canfail">
+  <data key="d1">0.2775960977317661</data>
+</edge>
+<edge source="kindofabuzz" target="HulkingBrute">
+  <data key="d1">0.1288605654663202</data>
+</edge>
+<edge source="Phirazo" target="Altair05">
+  <data key="d1">0.39267567654709434</data>
+</edge>
+<edge source="wickedang3l" target="mechanical_animal">
+  <data key="d1">0.9564057227959488</data>
+</edge>
+<edge source="monkeyparts" target="sagan_drinks_cosmos">
+  <data key="d1">0.18713089175084474</data>
+</edge>
+<edge source="kissthepan" target="neotropic9">
+  <data key="d1">0.903983954928237</data>
+</edge>
+<edge source="cynoclast" target="hilltoptheologian">
+  <data key="d1">0.5438059500773263</data>
+</edge>
+<edge source="Cgn38" target="adusoccr">
+  <data key="d1">0.4569114216457658</data>
+</edge>
+<edge source="danbrewtan" target="Frostiken">
+  <data key="d1">0.8820414102298896</data>
+</edge>
+<edge source="Xatencio" target="kaett">
+  <data key="d1">0.45860396176858587</data>
+</edge>
+<edge source="atlasMuutaras" target="Copper13">
+  <data key="d1">0.7241676366115433</data>
+</edge>
+<edge source="Lootaluck" target="canteloupy">
+  <data key="d1">0.399025321703102</data>
+</edge>
+<edge source="Phred_Felps" target="mecrosis">
+  <data key="d1">0.9040443929009577</data>
+</edge>
+<edge source="isleepinahammock" target="NRA4eva">
+  <data key="d1">0.6900250201912274</data>
+</edge>
+<edge source="kestrellaz" target="mlw4428">
+  <data key="d1">0.6996220542505167</data>
+</edge>
+<edge source="BaPef" target="ShirleyYouCant">
+  <data key="d1">0.3277204015571189</data>
+</edge>
+<edge source="BabyFaceMagoo" target="TeutonicDisorder">
+  <data key="d1">0.7567786427368892</data>
+</edge>
+<edge source="erveek" target="etfp">
+  <data key="d1">0.6360610554471413</data>
+</edge>
+<edge source="TheUnholyWendigo" target="Fixhotep">
+  <data key="d1">0.24002027337970955</data>
+</edge>
+<edge source="Gilbygil11" target="ivanvonbewski">
+  <data key="d1">0.16053882248525642</data>
+</edge>
+<edge source="Wesside" target="MartinSchou">
+  <data key="d1">0.7963914745173317</data>
+</edge>
+<edge source="reaper527" target="wwickeddogg">
+  <data key="d1">0.9591666030352225</data>
+</edge>
+<edge source="AllRightyGuy" target="Teotwawki69">
+  <data key="d1">0.45813882726004285</data>
+</edge>
+<edge source="sluggdiddy" target="Lighting">
+  <data key="d1">0.5909841653236849</data>
+</edge>
+<edge source="thesilverpig" target="headlessparrot">
+  <data key="d1">0.8577226441935546</data>
+</edge>
+<edge source="Lady_Sex_Shampoo" target="Keltino">
+  <data key="d1">0.45722345335385706</data>
+</edge>
+<edge source="tylerthor" target="doesntakethehighroad">
+  <data key="d1">0.9518744768327362</data>
+</edge>
+<edge source="sanemaniac" target="frenzyboard">
+  <data key="d1">0.5757511620448724</data>
+</edge>
+<edge source="TodaysIllusion" target="J1b">
+  <data key="d1">0.820767120701315</data>
+</edge>
+<edge source="masterbatesAlot" target="MystikIncarnate">
+  <data key="d1">0.9088437184127384</data>
+</edge>
+<edge source="Indon_Dasani" target="pixelperfect3">
+  <data key="d1">0.8155238187685688</data>
+</edge>
+<edge source="MorePrecisePlease" target="oneineightbillion">
+  <data key="d1">0.15941446344895593</data>
+</edge>
+<edge source="Clownbaby456" target="atrich">
+  <data key="d1">0.6288984390617004</data>
+</edge>
+<edge source="skipperdude" target="Liar_tuck">
+  <data key="d1">0.3984342586196771</data>
+</edge>
+<edge source="WillNotDoYourTaxes" target="CowboyProgrammer">
+  <data key="d1">0.0627129520233457</data>
+</edge>
+<edge source="mickeysf" target="Sol668">
+  <data key="d1">0.42403225188984195</data>
+</edge>
+<edge source="mlw4428" target="Hurrah_for_Karamazov">
+  <data key="d1">0.2586840668894077</data>
+</edge>
+<edge source="Hexaploid" target="Ikimasen">
+  <data key="d1">0.8490383084285108</data>
+</edge>
+<edge source="JeremyRodriguez" target="boscoist">
+  <data key="d1">0.03330462654669619</data>
+</edge>
+<edge source="TimeZarg" target="Joyrock">
+  <data key="d1">0.9589827218634736</data>
+</edge>
+<edge source="BagOnuts" target="brs677">
+  <data key="d1">0.3553688484719296</data>
+</edge>
+<edge source="El_Glenn" target="Feroshnikop">
+  <data key="d1">0.3567068904025429</data>
+</edge>
+<edge source="fugged_up_shib" target="willbradley">
+  <data key="d1">0.01632850268370789</data>
+</edge>
+<edge source="jordanlund" target="MightyBulger">
+  <data key="d1">0.18523232523618394</data>
+</edge>
+<edge source="asiltopbr" target="Jaqqarhan">
+  <data key="d1">0.4012595008036087</data>
+</edge>
+<edge source="platinumarks" target="MANCREEP">
+  <data key="d1">0.9292914173027139</data>
+</edge>
+<edge source="silverist" target="SpareLiver">
+  <data key="d1">0.09961493022127133</data>
+</edge>
+<edge source="dylanagibson" target="dilly231">
+  <data key="d1">0.9453015334790795</data>
+</edge>
+<edge source="sdonaghy" target="macbackfat">
+  <data key="d1">0.8694885305466322</data>
+</edge>
+<edge source="msdrahcir" target="OneOfDozens">
+  <data key="d1">0.4541623969075518</data>
+</edge>
+<edge source="tedemang" target="ILikeBumblebees">
+  <data key="d1">0.32670088176826007</data>
+</edge>
+<edge source="MrXhin" target="Splint333">
+  <data key="d1">0.23274412927905685</data>
+</edge>
+<edge source="mayowarlord" target="phillymjs">
+  <data key="d1">0.6144647064768743</data>
+</edge>
+<edge source="SomeoneIsWatchingYou" target="bleachmartini">
+  <data key="d1">0.03307459147550562</data>
+</edge>
+<edge source="axeman2013" target="adamcognac">
+  <data key="d1">0.015606064446828216</data>
+</edge>
+<edge source="Condawg" target="ThisPenguinFlies">
+  <data key="d1">0.42879572249823783</data>
+</edge>
+<edge source="fyberoptyk" target="ReallyCleverMoniker">
+  <data key="d1">0.0680740739747202</data>
+</edge>
+<edge source="Thespus" target="TheLightningbolt">
+  <data key="d1">0.2519409882460929</data>
+</edge>
+<edge source="ze_ben" target="hold-up">
+  <data key="d1">0.22116091534608384</data>
+</edge>
+<edge source="Montmorency222" target="Electrorocket">
+  <data key="d1">0.2531911937228519</data>
+</edge>
+<edge source="ohyeathatsright" target="Origin_Of_Storms">
+  <data key="d1">0.13105523121525775</data>
+</edge>
+<edge source="Re_Re_Think" target="mjfgates">
+  <data key="d1">0.01203622289765427</data>
+</edge>
+<edge source="captainburnz" target="1derful">
+  <data key="d1">0.11548429713874808</data>
+</edge>
+<edge source="nicksvr4" target="PhillAholic">
+  <data key="d1">0.6184802595127479</data>
+</edge>
+<edge source="WeAreAllBrainWashed" target="greenascanbe">
+  <data key="d1">0.9742562128180503</data>
+</edge>
+<edge source="moderatelybadass" target="malenkylizards">
+  <data key="d1">0.9903450015608939</data>
+</edge>
+<edge source="TheMajestic23" target="TheMajestic23">
+  <data key="d1">0.4090540953730616</data>
+</edge>
+<edge source="OmicronNine" target="Dogdays991">
+  <data key="d1">0.16295442604660537</data>
+</edge>
+<edge source="jpe77" target="HastenTheRapture">
+  <data key="d1">0.6387617573665293</data>
+</edge>
+<edge source="rsmjr" target="geargirl">
+  <data key="d1">0.49030534654873714</data>
+</edge>
+<edge source="CorporationTshirt" target="Sloppy_Twat">
+  <data key="d1">0.9894097772844315</data>
+</edge>
+<edge source="uber_neutrino" target="Zenitram">
+  <data key="d1">0.0653042071517802</data>
+</edge>
+<edge source="EricSchC1fr" target="Imapopulistnow">
+  <data key="d1">0.7832344383138131</data>
+</edge>
+<edge source="AbridgementTooFar" target="stilesja">
+  <data key="d1">0.2883984973314939</data>
+</edge>
+<edge source="bettorworse" target="shellshoq">
+  <data key="d1">0.241418620076574</data>
+</edge>
+<edge source="drunkenvalley" target="gibbie99">
+  <data key="d1">0.662504571532676</data>
+</edge>
+<edge source="shawnathon" target="cnrfvfjkrhwerfh">
+  <data key="d1">0.24606318499096447</data>
+</edge>
+<edge source="Izithel" target="papipapichulo">
+  <data key="d1">0.6658591175591877</data>
+</edge>
+<edge source="apoutwest" target="GlassDarkly">
+  <data key="d1">0.5173085172022888</data>
+</edge>
+<edge source="diablo_man" target="crimdelacrim">
+  <data key="d1">0.4240889884358493</data>
+</edge>
+<edge source="Malfeasant" target="Arizhel">
+  <data key="d1">0.554687808661419</data>
+</edge>
+<edge source="oblication" target="Moon_Cricket05">
+  <data key="d1">0.28705151991962974</data>
+</edge>
+<edge source="nullsucks" target="eedna">
+  <data key="d1">0.7065747062729789</data>
+</edge>
+<edge source="EqualOrLessThan2" target="Snickerzzz">
+  <data key="d1">0.414856869333564</data>
+</edge>
+<edge source="SuitedAfro" target="ILL_PM_YOU_MY_DICK">
+  <data key="d1">0.36054556048589226</data>
+</edge>
+<edge source="gravshift" target="feralkitten">
+  <data key="d1">0.8286569145557378</data>
+</edge>
+<edge source="tophermeyer" target="AbridgementTooFar">
+  <data key="d1">0.9249669119531921</data>
+</edge>
+<edge source="APretentiousHipster" target="Jacobmc1">
+  <data key="d1">0.046007310887296926</data>
+</edge>
+<edge source="omnichronos" target="sockpuppetzero">
+  <data key="d1">0.2326269928297655</data>
+</edge>
+<edge source="yetkwai" target="imheretomeetmen">
+  <data key="d1">0.34851936949256324</data>
+</edge>
+<edge source="Tiby312" target="AndrewL78">
+  <data key="d1">0.8149664793702474</data>
+</edge>
+<edge source="throwaway_31415" target="maquila">
+  <data key="d1">0.9854914276432976</data>
+</edge>
+<edge source="Sol668" target="unclefisty">
+  <data key="d1">0.9689717046703518</data>
+</edge>
+<edge source="Tumble85" target="ThatRedEyeAlien">
+  <data key="d1">0.9049483455499269</data>
+</edge>
+<edge source="tableman" target="tsdeal">
+  <data key="d1">0.2965562650640299</data>
+</edge>
+<edge source="cwestn" target="fantasyfest">
+  <data key="d1">0.9920112434144741</data>
+</edge>
+<edge source="groove_la_chord" target="LifeBeginsAt10kRPM">
+  <data key="d1">0.2494200410564512</data>
+</edge>
+<edge source="ghostbackwards" target="NeonDisease">
+  <data key="d1">0.1059061548822322</data>
+</edge>
+<edge source="mrwiffy" target="working_shibe">
+  <data key="d1">0.9509526110553941</data>
+</edge>
+<edge source="CS_83" target="eckinlighter">
+  <data key="d1">0.2334202554680963</data>
+</edge>
+<edge source="LBJsPNS" target="Maxtrt">
+  <data key="d1">0.6897682650777505</data>
+</edge>
+<edge source="yester64" target="NastyButler_">
+  <data key="d1">0.05835635898058866</data>
+</edge>
+<edge source="miasmic" target="mxmxmxmx">
+  <data key="d1">0.7307090991274762</data>
+</edge>
+<edge source="co99950" target="toshino_kyoko">
+  <data key="d1">0.8817202123338397</data>
+</edge>
+<edge source="socsa" target="Treassach">
+  <data key="d1">0.2724368954659625</data>
+</edge>
+<edge source="TitoAndronico" target="Thewallmachine">
+  <data key="d1">0.37905689607742854</data>
+</edge>
+<edge source="beauseph" target="krunk7">
+  <data key="d1">0.3742961833209161</data>
+</edge>
+<edge source="backgroundN015e" target="gonetosea">
+  <data key="d1">0.7487882575401331</data>
+</edge>
+<edge source="nianbo" target="TheMeatball">
+  <data key="d1">0.23780724253903884</data>
+</edge>
+<edge source="chuck_cranston" target="NotMeow">
+  <data key="d1">0.171853099047643</data>
+</edge>
+<edge source="calvinsylveste" target="dairydog91">
+  <data key="d1">0.4492916486877381</data>
+</edge>
+<edge source="41145and6" target="pixl_graphix">
+  <data key="d1">0.3044684073773195</data>
+</edge>
+<edge source="cryptic_mythic" target="souldust">
+  <data key="d1">0.8391891222586524</data>
+</edge>
+<edge source="FockSmulder" target="shaqrock">
+  <data key="d1">0.23774182601563876</data>
+</edge>
+<edge source="kerabatsos" target="dallasdude">
+  <data key="d1">0.5023894574892614</data>
+</edge>
+<edge source="shug7272" target="letdogsvote">
+  <data key="d1">0.9425835996979304</data>
+</edge>
+<edge source="barrio-libre" target="gpia7r">
+  <data key="d1">0.6339976977446607</data>
+</edge>
+<edge source="wmurray003" target="Saephon">
+  <data key="d1">0.8672894054624648</data>
+</edge>
+<edge source="misterrunon" target="eskimoroll">
+  <data key="d1">0.9402096893547673</data>
+</edge>
+<edge source="rendevouspoo" target="vooffle">
+  <data key="d1">0.7507648618863519</data>
+</edge>
+<edge source="haveyouseenmyhair" target="wrcftw">
+  <data key="d1">0.6995750602247514</data>
+</edge>
+<edge source="drewiepoodle" target="mcstoopums">
+  <data key="d1">0.9679655666042271</data>
+</edge>
+<edge source="S4ngin" target="bourekas">
+  <data key="d1">0.9944007896476794</data>
+</edge>
+<edge source="LakeStClair" target="jeremycb29">
+  <data key="d1">0.45182168266975964</data>
+</edge>
+<edge source="frepost" target="BerateBirthers">
+  <data key="d1">0.07086977818420837</data>
+</edge>
+<edge source="kthehun89" target="reallyjay">
+  <data key="d1">0.29279403144051885</data>
+</edge>
+<edge source="NouberNou" target="Sloppy1sts">
+  <data key="d1">0.15235470568773046</data>
+</edge>
+<edge source="wesman9010" target="zulhadm">
+  <data key="d1">0.4174863747960118</data>
+</edge>
+<edge source="bangorthebarbarian" target="MauriceReeves">
+  <data key="d1">0.13128932847325603</data>
+</edge>
+<edge source="terp1987" target="nonrate">
+  <data key="d1">0.604117804020882</data>
+</edge>
+<edge source="mindracer" target="The_Gregor">
+  <data key="d1">0.3828080591578541</data>
+</edge>
+<edge source="LazyCon" target="Hypocrite_Redditor">
+  <data key="d1">0.89538588428821</data>
+</edge>
+<edge source="Mudders_Milk_Man" target="joshamania">
+  <data key="d1">0.9677946717985019</data>
+</edge>
+<edge source="thenewyorkgod" target="NottaGrammerNasi">
+  <data key="d1">0.5468849016694222</data>
+</edge>
+<edge source="d33p_blu3" target="FistofNorris">
+  <data key="d1">0.2748235698675966</data>
+</edge>
+<edge source="whobetta" target="burnadams">
+  <data key="d1">0.5922304187618368</data>
+</edge>
+<edge source="nixed9" target="CylonbabyLiam">
+  <data key="d1">0.8967611582244098</data>
+</edge>
+<edge source="Soulgee" target="chihouse312">
+  <data key="d1">0.4067333458357483</data>
+</edge>
+<edge source="Alpha_Zulu" target="Alpha_Zulu">
+  <data key="d1">0.5520782766919708</data>
+</edge>
+<edge source="MrSamsonite" target="souurdiesel">
+  <data key="d1">0.2716527676061459</data>
+</edge>
+<edge source="thechief05" target="jpurdy">
+  <data key="d1">0.455444149450027</data>
+</edge>
+<edge source="bigroblee" target="thingmabobby">
+  <data key="d1">0.40171353537959864</data>
+</edge>
+<edge source="finebydesign" target="rustyrebar">
+  <data key="d1">0.24841346508297102</data>
+</edge>
+<edge source="loondawg" target="jasonskjonsby">
+  <data key="d1">0.5058663838253084</data>
+</edge>
+</graph></graphml>

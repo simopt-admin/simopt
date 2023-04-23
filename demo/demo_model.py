@@ -29,13 +29,13 @@ from rng.mrg32k3a import MRG32k3a
 
 # Working example for MM1 model.
 # -----------------------------------------------
-from simopt.models.mm1queue import MM1Queue
-fixed_factors = {"lambda": 3.0, "mu": 8.0}
-mymodel = MM1Queue(fixed_factors)
-from simopt.models.fake import Fake
-mymodel = Fake()
-from simopt.models.volunteer import Volunteer
-mymodel = Volunteer()
+# from simopt.models.mm1queue import MM1Queue
+# fixed_factors = {"lambda": 3.0, "mu": 8.0}
+# mymodel = MM1Queue(fixed_factors)
+# from simopt.models.fake import Fake
+# mymodel = Fake()
+from simopt.models.cascade import Cascade
+mymodel = Cascade()
 
 # -----------------------------------------------
 

@@ -43,21 +43,27 @@ import numpy as np
 
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
-from simopt.models.cntnv import CntNVMaxProfit
-fixed_factors = {"initial_solution": (2,), "budget": 500}
-myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (3,)
+# from simopt.models.cntnv import CntNVMaxProfit
+# fixed_factors = {"initial_solution": (2,), "budget": 500}
+# myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+# x = (3,)
+# mysolution = Solution(x, myproblem)
+
+# from simopt.models.fake import FakeProblem
+# myproblem = FakeProblem()
+# x = (1, 0)
+# mysolution = Solution(x, myproblem)
+
+# from simopt.models.volunteer import VolunteerDist
+# myproblem = VolunteerDist()
+# x = tuple((1/4 * np.ones(4)).tolist())
+# mysolution = Solution(x, myproblem)
+
+from simopt.models.cascade import CascadeMax
+myproblem = CascadeMax()
+x = tuple(0.1 * np.ones(len(myproblem.G)))
 mysolution = Solution(x, myproblem)
 
-from simopt.models.fake import FakeProblem
-myproblem = FakeProblem()
-x = (1, 0)
-mysolution = Solution(x, myproblem)
-
-from simopt.models.volunteer import VolunteerDist
-myproblem = VolunteerDist()
-x = tuple((1/4 * np.ones(4)).tolist())
-mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
 # Another working example for FacilitySizingTotalCost problem. (Commented out)
@@ -80,6 +86,11 @@ mysolution.attach_rngs(rng_list, copy=False)
 # Simulate a fixed number of replications (n_reps) at the solution x.
 n_reps = 10
 myproblem.simulate(mysolution, m=n_reps)
+rand_sol = myproblem.get_random_solution(rng_list[0])
+print('rand sol', myproblem.get_random_solution(rng_list[1]))
+print(np.dot(myproblem.Ci,rand_sol), 'Cx')
+print('B', myproblem.di)
+
 
 # Print results to console.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")
