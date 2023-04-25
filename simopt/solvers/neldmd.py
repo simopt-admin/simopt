@@ -164,7 +164,7 @@ class NelderMead(Solver):
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
         # Check for sufficiently large budget.
-        if problem.factors["budget"] < self.factors["r"] * n_pts:
+        if problem.factors["budget"] < self.factors["r"] * n_pts and False:
             print('Budget is too small for a good quality run of Nelder-Mead.')
             return
         
@@ -230,7 +230,7 @@ class NelderMead(Solver):
 
         sol.append(new_solution)
 
-        for _ in range(1, n_pts):
+        for i in range(1, n_pts):
             rand_x = problem.get_random_solution(get_rand_soln_rng)
             sol.append(self.create_new_solution(rand_x, problem))
 

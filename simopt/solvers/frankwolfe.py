@@ -314,6 +314,22 @@ class FrankWolfe(Solver):
             # Backward stepsize.
             steph2 = stepsize
 
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = 1
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = -1 
+            ra = d.flatten() - C @ cur_x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star:
+                        s_star = s
+
+
             # Check variable bounds.
             if x1[i] + steph1 > upper_bound[i]:
                 steph1 = np.abs(upper_bound[i] - x1[i])

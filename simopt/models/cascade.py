@@ -53,7 +53,7 @@ class Cascade(Model):
             "num_subgraph": {
                 "description": "number of subgraphs to generate",
                 "datatype": int,
-                "default": 10
+                "default": 1
             },
             "init_prob": {
                 "description": "probability of initiating the nodes",
@@ -224,12 +224,12 @@ class CascadeMax(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(0.1 * np.ones(len(self.G)))
+                "default": tuple(0.001 * np.ones(len(self.G)))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 3000
             },
             "B": {
                 "description": "budget for the activation costs",
@@ -406,12 +406,60 @@ class CascadeMax(Problem):
 
         # Hit and Run
 
+        start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
+
+        # Reshape Ci if necessary.
+        if self.Ci.ndim == 1:
+            self.Ci = self.Ci.reshape(1, -1)
+
+        aux_pts = []
+        # Find an auxiliar point for each plane.
+        for i in range(self.Ci.shape[0]):
+            p = np.zeros(self.dim)
+            j = np.argmax(self.Ci[i] != 0)
+            p[j] = self.di[i] / self.Ci[i][j]
+        aux_pts.append(p)  
+
+        # Generate a random direction to travel.
+        direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+        direction = direction / np.linalg.norm(direction)
+
+        # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
+        lambdas = []
+        for i in range(self.Ci.shape[0]):
+            if np.isclose(direction @ self.Ci[i], 0):
+                lambdas.append(np.nan)
+            else:
+                lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
+                lambdas.append(lam)
+        lambdas = np.array(lambdas)
+
+        # Find the smallest positive and negative lambdas.
+        try:
+            if (len(lambdas) == 1) & (lambdas[0] > 0):
+                lam_minus  = 0
+                lam_plus = np.min(lambdas[lambdas > 0])
+            elif (len(lambdas) == 1) & (lambdas[0] < 0):
+                lam_plus = 0
+                lam_minus = np.max(lambdas[lambdas < 0]) 
+            else:
+                lam_plus = np.min(lambdas[lambdas > 0])
+                lam_minus = np.max(lambdas[lambdas < 0])
+        except(Exception):
+            raise RuntimeError("The current direction does not intersect"
+                               "any of the hyperplanes.")
+        # Generate random point between lambdas.
+        lam = rand_sol_rng.uniform(lam_minus, lam_plus)
+
+        # Compute the new point.
+        x= start_pt + lam * direction
+
         x= tuple(x)
 
         return x
     
 
-    def find_feasible_initial(self, Ae, Ai, be, bi, tol):
+    def find_feasible_initial(self, Ae, Ai, be, bi):
         '''
         Find an initial feasible solution (if not user-provided)
         by solving phase one simplex.

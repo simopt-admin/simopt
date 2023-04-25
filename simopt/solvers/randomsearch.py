@@ -63,7 +63,7 @@ class RandomSearch(Solver):
             "sample_size": {
                 "description": "sample size per solution",
                 "datatype": int,
-                "default": 10
+                "default": 30
             }
         }
         self.check_factor_list = {
