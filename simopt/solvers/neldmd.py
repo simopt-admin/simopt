@@ -97,9 +97,9 @@ class NelderMead(Solver):
                 "default": 10**(-7)
             },
             "initial_spread": {
-                "description": "fraction of the distance between bounds used to select initial points",
+                "description": "1 - fraction of the distance towards the centroid for shrinking the initial points",
                 "datatype": float,
-                "default": 1 / 10
+                "default": 1/2
             },
             "tol": {
                 "description": "floating point tolerance for checking tightness of constraints",
@@ -233,6 +233,19 @@ class NelderMead(Solver):
         for _ in range(1, n_pts):
             rand_x = problem.get_random_solution(get_rand_soln_rng)
             sol.append(self.create_new_solution(rand_x, problem))
+
+        # Record initial solution data.
+        intermediate_budgets.append(0)
+        recommended_solns.append(sol[0])
+        
+        # Restrict starting shape by shrinking nodes other than the initial solution towards the centroid
+        p_cent = tuple(np.mean(tuple([s.x for s in sol]), axis=0))
+        small_sols = [sol[0]]
+        for i in range(1, len(sol)):
+            small_sol = np.array(sol[i].x) + (np.array(p_cent) - np.array(sol[i].x)) * self.factors["initial_spread"]
+            small_sols.append(self.create_new_solution(tuple(small_sol), problem))
+        
+        sol = small_sols
         # else:  # Restrict starting shape/location.
         #     for i in range(problem.dim):
         #         distance = (self.upper_bounds[i] - self.lower_bounds[i]) * self.factors["initial_spread"]
@@ -254,9 +267,7 @@ class NelderMead(Solver):
         for solution in sol:
             problem.simulate(solution, self.factors["r"])
             budget_spent += self.factors["r"]
-        # Record initial solution data.
-        intermediate_budgets.append(0)
-        recommended_solns.append(sol[0])
+
         # Sort solutions by obj function estimate.
         sort_sol = self.sort_and_end_update(problem, sol)
 

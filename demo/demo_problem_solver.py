@@ -25,18 +25,18 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
-# solver_name = "RNDSRCH"  # Random search solver
+solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ACTIVESET"
 # solver_name = "PGD-SS"
 # solver_name = "PGD"
 # solver_name = "DS"
 # solver_name = "NELDMD"
-solver_name = "FW"
+# solver_name = "FW"
 # problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
-# problem_name = "SAN-2"
+problem_name = "SAN-2"
 # problem_name = "SAN-1"
-problem_name = "SMF-1"
+# problem_name = "SMF-1"
 
 # -----------------------------------------------
 
@@ -50,7 +50,7 @@ print(f"Results will be stored as {file_name_path}.")
 myexperiment = ProblemSolver(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=5)
+myexperiment.run(n_macroreps=20)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
@@ -69,9 +69,9 @@ myexperiment.run(n_macroreps=5)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=50)
+myexperiment.post_replicate(n_postreps=100)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=50)
+post_normalize([myexperiment], n_postreps_init_opt=100)
 
 print("Plotting results.")
 # Produce basic plots of the solver on the problem.

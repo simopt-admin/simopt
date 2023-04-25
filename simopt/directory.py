@@ -66,7 +66,12 @@ solver_directory = {
 }
 solver_nonabbreviated_directory = {
     "ASTRODF (SDCN)": ASTRODF,
-    "RandomSearch (SSMN)": RandomSearch
+    "RandomSearch": RandomSearch,
+    "Projected Gradient Descent": PGD,
+    "Projected Gradient Descent": PGDSS,
+    "FrankWolfe": FrankWolfe,
+    "Active Set": ACTIVESET,
+    "Nelder-Mead": NelderMead,
 }
 problem_directory = {
     "CNTNEWS-1": CntNVMaxProfit,

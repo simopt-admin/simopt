@@ -80,7 +80,7 @@ class FrankWolfe(Solver):
             "alpha_max": {
                 "description": "maximum step size.",
                 "datatype": int,
-                "default": 10
+                "default": 1
             },
             "alpha_0": {
                 "description": "initial step size.",
@@ -127,7 +127,7 @@ class FrankWolfe(Solver):
         return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
 
     def check_alpha_max(self):
-        return self.factors["alpha_max"] > 0
+        return self.factors["alpha_max"] > 0 & self.factors["alpha_max"] < 1
 
     def check_alpha_0(self):
         return self.factors["alpha_0"] > 0
@@ -237,8 +237,8 @@ class FrankWolfe(Solver):
             dir = self.search_dir(problem, new_x, Ce, Ci, de, di, grad)
 
 
-            # Update the parameter vector with a step in the search direction
-            alpha = 2 / (k + 2)
+            # # Update the parameter vector with a step in the search direction
+            # alpha = 2 / (k + 2)
 
             # Obtain candidate solution.
             candidate_x = new_x + alpha * dir
@@ -247,18 +247,21 @@ class FrankWolfe(Solver):
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            new_solution = candidate_solution
+            # new_solution = candidate_solution
 
-            # # Check the modified Armijo condition for sufficient decrease.
-            # if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
-            #         -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir) + 2 * epsilon_f):
-            #     # Successful step
-            #     new_solution = candidate_solution
-            #     # Enlarge step size.
-            #     alpha = min(alpha_max, alpha / gamma)
-            # else:
-            #     # Unsuccessful step - reduce step size.
-            #     alpha = gamma * alpha
+            # Check the modified Armijo condition for sufficient decrease.
+            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
+                    -1 * problem.minmax[0] * new_solution.objectives_mean + alpha * theta * np.dot(grad, dir)**2 + 2 * epsilon_f):
+                # Successful step
+                new_solution = candidate_solution
+                # Enlarge step size.
+                alpha = min(alpha_max, alpha / gamma)
+            else:
+                # Unsuccessful step - reduce step size.
+                alpha = gamma * alpha
+            
+            # print('dir', dir)
+            # print('alpha', alpha)
 
             # Update the number of iterations.
             k += 1
@@ -269,7 +272,6 @@ class FrankWolfe(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
-        print('solutions', [sol.x for sol in recommended_solns])
         return recommended_solns, intermediate_budgets
 
 
@@ -410,7 +412,7 @@ class FrankWolfe(Solver):
         d = cp.Variable(problem.dim)
 
         # Define objective.
-        obj = cp.Minimize(grad @ d)
+        obj = cp.Minimize(grad @ d + + 0.5 * cp.quad_form(d, np.identity(problem.dim)))
 
         # Define constraints.
         constraints = []

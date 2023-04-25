@@ -10,10 +10,12 @@ import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemSolver class and other useful functions
-from experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots
+from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots, plot_progress_curves, plot_solvability_cdfs
 
-solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
-problem_names = {"SAN-1"} # CNTNEWS-1"} #, "SAN-1"}
+# solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
+solver_names = {"RNDSRCH", "NELDMD","PGD-SS", "FW", "ACTIVESET"}
+
+problem_names = {"SAN-2"} # CNTNEWS-1"} #, "SAN-1"}
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 # solver_name = <solver_name>
@@ -30,7 +32,7 @@ for problem_name in problem_names:
         file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
 
         # Run a fixed number of macroreplications of the solver on the problem.
-        # myexperiment.run(n_macroreps=10)
+        # myexperiment.run(n_macroreps=20)
 
         # If the solver runs have already been performed, uncomment the
         # following pair of lines (and uncommmen the myexperiment.run(...)
@@ -39,12 +41,12 @@ for problem_name in problem_names:
 
         print("Post-processing results.")
         # Run a fixed number of postreplications at all recommended solutions.
-        myexperiment.post_replicate(n_postreps=200)
+        myexperiment.post_replicate(n_postreps=100)
 
         problem_experiments.append(myexperiment)
 
     # Find an optimal solution x* for normalization.
-    post_normalize(problem_experiments, n_postreps_init_opt=200)
+    post_normalize(problem_experiments, n_postreps_init_opt=100)
 
 # Re-compile problem-solver results.
 myexperiments = []
@@ -63,6 +65,10 @@ plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=Fal
 plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=True)
 plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=False, all_in_one=False)
 plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=True)
+plot_progress_curves(experiments=myexperiments, plot_type="all", normalize=False)
+plot_progress_curves(experiments=myexperiments, plot_type="mean", normalize=False)
+plot_progress_curves(experiments=myexperiments, plot_type="quantile", beta=0.90, normalize=False)
+plot_solvability_cdfs(experiments=myexperiments, solve_tol=0.1)
 #plot_terminal_scatterplots(experiments = myexperiments, all_in_one=False)
 
 # Plots will be saved in the folder experiments/plots.
