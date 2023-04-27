@@ -65,7 +65,7 @@ class FrankWolfe(Solver):
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 50
+                "default": 30
             },
             "theta": {
                 "description": "constant in the Armijo condition.",
@@ -211,31 +211,30 @@ class FrankWolfe(Solver):
 
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
-            # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
-            # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            BdsCheck = np.subtract(forward, backward)
+            # # Check variable bounds.
+            # forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
+            # backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
+            # # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
+            # BdsCheck = np.subtract(forward, backward)
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = alpha)
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
+                expended_budget += budget_spent
                 # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
                     if expended_budget > problem.factors["budget"]:
                         break
-                    grad = self.finite_diff(new_solution, BdsCheck, problem, r)
-                    expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
+                    expended_budget += budget_spent
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
             # Compute search direction
             dir = self.search_dir(problem, new_x, Ce, Ci, de, di, grad)
-
 
             # # Update the parameter vector with a step in the search direction
             # alpha = 2 / (k + 2)
@@ -259,9 +258,6 @@ class FrankWolfe(Solver):
             else:
                 # Unsuccessful step - reduce step size.
                 alpha = gamma * alpha
-            
-            # print('dir', dir)
-            # print('alpha', alpha)
 
             # Update the number of iterations.
             k += 1
@@ -275,7 +271,7 @@ class FrankWolfe(Solver):
         return recommended_solns, intermediate_budgets
 
 
-    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5, tol = 1e-7):
+    def finite_diff(self, new_solution, problem, r, stepsize = 1e-5, tol = 1e-7):
         '''
         Finite difference for approximating objective gradient at new_solution.
 
@@ -283,8 +279,6 @@ class FrankWolfe(Solver):
         ---------
         new_solution : Solution object
             a solution to the problem
-        BdsCheck : ndarray
-            an array that checks for lower/upper bounds at each dimension
         problem : Problem object
             simulation-optimization problem to solve
         r : int 
@@ -296,13 +290,15 @@ class FrankWolfe(Solver):
         -------
         grad : ndarray
             the estimated objective gradient at new_solution
+        budget_spent : int
+            budget spent in finite difference
         '''
         Ci = problem.Ci
         di = problem.di
         Ce = problem.Ce
         de = problem.de
 
-                # Upper bound and lower bound.
+        # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
 
@@ -332,6 +328,7 @@ class FrankWolfe(Solver):
             C = np.vstack((C, -np.identity(lower_bound.shape[0])))
             d = np.vstack((d, -lower_bound[np.newaxis].T))
 
+        BdsCheck = np.zeros(problem.dim)
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
@@ -339,7 +336,6 @@ class FrankWolfe(Solver):
         grad = np.zeros(problem.dim)
 
         for i in range(problem.dim):
-            print('i', i)
             # Initialization.
             x1 = list(new_x)
             x2 = list(new_x)
@@ -415,8 +411,8 @@ class FrankWolfe(Solver):
                 grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
             elif BdsCheck[i] == -1:
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-        print('grad', grad)
-        return grad
+        budget_spent = (2 * problem.dim - np.sum(BdsCheck != 0)) * r        
+        return grad, budget_spent
 
     def _feasible(self, x, problem, tol):
         """
@@ -531,6 +527,8 @@ class FrankWolfe(Solver):
 
         Returns
         -------
+        x_new_solution : Solution
+            a solution obtained by line search
         step_size : float
             computed step size
         expended_budget : int
@@ -540,6 +538,7 @@ class FrankWolfe(Solver):
         fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
         step_size = alpha_0
         count = 0
+        x_new_solution = cur_sol
         while True:
             if expended_budget > problem.factors["budget"]:
                 break
@@ -554,11 +553,8 @@ class FrankWolfe(Solver):
             if f_new < fx + alpha * step_size * np.dot(grad, d):
                 break
             step_size *= beta
-            count +=1
-        # Enlarge the step size if satisfying the sufficient decrease on the first try.
-        if count == 0:
-            step_size /= beta
-        return step_size, expended_budget
+            count += 1
+        return x_new_solution, step_size, expended_budget
 
     def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
         '''

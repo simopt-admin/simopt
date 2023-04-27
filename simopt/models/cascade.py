@@ -47,13 +47,13 @@ class Cascade(Model):
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
-        self.G = nx.read_graphml('reddit.graphml')
+        self.G = nx.read_graphml('DAG.graphml')
         self.num_nodes = len(self.G)
         self.specifications = {
             "num_subgraph": {
                 "description": "number of subgraphs to generate",
                 "datatype": int,
-                "default": 1
+                "default": 10
             },
             "init_prob": {
                 "description": "probability of initiating the nodes",
@@ -123,6 +123,7 @@ class Cascade(Model):
                 # Add newly activated nodes to the activated set.
                 newly_activated = temp_activated
                 activated.update(newly_activated)
+
             
             num_activated = len(activated)
             num_lst.append(num_activated)
@@ -216,7 +217,7 @@ class CascadeMax(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.G = nx.read_graphml('reddit.graphml')
+        self.G = nx.read_graphml('DAG.graphml')
         self.model_default_factors = {}
         self.model_decision_factors = {"init_prob"}
         self.factors = fixed_factors

@@ -64,6 +64,11 @@ myproblem = CascadeMax()
 x = tuple(0.1 * np.ones(len(myproblem.G)))
 mysolution = Solution(x, myproblem)
 
+# from simopt.models.cascadetime import CascadeTimeEndMax
+# myproblem = CascadeTimeEndMax()
+# x = tuple(0.1 * np.ones(len(myproblem.G) * 20))
+# mysolution = Solution(x, myproblem)
+
 # -----------------------------------------------
 
 # Another working example for FacilitySizingTotalCost problem. (Commented out)

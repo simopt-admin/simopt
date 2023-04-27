@@ -254,14 +254,14 @@ class ACTIVESET(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, r, self.factors["finite_diff_step"])
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
-                # A while loop to prevent zero gradient
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, C, d, stepsize = alpha)
+                expended_budget += budget_spent
+                # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
                     if expended_budget > problem.factors["budget"]:
                         break
-                    grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
-                    expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r, C, d)
+                    expended_budget += budget_spent
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
@@ -321,7 +321,7 @@ class ACTIVESET(Solver):
                         if s_star > 0:
                             # Line search to determine a step_size.
                             new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-
+            print('new sol', new_solution.x)
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
@@ -372,7 +372,7 @@ class ACTIVESET(Solver):
         return dir, lmbd
 
 
-    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
+    def finite_diff(self, new_solution, problem, r, C, d, stepsize = 1e-5, tol = 1e-7):
         '''
         Finite difference for approximating objective gradient at new_solution.
 
@@ -380,12 +380,14 @@ class ACTIVESET(Solver):
         ---------
         new_solution : Solution object
             a solution to the problem
-        BdsCheck : ndarray
-            an array that checks for lower/upper bounds at each dimension
         problem : Problem object
             simulation-optimization problem to solve
         r : int 
             number of replications taken at each solution
+        C : ndarray
+            constraint matrix
+        d : ndarray
+            constraint vector
         stepsize: float
             step size for finite differences
 
@@ -393,9 +395,11 @@ class ACTIVESET(Solver):
         -------
         grad : ndarray
             the estimated objective gradient at new_solution
+        budget_spent : int
+            budget spent in finite difference
         '''
-        lower_bound = problem.lower_bounds
-        upper_bound = problem.upper_bounds
+
+        BdsCheck = np.zeros(problem.dim)
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
@@ -411,11 +415,38 @@ class ACTIVESET(Solver):
             # Backward stepsize.
             steph2 = stepsize
 
-            # Check variable bounds.
-            if x1[i] + steph1 > upper_bound[i]:
-                steph1 = np.abs(upper_bound[i] - x1[i])
-            if x2[i] - steph2 < lower_bound[i]:
-                steph2 = np.abs(x2[i] - lower_bound[i])
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = 1
+            dir2 = np.zeros(problem.dim)
+            dir2[i] = -1 
+
+            ra = d.flatten() - C @ new_x
+            ra_d = C @ dir1
+            # Initialize maximum step size.
+            steph1 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph1:
+                        steph1 = s
+            
+            ra_d = C @ dir2
+            # Initialize maximum step size.
+            steph2 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph2:
+                        steph2 = s
+            
+            if (steph1 != 0) & (steph2 != 0):
+                BdsCheck[i] = 0
+            elif steph1 == 0:
+                BdsCheck[i] = -1
+            else:
+                BdsCheck[i] = 1
             
             # Decide stepsize.
             # Central diff.
@@ -431,6 +462,7 @@ class ACTIVESET(Solver):
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
+
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
@@ -450,9 +482,9 @@ class ACTIVESET(Solver):
                 grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
             elif BdsCheck[i] == -1:
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
+        budget_spent = (2 * problem.dim - np.sum(BdsCheck != 0)) * r        
+        return grad, budget_spent
 
-        return grad
-    
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
         """
         A backtracking line-search along [x, x + rd] assuming all solution on the line are feasible. 
@@ -491,7 +523,7 @@ class ACTIVESET(Solver):
         fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
         step_size = alpha_0
         count = 0
-        x_new_solution = self.create_new_solution(tuple(x), problem)
+        x_new_solution = cur_sol
         while True:
             if expended_budget > problem.factors["budget"]:
                 break

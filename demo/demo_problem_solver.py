@@ -25,16 +25,17 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
-# solver_name = "RNDSRCH"  # Random search solver
+solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ACTIVESET"
 # solver_name = "PGD-SS"
 # solver_name = "PGD"
 # solver_name = "DS"
 # solver_name = "NELDMD"
-solver_name = "FW"
+# solver_name = "FW"
 # problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
-problem_name = "CASCADE-1"
+# problem_name = "CASCADE-1"
+problem_name = "CASCADETIME-1"
 # problem_name = "SAN-1"
 # problem_name = "SMF-1"
 
@@ -49,14 +50,21 @@ print(f"Results will be stored as {file_name_path}.")
 # Initialize an instance of the experiment class.
 myexperiment = ProblemSolver(solver_name, problem_name)
 
+import timeit
+start = timeit.default_timer()
 # Run a fixed number of macroreplications of the solver on the problem.
 myexperiment.run(n_macroreps=5)
+stop = timeit.default_timer()
 
+print('Time: ', stop - start)  
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
 # myexperiment = read_experiment_results(file_name_path)
 
+# import numpy as np
+# print(np.array(myexperiment.all_recommended_xs[0][-1]))
+# print(np.dot(np.array(myexperiment.all_recommended_xs[0][-1]), 50 * np.ones(30)) )
 # #################
 # # plot the recommended solutions
 # import matplotlib.pyplot as plt

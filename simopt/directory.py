@@ -49,7 +49,7 @@ from .models.volunteer import Volunteer, VolunteerDist, VolunteerSurvival
 from .models.fake2 import Fake2, FakeProblem2
 from .models.smf import SMF, SMF_Max
 from .models.cascade import Cascade, CascadeMax
-from .models.cascadetime import CascadeTime, CascadeTimeMax
+from .models.cascadetime import CascadeTime, CascadeTimeMax, CascadeTimeEndMax
 # directory dictionaries
 solver_directory = {
     "ASTRODF": ASTRODF,
@@ -102,7 +102,8 @@ problem_directory = {
     "FAKE2-1": FakeProblem2,
     "SMF-1": SMF_Max,
     "CASCADE-1": CascadeMax,
-    "CASCADETIME-1": CascadeTimeMax
+    "CASCADETIME-1": CascadeTimeMax,
+    "CASCADETIME-2": CascadeTimeEndMax
 }
 problem_nonabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
