@@ -229,7 +229,7 @@ class CascadeMax(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 3000
+                "default": 10000
             },
             "B": {
                 "description": "budget for the activation costs",
@@ -398,11 +398,6 @@ class CascadeMax(Problem):
         x : tuple
             vector of decision variables
         """
-        # while True:
-        #     print('here')
-        #     x = [rand_sol_rng.uniform(0, np.max(self.Ci)/ self.factors['B']) for _ in range(self.dim)]
-        #     if np.dot(self.Ci, x) <= self.factors['B']:
-        #         break
 
         # Hit and Run
 
@@ -457,6 +452,79 @@ class CascadeMax(Problem):
         x= tuple(x)
 
         return x
+
+    
+    def get_multiple_random_solution(self, rand_sol_rng, n_samples):
+        """
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+
+        # Hit and Run
+
+        start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
+
+        # Reshape Ci if necessary.
+        if self.Ci.ndim == 1:
+            self.Ci = self.Ci.reshape(1, -1)
+
+        aux_pts = []
+        # Find an auxiliar point for each plane.
+        for i in range(self.Ci.shape[0]):
+            p = np.zeros(self.dim)
+            j = np.argmax(self.Ci[i] != 0)
+            p[j] = self.di[i] / self.Ci[i][j]
+        aux_pts.append(p)  
+
+        xs = []
+        for _ in range(n_samples):
+            # Generate a random direction to travel.
+            direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+            direction = direction / np.linalg.norm(direction)
+
+            # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
+            lambdas = []
+            for i in range(self.Ci.shape[0]):
+                if np.isclose(direction @ self.Ci[i], 0):
+                    lambdas.append(np.nan)
+                else:
+                    lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
+                    lambdas.append(lam)
+            lambdas = np.array(lambdas)
+
+            # Find the smallest positive and negative lambdas.
+            try:
+                if (len(lambdas) == 1) & (lambdas[0] > 0):
+                    lam_minus  = 0
+                    lam_plus = np.min(lambdas[lambdas > 0])
+                elif (len(lambdas) == 1) & (lambdas[0] < 0):
+                    lam_plus = 0
+                    lam_minus = np.max(lambdas[lambdas < 0]) 
+                else:
+                    lam_plus = np.min(lambdas[lambdas > 0])
+                    lam_minus = np.max(lambdas[lambdas < 0])
+            except(Exception):
+                raise RuntimeError("The current direction does not intersect"
+                                "any of the hyperplanes.")
+            # Generate random point between lambdas.
+            lam = rand_sol_rng.uniform(lam_minus, lam_plus)
+
+            # Compute the new point.
+            x= start_pt + lam * direction
+
+            x= tuple(x)
+            xs.append(x)
+
+        return xs
     
 
     def find_feasible_initial(self, Ae, Ai, be, bi):

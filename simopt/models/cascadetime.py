@@ -43,7 +43,7 @@ class CascadeTime(Model):
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
-        self.name = "CASCADE"
+        self.name = "CASCADETIME"
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
@@ -58,13 +58,25 @@ class CascadeTime(Model):
             "init_prob": {
                 "description": "probability of initiating the nodes",
                 "datatype": np.ndarray,
-                "default": 0.1 * np.ones(self.num_nodes)
+                "default": 0.2 * np.ones(len(self.G) * 20)
+            },
+            "T": {
+                "description": "number of time steps for the cascade process",
+                "datatype": int,
+                "default": 20
+            },
+             "beta": {
+                "description": "probability of de-activating a node at each time step",
+                "datatype": float,
+                "default": 0.6
             }
         }
 
         self.check_factor_list = {
             "num_subgraph": self.check_num_subgraph,
             "init_prob": self.check_init_prob,
+            "T": self.check_T,
+            "beta": self.check_beta
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -75,6 +87,12 @@ class CascadeTime(Model):
     
     def check_init_prob(self):
         return np.all(self.factors["init_prob"] >= 0)
+    
+    def check_T(self):
+        return self.factors["T"] > 0
+    
+    def check_beta(self):
+        return (self.factors["beta"] >= 0) & (self.factors["beta"] <= 1)
 
     def check_simulatable_factors(self):
         return True
@@ -102,7 +120,7 @@ class CascadeTime(Model):
                 H.add_node(v, **attr_dict)
                 if i > 0:
                     u_prev = (i-1, u)
-                    H.add_edge(u_prev, v, weight= self.factors["beta"]) # connect the same node in consecutive layers
+                    H.add_edge(u_prev, v, weight= 1 - self.factors["beta"]) # connect the same node in consecutive layers
             for u, v, attr_dict in self.G.edges(data=True):
                 u_curr = (i, u)
                 v_curr = (i+1, v)
@@ -112,11 +130,12 @@ class CascadeTime(Model):
         seed_rng = rng_list[0]
         activate_rng = rng_list[1]
 
-        nodes = list(self.G.nodes)
+        nodes = list(H.nodes)
         num_lst = []
+        num_end_lst = []
         for _ in range(self.factors['num_subgraph']):
             # Create seed nodes.
-            seeds = [nodes[j] for j in range(self.num_nodes) if seed_rng.uniform(0, 1) < self.factors["init_prob"][j]]
+            seeds = [nodes[j] for j in range(self.num_nodes * self.factors["T"]) if seed_rng.uniform(0, 1) < self.factors["init_prob"][j]]
             # Set all nodes as not activated.
             activated = set()
             # Add the seed nodes to the activated set.
@@ -129,21 +148,26 @@ class CascadeTime(Model):
                 temp_activated = set()
                 for v in newly_activated:
                     # Check for each successor if it gets activated.
-                    for w in self.G.successors(v):
+                    for w in H.successors(v):
                         if w not in activated:
                             u = activate_rng.uniform(0, 1)
-                            if u < self.G[v][w]['weight']:
+                            if u < H[v][w]['weight']:
                                 temp_activated.add(w)
                 # Add newly activated nodes to the activated set.
                 newly_activated = temp_activated
                 activated.update(newly_activated)
             
-            num_activated = len(activated)
+            num_activated = len(activated) #Total number of nodes ever activated throughout the process
+            # print('checker', activated[0][0])
+            # print([node for node in activated])
+            num_activated_end = len([1 for node in activated if node[0] == self.factors["T"]])#Total number of nodes activated at the end of the process (T)
             num_lst.append(num_activated)
-    
+            num_end_lst.append(num_activated_end)
+
 
         # Calculate responses from simulation data.
-        responses = {"mean_num_activated": np.mean(num_lst)
+        responses = {"mean_num_activated": np.mean(num_lst),
+                     "mean_num_activated_end": np.mean(num_end_lst)
                      }
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         return responses, gradients
@@ -257,11 +281,11 @@ class CascadeTimeMax(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = Cascade(self.model_fixed_factors)
-        self.dim = len(self.model.G)
+        self.model = CascadeTime(self.model_fixed_factors)
+        self.dim = len(self.model.G * self.model.factors["T"])
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
-        self.Ci = np.array([self.model.G.nodes[node]["cost"] for node in self.model.G.nodes()])
+        self.Ci = np.array([self.model.G.nodes[node]["cost"] for node in self.model.G.nodes() for _ in range("T")])
         self.Ce = None
         self.di = np.array([self.factors["B"]])
         self.de = None
@@ -412,20 +436,136 @@ class CascadeTimeMax(Problem):
         x : tuple
             vector of decision variables
         """
-        # while True:
-        #     print('here')
-        #     x = [rand_sol_rng.uniform(0, np.max(self.Ci)/ self.factors['B']) for _ in range(self.dim)]
-        #     if np.dot(self.Ci, x) <= self.factors['B']:
-        #         break
 
         # Hit and Run
+
+        start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
+
+        # Reshape Ci if necessary.
+        if self.Ci.ndim == 1:
+            self.Ci = self.Ci.reshape(1, -1)
+
+        aux_pts = []
+        # Find an auxiliar point for each plane.
+        for i in range(self.Ci.shape[0]):
+            p = np.zeros(self.dim)
+            j = np.argmax(self.Ci[i] != 0)
+            p[j] = self.di[i] / self.Ci[i][j]
+        aux_pts.append(p)  
+
+        # Generate a random direction to travel.
+        direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+        direction = direction / np.linalg.norm(direction)
+
+        # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
+        lambdas = []
+        for i in range(self.Ci.shape[0]):
+            if np.isclose(direction @ self.Ci[i], 0):
+                lambdas.append(np.nan)
+            else:
+                lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
+                lambdas.append(lam)
+        lambdas = np.array(lambdas)
+
+        # Find the smallest positive and negative lambdas.
+        try:
+            if (len(lambdas) == 1) & (lambdas[0] > 0):
+                lam_minus  = 0
+                lam_plus = np.min(lambdas[lambdas > 0])
+            elif (len(lambdas) == 1) & (lambdas[0] < 0):
+                lam_plus = 0
+                lam_minus = np.max(lambdas[lambdas < 0]) 
+            else:
+                lam_plus = np.min(lambdas[lambdas > 0])
+                lam_minus = np.max(lambdas[lambdas < 0])
+        except(Exception):
+            raise RuntimeError("The current direction does not intersect"
+                               "any of the hyperplanes.")
+        # Generate random point between lambdas.
+        lam = rand_sol_rng.uniform(lam_minus, lam_plus)
+
+        # Compute the new point.
+        x= start_pt + lam * direction
 
         x= tuple(x)
 
         return x
+
+    
+    def get_multiple_random_solution(self, rand_sol_rng, n_samples):
+        """
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+
+        # Hit and Run
+
+        start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
+
+        # Reshape Ci if necessary.
+        if self.Ci.ndim == 1:
+            self.Ci = self.Ci.reshape(1, -1)
+
+        aux_pts = []
+        # Find an auxiliar point for each plane.
+        for i in range(self.Ci.shape[0]):
+            p = np.zeros(self.dim)
+            j = np.argmax(self.Ci[i] != 0)
+            p[j] = self.di[i] / self.Ci[i][j]
+        aux_pts.append(p)  
+
+        xs = []
+        for _ in range(n_samples):
+            # Generate a random direction to travel.
+            direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+            direction = direction / np.linalg.norm(direction)
+
+            # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
+            lambdas = []
+            for i in range(self.Ci.shape[0]):
+                if np.isclose(direction @ self.Ci[i], 0):
+                    lambdas.append(np.nan)
+                else:
+                    lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
+                    lambdas.append(lam)
+            lambdas = np.array(lambdas)
+
+            # Find the smallest positive and negative lambdas.
+            try:
+                if (len(lambdas) == 1) & (lambdas[0] > 0):
+                    lam_minus  = 0
+                    lam_plus = np.min(lambdas[lambdas > 0])
+                elif (len(lambdas) == 1) & (lambdas[0] < 0):
+                    lam_plus = 0
+                    lam_minus = np.max(lambdas[lambdas < 0]) 
+                else:
+                    lam_plus = np.min(lambdas[lambdas > 0])
+                    lam_minus = np.max(lambdas[lambdas < 0])
+            except(Exception):
+                raise RuntimeError("The current direction does not intersect"
+                                "any of the hyperplanes.")
+            # Generate random point between lambdas.
+            lam = rand_sol_rng.uniform(lam_minus, lam_plus)
+
+            # Compute the new point.
+            x= start_pt + lam * direction
+
+            x= tuple(x)
+            xs.append(x)
+
+        return xs
     
 
-    def find_feasible_initial(self, Ae, Ai, be, bi, tol):
+    def find_feasible_initial(self, Ae, Ai, be, bi):
         '''
         Find an initial feasible solution (if not user-provided)
         by solving phase one simplex.

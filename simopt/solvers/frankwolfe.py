@@ -275,7 +275,7 @@ class FrankWolfe(Solver):
         return recommended_solns, intermediate_budgets
 
 
-    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
+    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5, tol = 1e-7):
         '''
         Finite difference for approximating objective gradient at new_solution.
 
@@ -297,8 +297,41 @@ class FrankWolfe(Solver):
         grad : ndarray
             the estimated objective gradient at new_solution
         '''
-        lower_bound = problem.lower_bounds
-        upper_bound = problem.upper_bounds
+        Ci = problem.Ci
+        di = problem.di
+        Ce = problem.Ce
+        de = problem.de
+
+                # Upper bound and lower bound.
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, problem.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
@@ -306,6 +339,7 @@ class FrankWolfe(Solver):
         grad = np.zeros(problem.dim)
 
         for i in range(problem.dim):
+            print('i', i)
             # Initialization.
             x1 = list(new_x)
             x2 = list(new_x)
@@ -316,25 +350,36 @@ class FrankWolfe(Solver):
 
             dir1 = np.zeros(problem.dim)
             dir1[i] = 1
-            dir1 = np.zeros(problem.dim)
-            dir1[i] = -1 
-            ra = d.flatten() - C @ cur_x
-            ra_d = C @ dir
+            dir2 = np.zeros(problem.dim)
+            dir2[i] = -1 
+
+            ra = d.flatten() - C @ new_x
+            ra_d = C @ dir1
             # Initialize maximum step size.
-            s_star = np.inf
+            steph1 = np.inf
             # Perform ratio test.
-            for i in range(len(ra)):
-                if ra_d[i] - tol > 0:
-                    s = ra[i]/ra_d[i]
-                    if s < s_star:
-                        s_star = s
-
-
-            # Check variable bounds.
-            if x1[i] + steph1 > upper_bound[i]:
-                steph1 = np.abs(upper_bound[i] - x1[i])
-            if x2[i] - steph2 < lower_bound[i]:
-                steph2 = np.abs(x2[i] - lower_bound[i])
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph1:
+                        steph1 = s
+            
+            ra_d = C @ dir2
+            # Initialize maximum step size.
+            steph2 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph2:
+                        steph2 = s
+            
+            if (steph1 != 0) & (steph2 != 0):
+                BdsCheck[i] = 0
+            elif steph1 == 0:
+                BdsCheck[i] = -1
+            else:
+                BdsCheck[i] = 1
             
             # Decide stepsize.
             # Central diff.
@@ -350,6 +395,7 @@ class FrankWolfe(Solver):
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
+
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
@@ -369,7 +415,7 @@ class FrankWolfe(Solver):
                 grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
             elif BdsCheck[i] == -1:
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-
+        print('grad', grad)
         return grad
 
     def _feasible(self, x, problem, tol):

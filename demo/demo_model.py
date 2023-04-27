@@ -34,9 +34,10 @@ from rng.mrg32k3a import MRG32k3a
 # mymodel = MM1Queue(fixed_factors)
 # from simopt.models.fake import Fake
 # mymodel = Fake()
-from simopt.models.cascade import Cascade
-mymodel = Cascade()
-
+# from simopt.models.cascade import Cascade
+# mymodel = Cascade()
+from simopt.models.cascadetime import CascadeTime
+mymodel = CascadeTime()
 # -----------------------------------------------
 
 # The rest of this script requires no changes.
