@@ -230,7 +230,7 @@ class NelderMead(Solver):
 
         sol.append(new_solution)
 
-        if problem.name == "CASCADE-1":
+        if (problem.name == "CASCADE-1") or (problem.name == "CASCADETIME-1") or (problem.name == "CASCADETIME-2") :
             print('start')
             xs = problem.get_multiple_random_solution(get_rand_soln_rng, n_pts - 1)
             for rand_x in xs:
@@ -277,36 +277,36 @@ class NelderMead(Solver):
             if not self._feasible(p_refl, problem, tol):
                 p_refl = self.check_const(p_refl, orig_pt.x,  C, d, tol)
 
-            # Shrink towards best if out of bounds.
-            if not np.allclose(p_refl, p_refl_copy):
-                print('here')
-                while not np.allclose(p_refl, p_refl_copy):
-                    p_low = sort_sol[0]
-                    for i in range(1, len(sort_sol)):
-                        p_new2 = p_low
-                        p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
-                                          tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
-                        if not self._feasible(p_new, problem, tol):
-                            p_new = self.check_const(p_new, p_new2.x, C, d, tol)
-                        p_new = Solution(tuple(p_new), problem)
-                        p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
-                        problem.simulate(p_new, r)
-                        budget_spent += r
+            # # Shrink towards best if out of bounds.
+            # if not np.allclose(p_refl, p_refl_copy):
+            #     print('here')
+            #     while not np.allclose(p_refl, p_refl_copy):
+            #         p_low = sort_sol[0]
+            #         for i in range(1, len(sort_sol)):
+            #             p_new2 = p_low
+            #             p_new = tuple(map(lambda i, j: i + j, tuple(self.factors["delta"] * i for i in sort_sol[i].x),
+            #                               tuple((1 - self.factors["delta"]) * i for i in p_low.x)))
+            #             if not self._feasible(p_new, problem, tol):
+            #                 p_new = self.check_const(p_new, p_new2.x, C, d, tol)
+            #             p_new = Solution(tuple(p_new), problem)
+            #             p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+            #             problem.simulate(p_new, r)
+            #             budget_spent += r
 
-                        # Update sort_sol.
-                        sort_sol[i] = p_new  # p_new replaces pi.
+            #             # Update sort_sol.
+            #             sort_sol[i] = p_new  # p_new replaces pi.
 
-                    # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+            #         # Sort & end updating.
+            #         sort_sol = self.sort_and_end_update(problem, sort_sol)
 
-                    p_high = sort_sol[-1]  # Current worst point.
-                    p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # Centroid for other pts.
-                    orig_pt = p_high  # Save the original point.
-                    p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"]) * i for i in p_cent),
-                                       tuple(self.factors["alpha"] * i for i in p_high.x)))  # Reflection.
-                    p_refl_copy = np.array(p_refl)
-                    if not self._feasible(p_refl, problem, tol):
-                        p_refl = self.check_const(p_refl, orig_pt.x,  C, d, tol)
+            #         p_high = sort_sol[-1]  # Current worst point.
+            #         p_cent = tuple(np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0))  # Centroid for other pts.
+            #         orig_pt = p_high  # Save the original point.
+            #         p_refl = tuple(map(lambda i, j: i - j, tuple((1 + self.factors["alpha"]) * i for i in p_cent),
+            #                            tuple(self.factors["alpha"] * i for i in p_high.x)))  # Reflection.
+            #         p_refl_copy = np.array(p_refl)
+            #         if not self._feasible(p_refl, problem, tol):
+            #             p_refl = self.check_const(p_refl, orig_pt.x,  C, d, tol)
 
             # Evaluate reflected point.
             p_refl = Solution(tuple(p_refl), problem)

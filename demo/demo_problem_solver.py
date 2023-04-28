@@ -34,8 +34,8 @@ solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "FW"
 # problem_name = "VOLUNTEER-2"  
 # problem_name = "FAKE2-1" 
-# problem_name = "CASCADE-1"
-problem_name = "CASCADETIME-1"
+problem_name = "CASCADE-1"
+# problem_name = "CASCADETIME-1"
 # problem_name = "SAN-1"
 # problem_name = "SMF-1"
 
