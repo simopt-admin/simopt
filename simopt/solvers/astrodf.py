@@ -442,12 +442,65 @@ class ASTRODF(Solver):
             solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
             candidate_x = new_x + solve_subproblem.x
 
-        # handle the box constraints
-        for i in range(problem.dim):
-            if candidate_x[i] <= problem.lower_bounds[i]:
-                candidate_x[i] = problem.lower_bounds[i] + 0.01
-            elif candidate_x[i] >= problem.upper_bounds[i]:
-                candidate_x[i] = problem.upper_bounds[i] - 0.01
+        # Upper bound and lower bound.
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
+
+        # Input inequality and equlaity constraint matrix and vector.
+        # Cix <= di
+        # Cex = de
+        Ci = problem.Ci
+        di = problem.di
+        Ce = problem.Ce
+        de = problem.de
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, problem.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
+        # handle the box and linear constraints using ratio test
+        tol = 1e-6
+        dir = np.array(candidate_x) - np.array(new_x)
+        ra = d.flatten() - C @ new_x
+        ra_d = C @ dir
+        # Initialize maximum step size.
+        s_star = np.inf
+        # Perform ratio test.
+        for i in range(len(ra)):
+            if ra_d[i] - tol > 0:
+                s = ra[i]/ra_d[i]
+                if s < s_star:
+                    s_star = s
+
+        candidate_x= new_x + min(1, s_star) * dir
+        # # handle the box and linear constraints using ratio test
+        # for i in range(problem.dim):
+        #     if candidate_x[i] <= problem.lower_bounds[i]:
+        #         candidate_x[i] = problem.lower_bounds[i] + 0.01
+        #     elif candidate_x[i] >= problem.upper_bounds[i]:
+        #         candidate_x[i] = problem.upper_bounds[i] - 0.01
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
         candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
