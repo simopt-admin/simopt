@@ -43,9 +43,9 @@ from simopt.base import Solution
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
 from simopt.models.cntnv import CntNVMaxProfit
-fixed_factors = {"initial_solution": (2,), "budget": 500}
+fixed_factors = {}
 myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (3,)
+x = (5, 5, 5, 5, 5)
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
