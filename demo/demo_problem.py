@@ -59,15 +59,15 @@ import numpy as np
 # x = tuple((1/4 * np.ones(4)).tolist())
 # mysolution = Solution(x, myproblem)
 
-from simopt.models.cascade import CascadeMax
-myproblem = CascadeMax()
-x = tuple(0.1 * np.ones(len(myproblem.G)))
-mysolution = Solution(x, myproblem)
-
-# from simopt.models.cascadetime import CascadeTimeEndMax
-# myproblem = CascadeTimeEndMax()
-# x = tuple(0.1 * np.ones(len(myproblem.G) * 20))
+# from simopt.models.cascade import CascadeMax
+# myproblem = CascadeMax()
+# x = tuple(0.1 * np.ones(len(myproblem.G)))
 # mysolution = Solution(x, myproblem)
+
+from simopt.models.cascadetime import CascadeTimeEndMax
+myproblem = CascadeTimeEndMax()
+x = tuple(np.array([0.5, 0, 0] * 10))
+mysolution = Solution(x, myproblem)
 
 # -----------------------------------------------
 

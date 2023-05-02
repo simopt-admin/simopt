@@ -218,24 +218,24 @@ class PGDSS(Solver):
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
-            # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            BdsCheck = np.subtract(forward, backward)
+            # forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
+            # backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
+            # # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
+            # BdsCheck = np.subtract(forward, backward)
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem, r, stepsize = self.factors["finite_diff_step"])
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
+                expended_budget += budget_spent
                 # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
                     if expended_budget > problem.factors["budget"]:
                         break
-                    grad = self.finite_diff(new_solution, BdsCheck, problem, r)
-                    expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
+                    expended_budget += budget_spent
                     # Update r after each iteration.
                     r = int(self.factors["lambda"] * r)
 
@@ -278,7 +278,7 @@ class PGDSS(Solver):
         return recommended_solns, intermediate_budgets
 
 
-    def finite_diff(self, new_solution, BdsCheck, problem, r, stepsize = 1e-5):
+    def finite_diff(self, new_solution, problem, r, stepsize = 1e-5, tol = 1e-7):
         '''
         Finite difference for approximating objective gradient at new_solution.
 
@@ -286,8 +286,6 @@ class PGDSS(Solver):
         ---------
         new_solution : Solution object
             a solution to the problem
-        BdsCheck : ndarray
-            an array that checks for lower/upper bounds at each dimension
         problem : Problem object
             simulation-optimization problem to solve
         r : int 
@@ -299,9 +297,45 @@ class PGDSS(Solver):
         -------
         grad : ndarray
             the estimated objective gradient at new_solution
+        budget_spent : int
+            budget spent in finite difference
         '''
-        lower_bound = problem.lower_bounds
-        upper_bound = problem.upper_bounds
+        Ci = problem.Ci
+        di = problem.di
+        Ce = problem.Ce
+        de = problem.de
+
+        # Upper bound and lower bound.
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, problem.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
+        BdsCheck = np.zeros(problem.dim)
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
@@ -317,11 +351,38 @@ class PGDSS(Solver):
             # Backward stepsize.
             steph2 = stepsize
 
-            # Check variable bounds.
-            if x1[i] + steph1 > upper_bound[i]:
-                steph1 = np.abs(upper_bound[i] - x1[i])
-            if x2[i] - steph2 < lower_bound[i]:
-                steph2 = np.abs(x2[i] - lower_bound[i])
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = 1
+            dir2 = np.zeros(problem.dim)
+            dir2[i] = -1 
+
+            ra = d.flatten() - C @ new_x
+            ra_d = C @ dir1
+            # Initialize maximum step size.
+            steph1 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph1:
+                        steph1 = s
+            
+            ra_d = C @ dir2
+            # Initialize maximum step size.
+            steph2 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < steph2:
+                        steph2 = s
+            
+            if (steph1 != 0) & (steph2 != 0):
+                BdsCheck[i] = 0
+            elif steph1 == 0:
+                BdsCheck[i] = -1
+            else:
+                BdsCheck[i] = 1
             
             # Decide stepsize.
             # Central diff.
@@ -337,6 +398,7 @@ class PGDSS(Solver):
             else:
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
+
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
@@ -356,8 +418,8 @@ class PGDSS(Solver):
                 grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
             elif BdsCheck[i] == -1:
                 grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-
-        return grad
+        budget_spent = (2 * problem.dim - np.sum(BdsCheck != 0)) * r        
+        return grad, budget_spent
 
     def _feasible(self, x, problem, tol):
         """

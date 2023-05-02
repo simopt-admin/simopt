@@ -100,7 +100,7 @@ class Cascade(Model):
 
         nodes = list(self.G.nodes)
         num_lst = []
-        for _ in range(self.factors['num_subgraph']):
+        for _ in range(self.factors["num_subgraph"]):
             # Create seed nodes.
             seeds = [nodes[j] for j in range(self.num_nodes) if seed_rng.uniform(0, 1) < self.factors["init_prob"][j]]
             # Set all nodes as not activated.
@@ -118,7 +118,7 @@ class Cascade(Model):
                     for w in self.G.successors(v):
                         if w not in activated:
                             u = activate_rng.uniform(0, 1)
-                            if u < self.G[v][w]['weight']:
+                            if u < self.G[v][w]["weight"]:
                                 temp_activated.add(w)
                 # Add newly activated nodes to the activated set.
                 newly_activated = temp_activated

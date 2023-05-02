@@ -213,6 +213,9 @@ class ACTIVESET(Solver):
         else:
             neq = 0
 
+        print(C)
+        print(d)
+
         # Checker for whether the problem is unconstrained.
         unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
 

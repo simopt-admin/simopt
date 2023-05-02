@@ -55,10 +55,15 @@ class CascadeTime(Model):
                 "datatype": int,
                 "default": 1
             },
+             "num_group": {
+                "description": "number of node groups",
+                "datatype": int,
+                "default": 3
+            },
             "init_prob": {
                 "description": "probability of initiating the nodes",
                 "datatype": np.ndarray,
-                "default": 0.001 * np.ones(len(self.G) * 10)
+                "default": np.array([0.5, 0, 0] * 10)
             },
             "T": {
                 "description": "number of time steps for the cascade process",
@@ -68,12 +73,13 @@ class CascadeTime(Model):
              "beta": {
                 "description": "probability of de-activating a node at each time step",
                 "datatype": float,
-                "default": 0.5
+                "default": 0.3
             }
         }
 
         self.check_factor_list = {
             "num_subgraph": self.check_num_subgraph,
+            "num_group": self.check_num_group,
             "init_prob": self.check_init_prob,
             "T": self.check_T,
             "beta": self.check_beta
@@ -85,8 +91,11 @@ class CascadeTime(Model):
     def check_num_subgraph(self):
         return self.factors["num_subgraph"] > 0
     
+    def check_num_group(self):
+        return self.factors["num_group"] > 0
+    
     def check_init_prob(self):
-        return np.all(self.factors["init_prob"] >= 0)
+        return np.all(self.factors["init_prob"] >= 0) & (len(self.factors["init_prob"]) == int(self.factors["num_group"] * self.factors["T"]))
     
     def check_T(self):
         return self.factors["T"] > 0
@@ -118,12 +127,16 @@ class CascadeTime(Model):
             for u, attr_dict in self.G.nodes(data=True):
                 v = (i, u)
                 H.add_node(v, **attr_dict)
-                u_prev = (i-1, u)
-                H.add_edge(u_prev, v, weight= 1 - self.factors["beta"]) # connect the same node in consecutive layers
-            for u, v, attr_dict in self.G.edges(data=True):
+             
+        for i in range(2, self.factors["T"] + 1):
+            for u, v in self.G.edges:
                 u_curr = (i-1, u)
                 v_curr = (i, v)
-                H.add_edge(u_curr, v_curr, **attr_dict)
+                H.add_edge(u_curr, v_curr, **self.G[u][v])
+            for u in self.G.nodes:
+                u_prev = (i-1, u)
+                H.add_edge(u_prev, (i, u), weight= 1 - self.factors["beta"])
+
 
         # Designate random number generators.
         seed_rng = rng_list[0]
@@ -132,9 +145,19 @@ class CascadeTime(Model):
         nodes = list(H.nodes)
         num_lst = []
         num_end_lst = []
-        for _ in range(self.factors['num_subgraph']):
-            # Create seed nodes.
-            seeds = [nodes[j] for j in range(self.num_nodes * self.factors["T"]) if seed_rng.uniform(0, 1) < self.factors["init_prob"][j]]
+        for _ in range(self.factors["num_subgraph"]):
+            seeds = []
+            for i in range(self.factors["T"]):
+                nodes_i = nodes[i * len(self.G) : (i+1) * len(self.G)]
+                # Create seed nodes according to the initiating probability of the node groups.
+                group_size = len(nodes_i) // self.factors["num_group"]
+                remainder = len(nodes_i) % self.factors["num_group"]
+                # Divide the nodes into groups.
+                groups = [nodes_i[j * group_size:(j + 1) * group_size] for j in range(self.factors["num_group"])]
+                if remainder:
+                    groups[-1].extend(nodes_i[-remainder:])            
+                for g in range(self.factors["num_group"]):
+                    seeds.extend([groups[g][j] for j in range(len(groups[g])) if seed_rng.uniform(0, 1) < self.factors["init_prob"][i * self.factors["num_group"]+ g]])
             # Set all nodes as not activated.
             activated = set()
             # Add the seed nodes to the activated set.
@@ -150,7 +173,7 @@ class CascadeTime(Model):
                     for w in H.successors(v):
                         if w not in activated:
                             u = activate_rng.uniform(0, 1)
-                            if u < H[v][w]['weight']:
+                            if u < H[v][w]["weight"]:
                                 temp_activated.add(w)
                 # Add newly activated nodes to the activated set.
                 newly_activated = temp_activated
@@ -259,17 +282,17 @@ class CascadeTimeMax(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(0.001 * np.ones(len(self.G) * 10))
+                "default": tuple(np.array([0.5, 0, 0] * 10))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 30000
+                "default": 10000
             },
             "B": {
                 "description": "budget for the activation costs",
                 "datatype": int,
-                "default": 200
+                "default": 1000
             }
         }
         self.check_factor_list = {
@@ -279,10 +302,19 @@ class CascadeTimeMax(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = CascadeTime(self.model_fixed_factors)
-        self.dim = len(self.model.G) * self.model.factors["T"]
+        self.dim = self.model.factors["num_group"] * self.model.factors["T"]
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
-        self.Ci = np.array([self.model.G.nodes[node]["cost"] for node in self.model.G.nodes() for _ in range(self.model.factors["T"])])
+
+        nodes = list(self.model.G.nodes)
+        group_size = len(nodes) // self.model.factors["num_group"]
+        remainder = len(nodes) % self.model.factors["num_group"]
+        # Divide the nodes into groups.
+        groups = [nodes[i * group_size:(i + 1) * group_size] for i in range(self.model.factors["num_group"])]
+        if remainder:
+            groups[-1].extend(nodes[-remainder:])  
+
+        self.Ci = np.array([np.sum([self.model.G.nodes[groups[g][i]]["cost"] for i in range(len(groups[g]))]) for g in range(self.model.factors["num_group"]) for _ in range(self.model.factors["T"])])
         self.Ce = None
         self.di = np.array([self.factors["B"]])
         self.de = None

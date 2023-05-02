@@ -585,8 +585,12 @@ class ASTRODF(Solver):
         
         # Generate many dummy solutions without replication only to find a reasonable maximum radius
         dummy_solns = []
-        for i in range(1000 * problem.dim):    
-            dummy_solns += [problem.get_random_solution(find_next_soln_rng)]       
+        if (problem.name == "CASCADE-1") or (problem.name == "CASCADETIME-1") or (problem.name == "CASCADETIME-2") :
+            dummy_solns.extend(problem.get_multiple_random_solution(find_next_soln_rng, 1000 * problem.dim))
+        else:
+            for i in range(1000 * problem.dim): 
+                dummy_solns += [problem.get_random_solution(find_next_soln_rng)]
+        print('done')
         # Range for each dimension is calculated and compared with box constraints range if given 
         # TODO: just use box constraints range if given
         # delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
