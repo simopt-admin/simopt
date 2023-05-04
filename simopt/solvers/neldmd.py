@@ -231,7 +231,6 @@ class NelderMead(Solver):
         sol.append(new_solution)
 
         if (problem.name == "CASCADE-1") or (problem.name == "CASCADETIME-1") or (problem.name == "CASCADETIME-2") :
-            print('start')
             xs = problem.get_multiple_random_solution(get_rand_soln_rng, n_pts - 1)
             for rand_x in xs:
                 sol.append(self.create_new_solution(rand_x, problem))
@@ -239,8 +238,6 @@ class NelderMead(Solver):
             for i in range(1, n_pts):
                 rand_x = problem.get_random_solution(get_rand_soln_rng)
                 sol.append(self.create_new_solution(rand_x, problem))
-        print('done')
-
 
         # Record initial solution data.
         intermediate_budgets.append(0)
@@ -257,7 +254,6 @@ class NelderMead(Solver):
 
         # Start Solving.
         # Evaluate solutions in initial structure.
-        print('Evaluating init sols')
         for solution in sol:
             problem.simulate(solution, self.factors["r"])
             budget_spent += self.factors["r"]
@@ -434,7 +430,6 @@ class NelderMead(Solver):
                     if new_best == 1 and budget_spent <= problem.factors["budget"]:
                         intermediate_budgets.append(budget_spent)
                         recommended_solns.append(sort_sol[0])
-        print('sol list', [sol.x for sol in recommended_solns])
         return recommended_solns, intermediate_budgets
 
     # HELPER FUNCTIONS

@@ -213,9 +213,6 @@ class ACTIVESET(Solver):
         else:
             neq = 0
 
-        print(C)
-        print(d)
-
         # Checker for whether the problem is unconstrained.
         unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
 
@@ -324,7 +321,6 @@ class ACTIVESET(Solver):
                         if s_star > 0:
                             # Line search to determine a step_size.
                             new_solution, step_size, expended_budget = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-            print('new sol', new_solution.x)
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution

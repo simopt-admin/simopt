@@ -26,9 +26,9 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 # solver_name = "RNDSRCH"  # Random search solver
-solver_name = "ASTRODF"  # Random search solver
+# solver_name = "ASTRODF"  # Random search solver
 
-# solver_name = "ACTIVESET"
+solver_name = "ACTIVESET"
 # solver_name = "PGD-SS"
 # solver_name = "PGD"
 # solver_name = "DS"
@@ -55,7 +55,7 @@ myexperiment = ProblemSolver(solver_name, problem_name)
 import timeit
 start = timeit.default_timer()
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=5)
+myexperiment.run(n_macroreps=20)
 stop = timeit.default_timer()
 
 print('Time: ', stop - start)  

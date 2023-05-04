@@ -7,21 +7,26 @@ macroreplications of the solver on the problem.
 import sys
 import os.path as o
 import os
+import pickle
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_terminal_progress, plot_terminal_scatterplots, plot_progress_curves, plot_solvability_cdfs
 
 # solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
-solver_names = {"RNDSRCH", "NELDMD","PGD-SS", "FW", "ACTIVESET"}
+solver_names = {"RNDSRCH", "NELDMD", "ASTRODF", "PGD-SS", "FW", "ACTIVESET"}
 
-problem_names = {"SAN-2"} # CNTNEWS-1"} #, "SAN-1"}
+# problem_names = {"SAN-2"} # CNTNEWS-1"} #, "SAN-1"}
+problem_names = {"CASCADETIME-1"} # CNTNEWS-1"} #, "SAN-1"}
+
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
+times = {}
 
 for problem_name in problem_names:
+    times[problem_name] = {}
 
     problem_experiments = []
     for solver_name in solver_names:
@@ -30,23 +35,31 @@ for problem_name in problem_names:
         myexperiment = ProblemSolver(solver_name, problem_name)
 
         file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
-
+        
+        import timeit
+        start = timeit.default_timer()
         # Run a fixed number of macroreplications of the solver on the problem.
-        # myexperiment.run(n_macroreps=20)
+        myexperiment.run(n_macroreps=20)
 
         # If the solver runs have already been performed, uncomment the
         # following pair of lines (and uncommmen the myexperiment.run(...)
         # line above) to read in results from a .pickle file.
-        myexperiment = read_experiment_results(file_name_path)
+        # myexperiment = read_experiment_results(file_name_path)
 
         print("Post-processing results.")
         # Run a fixed number of postreplications at all recommended solutions.
         myexperiment.post_replicate(n_postreps=100)
+        stop = timeit.default_timer()
+        print('Time: ', stop - start) 
+        times[solver_name] = stop-start
 
         problem_experiments.append(myexperiment)
 
     # Find an optimal solution x* for normalization.
     post_normalize(problem_experiments, n_postreps_init_opt=100)
+
+with open("runtime.pickle", "wb") as f:
+    pickle.dump(times, f)
 
 # Re-compile problem-solver results.
 myexperiments = []

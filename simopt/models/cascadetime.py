@@ -73,7 +73,7 @@ class CascadeTime(Model):
              "beta": {
                 "description": "probability of de-activating a node at each time step",
                 "datatype": float,
-                "default": 0.3
+                "default": 0.4
             }
         }
 
@@ -292,7 +292,7 @@ class CascadeTimeMax(Problem):
             "B": {
                 "description": "budget for the activation costs",
                 "datatype": int,
-                "default": 1000
+                "default": 800
             }
         }
         self.check_factor_list = {
@@ -756,7 +756,7 @@ class CascadeTimeEndMax(Problem):
             "B": {
                 "description": "budget for the activation costs",
                 "datatype": int,
-                "default": 1000
+                "default": 200
             }
         }
         self.check_factor_list = {
