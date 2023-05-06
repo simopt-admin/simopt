@@ -63,7 +63,7 @@ class CascadeTime(Model):
             "init_prob": {
                 "description": "probability of initiating the nodes",
                 "datatype": np.ndarray,
-                "default": np.array([0.5, 0, 0] * 10)
+                "default": np.array([0.0001, 0.0001, 0.0001] * 10)
             },
             "T": {
                 "description": "number of time steps for the cascade process",
@@ -282,7 +282,7 @@ class CascadeTimeMax(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(np.array([0.5, 0, 0] * 10))
+                "default": tuple(np.array([0.0001, 0.0001, 0.0001] * 10))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -746,7 +746,7 @@ class CascadeTimeEndMax(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(0.001 * np.ones(len(self.G) * 10))
+                "default": tuple(np.array([0.0001, 0.0001, 0.0001] * 10))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -756,7 +756,7 @@ class CascadeTimeEndMax(Problem):
             "B": {
                 "description": "budget for the activation costs",
                 "datatype": int,
-                "default": 200
+                "default": 800
             }
         }
         self.check_factor_list = {
@@ -766,10 +766,19 @@ class CascadeTimeEndMax(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = CascadeTime(self.model_fixed_factors)
-        self.dim = len(self.model.G) * self.model.factors["T"]
+        self.dim = self.model.factors["num_group"] * self.model.factors["T"]
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
-        self.Ci = np.array([self.model.G.nodes[node]["cost"] for node in self.model.G.nodes() for _ in range(self.model.factors["T"])])
+
+        nodes = list(self.model.G.nodes)
+        group_size = len(nodes) // self.model.factors["num_group"]
+        remainder = len(nodes) % self.model.factors["num_group"]
+        # Divide the nodes into groups.
+        groups = [nodes[i * group_size:(i + 1) * group_size] for i in range(self.model.factors["num_group"])]
+        if remainder:
+            groups[-1].extend(nodes[-remainder:])  
+
+        self.Ci = np.array([np.sum([self.model.G.nodes[groups[g][i]]["cost"] for i in range(len(groups[g]))]) for g in range(self.model.factors["num_group"]) for _ in range(self.model.factors["T"])])
         self.Ce = None
         self.di = np.array([self.factors["B"]])
         self.de = None

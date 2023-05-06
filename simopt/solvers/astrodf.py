@@ -14,6 +14,7 @@ This version does not require a delta_max, instead it estimates the maximum step
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
+import cvxpy as cp
 from math import log, ceil, sqrt
 import warnings
 from scipy.optimize import NonlinearConstraint
@@ -480,21 +481,25 @@ class ASTRODF(Solver):
             C = np.vstack((C, -np.identity(lower_bound.shape[0])))
             d = np.vstack((d, -lower_bound[np.newaxis].T))
 
-        # handle the box and linear constraints using ratio test
+        # Checker for whether the problem is unconstrained.
+        unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
         tol = 1e-6
-        dir = np.array(candidate_x) - np.array(new_x)
-        ra = d.flatten() - C @ new_x
-        ra_d = C @ dir
-        # Initialize maximum step size.
-        s_star = np.inf
-        # Perform ratio test.
-        for i in range(len(ra)):
-            if ra_d[i] - tol > 0:
-                s = ra[i]/ra_d[i]
-                if s < s_star:
-                    s_star = s
+        
+        if (not unconstr_flag) & (not self._feasible(candidate_x, problem, tol)):
+            # handle the box and linear constraints using ratio test
+            dir = np.array(candidate_x) - np.array(new_x)
+            ra = d.flatten() - C @ new_x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star:
+                        s_star = s
 
-        candidate_x= new_x + min(1, s_star) * dir
+            candidate_x= new_x + min(1, s_star) * dir
         # # handle the box and linear constraints using ratio test
         # for i in range(problem.dim):
         #     if candidate_x[i] <= problem.lower_bounds[i]:
@@ -605,6 +610,57 @@ class ASTRODF(Solver):
         k = 0        
         delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
         new_x = problem.factors["initial_solution"]
+
+        # Upper bound and lower bound.
+        lower_bound = np.array(problem.lower_bounds)
+        upper_bound = np.array(problem.upper_bounds)
+
+        # Input inequality and equlaity constraint matrix and vector.
+        # Cix <= di
+        # Cex = de
+        Ci = problem.Ci
+        di = problem.di
+        Ce = problem.Ce
+        de = problem.de
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, problem.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
+        # Checker for whether the problem is unconstrained.
+        unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
+
+        # Initial dim + 1 points. # TODO - change this.
+        sol = []
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_x = new_solution.x
+
+        if (not unconstr_flag) & (not self._feasible(new_x, problem, 1e-6)):
+            new_x = self.find_feasible_initial(problem, Ce, Ci, de, di, 1e-6)
+
+
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
         
@@ -615,3 +671,89 @@ class ASTRODF(Solver):
                              recommended_solns, intermediate_budgets, kappa, new_solution)
 
         return recommended_solns, intermediate_budgets
+    
+    def find_feasible_initial(self, problem, Ae, Ai, be, bi, tol):
+        '''
+        Find an initial feasible solution (if not user-provided)
+        by solving phase one simplex.
+
+        Arguments
+        ---------
+        problem : Problem object
+            simulation-optimization problem to solve
+        C: ndarray
+            constraint coefficient matrix
+        d: ndarray
+            constraint coefficient vector
+
+        Returns
+        -------
+        x0 : ndarray
+            an initial feasible solution
+        tol: float
+            Floating point comparison tolerance
+        '''
+        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds)
+
+        # Define decision variables.
+        x = cp.Variable(problem.dim)
+
+        # Define constraints.
+        constraints = []
+
+        if (Ae is not None) and (be is not None):
+            constraints.append(Ae @ x == be.ravel())
+        if (Ai is not None) and (bi is not None):
+            constraints.append(Ai @ x <= bi.ravel())
+
+        # Removing redundant bound constraints.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        if len(ub_inf_idx) > 0:
+            for i in ub_inf_idx:
+                constraints.append(x[i] <= upper_bound[i])
+        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        if len(lb_inf_idx) > 0:
+            for i in lb_inf_idx:
+                constraints.append(x[i] >= lower_bound[i])
+
+        # Define objective function.
+        obj = cp.Minimize(0)
+        
+        # Create problem.
+        model = cp.Problem(obj, constraints)
+
+        # Solve problem.
+        model.solve(solver = cp.SCIPY)
+
+        # Check for optimality.
+        if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
+            raise ValueError("Could not find feasible x0")
+        x0 = x.value
+        if not self._feasible(x0, problem, tol):
+            raise ValueError("Could not find feasible x0")
+
+        return x0
+    
+    def _feasible(self, x, problem, tol):
+        """
+        Check whether a solution x is feasible to the problem.
+        
+        Arguments
+        ---------
+        x : tuple
+            a solution vector
+        problem : Problem object
+            simulation-optimization problem to solve
+        tol: float
+            Floating point comparison tolerance
+        """
+        x = np.asarray(x)
+        lb = np.asarray(problem.lower_bounds)
+        ub = np.asarray(problem.upper_bounds)
+        res = True
+        if (problem.Ci is not None) and (problem.di is not None):
+            res = res & np.all(problem.Ci @ x <= problem.di + tol)
+        if (problem.Ce is not None) and (problem.de is not None):
+            res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
+        return res & (np.all(x >= lb)) & (np.all(x <= ub))
