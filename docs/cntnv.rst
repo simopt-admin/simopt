@@ -15,10 +15,10 @@ salvaged at price :math:`p_{v}`.
 Sources of Randomness:
 ----------------------
 
-Each day's random demand for discrete product quantities follows Exponential distribution and is denoted 
-by :math:`D`. The parameters of the Exponential distribution is :math:`µ`. Its cumulative
-distribution function is given by :math:`F(x) = 1 - exp(-x/µ)}` where :math:`x` and
-:math:`µ` are positive.
+Each day's random demand for discrete product quantities follows Poisson distribution and 
+is denoted by :math:`D`. The parameters of the Poisson distribution is :math:`λ`. Its 
+cumulative distribution function is given by :math:`F(x; λ) = \sum_{k=0}^{x} \frac{e^{-λ}λ^k}{k!}` 
+where :math:`x` and :math:`λ` are positive.
 
 Model Factors: 
 --------------
@@ -45,7 +45,7 @@ Model Factors:
 
 * process_cost (:math:`c_{p}`): Processing cost per product unit. :math:`n_{p}` sized array.
 
-    * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
+    * Default: [0.1, 0.1, 0.1]
 
 * order_cost (:math:`c_{o}`): Fixed one-time ordering cost.
 
@@ -53,7 +53,7 @@ Model Factors:
 
 * purchase_yield (:math:`Y`): Yield rates for initially purchased materials. :math:`n_{m}` sized array. 
 
-    * Default: [0.9, 0.9, 0.9, 0.9, 0.9]
+    * Default: [0.9, 0.9, 0.9, 0.9]
 
 * total_budget (:math:`b`): Total budget for all materials, processing, ordering and recourse purchases.
 
@@ -71,7 +71,7 @@ Model Factors:
 
     * Default: [20, 20, 20, 20]
   
-* exp_mean (:math:`µ`): Mean parameter for demand's exponential distribution. :math:`n_{p}` sized array. 
+* poi_mean (:math:`λ`): Mean parameter for demand's poisson distribution. :math:`n_{p}` sized array. 
 
     * Default: [15, 15, 15]
 
@@ -127,7 +127,7 @@ model factors is necessary if simulating a particular case.
     * :math:`n_{p}` = 1 
     * :math:`c_{p}` still exists as an array. len(:math:`c_{p}`) = 1.
     * :math:`p_{s}` still exists as an array. len(:math:`p_{s}`) = 1.
-    * :math:`µ` stil exists as an array. len(:math:`µ`) = 1.
+    * :math:`λ` stil exists as an array. len(:math:`λ`) = 1.
 
     In other words, the factors' datatype should not alter, regardless of the model being the 
     multi-product/single-product or retail/factory. 
@@ -139,11 +139,14 @@ model factors is necessary if simulating a particular case.
     decision to procure materials/products after demand is observed. Economically speaking, a vendor
     would chooses to do so only if the return is worth the premium prices paid for the recourse. 
 
+    Recourse is disabled by default. In other words, its default input is None. 
+
     In the retail newsvendor setting, the recourse refers to product recourse. 
 
     In the factory newsvendor setting, the recourse refers to material recourse. 
 
     In either case, len(:math:`c_{r}`) = :math:`n_{m}`. 
+
 
 6) Random yield:
 
@@ -216,14 +219,15 @@ Starting Solution:
 Random Solutions: 
 -----------------
 
-If random solutions are needed, generate :math:`x` from an Exponential distribution with mean 1.
+If random solutions are needed, generate :math:`x` from continous_random_vector_from_simplex 
+function in mrg32k3a.
 
 Optimal Solution:
 -----------------
 
-* [107, 68, 226, 129]
+* [82, 60, 144, 115]
 
 Optimal Objective Function Value:
 ---------------------------------
 
-For the default factors, the maximum expected profit is 243.6
+For the default factors, the maximum expected profit is 343.19

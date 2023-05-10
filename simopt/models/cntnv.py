@@ -2,11 +2,13 @@
 Summary
 -------
 Simulate a day's worth of sales for a newsvendor.
-A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`_.
+A detailed description of the model/problem can be found `here
+<https://simopt.readthedocs.io/en/latest/cntnv.html>`_.
 """
 import numpy as np
 import pulp
 from ..base import Model, Problem
+
 
 class CntNV(Model):
     """
@@ -57,7 +59,7 @@ class CntNV(Model):
                 "default": 3
             },
             "mat_to_prod": {
-                "description": "P by R matrix mapping M materials to P products",
+                "description": "PxR matrix, mapping M material to P products",
                 "datatype": list,
                 "default": [[1, 2, 1, 3],
                             [1, 1, 3, 1],
@@ -86,10 +88,10 @@ class CntNV(Model):
             "purchase_yield": {
                 "description": "yield rate of purchased materials",
                 "datatype": list,
-                "default": list(0.9* np.ones(4))
-            },          
+                "default": list(0.9 * np.ones(4))
+            },
             "total_budget": {
-                "description": "total budget for newsvendor's entire operations",
+                "description": "total budget for newsvendor's operation",
                 "datatype": int,
                 "default": 600
             },
@@ -105,11 +107,11 @@ class CntNV(Model):
             },
             "order_quantity": {
                 "description": "initial order quantity per material",
-                "datatype": list,  
+                "datatype": list,
                 "default": list(20 * np.ones(4))
             },
-            "exp_mean": {
-                "description": "Mean parameter for demand's exponential distribution",
+            "poi_mean": {
+                "description": "parameter for poisson demand distribution",
                 "datatype": list,
                 "default": list(15 * np.ones(3))
             }
@@ -127,56 +129,80 @@ class CntNV(Model):
             "sales_price": self.check_sales_price,
             "salvage_price": self.check_salvage_price,
             "order_quantity": self.check_order_quantity,
-            "exp_mean": self.check_exp_mean
+            "poi_mean": self.check_poi_mean
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
-   
+
     def check_num_material(self):
         return (self.factors["num_material"] > 0)
-    
+
     def check_num_product(self):
         return (self.factors["num_product"] > 0)
-    
+
     def check_mat_to_prod(self):
-        return (np.shape(self.factors["mat_to_prod"])[0] == self.factors["num_product"]) and (np.shape(self.factors["mat_to_prod"])[1] == self.factors["num_material"])
+        return (np.shape(self.factors["mat_to_prod"])[0] ==
+                self.factors["num_product"]) \
+            and (np.shape(self.factors["mat_to_prod"])[1] ==
+                 self.factors["num_material"])
 
     def check_material_cost(self):
-        return all(np.array(self.factors["material_cost"]) > 0) and (len(self.factors["material_cost"]) == self.factors["num_material"])
+        return all(np.array(self.factors["material_cost"]) > 0) \
+            and (len(self.factors["material_cost"]) ==
+                 self.factors["num_material"])
 
     def check_recourse_cost(self):
         if self.factors["recourse_cost"] is not None:
-            return all(np.array(self.factors["recourse_cost"]) > 0) and (len(self.factors["recourse_cost"]) == self.factors["num_material"])
+            return all(np.array(self.factors["recourse_cost"]) > 0) \
+                and (len(self.factors["recourse_cost"]) ==
+                     self.factors["num_material"])
         else:
             return True
-    
+
     def check_process_cost(self):
-        return all(np.array(self.factors["process_cost"]) >= 0) and (len(self.factors["process_cost"]) == self.factors["num_product"])
-        
+        return all(np.array(self.factors["process_cost"]) >= 0) \
+            and (len(self.factors["process_cost"]) ==
+                 self.factors["num_product"])
+
     def check_order_cost(self):
         return (self.factors["order_cost"] >= 0)
-        
+
     def check_purchase_yield(self):
-        return all(np.array(self.factors["purchase_yield"]) <= 1) and (len(self.factors["purchase_yield"]) == self.factors["num_material"])
-        
+        return all(np.array(self.factors["purchase_yield"]) <= 1) \
+            and (len(self.factors["purchase_yield"]) ==
+                 self.factors["num_material"])
+
     def check_total_budget(self):
-        return (np.dot(self.factors["order_quantity"], self.factors["material_cost"]) <= self.factors["total_budget"])
-    
+        return (np.dot(self.factors["order_quantity"], self.factors["material_cost"])
+                <= self.factors["total_budget"])
+
     def check_sales_price(self):
-        return all(np.array(self.factors["sales_price"]) > 0) and (len(self.factors["sales_price"]) == self.factors["num_product"])
+        return all(np.array(self.factors["sales_price"]) > 0) \
+            and (len(self.factors["sales_price"]) ==
+                 self.factors["num_product"])
 
     def check_salvage_price(self):
-        return all(np.array(self.factors["salvage_price"]) >= 0) and (len(self.factors["salvage_price"]) == self.factors["num_material"])
+        return all(np.array(self.factors["salvage_price"]) >= 0) \
+            and (len(self.factors["salvage_price"]) ==
+                 self.factors["num_material"])
 
     def check_order_quantity(self):
-        return all(np.array(self.factors["order_quantity"]) > 0) and (len(self.factors["order_quantity"]) == self.factors["num_material"]) 
+        return all(np.array(self.factors["order_quantity"]) > 0) \
+            and (len(self.factors["order_quantity"]) ==
+                 self.factors["num_material"]) \
+            and (np.issubdtype(self.factors["order_quantity"].dtype, np.integer))
 
-    def check_exp_mean(self):
-        return all(np.array(self.factors["exp_mean"]) > 0) and (len(self.factors["exp_mean"]) == self.factors["num_product"])
-    
+    def check_poi_mean(self):
+        return all(np.array(self.factors["poi_mean"]) > 0) \
+            and (len(self.factors["poi_mean"]) ==
+                 self.factors["num_product"]) \
+            and (np.issubdtype(self.factors["poi_mean"].dtype, np.integer))
+
     def check_simulatable_factors(self):
-        return all((self.factors["sales_price"] - np.dot(self.factors["mat_to_prod"], self.factors["material_cost"])) > 0)
-    
+        return all((self.factors["sales_price"] -
+                    np.dot(self.factors["mat_to_prod"],
+                           self.factors["material_cost"])) > 0)
+
     def replicate(self, rng_list):
         """
         Simulate a single replication for the current model factors.
@@ -194,60 +220,89 @@ class CntNV(Model):
             "stockout_qty" = amount by which demand exceeded supply
             "stockout" = was there unmet demand? (Y/N)
         """
-        # Replace with Poisson; independent demand
 
         # Designate random number generator for demand variability.
         demand_rng = rng_list[0]
         demand = []
         for i in range(self.factors["num_product"]):
-            unit_demand = -np.log(1 - demand_rng.random()) * (self.factors["exp_mean"])[i]
-            demand.append(int(np.ceil(unit_demand)))
+            mul, n = np.exp(-(self.factors["poi_mean"])[i]), 0
+            cdf, fact, power, u = mul, 1, 1, demand_rng.random()
+            while u > cdf:
+                n += 1
+                fact, power = n*fact, power*(self.factors["poi_mean"])[i]
+                cdf += (power/fact)*mul
+            demand.append(n)
 
-        # Generate binomial random variate for initial material levels based on yield rates
-        stock_material = [sum([1 for i in range(int(n)) if demand_rng.random() < p]) for p, n in zip(self.factors["purchase_yield"], self.factors["order_quantity"])]
-
+        # Generate binomial r.v for material levels based on yield rates
+        stock_material = [sum([1 for i in range(int(n))
+                               if demand_rng.random() < p])
+                          for p, n in zip(self.factors["purchase_yield"],
+                                          self.factors["order_quantity"])]
+        # If recourse cost is not specified, use an array of very large numbers
+        # This heuristically makes it impossible to buy any recourse material
+        if self.factors["recourse_cost"] is None:
+            self.factors["recourse_cost"] = [element * 10000 for
+                                             element in self.factors["material_cost"]]
         # define IP problem for production of goods to fulfill realized demand
         """
         X: amount of products produced for each product type
         Y: recourse quantity for each material type
-        Objective: maximize profit => sum(product sales) - sum(process cost) - sum(recourse cost)
+        Objective: maximize profit => sum(sales) - sum(process cost) - sum(recourse cost)
         """
-        X = pulp.LpVariable.dicts("X", range(self.factors["num_product"]), lowBound=0, cat='Integer')
-        Y = pulp.LpVariable.dicts("Y", range(self.factors["num_material"]), lowBound=0, cat='Integer')
+        X = pulp.LpVariable.dicts("X", range(self.factors["num_product"]),
+                                  lowBound=0, cat='Integer')
+        Y = pulp.LpVariable.dicts("Y", range(self.factors["num_material"]),
+                                  lowBound=0, cat='Integer')
         prob = pulp.LpProblem("Integer_Program", pulp.LpMaximize)
-        prob += pulp.lpSum(self.factors["sales_price"][i]*X[i] for i in range(self.factors["num_product"])) - \
-        pulp.lpSum([X[i]*self.factors["process_cost"][i] for i in range(self.factors["num_product"])]) - \
-        pulp.lpSum([Y[i]*self.factors["recourse_cost"][i] for i in range(self.factors["num_material"])]) 
+        prob += pulp.lpSum(self.factors["sales_price"][i] * X[i]
+                           for i in range(self.factors["num_product"])) - \
+            pulp.lpSum([X[i] * self.factors["process_cost"][i]
+                        for i in range(self.factors["num_product"])]) - \
+            pulp.lpSum([Y[i] * self.factors["recourse_cost"][i]
+                        for i in range(self.factors["num_material"])])
         # Define constraints
         """
-        C1: sum(recourse cost) + sum(process cost) <= total budget - sum(initial material cost)
-        C2: for each material, the amount used <= (initial material + recourse quantity)
+        C1: sum(recourse cost) + sum(process cost) <= total budget - sum(material cost)
+        C2: for each material, amount used <= (initial material + recourse quantity)
         """
-        prob += (pulp.lpSum([Y[i]*self.factors["recourse_cost"][i] for i in range(self.factors["num_material"])]) + pulp.lpSum([X[i]*self.factors["process_cost"][i] for i in range(self.factors["num_product"])])) <= self.factors["total_budget"] - np.dot(self.factors["order_quantity"], self.factors["material_cost"])
+        prob += (pulp.lpSum([Y[i]*self.factors["recourse_cost"][i]
+                            for i in range(self.factors["num_material"])]) +
+                 pulp.lpSum([X[i]*self.factors["process_cost"][i]
+                            for i in range(self.factors["num_product"])])) <= \
+            self.factors["total_budget"] - np.dot(self.factors["order_quantity"],
+                                                  self.factors["material_cost"])
         for j in range(self.factors["num_material"]):
-            prob += pulp.lpSum([self.factors["mat_to_prod"][i][j]*X[i] for i in range(self.factors["num_product"])]) <= stock_material[j] + Y[j]
+            prob += pulp.lpSum([self.factors["mat_to_prod"][i][j] * X[i]
+                                for i in range(self.factors["num_product"])]) <= \
+                                    stock_material[j] + Y[j]
         for i in range(self.factors["num_product"]):
             prob += X[i] <= demand[i]
         prob.solve(pulp.apis.PULP_CBC_CMD(msg=False))
 
         # Results of IP
-        Finish_Goods = np.array([pulp.value(X[i]) for i in range(self.factors["num_product"])])
-        Recourse = np.array([pulp.value(Y[i]) for i in range(self.factors["num_material"])])
-        Inventory = np.array(self.factors["order_quantity"]) + Recourse - np.dot(np.linalg.pinv(self.factors["mat_to_prod"]), Finish_Goods)
+        Finish_Goods = np.array([pulp.value(X[i])
+                                 for i in range(self.factors["num_product"])])
+        Recourse = np.array([pulp.value(Y[i])
+                             for i in range(self.factors["num_material"])])
+        Inventory = np.array(self.factors["order_quantity"]) + Recourse - \
+            np.dot(np.linalg.pinv(self.factors["mat_to_prod"]), Finish_Goods)
+
         # Calculate profit.
-        total_cost = (np.dot(self.factors["order_quantity"], self.factors["material_cost"]) + \
-                        np.dot(Recourse, self.factors["recourse_cost"]) + \
-                        np.dot(Finish_Goods, self.factors["process_cost"]) + \
-                        self.factors["order_cost"])
-        sales_revenue = np.dot([min(s, d) for s, d in zip(Finish_Goods, demand)], self.factors["sales_price"])
+        total_cost = (np.dot(self.factors["order_quantity"], self.factors["material_cost"]) +
+                      np.dot(Recourse, self.factors["recourse_cost"]) +
+                      np.dot(Finish_Goods, self.factors["process_cost"]) +
+                      self.factors["order_cost"])
+        sales_revenue = np.dot([min(s, d) for s, d in zip(Finish_Goods, demand)],
+                               self.factors["sales_price"])
         salvage_revenue = np.dot(Inventory, self.factors["salvage_price"])
         profit = sales_revenue + salvage_revenue - total_cost
 
-        stockout_qty =   [max(d - s, 0) for d, s in zip(demand, Finish_Goods)]
+        stockout_qty = [max(d - s, 0) for d, s in zip(demand, Finish_Goods)]
         stockout = [1 if a > 0 else 0 for a in stockout_qty]
         # Compose responses and gradients.
         responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications}
+                     for response_key in responses}
         return responses, gradients
 
 
@@ -336,7 +391,7 @@ class CntNVMaxProfit(Problem):
         self.variable_type = "discrete"
         self.gradient_available = False
         self.optimal_value = None
-        self.optimal_solution = None  
+        self.optimal_solution = None
         self.model_default_factors = {}
         self.model_decision_factors = {"order_quantity"}
         self.factors = fixed_factors
@@ -362,7 +417,6 @@ class CntNVMaxProfit(Problem):
         self.dim = self.model.factors["num_material"]
         self.lower_bounds = (0,)*self.dim
         self.upper_bounds = (np.inf,)*self.dim
-        
 
     def vector_to_factor_dict(self, vector):
         """
@@ -494,7 +548,9 @@ class CntNVMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return super().check_deterministic_constraints(x) and (np.dot(x, self.model.factors["material_cost"]) < self.model.factors["total_budget"])
+        return super().check_deterministic_constraints(x) and (
+            np.dot(x, self.model.factors["material_cost"]) <
+            self.model.factors["total_budget"])
 
     def get_random_solution(self, rand_sol_rng):
         """
@@ -510,10 +566,12 @@ class CntNVMaxProfit(Problem):
         x : tuple
             vector of decision variables
         """
-        # Generate an Exponential(rate = 1) r.v.
-        x = (rand_sol_rng.continuous_random_vector_from_simplex(n_elements = self.model.factors["num_material"], 
-                                                             summation = self.model.factors["total_budget"], 
-                                                             exact_sum = False,
-                                                             weights = self.model.factors["material_cost"]))
-        x = [np.floor(i) for i in x]
+        # Generate an r.v. vector.
+        # The result is rounded down to get discrete values.
+        x = (rand_sol_rng.continuous_random_vector_from_simplex(
+            n_elements=self.model.factors["num_material"],
+            summation=self.model.factors["total_budget"],
+            exact_sum=False,
+            weights=self.model.factors["material_cost"]))
+        x = [int(np.floor(i)) for i in x]
         return x

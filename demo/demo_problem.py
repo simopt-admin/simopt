@@ -45,7 +45,7 @@ from simopt.base import Solution
 from simopt.models.cntnv import CntNVMaxProfit
 fixed_factors = {}
 myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (5, 5, 5, 5, 5)
+x = (5, 5, 5, 5)
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
