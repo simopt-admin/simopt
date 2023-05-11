@@ -36,10 +36,10 @@ file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + 
 print(f"Results will be stored as {file_name_path}.")
 
 # Initialize an instance of the experiment class.
-myexperiment = ProblemSolver(solver_name, problem_name)
+myexperiment = ProblemSolver(solver_name, problem_name, solver_fixed_factors={"sample_size": 10})
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=20)
+myexperiment.run(n_macroreps=5)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
@@ -48,9 +48,9 @@ myexperiment.run(n_macroreps=20)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=200)
+myexperiment.post_replicate(n_postreps=20)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=200)
+post_normalize([myexperiment], n_postreps_init_opt=20)
 
 # Log results.
 myexperiment.log_experiment_results()
