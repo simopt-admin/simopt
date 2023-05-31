@@ -42,9 +42,9 @@ from simopt.base import Solution
 
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
-from simopt.models.cntnv import CntNVMaxProfit
+from simopt.models.valorantmm import ValorantMatch
 fixed_factors = {"initial_solution": (2,), "budget": 500}
-myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+myproblem = ValorantMatch(fixed_factors=fixed_factors)
 x = (3,)
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------

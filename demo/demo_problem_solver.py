@@ -7,6 +7,7 @@ macroreplications of the solver on the problem.
 import sys
 import os.path as o
 import os
+
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemSolver class and other useful functions
@@ -26,7 +27,7 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 solver_name = "RNDSRCH"  # Random search solver
-problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
+problem_name = "VALORANT-1"  # Continuous newsvendor problem
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -39,7 +40,7 @@ print(f"Results will be stored as {file_name_path}.")
 myexperiment = ProblemSolver(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=20)
+myexperiment.run(n_macroreps=5)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)

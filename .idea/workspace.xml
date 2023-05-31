@@ -5,7 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3c955668-7cb9-433a-8347-17145bf612ca" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/docs/valorantmm.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/demo/demo_problem.py" beforeDir="false" afterPath="$PROJECT_DIR$/demo/demo_problem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/demo/demo_problem_solver.py" beforeDir="false" afterPath="$PROJECT_DIR$/demo/demo_problem_solver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simopt/directory.py" beforeDir="false" afterPath="$PROJECT_DIR$/simopt/directory.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/simopt/models/valorantmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/simopt/models/valorantmm.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -83,7 +87,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="RunManager" selected="Python.demo_model">
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "last_opened_file_path": "C:/Users/nolan/OneDrive/Documents/GitHub/simopt/docs"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\nolan\OneDrive\Documents\GitHub\simopt\docs" />
+    </key>
+  </component>
+  <component name="RunManager">
     <configuration name="cntnv" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="simopt" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -185,6 +199,17 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/demo/demo_problem_solver.py</url>
+          <line>42</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/simopt/solvers/__init__.py">

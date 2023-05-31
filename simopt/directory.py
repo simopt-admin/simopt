@@ -4,6 +4,7 @@ Summary
 -------
 Provide dictionary directories listing solvers, problems, and models.
 """
+from .models.valorantmm import ValorantMatch, ValorantMatchmaking
 # import solvers
 from .solvers.astrodf import ASTRODF
 from .solvers.randomsearch import RandomSearch
@@ -73,7 +74,8 @@ problem_directory = {
     "PARAMESTI-1": ParamEstiMaxLogLik,
     "FIXEDSAN-1": FixedSANLongestPath,
     "NETWORK-1": NetworkMinTotalCost,
-    "AMUSEMENTPARK-1": AmusementParkMinDepart
+    "AMUSEMENTPARK-1": AmusementParkMinDepart,
+    "VALORANT-1": ValorantMatch
 }
 
 problem_unabbreviated_directory = {
@@ -97,7 +99,8 @@ problem_unabbreviated_directory = {
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSANLongestPath,
     "Min Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost,
-    "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementParkMinDepart
+    "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementParkMinDepart,
+    "Min Elo Difference Between Players and Teams for Valorant()": ValorantMatch
 }
 model_directory = {
     "EXAMPLE": ExampleModel,
@@ -117,7 +120,8 @@ model_directory = {
     "PARAMESTI": ParameterEstimation,
     "FIXEDSAN": FixedSAN,
     "NETWORK": Network,
-    "AMUSEMENTPARK": AmusementPark
+    "AMUSEMENTPARK": AmusementPark,
+    "VALORANT": ValorantMatchmaking
 }
 model_unabbreviated_directory = {
     "Min Deterministic Function + Noise (SUCG)": "EXAMPLE",
@@ -140,5 +144,6 @@ model_unabbreviated_directory = {
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
     "Min Total Cost for Communication Networks System (SDCN)": "NETWORK",
-    "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK"
+    "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK",
+    "Min Elo Difference Between Players and Teams for Valorant()": ValorantMatchmaking
 }
