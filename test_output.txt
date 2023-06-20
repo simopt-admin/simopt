@@ -1,0 +1,1 @@
+ Name: Factor 1, Default: 1.5, Include: False  Name: Factor 2, Default: 3.0, Include: False  Name: Factor 3, Default: 20, Include: False  Name: Factor 4, Default: 50, Include: False 

@@ -35,8 +35,8 @@ factor_settings_filename = None
 #    - each value in the table gives the value of the factor (col index)
 #      for the design point (row index)
 # E.g., design_filename = "model_factor_settings_design"
-# design_filename = None
-design_filename = "model_factor_settings_design"
+design_filename = None
+#design_filename = "model_factor_settings_design"
 
 # Specify a common number of replications to run of the model at each
 # design point.
@@ -55,7 +55,7 @@ output_filename = "cntnews_data_farming_output"
 myexperiment = DataFarmingExperiment(model_name=model_name,
                                      factor_settings_filename=factor_settings_filename,
                                      factor_headers=factor_headers,
-                                     design_filename=design_filename,
+                                     #design_filename=design_filename,
                                      model_fixed_factors={}
                                      )
 

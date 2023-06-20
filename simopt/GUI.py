@@ -14,7 +14,7 @@ import pickle
 import ast
 
 
-from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory
+from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory
 from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots
 
 
@@ -158,6 +158,14 @@ class Experiment_Window(tk.Tk):
                                             text = "Create Problem-Solver Group",
                                             width = 50,
                                             command = self.crossdesign_function)
+        # My code starts here 
+        # Create data farming experiment button
+        
+        self.data_farming_button = ttk.Button(master=self.master,
+                                            text = "Create Data Farming Experiment",
+                                            width = 50,
+                                            command = self.datafarming_function)
+        # My code ends here
 
         self.pickle_file_load_button = ttk.Button(master=self.master,
                                                 text = "Load Problem-Solver Pair",
@@ -259,7 +267,10 @@ class Experiment_Window(tk.Tk):
             else:
                 self.post_normal_all_button.place_forget()
             if tab == 'Queue of Problem-Solver Pairs':
-                self.make_meta_experiment.place(x=10,rely=.92)
+                # My code starts here 
+                # Make meta experiment button wider & releative x
+                self.make_meta_experiment.place(relx=.02,rely=.92, width= 300)
+                # My code ends here
             else:
                 self.make_meta_experiment.place_forget()
 
@@ -287,6 +298,13 @@ class Experiment_Window(tk.Tk):
 
         self.or_label.place(x=215, rely=.06)
         self.crossdesign_button.place(x=255, rely=.06, width=220)
+        
+        # My code starts here
+        # Place data farming button
+        
+        self.data_farming_button.place(relx = .6, rely=.92, width=220)
+        
+        # My code ends here
 
         y_place = .06
         self.pickle_file_load_button.place(x=10, rely=y_place, width=195)
@@ -455,7 +473,7 @@ class Experiment_Window(tk.Tk):
 
         ## Rina Adding After this 
         problem = str(self.problem_var.get())  
-        self.oracle = model_unabbreviated_directory[problem] # returns model string
+        self.oracle = model_problem_unabbreviated_directory[problem] # returns model string
         self.oracle_object = model_directory[self.oracle]
         ##self.oracle = problem.split("-") 
         ##self.oracle = self.oracle[0] 
@@ -1435,6 +1453,16 @@ class Experiment_Window(tk.Tk):
         self.crossdesign_window.geometry("650x850")
         self.crossdesign_window.title("Cross-Design Problem-Solver Group")
         self.cross_app = Cross_Design_Window(self.crossdesign_window, self)
+        
+    # My code starts here
+    # Open data farming window
+    def datafarming_function(self):
+        self.datafarming_window = tk.Toplevel(self.master)
+        self.datafarming_window.geometry("650x850")
+        self.datafarming_window.title("Data Farming")
+        self.datafarming_app = Data_Farming_Window(self.datafarming_window, self)
+        
+    # My code ends here
 
     def add_meta_exp_to_frame(self, n_macroreps=None, input_meta_experiment=None):
         if n_macroreps == None and input_meta_experiment != None:
@@ -2272,6 +2300,1186 @@ class Experiment_Window(tk.Tk):
         if str(self.problem_var.get()) != "Problem":
             self.add_button.place(x=10, rely=.48, width=200, height=30)
                  
+# My code starts here
+# Create data farming window class
+class Data_Farming_Window():
+    def __init__(self, master, main_widow, forced_creation = False):
+        if not forced_creation:
+            self.master = master
+            self.main_window = main_widow
+            self.master.grid_rowconfigure(0, weight=0)
+            self.master.grid_rowconfigure(1, weight=0)
+            self.master.grid_rowconfigure(2, weight=0)
+            self.master.grid_rowconfigure(3, weight=0)
+            self.master.grid_rowconfigure(4, weight=0)
+            self.master.grid_rowconfigure(5, weight=1)
+            self.master.grid_rowconfigure(6, weight=1)
+            self.master.grid_rowconfigure(7, weight=1)
+            self.master.grid_columnconfigure(0, weight=1)
+            self.master.grid_columnconfigure(1, weight=1)
+            self.master.grid_columnconfigure(2, weight=1)
+            self.master.grid_columnconfigure(3, weight=1)
+            
+            
+            self.design_frame = tk.Frame(master = self.master)
+            self.design_frame.grid(row = 5, column = 0)
+            
+            self.create_design_frame = tk.Frame(master = self.master)
+            self.run_frame = tk.Frame(master = self.master)
+            
+            
+            
+            # Initial variable values
+            self.factor_que_length = 1
+            self.default_values_list = []
+            self.checkstate_list=[]
+            self.min_list = []
+            self.max_list = []
+            self.dec_list = []
+            
+            # Create button for entry testing
+            #self.test_button = tk.Button( master = self.master, text = "Test Entries", 
+                                         #command = self.get_factor_values , width = 50)
+            #self.test_button.place( relx = .1 , rely = .9)
+            
+            # Create main window title
+            self.title_frame = tk.Frame(master=self.master)
+            self.title_frame.grid_rowconfigure(0, weight=1)
+            self.title_frame.grid_columnconfigure(0, weight=1)
+            self.title_frame.grid( row=0, column = 0, sticky = tk.N)
+            self.datafarming_title_label = tk.Label(master=self.title_frame,
+                                                    text = "Data Farming",
+                                                    font = "Calibri 15 bold")
+            self.datafarming_title_label.grid( row = 0, column = 0) 
+            
+            # Create model selection drop down menu
+            self.model_list = model_unabbreviated_directory
+            self.modelselect_frame = tk.Frame(master=self.master)
+            self.modelselect_frame.grid_rowconfigure(0, weight=1)
+            self.modelselect_frame.grid_rowconfigure(1, weight=1)
+            self.modelselect_frame.grid_columnconfigure(0, weight=1)
+            self.modelselect_frame.grid_columnconfigure(1, weight=1)
+            self.modelselect_frame.grid( row =2, column = 0, sticky = tk.W )
+            self.model_label = tk.Label(master=self.modelselect_frame, # window label is used in
+                            text = "Select Model:",
+                            font = "Calibri 13",
+                            width = 20)
+            self.model_label.grid( row = 0, column = 0, sticky = tk.W)
+            
+            #Temp values for testing
+            
+            self.model_var = tk.StringVar()
+            # Need to add command
+            self.model_menu = ttk.OptionMenu(self.modelselect_frame, self.model_var, "Model", 
+                                             *self.model_list, command= self.show_model_factors)
+            self.model_menu.grid( row = 0, column = 1, sticky = tk.W)
+            
+            
+            
+           
+            
+                   
+       
+
+    # Display Model Factors
+    def show_model_factors(self,*args ):
+        
+        
+    
+        
+        
+        # Initialize frame canvas
+        self.factor_canvas = tk.Canvas (master = self.master)
+        self.factor_canvas.grid_rowconfigure(0, weight = 1)
+        self.factor_canvas.grid_columnconfigure(0, weight = 1)
+        self.factor_canvas.grid( row = 4, column = 0, sticky = 'nsew')
+        
+        self.factors_title_frame = tk.Frame(master = self.master)
+        self.factors_title_frame.grid( row = 3, column = 0, sticky = tk.N + tk.W)
+        self.factors_title_frame.grid_rowconfigure(0, weight = 0)
+        self.factors_title_frame.grid_columnconfigure(0, weight =1)
+        self.factors_title_frame.grid_columnconfigure(1, weight =1)
+        self.factors_title_frame.grid_columnconfigure(2, weight =1)
+        self.factors_title_frame.grid_columnconfigure(3, weight =1)
+        self.factors_title_frame.grid_columnconfigure(4, weight =1)
+        self.factors_title_frame.grid_columnconfigure(5, weight =1)
+        self.factors_title_frame.grid_columnconfigure(6, weight =1)
+        
+        self.factors_frame = tk.Frame( master = self.factor_canvas)
+        self.factors_frame.grid( row = 0, column = 0, sticky = tk.W + tk.N)
+        self.factors_frame.grid_rowconfigure(0, weight =1)
+        self.factors_frame.grid_columnconfigure(0, weight =1)
+        self.factors_frame.grid_columnconfigure(1, weight =1)
+        self.factors_frame.grid_columnconfigure(2, weight =1)
+        self.factors_frame.grid_columnconfigure(3, weight =1)
+        self.factors_frame.grid_columnconfigure(4, weight =1)
+        self.factors_frame.grid_columnconfigure(5, weight =1)
+        self.factors_frame.grid_columnconfigure(6, weight =1)
+        self.factors_frame.grid_columnconfigure(7, weight =1)
+        
+      
+  
+        #Clear previous selections
+        for widget in self.factors_frame.winfo_children():
+            widget.destroy()
+            
+        # Delete previous design tree
+        for widget in self.create_design_frame.winfo_children():
+            widget.destroy()
+        
+        for widget in self.run_frame.winfo_children():
+            widget.destroy()
+            
+        for widget in self.design_frame.winfo_children():
+            widget.destroy()
+        
+        # Widget lists
+        self.default_widgets = {}
+        self.check_widgets = {}
+        self.min_widgets = {}
+        self.max_widgets = {}
+        self.dec_widgets = {}
+        self.cat_widgets = {}
+        
+        # Initial variable values
+        self.factor_que_length = 1
+        self.default_values_list = []
+        self.checkstate_list=[]
+        self.min_list = []
+        self.max_list = []
+        self.dec_list = []
+        self.cat_checklist = []
+        
+        # Create column for model factor names
+        self.headername_label = tk.Label(master = self.factors_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+        
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.factors_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        # Create column for factor check box
+        self.headercheck_label = tk.Label(master = self.factors_frame, text = 'Include in Experiment', font = "Calibri 13 bold", width = 20 )
+        self.headercheck_label.grid(row = 0, column = 3, sticky = tk.N + tk.W)
+        
+        # Create header for experiment options
+        self.headercheck_label = tk.Label(master = self.factors_frame, text = 'Experiment Options', font = "Calibri 13 bold", width = 50 )
+        self.headercheck_label.grid(row = 0, column = 4, columnspan = 3)
+        
+    
+        
+       
+        
+        
+        # Get model selected from drop down
+        self.selected_model = self.model_var.get()
+        
+        # Uncomment this to run on temp test data
+        
+        # temp test data
+        # test_factor_list = ['1','2','3', '4', '5']
+        # test_factornames = {'1': 'Factor 1', '2': 'Factor 2', '3': 'Factor 3', '4': 'Factor 4', '5': 'Factor 5'}
+        # test_factortype ={'1':'Integer', '2': 'Categorical', '3': 'Boolean', '4': 'Categorical', '5': 'Integer'}
+        # test_factordefault = {'1': '5', '2': 'Category', '3': 'True', '4': 'Category', '5': '10' }
+        # test_categories = ['cat 1', 'cat 2', 'cat 3']
+        # test_cat_default = 'cat def'
+        # test_bool_list = ['True', 'False']
+        # test_bool_default = 'True'
+        
+        # for factor in test_factor_list:
+        #     ftype = test_factortype[factor]
+        #     if ftype == 'Integer':
+            
+        #         self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+    
+        #         # Add label for factor names
+        #         self.factorname_label = tk.Label (master = self.factors_frame, text = test_factornames[factor], font = "Calibri 13", width = 20)
+        #         self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+        #         # Add label for factor type
+        #         self.factortype_label = tk.Label (master = self.factors_frame, text = test_factortype[factor], font = "Calibri 13", width = 20)
+        #         self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+        #         # Add entry box for default value
+        #         self.default_value= tk.StringVar()
+        #         self.default_entry = tk.Entry( master = self.factors_frame, width = 20, textvariable = self.default_value)
+        #         self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+        #         #Display original default value
+        #         self.default_entry.insert(0, test_factordefault[factor])
+        #         self.default_values_list.append(self.default_value)
+                
+        #         self.default_widgets[factor] = self.default_entry
+                
+                
+        #         # Add check box
+        #         self.checkstate = tk.BooleanVar()
+        #         self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+        #                                        command = self.include_factor)
+        #         self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+        #         self.checkstate_list.append(self.checkstate)
+                
+        #         self.check_widgets[factor] = self.checkbox
+                
+        #         # Add entry box for min val
+        #         self.min_frame = tk.Frame (master = self.factors_frame)
+        #         self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+        #         self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+        #         self.min_label.grid( row = 0, column = 0)
+        #         self.min_val = tk.StringVar()
+        #         self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val)
+        #         self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+        #         self.min_list.append(self.min_val)    
+                
+        #         self.min_widgets[factor] = self.min_entry
+                
+        #         self.min_entry.configure(state = 'disabled')
+                
+        #         # Add entry box for max val
+        #         self.max_frame = tk.Frame (master = self.factors_frame)
+        #         self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+        #         self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+        #         self.max_label.grid( row = 0, column = 0) 
+                
+        #         self.max_val = tk.StringVar()
+        #         self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val)
+        #         self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+        #         self.max_list.append(self.max_val)    
+                
+        #         self.max_widgets[factor] = self.max_entry
+                
+        #         self.max_entry.configure(state = 'disabled')
+                
+        #         # Add entry box for editable decimals
+        #         self.dec_frame = tk.Frame (master = self.factors_frame)
+        #         self.dec_frame.grid( row = self.factor_que_length, column = 6, sticky = tk.N + tk.W )
+                
+        #         self.max_label = tk.Label(master = self.dec_frame, text = '# Decimals', font = "Calibri 13", width = 10 )
+        #         self.max_label.grid( row = 0, column = 0) 
+                
+        #         self.dec_val = tk.StringVar()
+        #         self.dec_entry = tk.Entry( master = self.dec_frame, width = 10, textvariable = self.dec_val)
+        #         self.dec_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+        #         self.dec_list.append(self.dec_val)  
+                
+        #         self.dec_widgets[factor] = self.dec_entry
+                
+        #         self.dec_entry.configure(state = 'disabled')
+                
+        #         self.factor_que_length += 1
+        #     elif ftype == 'Categorical':
+               
+        #         # Add label for factor names
+        #         self.factorname_label = tk.Label (master = self.factors_frame, text = test_factornames[factor], font = "Calibri 13", width = 20)
+        #         self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+        #         # Add label for factor type
+        #         self.factortype_label = tk.Label (master = self.factors_frame, text = test_factortype[factor], font = "Calibri 13", width = 20)
+        #         self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+        #         # Add option menu for default category
+        #         self.default_value= tk.StringVar()
+        #         self.default_value.set(test_cat_default)
+        #         self.default_entry = ttk.OptionMenu(self.factors_frame, self.default_value, test_cat_default, *test_categories)
+        #         self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                
+        #         self.default_widgets[factor] = self.default_entry
+        #         self.default_values_list.append(self.default_value)
+                
+        #         # Add check box
+        #         self.checkstate = tk.BooleanVar()
+        #         self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate, 
+        #                                        command = self.include_factor)
+        #         self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+        #         self.checkstate_list.append(self.checkstate)
+                
+        #         self.check_widgets[factor] = self.checkbox
+                
+        #         #Add list of current category checkboxes
+        #         self.current_cat_widgets = []
+        #         self.current_cat_var = []
+                
+        #        # Add editable categories
+        #         for i in range(len(test_categories)):
+                  
+        #            self.column_range = 4 + i
+        #            self.factors_frame.grid_columnconfigure(self.column_range, weight =1)
+        #            self.cat_frame = tk.Frame(master = self.factors_frame)
+        #            self.cat_frame.grid( row = self.factor_que_length, column = self.column_range)
+                   
+        #            self.cat_checkstate = tk.BooleanVar()
+        #            self.cat_check = tk.Checkbutton(master = self.cat_frame, variable = self.cat_checkstate)
+        #            self.cat_check.grid(row = 0, column = 0)
+                   
+        #            self.cat_label = tk.Label( master = self.cat_frame, text = test_categories[i], font = "Calibri 13", width = 10)
+        #            self.cat_label.grid( row = 0, column = 1)
+                  
+        #            self.current_cat_widgets.append(self.cat_check)
+        #            self.current_cat_var.append(self.cat_checkstate)
+        #            self.cat_check.configure( state = 'disabled')
+                   
+        #         self.cat_widgets[factor] = self.current_cat_widgets
+        #         self.cat_checklist.append(self.current_cat_var)
+                   
+                   
+        #         self.factor_que_length += 1    
+                   
+                   
+        #     elif ftype == 'Boolean':
+                
+        #         # Add label for factor names
+        #         self.factorname_label = tk.Label (master = self.factors_frame, text = test_factornames[factor], font = "Calibri 13", width = 20)
+        #         self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+        #         # Add label for factor type
+        #         self.factortype_label = tk.Label (master = self.factors_frame, text = test_factortype[factor], font = "Calibri 13", width = 20)
+        #         self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+        #         # Add option menu for default true/false
+        #         self.default_value= tk.StringVar()
+        #         self.default_value.set(test_bool_default)
+        #         self.default_entry = ttk.OptionMenu(self.factors_frame, self.default_value, test_bool_default, *test_bool_list)
+        #         self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                
+        #         self.default_widgets[factor] = self.default_entry
+        #         self.default_values_list.append(self.default_value)
+                
+        #         # Add check box
+        #         self.checkstate = tk.BooleanVar()
+        #         self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+        #                                        command = self.include_factor)
+        #         self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+        #         self.checkstate_list.append(self.checkstate)
+                
+        #         self.check_widgets[factor] = self.checkbox
+                
+        #         self.factor_que_length += 1  
+                
+               
+               #End of test code 
+            
+               
+             
+            
+                
+        #Update scrollbar config
+        
+        self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
+             
+        yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
+        yscroll.grid(row = 0, column = 7, rowspan = self.factor_que_length + 1, sticky = 'nsew')
+        self.factor_canvas.configure(yscrollcommand=yscroll.set)
+        
+        # # Don't need this one
+        # xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
+        # xscroll.grid(row = self.factor_que_length + 1, column = 0, columnspan = 8, sticky = 'nsew')
+        # self.factor_canvas.configure(xscrollcommand=xscroll.set)
+        
+        self.factors_frame.update_idletasks()
+        self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
+        
+    
+                
+        
+        # Get model infor from dictionary
+        self.model_object = self.model_list[self.selected_model]()
+        
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            
+            
+            if self.factor_datatype == float:
+            
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'float'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = 20, textvariable = self.default_value)
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                
+                # Add check box
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.factors_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val)
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.factors_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val)
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled')
+                
+                # Add entry box for editable decimals
+                self.dec_frame = tk.Frame (master = self.factors_frame)
+                self.dec_frame.grid( row = self.factor_que_length, column = 6, sticky = tk.N + tk.W )
+                
+                self.dec_label = tk.Label(master = self.dec_frame, text = '# Decimals', font = "Calibri 13", width = 10 )
+                self.dec_label.grid( row = 0, column = 0) 
+                
+                self.dec_val = tk.StringVar()
+                self.dec_entry = tk.Entry( master = self.dec_frame, width = 10, textvariable = self.dec_val)
+                self.dec_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.dec_list.append(self.dec_val)  
+                
+                self.dec_widgets[factor] = self.dec_entry
+                
+                self.dec_entry.configure(state = 'disabled')
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == int:
+            
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'int'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = 20, textvariable = self.default_value)
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                
+                # Add check box
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.factors_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val)
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.factors_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val)
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled')
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == list:
+                
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'list'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                #Default values label (place holder until option menu working)
+                self.factordefault_label = tk.Label (master = self.factors_frame, text = str(self.factor_default) , font = "Calibri 11", width = 200, anchor = 'w')
+                self.factordefault_label.grid( row = self.factor_que_length, column = 2, sticky = tk.N + tk.W, columnspan = 5)
+                
+                # Variable to hold default value (currently not editable)
+                self.default_value= tk.StringVar()
+                #Set to default in model code
+                self.default_value.set(self.factor_default)
+                
+                self.default_values_list.append(self.default_value)
+                
+               
+                
+                self.factor_que_length += 1
+                
+            elif self.factor_datatype == tuple:
+                
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'tuple'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                #Default values label (place holder until option menu working)
+                self.factordefault_label = tk.Label (master = self.factors_frame, text = str(self.factor_default), font = "Calibri 11", width = 200, anchor = 'w')
+                self.factordefault_label.grid( row = self.factor_que_length, column = 2, sticky = tk.N + tk.W, columnspan = 5)
+                
+                # Variable to hold default value (currently not editable)
+                self.default_value= tk.StringVar()
+                # Set to default in model code
+                self.default_value.set(self.factor_default)
+                
+                self.default_values_list.append(self.default_value)
+               
+                self.factor_que_length += 1
+               
+                
+              
+                
+               # Use this once we know how to get all possible list inputs
+                
+              # # Add option menu for default category
+                # self.default_value= tk.StringVar()
+                # self.default_value.set(test_cat_default)
+                # self.default_entry = ttk.OptionMenu(self.factors_frame, self.default_value, self.factor_default, *test_categories)
+                # self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                
+                # self.default_widgets[factor] = self.default_entry
+                # self.default_values_list.append(self.default_value)
+                
+                # # Add check box
+                # self.checkstate = tk.BooleanVar()
+                # self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate, 
+                #                                command = self.include_factor)
+                # self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                # self.checkstate_list.append(self.checkstate)
+                
+                # self.check_widgets[factor] = self.checkbox
+                
+                # #Add list of current category checkboxes
+                # self.current_cat_widgets = []
+                # self.current_cat_var = []
+                
+               # Add editable categories
+                
+               # for i in range(len(test_categories)):
+                  
+               #     self.column_range = 4 + i
+               #     self.factors_frame.grid_columnconfigure(self.column_range, weight =1)
+               #     self.cat_frame = tk.Frame(master = self.factors_frame)
+               #     self.cat_frame.grid( row = self.factor_que_length, column = self.column_range)
+                   
+               #     self.cat_checkstate = tk.BooleanVar()
+               #     self.cat_check = tk.Checkbutton(master = self.cat_frame, variable = self.cat_checkstate)
+               #     self.cat_check.grid(row = 0, column = 0)
+                   
+               #     self.cat_label = tk.Label( master = self.cat_frame, text = test_categories[i], font = "Calibri 13", width = 10)
+               #     self.cat_label.grid( row = 0, column = 1)
+                  
+               #     self.current_cat_widgets.append(self.cat_check)
+               #     self.current_cat_var.append(self.cat_checkstate)
+               #     self.cat_check.configure( state = 'disabled')
+                   
+               #  self.cat_widgets[factor] = self.current_cat_widgets
+               #  self.cat_checklist.append(self.current_cat_var)
+                   
+                   
+               #  self.factor_que_length += 1    
+                   
+              
+            # Does not appear to be any bool categories, can add later
+            # elif ftype == 'Boolean':
+                
+            #     # Add label for factor names
+            #     self.factorname_label = tk.Label (master = self.factors_frame, text = test_factornames[factor], font = "Calibri 13", width = 20)
+            #     self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+            #     # Add label for factor type
+            #     self.factortype_label = tk.Label (master = self.factors_frame, text = test_factortype[factor], font = "Calibri 13", width = 20)
+            #     self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+            #     # Add option menu for default true/false
+            #     self.default_value= tk.StringVar()
+            #     self.default_value.set(test_bool_default)
+            #     self.default_entry = ttk.OptionMenu(self.factors_frame, self.default_value, test_bool_default, *test_bool_list)
+            #     self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                
+            #     self.default_widgets[factor] = self.default_entry
+            #     self.default_values_list.append(self.default_value)
+                
+            #     # Add check box
+            #     self.checkstate = tk.BooleanVar()
+            #     self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+            #                                    command = self.include_factor)
+            #     self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+            #     self.checkstate_list.append(self.checkstate)
+                
+            #     self.check_widgets[factor] = self.checkbox
+                
+            #     self.factor_que_length += 1  
+        
+        # Design type selection menu
+        self.design_frame = tk.Frame(master = self.master)
+        self.design_frame.grid(row = 5, column = 0)
+        self.design_type_label = tk.Label (master = self.design_frame, text = 'Select Design Type', font = "Calibri 13", width = 20)
+        self.design_type_label.grid( row = 0, column = 0)
+        
+        self.design_types_list = ['NOLH']
+        self.design_var = tk.StringVar()
+        self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, 'Design Type', *self.design_types_list, command = self.enable_stacks)
+        self.design_type_menu.grid(row = 0, column = 1)
+        
+        #Stack selection menu
+        self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks", font = "Calibri 13", width = 20)
+        self.stack_label.grid( row =1, column = 0)
+        self.stack_list = ['1', '2', '3']
+        self.stack_var = tk.StringVar()
+        self.stack_menu = ttk.OptionMenu(self.design_frame, self.stack_var, 'Stacks', *self.stack_list, command = self.get_design_pts)
+        self.stack_menu.grid( row = 1, column = 1)
+        self.stack_menu.configure(state = 'disabled')
+        
+        # Design pts label
+        self.design_pts_title = tk.Label (master = self.design_frame, text = 'Design Points', font = "Calibri 13", width = 50)
+        self.design_pts_title.grid( row = 0, column = 2)
+        
+        # Create design button
+        self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
+        self.create_design_button.grid( row = 0, column = 3)
+        self.create_design_button.configure(state = 'disabled')
+        
+    def enable_stacks(self, *args):
+        self.stack_menu.configure(state = 'normal')
+    
+    def get_design_pts(self, *args):
+        self.design_pts = self.stack_var.get() + " test "
+        
+        self.design_pts_label = tk.Label( master = self.design_frame, text = self.design_pts, font = "Calibri 13", width = 50)
+        self.design_pts_label.grid( row = 1, column =2)
+        
+        self.create_design_button.configure(state = 'normal')
+        
+        
+        
+    def create_design(self, *args):
+        
+        #Temp values for testing
+        test_factor_list = ['1','2','3', '4', '5']
+        test_factornames = {'1': 'Factor 1', '2': 'Factor 2', '3': 'Factor 3', '4': 'Factor 4', '5': 'Factor 5'}
+        test_factortype ={'1':'Integer', '2': 'Categorical', '3': 'Boolean', '4': 'Categorical', '5': 'Integer'}
+    
+        test_categories = ['cat 1', 'cat 2', 'cat 3']
+       
+        
+        test_designs = {'1': 'arrival rate = 3, service style = LIFO,  allow departures = True', '2': 'arrival rate = 1, service style = FIFO,  allow departures = False' }
+       
+        self.create_design_frame = tk.Frame(master = self.master)
+        self.create_design_frame.grid( row = 6, column = 0)
+        self.create_design_frame.grid_rowconfigure( 0, weight = 0)
+        self.create_design_frame.grid_rowconfigure( 1, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 0, weight = 1)
+        
+        
+        
+        self.create_design_label = tk.Label( master = self.create_design_frame, text = 'Generated Designs', font = "Calibri 13 bold", width = 50)
+        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+        
+        self.design_tree = ttk.Treeview( master = self.create_design_frame)
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew')
+       
+        self.design_tree['columns'] = [ 'Factor Values']
+        self.design_tree.column("#0", width=80 )
+        self.design_tree.column("Factor Values", width=1000) 
+        
+        self.style = ttk.Style()
+        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.design_tree.heading( '#0', text = 'Design #' )
+        self.design_tree.heading( 'Factor Values', text = 'Factor Values')
+        
+        
+        #Export design factors (text file for now)
+        
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
+        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
+        self.min_values = [self.min_val.get() for self.min_val in self.min_list]
+        self.max_values = [self.max_val.get() for self.max_val in self.max_list]
+        self.dec_values = [self.dec_val.get() for self.dec_val in self.dec_list]
+        self.factor_index = 0
+        self.maxmin_index = 0
+        self.dec_index = 0
+       
+        
+        # with open("test_output.txt", "w") as test_output_file:
+        #     test_output_file.write("")
+         
+        # # Get experiment information    
+        # for factor in test_factor_list:
+        #     self.factor_name = test_factornames[factor]
+        #     self.factor_default = self.default_values[self.factor_index]
+        #     self.factor_include = self.check_values[self.factor_index]
+        #     self.current_cat_index = 0
+            
+        #     if self.factor_include == True:
+        #         self.factor_include_str = 'True'
+        #     else:
+        #         self.factor_include_str = 'False'
+            
+        #     ftype = test_factortype[factor]
+            
+        #     if ftype == 'Integer' and self.factor_include == True:
+        #         self.factor_min = self.min_values[self.int_index]
+        #         self.factor_max = self.max_values[self.int_index]
+        #         self.factor_dec = self.dec_values[self.int_index]
+                
+        #         self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + ', Min: ' + self.factor_min + ', Max: ' + self.factor_max + ', Decimals: ' + self.factor_dec + ' '
+                
+        #         with open("test_output.txt", "a") as test_output_file:
+        #             test_output_file.write(self.data_insert)
+                    
+        #         self.int_index += 1
+                
+        #     elif ftype == 'Integer' and self.factor_include == False:
+                
+        #         self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+        #         with open("test_output.txt", "a") as test_output_file:
+        #             test_output_file.write(self.data_insert)
+                    
+        #         self.int_index += 1
+                
+        #     elif ftype == 'Categorical' and self.factor_include == True:
+        #         self.current_checklist = self.cat_checklist[self.cat_index]
+        #         self.cat_check_values = [self.cat_checkstate.get() for self.cat_checkstate in self.current_cat_var]
+                
+        #         self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + ', Categories Selected: '
+                
+        #         for checkstate in self.cat_check_values:
+        #             self.current_cat_name = test_categories[self.current_cat_index]
+        #             if checkstate == True:
+        #                 self.data_insert += self.current_cat_name + ", "
+        #             self.current_cat_index += 1
+                    
+        #         with open("test_output.txt", "a") as test_output_file:
+        #             test_output_file.write(self.data_insert)
+                    
+        #         self.cat_index += 1
+                
+        #     elif ftype == 'Categorical' and self.factor_include == False:
+               
+        #         self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+        #         with open("test_output.txt", "a") as test_output_file:
+        #             test_output_file.write(self.data_insert)
+               
+        #         self.cat_index += 1
+                    
+        #     elif ftype == 'Boolean': 
+                
+        #         self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+        #         with open("test_output.txt", "a") as test_output_file:
+        #             test_output_file.write(self.data_insert)
+                
+                
+        #     self.factor_index += 1
+                
+                
+        # # Export experiment options to file
+        # for design in test_designs:
+        #     self.current_design = '{' + test_designs[design] + '}'
+        #     self.design_tree.insert("", 'end', text = design, values = (self.current_design), tag = 'style' )
+        
+        with open("model_design_factors.txt", "w") as self.model_design_factors:
+            self.model_design_factors.write("")
+         
+        # Get experiment information    
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            
+            
+            self.factor_default = self.default_values[self.factor_index]
+            self.factor_include = self.check_values[self.factor_index]
+            
+            if self.factor_include == True:
+            
+                if self.factor_datatype == float or self.factor_datatype == int:
+                    self.factor_min = str(self.min_values[self.maxmin_index])
+                    self.factor_max = str(self.max_values[self.maxmin_index])
+                    self.maxmin_index += 1
+                    
+                    if self.factor_datatype == float:
+                        self.factor_dec = str(self.dec_values[self.dec_index])
+                        self.dec_index += 1
+                        
+                    elif self.factor_datatype == int:
+                        self.factor_dec = '0'
+                        
+                    self.data_insert = self.factor_min + ' ' + self.factor_max + ' ' + self.factor_dec
+                    
+                    with open("model_design_factors.txt", "a") as self.model_design_factors:
+                        self.model_design_factors.write(self.data_insert + '\n')
+            
+            # Continue to increase index even if not included in design
+            if self.factor_include == False:
+                if self.factor_datatype == float or self.factor_datatype == int:
+                    self.maxmin_index += 1
+                if self.factor_datatype == float:
+                    self.dec_index += 1
+             
+            self.factor_index += 1
+                    
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            # if self.factor_include == True:
+            #     self.factor_include_str = 'True'
+            # else:
+            #     self.factor_include_str = 'False'
+            
+            # ftype = test_factortype[factor]
+            
+            # if ftype == 'Integer' and self.factor_include == True:
+            #     self.factor_min = self.min_values[self.int_index]
+            #     self.factor_max = self.max_values[self.int_index]
+            #     self.factor_dec = self.dec_values[self.int_index]
+                
+            #     self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + ', Min: ' + self.factor_min + ', Max: ' + self.factor_max + ', Decimals: ' + self.factor_dec + ' '
+                
+            #     with open("test_output.txt", "a") as test_output_file:
+            #         test_output_file.write(self.data_insert)
+                    
+            #     self.int_index += 1
+                
+            # elif ftype == 'Integer' and self.factor_include == False:
+                
+            #     self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+            #     with open("test_output.txt", "a") as test_output_file:
+            #         test_output_file.write(self.data_insert)
+                    
+            #     self.int_index += 1
+                
+            # elif ftype == 'Categorical' and self.factor_include == True:
+            #     self.current_checklist = self.cat_checklist[self.cat_index]
+            #     self.cat_check_values = [self.cat_checkstate.get() for self.cat_checkstate in self.current_cat_var]
+                
+            #     self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + ', Categories Selected: '
+                
+            #     for checkstate in self.cat_check_values:
+            #         self.current_cat_name = test_categories[self.current_cat_index]
+            #         if checkstate == True:
+            #             self.data_insert += self.current_cat_name + ", "
+            #         self.current_cat_index += 1
+                    
+            #     with open("test_output.txt", "a") as test_output_file:
+            #         test_output_file.write(self.data_insert)
+                    
+            #     self.cat_index += 1
+                
+            # elif ftype == 'Categorical' and self.factor_include == False:
+               
+            #     self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+            #     with open("test_output.txt", "a") as test_output_file:
+            #         test_output_file.write(self.data_insert)
+               
+            #     self.cat_index += 1
+                    
+            # elif ftype == 'Boolean': 
+                
+            #     self.data_insert = ' Name: ' + self.factor_name + ', Default: ' + self.factor_default + ', Include: ' + self.factor_include_str + " "
+                
+            #     with open("test_output.txt", "a") as test_output_file:
+            #         test_output_file.write(self.data_insert)
+                
+          
+                
+                
+        # Export experiment options to file
+        for design in test_designs:
+            self.current_design = '{' + test_designs[design] + '}'
+            self.design_tree.insert("", 'end', text = design, values = (self.current_design), tag = 'style' )
+            
+        # Create buttons to run experiment
+        self.run_frame = tk.Frame(master = self.master)
+        self.run_frame.grid(row = 7, column = 0)
+        self.run_frame.grid_columnconfigure(0, weight = 1)
+        self.run_frame.grid_columnconfigure(1, weight = 1)
+        self.run_frame.grid_columnconfigure(2, weight = 1)
+        self.run_frame.grid_rowconfigure(0, weight = 0)
+        self.run_frame.grid_rowconfigure(1, weight = 0)
+        self.run_frame.grid_rowconfigure(2, weight = 0)
+        
+        self.rep_label = tk.Label(master = self.run_frame, text = 'Replications', font = 'Calibri 13', width = 20)
+        self.rep_label.grid( row = 0, column = 0, sticky = tk.W)
+        self.rep_var = tk.StringVar()
+        self.rep_entry = tk.Entry( master = self.run_frame, textvariable = self.rep_var, width = 10)
+        self.rep_entry.grid( row = 0, column = 1, sticky = tk.W)
+        
+        self.crn_label = tk.Label(master = self.run_frame, text = 'CRN', font = 'Calibri 13', width = 20)
+        self.crn_label.grid( row = 1, column = 0, sticky = tk.W)
+        self.crn_var = tk.StringVar()
+        self.crn_option = ttk.OptionMenu( self.run_frame, self.crn_var,'Yes', 'Yes', 'No')
+        self.crn_option.grid(row = 1, column =1, sticky = tk.W)
+        
+        self.filename_label = tk.Label(master = self.run_frame, text = 'File Name', font = 'Calibri 13', width =20)
+        self.filename_label.grid( row = 2, column = 0, sticky = tk.W)
+        self.filename_var = tk.StringVar()
+        self.filename_entry = tk.Entry( master = self.run_frame, textvariable = self.filename_var, width = 50)
+        self.filename_entry.grid( row = 2, column = 1)
+        
+        self.run_button = tk.Button(master = self.run_frame, text = 'Run All', font = 'Calibri 13', width = 20, command = self.run_experiment)
+        self.run_button.grid( row = 0, column = 2)
+        
+            
+    def run_experiment(self, *args):
+        with open("test_run_experiment.csv", "w") as test_run_file:
+            test_run_file.write("")
+   
+    def include_factor(self, *args):
+
+        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
+        self.check_index = 0
+        self.cat_index = 0
+    
+        # If checkbox to include in experiment checked, enable experiment option buttons
+        for factor in self.model_object.specifications:
+                  
+            # Get current checksate values from include experiment column
+            self.current_checkstate = self.check_values[self.check_index]
+            # Cross check factor type
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            # Disable / enable experiment option widgets depending on factor type
+            if self.factor_datatype == float or self.factor_datatype == int:
+                self.current_min_entry = self.min_widgets[factor]
+                self.current_max_entry = self.max_widgets[factor]               
+                
+                if self.current_checkstate == True:
+                    self.current_min_entry.configure(state = 'normal')
+                    self.current_max_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    #Empty current entries
+                    self.current_min_entry.delete(0, tk.END)
+                    self.current_max_entry.delete(0, tk.END)
+                   
+                    
+                    self.current_min_entry.configure(state = 'disabled')
+                    self.current_max_entry.configure(state = 'disabled')
+                                      
+            if self.factor_datatype == float:              
+                self.current_dec_entry = self.dec_widgets[factor]
+                
+                if self.current_checkstate == True:
+                    self.current_dec_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    self.current_dec_entry.delete(0, tk.END)
+                    self.current_dec_entry.configure(state = 'disabled')
+                    
+                
+                    
+            
+                
+            # Include this if we have categorical factors
+            
+            # elif ftype == 'Categorical':
+            #     # Get list of checkbox widgets corresponding to factor
+            #     self.current_cat_checks = self.cat_widgets[factor]
+            #     # Get list of check variables corresponding to factor
+            #     self.cat_vars = self.cat_checklist[self.cat_index]
+            #     if self.current_checkstate == True:
+            #         for i in range(len(self.current_cat_checks)):
+            #             # Enable checkboxes
+            #             self.current_cat_checkbox = self.current_cat_checks[i]
+            #             self.current_cat_checkbox.configure( state = 'normal')
+            #     elif self.current_checkstate == False:
+            #         for i in range(len(self.current_cat_checks)):
+            #             # Set check values to false
+            #             self.current_cat_checkvalue = self.cat_vars[i]
+            #             self.current_cat_checkvalue.set(False)
+            #             #Disable checkboxes
+            #             self.current_cat_checkbox = self.current_cat_checks[i]
+            #             self.current_cat_checkbox.configure( state = 'disabled')
+                        
+            #     self.cat_index += 1
+                        
+           
+            
+            self.check_index += 1        
+                    
+       
+        
+    
+                
+                
+        
+ 
+        
+
+        
+
+
+            
+   
+    """
+        # Create factor name list
+        self.factorname_frame = tk.Frame(master=self.master)
+        self.factorname_frame.grid(row=3, column=0)
+        self.factorname_frame_label = tk.LabelFrame(master=self.factorname_frame, text="Model Factors")
+        self.factorname_frame_label.grid(row = 0)
+        
+        # Create a Listbox
+        factor_list = tk.Listbox(self.factorname_frame)
+        factor_list.grid( row = 1)
+        
+        # Populate the Listbox with items
+        for factor in self.model_factors:
+            factor_list.insert(tk.END, factor)
+        
+        
+        # Display factor checklist
+        self.check_factors = []
+        for factor in self.model_factors:
+            check_var = tk.IntVar()
+            check_button = tk.Checkbutton(self.factor_frame_model, text=factor, variable=check_var)
+            check_button.pack()
+            self.check_factors.append(check_var)
+        
+        
+        self.vert_scroll_bar_factor_model = Scrollbar(self.factor_label_frame_model, orient="vertical", command=self.factor_canvas_model.yview)
+        self.horiz_scroll_bar_factor_model = Scrollbar(self.factor_label_frame_model, orient="horizontal", command=self.factor_canvas_model.xview)
+       
+      
+     
+
+        self.factor_canvas_model = tk.Canvas(master=self.factor_label_frame_model, borderwidth=0)
+
+       
+        
+        # Scroll Bars
+        
+        self.vert_scroll_bar_factor_model = Scrollbar(self.factor_label_frame_model, orient="vertical", command=self.factor_canvas_model.yview)
+        self.horiz_scroll_bar_factor_model = Scrollbar(self.factor_label_frame_model, orient="horizontal", command=self.factor_canvas_model.xview)
+        self.factor_canvas_model.configure(xscrollcommand=self.horiz_scroll_bar_factor_model.set, yscrollcommand=self.vert_scroll_bar_factor_model.set)
+
+        self.vert_scroll_bar_factor_model.pack(side="right", fill="y")
+        self.horiz_scroll_bar_factor_model.pack(side="bottom", fill="x")
+
+        self.factor_canvas_model.pack(side="left", fill="both", expand=True)
+        self.factor_canvas_model.create_window((0,0), window=self.factor_frame_model, anchor="nw",
+                                  tags="self.factor_frame_model")
+
+        self.factor_frame_model.bind("<Configure>", self.onFrameConfigure_factor_model)
+
+        self.factor_notebook_model = ttk.Notebook(master=self.factor_frame_model)
+        self.factor_notebook_model.pack(fill="both")
+
+        self.factor_tab_one_model = tk.Frame(master=self.factor_notebook_model)
+
+        self.factor_notebook_model.add(self.factor_tab_one_model, text=str(self.solver_var2.get()) + " Factors")
+
+        self.factor_tab_one_solver.grid_rowconfigure(0)
+
+        self.factor_heading_list_solver = ["Description", "Input"]
+        """    
+    
+# My code ends here
 
 class Cross_Design_Window():
 

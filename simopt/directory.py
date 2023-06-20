@@ -119,7 +119,7 @@ model_directory = {
     "NETWORK": Network,
     "AMUSEMENTPARK": AmusementPark
 }
-model_unabbreviated_directory = {
+model_problem_unabbreviated_directory = {
     "Min Deterministic Function + Noise (SUCG)": "EXAMPLE",
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": "MM1",
@@ -141,4 +141,24 @@ model_unabbreviated_directory = {
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
     "Min Total Cost for Communication Networks System (SDCN)": "NETWORK",
     "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK"
+}
+model_unabbreviated_directory= {
+	"Deterministic Function + Noise": ExampleModel,
+	"Continuous Newsvendor": CntNV,
+	"MM1 Queue": MM1Queue,
+	"Facility Sizing": FacilitySize,
+	"Revenue Management Temporal Demand": RMITD,
+	"(s, S) Inventory": SSCont,
+	"Iron Ore": IronOre,
+	"Dynamic Newsvendor": DynamNews,
+	"Dual Sourcing": DualSourcing,
+	"Contamination": Contamination,
+	"Chess Matchmaking": ChessMatchmaking,
+	"Stochastic Activity Network": SAN,
+	"Hotel Booking": Hotel,
+	"Restaurant Table Allocation": TableAllocation,
+	"Gamma Parameter Estimation": ParameterEstimation,
+	"Fixed Stochastic Activity Network": FixedSAN,
+	"Communication Networks System": Network,
+	"Amusement Park (SDDN)": AmusementPark
 }
