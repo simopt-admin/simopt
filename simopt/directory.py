@@ -12,6 +12,7 @@ from .solvers.strong import STRONG
 from .solvers.spsa import SPSA
 from .solvers.adam import ADAM
 from .solvers.aloe import ALOE
+from .solvers.coordinatesearch import CoordinateSearch
 # import models and problems
 from .models.example import ExampleModel, ExampleProblem
 from .models.cntnv import CntNV, CntNVMaxProfit
@@ -39,7 +40,8 @@ solver_directory = {
     "STRONG": STRONG,
     "SPSA": SPSA,
     "ADAM": ADAM,
-    "ALOE": ALOE
+    "ALOE": ALOE,
+    "COORDSRCH": CoordinateSearch
 }
 
 solver_unabbreviated_directory = {
@@ -49,7 +51,8 @@ solver_unabbreviated_directory = {
     "STRONG (SBCN)": STRONG,
     "SPSA (SBCN)": SPSA,
     "ADAM (SBCN)": ADAM,
-    "ALOE (SBCN)": ALOE
+    "ALOE (SBCN)": ALOE,
+    "Coordinate Search (SBDN)": CoordinateSearch
 }
 
 problem_directory = {
