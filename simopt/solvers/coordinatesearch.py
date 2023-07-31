@@ -217,7 +217,7 @@ class CoordinateSearch(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
             else:
-                new_x = self.factors["initial solution"]
+                new_x = self.factors["initial_solution"]
                 new_solution = initial_solution
             print()
         print("total expended budget:",expended_budget)
