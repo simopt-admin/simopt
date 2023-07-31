@@ -1,0 +1,47 @@
+./experiments/outputs/COORDSRCH_on_SSCONT-1.pickle
+Problem: SSCONT-1
+Solver: COORDSRCH
+
+Model Factors:
+	demand_mean: 100.0
+	lead_mean: 6.0
+	backorder_cost: 4.0
+	holding_cost: 1.0
+	fixed_cost: 36.0
+	variable_cost: 2.0
+	n_days: 100
+	warmup: 20
+
+Problem Factors:
+	initial_solution: (600, 600)
+	budget: 1000
+
+Solver Factors:
+	crn_across_solns: True
+	ini_sample_size: 10
+	sample_size_slope: 1
+	m0: 4
+	zmax: 50
+
+1 macroreplications were run.
+200 postreplications were run at each recommended solution.
+
+The initial solution is (600, 600). Its estimated objective is 624.4132.
+The proxy optimal solution is (473, 408). Its estimated objective is 542.7212.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 10	Recommended Solution: (600, 600)	Estimated Objective: 618.581
+	Budget: 80	Recommended Solution: (536, 600)	Estimated Objective: 592.2786
+	Budget: 157	Recommended Solution: (536, 536)	Estimated Objective: 577.0752
+	Budget: 241	Recommended Solution: (472, 536)	Estimated Objective: 558.4856
+	Budget: 332	Recommended Solution: (472, 472)	Estimated Objective: 547.8508
+	Budget: 444	Recommended Solution: (473, 472)	Estimated Objective: 548.0423
+	Budget: 549	Recommended Solution: (473, 408)	Estimated Objective: 536.1868
+	Budget: 677	Recommended Solution: (474, 408)	Estimated Objective: 536.3222
+	Budget: 830	Recommended Solution: (474, 408)	Estimated Objective: 536.3222
+	Budget: 884	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
+	Budget: 1000	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
+	The time taken to complete this macroreplication was 3.99 s.

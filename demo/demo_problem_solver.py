@@ -26,7 +26,7 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
 solver_name = "COORDSRCH"  # Random search solver
-problem_name = "SSCONT-1"  # Continuous newsvendor problem
+problem_name = "SSCONT-1"  # SS inventory problem
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -39,7 +39,7 @@ print(f"Results will be stored as {file_name_path}.")
 myexperiment = ProblemSolver(solver_name, problem_name)
 
 # Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=5)
+myexperiment.run(n_macroreps=1)
 
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
