@@ -44,4 +44,4 @@ Macroreplication 1:
 	Budget: 830	Recommended Solution: (474, 408)	Estimated Objective: 536.3222
 	Budget: 884	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
 	Budget: 1000	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
-	The time taken to complete this macroreplication was 4.4 s.
+	The time taken to complete this macroreplication was 4.9 s.
