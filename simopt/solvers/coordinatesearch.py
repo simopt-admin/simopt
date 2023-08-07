@@ -63,12 +63,12 @@ class CoordinateSearch(Solver):
             "ini_sample_size": {
                 "description": "initial sample size",
                 "datatype": int,
-                "default": 10
+                "default": 100
             },
             "sample_size_slope": {
                 "description": "sample size increment per iteration",
                 "datatype": int,
-                "default": 1
+                "default": 10
             },
             "m0": {
                 "description": "2^m0 is the maximum step size the line search may take",
@@ -131,6 +131,7 @@ class CoordinateSearch(Solver):
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
         """
+        #print("ini_sample_size={} sample_size_slope={}".format(self.factors["ini_sample_size"],self.factors["sample_size_slope"]))
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
         initial_solution = new_solution
@@ -167,6 +168,12 @@ class CoordinateSearch(Solver):
             # Update new_solution with the current Nk.
             expended_budget += (Nk - new_solution.n_reps)
             problem.simulate_up_to({new_solution},Nk)
+            temp_solution = self.create_new_solution(new_x, problem) # DELETE ME
+            problem.simulate(temp_solution,Nk) # DELETE ME
+            print("\nWithout reusing replications: k={} Nk={} new_solution={}".format(k,Nk,temp_solution.objectives_mean),end='') # DELETE ME
+            temp_solution = self.create_new_solution(y_x, problem) # DELETE ME
+            problem.simulate(temp_solution,Nk) # DELETE ME
+            print(" y_solution={}".format(temp_solution.objectives_mean)) # DELETE ME
             if problem.minmax * y_solution.objectives_mean > problem.minmax * new_solution.objectives_mean:
                 d = y
                 z0 = 1
@@ -174,6 +181,12 @@ class CoordinateSearch(Solver):
                 d = -y
                 z0 = 0
             y0 = d * z0
+            print("\nSTEP 0: k={} i={} new_x={} y={} y_x={}".format(k,i,new_x,y,y_x))
+            print("new_solution={} y_solution={}".format(new_solution.objectives_mean,y_solution.objectives_mean))
+            print("d={} z0={} y0={}".format(d,z0,y0))
+            print("visited_solns:",end='')
+            for temp_soln in visited_solns:
+                print(temp_soln.x,end=',')
             # STEP 1, LINE SEARCH (Hong, 2005).
             y0_x = self.update_tuple(new_x, i, y0)
             # Update y0_solution with the current Nk. Create a new solution if necessary.
@@ -200,15 +213,14 @@ class CoordinateSearch(Solver):
                 new_solution = y0_solution
             else:    
                 m = self.factors["m0"]
-                print("k=",k," i=",i, " new_x=",new_x,sep='',end=' ')
-                print(new_solution.objectives_mean,y_solution.objectives_mean,y0d_solution.objectives_mean,y0_solution.objectives_mean)
-                print("y=",y," d=",d," z0=",z0," y0=",y0," y_x=",y_x," y0d_x=",y0d_x," y0_x=",y0_x,sep='')
+                print("\nSTEP 1: i_visited={} y0d_x={} y0_x={}".format(i_visited,y0d_x,y0_x))
+                print("y0d_solution={} y0_solution={}".format(y0d_solution.objectives_mean,y0_solution.objectives_mean))
                 # STEP 2, LINE SEARCH (Hong, 2005).
                 while True:
                     z = z0 + 2**m
                     y = d * z
                     y_x = self.update_tuple(new_x, i, y)
-                    print("m=",m," z=",z," y=",y," y_x=",y_x,sep='')
+                    print("STEP 2 LOOP: z0={} m={} z={} y={} y_x={}".format(z0,m,z,y,y_x))
                     if (not problem.check_deterministic_constraints(y_x)) and m == 0:
                         new_x = y0_x
                         new_solution = y0_solution
@@ -225,6 +237,7 @@ class CoordinateSearch(Solver):
                             visited_solns.append(y_solution)
                         expended_budget += (Nk - y_solution.n_reps)
                         problem.simulate_up_to({y_solution},Nk)
+                        print("y_solution=",y_solution.objectives_mean)
                         # STEP 3, LINE SEARCH (Hong, 2005).
                         if problem.minmax * y_solution.objectives_mean > problem.minmax * y0_solution.objectives_mean and z < self.factors["zmax"]:
                             z0 = z
@@ -238,15 +251,17 @@ class CoordinateSearch(Solver):
                             break
                         else:
                             m -= 1
-            print("new_x=",new_x,sep='')
+            print("End of iteration {}: new_x={} new_solution={} expended_budget={}".format(k,new_x,new_solution.objectives_mean,expended_budget))
             # If problem is not fully constrained, make sure new_solution is not worse than initial_solution.
-            if problem.minmax * new_solution.objectives_mean >= problem.minmax * initial_solution.objectives_mean:
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-            else:
+            if problem.minmax * new_solution.objectives_mean < problem.minmax * initial_solution.objectives_mean:
                 print("The new solution is worse than x0!")
-                new_x = self.factors["initial_solution"]
-                new_solution = initial_solution
-            print()
-        print("total expended budget:",expended_budget)
+            recommended_solns.append(new_solution)
+            intermediate_budgets.append(expended_budget)
+        # Summarize at the end.
+        print("\ntotal expended budget:",expended_budget)
+        print("length of visited_solns: {}".format(len(visited_solns)))
+        print("recommended_solns=",end='')
+        for temp_soln in recommended_solns:
+                print(temp_soln.x,end=',')
+        print("\nintermediate_budgets={}".format(intermediate_budgets))
         return recommended_solns, intermediate_budgets
