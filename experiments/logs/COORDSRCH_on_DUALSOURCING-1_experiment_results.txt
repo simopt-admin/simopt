@@ -1,0 +1,51 @@
+./experiments/outputs/COORDSRCH_on_DUALSOURCING-1.pickle
+Problem: DUALSOURCING-1
+Solver: COORDSRCH
+
+Model Factors:
+	n_days: 1000
+	initial_inv: 40
+	cost_reg: 100.0
+	cost_exp: 110.0
+	lead_reg: 2
+	lead_exp: 0
+	holding_cost: 5.0
+	penalty_cost: 495.0
+	st_dev: 10.0
+	mu: 30.0
+
+Problem Factors:
+	budget: 1092
+	initial_solution: (50, 80)
+
+Solver Factors:
+	ini_sample_size: 10
+	sample_size_slope: 1
+	crn_across_solns: True
+	m0: 4
+	zmax: 50
+
+1 macroreplications were run.
+200 postreplications were run at each recommended solution.
+
+The initial solution is (50, 80). Its estimated objective is 3294.6238.
+The proxy optimal solution is (50, 93). Its estimated objective is 3238.9411.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 10	Recommended Solution: (50, 80)	Estimated Objective: 3295.6687
+	Budget: 70	Recommended Solution: (50, 80)	Estimated Objective: 3295.6687
+	Budget: 126	Recommended Solution: (50, 145)	Estimated Objective: 3283.0979
+	Budget: 199	Recommended Solution: (50, 145)	Estimated Objective: 3283.0979
+	Budget: 234	Recommended Solution: (50, 89)	Estimated Objective: 3255.6978
+	Budget: 319	Recommended Solution: (50, 89)	Estimated Objective: 3255.6978
+	Budget: 440	Recommended Solution: (50, 90)	Estimated Objective: 3251.5416
+	Budget: 537	Recommended Solution: (50, 90)	Estimated Objective: 3251.5416
+	Budget: 644	Recommended Solution: (50, 91)	Estimated Objective: 3247.4467
+	Budget: 753	Recommended Solution: (50, 91)	Estimated Objective: 3247.4467
+	Budget: 857	Recommended Solution: (50, 92)	Estimated Objective: 3243.4966
+	Budget: 978	Recommended Solution: (50, 92)	Estimated Objective: 3243.4966
+	Budget: 1092	Recommended Solution: (50, 93)	Estimated Objective: 3239.631
+	The time taken to complete this macroreplication was 155.29 s.

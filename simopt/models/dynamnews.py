@@ -277,7 +277,7 @@ class DynamNewsMaxProfit(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(3 * np.ones(10))
+                "default": tuple(2 * np.ones(10))
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -426,7 +426,7 @@ class DynamNewsMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)
+        return super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng):
         """

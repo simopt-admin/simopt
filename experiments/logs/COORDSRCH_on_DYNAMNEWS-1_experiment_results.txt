@@ -1,0 +1,47 @@
+./experiments/outputs/COORDSRCH_on_DYNAMNEWS-1.pickle
+Problem: DYNAMNEWS-1
+Solver: COORDSRCH
+
+Model Factors:
+	num_prod: 10
+	num_customer: 30
+	c_utility: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+	mu: 1.0
+	price: [9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0]
+	cost: [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+
+Problem Factors:
+	initial_solution: (2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)
+	budget: 1000
+
+Solver Factors:
+	ini_sample_size: 10
+	sample_size_slope: 1
+	crn_across_solns: True
+	m0: 4
+	zmax: 50
+
+1 macroreplications were run.
+200 postreplications were run at each recommended solution.
+
+The initial solution is (2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0). Its estimated objective is 80.0.
+The proxy optimal solution is (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0). Its estimated objective is 120.0.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 10	Recommended Solution: (2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 80.0
+	Budget: 80	Recommended Solution: (3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 84.0
+	Budget: 147	Recommended Solution: (3.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 88.0
+	Budget: 220	Recommended Solution: (3.0, 3.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 92.0
+	Budget: 299	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 96.0
+	Budget: 384	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 100.0
+	Budget: 475	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.0, 2.0, 2.0, 2.0)	Estimated Objective: 104.0
+	Budget: 572	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.0, 2.0, 2.0)	Estimated Objective: 108.0
+	Budget: 675	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.0, 2.0)	Estimated Objective: 112.0
+	Budget: 784	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.0)	Estimated Objective: 116.0
+	Budget: 899	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0)	Estimated Objective: 120.0
+	Budget: 960	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0)	Estimated Objective: 120.0
+	Budget: 1000	Recommended Solution: (3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0)	Estimated Objective: 120.0
+	The time taken to complete this macroreplication was 3.66 s.

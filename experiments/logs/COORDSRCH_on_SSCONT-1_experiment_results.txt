@@ -27,21 +27,22 @@ Solver Factors:
 200 postreplications were run at each recommended solution.
 
 The initial solution is (600, 600). Its estimated objective is 624.4132.
-The proxy optimal solution is (473, 408). Its estimated objective is 542.7212.
+The proxy optimal solution is (344, 409). Its estimated objective is 536.5961.
 200 postreplications were taken at x0 and x_star.
 
 Macroreplication Results:
 
 Macroreplication 1:
 	Budget: 10	Recommended Solution: (600, 600)	Estimated Objective: 618.581
-	Budget: 80	Recommended Solution: (536, 600)	Estimated Objective: 592.2786
-	Budget: 157	Recommended Solution: (536, 536)	Estimated Objective: 577.0752
-	Budget: 241	Recommended Solution: (472, 536)	Estimated Objective: 558.4856
-	Budget: 332	Recommended Solution: (472, 472)	Estimated Objective: 547.8508
-	Budget: 444	Recommended Solution: (473, 472)	Estimated Objective: 548.0423
-	Budget: 549	Recommended Solution: (473, 408)	Estimated Objective: 536.1868
-	Budget: 677	Recommended Solution: (474, 408)	Estimated Objective: 536.3222
-	Budget: 830	Recommended Solution: (474, 408)	Estimated Objective: 536.3222
-	Budget: 884	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
-	Budget: 1000	Recommended Solution: (475, 408)	Estimated Objective: 536.4589
-	The time taken to complete this macroreplication was 4.9 s.
+	Budget: 70	Recommended Solution: (536, 600)	Estimated Objective: 592.2786
+	Budget: 137	Recommended Solution: (536, 536)	Estimated Objective: 577.0752
+	Budget: 210	Recommended Solution: (472, 536)	Estimated Objective: 558.4856
+	Budget: 315	Recommended Solution: (472, 537)	Estimated Objective: 558.2347
+	Budget: 400	Recommended Solution: (408, 537)	Estimated Objective: 545.3088
+	Budget: 491	Recommended Solution: (408, 473)	Estimated Objective: 538.2903
+	Budget: 588	Recommended Solution: (344, 473)	Estimated Objective: 534.4053
+	Budget: 691	Recommended Solution: (344, 409)	Estimated Objective: 530.5796
+	Budget: 800	Recommended Solution: (409, 409)	Estimated Objective: 530.6558
+	Budget: 934	Recommended Solution: (409, 409)	Estimated Objective: 530.6558
+	Budget: 1000	Recommended Solution: (409, 409)	Estimated Objective: 530.6558
+	The time taken to complete this macroreplication was 5.55 s.

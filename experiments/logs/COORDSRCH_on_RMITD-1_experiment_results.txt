@@ -1,0 +1,47 @@
+./experiments/outputs/COORDSRCH_on_RMITD-1.pickle
+Problem: RMITD-1
+Solver: COORDSRCH
+
+Model Factors:
+	time_horizon: 3
+	prices: [100, 300, 400]
+	demand_means: [50, 20, 30]
+	cost: 80.0
+	gamma_shape: 1.0
+	gamma_scale: 1.0
+
+Problem Factors:
+	budget: 100000
+	initial_solution: (100, 50, 40)
+
+Solver Factors:
+	ini_sample_size: 1000
+	sample_size_slope: 100
+	crn_across_solns: True
+	m0: 4
+	zmax: 50
+
+1 macroreplications were run.
+10000 postreplications were run at each recommended solution.
+
+The initial solution is (100, 50, 40). Its estimated objective is 2552.5022.
+The proxy optimal solution is (104, 53, 40). Its estimated objective is 2601.7579.
+10000 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 1000	Recommended Solution: (100, 50, 40)	Estimated Objective: 2657.4681
+	Budget: 9000	Recommended Solution: (101, 50, 40)	Estimated Objective: 2671.4139
+	Budget: 15700	Recommended Solution: (101, 51, 40)	Estimated Objective: 2674.5919
+	Budget: 20600	Recommended Solution: (101, 51, 40)	Estimated Objective: 2674.5919
+	Budget: 29800	Recommended Solution: (102, 51, 40)	Estimated Objective: 2686.9464
+	Budget: 38300	Recommended Solution: (102, 52, 40)	Estimated Objective: 2689.3421
+	Budget: 44400	Recommended Solution: (102, 52, 40)	Estimated Objective: 2689.3421
+	Budget: 55700	Recommended Solution: (103, 52, 40)	Estimated Objective: 2700.1707
+	Budget: 66000	Recommended Solution: (103, 53, 40)	Estimated Objective: 2701.7469
+	Budget: 73300	Recommended Solution: (103, 53, 40)	Estimated Objective: 2701.7469
+	Budget: 84800	Recommended Solution: (104, 53, 40)	Estimated Objective: 2710.9807
+	Budget: 94900	Recommended Solution: (104, 53, 40)	Estimated Objective: 2710.9807
+	Budget: 100000	Recommended Solution: (104, 53, 40)	Estimated Objective: 2710.9807
+	The time taken to complete this macroreplication was 9.17 s.

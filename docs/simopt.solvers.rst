@@ -28,6 +28,14 @@ simopt.solvers.astrodf module
    :undoc-members:
    :show-inheritance:
 
+simopt.solvers.coordinatesearch module
+--------------------------------------
+
+.. automodule:: simopt.solvers.coordinatesearch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 simopt.solvers.neldmd module
 ----------------------------
 

@@ -42,10 +42,10 @@ from simopt.base import Solution
 
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
-from simopt.models.cntnv import CntNVMaxProfit
-fixed_factors = {"initial_solution": (2,), "budget": 500}
-myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (3,)
+from simopt.models.tableallocation import TableAllocationMaxRev
+fixed_factors = {}
+myproblem = TableAllocationMaxRev(fixed_factors)
+x = (9, 4, 3, 1)
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
@@ -67,12 +67,13 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
-n_reps = 10
+n_reps = 100
 myproblem.simulate(mysolution, m=n_reps)
 
 # Print results to console.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")
 print(f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with standard error {round(mysolution.objectives_stderr[0], 4)}.")
+"""
 print("The individual observations of the objective were:")
 for idx in range(n_reps):
     print(f"\t {round(mysolution.objectives[idx][0], 4)}")
@@ -91,3 +92,4 @@ if myproblem.n_stochastic_constraints > 0:
             print(f"\t\t {round(mysolution.stoch_constraints[idx][stc_idx], 4)}")
 else:
     print("\nThis problem has no stochastic constraints.")
+"""

@@ -289,7 +289,7 @@ class RMITDMaxRevenue(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (100, 50, 30)
+                "default": (100, 50, 40)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -375,7 +375,7 @@ class RMITDMaxRevenue(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
+        return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1)) and super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng):
         """

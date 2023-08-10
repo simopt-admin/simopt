@@ -1,0 +1,48 @@
+./experiments/outputs/COORDSRCH_on_TABLEALLOCATION-1.pickle
+Problem: TABLEALLOCATION-1
+Solver: COORDSRCH
+
+Model Factors:
+	n_hours: 5.0
+	capacity: 80
+	table_cap: [2, 4, 6, 8]
+	lambda: [3, 6, 3, 3, 2, 1.3333333333333333, 1.2, 1]
+	service_time_means: [20, 25, 30, 35, 40, 45, 50, 60]
+	table_revenue: [15, 30, 45, 60, 75, 90, 105, 120]
+
+Problem Factors:
+	budget: 100
+	initial_solution: (10, 5, 4, 2)
+
+Solver Factors:
+	ini_sample_size: 10
+	sample_size_slope: 1
+	crn_across_solns: True
+	m0: 4
+	zmax: 50
+
+1 macroreplications were run.
+200 postreplications were run at each recommended solution.
+
+The initial solution is (10, 5, 4, 2). Its estimated objective is 5118.675.
+The proxy optimal solution is (10, 5, 4, 2). Its estimated objective is 5118.675.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 10	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 20	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 32	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 45	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 59	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 64	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 69	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 74	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 79	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 84	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 89	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 94	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 99	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	Budget: 100	Recommended Solution: (10, 5, 4, 2)	Estimated Objective: 5024.1
+	The time taken to complete this macroreplication was 0.28 s.

@@ -18,7 +18,7 @@ matrix:
   :width: 700
 
 The time that a visitor spends at an attraction follows an Erlang
-distribution with shape parameter :math:`k = 2`` and rate :math:`\lambda = 9`.
+distribution with shape parameter :math:`k = 2` and rate :math:`\lambda = 9`.
 The park opens at 9AM and closes at 5PM, and time is measured in minutes.
 When the park closes, all visitors in the queue leave immediately.
 

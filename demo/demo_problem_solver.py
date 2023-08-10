@@ -25,8 +25,8 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 
 # Example with random search solver on continuous newsvendor problem.
 # -----------------------------------------------
-solver_name = "COORDSRCH"  # Random search solver
-problem_name = "SSCONT-1"  # SS inventory problem
+solver_name = "COORDSRCH"
+problem_name = "RMITD-1"
 # -----------------------------------------------
 
 print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -36,7 +36,9 @@ file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + 
 print(f"Results will be stored as {file_name_path}.")
 
 # Initialize an instance of the experiment class.
-myexperiment = ProblemSolver(solver_name, problem_name)
+myexperiment = ProblemSolver(solver_name, problem_name,
+                             solver_fixed_factors={"ini_sample_size": 1000, "sample_size_slope": 100},
+                             problem_fixed_factors={"budget": 100000})
 
 # Run a fixed number of macroreplications of the solver on the problem.
 myexperiment.run(n_macroreps=1)
@@ -48,9 +50,9 @@ myexperiment.run(n_macroreps=1)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=200)
+myexperiment.post_replicate(n_postreps=10000)
 # Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=200)
+post_normalize([myexperiment], n_postreps_init_opt=10000)
 
 # Log results.
 myexperiment.log_experiment_results()

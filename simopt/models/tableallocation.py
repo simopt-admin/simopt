@@ -450,7 +450,7 @@ class TableAllocationMaxRev(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"], x)) <= self.model_fixed_factors["capacity"])
+        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"], x)) <= self.model_fixed_factors["capacity"]) and super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng):
         """
