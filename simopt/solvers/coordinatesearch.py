@@ -170,9 +170,9 @@ class CoordinateSearch(Solver):
             """
             # The solver uses different random numbers than "demo_problem.py".
             temp_solution = self.create_new_solution(new_x, problem)
-            problem.simulate(temp_solution, Nk) # DELETE ME
+            problem.simulate(temp_solution, Nk)
             print("\nWithout reusing replications: k={} Nk={} new_solution={}".format(k, Nk, temp_solution.objectives_mean), end='')
-            temp_solution = self.create_new_solution((y_x, problem)
+            temp_solution = self.create_new_solution(y_x, problem)
             problem.simulate(temp_solution, Nk)
             print(" y_solution={}".format(temp_solution.objectives_mean))
             """
@@ -276,7 +276,7 @@ class CoordinateSearch(Solver):
         print("length of visited_solns: {}".format(len(visited_solns)))
         print("recommended_solns=", end='')
         for temp_soln in recommended_solns:
-                print(temp_soln.x, end=',')
+            print(temp_soln.x, end=',')
         print("\nintermediate_budgets={}".format(intermediate_budgets))
         """
         return recommended_solns, intermediate_budgets
