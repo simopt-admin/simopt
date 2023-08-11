@@ -133,7 +133,6 @@ class CoordinateSearch(Solver):
         """
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
-        initial_solution = new_solution
         problem.simulate(new_solution, self.factors["ini_sample_size"])
         expended_budget = self.factors["ini_sample_size"]
         intermediate_budgets = [expended_budget]
@@ -211,9 +210,6 @@ class CoordinateSearch(Solver):
                     print(" y0d_solution={} y0_solution={}".format(y0d_solution.objectives_mean, y0_solution.objectives_mean))
                     print("End of iteration {}: new_x={} new_solution={} expended_budget={}".format(k, new_x, new_solution.objectives_mean, expended_budget))
                     """
-                    # If problem is not fully constrained, make sure new_solution is not worse than initial_solution.
-                    if problem.minmax * new_solution.objectives_mean < problem.minmax * initial_solution.objectives_mean:
-                        print("The new solution is worse than x0!")
                     recommended_solns.append(new_solution)
                     intermediate_budgets.append(expended_budget)
                     continue
@@ -265,9 +261,6 @@ class CoordinateSearch(Solver):
             """
             print("End of iteration {}: new_x={} new_solution={} expended_budget={}".format(k, new_x, new_solution.objectives_mean, expended_budget))
             """
-            # If problem is not fully constrained, make sure new_solution is not worse than initial_solution.
-            if problem.minmax * new_solution.objectives_mean < problem.minmax * initial_solution.objectives_mean:
-                print("The new solution is worse than x0!")
             recommended_solns.append(new_solution)
             intermediate_budgets.append(expended_budget)
         """
