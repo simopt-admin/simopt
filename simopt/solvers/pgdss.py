@@ -228,7 +228,7 @@ class PGDSS(Solver):
                 grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize=alpha)
                 expended_budget += budget_spent
                 # A while loop to prevent zero gradient.
                 while np.all((grad == 0)):
@@ -268,7 +268,6 @@ class PGDSS(Solver):
             else:
                 # Unsuccessful step - reduce step size.
                 alpha = gamma * alpha
-
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
@@ -359,24 +358,26 @@ class PGDSS(Solver):
             ra = d.flatten() - C @ new_x
             ra_d = C @ dir1
             # Initialize maximum step size.
-            steph1 = np.inf
+            temp_steph1 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph1:
-                        steph1 = s
-            
+                        temp_steph1 = s
+            steph1 = min(temp_steph1, steph1)
+
             ra_d = C @ dir2
             # Initialize maximum step size.
-            steph2 = np.inf
+            temp_steph2 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph2:
-                        steph2 = s
-            
+                        temp_steph2 = s
+            steph2 = min(temp_steph2, steph2)
+
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
             elif steph1 == 0:
@@ -411,6 +412,7 @@ class PGDSS(Solver):
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
                 FnPlusMinus[i, 1] = fn2
+
             # Calculate gradient.
             if BdsCheck[i] == 0:
                 grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])

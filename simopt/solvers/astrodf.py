@@ -383,7 +383,7 @@ class ASTRODF(Solver):
         return Y
 
     # run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
-    def iterate(self, k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget_limit, recommended_solns, intermediate_budgets, kappa, new_solution):
+    def iterate(self, k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget_limit, recommended_solns, intermediate_budgets, kappa, new_solution, C, d, unconstr_flag):
         # default values
         eta_1 = self.factors["eta_1"]
         eta_2 = self.factors["eta_2"]
@@ -442,64 +442,12 @@ class ASTRODF(Solver):
             nlc = NonlinearConstraint(con_f, 0, delta_k)
             solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
             candidate_x = new_x + solve_subproblem.x
-
-        # Upper bound and lower bound.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
-
-        # Input inequality and equlaity constraint matrix and vector.
-        # Cix <= di
-        # Cex = de
-        Ci = problem.Ci
-        di = problem.di
-        Ce = problem.Ce
-        de = problem.de
-
-        # Remove redundant upper/lower bounds.
-        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
-        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
-
-        # Form a constraint coefficient matrix where all the equality constraints are put on top and
-        # all the bound constraints in the bottom and a constraint coefficient vector.  
-        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
-            C = np.vstack((Ce,  Ci))
-            d = np.vstack((de.T, di.T))
-        elif (Ce is not None) and (de is not None):
-            C = Ce
-            d = de.T
-        elif (Ci is not None) and (di is not None):
-            C = Ci
-            d = di.T
-        else:
-          C = np.empty([1, problem.dim])
-          d = np.empty([1, 1])
         
-        if len(ub_inf_idx) > 0:
-            C = np.vstack((C, np.identity(upper_bound.shape[0])))
-            d = np.vstack((d, upper_bound[np.newaxis].T))
-        if len(lb_inf_idx) > 0:
-            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
-            d = np.vstack((d, -lower_bound[np.newaxis].T))
-
-        # Checker for whether the problem is unconstrained.
-        unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
         tol = 1e-6
         
         if (not unconstr_flag) & (not self._feasible(candidate_x, problem, tol)):
             # handle the box and linear constraints using ratio test
-            dir = np.array(candidate_x) - np.array(new_x)
-            ra = d.flatten() - C @ new_x
-            ra_d = C @ dir
-            # Initialize maximum step size.
-            s_star = np.inf
-            # Perform ratio test.
-            for i in range(len(ra)):
-                if ra_d[i] - tol > 0:
-                    s = ra[i]/ra_d[i]
-                    if s < s_star:
-                        s_star = s
-
-            candidate_x= new_x + min(1, s_star) * dir
+            candidate_x = self.check_const(candidate_x, new_x, C, d, tol)
         # # handle the box and linear constraints using ratio test
         # for i in range(problem.dim):
         #     if candidate_x[i] <= problem.lower_bounds[i]:
@@ -533,9 +481,34 @@ class ASTRODF(Solver):
     
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
         if min(fval) < fval_tilde and fval[0] - min(fval) >= self.factors["ps_sufficient_reduction"] * delta_k ** 2:
-            fval_tilde = min(fval)
-            candidate_x = Y[fval.index(min(fval))][0]
-            candidate_solution = interpolation_solns[fval.index(min(fval))]
+            temp_x = Y[fval.index(min(fval))][0]
+            
+            if unconstr_flag or self._feasible(temp_x, problem, tol):
+                fval_tilde = min(fval)
+                candidate_x = temp_x
+                candidate_solution = interpolation_solns[fval.index(min(fval))]
+            else:
+                # handle the box and linear constraints using ratio test
+                temp_x = self.check_const(temp_x, new_x, C, d, tol)
+                temp_solution = self.create_new_solution(tuple(temp_x), problem)
+                # pilot run and adaptive sampling
+                problem.simulate(temp_solution, pilot_run)
+                expended_budget += pilot_run
+                sample_size = pilot_run
+                while True:
+                    problem.simulate(temp_solution, 1)
+                    expended_budget += 1
+                    sample_size += 1
+                    sig2 = candidate_solution.objectives_var
+                    stopping = self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim)
+                    if sample_size >= stopping or sample_size >= lambda_max or expended_budget >= budget_limit:
+                        break
+                temp_val = -1 * problem.minmax[0] * temp_solution.objectives_mean
+                # accept only if temp x has lower objective
+                if temp_val < fval_tilde:
+                    fval_tilde = temp_val
+                    candidate_x = temp_x
+                    candidate_solution = temp_solution
     
         # compute the success ratio rho
         if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) == 0:
@@ -651,15 +624,11 @@ class ASTRODF(Solver):
 
         # Checker for whether the problem is unconstrained.
         unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
-
-        # Initial dim + 1 points. # TODO - change this.
-        sol = []
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        new_x = new_solution.x
-
         if (not unconstr_flag) & (not self._feasible(new_x, problem, 1e-6)):
             new_x = self.find_feasible_initial(problem, Ce, Ci, de, di, 1e-6)
 
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_x = new_solution.x
 
         expended_budget, kappa = 0, 0
         new_solution, recommended_solns, intermediate_budgets = [], [], [] 
@@ -668,7 +637,7 @@ class ASTRODF(Solver):
             k += 1
             final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
                 self.iterate(k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget, \
-                             recommended_solns, intermediate_budgets, kappa, new_solution)
+                             recommended_solns, intermediate_budgets, kappa, new_solution, C, d, unconstr_flag)
 
         return recommended_solns, intermediate_budgets
     
@@ -757,3 +726,27 @@ class ASTRODF(Solver):
         if (problem.Ce is not None) and (problem.de is not None):
             res = res & (np.allclose(np.dot(problem.Ce, x), problem.de, rtol=0, atol=tol))
         return res & (np.all(x >= lb)) & (np.all(x <= ub))
+    
+
+    def check_const(self, candidate_x, cur_x, C, d, tol):
+        # handle the box and linear constraints using ratio test
+        dir = np.array(candidate_x) - np.array(cur_x)
+
+        # Get all indices not in the active set such that Ai^Td>0
+        r_idx = list((C @ dir > 0).nonzero()[0])
+
+        # Compute the ratio test
+        ra = d[r_idx,:].flatten() - C[r_idx, :] @ cur_x
+        ra_d = C[r_idx, :] @ dir
+        # Initialize maximum step size.
+        s_star = np.inf
+        # Perform ratio test.
+        for i in range(len(ra)):
+            if ra_d[i] - tol > 0:
+                s = ra[i]/ra_d[i]
+                if s < s_star:
+                    s_star = s
+
+        new_x = cur_x + min(1, s_star) * dir
+
+        return new_x

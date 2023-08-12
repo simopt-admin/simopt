@@ -28,8 +28,8 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 # solver_name = "RNDSRCH"  # Random search solver
 # solver_name = "ASTRODF"  # Random search solver
 
-solver_name = "ACTIVESET"
-# solver_name = "PGD-SS"
+# solver_name = "ACTIVESET"
+solver_name = "PGD-SS"
 # solver_name = "PGD"
 # solver_name = "DS"
 # solver_name = "NELDMD"
@@ -52,20 +52,22 @@ print(f"Results will be stored as {file_name_path}.")
 # Initialize an instance of the experiment class.
 myexperiment = ProblemSolver(solver_name, problem_name)
 
-import timeit
-start = timeit.default_timer()
-# Run a fixed number of macroreplications of the solver on the problem.
-myexperiment.run(n_macroreps=20)
-stop = timeit.default_timer()
+# import timeit
+# start = timeit.default_timer()
+# # Run a fixed number of macroreplications of the solver on the problem.
+# myexperiment.run(n_macroreps=3)
+# stop = timeit.default_timer()
 
-print('Time: ', stop - start)  
+# print('Time: ', stop - start)  
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
-# myexperiment = read_experiment_results(file_name_path)
+myexperiment = read_experiment_results(file_name_path)
 
-# import numpy as np
-# print(np.array(myexperiment.all_recommended_xs[0][-1]))
+import numpy as np
+print(repr(np.array(myexperiment.xstar)))
+print(repr(np.asarray(myexperiment.all_recommended_xs[-1][-1])))
+print(repr(np.asarray(myexperiment.all_recommended_xs[0][-1])))
 # print(np.dot(np.array(myexperiment.all_recommended_xs[0][-1]), 50 * np.ones(30)) )
 # #################
 # # plot the recommended solutions
@@ -77,18 +79,18 @@ print('Time: ', stop - start)
 # plt.show()
 
 
-print("Post-processing results.")
-# Run a fixed number of postreplications at all recommended solutions.
-myexperiment.post_replicate(n_postreps=100)
-# Find an optimal solution x* for normalization.
-post_normalize([myexperiment], n_postreps_init_opt=100)
+# print("Post-processing results.")
+# # Run a fixed number of postreplications at all recommended solutions.
+# myexperiment.post_replicate(n_postreps=100)
+# # Find an optimal solution x* for normalization.
+# post_normalize([myexperiment], n_postreps_init_opt=100)
 
-print("Plotting results.")
-# Produce basic plots of the solver on the problem.
-plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
-plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
-plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
-plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
+# print("Plotting results.")
+# # Produce basic plots of the solver on the problem.
+# plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
+# plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+# plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
+# plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
 
-# Plots will be saved in the folder experiments/plots.
-print("Finished. Plots can be found in experiments/plots folder.")
+# # Plots will be saved in the folder experiments/plots.
+# print("Finished. Plots can be found in experiments/plots folder.")

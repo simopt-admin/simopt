@@ -219,7 +219,7 @@ class NelderMead(Solver):
         # Checker for whether the problem is unconstrained.
         unconstr_flag = (Ce is None) & (Ci is None) & (di is None) & (de is None) & (all(np.isinf(lower_bound))) & (all(np.isinf(upper_bound)))
 
-        # Initial dim + 1 points. # TODO - change this.
+        # Initial dim + 1 points.
         sol = []
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         new_x = new_solution.x
@@ -525,9 +525,15 @@ class NelderMead(Solver):
         return res & (np.all(x >= lb)) & (np.all(x <= ub))
 
     def check_const(self, candidate_x, cur_x, C, d, tol):
+        # handle the box and linear constraints using ratio test
         dir = np.array(candidate_x) - np.array(cur_x)
-        ra = d.flatten() - C @ cur_x
-        ra_d = C @ dir
+
+        # Get all indices not in the active set such that Ai^Td>0
+        r_idx = list((C @ dir > 0).nonzero()[0])
+
+        # Compute the ratio test
+        ra = d[r_idx,:].flatten() - C[r_idx, :] @ cur_x
+        ra_d = C[r_idx, :] @ dir
         # Initialize maximum step size.
         s_star = np.inf
         # Perform ratio test.

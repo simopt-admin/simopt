@@ -17,17 +17,17 @@ from simopt.experiment_base import ProblemSolver, read_experiment_results, post_
 solver_names = {"RNDSRCH", "NELDMD", "ASTRODF", "PGD-SS", "FW", "ACTIVESET"}
 
 # problem_names = {"SAN-2"} # CNTNEWS-1"} #, "SAN-1"}
-problem_names = {"CASCADETIME-1"} # CNTNEWS-1"} #, "SAN-1"}
+problem_names = {"CASCADETIME-2"} # CNTNEWS-1"} #, "SAN-1"}
+# problem_names = {"CASCADE-1"} # CNTNEWS-1"} #, "SAN-1"}
 
 # solver_name = "RNDSRCH"  # Random search solver
 # problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
 # solver_name = <solver_name>
 # problem_name = <problem_name>
+import timeit
+
 times = {}
-
 for problem_name in problem_names:
-    times[problem_name] = {}
-
     problem_experiments = []
     for solver_name in solver_names:
         print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -35,9 +35,8 @@ for problem_name in problem_names:
         myexperiment = ProblemSolver(solver_name, problem_name)
 
         file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
-        
-        import timeit
         start = timeit.default_timer()
+
         # Run a fixed number of macroreplications of the solver on the problem.
         myexperiment.run(n_macroreps=20)
 
@@ -50,16 +49,17 @@ for problem_name in problem_names:
         # Run a fixed number of postreplications at all recommended solutions.
         myexperiment.post_replicate(n_postreps=100)
         stop = timeit.default_timer()
-        print('Time: ', stop - start) 
-        times[solver_name] = stop-start
+        times[solver_name] = stop - start
 
         problem_experiments.append(myexperiment)
 
     # Find an optimal solution x* for normalization.
     post_normalize(problem_experiments, n_postreps_init_opt=100)
 
-with open("runtime.pickle", "wb") as f:
-    pickle.dump(times, f)
+# Open the file in binary mode
+with open("runtime3.pickle", "wb") as file:
+    # Dump the dictionary into the file
+    pickle.dump(times, file)
 
 # Re-compile problem-solver results.
 myexperiments = []

@@ -243,11 +243,11 @@ class ACTIVESET(Solver):
 
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
-            # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
-            # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            BdsCheck = np.subtract(forward, backward)
+            # # Check variable bounds.
+            # forward = np.isclose(new_x, lower_bound, atol = tol).astype(int)
+            # backward = np.isclose(new_x, upper_bound, atol = tol).astype(int)
+            # # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
+            # BdsCheck = np.subtract(forward, backward)
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
@@ -422,23 +422,25 @@ class ACTIVESET(Solver):
             ra = d.flatten() - C @ new_x
             ra_d = C @ dir1
             # Initialize maximum step size.
-            steph1 = np.inf
+            temp_steph1 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph1:
-                        steph1 = s
-            
+                        temp_steph1 = s
+            steph1 = min(temp_steph1, steph1)
+
             ra_d = C @ dir2
             # Initialize maximum step size.
-            steph2 = np.inf
+            temp_steph2 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph2:
-                        steph2 = s
+                        temp_steph2 = s
+            steph2 = min(temp_steph2, steph2)
             
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0

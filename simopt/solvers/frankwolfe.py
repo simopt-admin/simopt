@@ -352,24 +352,26 @@ class FrankWolfe(Solver):
             ra = d.flatten() - C @ new_x
             ra_d = C @ dir1
             # Initialize maximum step size.
-            steph1 = np.inf
+            temp_steph1 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph1:
-                        steph1 = s
-            
+                        temp_steph1 = s
+            steph1 = min(temp_steph1, steph1)
+
             ra_d = C @ dir2
             # Initialize maximum step size.
-            steph2 = np.inf
+            temp_steph2 = np.inf
             # Perform ratio test.
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
                     if s < steph2:
-                        steph2 = s
-            
+                        temp_steph2 = s
+            steph2 = min(temp_steph2, steph2)
+
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
             elif steph1 == 0:
@@ -404,6 +406,7 @@ class FrankWolfe(Solver):
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
                 FnPlusMinus[i, 1] = fn2
+
             # Calculate gradient.
             if BdsCheck[i] == 0:
                 grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
