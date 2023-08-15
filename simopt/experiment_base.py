@@ -4,6 +4,7 @@ Summary
 -------
 Provide base classes for problem-solver pairs and helper functions
 for reading/writing data and plotting.
+This is the modified version to generate and solve random problem instances by solvers.
 """
 
 import numpy as np
@@ -15,8 +16,8 @@ import pickle
 import importlib
 import time
 import os
-from mrg32k3a.mrg32k3a import MRG32k3a
-
+# from mrg32k3a.mrg32k3a import MRG32k3a
+from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
 
 from .base import Solution
 from .directory import solver_directory, problem_directory
@@ -464,7 +465,7 @@ class ProblemSolver(object):
         for mrep in range(self.n_macroreps):
             print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             # Create, initialize, and attach RNGs used for simulating solutions.
-            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
+            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.model.n_rngs)]
             self.solver.solution_progenitor_rngs = progenitor_rngs
             # print([rng.s_ss_sss_index for rng in progenitor_rngs])
             # Run the solver on the problem.
@@ -524,7 +525,6 @@ class ProblemSolver(object):
         self.all_post_replicates = [[[] for _ in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
-            print(f"Postreplicating macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             for budget_index in range(len(self.all_intermediate_budgets[mrep])):
                 x = self.all_recommended_xs[mrep][budget_index]
                 fresh_soln = Solution(x, self.problem)
@@ -760,7 +760,7 @@ class ProblemSolver(object):
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
         new_path2 = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
 
-        # Create directories if they do not exist.
+        # Create directories if they do no exist.
         if "./experiments/logs" in new_path2 and not os.path.exists("./experiments/logs"):
             os.makedirs("./experiments", exist_ok=True)
             os.makedirs("./experiments/logs")
@@ -799,10 +799,7 @@ class ProblemSolver(object):
             # and how many replications were taken of them (n_postreps_init_opt).
             if self.check_postnormalize():
                 file.write(f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
-                if self.xstar is None:
-                    file.write(f"No proxy optimal solution was used. A proxy optimal objective function value of {self.problem.optimal_value[0]} was provided.\n")
-                else:
-                    file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
+                file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
                 file.write(f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n")
             # Display recommended solution at each budget value for each macroreplication.
             file.write('Macroreplication Results:\n')
@@ -899,7 +896,6 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
-    print(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
         # Stream 0: reserved for post-replications.
@@ -920,17 +916,11 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
-    print("Finding f(x*)...")
     if proxy_opt_val is not None:
-        if proxy_opt_x is None:
-            xstar = None
-        else:
-            xstar = proxy_opt_x  # Assuming the provided x is optimal in this case.
-        print("\t...using provided proxy f(x*).")
+        xstar = None
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
-        print("\t...using provided proxy x*.")
         xstar = proxy_opt_x
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -939,14 +929,10 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
-        print("\t...using coded f(x*).")
         xstar = None
-        # NOTE: optimal_value is a tuple.
-        # Currently hard-coded for single objective case, i.e., optimal_value[0].
-        xstar_postreps = [ref_experiment.problem.optimal_value[0]] * n_postreps_init_opt
+        xstar_postreps = [ref_experiment.problem.optimal_value] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
-        print("\t...using coded x*.")
         xstar = ref_experiment.problem.optimal_solution
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -956,7 +942,6 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
-        print("\t...using best postreplicated solution as proxy for x*.")
         # TO DO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
@@ -1079,7 +1064,7 @@ def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=N
             "quantile_solvability" : quantile solvability profile;
 
             "diff_cdf_solvability" : difference of cdf solvability profiles;
-
+            
             "diff_quantile_solvability" : difference of quantile solvability profiles.
     beta : float, optional
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1155,7 +1140,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
             "solve_time_quantile" : beta quantile of solve time;
 
             "solve_time_cdf" : cdf of solve time;
-
+            
             "cdf_solvability" : cdf solvability profile;
 
             "quantile_solvability" : quantile solvability profile;
@@ -2036,7 +2021,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         ProblemSolver pairs of different solvers on a common problem.
     plot_type : str, default="violin"
         String indicating which type of plot to produce:
-
+        
             "box" : comparative box plots;
 
             "violin" : comparative violin plots.
@@ -2469,6 +2454,14 @@ class ProblemsSolvers(object):
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
+        elif solvers is None and problems is not None:  # Method by providing solver and problem names
+            self.experiments = [[ProblemSolver(solver_name=solver_name, problem=problem) for problem in problems] for solver_name in solver_names]
+            self.solvers = [solver_directory[solver_name](name=solver_name) for solver_name in solver_names]
+            self.solver_names = solver_names
+            self.problems = problems
+            self.problem_names = [problem.name for problem in self.problems]
+            self.n_solvers = len(self.solvers)
+            self.n_problems = len(self.problems)
         else:  # Method #1
             if solver_renames is None:
                 self.solver_names = solver_names
@@ -2621,56 +2614,6 @@ class ProblemsSolvers(object):
         """
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
-
-    def log_group_experiment_results(self):
-        """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
-        """
-        # Create a new text file in experiments/logs folder with correct name.
-        new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
-        new_path = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
-
-        # Create directories if they do no exist.
-        if "./experiments/logs" in new_path and not os.path.exists("./experiments/logs"):
-            os.makedirs("./experiments", exist_ok=True)
-            os.makedirs("./experiments/logs")
-        # Create text file.
-        with open(new_path + "_group_experiment_results.txt", "w") as file:
-            # Title text file with experiment information.
-            file.write(self.file_name_path)
-            file.write('\n')
-            # Write the name of each problem.
-            file.write("----------------------------------------------------------------------------------------------")
-            file.write("\nProblems:\n\n")
-            for i in range(self.n_problems):
-                file.write(f"{self.problem_names[i]}\n\t")
-                # Write model factors for each problem.
-                file.write("Model Factors:\n")
-                for key, value in self.problems[i].model.factors.items():
-                    # Excluding model factors corresponding to decision variables.
-                    if key not in self.problems[i].model_decision_factors:
-                        file.write(f"\t\t{key}: {value}\n")
-                # Write problem factors for each problem.
-                file.write("\n\tProblem Factors:\n")
-                for key, value in self.problems[i].factors.items():
-                    file.write(f"\t\t{key}: {value}\n")
-                file.write("\n")
-            file.write("----------------------------------------------------------------------------------------------")
-            # Write the name of each Solver.
-            file.write("\nSolvers:\n\n")
-            # Write solver factors for each solver.
-            for j in range(self.n_solvers):
-                file.write(f"{self.solver_names[j]}\n\t")
-                file.write("Solver Factors:\n")
-                for key, value in self.solvers[i].factors.items():
-                    file.write(f"\t\t{key}: {value}\n")
-                file.write("\n")
-            file.write("----------------------------------------------------------------------------------------------")
-            # Write the name of pickle files for each Problem-Solver pair.
-            file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
-            for p in self.problem_names:
-                for s in self.solver_names:
-                    file.write(f"\t{s}_on_{p}.pickle\n")
-        file.close()
 
 
 def read_group_experiment_results(file_name_path):
