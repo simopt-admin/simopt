@@ -1,8 +1,8 @@
 """
 Summary
 -------
-Simulate 
-`here <https://simopt.readthedocs.io/en/latest/ironore.html>`_.
+Simulate a progressive cascade process in an infinite time horizon.
+`here <https://simopt.readthedocs.io/en/latest/cascade.html>`_.
 
 """
 import numpy as np
@@ -14,7 +14,7 @@ from ..base import Model, Problem
 
 class Cascade(Model):
     """
-    Simulate the progressive cascade process in infinite time horizon.
+    Simulate a progressive cascade process in an infinite time horizon.
 
     Attributes
     ----------
@@ -400,58 +400,85 @@ class CascadeMax(Problem):
             vector of decision variables
         """
 
+        # Upper bound and lower bound.
+        lower_bound = np.array(self.lower_bounds)
+        upper_bound = np.array(self.upper_bounds)
+        # Input inequality and equlaity constraint matrix and vector.
+        # Cix <= di
+        # Cex = de
+        Ci = self.Ci
+        di = self.di
+        Ce = self.Ce
+        de = self.de
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, self.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
         # Hit and Run
+        start_pt = self.find_feasible_initial(None, C, None, d)
+        tol = 1e-6
 
-        start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
+        x = start_pt
+        # Generate the markov chain for sufficiently long.
+        for _ in range(20):
+            # Generate a random direction to travel.
+            direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
+            direction = direction / np.linalg.norm(direction)
 
-        # Reshape Ci if necessary.
-        if self.Ci.ndim == 1:
-            self.Ci = self.Ci.reshape(1, -1)
+            dir = direction
+            ra = d.flatten() - C @ x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star:
+                        s_star = s
 
-        aux_pts = []
-        # Find an auxiliar point for each plane.
-        for i in range(self.Ci.shape[0]):
-            p = np.zeros(self.dim)
-            j = np.argmax(self.Ci[i] != 0)
-            p[j] = self.di[i] / self.Ci[i][j]
-        aux_pts.append(p)  
+            dir = -direction
+            ra = d.flatten() - C @ x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star2 = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star2:
+                        s_star2 = s
 
-        # Generate a random direction to travel.
-        direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
-        direction = direction / np.linalg.norm(direction)
+            # Generate random point between lambdas.
+            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
 
-        # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
-        lambdas = []
-        for i in range(self.Ci.shape[0]):
-            if np.isclose(direction @ self.Ci[i], 0):
-                lambdas.append(np.nan)
-            else:
-                lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
-                lambdas.append(lam)
-        lambdas = np.array(lambdas)
-
-        # Find the smallest positive and negative lambdas.
-        try:
-            if (len(lambdas) == 1) & (lambdas[0] > 0):
-                lam_minus  = 0
-                lam_plus = np.min(lambdas[lambdas > 0])
-            elif (len(lambdas) == 1) & (lambdas[0] < 0):
-                lam_plus = 0
-                lam_minus = np.max(lambdas[lambdas < 0]) 
-            else:
-                lam_plus = np.min(lambdas[lambdas > 0])
-                lam_minus = np.max(lambdas[lambdas < 0])
-        except(Exception):
-            raise RuntimeError("The current direction does not intersect"
-                               "any of the hyperplanes.")
-        # Generate random point between lambdas.
-        lam = rand_sol_rng.uniform(lam_minus, lam_plus)
-
-        # Compute the new point.
-        x= start_pt + lam * direction
+            # Compute the new point.
+            x += lam * direction
 
         x= tuple(x)
-
         return x
 
     
@@ -470,6 +497,43 @@ class CascadeMax(Problem):
             vector of decision variables
         """
 
+        # Upper bound and lower bound.
+        lower_bound = np.array(self.lower_bounds)
+        upper_bound = np.array(self.upper_bounds)
+        # Input inequality and equlaity constraint matrix and vector.
+        # Cix <= di
+        # Cex = de
+        Ci = self.Ci
+        di = self.di
+        Ce = self.Ce
+        de = self.de
+
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        lb_inf_idx = np.where(~np.isinf(lower_bound))[0]
+
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            C = np.vstack((Ce,  Ci))
+            d = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            C = Ce
+            d = de.T
+        elif (Ci is not None) and (di is not None):
+            C = Ci
+            d = di.T
+        else:
+          C = np.empty([1, self.dim])
+          d = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            C = np.vstack((C, np.identity(upper_bound.shape[0])))
+            d = np.vstack((d, upper_bound[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            C = np.vstack((C, -np.identity(lower_bound.shape[0])))
+            d = np.vstack((d, -lower_bound[np.newaxis].T))
+
         # Hit and Run
 
         start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
@@ -487,45 +551,48 @@ class CascadeMax(Problem):
         aux_pts.append(p)  
 
         xs = []
-        for _ in range(n_samples):
+        x = start_pt
+        tol = 1e-6
+
+        # Generate the markov chain for sufficiently long.
+        for _ in range(20 + n_samples):
             # Generate a random direction to travel.
             direction = np.array([rand_sol_rng.uniform(0, 1) for _ in range(self.dim)])
             direction = direction / np.linalg.norm(direction)
 
-            # Find lambdas, the distance we have to travel in the current direction, from the current point, to reach a given hyperplane.
-            lambdas = []
-            for i in range(self.Ci.shape[0]):
-                if np.isclose(direction @ self.Ci[i], 0):
-                    lambdas.append(np.nan)
-                else:
-                    lam = ((aux_pts[i] - start_pt) @ self.Ci[i]) / (direction @ self.Ci[i])
-                    lambdas.append(lam)
-            lambdas = np.array(lambdas)
+            dir = direction
+            ra = d.flatten() - C @ x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star:
+                        s_star = s
 
-            # Find the smallest positive and negative lambdas.
-            try:
-                if (len(lambdas) == 1) & (lambdas[0] > 0):
-                    lam_minus  = 0
-                    lam_plus = np.min(lambdas[lambdas > 0])
-                elif (len(lambdas) == 1) & (lambdas[0] < 0):
-                    lam_plus = 0
-                    lam_minus = np.max(lambdas[lambdas < 0]) 
-                else:
-                    lam_plus = np.min(lambdas[lambdas > 0])
-                    lam_minus = np.max(lambdas[lambdas < 0])
-            except(Exception):
-                raise RuntimeError("The current direction does not intersect"
-                                "any of the hyperplanes.")
+            dir = -direction
+            ra = d.flatten() - C @ x
+            ra_d = C @ dir
+            # Initialize maximum step size.
+            s_star2 = np.inf
+            # Perform ratio test.
+            for i in range(len(ra)):
+                if ra_d[i] - tol > 0:
+                    s = ra[i]/ra_d[i]
+                    if s < s_star2:
+                        s_star2 = s
+
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(lam_minus, lam_plus)
+            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
 
             # Compute the new point.
-            x= start_pt + lam * direction
+            x += lam * direction
 
-            x= tuple(x)
-            xs.append(x)
+            xs.append(tuple(x))
 
-        return xs
+        return xs[: -n_samples]
     
 
     def find_feasible_initial(self, Ae, Ai, be, bi):

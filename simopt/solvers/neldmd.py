@@ -230,6 +230,7 @@ class NelderMead(Solver):
 
         sol.append(new_solution)
 
+        # TODO: below is a brute force way to generate multiple random solutions for the cascade problems.
         if (problem.name == "CASCADE-1") or (problem.name == "CASCADETIME-1") or (problem.name == "CASCADETIME-2") :
             xs = problem.get_multiple_random_solution(get_rand_soln_rng, n_pts - 1)
             for rand_x in xs:
@@ -525,7 +526,10 @@ class NelderMead(Solver):
         return res & (np.all(x >= lb)) & (np.all(x <= ub))
 
     def check_const(self, candidate_x, cur_x, C, d, tol):
-        # handle the box and linear constraints using ratio test
+        '''
+        Handle the box and linear constraints using ratio test.
+        '''
+
         dir = np.array(candidate_x) - np.array(cur_x)
 
         # Get all indices not in the active set such that Ai^Td>0

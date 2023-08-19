@@ -448,12 +448,6 @@ class ASTRODF(Solver):
         if (not unconstr_flag) & (not self._feasible(candidate_x, problem, tol)):
             # handle the box and linear constraints using ratio test
             candidate_x = self.check_const(candidate_x, new_x, C, d, tol)
-        # # handle the box and linear constraints using ratio test
-        # for i in range(problem.dim):
-        #     if candidate_x[i] <= problem.lower_bounds[i]:
-        #         candidate_x[i] = problem.lower_bounds[i] + 0.01
-        #     elif candidate_x[i] >= problem.upper_bounds[i]:
-        #         candidate_x[i] = problem.upper_bounds[i] - 0.01
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
         candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
@@ -729,7 +723,10 @@ class ASTRODF(Solver):
     
 
     def check_const(self, candidate_x, cur_x, C, d, tol):
-        # handle the box and linear constraints using ratio test
+        '''
+        Handle the box and linear constraints using ratio test.
+        '''
+
         dir = np.array(candidate_x) - np.array(cur_x)
 
         # Get all indices not in the active set such that Ai^Td>0

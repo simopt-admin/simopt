@@ -26,11 +26,15 @@ Modifications & Implementation:
 
 **iterate**: Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data.
 
+Adapted to handle linearly constrained problems (Joe's version):
+The **check_const** function handles the linear constraints with ratio test. This function is called in **iterate** when a candidate solution falls into the infeasible region.
+
+
 Scope:
 ------
 * objective_type: single
 
-* constraint_type: box
+* constraint_type: box, deterministic (linear)
 
 * variable_type: continuous
 
