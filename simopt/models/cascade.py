@@ -139,7 +139,7 @@ class Cascade(Model):
 """
 Summary
 -------
-Maximize the expected number of activated nodes at the end.
+Maximize the expected number of activated nodes.
 """
 
 class CascadeMax(Problem):
@@ -535,21 +535,7 @@ class CascadeMax(Problem):
             d = np.vstack((d, -lower_bound[np.newaxis].T))
 
         # Hit and Run
-
         start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
-
-        # Reshape Ci if necessary.
-        if self.Ci.ndim == 1:
-            self.Ci = self.Ci.reshape(1, -1)
-
-        aux_pts = []
-        # Find an auxiliar point for each plane.
-        for i in range(self.Ci.shape[0]):
-            p = np.zeros(self.dim)
-            j = np.argmax(self.Ci[i] != 0)
-            p[j] = self.di[i] / self.Ci[i][j]
-        aux_pts.append(p)  
-
         xs = []
         x = start_pt
         tol = 1e-6

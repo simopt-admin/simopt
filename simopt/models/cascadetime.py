@@ -61,7 +61,7 @@ class CascadeTime(Model):
                 "default": 3
             },
             "init_prob": {
-                "description": "probability of initiating the nodes",
+                "description": "probability of initiating the nodes for each group at each time step",
                 "datatype": np.ndarray,
                 "default": np.array([0.05, 0, 0] * 10)
             },
@@ -119,7 +119,8 @@ class CascadeTime(Model):
         -------
         responses : dict
             performance measures of interest
-            "mean_num_activated" = Mean number of activated nodes
+            "mean_num_activated" = Mean total number of activated nodes
+            "mean_num_activated_end" = Mean number of activated nodes at the end
         """
         # Reduce the graph to the progressive case.
         H = nx.DiGraph()
@@ -602,21 +603,7 @@ class CascadeTimeMax(Problem):
             d = np.vstack((d, -lower_bound[np.newaxis].T))
 
         # Hit and Run
-
         start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
-
-        # Reshape Ci if necessary.
-        if self.Ci.ndim == 1:
-            self.Ci = self.Ci.reshape(1, -1)
-
-        aux_pts = []
-        # Find an auxiliar point for each plane.
-        for i in range(self.Ci.shape[0]):
-            p = np.zeros(self.dim)
-            j = np.argmax(self.Ci[i] != 0)
-            p[j] = self.di[i] / self.Ci[i][j]
-        aux_pts.append(p)  
-
         xs = []
         x = start_pt
         tol = 1e-6
@@ -1133,21 +1120,7 @@ class CascadeTimeEndMax(Problem):
             d = np.vstack((d, -lower_bound[np.newaxis].T))
 
         # Hit and Run
-
         start_pt = self.find_feasible_initial(None, self.Ci, None, self.di)
-
-        # Reshape Ci if necessary.
-        if self.Ci.ndim == 1:
-            self.Ci = self.Ci.reshape(1, -1)
-
-        aux_pts = []
-        # Find an auxiliar point for each plane.
-        for i in range(self.Ci.shape[0]):
-            p = np.zeros(self.dim)
-            j = np.argmax(self.Ci[i] != 0)
-            p[j] = self.di[i] / self.Ci[i][j]
-        aux_pts.append(p)  
-
         xs = []
         x = start_pt
         tol = 1e-6

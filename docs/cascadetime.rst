@@ -1,119 +1,72 @@
-Model: Non-progressive Cascade Process (CASCADE)
+Model: Non-progressive Cascade Process (CASCADETIME)
 ====================================================================
 
 Description:
 ------------
-Iron ore is traded on the spot market, facing an exogenous, stochastic price. There
-is enormous demand for iron, and so for the purposes of a small or medium-sized iron ore mine, we assume
-that any quantity of ore can be instantaneously sold at current market rates.
+In each replication, we simulate non-progressive cascade(s) process within a finite time :math:`\tau`. The non-progressive cascade process is similar
+to the progressive one (see the .rst file for CASCADE) but within a finite tiem horizon and including the probability of becoming inactive 
+at each time step :math:`\beta_v` for node :math:`v \in V`. Besides, the initial node activation probabilities become :math:`u_v^t \in [0,1] \forall v \in V,
+t = \{1, 2, \ldots, \tau\}`, which is time-dependent.
 
-Let there be :math:`T` time periods (days), holding cost of :math:`h` per unit, production cost of :math:`c` per unit, 
-maximum production per day of :math:`m` units, and maximum holding capacity of :math:`K` units. Let the iron ore market price for
-the day be :math:`P_t`.
+According to Kempe et al. 2003, we can reduce the non-progressive cascade progress to the progressive one, The reduction can be achieved by transforming the original
+graph :math:`G` to a layered graph :math:`H = (V', E')` on :math:`\tau \cdot |V|` nodes, where :math:`V'` consists of :math:`v_t^i` for each node :math:`i` in :math:`G`
+and each time-step :math:`t \leq \tau`. :math:`E'` is obtained by connecting each node in :math:`H` with itself and its neighbors in :math:`G` indexed by the previous time step.
+The edge weight is specified as follows: :math:`p(v_t^i, v_{t+1}^j) = p_{ij}, p(v_t^i, v_{t+1}^i) = 1 - \beta_i`
 
-Let :math:`x_1` be the price at which to begin production, :math:`x_2` be the inventory level at which to cease production,
-:math:`x_3` be the price at which to cease production, and :math:`x_4` be the price at which to sell all current stock.
-
-The daily order of operations in the simulation is as follows:
-
-  1. Sample the market price, :math:`P_t`. Let current stock be :math:`s_t`.
-
-  2. If production is already underway,
-
-    (a) if :math:`P_t` ≤ :math:`x_3` or :math:`s_t` ≥ :math:`x_2`, cease production.
-    
-    (b) else, produce :math:`min(m, K − s_t)` at cost :math:`c` per unit.
-
-  3. If production is not currently underway, and if :math:`P_t` ≥ :math:`x_1` and :math:`s_t` < :math:`x_2`, begin production.
-
-  4. If :math:`P_t` ≥ :math:`x_4`, sell all stock (after production) at price :math:`P_t`.
-
-  5. Charge a holding cost of :math:`h` per unit (after production and sales).
+Note: the input graph :math:`G` is pre-generated through a random Gnp graph with :math:`n = 30` and :math:`p = 0.4`. We further transform 
+:math:`G` to a directed acyclic graph by keeping only edges directing from lower indices to higher indices.
+The resulting graph is stored in **DAG.graphml**.
 
 Sources of Randomness:
 ----------------------
-1. Let :math:`P_t` be a meanreverting random walk, such that :math:`P_t = \mbox{trunc}(P_t - 1 + N_t (\mu,\sigma))`, 
-where :math:`N_t` is a normal random variable with standard deviation :math:`\sigma` and mean :math:`\mu_t = \mbox{sgn}(\mu_0 − P_t−1) * (| \mu_0 − P_t − 1 |)^{\frac{1}{4}}`.
-Here :math:`\mbox{trunc}(x)` truncates the price to lie between a specified minimum and maximum price.
+1. A node :math:`v_t` would be activated initially following a Bernoulli distribution with :math:`p = u_v^t`.
+
+2. An edge :math:`e` would be activated following a Bernoulli distribution with :math:`p = p_e`, where :math:`p_e` corresponds to the edge weight.
 
 Model Factors:
 --------------
-* mean_price: Mean iron ore price per unit.
+* num_subgraph: Number of subgraphs to generate.
 
-    * Default: 100.0
+    * Default: 10
 
-* max_price: Maximum iron ore price per unit.
+* num_group: Number of node groups.
 
-    * Default: 200.0
+    * Default: 3
 
-* min_price: Minimum iron ore price per unit.
+* init_prob: Probability of initiating the nodes for each group at each time step.
 
-    * Default: 0.0
-  
-* capacity: Maximum holding capacity.
+    * Default: np.array([0.05, 0, 0] * 10)
 
-    * Default: 10000
+* T: Number of time steps for the cascade process.
 
-* st_dev: Standard deviation of random walk steps for price.
+    * Default: 10
 
-    * Default: 7.5
+* beta: Probability of de-activating a node at each time step.
 
-* holding_cost: Holding cost per unit per period.
-
-    * Default: 1.0
-
-* prod_cost: Production cost per unit.
-
-    * Default: 100.0
-
-* max_prod_perday: Maximum units produced per day.
-
-    * Default: 100
-
-* price_prod: Price level to start production.
-
-    * Default: 80.0
-
-* inven_stop: Inventory level to cease production.
-
-    * Default: 7000
-
-* price_stop: Price level to stop production.
-
-    * Default: 40
-
-* price_sell: Price level to sell all stock.
-
-    * Default: 100
-
-* n_days: Number of days to simulate.
-
-    * Default: 365
-
+    * Default: 0.4
 
 Respones:
 ---------
-* total_profit: The total profit over the time period
+* mean_num_activated: The average total number of activated nodes among all subgraphs.
 
-* frac_producing: The fraction of days spent producing iron ore
-
-* mean_stock: The average stocks over the time period
+* mean_num_activated_end: Mean number of activated nodes at the end.
 
 
 References:
 ===========
-N/A
+Kempe, D., Kleinberg, J., & Tardos, É. (2003, August). Maximizing the spread of influence through a social network. 
+In Proceedings of the ninth ACM SIGKDD international conference on Knowledge discovery and data mining (pp. 137-146).
+
+Sheldon, D., Dilkina, B., Elmachtoub, A. N., Finseth, R., Sabharwal, A., Conrad, J., ... & Vaughan, W. (2012). 
+Maximizing the spread of cascades using network design. arXiv preprint arXiv:1203.3514.
 
 
-Optimization Problem: Maximize Profit (IRONORE-1)
-=================================================
+Optimization Problem: Maximize Total Activated Nodes (CASCADETIME-1)
+=====================================================================
 
 Decision Variables:
 -------------------
-* price_prod
-* inven_stop
-* price_stop
-* price_sell
+* init_prob (:math:`u_v^t`)
 
 Objectives:
 -----------
@@ -136,14 +89,11 @@ Fixed Model Factors:
 
 Starting Solution: 
 ------------------
-* initial_solution: :math:`x_1 = 80`, :math:`x_2 = 7000`, :math:`x_3 = 40`, :math:`x_4=100`
+* initial_solution: tuple(np.array([0.01, 0.01, 0.01] * 10))
 
 Random Solutions: 
 -----------------
-* :math:`x_1`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
-* :math:`x_2`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 1000 and 10000.
-* :math:`x_3`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
-* :math:`x_4`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
+* 
 
 Optimal Solution:
 -----------------
