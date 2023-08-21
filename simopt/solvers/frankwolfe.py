@@ -444,7 +444,7 @@ class FrankWolfe(Solver):
         """
         Compute a search direction by solving a direction-finding linear subproblem at solution x.
 
-        min d^Tgrad
+        min d^Tgrad + 1/2 ||d||^2
         s.t. Ae(x + d) = be
              Ai(x + d) <= bi
              (x + d) >= lb
@@ -473,7 +473,7 @@ class FrankWolfe(Solver):
         d = cp.Variable(problem.dim)
 
         # Define objective.
-        obj = cp.Minimize(grad @ d + + 0.5 * cp.quad_form(d, np.identity(problem.dim)))
+        obj = cp.Minimize(grad @ d + 0.5 * cp.quad_form(d, np.identity(problem.dim)))
 
         # Define constraints.
         constraints = []

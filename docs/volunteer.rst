@@ -106,11 +106,13 @@ Decision Variables:
 
 Objectives:
 -----------
-Minimize the probability of the distance of the closest volunteer exceeding the threshold distance.
+Minimize the probability of the distance of the closest volunteer exceeding the threshold distance :math:`r`.
+
+:math:`\min && \mathcal{P}(D > r)`
 
 Constraints:
 ------------
-* :math:`x_i`'s should sum up to one.
+* :math:`x_i`'s should be non-negative and sum up to one.
 
 Problem Factors:
 ----------------
@@ -152,6 +154,8 @@ Decision Variables:
 Objectives:
 -----------
 Maximize the probability of survival of the OHCA.
+
+**gradient**
 
 Constraints:
 ------------

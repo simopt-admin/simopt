@@ -3,7 +3,7 @@ Solver: Frank-Wolfe (FW)
 
 Description:
 ------------
-The solver is dedicated for problems with linear constraints in the form of :math:`C_e x = de, C_i x \leq di`.
+The solver is dedicated for problems with linear constraints in the form of :math:`C_e x = d_e, C_i x \leq d_i`.
 It employs the Frank-Wolfe algorithm with adaptive step search.
 
 Modifications & Implementation:
@@ -17,6 +17,15 @@ Modifications & Implementation:
 
 **search_dir**: Compute a search direction by solving a direction-finding linear subproblem at solution x.
 
+.. math::
+
+    \begin{align}
+    \min && (1/2)|| d ||^2+ g(x)^T d \\\\
+    \text{s.t.} A_e(x + d) = b_e \\
+             A_i(x + d) \leq b_i \\
+             (x + d) \geq lb \\
+             (x + d) \leq ub
+    \end{align}
 
 Scope:
 ------

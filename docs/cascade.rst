@@ -58,15 +58,16 @@ Constraints:
 ------------
 All decision variables should be between 0 and 1.
 The expected total activation cost should be within a cost budget :math:`B`.
+
 :math:`\sum c_v \cdot u_v \leq B`
 
 Problem Factors:
 ----------------
 * budget: Max # of replications for a solver to take
 
-  * Default: 1000
+  * Default: 10000
 
-* B: Budget for the activation costse
+* B: Budget for the activation costs
 
   * Default: 200
 
@@ -80,8 +81,10 @@ Starting Solution:
 
 Random Solutions: 
 -----------------
-:math:`u_v` is sampled uniformly from convex shapes defined by linear constraints.
-We adopt the hit-and-run algorithm, a Markov Chain Monte Carlo method.
+* :math:`u_v` is sampled uniformly from convex shapes defined by linear constraints. We adopt the hit-and-run algorithm, a Markov Chain Monte Carlo method.
+
+* The **get_multiple_random_solution** function allows for more efficiently generating multiple random solutions using hit-and-run.
+
 
 Optimal Solution:
 -----------------

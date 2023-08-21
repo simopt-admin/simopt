@@ -481,7 +481,10 @@ class VolunteerDist(Problem):
         self.dim = self.model.factors["num_squares"]
         self.lower_bounds = tuple(np.zeros(self.dim))
         self.upper_bounds = tuple(np.ones(self.dim))
-        self.set_linear_constraints()
+        self.Ci = None
+        self.Ce = np.ones(self.dim)
+        self.di = None
+        self.de = np.array([1])
 
     def check_initial_solution(self):
         return len(self.factors["initial_solution"]) == self.dim
@@ -627,7 +630,8 @@ class VolunteerDist(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.sum(x) <= 1
+        return np.sum(x) == 1
+
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.
@@ -644,21 +648,9 @@ class VolunteerDist(Problem):
         """
         if rand_sol_rng.random() < 0.25:
             x = tuple(rand_sol_rng.unitsimplexvariate(self.dim))
-        else:
+        else:  # With a certain probability, cheating to generate a good solution.
             x = tuple(list(chain.from_iterable(self.factors["p_OHCA"])))
         return x
-    
-    def set_linear_constraints(self):
-        # Initialize linear constraint matrices.
-        self.Ci = None
-        self.Ce = None
-        self.di = None
-        self.de = None
-        if self.constraint_type != "deterministic": # maybe create a new type of constraint named "linear"
-            return
-        else:
-            self.Ce = np.ones(self.dim)
-            self.de = np.array([1])
 
 
 """

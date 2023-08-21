@@ -17,8 +17,8 @@ Nonetheless, we realize that simply using :math:`u_v^t` as decision variables ca
 To reduce the dimension, we adopt an approach for "grouping" the variables together: 
 
 given :math:`K`, a constant number of groups, we divide the node set :math:`V` into :math:`K` node subsets 
-$\{V_k'\}_{k = \{1, 2, \ldots, K\}}$. The decision variables become $u_k^t$, which represents the probability of activating any node in $V_k'$ at time step $t$. 
-Notice that $u_v^t = u_k^t$ for all $v \in V_k'$.
+:math:`\{V_k'\}_{k = \{1, 2, \ldots, K\}}`. The decision variables become :math:`u_k^t`, which represents the probability of activating any node in :math:`V_k'` at time step :math:`t`. 
+Notice that :math:`u_v^t = u_k^t` for :math:`v \in V_k`.
 
 
 Note: the input graph :math:`G` is pre-generated through a random Gnp graph with :math:`n = 30` and :math:`p = 0.4`. We further transform 
@@ -74,7 +74,7 @@ Optimization Problem: Maximize Total Activated Nodes (CASCADETIME-1)
 
 Decision Variables:
 -------------------
-* init_prob (:math:`u_v^t`)
+* init_prob (:math:`u_k^t`)
 
 Objectives:
 -----------
@@ -82,14 +82,19 @@ Maximize the expected total number of activated nodes throughout the entire time
 
 Constraints:
 ------------
-All decision variables should be non-negative.
-Logically, we should also have price_stop <= price_prod <= price_sell, but this is not enforced.
+All decision variables should be between 0 and 1.
+The expected total activation cost should be within a cost budget :math:`B`.
+:math:`\sum_{t \leq \tau} \sum_{k \in K} \sum_{v \in V_k} c_v \cdot u_k^t \leq B`
 
 Problem Factors:
 ----------------
 * budget: Max # of replications for a solver to take
 
-  * Default: 1000
+  * Default: 10000
+
+* B: Budget for the activation costs
+
+  * Default: 500
 
 Fixed Model Factors:
 --------------------
@@ -101,7 +106,57 @@ Starting Solution:
 
 Random Solutions: 
 -----------------
-* 
+* :math:`u_k^t` is sampled uniformly from convex shapes defined by linear constraints. We adopt the hit-and-run algorithm, a Markov Chain Monte Carlo method.
+
+* The **get_multiple_random_solution** function allows for more efficiently generating multiple random solutions using hit-and-run.
+
+Optimal Solution:
+-----------------
+Unknown
+
+Optimal Objective Function Value:
+---------------------------------
+Unknown
+
+
+Optimization Problem: Maximize End Activated Nodes (CASCADETIME-2)
+=====================================================================
+
+Decision Variables:
+-------------------
+* init_prob (:math:`u_k^t`)
+
+Objectives:
+-----------
+Maximize the expected number of activated nodes at the end of the time period.
+
+Constraints:
+------------
+All decision variables should be between 0 and 1.
+The expected total activation cost should be within a cost budget :math:`B`.
+:math:`\sum_{t \leq \tau} \sum_{k \in K} \sum_{v \in V_k} c_v \cdot u_k^t \leq B`
+
+Problem Factors:
+----------------
+* budget: Max # of replications for a solver to take
+
+  * Default: 10000
+
+* B: Budget for the activation costs
+
+  * Default: 500
+
+Fixed Model Factors:
+--------------------
+* N/A
+
+Starting Solution: 
+------------------
+* initial_solution: tuple(np.array([0.01, 0.01, 0.01] * 10))
+
+Random Solutions: 
+-----------------
+* :math:`u_k^t` is sampled uniformly from convex shapes defined by linear constraints. We adopt the hit-and-run algorithm, a Markov Chain Monte Carlo method.
 
 Optimal Solution:
 -----------------
