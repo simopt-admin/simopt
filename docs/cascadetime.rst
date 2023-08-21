@@ -13,6 +13,14 @@ graph :math:`G` to a layered graph :math:`H = (V', E')` on :math:`\tau \cdot |V|
 and each time-step :math:`t \leq \tau`. :math:`E'` is obtained by connecting each node in :math:`H` with itself and its neighbors in :math:`G` indexed by the previous time step.
 The edge weight is specified as follows: :math:`p(v_t^i, v_{t+1}^j) = p_{ij}, p(v_t^i, v_{t+1}^i) = 1 - \beta_i`
 
+Nonetheless, we realize that simply using :math:`u_v^t` as decision variables can make these two problems become extremely high-dimensional and hard to solve. 
+To reduce the dimension, we adopt an approach for "grouping" the variables together: 
+
+given :math:`K`, a constant number of groups, we divide the node set :math:`V` into :math:`K` node subsets 
+$\{V_k'\}_{k = \{1, 2, \ldots, K\}}$. The decision variables become $u_k^t$, which represents the probability of activating any node in $V_k'$ at time step $t$. 
+Notice that $u_v^t = u_k^t$ for all $v \in V_k'$.
+
+
 Note: the input graph :math:`G` is pre-generated through a random Gnp graph with :math:`n = 30` and :math:`p = 0.4`. We further transform 
 :math:`G` to a directed acyclic graph by keeping only edges directing from lower indices to higher indices.
 The resulting graph is stored in **DAG.graphml**.
@@ -29,7 +37,7 @@ Model Factors:
 
     * Default: 10
 
-* num_group: Number of node groups.
+* num_group (:math:`K`): Number of node groups.
 
     * Default: 3
 
@@ -70,7 +78,7 @@ Decision Variables:
 
 Objectives:
 -----------
-Maximize total_profit over the :math:`T` time periods.
+Maximize the expected total number of activated nodes throughout the entire time period.
 
 Constraints:
 ------------
