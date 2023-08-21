@@ -134,7 +134,7 @@ Starting Solution:
 
 Random Solutions: 
 ------------------
-Sample each :math:`x_i` in a standard simplex.
+Sample :math:`x_i` uniformly from a unit simplex.
 
 Optimal Solution:
 -----------------
@@ -155,11 +155,21 @@ Objectives:
 -----------
 Maximize the probability of survival of the OHCA.
 
-**gradient**
+:math:`\max && \mathcal{E} s(D)`
+
+**gradient** (using likelihodd ratio estimator)
+
+To compute the gradient estimator:
+
+* Compute s(D)
+* Let :math:`S_i =` count of volunteers in square :math:`i`.
+* Estimate :math:`i^{th}` component of gradient by :math:`\frac{S_i}{x_i} s(D)` if :math:`x_i > 0` or 0 if :math:`x_i = 0`.
+
+This has very high variance for component :math:`i` where :math:`x_i` is small.
 
 Constraints:
 ------------
-* :math:`x_i`'s should sum up to one.
+* :math:`x_i`'s should be non-negative and sum up to one.
 
 Problem Factors:
 ----------------
@@ -181,7 +191,7 @@ Starting Solution:
 
 Random Solutions: 
 ------------------
-Sample each :math:`x_i` in a standard simplex.
+Sample :math:`x_i` uniformly from a unit simplex.
 
 Optimal Solution:
 -----------------
