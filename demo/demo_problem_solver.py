@@ -52,17 +52,17 @@ print(f"Results will be stored as {file_name_path}.")
 # Initialize an instance of the experiment class.
 myexperiment = ProblemSolver(solver_name, problem_name)
 
-# import timeit
-# start = timeit.default_timer()
-# # Run a fixed number of macroreplications of the solver on the problem.
-# myexperiment.run(n_macroreps=3)
-# stop = timeit.default_timer()
+import timeit
+start = timeit.default_timer()
+# Run a fixed number of macroreplications of the solver on the problem.
+myexperiment.run(n_macroreps=3)
+stop = timeit.default_timer()
 
 # print('Time: ', stop - start)  
 # If the solver runs have already been performed, uncomment the
 # following pair of lines (and uncommmen the myexperiment.run(...)
 # line above) to read in results from a .pickle file.
-myexperiment = read_experiment_results(file_name_path)
+# myexperiment = read_experiment_results(file_name_path)
 
 import numpy as np
 print(repr(np.array(myexperiment.xstar)))
