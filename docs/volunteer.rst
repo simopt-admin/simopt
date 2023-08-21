@@ -40,6 +40,10 @@ the OHCA happens. The distance of the closest volunteer is
 which equals :math:`\infty` if :math:`N = 0`.
 
 
+Note: the 20x20 probabilities of an OHCA occurring in each square are pre-generated. The probabilities gradually descent from the peak center where
+it has the highest probability of occurence.
+The resulting probability matrix is stored in **p_OHCA.csv**.
+
 Sources of Randomness:
 ----------------------
 There are three sources of randomness.

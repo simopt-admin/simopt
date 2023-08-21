@@ -552,17 +552,20 @@ class CascadeTimeMax(Problem):
     
     def get_multiple_random_solution(self, rand_sol_rng, n_samples):
         """
-        Generate a random solution for starting or restarting solvers.
+        Generate multiple random solutions for starting or restarting solvers.
 
         Arguments
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
+        n_samples: int
+            number of random solutions to generate
+
         Returns
         -------
-        x : tuple
-            vector of decision variables
+        xs : list[tuple]
+            list of vectors of decision variables
         """
 
         # Upper bound and lower bound.
@@ -1069,17 +1072,20 @@ class CascadeTimeEndMax(Problem):
     
     def get_multiple_random_solution(self, rand_sol_rng, n_samples):
         """
-        Generate a random solution for starting or restarting solvers.
+        Generate multiple random solutions for starting or restarting solvers.
 
         Arguments
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
+        n_samples: int
+            number of random solutions to generate
+
         Returns
         -------
-        x : tuple
-            vector of decision variables
+        xs : list[tuple]
+            list of vectors of decision variables
         """
 
         # Upper bound and lower bound.
