@@ -541,7 +541,7 @@ class CascadeTimeMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
+            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
 
             # Compute the new point.
             x += lam * direction
@@ -642,7 +642,7 @@ class CascadeTimeMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
+            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
 
             # Compute the new point.
             x += lam * direction
@@ -1061,7 +1061,7 @@ class CascadeTimeEndMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
+            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
 
             # Compute the new point.
             x += lam * direction
@@ -1162,7 +1162,7 @@ class CascadeTimeEndMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
+            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
 
             # Compute the new point.
             x += lam * direction
