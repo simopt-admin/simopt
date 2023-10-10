@@ -1,0 +1,23 @@
+Solver Name:,RNDSRCH
+Design Type:,NOLH
+Number of Stacks:,1
+Design Factors:,sample_size
+Fixed Factors:,crn_across_solns
+Design #,sample_size,crn_across_solns (fixed)
+0,29,TRUE
+1,7,TRUE
+2,12,TRUE
+3,18,TRUE
+4,68,TRUE
+5,90,TRUE
+6,57,TRUE
+7,51,TRUE
+8,46,TRUE
+9,62,TRUE
+10,84,TRUE
+11,79,TRUE
+12,73,TRUE
+13,23,TRUE
+14,1,TRUE
+15,34,TRUE
+16,40,TRUE

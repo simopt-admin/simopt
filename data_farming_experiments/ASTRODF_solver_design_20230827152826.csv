@@ -1,0 +1,6 @@
+Solver Name:,ASTRODF
+Design Type:,NOLH
+Number of Stacks:,1
+Design Factors:,crn_across_solns,lambda_min
+Fixed Factors:,eta_1,eta_2,gamma_1,gamma_2,easy_solve,reuse_points,ps_sufficient_reduction
+Design #,crn_across_solns,lambda_min,eta_1 (fixed),eta_2 (fixed),gamma_1 (fixed),gamma_2 (fixed),easy_solve (fixed),reuse_points (fixed),ps_sufficient_reduction (fixed)

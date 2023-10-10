@@ -25,8 +25,8 @@ factor_headers = ["purchase_price", "sales_price", "salvage_price", "order_quant
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-# factor_settings_filename = "model_factor_settings"
-factor_settings_filename = None
+factor_settings_filename = "model_factor_settings"
+#factor_settings_filename = None
 
 # OR, if the design has been created, provide the name of a .text file
 # containing the following:

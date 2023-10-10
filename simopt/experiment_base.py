@@ -337,7 +337,7 @@ class ProblemSolver(object):
         Proxy for optimal solution (x*).
     xstar_postreps : list
         Post-replicates at x*.
-    objective_curves : list [``experiment_base.Curve``]
+    objective_curves : list [``experiment_base.Curve``] 
         Curves of estimated objective function values,
         one for each macroreplication.
     progress_curves : list [``experiment_base.Curve``]

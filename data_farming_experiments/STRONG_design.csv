@@ -1,0 +1,18 @@
+Design #,n0,crn_across_solns,n_r,sensitivity,delta_threshold,delta_T,eta_0,eta_1,gamma_1,gamma_2,lambda,lambda_2,Solver Name,Design Type,Number Stacks
+0,14,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+1,7,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+2,9,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+3,10,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+4,27,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+5,34,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+6,23,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+7,21,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+8,20,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+9,25,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+10,32,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+11,30,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+12,29,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+13,12,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+14,5,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+15,16,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1
+16,18,True,10,1e-07,7,2.0,0.01,0.3,0.9,1.11,2,1.01,STRONG,nolhs,1

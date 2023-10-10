@@ -1,0 +1,21 @@
+Solver Name:,RNDSRCH
+Design Factors:,sample_size
+Fixed Factors:,crn_across_solns
+Design #,sample_size,crn_across_solns (fixed)
+0,4,True
+1,2,True
+2,2,True
+3,3,True
+4,8,True
+5,10,True
+6,7,True
+7,6,True
+8,6,True
+9,7,True
+10,9,True
+11,9,True
+12,8,True
+13,3,True
+14,1,True
+15,4,True
+16,5,True
