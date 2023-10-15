@@ -57,7 +57,7 @@ Model Factors:
 
     * Default: (9, 9)
   
-* cost: Cost of prodcuts
+* cost: Cost of products
 
     * Default: (5, 5)
 
@@ -88,8 +88,8 @@ Decision Variables:
 
 Objectives:
 -----------
-Let :math:`\omega = \{U_t : t = 1, \ldots, T\}`denote the sample path,
-and assume that `\omega` follows the probability distribution :math:`P`.
+Let :math:`\omega = \{U_t : t = 1, \ldots, T\}` denote the sample path,
+and assume that :math:`\omega` follows the probability distribution :math:`P`.
 We consider a one-period inventory model and assume :math:`P(T < +\infty) = 1`.
 The retailer knows the probability measure :math:`P`.
 His/her objective is to choose the initial inventory level :math:`x` that maximizes profit.

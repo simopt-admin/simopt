@@ -45,7 +45,7 @@ class DynamNews(Model):
             fixed_factors = {}
         self.name = "DYNAMNEWS"
         self.n_rngs = 1
-        self.n_responses = 2
+        self.n_responses = 4
         self.factors = fixed_factors
         self.specifications = {
             "num_prod": {
@@ -135,6 +135,8 @@ class DynamNews(Model):
             performance measures of interest
             "profit" = profit in this scenario
             "n_prod_stockout" = number of products which are out of stock
+            "n_missed_orders" = number of unmet customer orders
+            "fill_rate" = fraction of customer orders fulfilled
         """
         # Designate random number generator for generating a Gumbel random variable.
         Gumbel_rng = rng_list[0]
@@ -165,6 +167,7 @@ class DynamNews(Model):
             for j in instock:
                 if utility[t][j + 1] > utility[t][int(itembought[t])]:
                     itembought[t] = j + 1
+            # print("item bought", int(itembought[t]))
             if itembought[t] != 0:
                 inventory[int(itembought[t] - 1)] -= 1
 
@@ -173,9 +176,11 @@ class DynamNews(Model):
         revenue = numsold * np.array(self.factors["price"])
         cost = self.factors["init_level"] * np.array(self.factors["cost"])
         profit = revenue - cost
+        unmet_demand = self.factors["num_customer"] - sum(numsold)
+        order_fill_rate = sum(numsold) / self.factors["num_customer"]
 
         # Compose responses and gradients.
-        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0)}
+        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0), "n_missed_orders": unmet_demand, "fill_rate": order_fill_rate}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
