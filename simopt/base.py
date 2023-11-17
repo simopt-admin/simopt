@@ -3,11 +3,19 @@
 Summary
 -------
 Provide base classes for solvers, problems, and models.
+This is the modified version to generate and run random model/random problem instance.
 """
 
 import numpy as np
 from copy import deepcopy
-from mrg32k3a.mrg32k3a import MRG32k3a
+import sys
+import os.path as o
+# from mrg32k3a.mrg32k3a import MRG32k3a
+from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
+
+from simopt.auto_diff_util import bi_dict, replicate_wrapper
+
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 
 class Solver(object):
@@ -378,7 +386,7 @@ class Problem(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def attach_rngs(self, rng_list):
+    def attach_rngs(self, random_rng, copy=True):
         """Attach a list of random-number generators to the problem.
 
         Parameters
@@ -387,7 +395,25 @@ class Problem(object):
             List of random-number generators used to generate a random initial solution
             or a random problem instance.
         """
-        self.rng_list = rng_list
+        if copy:
+            self.random_rng = [deepcopy(rng) for rng in random_rng]
+        else:
+            self.random_rng = random_rng
+        
+    def rebase(self, n_reps):
+        """Rebase the progenitor rngs to start at a later subsubstream index.
+
+        Parameters
+        ----------
+        n_reps : int
+            Substream index to skip to.
+        """
+        new_rngs = []
+        for rng in self.random_rng:
+            stream_index = rng.s_ss_sss_index[0]
+            substream_index = rng.s_ss_sss_index[1]
+            new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps]))
+        self.random_rng = new_rngs
 
     def vector_to_factor_dict(self, vector):
         """
@@ -622,8 +648,6 @@ class Problem(object):
                 # to those of deterministic components of objectives.
                 solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
                 if self.gradient_available:
-                    # print(self.response_dict_to_objectives_gradients(vector_gradients))
-                    # print(solution.det_objectives_gradients)
                     solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives_gradients(vector_gradients), solution.det_objectives_gradients)]
                     # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
@@ -755,6 +779,21 @@ class Model(object):
         """
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
+    
+    def attach_rng(self, random_rng, copy=True):
+        """Attach a list of random-number generators to the problem.
+
+        Parameters
+        ----------
+        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
+            List of random-number generators used to generate a random initial solution
+            or a random problem instance.
+        """
+        # self.random_rng = random_rng
+        if copy:
+            self.random_rng = [deepcopy(rng) for rng in random_rng]
+        else:
+            self.random_rng = random_rng 
 
     def replicate(self, rng_list):
         """Simulate a single replication for the current model factors.
@@ -772,6 +811,27 @@ class Model(object):
             Gradient estimate for each response.
         """
         raise NotImplementedError
+    
+    
+class Auto_Model(Model):
+    """
+    Subclass of Model. 
+    """
+    def __init__(self, fixed_factors):
+        # set factors of the simulation model
+        # fill in missing factors with default values
+        super(Auto_Model, self).__init__(fixed_factors)
+        self.differentiable_factor_names = []
+        for key in self.specifications:
+            if self.specifications[key]["datatype"] == float:
+                self.differentiable_factor_names.append(key)
+        self.bi_dict = bi_dict(self.response_names)
+                
+    def innner_replicate(self, rng_list):
+        raise NotImplementedError
+
+    def replicate(self, rng_list, **kwargs):
+        return replicate_wrapper(self, rng_list, **kwargs)
 
 
 class Solution(object):
@@ -826,7 +886,10 @@ class Solution(object):
     def __init__(self, x, problem):
         super().__init__()
         self.x = x
-        self.dim = len(x)
+        if isinstance(x, int) or isinstance(x, float):
+            self.dim = 1
+        else:
+            self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
         self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
