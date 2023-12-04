@@ -1,0 +1,22 @@
+./experiments/outputs/group_RNDSRCH_on_EXAMPLE-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+EXAMPLE-1
+	Model Factors:
+
+	Problem Factors:
+		initial_solution: (2.0, 2.0)
+		budget: 1000
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+RNDSRCH
+	Solver Factors:
+		crn_across_solns: True
+		sample_size: 10
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+	RNDSRCH_on_EXAMPLE-1.pickle

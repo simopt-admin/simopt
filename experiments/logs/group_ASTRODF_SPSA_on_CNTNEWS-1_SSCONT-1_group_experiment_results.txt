@@ -1,0 +1,93 @@
+./experiments/outputs/group_ASTRODF_SPSA_on_CNTNEWS-1_SSCONT-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10
+		sales_price: 15
+		salvage_price: 1.0
+		Burr_c: 2.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 5
+		sales_price: 25
+		salvage_price: 1.0
+		Burr_c: 2.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1500
+		initial_solution: (0,)
+
+SSCONT-1
+	Model Factors:
+		demand_mean: 2000
+		lead_mean: 5
+		backorder_cost: 4.0
+		holding_cost: 1.0
+		fixed_cost: 36.0
+		variable_cost: 2.0
+		n_days: 100
+		warmup: 20
+
+	Problem Factors:
+		budget: 200
+		initial_solution: (600, 600)
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+ASTRODF
+	Solver Factors:
+		eta_1: 0.5
+		eta_2: 0.75
+		lambda_min: 50
+		crn_across_solns: True
+		gamma_1: 1.5
+		gamma_2: 0.5
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		eta_1: 0.3
+		eta_2: 0.4
+		lambda_min: 80
+		crn_across_solns: True
+		gamma_1: 1.5
+		gamma_2: 0.5
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+SPSA
+	Solver Factors:
+		n_reps: 20
+		n_loss: 3
+		crn_across_solns: True
+		alpha: 0.602
+		gamma: 0.101
+		step: 0.1
+		gavg: 1
+		eval_pct: 0.6666666666666666
+		iter_pct: 0.1
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+	ASTRODF_on_CNTNEWS-1.pickle
+	ASTRODF_on_CNTNEWS-1.pickle
+	SPSA_on_CNTNEWS-1.pickle
+	ASTRODF_on_CNTNEWS-1.pickle
+	ASTRODF_on_CNTNEWS-1.pickle
+	SPSA_on_CNTNEWS-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	SPSA_on_SSCONT-1.pickle

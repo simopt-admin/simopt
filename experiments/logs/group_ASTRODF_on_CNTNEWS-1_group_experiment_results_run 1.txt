@@ -1,0 +1,3477 @@
+./experiments/outputs/group_ASTRODF_on_CNTNEWS-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 969
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 594
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 688
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 781
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1625
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 2000
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1438
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1344
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1250
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1531
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1906
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1813
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1719
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 875
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 500
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1063
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 22.5
+		sales_price: 75.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 12.5
+		sales_price: 30.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 15.0
+		sales_price: 41.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 17.5
+		sales_price: 52.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 40.0
+		sales_price: 71.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 50.0
+		sales_price: 33.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 35.0
+		sales_price: 26.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 32.5
+		sales_price: 67.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 30.0
+		sales_price: 45.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 37.5
+		sales_price: 15.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 47.5
+		sales_price: 60.0
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 45.0
+		sales_price: 48.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 42.5
+		sales_price: 37.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 20.0
+		sales_price: 18.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 10.0
+		sales_price: 56.25
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 25.0
+		sales_price: 63.75
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 27.5
+		sales_price: 22.5
+		salvage_price: 5.0
+		Burr_c: 1.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		budget: 1156
+		initial_solution: (0,)
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+ASTRODF
+	Solver Factors:

@@ -1,0 +1,18 @@
+Design #,sample_size,crn_across_solns,Solver Name,Design Type,Number Stacks
+0,103,True,RNDSRCH,nolhs,1
+1,22,True,RNDSRCH,nolhs,1
+2,42,True,RNDSRCH,nolhs,1
+3,62,True,RNDSRCH,nolhs,1
+4,244,True,RNDSRCH,nolhs,1
+5,324,True,RNDSRCH,nolhs,1
+6,203,True,RNDSRCH,nolhs,1
+7,183,True,RNDSRCH,nolhs,1
+8,163,True,RNDSRCH,nolhs,1
+9,223,True,RNDSRCH,nolhs,1
+10,304,True,RNDSRCH,nolhs,1
+11,284,True,RNDSRCH,nolhs,1
+12,264,True,RNDSRCH,nolhs,1
+13,83,True,RNDSRCH,nolhs,1
+14,2,True,RNDSRCH,nolhs,1
+15,123,True,RNDSRCH,nolhs,1
+16,143,True,RNDSRCH,nolhs,1

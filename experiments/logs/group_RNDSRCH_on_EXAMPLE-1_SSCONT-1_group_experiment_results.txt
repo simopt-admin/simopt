@@ -1,0 +1,38 @@
+./experiments/outputs/group_RNDSRCH_on_EXAMPLE-1_SSCONT-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+EXAMPLE-1
+	Model Factors:
+
+	Problem Factors:
+		initial_solution: (2.0, 2.0)
+		budget: 500
+
+SSCONT-1
+	Model Factors:
+		demand_mean: 100.0
+		lead_mean: 5.0
+		backorder_cost: 4.0
+		holding_cost: 1.0
+		fixed_cost: 36.0
+		variable_cost: 2.0
+		n_days: 100
+		warmup: 20
+
+	Problem Factors:
+		initial_solution: (600.0, 600.0)
+		budget: 1000
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+RNDSRCH
+	Solver Factors:
+		crn_across_solns: True
+		sample_size: 20
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+	RNDSRCH_on_EXAMPLE-1.pickle
+	RNDSRCH_on_SSCONT-1.pickle

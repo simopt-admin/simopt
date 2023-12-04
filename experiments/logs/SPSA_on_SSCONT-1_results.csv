@@ -1,0 +1,6 @@
+DesignPt#,crn_across_solns,alpha,gamma,step,gavg,n_reps,n_loss,eval_pct,iter_pct,initial_solution,budget,n_days,variable_cost,lead_mean,backorder_cost,warmup,holding_cost,fixed_cost,demand_mean,MacroRep#,Final Relative Optimality Gap,Area Under Progress Curve,0.05-Solve Time,0.05-Solved? (Y/N),0.1-Solve Time,0.1-Solved? (Y/N),0.2-Solve Time,0.2-Solved? (Y/N),0.5-Solve Time,0.5-Solved? (Y/N)
+0,True,0.602,0.101,0.1,1,20,3,0.6666666666666666,0.1,"(600, 600)",200,100,2.0,5,4.0,20,1.0,36.0,2000,0,nan,nan,inf,0,inf,0,inf,0,inf,0
+0,True,0.602,0.101,0.1,1,20,3,0.6666666666666666,0.1,"(600, 600)",200,100,2.0,5,4.0,20,1.0,36.0,2000,1,nan,nan,inf,0,inf,0,inf,0,inf,0
+0,True,0.602,0.101,0.1,1,20,3,0.6666666666666666,0.1,"(600, 600)",200,100,2.0,5,4.0,20,1.0,36.0,2000,2,nan,nan,inf,0,inf,0,inf,0,inf,0
+0,True,0.602,0.101,0.1,1,20,3,0.6666666666666666,0.1,"(600, 600)",200,100,2.0,5,4.0,20,1.0,36.0,2000,3,nan,nan,inf,0,inf,0,inf,0,inf,0
+0,True,0.602,0.101,0.1,1,20,3,0.6666666666666666,0.1,"(600, 600)",200,100,2.0,5,4.0,20,1.0,36.0,2000,4,inf,nan,inf,0,inf,0,inf,0,inf,0

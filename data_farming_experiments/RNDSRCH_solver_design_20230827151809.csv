@@ -1,0 +1,6 @@
+Solver Name:,RNDSRCH
+Design Type:,NOLH
+Number of Stacks:,1
+Design Factors:,crn_across_solns,sample_size
+Fixed Factors:
+Design #,crn_across_solns,sample_size

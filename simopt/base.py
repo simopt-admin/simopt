@@ -160,6 +160,53 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
+    def run_all_checks(self, factor_names):
+        """
+        
+
+        Parameters
+        ----------
+        factor_names : list
+            list of str names of factors to check.
+
+        Returns
+        -------
+        check_all : bool
+            defines if all checks came back as true.
+
+        """
+        
+        is_joint_factors = self.check_solver_factors() # check all joint factor settings
+        
+        if is_joint_factors != True:
+            print("There is a joint setting of a solver factor that is not permissible")
+            
+        
+        #check datatypes for all factors
+        is_all_permissible = True
+        is_all_right_type = True
+        for factor in factor_names:
+            is_permissible = self.check_solver_factor(factor)
+            is_right_type = self.check_factor_datatype(factor)
+            
+            if is_right_type != True:
+                print(f"Solver factor {factor} is not a permissible data type.")
+                is_all_right_type = False
+                
+            if is_permissible != True:
+                print(f"Solver factor {factor} is not permissble.")
+                is_all_permissible = False
+        
+        if is_joint_factors and is_all_right_type and is_all_permissible == True:
+            check_all = True
+        else:
+            check_all = False
+            
+        return check_all
+            
+            
+        
+
     def create_new_solution(self, x, problem):
         """Create a new solution object with attached RNGs primed
         to simulate replications.
@@ -378,6 +425,59 @@ class Problem(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
+    def run_all_checks(self, factor_names):
+        """
+        
+
+        Parameters
+        ----------
+        factor_names : list
+            list of str names of factors to check.
+
+        Returns
+        -------
+        check_all : bool
+            defines if all checks came back as true.
+
+        """
+        
+        is_joint_factors = self.check_problem_factors() # check all joint factor settings
+        is_initial_sol = self.check_initial_solution()
+        is_budget = self.check_budget()
+        
+        if is_initial_sol != True:
+            print("The initial solution is not feasible and/or not correct dimension")
+            
+        if is_budget != True:
+            print("The budget is not positive.")
+        
+        if is_joint_factors != True:
+            print("There is a joint setting of a problem factor that is not permissible")
+            
+        
+        #check datatypes for all factors
+        is_all_permissible = True
+        is_all_right_type = True
+        for factor in factor_names:
+            is_permissible = self.check_problem_factor(factor)
+            is_right_type = self.check_factor_datatype(factor)
+            
+            if is_right_type != True:
+                print(f"Problem factor {factor} is not a permissible data type.")
+                is_all_right_type = False
+                
+            if is_permissible != True:
+                print(f"Problem factor {factor} is not permissble.")
+                is_all_permissible = False
+        
+        if is_joint_factors and is_all_right_type and is_all_permissible and is_initial_sol and is_budget == True:
+            check_all = True
+        else:
+            check_all = False
+            
+        return check_all
+            
+    
     def attach_rngs(self, rng_list):
         """Attach a list of random-number generators to the problem.
 
@@ -755,6 +855,51 @@ class Model(object):
         """
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
+
+    def run_all_checks(self, factor_names):
+        """
+        
+
+        Parameters
+        ----------
+        factor_names : list
+            list of str names of factors to check.
+
+        Returns
+        -------
+        check_all : bool
+            defines if all checks came back as true.
+
+        """
+        
+        is_joint_factors = self.check_simulatable_factors() # check all joint factor settings
+        
+        if is_joint_factors != True:
+            print("There is a joint setting of a model factor that is not permissible")
+            
+        
+        #check datatypes for all factors
+        is_all_permissible = True
+        is_all_right_type = True
+        for factor in factor_names:
+            is_permissible = self.check_simulatable_factor(factor)
+            is_right_type = self.check_factor_datatype(factor)
+            
+            if is_right_type != True:
+                print(f"Model factor {factor} is not a permissible data type.")
+                is_all_right_type = False
+                
+            if is_permissible != True:
+                print(f"Model factor {factor} is not permissble.")
+                is_all_permissible = False
+        
+        if is_joint_factors and is_all_right_type and is_all_permissible == True:
+            check_all = True
+        else:
+            check_all = False
+            
+        return check_all
+            
 
     def replicate(self, rng_list):
         """Simulate a single replication for the current model factors.

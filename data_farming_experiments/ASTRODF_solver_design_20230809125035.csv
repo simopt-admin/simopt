@@ -1,0 +1,21 @@
+Solver Name:,ASTRODF
+Design Factors:
+Fixed Factors:,crn_across_solns,eta_2,gamma_2,lambda_min,easy_solve,reuse_points,ps_sufficient_reduction
+Design #,eta_1,gamma_1,crn_across_solns (fixed),eta_2 (fixed),gamma_2 (fixed),lambda_min (fixed),easy_solve (fixed),reuse_points (fixed),ps_sufficient_reduction (fixed)
+0,0.38,True,0.8,0.5,4,True,False,0.1
+0,0.16,True,0.8,0.5,4,True,False,0.1
+0,0.21,True,0.8,0.5,4,True,False,0.1
+0,0.27,True,0.8,0.5,4,True,False,0.1
+0,0.78,True,0.8,0.5,4,True,False,0.1
+0,1.0,True,0.8,0.5,4,True,False,0.1
+0,0.66,True,0.8,0.5,4,True,False,0.1
+0,0.61,True,0.8,0.5,4,True,False,0.1
+0,0.55,True,0.8,0.5,4,True,False,0.1
+0,0.72,True,0.8,0.5,4,True,False,0.1
+0,0.94,True,0.8,0.5,4,True,False,0.1
+0,0.89,True,0.8,0.5,4,True,False,0.1
+0,0.83,True,0.8,0.5,4,True,False,0.1
+0,0.33,True,0.8,0.5,4,True,False,0.1
+0,0.1,True,0.8,0.5,4,True,False,0.1
+0,0.44,True,0.8,0.5,4,True,False,0.1
+0,0.49,True,0.8,0.5,4,True,False,0.1
