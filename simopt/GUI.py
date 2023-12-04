@@ -46,16 +46,18 @@ class Main_Menu_Window(tk.Tk):
         
         
         # Button to open model data farming window
-        self.datafarm_model_button = tk.Button(master = self.master, text = 'Model Data Farming', 
+        self.datafarm_model_button = tk.Button(master = self.master, text = 'Model Data Farming (beta)', 
                                            font = 'Calibri 13', width = 50, command = self.open_model_datafarming)
         self.datafarm_model_button.place( relx = .15, rely = .3) 
         self.datafarm_model_button.configure( background = 'light gray')
         
-        # Button to open solver & problem data farming window
-        self.datafarm_prob_sol_button = tk.Button(master = self.master, text = 'Solver Data Farming', 
-                                           font = 'Calibri 13', width = 50, command = self.open_prob_sol_datafarming)
-        self.datafarm_prob_sol_button.place( relx = .15, rely = .4) 
-        self.datafarm_prob_sol_button.configure( background = 'light gray')
+        
+        # Commented out for demo
+        # # Button to open solver & problem data farming window
+        # self.datafarm_prob_sol_button = tk.Button(master = self.master, text = 'Solver Data Farming', 
+        #                                    font = 'Calibri 13', width = 50, command = self.open_prob_sol_datafarming)
+        # self.datafarm_prob_sol_button.place( relx = .15, rely = .4) 
+        # self.datafarm_prob_sol_button.configure( background = 'light gray')
         
     def open_experiment_window(self):
         
@@ -2401,7 +2403,7 @@ class Data_Farming_Window():
             self.title_frame.grid_columnconfigure(0, weight=1)
             self.title_frame.grid( row=0, column = 0, sticky = tk.N)
             self.datafarming_title_label = tk.Label(master=self.title_frame,
-                                                    text = "Data Farming",
+                                                    text = "Model Data Farming",
                                                     font = "Calibri 15 bold")
             self.datafarming_title_label.grid( row = 0, column = 0) 
             
@@ -2505,7 +2507,7 @@ class Data_Farming_Window():
         # Name of design csv file
         self.design_csv_name = filedialog.askopenfilename()
         
-       #Specify what model is being used
+        #Specify what model is being used
         split_name = self.design_csv_name.split("experiments/")
         split_name = split_name[1].split('_')
         self.selected_model = split_name[0]
@@ -2686,16 +2688,8 @@ class Data_Farming_Window():
         self.factor_canvas.create_window((0, 0), window=self.factors_frame, anchor="nw")
         
         self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
-             
-        # yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        # yscroll.grid(row = 0, column = 1, sticky = 'nsew')
-        # self.factor_canvas.configure(yscrollcommand=yscroll.set)
         
-        # # # Don't need this one
-        # xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        # xscroll.grid(row = 1, column = 0, sticky = 'nsew')
-        # self.factor_canvas.configure(xscrollcommand=xscroll.set)
-        
+
         
         self.factors_title_frame = tk.Frame(master = self.master)
         self.factors_title_frame.grid( row = 3, column = 0, sticky = 'nsew')
@@ -2711,7 +2705,7 @@ class Data_Farming_Window():
         
         #self.factors_frame = tk.Frame( master = self.factor_canvas)
         self.factors_frame.grid( row = 0, column = 0, sticky = 'nsew')
-        self.factors_frame.grid_rowconfigure(0, weight =1)
+        self.factors_frame.grid_rowconfigure(0, weight =0)
         self.factors_frame.grid_columnconfigure(0, weight =0)
         self.factors_frame.grid_columnconfigure(1, weight =0)
         self.factors_frame.grid_columnconfigure(2, weight =0)
@@ -2788,22 +2782,7 @@ class Data_Farming_Window():
         # Get model selected from drop down
         self.selected_model = self.model_var.get()
         
-                
-        # #Update scrollbar config
-        
-        # self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
-             
-        # yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        # yscroll.grid(row = 0, column = 7, rowspan = self.factor_que_length + 1, sticky = 'nsew')
-        # self.factor_canvas.configure(yscrollcommand=yscroll.set)
-        
-        # # # Don't need this one
-        # xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        # xscroll.grid(row = self.factor_que_length + 1, column = 0, columnspan = 8, sticky = 'nsew')
-        # self.factor_canvas.configure(xscrollcommand=xscroll.set)
-        
-        self.factors_frame.update_idletasks()
-        self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
+
         
     
                 
@@ -2994,8 +2973,8 @@ class Data_Farming_Window():
                 default_len = len(str(self.factor_default))
                 if default_len > entry_width:
                     entry_width = default_len
-                    if default_len > 150:
-                        entry_width = 150
+                    if default_len > 25:
+                        entry_width = 25
                 self.default_value= tk.StringVar()
                 self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
                 self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
@@ -3033,8 +3012,8 @@ class Data_Farming_Window():
                 default_len = len(str(self.factor_default))
                 if default_len > entry_width:
                     entry_width = default_len
-                    if default_len > 150:
-                        entry_width = 150
+                    if default_len > 25:
+                        entry_width = 25
                 self.default_value= tk.StringVar()
                 self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
                 self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
@@ -3054,23 +3033,9 @@ class Data_Farming_Window():
                 self.check_widgets[factor] = self.checkbox
                
                 self.factor_que_length += 1
-               
-                
-              
-        yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        yscroll.grid(row = 0, column = 1, sticky = 'ns')
-        self.factor_canvas.configure(yscrollcommand=yscroll.set)
+
         
-        # # Don't need this one
-        xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        xscroll.grid(row = 1, column = 0, sticky = 'ew')
-        self.factor_canvas.configure(xscrollcommand=xscroll.set) 
-        
-        
-        #self.factors_frame.bind("<Configure>", self.onFrameConfigure_factor)
-        
-        
-        #self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
+
         
         # Design type selection menu
         self.design_frame = tk.Frame(master = self.master)
@@ -3081,7 +3046,7 @@ class Data_Farming_Window():
         self.design_types_list = ['NOLH']
         self.design_var = tk.StringVar()
         self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, 'Design Type', *self.design_types_list, command = self.enable_stacks)
-        self.design_type_menu.grid(row = 0, column = 1)
+        self.design_type_menu.grid(row = 0, column = 1, padx = 30)
         
         #Stack selection menu
         self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks", font = "Calibri 13", width = 20)
@@ -3197,7 +3162,7 @@ class Data_Farming_Window():
       
         
         self.run_button = tk.Button(master = self.run_frame, text = 'Run All', font = 'Calibri 13', width = 20, command = self.run_experiment)
-        self.run_button.grid( row = 0, column = 2, sticky = tk.E)
+        self.run_button.grid( row = 0, column = 2, sticky = tk.E, padx = 30)
         
   
         
