@@ -12,13 +12,81 @@ from PIL import ImageTk, Image
 import traceback
 import pickle
 import ast
+import os
+import sys
+import csv
+import os.path as o
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
+import pandas as pd
 
-from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory
+from simopt.data_farming_base import DataFarmingExperiment, DesignPoint, DataFarmingMetaExperiment
+
+from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory, model_problem_class_directory
 from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots
 
 
-class Experiment_Window(tk.Tk):
+
+class Main_Menu_Window(tk.Tk):
+    def __init__(self, master):
+        
+        self.master = master
+         
+     
+        self.title_label = tk.Label(master = self.master, text = "Welcome to SimOpt Library Graphic User Interface", font = "Calibri 15 bold", 
+                                    justify="center", width = 50)
+        self.title_label.place(relx = .1, rely = .05)
+       
+        
+        # Button to open original main window to run experiments across solvers & problems
+        self.experiment_button = tk.Button( master = self.master, text = 'Problem-Solver Experiment', 
+                                           font = 'Calibri 13', width = 50, command = self.open_experiment_window)
+        self.experiment_button.place( relx = .15, rely = .2)
+        self.experiment_button.configure( background = 'light gray')
+        
+        
+        # Button to open model data farming window
+        self.datafarm_model_button = tk.Button(master = self.master, text = 'Model Data Farming (beta)', 
+                                           font = 'Calibri 13', width = 50, command = self.open_model_datafarming)
+        self.datafarm_model_button.place( relx = .15, rely = .3) 
+        self.datafarm_model_button.configure( background = 'light gray')
+        
+        
+        # Commented out for demo
+        # # Button to open solver & problem data farming window
+        # self.datafarm_prob_sol_button = tk.Button(master = self.master, text = 'Solver Data Farming', 
+        #                                    font = 'Calibri 13', width = 50, command = self.open_prob_sol_datafarming)
+        # self.datafarm_prob_sol_button.place( relx = .15, rely = .4) 
+        # self.datafarm_prob_sol_button.configure( background = 'light gray')
+        
+    def open_experiment_window(self):
+        
+        self.create_experiment_window = tk.Toplevel(self.master)
+        self.create_experiment_window.geometry("1200x1000")
+        self.create_experiment_window.title("SimOpt Library Graphical User Interface - Problem-Solver Experiment")
+        self.experiment_app = Experiment_Window(self.create_experiment_window)
+    
+    def open_model_datafarming(self):
+        self.datafarming_window = tk.Toplevel(self.master)
+        self.datafarming_window.geometry("1000x850")
+        self.datafarming_window.title("SimOpt Library Graphical User Interface - Model Data Farming")
+        self.datafarming_app = Data_Farming_Window(self.datafarming_window, self)
+        
+    def open_prob_sol_datafarming(self):
+        self.solver_datafarm_window = tk.Toplevel(self.master)
+        self.solver_datafarm_window.geometry("1000x850")
+        self.solver_datafarm_window.title("SimOpt Library Graphical User Interface - Solver Data Farming")
+        self.solver_datafarm_app = Solver_Datafarming_Window(self.solver_datafarm_window)
+    
+        
+        
+        
+        
+        
+    
+
+
+class Experiment_Window(tk.Toplevel):
     """
     Main window of the GUI
 
@@ -158,6 +226,7 @@ class Experiment_Window(tk.Tk):
                                             text = "Create Problem-Solver Group",
                                             width = 50,
                                             command = self.crossdesign_function)
+        
 
         self.pickle_file_load_button = ttk.Button(master=self.master,
                                                 text = "Load Problem-Solver Pair",
@@ -196,8 +265,8 @@ class Experiment_Window(tk.Tk):
 
         self.style = ttk.Style()
         self.style.configure("Bold.TLabel", font = ("Calibri",15,"bold"))
-        label_Workspace = ttk.Label(text = "Workspace", style="Bold.TLabel")
-        self.queue_label_frame = ttk.LabelFrame(master=self.master, labelwidget= label_Workspace)
+        self.label_Workspace = ttk.Label(master = self.master, text = "Workspace", style="Bold.TLabel")
+        self.queue_label_frame = ttk.LabelFrame(master=self.master, labelwidget= self.label_Workspace)
 
         self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
 
@@ -259,7 +328,10 @@ class Experiment_Window(tk.Tk):
             else:
                 self.post_normal_all_button.place_forget()
             if tab == 'Queue of Problem-Solver Pairs':
-                self.make_meta_experiment.place(x=10,rely=.92)
+                # My code starts here 
+                # Make meta experiment button wider & releative x
+                self.make_meta_experiment.place(relx=.02,rely=.92, width= 300)
+                # My code ends here
             else:
                 self.make_meta_experiment.place_forget()
 
@@ -287,6 +359,8 @@ class Experiment_Window(tk.Tk):
 
         self.or_label.place(x=215, rely=.06)
         self.crossdesign_button.place(x=255, rely=.06, width=220)
+        
+        
 
         y_place = .06
         self.pickle_file_load_button.place(x=10, rely=y_place, width=195)
@@ -455,7 +529,7 @@ class Experiment_Window(tk.Tk):
 
         ## Rina Adding After this 
         problem = str(self.problem_var.get())  
-        self.oracle = model_unabbreviated_directory[problem] # returns model string
+        self.oracle = model_problem_unabbreviated_directory[problem] # returns model string
         self.oracle_object = model_directory[self.oracle]
         ##self.oracle = problem.split("-") 
         ##self.oracle = self.oracle[0] 
@@ -1435,6 +1509,16 @@ class Experiment_Window(tk.Tk):
         self.crossdesign_window.geometry("650x850")
         self.crossdesign_window.title("Cross-Design Problem-Solver Group")
         self.cross_app = Cross_Design_Window(self.crossdesign_window, self)
+        
+    # My code starts here
+    # Open data farming window
+    def datafarming_function(self):
+        self.datafarming_window = tk.Toplevel(self.master)
+        self.datafarming_window.geometry("650x850")
+        self.datafarming_window.title("Data Farming")
+        self.datafarming_app = Data_Farming_Window(self.datafarming_window, self)
+        
+    # My code ends here
 
     def add_meta_exp_to_frame(self, n_macroreps=None, input_meta_experiment=None):
         if n_macroreps == None and input_meta_experiment != None:
@@ -2272,6 +2356,2826 @@ class Experiment_Window(tk.Tk):
         if str(self.problem_var.get()) != "Problem":
             self.add_button.place(x=10, rely=.48, width=200, height=30)
                  
+# My code starts here
+# Create data farming window class
+class Data_Farming_Window():
+    def __init__(self, master, main_widow, forced_creation = False):
+        if not forced_creation:
+            self.master = master
+            self.main_window = main_widow
+            self.master.grid_rowconfigure(0, weight=0)
+            self.master.grid_rowconfigure(1, weight=0)
+            self.master.grid_rowconfigure(2, weight=0)
+            self.master.grid_rowconfigure(3, weight=0)
+            self.master.grid_rowconfigure(4, weight=0)
+            self.master.grid_rowconfigure(5, weight=1)
+            self.master.grid_rowconfigure(6, weight=1)
+            self.master.grid_rowconfigure(7, weight=1)
+            self.master.grid_columnconfigure(0, weight=1)
+            self.master.grid_columnconfigure(1, weight=1)
+            self.master.grid_columnconfigure(2, weight=1)
+            self.master.grid_columnconfigure(3, weight=1)
+            self.master.grid_columnconfigure(4, weight=1)
+            
+            # Intitialize frames so prevous entries can be deleted
+            self.design_frame = tk.Frame(master = self.master)
+            self.design_frame.grid(row = 5, column = 0)
+            
+            self.create_design_frame = tk.Frame(master = self.master)
+            self.run_frame = tk.Frame(master = self.master)
+            self.factor_canvas = tk.Canvas (master = self.master)
+            self.factors_frame = tk.Frame( master = self.factor_canvas)
+            
+            
+            # Initial variable values
+            self.factor_que_length = 1
+            self.default_values_list = []
+            self.checkstate_list=[]
+            self.min_list = []
+            self.max_list = []
+            self.dec_list = []
+            
+            
+            
+            # Create main window title
+            self.title_frame = tk.Frame(master=self.master)
+            self.title_frame.grid_rowconfigure(0, weight=1)
+            self.title_frame.grid_columnconfigure(0, weight=1)
+            self.title_frame.grid( row=0, column = 0, sticky = tk.N)
+            self.datafarming_title_label = tk.Label(master=self.title_frame,
+                                                    text = "Model Data Farming",
+                                                    font = "Calibri 15 bold")
+            self.datafarming_title_label.grid( row = 0, column = 0) 
+            
+            # Create model selection drop down menu
+            self.model_list = model_unabbreviated_directory
+            self.modelselect_frame = tk.Frame(master=self.master)
+            self.modelselect_frame.grid_rowconfigure(0, weight=1)
+            self.modelselect_frame.grid_rowconfigure(1, weight=1)
+            self.modelselect_frame.grid_columnconfigure(0, weight=1)
+            self.modelselect_frame.grid_columnconfigure(1, weight=1)
+            self.modelselect_frame.grid_columnconfigure(2, weight=1)
+            self.modelselect_frame.grid_columnconfigure(3, weight=1)
+            self.modelselect_frame.grid_columnconfigure(4, weight=1)
+            
+            self.modelselect_frame.grid( row =2, column = 0, sticky = tk.W )
+            self.model_label = tk.Label(master=self.modelselect_frame, # window label is used in
+                            text = "Select Model:",
+                            font = "Calibri 13",
+                            width = 20)
+            self.model_label.grid( row = 0, column = 0, sticky = tk.W)       
+            self.model_var = tk.StringVar()
+            self.model_menu = ttk.OptionMenu(self.modelselect_frame, self.model_var, "Model", 
+                                             *self.model_list, command= self.show_model_factors)
+            self.model_menu.grid( row = 0, column = 1, sticky = tk.W)
+            
+            # Create load design button
+            
+            self.or_label = tk.Label(master = self.modelselect_frame,
+                                     text = "OR",
+                                     font = "Calibri 13",
+                                     width = 20)
+            self.or_label.grid( row = 0, column = 2, sticky = tk.W)
+            
+            self.load_design_button = tk.Button( master = self.modelselect_frame, text = 'Load Design CSV',
+                                                width = 20, command = self.load_design)
+            self.load_design_button.grid( row = 0, column = 3, sticky = tk.W)
+            
+            
+    
+            
+            
+    def load_design(self):
+        
+    
+        #Clear previous selections
+        for widget in self.factors_frame.winfo_children():
+            widget.destroy()
+            
+        # Delete previous design tree
+        for widget in self.create_design_frame.winfo_children():
+            widget.destroy()
+        
+        for widget in self.run_frame.winfo_children():
+            widget.destroy()
+            
+        for widget in self.design_frame.winfo_children():
+            widget.destroy()
+            
+        
+        # Initialize frame canvas
+        self.factor_canvas = tk.Canvas (master = self.master)
+        self.factor_canvas.grid_rowconfigure(0, weight = 1)
+        self.factor_canvas.grid_columnconfigure(0, weight = 1)
+        self.factor_canvas.grid( row = 4, column = 0, sticky = 'nsew')
+        
+        self.factors_title_frame = tk.Frame(master = self.master)
+        self.factors_title_frame.grid( row = 3, column = 0, sticky = tk.N + tk.W)
+        self.factors_title_frame.grid_rowconfigure(0, weight = 0)
+        self.factors_title_frame.grid_columnconfigure(0, weight =1)
+        self.factors_title_frame.grid_columnconfigure(1, weight =1)
+        self.factors_title_frame.grid_columnconfigure(2, weight =1)
+        
+        self.factors_frame = tk.Frame( master = self.factor_canvas)
+        self.factors_frame.grid( row = 0, column = 0, sticky = tk.W + tk.N)
+        self.factors_frame.grid_rowconfigure(0, weight =1)
+        self.factors_frame.grid_columnconfigure(0, weight =1)
+        self.factors_frame.grid_columnconfigure(1, weight =1)
+        self.factors_frame.grid_columnconfigure(2, weight =1)
+        self.factors_frame.grid_columnconfigure(3, weight =1)
+        
+        
+        # Create column for model factor names
+        self.headername_label = tk.Label(master = self.factors_frame, text = 'Default Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+        
+        #Values to help with formatting
+        entry_width = 20
+        
+        # List to hold default values
+        self.default_values_list = []
+        self.fixed_str = {}
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.factors_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+            
+        # Name of design csv file
+        self.design_csv_name = filedialog.askopenfilename()
+        
+        #Specify what model is being used
+        split_name = self.design_csv_name.split("experiments/")
+        split_name = split_name[1].split('_')
+        self.selected_model = split_name[0]
+     
+       
+        self.model_object = model_unabbreviated_directory[self.selected_model]() #Eventually allow selection here
+        
+        
+        #Display model name
+        self.model_name_label = tk.Label( master = self.modelselect_frame, text = 'Selected Model: ' + self.selected_model, font = "Calibri 13", width = 40  )
+        self.model_name_label.grid( row = 0, column = 4, sticky = tk.W)
+        
+        #Determine factors not included in design
+ 
+        with open( self.design_csv_name, 'r') as design_file:
+            reader = csv.reader(design_file)
+            self.all_factor_headers = next(reader)[1:]
+         
+        self.default_factor_list = [] 
+        for model_factor in self.model_object.specifications:
+            if model_factor not in self.all_factor_headers:
+                self.default_factor_list.append(model_factor)
+       
+        # Number of all factors in model
+        num_all_factors = len(self.all_factor_headers)
+        # Number of vaired factors in experiment        
+        num_factors = num_all_factors - len(self.default_factor_list)
+        # Factor headers dictionary to be used in run function
+        self.factor_headers = self.all_factor_headers[: num_factors]
+        print('factor headers', self.factor_headers)
+        #print( 'num factors', num_factors)
+        
+        # Determine values of default factors
+        default_list = []
+        with open( self.design_csv_name, 'r') as design_file:
+            reader = csv.reader(design_file)
+            # skip header row
+            next(reader)
+            # Read only default factor values
+            default_list = next(reader)[num_factors + 1:]
+            #print('default_list', default_list)
+        
+
+        # Allow user to change default values
+        factor_idx = 0
+        for  factor in self.default_factor_list:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = default_list[factor_idx]
+            
+            
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+            
+            if self.factor_datatype == int:
+                self.str_type = 'int'
+            elif self.factor_datatype == float:
+                self.str_type = 'float'
+            elif self.factor_datatype == list:
+                self.str_type = 'list'
+            elif self.factor_datatype == tuple:
+                self.str_type = 'tuple'
+          
+           
+            # Add label for factor names
+            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            
+            # Add label for factor type
+            self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+            self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+            
+            #Add entry box for default value
+            default_len = len(str(self.factor_default))
+            if default_len > entry_width:
+                entry_width = default_len
+                if default_len > 150:
+                    entry_width = 150
+            self.default_value= tk.StringVar()
+            self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+            self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+            #Display original default value
+            self.default_entry.insert(0, str(self.factor_default))
+            self.default_values_list.append(self.default_value)
+            
+            
+            self.factor_que_length += 1
+            factor_idx += 1
+            
+        #Create change defaults button
+        self.change_def_frame = tk.Frame( master = self.master)
+        self.change_def_frame.grid(row = 5, column = 0)
+        self.change_def_button = tk.Button(master = self.change_def_frame, text = 'Change Experiment Defaults', font = "Calibri 13",
+                                                width = 30, command = self.update_defaults)
+        self.change_def_button.grid( row = 0, column = 0)
+            
+           
+        
+        # Run to store default values
+        self.update_defaults()
+        
+     
+        
+        # Create design text file to be used in experiment "model_factors_design"
+        with open( "./data_farming_experiments/model_factors_design.txt", 'w', encoding="utf-8") as design_file:
+            design_file.write("")
+        with open(self.design_csv_name, 'r') as design_csv:
+            reader = csv.reader(design_csv)
+            next(reader)
+            for row in design_csv:
+                data_insert = ""
+                # values for all factors
+                factor_list = row.split(',')
+                # values only for vaired factors in experiment
+                design_list = factor_list[1: num_factors + 1]
+                
+                
+                for factor in design_list:
+                    data_insert += str(factor) + "\t"
+                                       
+                data_insert = data_insert[:-1]
+                with open( "./data_farming_experiments/model_factors_design.txt", 'a', encoding="utf-8" ) as design_file:
+                    design_file.write(data_insert + "\n")
+                    
+                    
+                
+            
+            
+                  
+    def update_defaults(self):
+        
+        
+        
+        # Get default user values
+        self.fixed_factors = {}
+        default_csv_insert = []
+        
+        # List of values entered by user
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
+        factor_index = 0
+        for factor in self.default_factor_list:
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            current_def_val = self.default_values[factor_index]
+            if self.factor_datatype == float:
+                self.fixed_factors[factor] = float(current_def_val)
+            
+            elif self.factor_datatype == int:
+                self.fixed_factors[factor] = int(current_def_val)
+            
+            if self.factor_datatype == list:
+                self.fixed_factors[factor] = ast.literal_eval(current_def_val)
+        
+            elif self.factor_datatype == tuple:
+           
+                tuple_str = tuple(current_def_val[1:-1].split(","))
+                self.fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+            
+            default_csv_insert.append(self.fixed_factors[factor])    
+            factor_index += 1
+    
+        
+        self.display_design_tree()
+        
+
+    # Display Model Factors
+    def show_model_factors(self,*args ):
+        
+        
+    
+        self.factor_canvas.destroy()
+        
+        # Initialize frame canvas
+        self.factor_canvas = tk.Canvas (master = self.master)
+        self.factor_canvas.grid_rowconfigure(0, weight = 1)
+        self.factor_canvas.grid_columnconfigure(0, weight = 1)
+        self.factor_canvas.grid( row = 4, column = 0, sticky = 'nsew')
+        self.factors_frame = tk.Frame( master = self.factor_canvas)
+        self.factor_canvas.create_window((0, 0), window=self.factors_frame, anchor="nw")
+        
+        self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
+        
+
+        
+        self.factors_title_frame = tk.Frame(master = self.master)
+        self.factors_title_frame.grid( row = 3, column = 0, sticky = 'nsew')
+        self.factors_title_frame.grid_rowconfigure(0, weight = 0)
+        self.factors_title_frame.grid_columnconfigure(0, weight =0)
+        self.factors_title_frame.grid_columnconfigure(1, weight =0)
+        self.factors_title_frame.grid_columnconfigure(2, weight =0)
+        self.factors_title_frame.grid_columnconfigure(3, weight =0)
+        self.factors_title_frame.grid_columnconfigure(4, weight =0)
+        self.factors_title_frame.grid_columnconfigure(5, weight =0)
+        self.factors_title_frame.grid_columnconfigure(6, weight =0)
+        self.factors_title_frame.grid_columnconfigure(7, weight =0)
+        
+        #self.factors_frame = tk.Frame( master = self.factor_canvas)
+        self.factors_frame.grid( row = 0, column = 0, sticky = 'nsew')
+        self.factors_frame.grid_rowconfigure(0, weight =0)
+        self.factors_frame.grid_columnconfigure(0, weight =0)
+        self.factors_frame.grid_columnconfigure(1, weight =0)
+        self.factors_frame.grid_columnconfigure(2, weight =0)
+        self.factors_frame.grid_columnconfigure(3, weight =0)
+        self.factors_frame.grid_columnconfigure(4, weight =0)
+        self.factors_frame.grid_columnconfigure(5, weight =0)
+        self.factors_frame.grid_columnconfigure(6, weight =0)
+        self.factors_frame.grid_columnconfigure(7, weight =0)
+        
+      
+  
+        #Clear previous selections
+        for widget in self.factors_frame.winfo_children():
+            widget.destroy()
+            
+            
+        # Delete previous design tree
+        for widget in self.create_design_frame.winfo_children():
+            widget.destroy()
+        
+        for widget in self.run_frame.winfo_children():
+            widget.destroy()
+            
+        for widget in self.design_frame.winfo_children():
+            widget.destroy()
+        
+        # Widget lists
+        self.default_widgets = {}
+        self.check_widgets = {}
+        self.min_widgets = {}
+        self.max_widgets = {}
+        self.dec_widgets = {}
+        self.cat_widgets = {}
+        
+               
+        # Initial variable values
+        self.factor_que_length = 1
+        self.default_values_list = []
+        self.checkstate_list=[]
+        self.min_list = []
+        self.max_list = []
+        self.dec_list = []
+        self.cat_checklist = []
+        
+        #Values to help with formatting
+        entry_width = 20
+        
+        # Create column for model factor names
+        self.headername_label = tk.Label(master = self.factors_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 10, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 10, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+        
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.factors_frame, text = 'Default Value', font = "Calibri 13 bold", width = 15 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        # Create column for factor check box
+        self.headercheck_label = tk.Label(master = self.factors_frame, text = 'Include in Experiment', font = "Calibri 13 bold", width = 20 )
+        self.headercheck_label.grid(row = 0, column = 3, sticky = tk.N + tk.W)
+        
+        # Create header for experiment options
+        self.headercheck_label = tk.Label(master = self.factors_frame, text = 'Experiment Options', font = "Calibri 13 bold", width = 60 )
+        self.headercheck_label.grid(row = 0, column = 4, columnspan = 3)
+        
+    
+        
+       
+        
+        
+        # Get model selected from drop down
+        self.selected_model = self.model_var.get()
+        
+
+        
+    
+                
+        
+        # Get model infor from dictionary
+        self.model_object = self.model_list[self.selected_model]()
+        
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            
+            #Values to help with formatting
+            entry_width = 10
+            
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+            
+            # Add label for factor names
+            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 15, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+        
+            
+            
+            if self.factor_datatype == float:
+            
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'float'
+             
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 10, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                
+                # Add check box
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor, width = 5)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.factors_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val, justify = 'right')
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.factors_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val, justify = 'right')
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled')
+                
+                # Add entry box for editable decimals
+                self.dec_frame = tk.Frame (master = self.factors_frame)
+                self.dec_frame.grid( row = self.factor_que_length, column = 6, sticky = tk.N + tk.W )
+                
+                self.dec_label = tk.Label(master = self.dec_frame, text = '# Decimals', font = "Calibri 13", width = 10 )
+                self.dec_label.grid( row = 0, column = 0) 
+                
+                self.dec_val = tk.StringVar()
+                self.dec_entry = tk.Entry( master = self.dec_frame, width = 10, textvariable = self.dec_val, justify = 'right')
+                self.dec_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.dec_list.append(self.dec_val)  
+                
+                self.dec_widgets[factor] = self.dec_entry
+                
+                self.dec_entry.configure(state = 'disabled')
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == int:
+            
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'int'
+    
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 10, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.factors_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val, justify = 'right')
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.factors_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val, justify = 'right')
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled')
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == list:
+                
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'list'
+               
+                # Add label for factor names
+                # self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                # self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 10, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                #Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 25:
+                        entry_width = 25
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.default_values_list.append(self.default_value)
+                
+                
+                
+      
+                
+                # Add checkbox (currently not visible)
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                #self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+            
+                self.factor_que_length += 1
+                
+            elif self.factor_datatype == tuple:
+                
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'tuple'
+               
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 10, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 25:
+                        entry_width = 25
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.default_values_list.append(self.default_value)
+                
+             
+                
+                # Add checkbox (currently not visible)
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                #self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+               
+                self.factor_que_length += 1
+
+        
+
+        
+        # Design type selection menu
+        self.design_frame = tk.Frame(master = self.master)
+        self.design_frame.grid(row = 5, column = 0)
+        self.design_type_label = tk.Label (master = self.design_frame, text = 'Select Design Type', font = "Calibri 13", width = 20)
+        self.design_type_label.grid( row = 0, column = 0)
+        
+        self.design_types_list = ['NOLH']
+        self.design_var = tk.StringVar()
+        self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, 'Design Type', *self.design_types_list, command = self.enable_stacks)
+        self.design_type_menu.grid(row = 0, column = 1, padx = 30)
+        
+        #Stack selection menu
+        self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks", font = "Calibri 13", width = 20)
+        self.stack_label.grid( row =1, column = 0)
+        self.stack_list = ['1', '2', '3']
+        self.stack_var = tk.StringVar()
+        self.stack_menu = ttk.OptionMenu(self.design_frame, self.stack_var, 'Stacks', *self.stack_list, command = self.get_design_pts)
+        self.stack_menu.grid( row = 1, column = 1)
+        self.stack_menu.configure(state = 'disabled')
+        
+        # # Design pts label
+        # self.design_pts_title = tk.Label (master = self.design_frame, text = 'Design Points', font = "Calibri 13", width = 50)
+        # self.design_pts_title.grid( row = 0, column = 2)
+        
+        # Create design button
+        self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
+        self.create_design_button.grid( row = 0, column = 3)
+        self.create_design_button.configure(state = 'disabled')
+        
+ 
+    def onFrameConfigure_factor(self, *args):
+        self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
+        
+ 
+    # Used to display the design tree for both created and loaded designs
+    def display_design_tree(self):
+        
+        
+
+        # Get list of factor names from csv file
+        with open( self.design_csv_name, 'r') as design_file:
+            reader = csv.reader(design_file)
+            self.all_factor_headers = next(reader)[1:]
+       
+        #Get list of default factor names 
+        default_factor_names = [] 
+        for factor in self.all_factor_headers:
+            if factor not in self.model_object.specifications:
+                default_factor_names.append(factor)
+        # number of variable factors in experiment
+        self.num_factors = len(self.all_factor_headers) - len(default_factor_names)
+       
+        
+        #Initialize design tree
+        self.create_design_frame = tk.Frame(master = self.master)
+        self.create_design_frame.grid( row = 6, column = 0)
+        self.create_design_frame.grid_rowconfigure( 0, weight = 0)
+        self.create_design_frame.grid_rowconfigure( 1, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 0, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 1, weight = 1)
+        
+        self.create_design_label = tk.Label( master = self.create_design_frame, text = 'Generated Designs', font = "Calibri 13 bold", width = 50)
+        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+   
+        self.design_tree = ttk.Treeview( master = self.create_design_frame)
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew')
+        
+        # Create headers for each factor 
+        self.design_tree['columns'] = self.all_factor_headers
+        self.design_tree.column("#0", width=80, anchor = 'e' )
+        for factor in self.all_factor_headers:
+            self.design_tree.column(factor, width=250, anchor = 'e') 
+            self.design_tree.heading( factor, text = factor)
+       
+        
+        self.style = ttk.Style()
+        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.design_tree.heading( '#0', text = 'Design #' )
+        
+        # Read design file and output row plus default values to design tree
+        with open( self.design_csv_name, 'r') as design_file:
+            reader = csv.reader(design_file)
+            #skip header row
+            next(reader)
+            # used to number design rows
+            row_index = 0
+            for row in reader:
+                current_design_row = row[1:]
+                data_insert = current_design_row 
+                self.design_tree.insert("", 'end', text = row_index, values = data_insert, tag = 'style')
+                row_index += 1
+                
+            # Create a horizontal scrollbar
+        xscrollbar = ttk.Scrollbar(master = self.create_design_frame, orient="horizontal", command= self.design_tree.xview)
+        xscrollbar.grid(row = 2, column = 0, sticky = 'nsew')
+        
+        # Configure the Treeview to use the horizontal scrollbar
+        self.design_tree.configure(xscrollcommand=xscrollbar.set)
+        
+        # Create buttons to run experiment
+        self.run_frame = tk.Frame(master = self.master)
+        self.run_frame.grid(row = 7, column = 0)
+        self.run_frame.grid_columnconfigure(0, weight = 1)
+        self.run_frame.grid_columnconfigure(1, weight = 1)
+        self.run_frame.grid_columnconfigure(2, weight = 1)
+        self.run_frame.grid_rowconfigure(0, weight = 0)
+        self.run_frame.grid_rowconfigure(1, weight = 0)
+  
+        
+        self.rep_label = tk.Label(master = self.run_frame, text = 'Replications', font = 'Calibri 13', width = 20)
+        self.rep_label.grid( row = 0, column = 0, sticky = tk.W)
+        self.rep_var = tk.StringVar()
+        self.rep_entry = tk.Entry( master = self.run_frame, textvariable = self.rep_var, width = 10)
+        self.rep_entry.grid( row = 0, column = 1, sticky = tk.W)
+        
+        self.crn_label = tk.Label(master = self.run_frame, text = 'CRN', font = 'Calibri 13', width = 20)
+        self.crn_label.grid( row = 1, column = 0, sticky = tk.W)
+        self.crn_var = tk.StringVar()
+        self.crn_option = ttk.OptionMenu( self.run_frame, self.crn_var,'Yes', 'Yes', 'No')
+        self.crn_option.grid(row = 1, column =1, sticky = tk.W)
+        
+      
+        
+        self.run_button = tk.Button(master = self.run_frame, text = 'Run All', font = 'Calibri 13', width = 20, command = self.run_experiment)
+        self.run_button.grid( row = 0, column = 2, sticky = tk.E, padx = 30)
+        
+  
+        
+        
+    def enable_stacks(self, *args):
+        self.stack_menu.configure(state = 'normal')
+    
+    def get_design_pts(self, *args):
+        self.design_pts = self.stack_var.get() + " test "
+        
+        #self.design_pts_label = tk.Label( master = self.design_frame, text = self.design_pts, font = "Calibri 13", width = 50)
+        #self.design_pts_label.grid( row = 1, column =2)
+        
+        self.create_design_button.configure(state = 'normal')
+        
+        
+        
+    def create_design(self, *args):
+       
+        self.create_design_frame = tk.Frame(master = self.master)
+        self.create_design_frame.grid( row = 6, column = 0)
+        self.create_design_frame.grid_rowconfigure( 0, weight = 0)
+        self.create_design_frame.grid_rowconfigure( 1, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 0, weight = 1)
+    
+        
+        #Export design factors
+        
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
+        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
+        self.min_values = [self.min_val.get() for self.min_val in self.min_list]
+        self.max_values = [self.max_val.get() for self.max_val in self.max_list]
+        self.dec_values = [self.dec_val.get() for self.dec_val in self.dec_list]
+        self.fixed_factors = {}
+        self.factor_index = 0
+        self.maxmin_index = 0
+        self.dec_index = 0
+        # List used for parsing design file
+        self.factor_headers = [] 
+        
+        #Dictionary used for tree view display of fixed factors
+        self.fixed_str = {}
+        
+       
+      
+        # Write model factors file
+        
+        with open("./data_farming_experiments/model_factors.txt", "w") as self.model_design_factors:
+            self.model_design_factors.write("")
+         
+        # List to hold names of all factors part of model to be displayed in csv
+        self.factor_names = []
+        self.def_factor_names = []
+        # Get experiment information    
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+           
+            
+            
+            
+            self.factor_default = self.default_values[self.factor_index]
+            self.factor_include = self.check_values[self.factor_index]
+            
+            
+            
+            if self.factor_include == True:
+                
+                # Add factor to list of design factors in order that will be varied
+                self.factor_headers.append(factor)
+                # Factor names in csv are unedited
+                self.factor_names.append(factor)
+            
+                if self.factor_datatype == float or self.factor_datatype == int:
+                    self.factor_min = str(self.min_values[self.maxmin_index])
+                    self.factor_max = str(self.max_values[self.maxmin_index])
+                    self.maxmin_index += 1
+                    
+                    if self.factor_datatype == float:
+                        self.factor_dec = str(self.dec_values[self.dec_index])
+                        self.dec_index += 1
+                        
+                    elif self.factor_datatype == int:
+                        self.factor_dec = '0'
+                        
+                    self.data_insert = self.factor_min + ' ' + self.factor_max + ' ' + self.factor_dec
+                    with open("./data_farming_experiments/model_factors.txt", "a") as self.model_design_factors:
+                        self.model_design_factors.write(self.data_insert + '\n') 
+                        
+                
+                          
+                   
+            
+            # Include fixed default values in design
+            if self.factor_include == False:
+                
+                # Factor names in csv have "(default)" appended to end
+                self.def_factor_names.append(factor + ' (default)')
+                
+                # Values to be placed in tree view of design
+                self.fixed_str[factor] = self.factor_default
+               
+                if self.factor_datatype == float or self.factor_datatype == int:
+                    # self.factor_default = str(self.default_values[self.factor_index])
+                    # self.data_insert = self.factor_default + ' ' + self.factor_default + ' 0'
+                    self.maxmin_index += 1
+               
+                # Add default values to exeriment and set to correct datatype
+                if self.factor_datatype == float:
+                    self.fixed_factors[factor] = float(self.factor_default)
+                    self.dec_index += 1
+                    
+                elif self.factor_datatype == int:
+                    self.fixed_factors[factor] = int(self.factor_default)
+                    
+            if self.factor_datatype == list:
+                self.fixed_factors[factor] = ast.literal_eval(self.factor_default)
+                
+            elif self.factor_datatype == tuple:
+                   
+                tuple_str = tuple(self.factor_default[1:-1].split(","))
+                self.fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+   
+            self.factor_index += 1
+            
+        
+        #Create design file
+        model_name = self.model_object.name
+        model_fixed_factors = self.fixed_factors
+        
+        self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
+        
+        factor_settings_filename = 'model_factors'
+       
+        
+        # for  factor in self.model_object.specifications:
+            
+        # # Specify the names of the model factors (in order) that will be varied.
+        
+        #     # factor_headers.append(factor)
+            
+        
+        # Number of stacks specified by user
+        num_stack = self.stack_var.get()
+        # Create model factor design from .txt file of factor settings.
+        # Hard-coded for a single-stack NOLHS.
+        #command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
+        #command = f"stack_nolhs.rb -s 2 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+        command = "stack_nolhs.rb -s " + num_stack + f" ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+       
+        os.system(command) 
+        # Append design to base filename.
+        design_filename = f"{factor_settings_filename}_design"
+        # Read in design matrix from .txt file. Result is a pandas DataFrame.
+        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
+        # Count number of design_points.
+        self.n_design_pts = len(design_table)
+        # Create all design points.
+        self.design = []
+     
+        
+        #Time stamp for file name
+        timestamp = time.strftime("%Y%m%d%H%M%S")
+        
+        # Create design csv file with headers
+        self.design_csv_name= "./data_farming_experiments/" + self.selected_model + "_design_" + timestamp + ".csv"
+      
+        with open(self.design_csv_name, "w", newline='') as self.model_design_csv:
+            writer = csv.writer(self.model_design_csv)
+            writer.writerow(['Design #'] + self.factor_names + self.def_factor_names)
+        
+
+
+        # Get default values for factors not included in experiment
+        default_list = []
+        for factor in self.fixed_str:
+            default_list.append(self.fixed_str[factor])
+            
+        for dp_index in range(self.n_design_pts):
+            current_factor_designs = []
+            for factor_idx in range(len(self.factor_headers)):
+                current_factor_designs.append(design_table[factor_idx][dp_index])
+            data_insert = current_factor_designs + default_list   
+                
+             
+            
+            
+            # Write design points to csv file
+            with open(self.design_csv_name, "a", newline='') as self.model_design_csv:
+                writer = csv.writer(self.model_design_csv)
+                writer.writerow([dp_index] + data_insert)
+                
+        # Pop up message that csv design file has been created
+        tk.messagebox.showinfo("Information", "Design file " + self.design_csv_name + " has been created.")    
+    
+    
+        # Display Design Values
+        self.display_design_tree() 
+        
+        
+        
+            
+    def run_experiment(self, *args):
+        
+        #Name of model used for default save file
+        model_save_name = self.selected_model
+        
+        #Time stamp for file name
+        timestamp = time.strftime("%Y%m%d%H%M%S")
+        
+        # Ask user for file save location
+        save_path = filedialog.asksaveasfilename(initialfile = self.selected_model + "_datafarming_experiment_" + timestamp)
+        
+        
+               
+        # Specify the name of the model as it appears in directory.py
+        model_name = self.model_object.name
+        
+        
+       
+        # factor_headers = [] 
+        
+        # for  factor in self.model_object.specifications:
+        # # Specify the names of the model factors (in order) that will be varied.
+        
+        #     factor_headers.append(factor)
+
+        # If creating the design, provide the name of a .txt file containing
+        # the following:
+        #    - one row corresponding to each model factor being varied
+        #    - three columns:
+        #         - first column: lower bound for factor value
+        #         - second column: upper bound for factor value
+        #         - third column: (integer) number of digits for discretizing values
+        #                         (e.g., 0 corresponds to integral values for the factor)
+        #factor_settings_filename = "model_factors"
+        factor_settings_filename = None
+
+        # OR, if the design has been created, provide the name of a .text file
+        # containing the following:
+        #    - one row corresponding to each design point
+        #    - the number of columns equal to the number of factors being varied
+        #    - each value in the table gives the value of the factor (col index)
+        #      for the design point (row index)
+        # E.g., design_filename = "model_factor_settings_design"
+        #design_filename = None
+        design_filename = "model_factors_design"
+
+        # Specify a common number of replications to run of the model at each
+        # design point.
+        n_reps = int(self.rep_var.get())
+
+        # Specify whether to use common random numbers across different versions
+        # of the model.
+        if self.crn_var.get() == 'Yes':
+            crn_across_design_pts = True
+        else:
+            crn_across_design_pts = False
+
+        # Specify filename for outputs.
+        #output_filename = "test_experiment"
+        output_filename = save_path
+
+        # No code beyond this point needs to be edited.
+
+        # Create DataFarmingExperiment object.
+        myexperiment = DataFarmingExperiment(model_name=model_name,
+                                             factor_settings_filename=factor_settings_filename,
+                                             factor_headers=self.factor_headers,
+                                             design_filename=design_filename,
+                                             model_fixed_factors = self.fixed_factors
+                                             )
+
+        
+        
+        # Run replications and print results to file.
+        myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
+        myexperiment.print_to_csv(csv_filename=output_filename)
+
+            
+   
+    def include_factor(self, *args):
+
+        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
+        self.check_index = 0
+        self.cat_index = 0
+    
+        # If checkbox to include in experiment checked, enable experiment option buttons
+        for factor in self.model_object.specifications:
+                  
+            # Get current checksate values from include experiment column
+            self.current_checkstate = self.check_values[self.check_index]
+            # Cross check factor type
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            # Disable / enable experiment option widgets depending on factor type
+            if self.factor_datatype == float or self.factor_datatype == int:
+                self.current_min_entry = self.min_widgets[factor]
+                self.current_max_entry = self.max_widgets[factor]               
+                
+                             
+                if self.current_checkstate == True:
+                    self.current_min_entry.configure(state = 'normal')
+                    self.current_max_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    #Empty current entries
+                    self.current_min_entry.delete(0, tk.END)
+                    self.current_max_entry.delete(0, tk.END)
+                   
+                    
+                    self.current_min_entry.configure(state = 'disabled')
+                    self.current_max_entry.configure(state = 'disabled')
+                                      
+            if self.factor_datatype == float:              
+                self.current_dec_entry = self.dec_widgets[factor]
+                
+                if self.current_checkstate == True:
+                    self.current_dec_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    self.current_dec_entry.delete(0, tk.END)
+                    self.current_dec_entry.configure(state = 'disabled')
+                    
+            self.check_index += 1     
+                  
+
+
+class Solver_Datafarming_Window(tk.Toplevel):
+    def __init__(self, master):
+        
+        self.master = master
+        self.master.grid_rowconfigure(0, weight = 0)
+        self.master.grid_rowconfigure(1, weight = 0)
+        self.master.grid_rowconfigure(2, weight = 1)
+        self.master.grid_rowconfigure(3, weight = 1)
+        self.master.grid_rowconfigure(4, weight = 0)
+        self.master.grid_rowconfigure(5, weight = 1)
+        self.master.grid_rowconfigure(6, weight = 0)
+        self.master.grid_rowconfigure(7, weight = 1)
+        self.master.grid_rowconfigure(8, weight = 1)
+        self.master.grid_rowconfigure(9, weight = 1)
+        self.master.grid_rowconfigure(10, weight = 1)
+        self.master.grid_columnconfigure(0, weight = 1)
+        
+        #Initalize frames
+        self.title_frame = tk.Frame(master = self.master)
+        self.title_frame.grid(row = 0, column = 0)
+        self.title_frame.grid_rowconfigure(0, weight = 0)
+        self.title_frame.grid_columnconfigure(0, weight = 1)
+        
+        self.solver_select_frame = tk.Frame(master = self.master)
+        self.solver_select_frame.grid(row = 1, column =0)
+        self.solver_select_frame.grid_rowconfigure(0, weight = 0)
+        self.solver_select_frame.grid_columnconfigure(0, weight = 1)
+        self.solver_select_frame.grid_columnconfigure(1, weight = 1)
+        self.solver_select_frame.grid_columnconfigure(2, weight = 1)
+        self.solver_select_frame.grid_columnconfigure(3, weight = 1)
+        
+        self.solver_frame = tk.Frame(master = self.master)
+        self.solver_frame.grid(row = 2, column = 0)
+        
+        # frames created here so previous selections can be cleared
+        self.design_frame = tk.Frame(master = self.master)
+        self.problem_model_factors_frame = tk.Frame(master = self.master)
+        self.problem_select_frame = tk.Frame(master = self.master)
+        self.experiment_frame = tk.Frame(master = self.master)
+        self.problem_frame = tk.Frame(master = self.problem_model_factors_frame)
+        self.model_frame = tk.Frame(master = self.problem_model_factors_frame)
+        self.notebook_frame = tk.Frame (master = self.master)
+        self.design_view_frame = tk.Frame(master = self.master)
+        self.create_pair_frame = tk.Frame(master = self.master)
+        
+        
+        
+        
+        # Window title 
+        self.title_label = tk.Label( master = self.title_frame, text = 'Solver Data Farming', width = 50,
+                                    font = 'Calibir 15 bold')
+        self.title_label.grid( row = 0, column = 0)
+        
+        # Option menu to select solver
+        self.solver_select_label = tk.Label( master = self.solver_select_frame, text = 'Select Solver:', width = 20,
+                                    font = 'Calibir 13')
+        self.solver_select_label.grid( row = 0, column = 0)
+        
+        # Variable to store selected solver
+        self.solver_var = tk.StringVar()
+        
+        #Directory of solver names
+        self.solver_list = solver_unabbreviated_directory
+        
+        self.solver_select_menu = ttk.OptionMenu(self.solver_select_frame, self.solver_var, 'Solver', *self.solver_list, command = self.show_solver_factors)
+        self.solver_select_menu.grid(row = 0, column = 1)
+        
+        # Load design selection
+        self.load_design_label =  tk.Label( master = self.solver_select_frame, text = ' OR ', width = 20,
+                                    font = 'Calibir 13')
+        self.load_design_label.grid( row = 0, column = 2)
+        self.load_design_button = tk.Button(master = self.solver_select_frame, text = 'Load Solver Design', font = 'Calibir 11',
+                                            width = 20, command = self.load_solver_design)
+        self.load_design_button.grid( row = 0, column = 3)
+        
+        #Dictonaries to hold experiment info
+        self.experiment_pairs = {} #Dictionary to hold all experiment/ problem pairs, contains list of experiment, problem name, problem factors, then model factors
+        self.select_pair_vars ={}
+        self.macro_rep_vars = {}
+        self.post_rep_vars= {}
+        self.norm_rep_vars = {}
+        self.run_buttons = {}
+        self.post_buttons = {}
+        self.norm_buttons = {}
+        self.save_buttons = {}
+        
+        
+        
+    def clear_frame(self, frame):
+        for widget in frame.winfo_children():
+            widget.destroy()
+    
+    def load_solver_design(self):
+    
+        #Clear previous selections
+        self.clear_frame(frame = self.solver_frame) #Clear previous solver selections
+        self.clear_frame(frame = self.design_frame) # Clear design selections
+        self.clear_frame(frame = self.problem_model_factors_frame) # Clear problem and model factor selections
+        self.clear_frame(frame = self.problem_select_frame) # Clear problem selection widgets
+        self.clear_frame(frame = self.design_view_frame) # Clear design tree
+        self.clear_frame(self.create_pair_frame)
+            
+        
+        # Initialize frames
+        self.solver_frame.grid(row = 2, column = 0)
+        self.solver_frame.grid_rowconfigure(0, weight =1)
+        self.solver_frame.grid_columnconfigure(0, weight =1)
+        self.solver_frame.grid_columnconfigure(1, weight =1)
+        self.solver_frame.grid_columnconfigure(2, weight =1)
+        self.solver_frame.grid_columnconfigure(3, weight =1)
+        
+        self.loaded_design = True # Design was loaded by user
+
+        # Create column for model factor names
+        self.headername_label = tk.Label(master = self.solver_frame, text = 'Default Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.solver_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+       
+        
+        # List to hold default values
+        self.default_values_list = []
+        self.fixed_str = {}
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.solver_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+            
+        # Name of design csv file
+        self.csv_filename = filedialog.askopenfilename()
+        
+        # convert loaded design to data frame
+        self.design_table = pd.read_csv(self.csv_filename, index_col=False)
+        
+        # Get design information from table
+        self.solver_name = self.design_table.at[1, 'Solver Name']
+        self.design_type = self.design_table.at[1, 'Design Type']
+        self.n_stacks = self.design_table.at[1, 'Number Stacks']
+        
+        
+        # determine what factors are included in design
+        self.factor_status = {} #dictionary that contains true/false for wheither factor is in design
+        for col in self.design_table.columns[1:-3]: # col correspond to factor names, exclude index and information cols
+            factor_set = set(self.design_table[col])
+            
+            if len(factor_set) > 1:
+                design_factor = True
+            else:
+                design_factor = False
+                
+            self.factor_status[col] = design_factor
+            
+            
+            
+    
+            
+        # get default values for fixed factors
+        self.default_factors = {} #contains only factors not in design, factor default vals input as str
+        for factor in self.factor_status:
+            if self.factor_status[factor] == False:
+                self.default_factors[factor] = self.design_table.at[1, factor]
+                    
+  
+        print(self.default_factors)
+        self.solver_class = solver_directory[self.solver_name]
+        self.solver_object = self.solver_class()
+
+        #Display model name
+        self.solver_name_label = tk.Label( master = self.solver_select_frame, text = 'Selected Solver: ' + self.solver_name, font = "Calibri 13", width = 40  )
+        self.solver_name_label.grid( row = 0, column = 4, sticky = tk.W)
+        
+        # Allow user to change default values
+        factor_idx = 0
+        self.factor_que_length = 1
+        for  factor in self.default_factors:
+            
+            self.factor_datatype = self.solver_object.specifications[factor].get("datatype")
+            self.factor_description = self.solver_object.specifications[factor].get("description")
+            self.factor_default = self.default_factors[factor]
+            
+            
+            self.solver_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+            
+            # Convert datatype to string for display
+            if self.factor_datatype == int:
+                self.str_type = 'int'
+            elif self.factor_datatype == float:
+                self.str_type = 'float'
+            elif self.factor_datatype == bool:
+                self.str_type = 'bool'
+       
+            # Add label for factor names
+            self.factorname_label = tk.Label (master = self.solver_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            
+            # Add label for factor type
+            self.factortype_label = tk.Label (master = self.solver_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+            self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+            
+            #Add entry box for default value for int and float
+            self.default_value= tk.StringVar()
+            if self.factor_datatype == int or self.factor_datatype == float:
+                self.default_entry = tk.Entry( master = self.solver_frame, width = 10, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.default_values_list.append(self.default_value)
+                
+            # Add option menu for bool factors
+            elif self.factor_datatype == bool:
+                self.default_value.set(self.factor_default) #Set default bool option
+                self.bool_menu = ttk.OptionMenu(self.solver_frame, self.default_value, self.factor_default, 'TRUE', 'FALSE')
+                self.bool_menu.grid( row = self.factor_que_length, column = 2, sticky = tk.N + tk.W)
+                self.default_values_list.append(self.default_value)
+ 
+            self.factor_que_length += 1
+            factor_idx += 1
+     
+                    
+        self.show_design_options() # run function to design creation options
+        self.display_design_tree()
+
+
+    def show_solver_factors(self, *args):
+        
+        
+        #Initalize frames
+        self.solver_frame.grid_rowconfigure(0, weight = 0)
+        self.solver_frame.grid_columnconfigure(0, weight = 1)
+        self.solver_frame.grid_columnconfigure(1, weight = 1)
+        self.solver_frame.grid_columnconfigure(2, weight = 1)
+        self.solver_frame.grid_columnconfigure(3, weight = 1)
+        self.solver_frame.grid_columnconfigure(4, weight = 1)
+        self.solver_frame.grid_columnconfigure(5, weight = 1)
+        self.solver_frame.grid_columnconfigure(6, weight = 1)
+        
+       
+        # Clear previous selections    
+        self.clear_frame(frame = self.solver_frame) #Clear previous solver selections
+        self.clear_frame(frame = self.design_frame) # Clear design selections
+        self.clear_frame(frame = self.problem_model_factors_frame) # Clear problem and model factor selections
+        self.clear_frame(frame = self.problem_select_frame) # Clear problem selection widgets
+        self.clear_frame(frame = self.design_view_frame) # Clear design tree
+        self.clear_frame(self.create_pair_frame)
+        
+        self.loaded_design = False # design was not loaded by user
+        
+        # Create column for solver factor names
+        self.headername_label = tk.Label(master = self.solver_frame, text = 'Solver Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+
+        
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.solver_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+        
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.solver_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        # Create column for factor check box
+        self.headercheck_label = tk.Label(master = self.solver_frame, text = 'Include in Experiment', font = "Calibri 13 bold", width = 20 )
+        self.headercheck_label.grid(row = 0, column = 3, sticky = tk.N + tk.W)
+        
+        # Create header for experiment options
+        self.headercheck_label = tk.Label(master = self.solver_frame, text = 'Experiment Options', font = "Calibri 13 bold", width = 50 )
+        self.headercheck_label.grid(row = 0, column = 4, columnspan = 3)
+        
+        # Get solver info from dictionary
+        self.selected_solver = self.solver_var.get()
+        self.solver_object = self.solver_list[self.selected_solver]()
+        self.solver_name = self.solver_object.name # name of solver used for save files
+        
+        
+        entry_width = 10
+        
+        # Widget lists
+        self.default_widgets = {}
+        self.check_widgets = {}
+        self.min_widgets = {}
+        self.max_widgets = {}
+        self.dec_widgets = {}
+        self.description_buttons = {}
+        
+        
+               
+        # Initial variable values
+        self.factor_que_length = 1
+        self.default_values_list = []
+        self.checkstate_list=[]
+        self.min_list = []
+        self.max_list = []
+        self.dec_list = []
+        # self.descriptions = {} #used for description pop ups
+        
+       
+        for  factor in self.solver_object.specifications:
+            
+            self.factor_datatype = self.solver_object.specifications[factor].get("datatype")
+            factor_description = self.solver_object.specifications[factor].get("description")
+            self.factor_default = self.solver_object.specifications[factor].get("default")
+            
+            # self.descriptions[factor] = factor_description
+            
+            
+            # Add label for factor names
+            display_name = f"{factor} - {factor_description}"
+            self.factorname_label = tk.Label (master = self.solver_frame, text = display_name, font = "Calibri 13", width = 80, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            
+            
+            
+            
+            if self.factor_datatype == float:
+            
+                self.solver_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'float'
+    
+                # # Add label for factor names
+                # self.factorname_label = tk.Label (master = self.solver_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                # self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+               
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.solver_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.solver_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                
+                # Add check box
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.solver_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.solver_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val, justify = 'right')
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.solver_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val, justify = 'right')
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled')
+                
+                # Add entry box for editable decimals
+                self.dec_frame = tk.Frame (master = self.solver_frame)
+                self.dec_frame.grid( row = self.factor_que_length, column = 6, sticky = tk.N + tk.W )
+                
+                self.dec_label = tk.Label(master = self.dec_frame, text = '# Decimals', font = "Calibri 13", width = 10 )
+                self.dec_label.grid( row = 0, column = 0) 
+                
+                self.dec_val = tk.StringVar()
+                self.dec_entry = tk.Entry( master = self.dec_frame, width = 10, textvariable = self.dec_val, justify = 'right')
+                self.dec_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.dec_list.append(self.dec_val)  
+                
+                self.dec_widgets[factor] = self.dec_entry
+                
+                self.dec_entry.configure(state = 'disabled')
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == int:
+            
+                self.solver_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'int'
+    
+                # # Add label for factor names
+                # self.factorname_label = tk.Label (master = self.solver_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                # self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.solver_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.solver_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.solver_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                # Add entry box for min val
+                self.min_frame = tk.Frame (master = self.solver_frame)
+                self.min_frame.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W )
+                
+                self.min_label = tk.Label(master = self.min_frame, text = 'Min Value', font = "Calibri 13", width = 10 )
+                self.min_label.grid( row = 0, column = 0)
+                self.min_val = tk.StringVar()
+                self.min_entry = tk.Entry( master = self.min_frame, width = 10, textvariable = self.min_val, justify = 'right')
+                self.min_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+                
+                self.min_list.append(self.min_val)    
+                
+                self.min_widgets[factor] = self.min_entry
+                
+                self.min_entry.configure(state = 'disabled')
+                
+                # Add entry box for max val
+                self.max_frame = tk.Frame (master = self.solver_frame)
+                self.max_frame.grid( row = self.factor_que_length, column = 5, sticky = tk.N + tk.W )
+                
+                self.max_label = tk.Label(master = self.max_frame, text = 'Max Value', font = "Calibri 13", width = 10 )
+                self.max_label.grid( row = 0, column = 0) 
+                
+                self.max_val = tk.StringVar()
+                self.max_entry = tk.Entry( master = self.max_frame, width = 10, textvariable = self.max_val, justify = 'right')
+                self.max_entry.grid( row = 0, column = 1, sticky = tk.N + tk.W)
+               
+                self.max_list.append(self.max_val)    
+                
+                self.max_widgets[factor] = self.max_entry
+                
+                self.max_entry.configure(state = 'disabled') 
+                
+                self.factor_que_length += 1
+                
+            elif self.factor_datatype == bool:
+            
+                self.solver_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'bool'
+    
+                # # Add label for factor names
+                # self.factorname_label = tk.Label (master = self.solver_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                # self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.solver_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add option menu for true/false
+                self.default_value = tk.StringVar() #Variable to store selected bool factor state
+                self.default_value.set('TRUE') #Set default bool option
+                self.bool_menu = ttk.OptionMenu(self.solver_frame, self.default_value, 'TRUE', 'TRUE', 'FALSE')
+                self.bool_menu.grid( row = self.factor_que_length, column = 2, sticky = tk.N + tk.W)
+                
+                
+                
+                # Default value if not included in design
+                self.default_values_list.append(self.default_value)
+                
+                    
+                # Add checkbox 
+                self.checkstate = tk.BooleanVar()
+                self.checkbox = tk.Checkbutton( master = self.solver_frame, variable = self.checkstate,
+                                               command = self.include_factor)
+                self.checkbox.grid( row = self.factor_que_length, column = 3, sticky = 'nsew')
+                self.checkstate_list.append(self.checkstate)
+                
+                self.check_widgets[factor] = self.checkbox
+                
+                self.factor_que_length += 1
+                
+        # # Button for factor description
+        # self.description_button = tk.Button(master = self.solver_frame, text = 'Factor Details', font = 'Calibri 11', width = 15, command = lambda: self.show_description_window(solver = self.solver_object ))
+        # self.description_button.grid(row = self.factor_que_length + 1, column = 0)
+        self.show_design_options() # run function to show design creation options
+        # # self.bind_factor_descriptions()
+    
+    # def bind_factor_descriptions(self):
+    #     for factor in self.description_buttons:
+    #         print('factor', factor)
+    #         self.description_buttons[factor].configure(command = lambda: self.show_description(factor))
+            
+        
+        
+        
+    def show_design_options(self):
+        # Design type selection menu
+        self.design_frame.grid(row = 3, column = 0)
+        self.design_frame.grid_rowconfigure(0, weight = 0)
+        self.design_frame.grid_columnconfigure(0, weight = 1)
+        self.design_frame.grid_columnconfigure(1, weight = 1)
+        self.design_frame.grid_columnconfigure(2, weight = 1)
+        self.design_frame.grid_columnconfigure(3, weight = 1)
+        self.design_frame.grid_columnconfigure(4, weight = 1)
+        
+        # Input options from loaded designs
+        if self.loaded_design == True:
+            stack_display = self.n_stacks # same num of stacks as original loaded design
+            design_display = self.design_type
+        else:
+            stack_display = 'Stacks'
+            design_display = 'Design Type'
+        
+        self.design_type_label = tk.Label (master = self.design_frame, text = 'Select Design Type:', font = "Calibri 13", width = 20)
+        self.design_type_label.grid( row = 0, column = 0)
+        
+        self.design_types_list = ['nolhs']
+        self.design_var = tk.StringVar()
+        self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, design_display, *self.design_types_list, command = self.enable_stacks)
+        self.design_type_menu.grid(row = 0, column = 1)
+        if self.loaded_design == True:
+            self.design_type_menu.configure(state = 'disabled')
+        
+        #Stack selection menu
+        self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks:", font = "Calibri 13", width = 20)
+        self.stack_label.grid( row =1, column = 0)
+        self.stack_list = ['1', '2', '3']
+        self.stack_var = tk.StringVar()
+        self.stack_menu = ttk.OptionMenu(self.design_frame, self.stack_var, stack_display, *self.stack_list, command = self.enable_create_design_button)
+        self.stack_menu.grid( row = 1, column = 1)
+        self.stack_menu.configure(state = 'disabled')
+        
+        # Name of design file entry
+        self.design_filename_label = tk.Label (master = self.design_frame, text = "Name of design:", font = "Calibri 13", width = 20)
+        self.design_filename_label.grid( row = 0, column = 2)
+        self.design_filename_var = tk.StringVar() # variable to hold user specification of desing file name
+        #timestamp = time.strftime("%Y%m%d%H%M%S")
+        self.design_filename_var.set(self.solver_name)
+        self.design_filename_entry = tk.Entry(master = self.design_frame,  width = 40, textvariable = self.design_filename_var, justify = 'right' )
+        self.design_filename_entry.grid( row = 0, column = 3)
+        
+        
+        # Create design button 
+        if self.loaded_design == False:
+            self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
+            self.create_design_button.grid( row = 0, column = 4)
+            
+        # Modify design button for loaded designs
+        if self.loaded_design == True:
+            
+            self.mod_design_button = tk.Button(master = self.design_frame, text = 'Modify Design', font = "Calibri 13", command = self.mod_design , width = 20)
+            self.mod_design_button.grid( row = 0, column = 4)
+            
+            self.continue_design_button = tk.Button(master = self.design_frame, text = 'Continue w/o Changes', font = "Calibri 13", command = self.con_design , width = 25)
+            self.continue_design_button.grid( row = 1, column = 4)
+            
+    def mod_design(self):
+        
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+        factor_index = 0
+        for factor in self.default_factors:
+            #self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+            new_val = self.default_values[factor_index]
+            self.design_table[factor] = new_val
+            factor_index += 1
+            
+        self.design_filename = self.design_filename_var.get() # name of design file specified by user
+        
+        self.csv_filename = f'./data_farming_experiments/{self.design_filename}_design.csv'
+        
+        self.design_table.to_csv(self.csv_filename, index = False)
+
+        self.experiment = DataFarmingMetaExperiment(csv_filename = self.csv_filename)
+        self.select_problem()
+        self.display_design_tree()
+        
+                                                    
+        
+        
+        
+    def con_design(self):
+        self.experiment = DataFarmingMetaExperiment(csv_filename = self.csv_filename)
+        self.select_problem()
+                                                       
+        
+    
+    
+    def select_problem(self):
+       
+        # Problem selection frame
+        self.problem_select_frame.grid( row = 5, column = 0)
+        self.problem_select_frame.grid_rowconfigure(0, weight = 1)
+        self.problem_select_frame.grid_columnconfigure(0, weight = 1)
+        self.problem_select_frame.grid_columnconfigure(1, weight = 1)
+        self.problem_select_frame.grid_columnconfigure(2, weight = 1)
+        
+        
+        self.update_problem_list_compatability() #Check compatibility of solver problems, returns self.problem_list for option menu
+        
+        # Option menu to select problem
+        self.problem_select_label = tk.Label( master = self.problem_select_frame, text = 'Select Problem:', width = 20,
+                                    font = 'Calibir 13')
+        self.problem_select_label.grid( row = 0, column = 0)
+        
+        self.problem_var = tk.StringVar() # Variable to store selected problem
+          
+        
+        self.problem_select_menu = ttk.OptionMenu(self.problem_select_frame, self.problem_var, 'Problem', *self.problem_list, command = self.show_problem_factors)
+        self.problem_select_menu.grid(row = 0, column = 1)   
+        
+        # Display model name
+        self.model_name = ""
+        self.model_label = tk.Label(master = self.problem_select_frame, text = 'Model: ' + self.model_name, font = "Calibri 13")
+        self.model_label.grid(row = 0, column = 2)
+        
+      
+    def enable_stacks(self, *args):
+        if self.loaded_design == False: #cannot change stacks for loaded design
+            self.stack_menu.configure(state = 'normal')
+        
+    def enable_create_design_button(self, *args):
+        self.create_design_button.configure(state = 'normal')
+        
+        
+
+    
+    
+    def create_design(self, *args):
+
+        
+        #Export design factors
+
+        
+        self.n_stacks = self.stack_var.get() # user input for num stacks
+        self.design_type = self.design_var.get() #user input for design type
+        
+        # self.problem_fixed_factors = {} # holds fixed factors for problem to be used in design
+        # self.model_fixed_factors ={} # holds fixed factors of model to be used in design
+        self.fixed_factors = {} # holds fixed factors of solver to be used in design
+        self.factor_index = 0
+         
+        
+        # List to hold names of all factors part of model to be displayed in csv
+        self.factor_names = [] # names of solver factors included in experiment
+        self.def_factor_names = [] # names of default and cross design solver factors
+        self.problem_factor_names = [] # names of all problem factors
+        self.model_factor_names = [] # names of all model factors
+        
+ 
+      
+        # Write solver factors file
+        
+        self.design_filename = self.design_filename_var.get() # name of design file specified by user
+        
+        with open(f"./data_farming_experiments/{self.design_filename}.txt", "w") as self.solver_design_factors:
+            self.solver_design_factors.write("")
+            
+        
+       
+            
+        if self.loaded_design == False: # get factor settings for created design (not loaded)
+        
+            # List used for parsing design file
+            self.factor_headers = [] 
+           
+            # Lists that hold factor information set by user
+            self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list] # checkstate of each factor
+            self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+            self.min_values = [self.min_val.get() for self.min_val in self.min_list] # max value of each int & float factor
+            self.max_values = [self.max_val.get() for self.max_val in self.max_list] # min value of each int & float factor
+            self.dec_values = [self.dec_val.get() for self.dec_val in self.dec_list] # dec value of each float factor
+            
+            
+            # values to index through factors
+            self.factor_index = 0
+            self.maxmin_index = 0
+            self.dec_index = 0
+            
+            #Dictionary used for tree view display of fixed factors
+            self.solver_fixed_str = {}
+            self.def_factors = [] # list of factors not included in design
+            
+           
+            # Get solver experiment information    
+            for  factor in self.solver_object.specifications:
+                
+                self.factor_datatype = self.solver_object.specifications[factor].get("datatype")
+               
+                self.factor_default = self.default_values[self.factor_index]
+                self.factor_include = self.check_values[self.factor_index]
+                
+                
+               
+               
+                if self.factor_include == True:
+                    
+                    # # Add factor to list of design factors in order that will be varied
+                    # self.factor_headers.append(factor)
+                    # Factor names in csv are unedited
+                    # self.factor_names.append(factor)
+                
+                    if self.factor_datatype == float or self.factor_datatype == int:
+                        # Add factor to list of design factors in order that will be varied
+                        self.factor_headers.append(factor)
+                        # Factor names in csv are unedited
+                        self.factor_names.append(factor)
+                        
+                        self.factor_min = str(self.min_values[self.maxmin_index])
+                        self.factor_max = str(self.max_values[self.maxmin_index])
+                        self.maxmin_index += 1
+                        
+                        if self.factor_datatype == float:
+                            self.factor_dec = str(self.dec_values[self.dec_index])
+                            self.dec_index += 1
+                            
+                        elif self.factor_datatype == int:
+                            self.factor_dec = '0'
+                            
+                        self.data_insert = self.factor_min + ' ' + self.factor_max + ' ' + self.factor_dec
+                        with open(f"./data_farming_experiments/{self.design_filename}.txt", "a") as self.solver_design_factors:
+                            self.solver_design_factors.write(self.data_insert + '\n')  
+                            
+                    elif self.factor_datatype == bool: 
+                            
+                            factor_options = [True,False] # list of values factor can take, temp hard coded for true/false
+                            self.cross_design_factors[factor] = factor_options #add factor to cross design dictionary
+                            display = ""
+                            for opt in factor_options:
+                                opt_str = str(opt)
+                                display += opt_str + '/'
+                            self.solver_fixed_str[factor] = display[:-1] # add cross design factor to fixed str for design table
+                            self.def_factor_names.append(factor + ' (cross)') # list of factor names in cross design
+                       
+                
+                # Include fixed default values in design
+                if self.factor_include == False:
+                    
+                    # Factor names in csv have "(default)" appended to end
+                    self.def_factors.append(factor)
+                    self.def_factor_names.append(factor + ' (fixed)')
+                    
+                    # Values to be placed in tree view of design
+                    self.solver_fixed_str[factor] = self.factor_default
+                   
+                    if self.factor_datatype == float or self.factor_datatype == int:
+                        self.maxmin_index += 1
+                   
+                    # Add default values to exeriment and set to correct datatype
+                    if self.factor_datatype == float:
+                        self.fixed_factors[factor] = float(self.factor_default)
+                        self.dec_index += 1
+                        
+                    elif self.factor_datatype == int:
+                        self.fixed_factors[factor] = int(self.factor_default)
+                        
+                # bool values currently not able to be included in design
+                if self.factor_datatype == bool:
+                    if self.factor_default == 'TRUE':
+                        bool_val = bool(1)
+                    else:
+                        bool_val = bool(0) 
+                    self.fixed_factors[factor] = bool_val
+                    
+       
+                self.factor_index += 1
+                
+            # Create design csv file with headers
+            self.all_factor_headers = self.factor_names +  self.def_factor_names # combine factor names
+                
+            # Create solver factor design from .txt file of factor settings.
+            # Hard-coded for NOLHS.
+            self.design_filename = self.design_filename_var.get() # name of design file specified by user
+            
+            #self.filename = 'solver_factors' # base for all design file names, temp, turn into ask dialog
+            
+            if self.loaded_design == False:
+                self.csv_filename = f'./data_farming_experiments/{self.design_filename}_design.csv' # used to display design tree
+            
+            self.experiment = DataFarmingMetaExperiment(solver_name = self.solver_name,
+                                                           solver_factor_headers = self.factor_names,
+                                                           n_stacks = self.n_stacks,
+                                                           design_type = self.design_type,
+                                                           solver_factor_settings_filename = self.design_filename,
+                                                           design_filename= None,
+                                                           solver_fixed_factors = self.fixed_factors,
+                                                           cross_design_factors = self.cross_design_factors,
+                                                           csv_filename = None
+                                                           )
+            
+           
+                       
+ 
+        self.display_design_tree() # show created design
+        self.select_problem() # show problem selection menu 
+       
+      
+        
+    # Used to display the design tree for both created and loaded designs
+    def display_design_tree(self):
+      
+        #Initialize design tree
+        self.design_view_frame.grid( row = 4, column = 0)
+        self.design_view_frame.grid_rowconfigure( 0, weight = 0)
+        self.design_view_frame.grid_rowconfigure( 1, weight = 1)
+        self.design_view_frame.grid_columnconfigure( 0, weight = 1)
+        self.design_view_frame.grid_columnconfigure( 1, weight = 1)
+        
+      
+   
+        self.design_tree = ttk.Treeview( master = self.design_view_frame)
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew')
+      
+       
+        
+        self.style = ttk.Style()
+        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.design_tree.heading( '#0', text = 'Design #' )
+        
+        # Get design point values from csv
+        design_table = pd.read_csv(self.csv_filename, index_col="Design #")
+        num_dp = len(design_table) #used for label
+        self.create_design_label = tk.Label( master = self.design_view_frame, text = f'Total Design Points: {num_dp}', font = "Calibri 13 bold", width = 50)
+        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+        
+        # Enter design values into treeview
+        self.design_tree['columns'] = tuple(design_table.columns)[:-3]
+       
+        
+        
+        
+        for column in design_table.columns[:-3]:
+            self.design_tree.heading( column, text = column)
+            self.design_tree.column(column, width = 100)
+            
+        for  index, row in design_table.iterrows():
+            print('row', row)
+            
+            self.design_tree.insert("", index, text = index, values = tuple(row)[:-3])
+        
+  
+       
+      
+            # Create a horizontal scrollbar
+        xscrollbar = ttk.Scrollbar(master = self.design_view_frame, orient="horizontal", command= self.design_tree.xview)
+        xscrollbar.grid(row = 2, column = 0, sticky = 'nsew')
+        
+        # Configure the Treeview to use the horizontal scrollbar
+        self.design_tree.configure(xscrollcommand=xscrollbar.set) 
+    def show_problem_factors(self, *args):
+        
+        # self.show_experiment_options() # show options for experiment creation
+        
+        #Initalize frames
+        self.problem_model_factors_frame.grid(row = 6, column = 0)
+        self.problem_model_factors_frame.grid_rowconfigure(0, weight = 1)
+        self.problem_model_factors_frame.grid_columnconfigure(0, weight = 1)
+        self.problem_model_factors_frame.grid_columnconfigure(1, weight = 1)
+        self.problem_model_factors_frame.grid_columnconfigure(2, weight = 1)
+        
+        self.create_pair_frame.grid( row = 7, column = 0)
+        self.create_pair_frame.grid_rowconfigure(0, weight = 1)
+        self.create_pair_frame.grid_columnconfigure(0, weight = 1)
+        self.create_pair_frame.grid_columnconfigure(1, weight = 1)
+        self.create_pair_frame.grid_columnconfigure(2, weight = 1)
+       
+        
+        #Clear previous selections
+        self.clear_frame(self.problem_model_factors_frame) # clear problem-model factor selections
+        self.clear_frame(self.create_pair_frame) # clear create pair buttons
+        self.model_label.destroy() #remove old model label
+        
+            
+        self.problem_frame = tk.Frame(master = self.problem_model_factors_frame)
+        self.model_frame = tk.Frame(master = self.problem_model_factors_frame)
+         
+         
+        self.problem_frame.grid(row = 1, column = 0)
+        self.problem_frame.grid_rowconfigure(0, weight = 0)
+        self.problem_frame.grid_columnconfigure(0, weight = 1)
+        self.problem_frame.grid_columnconfigure(1, weight = 1)
+        self.problem_frame.grid_columnconfigure(2, weight = 1)
+        self.problem_frame.grid_columnconfigure(3, weight = 1)
+        self.problem_frame.grid_columnconfigure(4, weight = 1)
+        self.problem_frame.grid_columnconfigure(5, weight = 1)
+        self.problem_frame.grid_columnconfigure(6, weight = 1)
+         
+        self.model_frame.grid(row = 0, column = 1 )
+        self.model_frame.grid_rowconfigure(0, weight = 0)
+        self.model_frame.grid_columnconfigure(0, weight = 1)
+        self.model_frame.grid_columnconfigure(1, weight = 1)
+        self.model_frame.grid_columnconfigure(2, weight = 1)
+        
+        
+        
+
+
+        # Create column for problem factor names
+        self.headername_label = tk.Label(master = self.problem_model_factors_frame, text = 'Problem Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        # Create column for problem factor type
+        self.headertype_label = tk.Label(master = self.problem_model_factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 15, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)
+        
+        
+        # Create column for problem factor default values
+        self.headerdefault_label = tk.Label(master = self.problem_model_factors_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        # Create column for model factor names
+        self.headername_label = tk.Label(master = self.problem_model_factors_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 3, sticky = tk.N + tk.W)
+        
+        # Create column for model factor type
+        self.headertype_label = tk.Label(master = self.problem_model_factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 4, sticky = tk.N + tk.W)
+        
+        
+        # Create column for model factor default values
+        self.headerdefault_label = tk.Label(master = self.problem_model_factors_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 5, sticky = tk.N + tk.W)
+        
+      
+        entry_width = 10
+        
+        # Widget lists
+        self.default_widgets = {}
+        
+        # Initial variable values
+        self.factor_que_length = 1
+        self.problem_default_values_list = []
+        self.model_default_values_list = []
+        
+        # Get problem info from dictionary
+        self.selected_problem = self.problem_var.get()
+        self.problem_object = problem_unabbreviated_directory[self.selected_problem]()
+        self.problem_name = self.problem_object.name # name of problem used for save files
+   
+        # Get model info from dictonary
+        self.model_problem_dict = model_problem_class_directory # directory that relates problem name to model class
+        self.model_object = self.model_problem_dict[self.selected_problem]()
+        self.model_name = self.model_object.name # name of model that relates to problem 
+        
+              
+        # Display model name
+        self.model_label = tk.Label(master = self.problem_select_frame, text = 'Model: ' + self.model_name, font = "Calibri 13")
+        self.model_label.grid(row = 0, column = 2)
+        
+        
+        
+        for  factor in self.problem_object.specifications:
+            
+            self.factor_datatype = self.problem_object.specifications[factor].get("datatype")
+            self.factor_description = self.problem_object.specifications[factor].get("description")
+            self.factor_default = self.problem_object.specifications[factor].get("default")
+            
+            self.problem_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+        
+            
+            
+            if self.factor_datatype == float:
+            
+                self.problem_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'float'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+               
+                
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.problem_default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+               
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == int:
+            
+                self.problem_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'int'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.problem_default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == list:
+                
+                self.problem_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'list'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                #Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 150:
+                        entry_width = 150
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.problem_default_values_list.append(self.default_value)
+                
+            
+                self.factor_que_length += 1
+                
+            elif self.factor_datatype == tuple:
+                
+                self.problem_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'tuple'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 1, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 150:
+                        entry_width = 150
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.problem_default_values_list.append(self.default_value)
+                
+                self.factor_que_length += 1
+                
+        self.factor_que_length = 1
+                
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            self.factor_description = self.model_object.specifications[factor].get("description")
+            self.factor_default = self.model_object.specifications[factor].get("default")
+            
+            
+            #Values to help with formatting
+            entry_width = 10
+            
+            self.model_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+        
+            
+            
+            if self.factor_datatype == float:
+                
+                self.str_type = 'float'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 3, sticky = tk.N + tk.W)
+
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =5, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.model_default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+          
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == int:
+            
+                self.model_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'int'
+    
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 3, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =5, sticky = tk.N + tk.W)
+                #Display original default value
+                self.default_entry.insert(0, self.factor_default)
+                self.model_default_values_list.append(self.default_value)
+                
+                self.default_widgets[factor] = self.default_entry
+                
+                
+                self.factor_que_length += 1
+            
+            elif self.factor_datatype == list:
+                
+                self.model_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'list'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 3, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W)
+                
+                #Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 150:
+                        entry_width = 150
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =5, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.model_default_values_list.append(self.default_value)
+                
+            
+                self.factor_que_length += 1
+                
+            elif self.factor_datatype == tuple:
+                
+                self.model_frame.grid_rowconfigure(self.factor_que_length, weight =1)
+                
+                self.str_type = 'tuple'
+               
+                # Add label for factor names
+                self.factorname_label = tk.Label (master = self.problem_model_factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
+                self.factorname_label.grid( row = self.factor_que_length, column = 3, sticky = tk.N + tk.W)
+                
+                # Add label for factor type
+                self.factortype_label = tk.Label (master = self.problem_model_factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
+                self.factortype_label.grid( row = self.factor_que_length, column = 4, sticky = tk.N + tk.W)
+                
+                # Add entry box for default value
+                default_len = len(str(self.factor_default))
+                if default_len > entry_width:
+                    entry_width = default_len
+                    if default_len > 150:
+                        entry_width = 150
+                self.default_value= tk.StringVar()
+                self.default_entry = tk.Entry( master = self.problem_model_factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
+                self.default_entry.grid( row =self.factor_que_length, column =5, sticky = tk.N + tk.W, columnspan = 5)
+                #Display original default value
+                self.default_entry.insert(0, str(self.factor_default))
+                self.model_default_values_list.append(self.default_value)
+                
+               
+                self.factor_que_length += 1  
+                
+        # Save pair name
+        self.pair_name_label = tk.Label(master = self.create_pair_frame, text = 'Save pair as:' , width = 20, font = 'Calibri 13')
+        self.pair_name_label.grid(row = 0, column = 0)
+        self.pair_name_var = tk.StringVar() #store name of design-problem pair
+        self.pair_name_var.set(self.solver_name + '_' + self.problem_name)
+        self.pair_name_entry = tk.Entry( master = self.create_pair_frame, width = 20, textvariable = self.pair_name_var, justify = 'right')
+        self.pair_name_entry.grid(row = 0, column = 1)
+        
+        # Create design-problem pair button
+        self.add_pair_button = tk.Button(master = self.create_pair_frame, text = 'Add Design-Problem Pair', font = 'Calibri 13',
+                                         width = 20, command = self.add_pair)
+        self.add_pair_button.grid(row = 0, column = 2)
+        
+       
+        
+        
+        
+                
+    def add_pair(self):
+        
+        # Experiment frames
+        self.experiment_frame.grid( row = 8, column = 0)
+        self.experiment_frame.grid_rowconfigure(0, weight = 1)
+        self.experiment_frame.grid_columnconfigure(0, weight = 1)
+        self.experiment_frame.grid_columnconfigure(1, weight = 1)
+        self.experiment_frame.grid_columnconfigure(2, weight = 1)
+        self.experiment_frame.grid_columnconfigure(3, weight = 1)
+        self.experiment_frame.grid_columnconfigure(4, weight = 1)
+        self.experiment_frame.grid_columnconfigure(5, weight = 1)
+        self.experiment_frame.grid_columnconfigure(6, weight = 1)
+        self.experiment_frame.grid_columnconfigure(7, weight = 1)
+        self.experiment_frame.grid_columnconfigure(8, weight = 1)
+        self.experiment_frame.grid_columnconfigure(9, weight = 1)
+        self.experiment_frame.grid_columnconfigure(10, weight = 1)
+        self.experiment_frame.grid_columnconfigure(11, weight = 1)
+        self.experiment_frame.grid_columnconfigure(12, weight = 1)
+            
+        
+        if len(self.experiment_pairs) == 0: # for first added pair create header
+            
+            self.pair_name_header = tk.Label( master = self.experiment_frame, text = 'Generated Pairs', width = 20, font = 'Calibri 13 bold')
+            self.pair_name_header.grid(row = 0, column = 1)
+            
+            self.mac_rep_label = tk.Label(master = self.experiment_frame, text = '# Macro Replications', font = "Calibri 13 bold", width = 20)
+            self.mac_rep_label.grid(row = 0, column = 2)
+            
+            self.post_rep_label = tk.Label(master = self.experiment_frame, text = '# Post Replications', font = "Calibri 13 bold", width = 20)
+            self.post_rep_label.grid(row = 0, column = 4)
+            
+            self.crn_budget_label = tk.Label(master = self.experiment_frame, text = 'CRN Across Budget?', font = "Calibri 13 bold", width = 20)
+            self.crn_budget_label.grid(row = 0, column = 5)
+            
+            self.crn_macro_label = tk.Label(master = self.experiment_frame, text = 'CRN Across Macro?', font = "Calibri 13 bold", width = 20)
+            self.crn_macro_label.grid(row = 0, column = 6)
+            
+            self.norm_rep_label = tk.Label(master = self.experiment_frame, text = '# Normalization Replications', font = "Calibri 13 bold", width = 0)
+            self.norm_rep_label.grid(row = 0, column = 8)
+            
+            self.crn_macro_label = tk.Label(master = self.experiment_frame, text = 'CRN Across Initial Option?', font = "Calibri 13 bold", width = 25)
+            self.crn_macro_label.grid(row = 0, column = 9)
+            
+
+        self.problem_default_values = [self.default_value.get() for self.default_value in self.problem_default_values_list]
+        self.model_default_values = [self.default_value.get() for self.default_value in self.model_default_values_list]
+        
+        self.problem_fixed_factors = {} # holds fixed factors for problem to be used in design
+        self.model_fixed_factors ={} # holds fixed factors of model to be used in design
+        self.factor_index = 0
+         
+        
+      
+        
+        # Get problem default factor information    
+        for  factor in self.problem_object.specifications:
+            
+            self.factor_datatype = self.problem_object.specifications[factor].get("datatype")
+      
+            self.factor_default = self.problem_default_values[self.factor_index]
+            print("default", self.factor_default)
+            # self.problem_factor_names.append( factor + ' (fixed)')
+            
+            # # Values to be placed in tree view of design
+            # self.problem_fixed_str[factor] = self.factor_default
+            
+          
+           
+            # Add default values to exeriment and set to correct datatype
+            if self.factor_datatype == float:
+                self.problem_fixed_factors[factor] = float(self.factor_default)
+                
+            if self.factor_datatype == int:
+                self.problem_fixed_factors[factor] = int(self.factor_default)
+                
+            if self.factor_datatype == list:
+                self.problem_fixed_factors[factor] = ast.literal_eval(self.factor_default)
+                
+            if self.factor_datatype == tuple:
+                last_val = self.factor_default[-2]
+                tuple_str = self.factor_default[1:-1].split(",")
+                print('tuple string', )
+                # determine if last tuple value is empty
+                if last_val != ",":
+                    self.problem_fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+                else: 
+                    tuple_exclude_last = tuple_str[:-1]
+                    float_tuple = [float(s) for s in tuple_exclude_last]
+                    self.problem_fixed_factors[factor] = tuple(float_tuple)
+                    print( 'final tuple', tuple(float_tuple) )
+                    
+   
+            self.factor_index += 1
+        
+        # Get model default factor information
+        self.factor_index = 0
+        for  factor in self.model_object.specifications:
+            
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+      
+            self.factor_default = self.model_default_values[self.factor_index]
+            
+            # self.model_factor_names.append( factor + ' (fixed)')
+            
+            # # Values to be placed in tree view of design
+            # self.model_fixed_str[factor] = self.factor_default
+         
+            # Add default values to exeriment and set to correct datatype
+            if self.factor_datatype == float:
+                self.model_fixed_factors[factor] = float(self.factor_default)
+               
+            if self.factor_datatype == int:
+                self.model_fixed_factors[factor] = int(self.factor_default)
+                
+            if self.factor_datatype == list:
+                self.model_fixed_factors[factor] = ast.literal_eval(self.factor_default)
+            
+            if self.factor_datatype == tuple:
+                   
+                tuple_str = tuple(self.factor_default[1:-1].split(","))
+                self.model_fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+       
+            self.factor_index += 1
+        
+        # #Specify the name of the solver as it appears in directory.py
+        # # solver_name = "RNDSRCH"
+        # solver_name = self.solver_object.name # name of solver selected
+       
+
+        # # Specify the names of the model factors (in order) that will be varied.
+        # # solver_factor_headers = ["sample_size"]
+        # solver_factor_headers = self.factor_names 
+        
+        
+
+        # # Specify the name of the problem as it appears in directory.py
+        # # problem_name = "FACSIZE-2"
+        #problem_name = self.problem_object.name
+        
+        # cross_design_factors = self.cross_design_factors # factors included in cross design
+
+        
+        # solver_factor_settings_filename = None
+
+      
+        # design_filename = 'solver_factors_design'
+
+        # OPTIONAL: Provide additional overrides for default solver/problem/model factors.
+        # If empty, default factor settings are used.
+        # solver_fixed_factors = self.fixed_factors
+        # print('solver_fixed_factors', self.fixed_factors)
+        # problem_fixed_factors = self.problem_fixed_factors
+        # print('problem fixed factors', problem_fixed_factors)
+        # model_fixed_factors = self.model_fixed_factors
+        # print('model fixed factors', model_fixed_factors)
+   
+
+        # No code beyond this point needs to be edited.
+
+        # Create DataFarmingExperiment object.
+        # self.myDFMetaExperiment = DataFarmingMetaExperiment(solver_name=solver_name,
+        #                                                problem_name=problem_name,
+        #                                                solver_factor_headers=solver_factor_headers,
+        #                                                solver_factor_settings_filename=solver_factor_settings_filename,
+        #                                                design_filename=design_filename,
+        #                                                solver_fixed_factors=solver_fixed_factors,
+        #                                                problem_fixed_factors=problem_fixed_factors,
+        #                                                model_fixed_factors=model_fixed_factors,
+        #                                                cross_design_factors = cross_design_factors
+        #                                                )
+        pair_name = self.pair_name_var.get() #name of problem pair
+        self.experiment_pairs[pair_name] = [self.experiment, self.problem_object.name, self.problem_fixed_factors, self.model_fixed_factors] # Add experiment to dictionary by pair name
+        
+        self.show_experiment_options(pair_name = pair_name)
+
+
+        
+    def show_experiment_options(self, pair_name):
+        # Show experiment options
+        current_row = len(self.experiment_pairs)
+        self.experiment_frame.grid_rowconfigure(current_row, weight = 1)
+
+       
+        
+        # Pair name label
+        self.pair_name_label = tk.Label(master = self.experiment_frame, text = pair_name, font = 'Calibri 11', width = 20)
+        self.pair_name_label.grid( row = current_row, column = 1)
+        
+       # number macro replications
+        self.mac_rep_var = tk.StringVar() # variable to store number of macro replication of experiment
+        self.macro_rep_vars[pair_name] = self.mac_rep_var # store to macro list for all experiments
+        
+        self.mac_rep_entry = tk.Entry(master = self.experiment_frame, width = 10, textvariable = self.mac_rep_var, justify = 'right')
+        self.mac_rep_entry.grid(row = current_row, column = 2)
+        
+        
+        # Run experiment button
+        self.run_exp_button = tk.Button( master = self.experiment_frame, width = 10, text = 'Run', font = "Calibri 11", command = lambda: self.run_experiment(pair_name = pair_name))
+        self.run_exp_button.grid( row = current_row, column = 3)
+        self.run_buttons[pair_name] = self.run_exp_button # store to run button list for all experiments
+        
+        # Number post replications
+        self.post_rep_var = tk.StringVar() # variable to store number of post replications of experiment
+        self.post_rep_vars[pair_name] = self.post_rep_var # store to post rep list for all experiments
+        
+        self.post_rep_entry = tk.Entry(master = self.experiment_frame, width = 10, textvariable = self.post_rep_var, justify = 'right')
+        self.post_rep_entry.grid(row = current_row, column = 4) 
+        
+        # CRN across budget for post rep
+        crn_budget_var = tk.StringVar() # variable to hold true/false state of crn across budget
+        self.crn_budget_menu = ttk.OptionMenu(self.experiment_frame, crn_budget_var, 'True', *['True', 'False'])
+        self.crn_budget_menu.grid(row = current_row, column = 5)
+        
+        # CRN across macro for post rep
+        crn_macro_var = tk.StringVar() # variable to hold true/false state of crn across macro reps
+        self.crn_macro_menu = ttk.OptionMenu(self.experiment_frame, crn_macro_var, 'False', *['True', 'False'])
+        self.crn_macro_menu.grid(row = current_row, column = 6)
+        
+        # Post process button experiment button
+        self.post_button = tk.Button( master = self.experiment_frame, width = 10, text = 'Post-Process', font = "Calibri 11", command = lambda: self.post_replicate(pair_name =pair_name, 
+                                                                                                                                                                    crn_across_budget=crn_budget_var.get(),
+                                                                                                                                                                    crn_across_macro=crn_macro_var.get()))
+        self.post_button.grid( row = current_row, column = 7)
+        self.post_buttons[pair_name] = self.post_button # store to post button list for all experiments
+        self.post_button.configure( state = 'disabled')
+        
+        
+        # Number normalization replications
+       
+        self.norm_rep_var = tk.StringVar() # variable to store number of normalization replications of experiment
+        self.norm_rep_vars[pair_name] = self.norm_rep_var # store to norm rep list for all experiments
+        
+        self.norm_rep_entry = tk.Entry(master = self.experiment_frame, width = 10, textvariable = self.norm_rep_var, justify = 'right')
+        self.norm_rep_entry.grid(row = current_row, column = 8) 
+        
+        # CRN across init option
+        crn_init_var = tk.StringVar() # variable to hold true/false state of crn across initial option
+        self.crn_init_menu = ttk.OptionMenu(self.experiment_frame, crn_init_var, 'True', *['True', 'False'])
+        self.crn_init_menu.grid(row = current_row, column = 9)
+        
+        
+        # Normalize experiment button
+        self.norm_button = tk.Button( master = self.experiment_frame, width = 10, text = 'Normalize', font = "Calibri 11", command = lambda: self.post_normalize(pair_name = pair_name,
+                                                                                                                                                                 crn_across_init = crn_init_var.get()))
+        self.norm_button.grid( row = current_row, column = 10)
+        self.norm_buttons[pair_name] = self.norm_button # store to norm button list for all experiments
+        self.norm_button.configure( state = 'disabled')
+        
+        # Save experiment button
+        self.save_button = tk.Button( master = self.experiment_frame, width = 10, text = 'Save', font = "Calibri 11", command = lambda: self.save_results(pair_name = pair_name))
+                                                                                                                                           
+        self.save_button.grid( row = current_row, column = 11)
+        self.save_buttons[pair_name] = self.save_button # store to save button list for all experiments
+        self.save_button.configure( state = 'disabled')
+
+
+
+    def run_experiment(self, pair_name):
+        
+        
+        current_exp = self.experiment_pairs[pair_name][0] # experiment is first element in stored list
+        n_macroreps = int(self.macro_rep_vars[pair_name].get())
+        
+        problem_name = self.experiment_pairs[pair_name][1]
+        problem_fixed_factors = self.experiment_pairs[pair_name][2]
+        model_fixed_factors = self.experiment_pairs[pair_name][3]
+
+
+        # Run macroreplications at each design point.
+        current_exp.run(n_macroreps=n_macroreps, 
+                        problem_name=problem_name, 
+                        problem_fixed_factors=problem_fixed_factors, 
+                        model_fixed_factors=model_fixed_factors 
+                        )
+
+      
+    
+        self.run_buttons[pair_name].configure( bg = 'dark gray') # change color of button
+        
+        self.post_buttons[pair_name].configure(state = 'normal')
+        self.norm_buttons[pair_name].configure( state = 'disabled')
+        self.save_buttons[pair_name].configure( state = 'disabled')
+    
+    
+   
+    def post_replicate(self, pair_name, crn_across_budget, crn_across_macro):
+        
+        
+        current_exp = self.experiment_pairs[pair_name][0]
+       
+        # Specify the number of postreplications to take at each recommended solution
+        # from each macroreplication at each design point.
+        # self.postreps = self.post_rep_var.get() # number of post reps specified by user (string)
+        n_postreps = int(self.post_rep_vars[pair_name].get())
+        # n_postreps = int(self.postreps)
+        
+        # Specify the CRN control for postreplications.   
+        if crn_across_budget == 'True':
+            crn_across_budget = True 
+        else:
+            crn_across_budget = False
+            
+        if crn_across_macro == 'True':
+            crn_across_macroreps = True 
+        else:
+            crn_across_macroreps = False 
+        
+        
+        # Postprocess the experimental results from each design point.
+        current_exp.post_replicate(n_postreps=n_postreps,
+                                          crn_across_budget=crn_across_budget,
+                                          crn_across_macroreps=crn_across_macroreps
+                                          )
+        
+        self.post_buttons[pair_name].configure( bg = 'dark gray') # change color of button
+        
+        self.norm_buttons[pair_name].configure(state = 'normal')
+        self.save_buttons[pair_name].configure( state = 'disabled')
+        
+        
+   
+    def post_normalize(self, pair_name, crn_across_init):
+ 
+        
+        current_exp = self.experiment_pairs[pair_name][0]
+        #Determine CRN
+        if crn_across_init == 'True':
+            crn_across_init_opt = True 
+        else:
+            crn_across_init_opt = False
+        
+        # Specify the number of postreplications to take at x0 and x*.
+        n_postreps_init_opt = int(self.norm_rep_vars[pair_name].get())
+        # self.normreps = self.norm_rep_var.get()
+        # n_postreps_init_opt = int(self.normreps)
+        
+        current_exp.post_normalize(n_postreps_init_opt=n_postreps_init_opt,
+                                          crn_across_init_opt=crn_across_init_opt
+                                          )
+        
+        self.norm_buttons[pair_name].configure( bg = 'dark gray') # change color of button
+        
+        self.save_buttons[pair_name].configure( state = 'normal')
+        
+
+    def save_results(self, pair_name):
+        
+        
+        current_exp = self.experiment_pairs[pair_name][0]
+        
+        # Save experiment results file name
+        export_csv_filename =  filedialog.asksaveasfilename(initialfile = pair_name + "_datafarming_experiment" )
+        
+        # Compute the performance metrics at each design point and print to csv.
+        current_exp.report_statistics(solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename = export_csv_filename)
+        
+        self.save_buttons[pair_name].configure( bg = 'dark gray') # change color of button
+        
+        
+    def update_problem_list_compatability(self):
+        
+        temp_problem_list = []
+        temp_solver_name = self.solver_name
+        
+        for problem in problem_unabbreviated_directory:
+
+            temp_problem = problem_unabbreviated_directory[problem] # problem object
+            temp_problem_name = temp_problem().name
+
+            temp_experiment = ProblemSolver(solver_name=temp_solver_name, problem_name=temp_problem_name)
+            comp = temp_experiment.check_compatibility()
+
+            if comp == "":
+                temp_problem_list.append(problem)
+
+        # from experiments.inputs.all_factors.py:
+        self.problem_list = temp_problem_list # list of problems used for option menu 
+
+           
+    
+    def include_factor(self, *args):
+
+        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
+        self.check_index = 0
+        self.cat_index = 0
+        self.cross_design_factors = {} # Dictionary to hold cross design factors and lists containing possible factor values
+    
+        # If checkbox to include in experiment checked, enable experiment option buttons
+        for factor in self.solver_object.specifications:
+                  
+            # Get current checksate values from include experiment column
+            self.current_checkstate = self.check_values[self.check_index]
+            # Cross check factor type
+            self.factor_datatype = self.solver_object.specifications[factor].get("datatype")
+            
+            # Disable / enable experiment option widgets depending on factor type
+            if self.factor_datatype == float or self.factor_datatype == int:
+                self.current_min_entry = self.min_widgets[factor]
+                self.current_max_entry = self.max_widgets[factor]               
+                
+                             
+                if self.current_checkstate == True:
+                    self.current_min_entry.configure(state = 'normal')
+                    self.current_max_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    #Empty current entries
+                    self.current_min_entry.delete(0, tk.END)
+                    self.current_max_entry.delete(0, tk.END)
+                   
+                    
+                    self.current_min_entry.configure(state = 'disabled')
+                    self.current_max_entry.configure(state = 'disabled')
+                                      
+            if self.factor_datatype == float:              
+                self.current_dec_entry = self.dec_widgets[factor]
+                
+                if self.current_checkstate == True:
+                    self.current_dec_entry.configure(state = 'normal')
+                    
+                elif self.current_checkstate == False:
+                    self.current_dec_entry.delete(0, tk.END)
+                    self.current_dec_entry.configure(state = 'disabled')
+                    
+          
+            self.check_index += 1                     
+    
+            
+            
+        
+        
+    
+# My code ends here
 
 class Cross_Design_Window():
 
@@ -3512,10 +6416,11 @@ def problem_solver_abbreviated_name_to_unabbreviated(problem_or_solver, abbrevia
 def main():
     root = tk.Tk()
     root.title("SimOpt Library Graphical User Interface")
-    root.geometry("1200x1000")
+    root.geometry("600x700")
     root.pack_propagate(False)
 
-    app = Experiment_Window(root)
+    #app = Experiment_Window(root)
+    app = Main_Menu_Window(root)
     root.mainloop()
 
 if __name__ == '__main__':

@@ -1,10 +1,10 @@
-# Welcome to 2022 Winter Simulation Conference SimOpt Workshop!
+# Welcome to 2023 Winter Simulation Conference SimOpt Workshop!
 
-The SimOpt Workshop is taking place in-person in Orchid Main 4301AB-2 on Sunday, December 11 from 8-10 AM.
+The SimOpt Workshop is taking place in-person in Conference Room 14 on Sunday, December 10 from 9am-noon.
 
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
-The most-up-to-date publication about this library is [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf).
+The most-up-to-date publication about this library is [Eckman et al. (2023)](https://pubsonline.informs.org/doi/10.1287/ijoc.2023.1273).
 
 ## Before Workshop
 Before attending the workshop please follow the instructions below:
@@ -52,11 +52,25 @@ then you don’t.
   * From within VSCode, select the python interpreter on the top-right corner of the panel that looks like ![icon-3](./figs/icon-1.png) and from the list of available interpreters in your local computer, select the one that says Conda on the right.
   * Select a Python 3 interpreter by opening the Command Palette (Ctrl+Shift+P or Command+Shift+P), start typing the Python: Select Interpreter command to search, then select that command.
 
+(There will an opportunity to do these last two steps during the workshop, but you can also attempt them beforehand.)
+
 10. Open a terminal inside VSCode by clicking on Terminal > New Terminal from the menu. Inside the terminal, type the following to create a virtual environment: 
-  * `python -m venv venv`
-  * `venv\Scripts\activate` or on a Mac, `source venv/bin/activate`
-  * `python -m pip install simoptlib`
-  * `python -m simopt.GUI`
+    * `python -m venv venv`
+    * `venv\Scripts\activate` or on a Mac, `source venv/bin/activate`
+
+  * Then run the following commands to install the simopt package and open the GUI.
+    * `python -m pip install simoptlib`
+    * `python -m simopt.GUI`
+
+  * A pop-up window with the GUI should open. You can close it.
+
+11. In your browser, navigate to [https://github.com/simopt-admin/simopt](https://github.com/simopt-admin/simopt). Click on "Download ZIP" as shown.
+
+![zip-1](./figs/instruction-2.png)
+    
+Unzip the folder **simopt-master** and open it in VS Code using `File > Open Folder`.
+
+Open the file `workshop/workshop.ipynb` in the VS Code editor and follow along.
 
 
 ## Admins
@@ -73,15 +87,15 @@ To cite this work, please use
 @misc{simoptgithub,
   author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
   title = {{SimOpt}},
-  year = {2021},
+  year = {2023},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/simopt-admin/simopt}},
-  commit = {eda24b9f6a5885a37321ad7f8534bf10dec22480}
+  commit = {4c5de2e7576a596ea20979636cb034e75fada3f4}
 }
 ```
 
 ## Acknowledgments
 An earlier website for SimOpt, [http://www.simopt.org](http://www.simopt.org), was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
-Recent work on the development of SimOpt has been supported by the National Science Foundation under grant nos. DGE-1650441, CMMI-1537394, CMMI-1254298, CMMI-1536895, CMMI-2206972, IIS-1247696, and TRIPODS+X DMS-1839346, by the Air Force Office of Scientific Research under grant nos. FA9550-12-1-0200, FA9550-15-1-0038, and FA9550-16-1-0046, and by the Army Research Office under grant no. W911NF-17-1-0094.
+Recent work on the development of SimOpt has been supported by the National Science Foundation under grant nos. DGE-1650441, CMMI-1537394, CMMI-1254298, CMMI-1536895, CMMI-2226347, CMMI-2206972, CMMI-2035086, IIS-1247696, and TRIPODS+X DMS-1839346, by the Air Force Office of Scientific Research under grant nos. FA9550-12-1-0200, FA9550-15-1-0038, and FA9550-16-1-0046, and by the Army Research Office under grant no. W911NF-17-1-0094.
 Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation (NSF).

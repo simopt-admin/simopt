@@ -119,7 +119,7 @@ model_directory = {
     "NETWORK": Network,
     "AMUSEMENTPARK": AmusementPark
 }
-model_unabbreviated_directory = {
+model_problem_unabbreviated_directory = {
     "Min Deterministic Function + Noise (SUCG)": "EXAMPLE",
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": "MM1",
@@ -141,4 +141,47 @@ model_unabbreviated_directory = {
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": "FIXEDSAN",
     "Min Total Cost for Communication Networks System (SDCN)": "NETWORK",
     "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK"
+}
+model_problem_class_directory = {
+    "Min Deterministic Function + Noise (SUCG)": ExampleModel,
+    "Max Profit for Continuous Newsvendor (SBCG)": CntNV,
+    "Min Mean Sojourn Time for MM1 Queue (SBCG)": MM1Queue,
+    "Min Total Cost for Facility Sizing (SSCG)": FacilitySize,
+    "Max Service for Facility Sizing (SDCN)": FacilitySize,
+    "Max Revenue for Revenue Management Temporal Demand (SDDN)": RMITD,
+    "Min Total Cost for (s, S) Inventory (SBCN)": SSCont,
+    "Max Revenue for Iron Ore (SBDN)": IronOre,
+    "Max Revenue for Continuous Iron Ore (SBCN)": IronOre,
+    "Max Profit for Dynamic Newsvendor (SBDN)": DynamNews,
+    "Min Cost for Dual Sourcing (SBDN)": DualSourcing,
+    "Min Total Cost for Discrete Contamination (SSDN)": Contamination,
+    "Min Total Cost for Continuous Contamination (SSCN)": Contamination,
+    "Min Avg Difference for Chess Matchmaking (SSCN)": ChessMatchmaking,
+    "Min Mean Longest Path for Stochastic Activity Network (SBCG)": SAN,
+    "Max Revenue for Hotel Booking (SBDN)": Hotel,
+    "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocation,
+    "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParameterEstimation,
+    "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSAN,
+    "Min Total Cost for Communication Networks System (SDCN)": Network,
+    "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementPark
+}
+model_unabbreviated_directory= {
+	"Deterministic Function + Noise": ExampleModel,
+	"Continuous Newsvendor": CntNV,
+	"MM1 Queue": MM1Queue,
+	"Facility Sizing": FacilitySize,
+	"Revenue Management Temporal Demand": RMITD,
+	"(s, S) Inventory": SSCont,
+	"Iron Ore": IronOre,
+	"Dynamic Newsvendor": DynamNews,
+	"Dual Sourcing": DualSourcing,
+	"Contamination": Contamination,
+	"Chess Matchmaking": ChessMatchmaking,
+	"Stochastic Activity Network": SAN,
+	"Hotel Booking": Hotel,
+	"Restaurant Table Allocation": TableAllocation,
+	"Gamma Parameter Estimation": ParameterEstimation,
+	"Fixed Stochastic Activity Network": FixedSAN,
+	"Communication Networks System": Network,
+	"Amusement Park (SDDN)": AmusementPark
 }

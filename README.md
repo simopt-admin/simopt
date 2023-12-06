@@ -2,17 +2,15 @@
 
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
-The most-up-to-date publication about this library is [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2022/01/SimOpt-software-paper.pdf).
-
-
 For the purposes of this project, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function or stochastic constraints. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
 
 Several papers have discussed the development of SimOpt and experiments run on the testbed:
-* [Pasupathy and Henderson (2006)](https://www.informs-sim.org/wsc06papers/028.pdf) explains the original motivation for the testbed.
-* [Pasupathy and Henderson (2011)](https://www.informs-sim.org/wsc11papers/363.pdf) describes an earlier interface for MATLAB implementations of problems and solvers.
-* [Dong et al. (2017)](https://www.informs-sim.org/wsc17papers/includes/files/179.pdf) conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance.
+* [Eckman et al. (2023)](https://pubsonline.informs.org/doi/10.1287/ijoc.2023.1273) is the most up-to-date publication about SimOpt and describes the code architecture and how users can interact with the library.
+* [Eckman et al. (2023)](https://pubsonline.informs.org/doi/10.1287/ijoc.2022.1261) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt. For detailed description of the terminology used in the library, e.g., factors, macroreplications, post-processing, solvability plots, etc., see this paper.
 * [Eckman et al. (2019)](https://www.informs-sim.org/wsc19papers/374.pdf) describes in detail changes to the architecture of the MATLAB version of SimOpt and the control of random number streams.
-* [Eckman et al. (2021)](https://eckman.engr.tamu.edu/wp-content/uploads/sites/233/2021/09/SimOpt-metrics-paper.pdf) introduces the design of experiments for comparing solvers; this design has been implemented in the latest Python version of SimOpt. For detailed description of the terminology used in the library, e.g., factors, macroreplications, post-processing, solvability plots, etc., see this paper.
+* [Dong et al. (2017)](https://www.informs-sim.org/wsc17papers/includes/files/179.pdf) conducts an experimental comparison of several solvers in SimOpt and analyzes their relative performance.
+* [Pasupathy and Henderson (2011)](https://www.informs-sim.org/wsc11papers/363.pdf) describes an earlier interface for MATLAB implementations of problems and solvers.
+* [Pasupathy and Henderson (2006)](https://www.informs-sim.org/wsc06papers/028.pdf) explains the original motivation for the testbed.
 
 
 ## Code
@@ -23,7 +21,7 @@ Several papers have discussed the development of SimOpt and experiments run on t
 Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
 ## Getting Started
-The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. *(If you anticipate making improvements or contributions to SimOpt, you should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository so that you can later request your changes be integrated via GitHub's pull request feature.)* Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
+The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
 
 Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, and `mrg32k3a`. Run the command ``` python -m pip install numpy scipy matplotlib pandas seaborn mrg32k3a``` to install them from the terminal.
 
@@ -154,8 +152,17 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 7. To return to the main page, click the red "x" in the top-left corner of the window.
 
 ## Contributing
-You can contribute problems and solver to SimOpt by using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub or corresponding with the developers. 
+You can contribute problems and solvers to SimOpt (or fix other coding bugs) by [forking](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository and initiating [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub to request that your changes be integrated.
 
+We also maintain a short list of next steps for improving the libary:
+
+### Short-Term To-Do List
+1. **Accelerating and Hardening the Source Code:** profiling, exception tracking, unit testing.
+1. **Random Variate Generation:** adding to the random-variate generating capabilities of the `mrg32k3a` package that supports SimOpt.
+1. **Robustness to User Specification:** additional exception handling for changing model/problem/solver factors.
+1. **Improving the Diversity of Solvers and Problems:** we especially welcome more solvers for problems with discrete feasible regions and/or deterministic linear constraints and/or stochastic constraints and/or multiple objectives.
+1. **Parallelization for Large-Scale Experiments:** using `OpenMP` to parallelize macroreplications.
+1. **Performance Metrics and Plots:** new metrics and plots for problems with stochastic constraints and/or multiple objectives.
 
 ## Package
 The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
@@ -209,11 +216,11 @@ To cite this work, please use
 @misc{simoptgithub,
   author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
   title = {{SimOpt}},
-  year = {2021},
+  year = {2023},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/simopt-admin/simopt}},
-  commit = {eda24b9f6a5885a37321ad7f8534bf10dec22480}
+  commit = {4c5de2e7576a596ea20979636cb034e75fada3f4}
 }
 ```
 
