@@ -480,7 +480,7 @@ class ASTRODF(Solver):
             candidate_solution = interpolation_solns[fval.index(min(fval))]
     
         # compute the success ratio rho
-        if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) == 0:
+        if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) <= 0:
             rho = 0
         else:
             rho = (fval[0] - fval_tilde) / (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(candidate_x - new_x, q))
