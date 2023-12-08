@@ -68,7 +68,7 @@ class Main_Menu_Window(tk.Tk):
     
     def open_model_datafarming(self):
         self.datafarming_window = tk.Toplevel(self.master)
-        self.datafarming_window.geometry("1000x850")
+        self.datafarming_window.geometry("1500x850")
         self.datafarming_window.title("SimOpt Library Graphical User Interface - Model Data Farming")
         self.datafarming_app = Data_Farming_Window(self.datafarming_window, self)
         
@@ -2368,9 +2368,9 @@ class Data_Farming_Window():
             self.master.grid_rowconfigure(2, weight=0)
             self.master.grid_rowconfigure(3, weight=0)
             self.master.grid_rowconfigure(4, weight=0)
-            self.master.grid_rowconfigure(5, weight=1)
-            self.master.grid_rowconfigure(6, weight=1)
-            self.master.grid_rowconfigure(7, weight=1)
+            self.master.grid_rowconfigure(5, weight=0)
+            self.master.grid_rowconfigure(6, weight=0)
+            self.master.grid_rowconfigure(7, weight=0)
             self.master.grid_columnconfigure(0, weight=1)
             self.master.grid_columnconfigure(1, weight=1)
             self.master.grid_columnconfigure(2, weight=1)
@@ -2487,7 +2487,7 @@ class Data_Farming_Window():
         
         # Create column for model factor names
         self.headername_label = tk.Label(master = self.factors_frame, text = 'Default Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
-        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W, padx = 10)
         
         # Create column for factor type
         self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
@@ -2516,9 +2516,10 @@ class Data_Farming_Window():
         self.model_object = model_unabbreviated_directory[self.selected_model]() #Eventually allow selection here
         
         
-        #Display model name
-        self.model_name_label = tk.Label( master = self.modelselect_frame, text = 'Selected Model: ' + self.selected_model, font = "Calibri 13", width = 40  )
-        self.model_name_label.grid( row = 0, column = 4, sticky = tk.W)
+        
+        
+        self.model_var.set(self.selected_model)
+        
         
         #Determine factors not included in design
  
@@ -2573,8 +2574,8 @@ class Data_Farming_Window():
           
            
             # Add label for factor names
-            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
-            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            self.factorname_label = tk.Label (master = self.factors_frame, text = f"{factor} - {self.factor_description}", font = "Calibri 13", width = 40, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W, padx = 10)
             
             # Add label for factor type
             self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
@@ -2601,7 +2602,7 @@ class Data_Farming_Window():
         self.change_def_frame = tk.Frame( master = self.master)
         self.change_def_frame.grid(row = 5, column = 0)
         self.change_def_button = tk.Button(master = self.change_def_frame, text = 'Change Experiment Defaults', font = "Calibri 13",
-                                                width = 30, command = self.update_defaults)
+                                                width = 30, command = self.update_defaults_button)
         self.change_def_button.grid( row = 0, column = 0)
             
            
@@ -2755,7 +2756,7 @@ class Data_Farming_Window():
         
         # Create column for model factor names
         self.headername_label = tk.Label(master = self.factors_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 10, anchor = 'w')
-        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W, padx = 10)
         
         # Create column for factor type
         self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 10, anchor = 'w' )
@@ -2803,8 +2804,8 @@ class Data_Farming_Window():
             self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
             
             # Add label for factor names
-            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 15, anchor = 'w')
-            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            self.factorname_label = tk.Label (master = self.factors_frame, text = f"{factor} - {self.factor_description}", font = "Calibri 13", width = 40, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W, padx = 10)
         
             
             
@@ -3102,7 +3103,7 @@ class Data_Farming_Window():
         self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
    
         self.design_tree = ttk.Treeview( master = self.create_design_frame)
-        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew')
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew', padx = 10)
         
         # Create headers for each factor 
         self.design_tree['columns'] = self.all_factor_headers
@@ -3133,9 +3134,12 @@ class Data_Farming_Window():
             # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(master = self.create_design_frame, orient="horizontal", command= self.design_tree.xview)
         xscrollbar.grid(row = 2, column = 0, sticky = 'nsew')
+        yscrollbar = ttk.Scrollbar(master = self.create_design_frame, orient="vertical", command= self.design_tree.yview)
+        yscrollbar.grid(row = 1, column = 1, sticky = 'nsew')
         
         # Configure the Treeview to use the horizontal scrollbar
         self.design_tree.configure(xscrollcommand=xscrollbar.set)
+        self.design_tree.configure(yscrollcommand=yscrollbar.set)
         
         # Create buttons to run experiment
         self.run_frame = tk.Frame(master = self.master)
@@ -3366,6 +3370,11 @@ class Data_Farming_Window():
         
         
             
+    def update_defaults_button(self):
+        self.display_design_tree() 
+        
+        tk.messagebox.showinfo("Defaults Updated", "Defaults have been successfully updated.")   
+        
     def run_experiment(self, *args):
         
         #Name of model used for default save file
@@ -3442,6 +3451,9 @@ class Data_Farming_Window():
         # Run replications and print results to file.
         myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
         myexperiment.print_to_csv(csv_filename=output_filename)
+        
+        # run confirmation message
+        tk.messagebox.showinfo("Run Completed", f"Experiment Completed. Output file can be found at {output_filename}")  
 
             
    
@@ -4322,7 +4334,7 @@ class Solver_Datafarming_Window(tk.Toplevel):
     def display_design_tree(self):
       
         #Initialize design tree
-        self.design_view_frame.grid( row = 4, column = 0)
+        self.design_view_frame.grid( row = 4, column = 0, padx = 10)
         self.design_view_frame.grid_rowconfigure( 0, weight = 0)
         self.design_view_frame.grid_rowconfigure( 1, weight = 1)
         self.design_view_frame.grid_columnconfigure( 0, weight = 1)
