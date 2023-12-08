@@ -68,7 +68,7 @@ class Main_Menu_Window(tk.Tk):
     
     def open_model_datafarming(self):
         self.datafarming_window = tk.Toplevel(self.master)
-        self.datafarming_window.geometry("1000x850")
+        self.datafarming_window.geometry("1500x850")
         self.datafarming_window.title("SimOpt Library Graphical User Interface - Model Data Farming")
         self.datafarming_app = Data_Farming_Window(self.datafarming_window, self)
         
