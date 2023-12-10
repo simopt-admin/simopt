@@ -3371,6 +3371,32 @@ class Data_Farming_Window():
         
             
     def update_defaults_button(self):
+        self.fixed_factors = {}
+        default_csv_insert = []
+        
+        # List of values entered by user
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
+        factor_index = 0
+        for factor in self.default_factor_list:
+            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
+            current_def_val = self.default_values[factor_index]
+            if self.factor_datatype == float:
+                self.fixed_factors[factor] = float(current_def_val)
+            
+            elif self.factor_datatype == int:
+                self.fixed_factors[factor] = int(current_def_val)
+            
+            if self.factor_datatype == list:
+                self.fixed_factors[factor] = ast.literal_eval(current_def_val)
+        
+            elif self.factor_datatype == tuple:
+           
+                tuple_str = tuple(current_def_val[1:-1].split(","))
+                self.fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+            
+            default_csv_insert.append(self.fixed_factors[factor])    
+            factor_index += 1
+            
         self.display_design_tree() 
         
         tk.messagebox.showinfo("Defaults Updated", "Defaults have been successfully updated.")   
