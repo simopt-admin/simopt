@@ -1752,9 +1752,9 @@ class Experiment_Window(tk.Toplevel):
         # print("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
 
     def view_meta_function(self, row_num):
-        self.factor_label_frame_solver.destroy()
+        self.factor_label_frame_solvers.destroy()
         self.factor_label_frame_oracle.destroy()
-        self.factor_label_frame_problem.destroy()
+        self.factor_label_frame_problems.destroy()
         
         row_index = row_num -1
         self.problem_menu.destroy()
@@ -6359,7 +6359,7 @@ class Plot_Window():
                 width = 350
                 height = 350
                 img = Image.open(path_name)
-                img = img.resize((width,height), Image.ANTIALIAS)
+                img = img.resize((width,height), Image.LANCZOS)
                 img =  ImageTk.PhotoImage(img)
                 # img = tk.PhotoImage(file=path_name)
 
@@ -6390,7 +6390,7 @@ class Plot_Window():
             print("This is path",path_name)
             img = Image.open(path_name)
 
-            img = img.resize((width,height), Image.ANTIALIAS)
+            img = img.resize((width,height), Image.LANCZOS)
             img =  ImageTk.PhotoImage(img)
             # img = tk.PhotoImage(file=path_name)
 
