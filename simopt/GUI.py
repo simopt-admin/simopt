@@ -3371,6 +3371,8 @@ class Data_Farming_Window():
         
             
     def update_defaults_button(self):
+        
+        # Get default user values
         self.fixed_factors = {}
         default_csv_insert = []
         
@@ -3396,8 +3398,9 @@ class Data_Farming_Window():
             
             default_csv_insert.append(self.fixed_factors[factor])    
             factor_index += 1
-            
-        self.display_design_tree() 
+    
+        
+        self.display_design_tree()
         
         tk.messagebox.showinfo("Defaults Updated", "Defaults have been successfully updated.")   
         
