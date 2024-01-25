@@ -2459,6 +2459,7 @@ class ProblemsSolvers(object):
         check that their factors match those in the overall ProblemsSolvers.
         """
         if experiments is not None:  # Method #3
+            
             self.experiments = experiments
             self.solvers = [experiments[idx][0].solver for idx in range(len(experiments))]
             self.problems = [experiment.problem for experiment in experiments[0]]
@@ -2494,7 +2495,7 @@ class ProblemsSolvers(object):
             self.problems = problems
             self.solver_names = solver_names
             self.problem_names = problem_names
-            self.solver_set = set(solver_names)
+            self.solver_set  = set(solver_names)
             self.problem_set = set(problem_names)
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
@@ -2504,6 +2505,7 @@ class ProblemsSolvers(object):
             
             
         elif solvers is not None and problems is not None:  # Method #2
+            
             self.experiments = [[ProblemSolver(solver=solver, problem=problem) for problem in problems] for solver in solvers]
             self.solvers = solvers
             self.problems = problems
@@ -2524,6 +2526,7 @@ class ProblemsSolvers(object):
         
         
         else:  # Method #1
+            
             if solver_renames is None:
                 self.solver_names = solver_names
             else:
@@ -2534,6 +2537,10 @@ class ProblemsSolvers(object):
                 self.problem_names = problem_renames
             self.n_solvers = len(solver_names)
             self.n_problems = len(problem_names)
+            
+            # Use this for naming file
+            self.solver_set = solver_names
+            self.problem_set = problem_names
             # Read in fixed solver/problem/model factors from .py file in the experiments folder.
             # File should contain three dictionaries of dictionaries called
             #   - all_solver_fixed_factors

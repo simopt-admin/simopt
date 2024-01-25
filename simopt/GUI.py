@@ -23,7 +23,7 @@ import pandas as pd
 from simopt.data_farming_base import DataFarmingExperiment, DesignPoint, DataFarmingMetaExperiment
 
 from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory, model_problem_class_directory
-from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots
+from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots, create_design
 
 
 
@@ -90,12 +90,6 @@ class Main_Menu_Window(tk.Tk):
     
         
         
-        
-        
-        
-    
-
-
 class Experiment_Window(tk.Toplevel):
     """
     Main window of the GUI
@@ -1762,9 +1756,9 @@ class Experiment_Window(tk.Toplevel):
         # print("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
 
     def view_meta_function(self, row_num):
-        self.factor_label_frame_solver.destroy()
+        self.factor_label_frame_solvers.destroy()
         self.factor_label_frame_oracle.destroy()
-        self.factor_label_frame_problem.destroy()
+        self.factor_label_frame_problems.destroy()
         
         row_index = row_num -1
         self.problem_menu.destroy()
@@ -2364,7 +2358,13 @@ class Experiment_Window(tk.Toplevel):
         # self.factor_label_frame_problem.place(relx=.32, y=70, height=150, relwidth=.34)
         self.factor_label_frame_solver.place(x=10, rely=.15, relheight=.33, relwidth=.34)
         if str(self.problem_var.get()) != "Problem":
-            self.add_button.place(x=10, rely=.48, width=200, height=30)
+            self.add_button.place(x=10, rely=.48, width=200, height=30)        
+        
+        
+    
+
+
+
                  
 # My code starts here
 
@@ -2921,22 +2921,7 @@ class New_Experiment_Window(tk.Toplevel):
         experiment.report_group_statistics()
         
             
-    
-    
-            
-        
-            
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+     
         
     
         
@@ -2951,9 +2936,9 @@ class Data_Farming_Window():
             self.master.grid_rowconfigure(2, weight=0)
             self.master.grid_rowconfigure(3, weight=0)
             self.master.grid_rowconfigure(4, weight=0)
-            self.master.grid_rowconfigure(5, weight=1)
-            self.master.grid_rowconfigure(6, weight=1)
-            self.master.grid_rowconfigure(7, weight=1)
+            self.master.grid_rowconfigure(5, weight=0)
+            self.master.grid_rowconfigure(6, weight=0)
+            self.master.grid_rowconfigure(7, weight=0)
             self.master.grid_columnconfigure(0, weight=1)
             self.master.grid_columnconfigure(1, weight=1)
             self.master.grid_columnconfigure(2, weight=1)
@@ -2986,7 +2971,7 @@ class Data_Farming_Window():
             self.title_frame.grid_columnconfigure(0, weight=1)
             self.title_frame.grid( row=0, column = 0, sticky = tk.N)
             self.datafarming_title_label = tk.Label(master=self.title_frame,
-                                                    text = "Data Farming",
+                                                    text = "Model Data Farming",
                                                     font = "Calibri 15 bold")
             self.datafarming_title_label.grid( row = 0, column = 0) 
             
@@ -3026,24 +3011,32 @@ class Data_Farming_Window():
             
             
     
-            
+    def clear_frame(self, frame):
+        '''
+        
+
+        Parameters
+        ----------
+        frame : widget
+            Name of frame that you wish to delete all widgets from.
+
+        Returns
+        -------
+        None.
+
+        '''
+        for widget in frame.winfo_children():
+            widget.destroy()        
             
     def load_design(self):
         
     
         #Clear previous selections
-        for widget in self.factors_frame.winfo_children():
-            widget.destroy()
-            
-        # Delete previous design tree
-        for widget in self.create_design_frame.winfo_children():
-            widget.destroy()
-        
-        for widget in self.run_frame.winfo_children():
-            widget.destroy()
-            
-        for widget in self.design_frame.winfo_children():
-            widget.destroy()
+        self.clear_frame(frame = self.factors_frame)
+        self.clear_frame(frame = self.create_design_frame)
+        self.clear_frame(frame = self.run_frame)
+        self.clear_frame(frame = self.design_frame)
+
             
         
         # Initialize frame canvas
@@ -3067,10 +3060,12 @@ class Data_Farming_Window():
         self.factors_frame.grid_columnconfigure(2, weight =1)
         self.factors_frame.grid_columnconfigure(3, weight =1)
         
+        self.loaded_design = True # Design was loaded by user
+        
         
         # Create column for model factor names
         self.headername_label = tk.Label(master = self.factors_frame, text = 'Default Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
-        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W, padx = 10)
         
         # Create column for factor type
         self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
@@ -3088,59 +3083,47 @@ class Data_Farming_Window():
         self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
             
         # Name of design csv file
-        self.design_csv_name = filedialog.askopenfilename()
+        self.csv_filename = filedialog.askopenfilename()
         
-       #Specify what model is being used
-        split_name = self.design_csv_name.split("experiments/")
-        split_name = split_name[1].split('_')
-        self.selected_model = split_name[0]
-     
-       
-        self.model_object = model_unabbreviated_directory[self.selected_model]() #Eventually allow selection here
+        # convert loaded design to data frame
+        self.design_table = pd.read_csv(self.csv_filename, index_col=False)
         
+        # Get design information from table
+        self.model_name = self.design_table.at[1, 'Name']
+        self.design_type = self.design_table.at[1, 'Design Type']
+        self.n_stacks = self.design_table.at[1, 'Number Stacks']
+        self.model_var.set(self.model_name)
         
-        #Display model name
-        self.model_name_label = tk.Label( master = self.modelselect_frame, text = 'Selected Model: ' + self.selected_model, font = "Calibri 13", width = 40  )
-        self.model_name_label.grid( row = 0, column = 4, sticky = tk.W)
-        
-        #Determine factors not included in design
- 
-        with open( self.design_csv_name, 'r') as design_file:
-            reader = csv.reader(design_file)
-            self.all_factor_headers = next(reader)[1:]
-         
-        self.default_factor_list = [] 
-        for model_factor in self.model_object.specifications:
-            if model_factor not in self.all_factor_headers:
-                self.default_factor_list.append(model_factor)
-       
-        # Number of all factors in model
-        num_all_factors = len(self.all_factor_headers)
-        # Number of vaired factors in experiment        
-        num_factors = num_all_factors - len(self.default_factor_list)
-        # Factor headers dictionary to be used in run function
-        self.factor_headers = self.all_factor_headers[: num_factors]
-        print('factor headers', self.factor_headers)
-        #print( 'num factors', num_factors)
-        
-        # Determine values of default factors
-        default_list = []
-        with open( self.design_csv_name, 'r') as design_file:
-            reader = csv.reader(design_file)
-            # skip header row
-            next(reader)
-            # Read only default factor values
-            default_list = next(reader)[num_factors + 1:]
-            #print('default_list', default_list)
-        
+        self.factor_names = [] # names of factors included in design
+        # determine what factors are included in design
+        self.factor_status = {} #dictionary that contains true/false for wheither factor is in design
+        for col in self.design_table.columns[1:-3]: # col correspond to factor names, exclude index and information cols
+            factor_set = set(self.design_table[col])
+            
+            if len(factor_set) > 1:
+                design_factor = True
+            else:
+                design_factor = False
+                
+            self.factor_status[col] = design_factor
+            
+        # get default values for fixed factors
+        self.default_factors = {} #contains only factors not in design, factor default vals input as str
+        for factor in self.factor_status:
+            if self.factor_status[factor] == False:
+                self.default_factors[factor] = self.design_table.at[1, factor]
+            else:
+                self.factor_names.append(factor)
+                
+        self.model_object = model_directory[self.model_name]()
+
 
         # Allow user to change default values
-        factor_idx = 0
-        for  factor in self.default_factor_list:
+        for  factor_idx, factor in enumerate(self.default_factors):
             
             self.factor_datatype = self.model_object.specifications[factor].get("datatype")
             self.factor_description = self.model_object.specifications[factor].get("description")
-            self.factor_default = default_list[factor_idx]
+            self.factor_default = self.default_factors[factor]
             
             
             self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
@@ -3156,8 +3139,8 @@ class Data_Farming_Window():
           
            
             # Add label for factor names
-            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
-            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            self.factorname_label = tk.Label (master = self.factors_frame, text = f"{factor} - {self.factor_description}", font = "Calibri 13", width = 40, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W, padx = 10)
             
             # Add label for factor type
             self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 20, anchor = 'w')
@@ -3178,81 +3161,161 @@ class Data_Farming_Window():
             
             
             self.factor_que_length += 1
-            factor_idx += 1
             
-        #Create change defaults button
-        self.change_def_frame = tk.Frame( master = self.master)
-        self.change_def_frame.grid(row = 5, column = 0)
-        self.change_def_button = tk.Button(master = self.change_def_frame, text = 'Change Experiment Defaults', font = "Calibri 13",
-                                                width = 30, command = self.update_defaults)
-        self.change_def_button.grid( row = 0, column = 0)
-            
-           
-        
-        # Run to store default values
-        self.update_defaults()
-        
-     
-        
-        # Create design text file to be used in experiment "model_factors_design"
-        with open( "./data_farming_experiments/model_factors_design.txt", 'w', encoding="utf-8") as design_file:
-            design_file.write("")
-        with open(self.design_csv_name, 'r') as design_csv:
-            reader = csv.reader(design_csv)
-            next(reader)
-            for row in design_csv:
-                data_insert = ""
-                # values for all factors
-                factor_list = row.split(',')
-                # values only for vaired factors in experiment
-                design_list = factor_list[1: num_factors + 1]
-                
-                
-                for factor in design_list:
-                    data_insert += str(factor) + "\t"
-                                       
-                data_insert = data_insert[:-1]
-                with open( "./data_farming_experiments/model_factors_design.txt", 'a', encoding="utf-8" ) as design_file:
-                    design_file.write(data_insert + "\n")
-                    
-                    
-                
-            
-            
-                  
-    def update_defaults(self):
-        
-        
-        
-        # Get default user values
-        self.fixed_factors = {}
-        default_csv_insert = []
-        
-        # List of values entered by user
-        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
-        factor_index = 0
-        for factor in self.default_factor_list:
-            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
-            current_def_val = self.default_values[factor_index]
-            if self.factor_datatype == float:
-                self.fixed_factors[factor] = float(current_def_val)
-            
-            elif self.factor_datatype == int:
-                self.fixed_factors[factor] = int(current_def_val)
-            
-            if self.factor_datatype == list:
-                self.fixed_factors[factor] = ast.literal_eval(current_def_val)
-        
-            elif self.factor_datatype == tuple:
-           
-                tuple_str = tuple(current_def_val[1:-1].split(","))
-                self.fixed_factors[factor] = tuple(float(s) for s in tuple_str)
-            
-            default_csv_insert.append(self.fixed_factors[factor])    
-            factor_index += 1
-    
-        
+        self.show_design_options()
         self.display_design_tree()
+        
+        # disable run until either continue button is selected
+        self.run_button.configure(state = 'disabled')
+        
+        
+    def enable_run_button(self):
+        self.run_button.configure(state = 'normal')
+        
+    def show_design_options(self):
+        
+        # Design type selection menu
+        self.design_frame = tk.Frame(master = self.master)
+        self.design_frame.grid(row = 5, column = 0)
+        
+        # Input options from loaded designs
+        if self.loaded_design == True:
+            stack_display = self.n_stacks # same num of stacks as original loaded design
+            design_display = self.design_type
+        else:
+            stack_display = '1'
+            design_display = 'nolhs'
+            
+        self.design_type_label = tk.Label (master = self.design_frame, text = 'Select Design Type', font = "Calibri 13", width = 20)
+        self.design_type_label.grid( row = 0, column = 0)
+        
+        self.design_types_list = ['nolhs']
+        self.design_var = tk.StringVar()
+        self.design_var.set(design_display)
+        self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, design_display, *self.design_types_list)
+        self.design_type_menu.grid(row = 0, column = 1, padx = 30)
+        
+        #Stack selection menu
+        self.stack_label = tk.Label (master = self.design_frame, text = "Number of Stacks", font = "Calibri 13", width = 20)
+        self.stack_label.grid( row =1, column = 0)
+        self.stack_var = tk.StringVar()
+        self.stack_var.set(stack_display)
+        self.stack_menu = ttk.Entry(master = self.design_frame,  width = 10, textvariable = self.stack_var, justify = 'right' )
+        self.stack_menu.grid( row = 1, column = 1)
+        
+        #Disable selections for loaded designs
+        if self.loaded_design == True:
+            self.design_type_menu.configure(state = 'disabled')
+            self.stack_menu.configure(state = 'disabled')
+            
+        # Name of design file entry
+        self.design_filename_label = tk.Label (master = self.design_frame, text = "Name of design:", font = "Calibri 13", width = 20)
+        self.design_filename_label.grid( row = 0, column = 2)
+        self.design_filename_var = tk.StringVar() # variable to hold user specification of desing file name
+        self.design_filename_var.set(self.model_name)
+        self.design_filename_entry = tk.Entry(master = self.design_frame,  width = 40, textvariable = self.design_filename_var, justify = 'right' )
+        self.design_filename_entry.grid( row = 0, column = 3)
+        
+        # Create design button 
+        if self.loaded_design == False:
+            self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
+            self.create_design_button.grid( row = 0, column = 4)
+            
+        # Modify and continue design button for loaded designs
+        if self.loaded_design == True:
+            
+            self.mod_design_button = tk.Button(master = self.design_frame, text = 'Modify Design', font = "Calibri 13", command = self.mod_design , width = 20)
+            self.mod_design_button.grid( row = 0, column = 4)
+            self.con_design_button = tk.Button(master = self.design_frame, text = 'Continue w/o Modifications', font = "Calibri 13", command = self.con_design , width = 25)
+            self.con_design_button.grid( row = 1, column = 4)
+            
+
+
+            
+    def mod_design(self):
+        
+        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+        factor_index = 0
+        for factor in self.default_factors:
+            #self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+            new_val = self.default_values[factor_index]
+            self.design_table[factor] = new_val
+            self.default_factors[factor] = new_val
+            factor_index += 1
+            
+        self.experiment_name = self.design_filename_var.get() # name of design file specified by user
+        
+        self.csv_filename = f'./data_farming_experiments/{self.experiment_name}_design.csv'
+        
+        self.design_table.to_csv(self.csv_filename, index = False)
+        
+        # read new design csv and convert to df
+        self.design_table = pd.read_csv(self.csv_filename, index_col=False)
+        
+        tk.messagebox.showinfo("Information", f"Design has been modified. {self.experiment_name}_design.csv has been created in the data_farming_experiments folder. ") 
+
+        self.display_design_tree()
+        self.con_design()
+        
+    def con_design(self):
+        
+        # Create design txt file
+        self.experiment_name = self.design_filename_var.get() # name of design file specified by user
+        self.design_table[self.factor_names].to_csv(f'./data_farming_experiments/{self.experiment_name}_design.txt', sep='\t', index=False, header = False)
+        self.design_filename = f'{self.experiment_name}_design'
+        
+        # get fixed factors in proper data type
+        self.fixed_factors = self.convert_proper_datatype(self.default_factors)
+        
+        self.enable_run_button()
+        
+        
+        
+    def convert_proper_datatype(self, fixed_factors):
+        '''
+        
+
+        Parameters
+        ----------
+        fixed_factors : dict
+            Dictionary containing fixed factor names not included in design and corresponding user selected value as str.
+
+        Returns
+        -------
+        converted_fixed_factors : dict
+            Dictrionary containing fixed factor names and corresponding values converted to proper data type.
+
+        '''
+        
+        converted_fixed_factors = {}  
+
+        for indx, factor in enumerate(fixed_factors):
+            fixed_val = fixed_factors[factor]
+            datatype = self.model_object.specifications[factor].get("datatype")
+
+            if datatype == int or float:
+                converted_fixed_factors[factor] = datatype(fixed_val)
+            if datatype == list:
+                converted_fixed_factors[factor] = ast.literal_eval(fixed_val) 
+            if datatype == tuple:
+                last_val = fixed_val[-2]
+                tuple_str = fixed_val[1:-1].split(",")
+                # determine if last tuple value is empty
+                if last_val != ",":
+                    converted_fixed_factors[factor] = tuple(float(s) for s in tuple_str)
+                else: 
+                    tuple_exclude_last = tuple_str[:-1]
+                    float_tuple = [float(s) for s in tuple_exclude_last]
+                    converted_fixed_factors[factor] = tuple(float_tuple)     
+            if datatype == bool:
+                if fixed_val == 'TRUE':
+                    converted_fixed_factors[factor] = True
+                else:
+                    converted_fixed_factors[factor] = False
+    
+        return converted_fixed_factors
+        
+
         
 
     # Display Model Factors
@@ -3271,16 +3334,8 @@ class Data_Farming_Window():
         self.factor_canvas.create_window((0, 0), window=self.factors_frame, anchor="nw")
         
         self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
-             
-        # yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        # yscroll.grid(row = 0, column = 1, sticky = 'nsew')
-        # self.factor_canvas.configure(yscrollcommand=yscroll.set)
         
-        # # # Don't need this one
-        # xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        # xscroll.grid(row = 1, column = 0, sticky = 'nsew')
-        # self.factor_canvas.configure(xscrollcommand=xscroll.set)
-        
+
         
         self.factors_title_frame = tk.Frame(master = self.master)
         self.factors_title_frame.grid( row = 3, column = 0, sticky = 'nsew')
@@ -3296,7 +3351,7 @@ class Data_Farming_Window():
         
         #self.factors_frame = tk.Frame( master = self.factor_canvas)
         self.factors_frame.grid( row = 0, column = 0, sticky = 'nsew')
-        self.factors_frame.grid_rowconfigure(0, weight =1)
+        self.factors_frame.grid_rowconfigure(0, weight =0)
         self.factors_frame.grid_columnconfigure(0, weight =0)
         self.factors_frame.grid_columnconfigure(1, weight =0)
         self.factors_frame.grid_columnconfigure(2, weight =0)
@@ -3309,19 +3364,15 @@ class Data_Farming_Window():
       
   
         #Clear previous selections
-        for widget in self.factors_frame.winfo_children():
-            widget.destroy()
-            
-            
-        # Delete previous design tree
-        for widget in self.create_design_frame.winfo_children():
-            widget.destroy()
+        self.clear_frame(self.factors_frame)
+        self.clear_frame(self.create_design_frame)
+        self.clear_frame(self.run_frame)
+        self.clear_frame(self.run_frame)
+        self.clear_frame(self.design_frame)
+
         
-        for widget in self.run_frame.winfo_children():
-            widget.destroy()
-            
-        for widget in self.design_frame.winfo_children():
-            widget.destroy()
+        # created design not loaded
+        self.loaded_design = False
         
         # Widget lists
         self.default_widgets = {}
@@ -3339,14 +3390,13 @@ class Data_Farming_Window():
         self.min_list = []
         self.max_list = []
         self.dec_list = []
-        self.cat_checklist = []
         
         #Values to help with formatting
         entry_width = 20
         
         # Create column for model factor names
         self.headername_label = tk.Label(master = self.factors_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 10, anchor = 'w')
-        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W, padx = 10)
         
         # Create column for factor type
         self.headertype_label = tk.Label(master = self.factors_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 10, anchor = 'w' )
@@ -3364,37 +3414,13 @@ class Data_Farming_Window():
         # Create header for experiment options
         self.headercheck_label = tk.Label(master = self.factors_frame, text = 'Experiment Options', font = "Calibri 13 bold", width = 60 )
         self.headercheck_label.grid(row = 0, column = 4, columnspan = 3)
-        
-    
-        
-       
-        
-        
+                 
         # Get model selected from drop down
-        self.selected_model = self.model_var.get()
+        self.selected_model = self.model_var.get()             
         
-                
-        # #Update scrollbar config
-        
-        # self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight =1)
-             
-        # yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        # yscroll.grid(row = 0, column = 7, rowspan = self.factor_que_length + 1, sticky = 'nsew')
-        # self.factor_canvas.configure(yscrollcommand=yscroll.set)
-        
-        # # # Don't need this one
-        # xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        # xscroll.grid(row = self.factor_que_length + 1, column = 0, columnspan = 8, sticky = 'nsew')
-        # self.factor_canvas.configure(xscrollcommand=xscroll.set)
-        
-        self.factors_frame.update_idletasks()
-        self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
-        
-    
-                
-        
-        # Get model infor from dictionary
+        # Get model info from dictionary
         self.model_object = self.model_list[self.selected_model]()
+        self.model_name = self.model_object.name
         
         for  factor in self.model_object.specifications:
             
@@ -3409,8 +3435,8 @@ class Data_Farming_Window():
             self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
             
             # Add label for factor names
-            self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 15, anchor = 'w')
-            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+            self.factorname_label = tk.Label (master = self.factors_frame, text = f"{factor} - {self.factor_description}", font = "Calibri 13", width = 40, anchor = 'w')
+            self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W, padx = 10)
         
             
             
@@ -3566,10 +3592,7 @@ class Data_Farming_Window():
                 self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
                 
                 self.str_type = 'list'
-               
-                # Add label for factor names
-                # self.factorname_label = tk.Label (master = self.factors_frame, text = factor, font = "Calibri 13", width = 30, anchor = 'w')
-                # self.factorname_label.grid( row = self.factor_que_length, column = 0, sticky = tk.N + tk.W)
+
                 
                 # Add label for factor type
                 self.factortype_label = tk.Label (master = self.factors_frame, text = self.str_type, font = "Calibri 13", width = 10, anchor = 'w')
@@ -3579,19 +3602,15 @@ class Data_Farming_Window():
                 default_len = len(str(self.factor_default))
                 if default_len > entry_width:
                     entry_width = default_len
-                    if default_len > 150:
-                        entry_width = 150
+                    if default_len > 25:
+                        entry_width = 25
                 self.default_value= tk.StringVar()
                 self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
                 self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
                 #Display original default value
                 self.default_entry.insert(0, str(self.factor_default))
                 self.default_values_list.append(self.default_value)
-                
-                
-                
-      
-                
+   
                 # Add checkbox (currently not visible)
                 self.checkstate = tk.BooleanVar()
                 self.checkbox = tk.Checkbutton( master = self.factors_frame, variable = self.checkstate,
@@ -3618,8 +3637,8 @@ class Data_Farming_Window():
                 default_len = len(str(self.factor_default))
                 if default_len > entry_width:
                     entry_width = default_len
-                    if default_len > 150:
-                        entry_width = 150
+                    if default_len > 25:
+                        entry_width = 25
                 self.default_value= tk.StringVar()
                 self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
                 self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
@@ -3639,77 +3658,14 @@ class Data_Farming_Window():
                 self.check_widgets[factor] = self.checkbox
                
                 self.factor_que_length += 1
-               
-                
-              
-        yscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.VERTICAL, command=self.factor_canvas.yview)
-        yscroll.grid(row = 0, column = 1, sticky = 'ns')
-        self.factor_canvas.configure(yscrollcommand=yscroll.set)
-        
-        # # Don't need this one
-        xscroll = tk.Scrollbar(master = self.factor_canvas, orient=tk.HORIZONTAL, command=self.factor_canvas.xview)
-        xscroll.grid(row = 1, column = 0, sticky = 'ew')
-        self.factor_canvas.configure(xscrollcommand=xscroll.set) 
-        
-        
-        #self.factors_frame.bind("<Configure>", self.onFrameConfigure_factor)
-        
-        
-        #self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
-        
-        # Design type selection menu
-        self.design_frame = tk.Frame(master = self.master)
-        self.design_frame.grid(row = 5, column = 0)
-        self.design_type_label = tk.Label (master = self.design_frame, text = 'Select Design Type', font = "Calibri 13", width = 20)
-        self.design_type_label.grid( row = 0, column = 0)
-        
-        self.design_types_list = ['NOLH']
-        self.design_var = tk.StringVar()
-        self.design_type_menu = ttk.OptionMenu(self.design_frame, self.design_var, 'Design Type', *self.design_types_list, command = self.enable_stacks)
-        self.design_type_menu.grid(row = 0, column = 1)
-        
-        #Stack selection menu
-        self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks", font = "Calibri 13", width = 20)
-        self.stack_label.grid( row =1, column = 0)
-        self.stack_list = ['1', '2', '3']
-        self.stack_var = tk.StringVar()
-        self.stack_menu = ttk.OptionMenu(self.design_frame, self.stack_var, 'Stacks', *self.stack_list, command = self.get_design_pts)
-        self.stack_menu.grid( row = 1, column = 1)
-        self.stack_menu.configure(state = 'disabled')
-        
-        # # Design pts label
-        # self.design_pts_title = tk.Label (master = self.design_frame, text = 'Design Points', font = "Calibri 13", width = 50)
-        # self.design_pts_title.grid( row = 0, column = 2)
-        
-        # Create design button
-        self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
-        self.create_design_button.grid( row = 0, column = 3)
-        self.create_design_button.configure(state = 'disabled')
-        
- 
-    def onFrameConfigure_factor(self, *args):
-        self.factor_canvas.configure(scrollregion=self.factor_canvas.bbox('all'))
+
+        self.show_design_options()
+
         
  
     # Used to display the design tree for both created and loaded designs
     def display_design_tree(self):
-        
-        
-
-        # Get list of factor names from csv file
-        with open( self.design_csv_name, 'r') as design_file:
-            reader = csv.reader(design_file)
-            self.all_factor_headers = next(reader)[1:]
-       
-        #Get list of default factor names 
-        default_factor_names = [] 
-        for factor in self.all_factor_headers:
-            if factor not in self.model_object.specifications:
-                default_factor_names.append(factor)
-        # number of variable factors in experiment
-        self.num_factors = len(self.all_factor_headers) - len(default_factor_names)
-       
-        
+      
         #Initialize design tree
         self.create_design_frame = tk.Frame(master = self.master)
         self.create_design_frame.grid( row = 6, column = 0)
@@ -3717,45 +3673,39 @@ class Data_Farming_Window():
         self.create_design_frame.grid_rowconfigure( 1, weight = 1)
         self.create_design_frame.grid_columnconfigure( 0, weight = 1)
         self.create_design_frame.grid_columnconfigure( 1, weight = 1)
-        
-        self.create_design_label = tk.Label( master = self.create_design_frame, text = 'Generated Designs', font = "Calibri 13 bold", width = 50)
-        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+
    
         self.design_tree = ttk.Treeview( master = self.create_design_frame)
-        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew')
-        
-        # Create headers for each factor 
-        self.design_tree['columns'] = self.all_factor_headers
-        self.design_tree.column("#0", width=80, anchor = 'e' )
-        for factor in self.all_factor_headers:
-            self.design_tree.column(factor, width=250, anchor = 'e') 
-            self.design_tree.heading( factor, text = factor)
-       
-        
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew', padx = 10)
         self.style = ttk.Style()
         self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
         self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
         self.design_tree.heading( '#0', text = 'Design #' )
         
-        # Read design file and output row plus default values to design tree
-        with open( self.design_csv_name, 'r') as design_file:
-            reader = csv.reader(design_file)
-            #skip header row
-            next(reader)
-            # used to number design rows
-            row_index = 0
-            for row in reader:
-                current_design_row = row[1:]
-                data_insert = current_design_row 
-                self.design_tree.insert("", 'end', text = row_index, values = data_insert, tag = 'style')
-                row_index += 1
-                
-            # Create a horizontal scrollbar
+        # Get design point values from csv
+        design_table = pd.read_csv(self.csv_filename, index_col="Design #")
+        num_dp = len(design_table) #used for label
+        self.create_design_label = tk.Label( master = self.create_design_frame, text = f'Total Design Points: {num_dp}', font = "Calibri 13 bold", width = 50)
+        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+        
+        # Enter design values into treeview
+        self.design_tree['columns'] = tuple(design_table.columns)[:-3]
+
+        for column in design_table.columns[:-3]:
+            self.design_tree.heading( column, text = column)
+            self.design_tree.column(column, width = 100)
+            
+        for  index, row in design_table.iterrows():
+            
+            self.design_tree.insert("", index, text = index, values = tuple(row)[:-3])
+   
+        # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(master = self.create_design_frame, orient="horizontal", command= self.design_tree.xview)
         xscrollbar.grid(row = 2, column = 0, sticky = 'nsew')
         
         # Configure the Treeview to use the horizontal scrollbar
         self.design_tree.configure(xscrollcommand=xscrollbar.set)
+        
         
         # Create buttons to run experiment
         self.run_frame = tk.Frame(master = self.master)
@@ -3782,24 +3732,9 @@ class Data_Farming_Window():
       
         
         self.run_button = tk.Button(master = self.run_frame, text = 'Run All', font = 'Calibri 13', width = 20, command = self.run_experiment)
-        self.run_button.grid( row = 0, column = 2, sticky = tk.E)
-        
-  
-        
-        
-    def enable_stacks(self, *args):
-        self.stack_menu.configure(state = 'normal')
+        self.run_button.grid( row = 0, column = 2, sticky = tk.E, padx = 30)
+
     
-    def get_design_pts(self, *args):
-        self.design_pts = self.stack_var.get() + " test "
-        
-        #self.design_pts_label = tk.Label( master = self.design_frame, text = self.design_pts, font = "Calibri 13", width = 50)
-        #self.design_pts_label.grid( row = 1, column =2)
-        
-        self.create_design_button.configure(state = 'normal')
-        
-        
-        
     def create_design(self, *args):
        
         self.create_design_frame = tk.Frame(master = self.master)
@@ -3807,230 +3742,93 @@ class Data_Farming_Window():
         self.create_design_frame.grid_rowconfigure( 0, weight = 0)
         self.create_design_frame.grid_rowconfigure( 1, weight = 1)
         self.create_design_frame.grid_columnconfigure( 0, weight = 1)
-    
-        
-        #Export design factors
-        
-        self.default_values = [self.default_value.get() for self.default_value in self.default_values_list]
-        self.check_values = [self.checkstate.get() for self.checkstate in self.checkstate_list]
-        self.min_values = [self.min_val.get() for self.min_val in self.min_list]
-        self.max_values = [self.max_val.get() for self.max_val in self.max_list]
-        self.dec_values = [self.dec_val.get() for self.dec_val in self.dec_list]
-        self.fixed_factors = {}
-        self.factor_index = 0
-        self.maxmin_index = 0
-        self.dec_index = 0
-        # List used for parsing design file
-        self.factor_headers = [] 
+
         
         #Dictionary used for tree view display of fixed factors
         self.fixed_str = {}
         
-       
-      
-        # Write model factors file
         
-        with open("./data_farming_experiments/model_factors.txt", "w") as self.model_design_factors:
+        '''new stuff'''
+        # List to hold names of all factors part of model to be displayed in csv
+        self.factor_names = [] # names of model factors included in experiment
+        self.fixed_factors = {} # fixed factor names and corresponding value
+        
+        # Get user inputs for factor values
+        self.experiment_name = self.design_filename_var.get()
+        default_values = [default_value.get() for default_value in self.default_values_list]
+        check_values = [checkstate.get() for checkstate in self.checkstate_list]
+        min_values = [min_val.get() for min_val in self.min_list]
+        max_values = [max_val.get() for max_val in self.max_list]
+        dec_values = [dec_val.get() for dec_val in self.dec_list]
+        
+        with open(f"./data_farming_experiments/{self.experiment_name}.txt", "w") as self.model_design_factors:
             self.model_design_factors.write("")
-         
+     
+        # values to index through factors
+        maxmin_index = 0
+        dec_index = 0
+                       
         # List to hold names of all factors part of model to be displayed in csv
         self.factor_names = []
-        self.def_factor_names = []
+        def_factor_str = {}
+        
         # Get experiment information    
-        for  factor in self.model_object.specifications:
+        for  factor_index, factor in enumerate(self.model_object.specifications):
             
-            self.factor_datatype = self.model_object.specifications[factor].get("datatype")
-            self.factor_description = self.model_object.specifications[factor].get("description")
-           
+            factor_datatype = self.model_object.specifications[factor].get("datatype")   
+            factor_include = check_values[factor_index]
             
+            # get user inputs for design factors
             
-            
-            self.factor_default = self.default_values[self.factor_index]
-            self.factor_include = self.check_values[self.factor_index]
-            
-            
-            
-            if self.factor_include == True:
+            if factor_include == True:
                 
-                # Add factor to list of design factors in order that will be varied
-                self.factor_headers.append(factor)
-                # Factor names in csv are unedited
                 self.factor_names.append(factor)
             
-                if self.factor_datatype == float or self.factor_datatype == int:
-                    self.factor_min = str(self.min_values[self.maxmin_index])
-                    self.factor_max = str(self.max_values[self.maxmin_index])
-                    self.maxmin_index += 1
+                if factor_datatype == float or factor_datatype == int:
+                    factor_min = str(min_values[maxmin_index])
+                    factor_max = str(max_values[maxmin_index])
+                    maxmin_index += 1
                     
-                    if self.factor_datatype == float:
-                        self.factor_dec = str(self.dec_values[self.dec_index])
-                        self.dec_index += 1
+                    if factor_datatype == float:
+                        factor_dec = str(dec_values[dec_index])
+                        dec_index += 1
                         
-                    elif self.factor_datatype == int:
-                        self.factor_dec = '0'
+                    elif factor_datatype == int:
+                        factor_dec = '0'
                         
-                    self.data_insert = self.factor_min + ' ' + self.factor_max + ' ' + self.factor_dec
-                    with open("./data_farming_experiments/model_factors.txt", "a") as self.model_design_factors:
-                        self.model_design_factors.write(self.data_insert + '\n') 
-                        
-                
-                          
-                   
-            
-            # Include fixed default values in design
-            if self.factor_include == False:
-                
-                # Factor names in csv have "(default)" appended to end
-                self.def_factor_names.append(factor + ' (default)')
-                
-                # Values to be placed in tree view of design
-                self.fixed_str[factor] = self.factor_default
-               
-                if self.factor_datatype == float or self.factor_datatype == int:
-                    # self.factor_default = str(self.default_values[self.factor_index])
-                    # self.data_insert = self.factor_default + ' ' + self.factor_default + ' 0'
-                    self.maxmin_index += 1
-               
-                # Add default values to exeriment and set to correct datatype
-                if self.factor_datatype == float:
-                    self.fixed_factors[factor] = float(self.factor_default)
-                    self.dec_index += 1
-                    
-                elif self.factor_datatype == int:
-                    self.fixed_factors[factor] = int(self.factor_default)
-                    
-            if self.factor_datatype == list:
-                self.fixed_factors[factor] = ast.literal_eval(self.factor_default)
-                
-            elif self.factor_datatype == tuple:
-                   
-                tuple_str = tuple(self.factor_default[1:-1].split(","))
-                self.fixed_factors[factor] = tuple(float(s) for s in tuple_str)
-   
-            self.factor_index += 1
-            
-        
-        #Create design file
-        model_name = self.model_object.name
-        model_fixed_factors = self.fixed_factors
-        
-        self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
-        
-        factor_settings_filename = 'model_factors'
-       
-        
-        # for  factor in self.model_object.specifications:
-            
-        # # Specify the names of the model factors (in order) that will be varied.
-        
-        #     # factor_headers.append(factor)
-            
-        
-        # Number of stacks specified by user
-        num_stack = self.stack_var.get()
-        # Create model factor design from .txt file of factor settings.
-        # Hard-coded for a single-stack NOLHS.
-        #command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
-        #command = f"stack_nolhs.rb -s 2 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
-        command = "stack_nolhs.rb -s " + num_stack + f" ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
-       
-        os.system(command) 
-        # Append design to base filename.
-        design_filename = f"{factor_settings_filename}_design"
-        # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
-        # Count number of design_points.
-        self.n_design_pts = len(design_table)
-        # Create all design points.
-        self.design = []
-     
-        
-        #Time stamp for file name
-        timestamp = time.strftime("%Y%m%d%H%M%S")
-        
-        # Create design csv file with headers
-        self.design_csv_name= "./data_farming_experiments/" + self.selected_model + "_design_" + timestamp + ".csv"
-      
-        with open(self.design_csv_name, "w", newline='') as self.model_design_csv:
-            writer = csv.writer(self.model_design_csv)
-            writer.writerow(['Design #'] + self.factor_names + self.def_factor_names)
-        
+                data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
 
-
-        # Get default values for factors not included in experiment
-        default_list = []
-        for factor in self.fixed_str:
-            default_list.append(self.fixed_str[factor])
+                with open(f"./data_farming_experiments/{self.experiment_name}.txt", "a") as self.model_design_factors:
+                    self.model_design_factors.write(data_insert)    
             
-        for dp_index in range(self.n_design_pts):
-            current_factor_designs = []
-            for factor_idx in range(len(self.factor_headers)):
-                current_factor_designs.append(design_table[factor_idx][dp_index])
-            data_insert = current_factor_designs + default_list   
-                
-             
-            
-            
-            # Write design points to csv file
-            with open(self.design_csv_name, "a", newline='') as self.model_design_csv:
-                writer = csv.writer(self.model_design_csv)
-                writer.writerow([dp_index] + data_insert)
-                
+            # add fixed factors to dictionary and increase index values
+            if factor_include == False:
+                def_factor_str[factor]= default_values[factor_index]
+                if factor_datatype == float:
+                    dec_index += 1
+                    maxmin_index += 1                   
+                elif factor_datatype == int:
+                    maxmin_index += 1
+                         
+        # convert fixed factors to proper data type
+        self.fixed_factors = self.convert_proper_datatype(def_factor_str)
+                        
+        ''' Use create_design to create a design txt file & design csv'''
+        self.design_list = create_design( name = self.model_object.name,
+                                         factor_headers =self.factor_names,
+                                         factor_settings_filename =self.experiment_name,
+                                         fixed_factors =self.fixed_factors)
+        
+        self.design_filename = f"{self.experiment_name}_design"
+        self.csv_filename = f"./data_farming_experiments/{self.experiment_name}_design.csv"       
         # Pop up message that csv design file has been created
-        tk.messagebox.showinfo("Information", "Design file " + self.design_csv_name + " has been created.")    
-    
+        tk.messagebox.showinfo("Information", f"Design file {self.experiment_name}_design.csv has been created in the data_farming_experiments folder. ")      
     
         # Display Design Values
         self.display_design_tree() 
+    
         
-        
-        
-            
     def run_experiment(self, *args):
-        
-        #Name of model used for default save file
-        model_save_name = self.selected_model
-        
-        #Time stamp for file name
-        timestamp = time.strftime("%Y%m%d%H%M%S")
-        
-        # Ask user for file save location
-        save_path = filedialog.asksaveasfilename(initialfile = self.selected_model + "_datafarming_experiment_" + timestamp)
-        
-        
-               
-        # Specify the name of the model as it appears in directory.py
-        model_name = self.model_object.name
-        
-        
-       
-        # factor_headers = [] 
-        
-        # for  factor in self.model_object.specifications:
-        # # Specify the names of the model factors (in order) that will be varied.
-        
-        #     factor_headers.append(factor)
-
-        # If creating the design, provide the name of a .txt file containing
-        # the following:
-        #    - one row corresponding to each model factor being varied
-        #    - three columns:
-        #         - first column: lower bound for factor value
-        #         - second column: upper bound for factor value
-        #         - third column: (integer) number of digits for discretizing values
-        #                         (e.g., 0 corresponds to integral values for the factor)
-        #factor_settings_filename = "model_factors"
-        factor_settings_filename = None
-
-        # OR, if the design has been created, provide the name of a .text file
-        # containing the following:
-        #    - one row corresponding to each design point
-        #    - the number of columns equal to the number of factors being varied
-        #    - each value in the table gives the value of the factor (col index)
-        #      for the design point (row index)
-        # E.g., design_filename = "model_factor_settings_design"
-        #design_filename = None
-        design_filename = "model_factors_design"
 
         # Specify a common number of replications to run of the model at each
         # design point.
@@ -4043,27 +3841,24 @@ class Data_Farming_Window():
         else:
             crn_across_design_pts = False
 
-        # Specify filename for outputs.
-        #output_filename = "test_experiment"
-        output_filename = save_path
-
-        # No code beyond this point needs to be edited.
+        output_filename = f'./data_farming_experiments/{self.experiment_name}_raw_results'
 
         # Create DataFarmingExperiment object.
-        myexperiment = DataFarmingExperiment(model_name=model_name,
-                                             factor_settings_filename=factor_settings_filename,
-                                             factor_headers=self.factor_headers,
-                                             design_filename=design_filename,
+        myexperiment = DataFarmingExperiment(model_name=self.model_object.name,
+                                             factor_settings_filename=None,
+                                             factor_headers=self.factor_names,
+                                             design_filename=self.design_filename,
                                              model_fixed_factors = self.fixed_factors
                                              )
 
         
-        
         # Run replications and print results to file.
         myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
         myexperiment.print_to_csv(csv_filename=output_filename)
-
-            
+        
+        # run confirmation message
+        tk.messagebox.showinfo("Run Completed", f"Experiment Completed. Output file can be found at {output_filename}")  
+     
    
     def include_factor(self, *args):
 
@@ -4111,8 +3906,6 @@ class Data_Farming_Window():
                     self.current_dec_entry.configure(state = 'disabled')
                     
             self.check_index += 1     
-                  
-
 
 class Solver_Datafarming_Window(tk.Toplevel):
     def __init__(self, master):
@@ -4279,7 +4072,7 @@ class Solver_Datafarming_Window(tk.Toplevel):
                 self.default_factors[factor] = self.design_table.at[1, factor]
                     
   
-        print(self.default_factors)
+        
         self.solver_class = solver_directory[self.solver_name]
         self.solver_object = self.solver_class()
 
@@ -4667,9 +4460,9 @@ class Solver_Datafarming_Window(tk.Toplevel):
         #Stack selection menu
         self.stack_label = tk.Label (master = self.design_frame, text = "Select Number of Stacks:", font = "Calibri 13", width = 20)
         self.stack_label.grid( row =1, column = 0)
-        self.stack_list = ['1', '2', '3']
         self.stack_var = tk.StringVar()
-        self.stack_menu = ttk.OptionMenu(self.design_frame, self.stack_var, stack_display, *self.stack_list, command = self.enable_create_design_button)
+        self.stack_var.set('1')
+        self.stack_menu = ttk.Entry(master = self.design_frame,  width = 10, textvariable = self.stack_var, justify = 'right')
         self.stack_menu.grid( row = 1, column = 1)
         self.stack_menu.configure(state = 'disabled')
         
@@ -4682,7 +4475,7 @@ class Solver_Datafarming_Window(tk.Toplevel):
         self.design_filename_entry = tk.Entry(master = self.design_frame,  width = 40, textvariable = self.design_filename_var, justify = 'right' )
         self.design_filename_entry.grid( row = 0, column = 3)
         
-        
+         
         # Create design button 
         if self.loaded_design == False:
             self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
