@@ -3085,6 +3085,12 @@ class Data_Farming_Window():
         # Name of design csv file
         self.csv_filename = filedialog.askopenfilename()
         
+        # get experiment name
+        filename = os.path.basename(self.csv_filename)
+        name, ext = os.path.splitext(filename)
+        # remove design from name if present
+        self.experiment_name = name.replace('_design', '')
+        
         # convert loaded design to data frame
         self.design_table = pd.read_csv(self.csv_filename, index_col=False)
         
@@ -3094,6 +3100,7 @@ class Data_Farming_Window():
         self.n_stacks = self.design_table.at[1, 'Number Stacks']
         self.model_var.set(self.model_name)
         
+        all_factor_names = [col for col in self.design_table.columns[1:-3]]
         self.factor_names = [] # names of factors included in design
         # determine what factors are included in design
         self.factor_status = {} #dictionary that contains true/false for wheither factor is in design
@@ -3119,11 +3126,17 @@ class Data_Farming_Window():
 
 
         # Allow user to change default values
-        for  factor_idx, factor in enumerate(self.default_factors):
+        for  factor_idx, factor in enumerate(all_factor_names):
             
             self.factor_datatype = self.model_object.specifications[factor].get("datatype")
             self.factor_description = self.model_object.specifications[factor].get("description")
-            self.factor_default = self.default_factors[factor]
+            
+            if self.factor_status[factor] == False:
+                
+                self.factor_default = self.default_factors[factor]
+                
+            else:
+                self.factor_default = 'Cannot Edit Design Factor'
             
             
             self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
@@ -3153,11 +3166,18 @@ class Data_Farming_Window():
                 if default_len > 150:
                     entry_width = 150
             self.default_value= tk.StringVar()
+            self.default_value.set(self.factor_default)
             self.default_entry = tk.Entry( master = self.factors_frame, width = entry_width, textvariable = self.default_value, justify = 'right')
             self.default_entry.grid( row =self.factor_que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
             #Display original default value
-            self.default_entry.insert(0, str(self.factor_default))
-            self.default_values_list.append(self.default_value)
+            #self.default_entry.insert(0, str(self.factor_default))
+            #self.default_values_list.append(self.default_value)
+            
+            if self.factor_status[factor] == True:
+                self.default_entry.configure(state = 'disabled')
+            else:
+                self.default_values_list.append(self.default_value)
+                
             
             
             self.factor_que_length += 1
@@ -3212,7 +3232,7 @@ class Data_Farming_Window():
         self.design_filename_label = tk.Label (master = self.design_frame, text = "Name of design:", font = "Calibri 13", width = 20)
         self.design_filename_label.grid( row = 0, column = 2)
         self.design_filename_var = tk.StringVar() # variable to hold user specification of desing file name
-        self.design_filename_var.set(self.model_name)
+        self.design_filename_var.set(self.experiment_name)
         self.design_filename_entry = tk.Entry(master = self.design_frame,  width = 40, textvariable = self.design_filename_var, justify = 'right' )
         self.design_filename_entry.grid( row = 0, column = 3)
         
@@ -3747,8 +3767,9 @@ class Data_Farming_Window():
         #Dictionary used for tree view display of fixed factors
         self.fixed_str = {}
         
-        
-        '''new stuff'''
+        # user specified design options
+        n_stacks = self.stack_var.get()
+        design_type = self.design_var.get()
         # List to hold names of all factors part of model to be displayed in csv
         self.factor_names = [] # names of model factors included in experiment
         self.fixed_factors = {} # fixed factor names and corresponding value
@@ -3817,7 +3838,9 @@ class Data_Farming_Window():
         self.design_list = create_design( name = self.model_object.name,
                                          factor_headers =self.factor_names,
                                          factor_settings_filename =self.experiment_name,
-                                         fixed_factors =self.fixed_factors)
+                                         fixed_factors =self.fixed_factors,
+                                         n_stacks = n_stacks,
+                                         design_type = design_type)
         
         self.design_filename = f"{self.experiment_name}_design"
         self.csv_filename = f"./data_farming_experiments/{self.experiment_name}_design.csv"       
@@ -4789,7 +4812,7 @@ class Solver_Datafarming_Window(tk.Toplevel):
         
         #Initalize frames
         self.problem_model_factors_frame.grid(row = 6, column = 0)
-        self.problem_model_factors_frame.grid_rowconfigure(0, weight = 1)
+        self.problem_model_factors_frame.grid_rowconfigure(0, weight = 1)  
         self.problem_model_factors_frame.grid_columnconfigure(0, weight = 1)
         self.problem_model_factors_frame.grid_columnconfigure(1, weight = 1)
         self.problem_model_factors_frame.grid_columnconfigure(2, weight = 1)
