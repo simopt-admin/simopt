@@ -1,0 +1,18 @@
+Design #,sample_size,crn_across_solns,Name,Design Type,Number Stacks
+0,175,True,RNDSRCH,nolhs,1
+1,70,True,RNDSRCH,nolhs,1
+2,96,True,RNDSRCH,nolhs,1
+3,123,True,RNDSRCH,nolhs,1
+4,358,True,RNDSRCH,nolhs,1
+5,463,True,RNDSRCH,nolhs,1
+6,306,True,RNDSRCH,nolhs,1
+7,280,True,RNDSRCH,nolhs,1
+8,254,True,RNDSRCH,nolhs,1
+9,332,True,RNDSRCH,nolhs,1
+10,437,True,RNDSRCH,nolhs,1
+11,411,True,RNDSRCH,nolhs,1
+12,384,True,RNDSRCH,nolhs,1
+13,149,True,RNDSRCH,nolhs,1
+14,44,True,RNDSRCH,nolhs,1
+15,201,True,RNDSRCH,nolhs,1
+16,227,True,RNDSRCH,nolhs,1

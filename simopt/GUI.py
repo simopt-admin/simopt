@@ -19,7 +19,8 @@ import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 import pandas as pd
-
+import re
+from simopt.base import Problem, Solver, Model
 from simopt.data_farming_base import DataFarmingExperiment, DesignPoint, DataFarmingMetaExperiment
 
 from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory, model_problem_class_directory
@@ -2388,12 +2389,43 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment_list_display_row = 5
         
         # master list variables
-        self.master_solver_factor_list = [] # list of dictionaries of solver factors
-        self.master_solver_name_list = [] # list of all solver names in order of factor list
-        self.master_problem_factor_list = [] # list of dictionaries of problem factors (each index contains first the dictionary of problem factors then the dictionary of problem factors)
-        self.master_problem_name_list = [] # list of all problem names in order of factor list
+        self.master_solver_dict = {} # for each name of solver or solver design has list that includes: list of dps, solver name
+        self.master_problem_dict =  {} # for each name of solver or solver design has list that includes: list of dps, solver name
         self.master_experiment_dict = {} # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
         self.ran_experiments_dict = {} # dictionary of experiments that have been run orgainized by experiment name
+        self.design_types_list = ['nolhs'] # available design types that can be used during datafarming
+        self.macro_reps = {} # dict that contains user specified macroreps for each experiment
+        self.post_reps = {} # dict that contains user specified postrep numbers for each experiment
+        self.init_post_reps = {} # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
+        self.crn_budgets = {} # contains bool val for wheither crn is used across budget for each experiment
+        self.crn_macros = {} # contains bool val for wheither crn is used across macroreps for each experiment
+        self.crn_inits = {} # contains bool val for wheither crn is used across initial and optimal solution for each experiment
+        self.solve_tols = {} # solver tolerance gaps for each experiment (inserted as list)
+        
+        # widget lists for enable/delete functions
+        self.solver_list_labels = {} # holds widgets for solver name labels in solver list display
+        self.problem_list_labels = {} # holds widgets for problem name labels in problem list display
+        self.experiment_list_labels ={} # holds widgets for experimet name labels in experiment list display
+        self.solver_edit_buttons = {}
+        self.solver_del_buttons ={}
+        self.problem_edit_buttons = {}
+        self.problem_del_buttons = {}
+        self.run_buttons = {}
+        self.macro_entries = {}
+        self.experiment_del_buttons = {}
+        self.post_process_opt_buttons = {}
+        self.post_process_buttons = {}
+        self.macro_vars = [] # list used for updated macro entries when default is changed
+        
+        # Default experiment options (can be changed in GUI)
+        self.macro_default = 5 
+        self.post_default = 5 
+        self.init_default = 200
+        self.crn_budget_default = True
+        self.crn_macro_default = True
+        self.crn_init_default = True
+        self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
+        
         
         # empty frames so clear frames fn can execute
         self.solver_selection_frame = tk.Frame(master = self.master)
@@ -2402,7 +2434,11 @@ class New_Experiment_Window(tk.Toplevel):
         self.solver_frame = tk.Frame(master = self.master)
         self.problem_frame = tk.Frame(master = self.master)
         self.model_frame = tk.Frame(master = self.master)
-        
+        self.solver_datafarm_frame = tk.Frame(master = self.master)
+        self.problem_datafarm_frame = tk.Frame(master = self.master)
+        self.model_datafarm_frame = tk.Frame(master = self.master)
+        self.design_display_frame = tk.Frame(master = self.master)
+
         
         '''Title'''
         
@@ -2419,9 +2455,14 @@ class New_Experiment_Window(tk.Toplevel):
         
         self.solver_notebook_frame = ttk.Frame(master = self.sol_prob_book)
         self.problem_notebook_frame = ttk.Frame(master = self.sol_prob_book)
+        self.solver_datafarm_notebook_frame = ttk.Frame(master = self.sol_prob_book)
+        self.problem_datafarm_notebook_frame = ttk.Frame(master = self.sol_prob_book)
         
         self.sol_prob_book.add(self.solver_notebook_frame, text = 'Add Solver')
         self.sol_prob_book.add(self.problem_notebook_frame, text = 'Add Problem')
+        self.sol_prob_book.add(self.solver_datafarm_notebook_frame, text = 'Add Solver w/ Data Farming')
+        self.sol_prob_book.add(self.problem_datafarm_notebook_frame, text = 'Add Problem w/ Data Farming')
+        
         
         # Solver selection menu frames
         self.solver_selection_frame = tk.Frame(master = self.solver_notebook_frame)
@@ -2440,9 +2481,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         self.solver_select_menu = ttk.OptionMenu(self.solver_selection_frame, self.solver_var, 'Solver', *self.solver_list, command = self.show_solver_factors)
         self.solver_select_menu.grid(row = 0, column = 1)
-        
-        self.problem_selection_frame = tk.Frame(master = self.problem_notebook_frame)
-        self.problem_selection_frame.grid(row = 0, column = 0)
+
         
         # problem selection frames
         self.problem_selection_frame = tk.Frame(master = self.problem_notebook_frame)
@@ -2462,11 +2501,44 @@ class New_Experiment_Window(tk.Toplevel):
         self.problem_select_menu = ttk.OptionMenu(self.problem_selection_frame, self.problem_var, 'Problem', *self.problem_list, command = self.show_problem_factors)
         self.problem_select_menu.grid(row = 0, column = 1)
         
+        # Solver selection w/ data farming
+        self.solver_datafarm_selection_frame = tk.Frame(master = self.solver_datafarm_notebook_frame)
+        self.solver_datafarm_selection_frame.grid(row = 0, column = 0)
         
-        # self.add_solver_button = tk.Button(master = self.add_buttons_frame, text = "Add a Solver to Experiment", command= self.add_solver)
-        # self.add_solver_button.grid(row = 0, column = 0)
-        # self.add_problem_button =tk.Button(master = self.add_buttons_frame, text = "Add a Problem to Experiment", command= self.add_problem)
-        # self.add_problem_button.grid(row = 0, column = 1)
+        # Option menu to select solver
+        self.solver_select_label = tk.Label( master = self.solver_datafarm_selection_frame, text = 'Select Solver:', width = 20,
+                                    font = 'Calibir 13')
+        self.solver_select_label.grid( row = 0, column = 0)
+        
+        # Variable to store selected solver
+        self.solver_datafarm_var = tk.StringVar()
+        
+        #Directory of solver names
+        self.solver_list = solver_unabbreviated_directory
+        
+        self.solver_datafarm_select_menu = ttk.OptionMenu(self.solver_datafarm_selection_frame, self.solver_datafarm_var, 'Solver', *self.solver_list, command = self.show_solver_datafarm)
+        self.solver_datafarm_select_menu.grid(row = 0, column = 1)
+
+        # Problem selection w/ data farming
+        self.problem_datafarm_selection_frame = tk.Frame(master = self.problem_datafarm_notebook_frame)
+        self.problem_datafarm_selection_frame.grid(row = 0, column = 0)
+        
+        # Option menu to select problem
+        self.problem_select_label = tk.Label( master = self.problem_datafarm_selection_frame, text = 'Select Problem', width = 20,
+                                    font = 'Calibir 13')
+        self.problem_select_label.grid( row = 0, column = 0)
+        
+        # Variable to store selected problem
+        self.problem_datafarm_var = tk.StringVar()
+        
+        #Directory of problem names
+        self.problem_list = problem_unabbreviated_directory
+        
+        self.problem_datafarm_select_menu = ttk.OptionMenu(self.problem_datafarm_selection_frame, self.problem_datafarm_var, 'Problem', *self.problem_list, command = self.show_problem_datafarm)
+        self.problem_datafarm_select_menu.grid(row = 0, column = 1)
+        
+        
+        
         
         '''Display solver & problem lists'''
         
@@ -2491,10 +2563,17 @@ class New_Experiment_Window(tk.Toplevel):
         self.problem_list_title = tk.Label(master = self.display_problem_list_frame, text = 'Created Problems', font = 'Calibri 15 bold')
         self.problem_list_title.grid(row = 0, column = 1)
         
+        # set experiment name and create experiment
         self.experiment_button_frame = tk.Frame(master = self.master)
         self.experiment_button_frame.grid(row = self.experiment_button_row, column = 0)
+        self.experiment_name_label = tk.Label(master = self.experiment_button_frame, text = 'Experiment Name', font = 'Calibri 13')
+        self.experiment_name_label.grid(row = 0, column = 0)
+        self.experiment_name_var = tk.StringVar()
+        self.experiment_name_var.set('experiment')
+        self.experiment_name_entry = tk.Entry(master = self.experiment_button_frame, textvariable = self.experiment_name_var, width = 30, justify = 'left')
+        self.experiment_name_entry.grid(row = 0, column = 1)
         self.run_experiment_button = tk.Button(master = self.experiment_button_frame, text = 'Create experiment with listed solvers & problems', command = self.create_experiment)
-        self.run_experiment_button.grid(row = 0, column = 0)
+        self.run_experiment_button.grid(row = 2, column = 0)
         
         ''' Display experiment list and run options'''
         self.experiment_list_display_frame = tk.Frame(master = self.master)
@@ -2504,64 +2583,16 @@ class New_Experiment_Window(tk.Toplevel):
         
         self.experiment_list_title = tk.Label(master = self.experiment_list_display_frame, text = 'Created Experiments', font = 'Calibri 15 bold' )
         self.experiment_list_title.grid(row = 0, column = 0)
+        self.experiment_defaults_button = tk.Button(master = self.experiment_list_display_frame, text = 'Change default experiment options', command = self.open_defaults_window)
+        self.experiment_defaults_button.grid(row = 0, column = 1, padx = 10)
         
     def clear_frame(self, frame):
-        
+
         for widget in frame.winfo_children():
             widget.destroy()
-            
-    # def add_solver(self):
-        
-    #     # clear previous selections
-    #     self.clear_frame(self.problem_selection_frame)
-    #     self.clear_frame(self.solver_selection_frame)
-    #     self.clear_frame(self.prob_mod_frame)
-    #     self.clear_frame(self.solver_frame)
-        
-    #     self.solver_selection_frame = tk.Frame(master = self.master)
-    #     self.solver_selection_frame.grid(row = self.selection_row, column = 0)
-        
-    #     # Option menu to select solver
-    #     self.solver_select_label = tk.Label( master = self.solver_selection_frame, text = 'Select Solver:', width = 20,
-    #                                 font = 'Calibir 13')
-    #     self.solver_select_label.grid( row = 0, column = 0)
-        
-    #     # Variable to store selected solver
-    #     self.solver_var = tk.StringVar()
-        
-    #     #Directory of solver names
-    #     self.solver_list = solver_unabbreviated_directory
-        
-    #     self.solver_select_menu = ttk.OptionMenu(self.solver_selection_frame, self.solver_var, 'Solver', *self.solver_list, command = self.show_solver_factors)
-    #     self.solver_select_menu.grid(row = 0, column = 1)
-        
-        
-        
-    # def add_problem(self):
-        
-    #     # clear previous selections
-    #     self.clear_frame(self.problem_selection_frame)
-    #     self.clear_frame(self.solver_selection_frame)
-    #     self.clear_frame(self.prob_mod_frame)
-    #     self.clear_frame(self.solver_frame)
-        
-        
-    #     self.problem_selection_frame = tk.Frame(master = self.master)
-    #     self.problem_selection_frame.grid(row = self.selection_row, column = 0)
-        
-    #     # Option menu to select solver
-    #     self.problem_select_label = tk.Label( master = self.problem_selection_frame, text = 'Select Problem', width = 20,
-    #                                 font = 'Calibir 13')
-    #     self.problem_select_label.grid( row = 0, column = 0)
-        
-    #     # Variable to store selected solver
-    #     self.problem_var = tk.StringVar()
-        
-    #     #Directory of solver names
-    #     self.problem_list = problem_unabbreviated_directory
-        
-    #     self.problem_select_menu = ttk.OptionMenu(self.problem_selection_frame, self.problem_var, 'Problem', *self.problem_list, command = self.show_problem_factors)
-    #     self.problem_select_menu.grid(row = 0, column = 1)
+    
+                
+
         
     def get_datatype_str(self,datatype):
         if datatype == float:
@@ -2577,14 +2608,13 @@ class New_Experiment_Window(tk.Toplevel):
             
         return str_type
         
-    def show_factor_defaults(self, base_object, frame):
+    def show_factor_defaults(self, base_object, frame, factor_dict = None):
         # Widget lists
         defaults = {}
         # Initial variable values
         #self.factor_que_length = 0
         entry_width = 10
         #append_list
-        
 
             
         for  que_length, factor in enumerate(base_object.specifications):
@@ -2592,7 +2622,10 @@ class New_Experiment_Window(tk.Toplevel):
             
             factor_datatype = base_object.specifications[factor].get("datatype")
             factor_description = base_object.specifications[factor].get("description")
-            factor_default = base_object.specifications[factor].get("default")
+            if factor_dict is not None:
+                factor_default = factor_dict[factor]
+            else:
+                factor_default = base_object.specifications[factor].get("default")
             
             # Add label for factor names
             display_name = f"{factor} - {factor_description}"
@@ -2639,23 +2672,7 @@ class New_Experiment_Window(tk.Toplevel):
                 default_entry.grid( row =que_length, column =2, sticky = tk.N + tk.W)
                 #Display original default value
                 default_entry.insert(0, factor_default)
-                #append_list.append(default_entry, default_value)
-                #default_values[factor] = default_value
-                
-            # elif factor_datatype == list or tuple:
-                
-            #     # Add entry box for default value
-            #     default_len = len(str(factor_default))
-            #     if default_len > entry_width:
-            #         entry_width = default_len
-            #         if default_len > 150:
-            #             entry_width = 150
-            #     default_value= tk.StringVar()
-            #     default_entry = tk.Entry( master = frame, width = entry_width, textvariable = default_value, justify = 'right')
-            #     default_entry.grid( row =que_length, column =2, sticky = tk.N + tk.W, columnspan = 5)
-            #     #Display original default value
-            #     default_entry.insert(0, str(factor_default))
- 
+
             # add varibles to default list
             defaults[factor] =  default_value
             
@@ -2663,6 +2680,65 @@ class New_Experiment_Window(tk.Toplevel):
         
           
         
+    def show_datafarming_options(self, base_object, frame):
+        
+        checkstates= {} # holds variable for each factor's check state
+        min_vals = {} # holds variable for each factor's min value
+        max_vals = {} # holds variable for each factor's max values
+        dec_vals = {} # holds variable for each float factor's # decimals
+        widgets = {} # holds a list of each widget for min, max, and dec entry for each factor
+        
+        
+        for  que_length, factor in enumerate(base_object.specifications):
+            factor_datatype = base_object.specifications[factor].get("datatype")
+            class_type = type(base_object).__base__
+            widget_list = [] 
+            
+            if factor_datatype in (int,float,bool):
+                
+                # Add check box to include in design
+                checkstate = tk.BooleanVar()
+                checkbox = tk.Checkbutton(master = frame, variable = checkstate, width = 5, command = lambda: self.enable_datafarm_entry(class_type))
+                checkbox.grid(row = que_length, column = 3, sticky = tk.N + tk.W)
+                checkstates[factor] = checkstate
+                
+                if factor_datatype in (int,float):
+                    # Add entry box for min val
+                    min_label = tk.Label(master = frame, text = 'Min Value', font = 'Calibri 11')
+                    min_label.grid(row = que_length, column = 4, sticky = tk.N + tk.W)
+                    min_val = tk.StringVar()
+                    min_entry = tk.Entry( master = frame, width = 10, textvariable = min_val, justify = 'right')
+                    min_entry.grid(row = que_length, column = 5, sticky = tk.N + tk.W )
+                    min_entry.configure(state = 'disabled')
+                    min_vals[factor] = min_val
+                    widget_list.append(min_entry)
+                    
+                    # Add entry box for max val
+                    max_label = tk.Label(master = frame, text = 'Max Value', font = 'Calibri 11')
+                    max_label.grid(row = que_length, column = 6, sticky = tk.N + tk.W)
+                    max_val = tk.StringVar()
+                    max_entry = tk.Entry( master = frame, width = 10, textvariable = max_val, justify = 'right')
+                    max_entry.grid(row = que_length, column = 7, sticky = tk.N + tk.W )
+                    max_entry.configure(state = 'disabled')
+                    max_vals[factor] = max_val
+                    widget_list.append(max_entry)
+                    
+                    # Add entry box for dec val for float factors
+                    if factor_datatype == float:          
+                        dec_label = tk.Label(master = frame, text = '# Decimals', font = 'Calibri 11')
+                        dec_label.grid(row = que_length, column = 8, sticky = tk.N + tk.W)
+                        dec_val = tk.StringVar()
+                        dec_entry = tk.Entry( master = frame, width = 10, textvariable = dec_val, justify = 'right')
+                        dec_entry.grid(row = que_length, column = 9, sticky = tk.N + tk.W )
+                        dec_entry.configure(state = 'disabled')
+                        dec_vals[factor] = dec_val
+                        widget_list.append(dec_entry)
+                    
+                widgets[factor] = widget_list
+                    
+        return checkstates, min_vals, max_vals, dec_vals, widgets
+                
+  
     def show_problem_factors(self, event = None):
         
         #clear previous selections
@@ -2722,10 +2798,17 @@ class New_Experiment_Window(tk.Toplevel):
         # show model factors and store default widgets and default values to these
         self.model_defaults = self.show_factor_defaults(self.model_object, self.model_factor_display_canvas)
         
-        '''Buttons for add problem'''
-        
+        # entry for problem name and add problem button
+        self.problem_name_label = tk.Label(master = self.model_frame, text = 'problem Name', font = "Calibri 13", width = 20 )
+        self.problem_name_label.grid(row = 2, column= 0)
+        self.problem_name_var = tk.StringVar() 
+        # get unique problem name
+        problem_name = self.get_unique_name(self.master_problem_dict, self.problem_object.name)   
+        self.problem_name_var.set(problem_name)
+        self.problem_name_entry = tk.Entry(master = self.model_frame, textvariable= self.problem_name_var, width = 20)
+        self.problem_name_entry.grid(row =2, column = 1)
         self.add_prob_to_exp_button = tk.Button(master = self.model_frame, text = "Add this problem to experiment", command = self.add_problem_to_experiment)
-        self.add_prob_to_exp_button.grid(row = 2, column = 0)
+        self.add_prob_to_exp_button.grid(row = 3, column = 0)
         
         
         
@@ -2742,11 +2825,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.solver_frame.grid(row = 1, column = 0)
         self.factor_display_canvas = tk.Canvas(master = self.solver_frame)
         self.factor_display_canvas.grid(row = 1, column = 0)
-        
-        self.datafarm_button = tk.Button(master = self.solver_selection_frame, text = "Data Farm this Solver")
-        self.datafarm_button.grid( row = 1, column = 0)
-        
-        #self.IsSolver = True #used when adding solver to experiment list
+
         
         # Create column for solver factor names
         self.headername_label = tk.Label(master = self.solver_frame, text = 'Solver Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
@@ -2768,9 +2847,559 @@ class New_Experiment_Window(tk.Toplevel):
         self.solver_defaults = self.show_factor_defaults(self.solver_object, self.factor_display_canvas)
         
             
-        '''Buttons for add solver'''
+        # entry for solver name and add solver button
+        self.solver_name_label = tk.Label(master = self.solver_frame, text = 'Solver Name', font = "Calibri 13", width = 20 )
+        self.solver_name_label.grid(row = 2, column= 0)
+        self.solver_name_var = tk.StringVar() 
+        # get unique solver name
+        solver_name = self.get_unique_name(self.master_solver_dict, self.solver_object.name)   
+        self.solver_name_var.set(solver_name)
+        self.solver_name_entry = tk.Entry(master = self.solver_frame, textvariable= self.solver_name_var, width = 20)
+        self.solver_name_entry.grid(row =2, column = 1)
         self.add_sol_to_exp_button = tk.Button(master = self.solver_frame, text = "Add this solver to experiment", command = self.add_solver_to_experiment)
-        self.add_sol_to_exp_button.grid(row = 2, column = 0)
+        self.add_sol_to_exp_button.grid(row = 3, column = 0)
+        
+    def get_unique_name(self, dict_lookup, base_name):
+        '''
+        
+
+        Parameters
+        ----------
+        dict_lookup : dict
+            dictionary where you want to determine unique name from.
+        base_name : str
+            base name that you want appended to become unique.
+
+        Returns
+        -------
+        new_name : str
+            new unique name.
+
+        '''
+
+        if base_name in dict_lookup:
+            # remove suffix from base_name if applicable
+            if re.match(r'.*_[0-9]+$', base_name):
+                base_name = base_name.rsplit('_', 1)[0]
+            count = 0
+            test_name = base_name
+            while test_name in dict_lookup:
+                test_name = base_name
+                count += 1
+                test_name = f"{base_name}_{str(count)}"
+            new_name = test_name
+        else:
+            new_name = base_name
+            
+        return new_name
+        
+    def show_problem_datafarm(self, event = None):
+        #clear previous selections
+        self.clear_frame(self.problem_datafarm_frame)
+        self.clear_frame(self.model_datafarm_frame)
+        self.clear_frame(self.design_display_frame )
+        
+        
+        ''' Initialize frames, headers, and data farming buttons'''
+
+        self.problem_datafarm_frame = tk.Frame(master = self.problem_datafarm_notebook_frame)
+        self.problem_datafarm_frame.grid(row = 1, column = 0)
+        self.problem_factor_display_canvas = tk.Canvas(master = self.problem_datafarm_frame)
+        self.problem_factor_display_canvas.grid(row = 1, column = 0)
+        self.model_datafarm_frame = tk.Frame(master = self.problem_datafarm_notebook_frame)
+        self.model_datafarm_frame.grid(row =2, column =0)
+        self.model_factor_display_canvas = tk.Canvas(master = self.model_datafarm_frame)
+        self.model_factor_display_canvas.grid(row = 1, column = 0)
+  
+        # Create column for problem factor names
+        self.problem_headername_label = tk.Label(master = self.problem_datafarm_frame, text = 'Problem Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.problem_headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+        
+        self.model_headername_label = tk.Label(master = self.model_datafarm_frame, text = 'Model Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.model_headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+         
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.problem_datafarm_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)  
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.problem_datafarm_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        ''' Get problem information from dicrectory and display'''
+        # Get problem info from directory
+        self.selected_datafarm_problem = self.problem_datafarm_var.get()
+        self.problem_datafarm_object = self.problem_list[self.selected_datafarm_problem]()
+
+        # show problem factors and store default widgets and values to this dict
+        self.problem_datafarm_defaults = self.show_factor_defaults(self.problem_datafarm_object, self.problem_factor_display_canvas)
+        self.problem_checkstates, self.problem_min_vals, self.problem_max_vals, self.problem_dec_vals, self.problem_datafarm_widgets = self.show_datafarming_options(self.problem_datafarm_object, self.problem_factor_display_canvas)
+        
+        ''' Get model information from dicrectory and display'''
+        self.model_problem_dict = model_problem_class_directory # directory that relates problem name to model class
+        self.model_datafarm_object = self.model_problem_dict[self.selected_datafarm_problem]()
+        # show model factors and store default widgets and default values to these
+        self.model_datafarm_defaults = self.show_factor_defaults(self.model_datafarm_object, self.model_factor_display_canvas)
+        self.model_checkstates, self.model_min_vals, self.model_max_vals, self.model_dec_vals, self.model_datafarm_widgets = self.show_datafarming_options(self.model_datafarm_object, self.model_factor_display_canvas)
+
+        '''Options for creaing design'''
+        # Design type for problem
+        self.design_type_label = tk.Label (master = self.problem_datafarm_frame, text = 'Select Design Type for Problem', font = "Calibri 13", width = 30)
+        self.design_type_label.grid( row = 2, column = 0)
+
+        self.problem_design_var = tk.StringVar()
+        self.problem_design_var.set('nolhs')
+        self.problem_design_type_menu = ttk.OptionMenu(self.problem_datafarm_frame, self.problem_design_var, 'nolhs', *self.design_types_list)
+        self.problem_design_type_menu.grid(row = 2, column = 1, padx = 30)
+        self.problem_design_type_menu.configure(state = 'disabled')
+        
+        #Stack selection for problem
+        self.problem_stack_label = tk.Label (master = self.problem_datafarm_frame, text = "Number of Stacks for Problem", font = "Calibri 13", width = 30)
+        self.problem_stack_label.grid( row =3, column = 0)
+        self.problem_stack_var = tk.StringVar()
+        self.problem_stack_var.set('1')
+        self.problem_stack_entry = ttk.Entry(master = self.problem_datafarm_frame,  width = 10, textvariable = self.problem_stack_var, justify = 'right' )
+        self.problem_stack_entry.grid( row = 3, column = 1)
+        self.problem_stack_entry.configure(state = 'disabled')
+        
+        # Design type for model 
+        self.model_design_type_label = tk.Label (master = self.model_datafarm_frame, text = 'Select Design Type for Model', font = "Calibri 13", width = 30)
+        self.model_design_type_label.grid( row = 2, column = 0)
+
+        self.model_design_var = tk.StringVar()
+        self.model_design_var.set('nolhs')
+        self.model_design_type_menu = ttk.OptionMenu(self.model_datafarm_frame, self.problem_design_var, 'nolhs', *self.design_types_list)
+        self.model_design_type_menu.grid(row = 2, column = 1, padx = 30)
+        self.model_design_type_menu.configure(state = 'disabled')
+        
+        #Stack selection for model
+        self.model_stack_label = tk.Label (master = self.model_datafarm_frame, text = "Number of Stacks for Model", font = "Calibri 13", width = 30)
+        self.model_stack_label.grid( row =3, column = 0)
+        self.model_stack_var = tk.StringVar()
+        self.model_stack_var.set('1')
+        self.model_stack_entry = ttk.Entry(master = self.model_datafarm_frame,  width = 10, textvariable = self.problem_stack_var, justify = 'right' )
+        self.model_stack_entry.grid( row = 3, column = 1)
+        self.model_stack_entry.configure(state = 'disabled')
+        
+        # design name entry
+        self.problem_design_name_label = tk.Label(master = self.model_datafarm_frame, text = "Name of Design", font = "Calibri 13", width = 20)
+        self.problem_design_name_label.grid(row = 4, column = 0)
+        self.problem_design_name_var = tk.StringVar()
+        #get unique problem design name
+        problem_name = self.get_unique_name(self.master_problem_dict, f"{self.problem_datafarm_object.name}_design")
+        self.problem_design_name_var.set(problem_name)
+        self.problem_design_name_entry = tk.Entry(master = self.model_datafarm_frame, textvariable = self.problem_design_name_var, width = 20)
+        self.problem_design_name_entry.grid(row =4, column =1)
+        # create design button
+        self.create_problem_design_button= tk.Button(master = self.model_datafarm_frame, text = "Create Design", command = self.create_problem_design)
+        self.create_problem_design_button.grid(row = 2, column = 2)        
+
+    def show_solver_datafarm(self, event = None):
+        #clear previous selections
+        self.clear_frame(self.solver_datafarm_frame)
+        
+        
+        ''' Initialize frames and headers'''
+         
+        self.solver_datafarm_frame = tk.Frame(master = self.solver_datafarm_notebook_frame)
+        self.solver_datafarm_frame.grid(row = 1, column = 0)
+        self.factor_display_canvas = tk.Canvas(master = self.solver_datafarm_frame)
+        self.factor_display_canvas.grid(row = 1, column = 0)
+        
+
+        # Create column for solver factor names
+        self.headername_label = tk.Label(master = self.solver_datafarm_frame, text = 'Solver Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+         
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.solver_datafarm_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)  
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.solver_datafarm_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        ''' Get solver information from dicrectory and display'''
+        # Get solver info from dictionary
+        self.selected_datafarm_solver = self.solver_datafarm_var.get()
+        self.solver_datafarm_object = self.solver_list[self.selected_datafarm_solver]()
+        # show problem factors and store default widgets to this dict
+        self.solver_datafarm_defaults = self.show_factor_defaults(self.solver_datafarm_object, self.factor_display_canvas)
+        self.solver_checkstates, self.solver_min_vals, self.solver_max_vals, self.solver_dec_vals, self.solver_datafarm_widgets = self.show_datafarming_options(self.solver_datafarm_object, self.factor_display_canvas)
+        
+            
+        '''Options for creaing design'''
+        # Design type
+        self.design_type_label = tk.Label (master = self.solver_datafarm_frame, text = 'Select Design Type', font = "Calibri 13", width = 20)
+        self.design_type_label.grid( row = 2, column = 0)
+
+        self.solver_design_var = tk.StringVar()
+        self.solver_design_var.set('nolhs')
+        self.design_type_menu = ttk.OptionMenu(self.solver_datafarm_frame, self.solver_design_var, 'nolhs', *self.design_types_list)
+        self.design_type_menu.grid(row = 2, column = 1, padx = 30)
+        
+        #Stack selection menu
+        self.stack_label = tk.Label (master = self.solver_datafarm_frame, text = "Number of Stacks", font = "Calibri 13", width = 20)
+        self.stack_label.grid( row =3, column = 0)
+        self.solver_stack_var = tk.StringVar()
+        self.solver_stack_var.set('1')
+        self.stack_menu = ttk.Entry(master = self.solver_datafarm_frame,  width = 10, textvariable = self.solver_stack_var, justify = 'right' )
+        self.stack_menu.grid( row = 3, column = 1)
+        
+        # design name entry
+        self.solver_design_name_label = tk.Label(master = self.solver_datafarm_frame, text = "Name of Design", font = "Calibri 13", width = 20)
+        self.solver_design_name_label.grid(row = 4, column = 0)
+        self.solver_design_name_var = tk.StringVar()
+        #get unique solver design name
+        solver_name = self.get_unique_name(self.master_solver_dict, f"{self.solver_datafarm_object.name}_design")
+        self.solver_design_name_var.set(solver_name)
+        self.solver_design_name_entry = tk.Entry(master = self.solver_datafarm_frame, textvariable = self.solver_design_name_var, width = 20)
+        self.solver_design_name_entry.grid(row =4, column =1)
+        # create design button
+        self.create_solver_design_button= tk.Button(master = self.solver_datafarm_frame, text = "Create Design", command = self.create_solver_design)
+        self.create_solver_design_button.grid(row = 2, column = 2)
+    
+    def enable_datafarm_entry(self, class_type):
+        
+        # enable datafarming options for factors selected to be included in design 
+        if class_type == Solver:
+            for factor in self.solver_checkstates:
+                checkstate = self.solver_checkstates[factor].get()
+                if factor in self.solver_datafarm_widgets:
+                    widget_list = self.solver_datafarm_widgets[factor]
+                    if checkstate:
+                        for widget in widget_list:
+                            widget.configure(state='normal')
+                    else:
+                        for widget in widget_list:
+                            widget.delete(0, tk.END)
+                            widget.configure(state = 'disabled')
+                  
+        if class_type == Problem:
+            for factor in self.problem_checkstates:
+                checkstate = self.problem_checkstates[factor].get()
+                if factor in self.problem_datafarm_widgets:
+                    widget_list = self.problem_datafarm_widgets[factor]
+                    if checkstate:
+                        for widget in widget_list:
+                            widget.configure(state='normal')
+                    else:
+                        for widget in widget_list:
+                            widget.delete(0, tk.END)
+                            widget.configure(state = 'disabled')
+
+        elif class_type == Model:
+            for factor in self.model_checkstates:
+                checkstate = self.model_checkstates[factor].get()
+                if factor in self.model_datafarm_widgets:
+                    widget_list = self.model_datafarm_widgets[factor]
+                    if checkstate:
+                        for widget in widget_list:
+                            widget.configure(state='normal')
+                    else:
+                        for widget in widget_list:
+                            widget.delete(0, tk.END)
+                            widget.configure(state = 'disabled')
+                            
+        # enable or disable problem and model design options depending on which factors are selected                    
+        if class_type == Problem or Model:
+            all_false_problem = all([var.get() == False for var in self.problem_checkstates.values()])
+            all_false_model = all([var.get() == False for var in self.model_checkstates.values()])    
+            if all_false_problem:
+                self.problem_stack_entry.delete(0, tk.END)
+                self.problem_stack_entry.configure(state = 'disabled')
+                self.problem_design_type_menu.configure(state = 'disabled')
+                
+            else:
+                self.problem_stack_entry.configure(state = 'normal')
+                self.problem_design_type_menu.configure(state = 'normal')
+                
+            if all_false_model:
+                self.model_stack_entry.delete(0, tk.END)
+                self.model_stack_entry.configure(state = 'disabled')
+                self.model_design_type_menu.configure(state = 'disabled')
+                
+            else:
+                self.model_stack_entry.configure(state = 'normal')
+                self.model_design_type_menu.configure(state = 'normal')
+                
+                
+                
+    def create_solver_design(self):
+        
+        # Get unique solver design name
+        self.solver_design_name = self.get_unique_name(self.master_solver_dict, self.solver_design_name_var.get())
+        
+        # get n stacks and design type from user input
+        n_stacks = self.solver_stack_var.get()
+        design_type = self.solver_design_var.get()
+
+        ''' Determine factors included in design '''
+        self.solver_design_factors = [] # list of names of factors included in design
+        self.solver_cross_design_factors = {} # dict of cross design factors w/ lists of possible values
+        for factor in self.solver_checkstates:
+            checkstate = self.solver_checkstates[factor].get()
+            factor_datatype = self.solver_datafarm_object.specifications[factor].get('datatype')
+            if checkstate:
+                if factor_datatype in (int,float):
+                        self.solver_design_factors.append(factor)
+                elif factor_datatype == bool:
+                    self.solver_cross_design_factors[factor] = ['TRUE', 'FALSE']
+                
+                
+        ''' Determine values of fixed factors '''
+        solver_fixed_factors = {} # contains fixed values for factors not in design
+        for factor in self.solver_datafarm_defaults:
+            if factor not in self.solver_design_factors:
+                fixed_val = self.solver_datafarm_defaults[factor]
+                solver_fixed_factors[factor] = fixed_val
+        # convert fixed factors to proper datatype
+        self.solver_fixed_factors = self.convert_proper_datatype(solver_fixed_factors, self.solver_datafarm_object.specifications)
+        
+                
+        ''' Create factor settings txt file'''
+        with open(f"./data_farming_experiments/{self.solver_design_name}.txt", "w") as settings_file:
+            settings_file.write("")    
+        for factor in self.solver_design_factors:
+            factor_datatype = self.solver_datafarm_object.specifications[factor].get('datatype')
+            min_val = self.solver_min_vals[factor].get()
+            max_val = self.solver_max_vals[factor].get()
+            if factor_datatype == float:
+                dec_val = self.solver_dec_vals[factor].get()
+            else:
+                dec_val = '0'
+            data_insert = f"{min_val} {max_val} {dec_val}\n"
+            with open(f"./data_farming_experiments/{self.solver_design_name}.txt", "a") as settings_file:
+                settings_file.write(data_insert)
+                
+        self.solver_design_list = create_design( name = self.solver_datafarm_object.name,
+                                                factor_headers = self.solver_design_factors,
+                                                factor_settings_filename = self.solver_design_name,
+                                                fixed_factors = self.solver_fixed_factors,
+                                                cross_design_factors = self.solver_cross_design_factors,
+                                                n_stacks = n_stacks,
+                                                design_type = design_type
+                                                )
+        # display design tree
+        self.display_design_tree(f"./data_farming_experiments/{self.solver_design_name}_design.csv", self.solver_datafarm_frame, row = 5)
+        # button to add solver design to experiment
+        self.add_solver_design_button = tk.Button(master = self.solver_datafarm_frame, text = "Add this solver to experiment", command = self.add_solver_design_to_experiment)
+        self.add_solver_design_button.grid(row = 6, column = 0)
+        #disable design name entry
+        self.solver_design_name_entry.configure(state = 'disabled')
+       
+    def create_problem_design(self):
+        
+        # Get unique solver design name
+        self.problem_design_name = self.get_unique_name(self.master_problem_dict, self.problem_design_name_var.get())
+        
+        # determine if no problem/model factors were selected
+        all_false_problem = all([var.get() == False for var in self.problem_checkstates.values()])
+        all_false_model = all([var.get() == False for var in self.model_checkstates.values()])
+        
+        # create design over problem factors
+        if not all_false_problem:    
+            # get n stacks and design type from user input
+            n_stacks = self.problem_stack_var.get()
+            design_type = self.problem_design_var.get()
+    
+            ''' Determine factors included in design '''
+            self.problem_design_factors = [] # list of names of factors included in design
+            self.problem_cross_design_factors = {} # dict of cross design factors w/ lists of possible values
+            for factor in self.problem_checkstates:
+                checkstate = self.problem_checkstates[factor].get()
+                factor_datatype = self.problem_datafarm_object.specifications[factor].get('datatype')
+                if checkstate:
+                    if factor_datatype in (int,float):
+                            self.problem_design_factors.append(factor)
+                    elif factor_datatype == bool:
+                        self.problem_cross_design_factors[factor] = ['TRUE', 'FALSE']
+                    
+            # if no cross design factors, set dict to None
+            if self.problem_cross_design_factors == {}:
+                self.problem_cross_design_factors = None
+                
+            ''' Determine values of fixed factors '''
+            problem_fixed_factors = {} # contains fixed values for factors not in design
+            for factor in self.problem_datafarm_defaults:
+                if factor not in self.problem_design_factors:
+                    problem_fixed_factors[factor] = self.problem_datafarm_defaults[factor]
+            # convert fixed factors to proper datatype
+            self.problem_fixed_factors = self.convert_proper_datatype(problem_fixed_factors, self.problem_datafarm_object.specifications)
+            
+                    
+            ''' Create factor settings txt file'''
+            with open(f"./data_farming_experiments/{self.problem_design_name}_problem_factors.txt", "w") as settings_file:
+                settings_file.write("")    
+            for factor in self.problem_design_factors:
+                factor_datatype = self.problem_datafarm_object.specifications[factor].get('datatype')
+                min_val = self.problem_min_vals[factor].get()
+                max_val = self.problem_max_vals[factor].get()
+                if factor_datatype == float:
+                    dec_val = self.problem_dec_vals[factor].get()
+                else:
+                    dec_val = '0'
+                data_insert = f"{min_val} {max_val} {dec_val}\n"
+                with open(f"./data_farming_experiments/{self.problem_design_name}_problem_factors.txt", "a") as settings_file:
+                    settings_file.write(data_insert)
+        
+                    
+            self.problem_design_list = create_design( name = self.problem_datafarm_object.name,
+                                                    factor_headers = self.problem_design_factors,
+                                                    factor_settings_filename = f'{self.problem_design_name}_problem_factors',
+                                                    fixed_factors = self.problem_fixed_factors,
+                                                    cross_design_factors = self.problem_cross_design_factors,
+                                                    n_stacks = n_stacks,
+                                                    design_type = design_type
+                                                    )
+        # create design over model factors
+        if not all_false_model:    
+            # get n stacks and design type from user input
+            n_stacks = self.model_stack_var.get()
+            design_type = self.model_design_var.get()
+    
+            ''' Determine factors included in design '''
+            self.model_design_factors = [] # list of names of factors included in design
+            self.model_cross_design_factors = {} # dict of cross design factors w/ lists of possible values
+            for factor in self.model_checkstates:
+                checkstate = self.model_checkstates[factor].get()
+                factor_datatype = self.model_datafarm_object.specifications[factor].get('datatype')
+                if checkstate:
+                    if factor_datatype in (int,float):
+                            self.model_design_factors.append(factor)
+                    elif factor_datatype == bool:
+                        self.model_cross_design_factors[factor] = ['TRUE', 'FALSE']
+                    
+            # if no cross design factors, set dict to None
+            if self.model_cross_design_factors == {}:
+                self.model_cross_design_factors = None
+                
+            ''' Determine values of fixed factors '''
+            model_fixed_factors = {} # contains fixed values for factors not in design
+            for factor in self.model_datafarm_defaults:
+                if factor not in self.model_design_factors:
+                    model_fixed_factors[factor] = self.model_datafarm_defaults[factor]
+            # convert fixed factors to proper datatype
+            self.model_fixed_factors = self.convert_proper_datatype(model_fixed_factors, self.model_datafarm_object.specifications)
+            
+                    
+            ''' Create factor settings txt file'''
+            with open(f"./data_farming_experiments/{self.problem_design_name}_model_factors.txt", "w") as settings_file:
+                settings_file.write("")    
+            for factor in self.model_design_factors:
+                factor_datatype = self.model_datafarm_object.specifications[factor].get('datatype')
+                min_val = self.model_min_vals[factor].get()
+                max_val = self.model_max_vals[factor].get()
+                if factor_datatype == float:
+                    dec_val = self.model_dec_vals[factor].get()
+                else:
+                    dec_val = '0'
+                data_insert = f"{min_val} {max_val} {dec_val}\n"
+                with open(f"./data_farming_experiments/{self.problem_design_name}_model_factors.txt", "a") as settings_file:
+                    settings_file.write(data_insert)
+        
+                    
+            self.model_design_list = create_design( name = self.model_datafarm_object.name,
+                                                    factor_headers = self.model_design_factors,
+                                                    factor_settings_filename = f'{self.problem_design_name}_model_factors',
+                                                    fixed_factors = self.model_fixed_factors,
+                                                    cross_design_factors = self.model_cross_design_factors,
+                                                    n_stacks = n_stacks,
+                                                    design_type = design_type
+                                                    )
+        # display design tree for problem, model, or both depending on design options
+        self.design_display_frame = tk.Frame(master=self.problem_datafarm_notebook_frame)
+        self.design_display_frame.grid(row=3, column=0)
+       
+        # display only problem design if no model design created
+        if all_false_model:
+            self.problem_design_tree_label = tk.Label(master = self.design_display_frame, text = 'Generated Design over Problem Factors', font = 'Calibri 13 bold')
+            self.problem_design_tree_label.grid(row=0, column=0)
+            self.display_design_tree(f"./data_farming_experiments/{self.problem_design_name}_problem_factors_design.csv", self.design_display_frame, row = 1)
+            # button to add problem design to experiment
+            self.add_problem_design_button = tk.Button(master = self.design_display_frame, text = "Add this problem design to experiment", command = self.add_problem_design_to_experiment)
+            self.add_problem_design_button.grid(row = 2, column = 0)
+            
+        # display only model design if no problem design created
+        elif all_false_problem:
+            self.model_design_tree_label = tk.Label(master = self.design_display_frame, text = 'Generated Design over Model Factors', font = 'Calibri 13 bold')
+            self.model_design_tree_label.grid(row=0, column=0)
+            self.display_design_tree(f"./data_farming_experiments/{self.problem_design_name}_model_factors_design.csv", self.design_display_frame, row = 1)
+            # button to add problem design to experiment
+            self.add_problem_design_button = tk.Button(master = self.design_display_frame, text = "Add this problem design to experiment", command = self.add_model_design_to_experiment)
+            self.add_problem_design_button.grid(row = 2, column = 0)
+            
+        else:
+            # create notebook with tabs to switch btwn problem & model design view
+            self.design_notebook = ttk.Notebook(master=self.design_display_frame)
+            self.design_notebook.grid(row=0, column=0)
+            self.problem_design_view_frame = tk.Frame(master = self.design_notebook)
+            self.model_design_view_frame = tk.Frame(master = self.design_notebook)
+            self.design_notebook.add(self.problem_design_view_frame, text = 'View Problem Design')
+            self.design_notebook.add(self.model_design_view_frame, text = 'View Model Design')
+            
+            # create view for problem
+            self.problem_design_tree_label = tk.Label(master = self.problem_design_view_frame, text = 'Generated Design over Problem Factors', font = 'Calibri 13 bold')
+            self.problem_design_tree_label.grid(row=0, column=0)
+            self.display_design_tree(f"./data_farming_experiments/{self.problem_design_name}_problem_factors_design.csv", self.problem_design_view_frame, row = 1)
+            
+            # create view for model
+            self.model_design_tree_label = tk.Label(master = self.model_design_view_frame, text = 'Generated Design over Model Factors', font = 'Calibri 13 bold')
+            self.model_design_tree_label.grid(row=0, column=0)
+            self.display_design_tree(f"./data_farming_experiments/{self.problem_design_name}_model_factors_design.csv", self.model_design_view_frame, row = 1)
+            
+            # button to add problem design to experiment
+            self.add_problem_design_button = tk.Button(master = self.design_display_frame, text = "Add this problem design to experiment", command = self.add_problem_and_model_design_to_experiment)
+            self.add_problem_design_button.grid(row = 2, column = 0)
+
+        # # button to add solver design to experiment
+        # self.add_solver_design_button = tk.Button(master = self.solver_datafarm_frame, text = "Add this solver to experiment", command = self.add_solver_design_to_experiment)
+        # self.add_solver_design_button.grid(row = 6, column = 0)
+        # #disable design name entry
+        # self.solver_design_name_entry.configure(state = 'disabled')         
+            
+    def display_design_tree(self, csv_filename, frame, row = 0, column = 0):
+        
+        #Initialize design tree
+        self.create_design_frame = tk.Frame(master = frame)
+        self.create_design_frame.grid( row = row, column = column)
+        self.create_design_frame.grid_rowconfigure( 0, weight = 0)
+        self.create_design_frame.grid_rowconfigure( 1, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 0, weight = 1)
+        self.create_design_frame.grid_columnconfigure( 1, weight = 1)
+
+   
+        self.design_tree = ttk.Treeview( master = self.create_design_frame)
+        self.design_tree.grid(row = 1, column = 0, sticky = 'nsew', padx = 10)
+        self.style = ttk.Style()
+        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.design_tree.heading( '#0', text = 'Design #' )
+        
+        # Get design point values from csv
+        design_table = pd.read_csv(csv_filename, index_col="Design #")
+        num_dp = len(design_table) #used for label
+        self.create_design_label = tk.Label( master = self.create_design_frame, text = f'Total Design Points: {num_dp}', font = "Calibri 13 bold", width = 50)
+        self.create_design_label.grid(row = 0, column = 0, sticky = tk.W)
+        
+        # Enter design values into treeview
+        self.design_tree['columns'] = tuple(design_table.columns)[:-3]
+
+        for column in design_table.columns[:-3]:
+            self.design_tree.heading( column, text = column)
+            self.design_tree.column(column, width = 100)
+            
+        for  index, row in design_table.iterrows():
+            
+            self.design_tree.insert("", index, text = index, values = tuple(row)[:-3])
+   
+        # Create a horizontal scrollbar
+        xscrollbar = ttk.Scrollbar(master = self.create_design_frame, orient="horizontal", command= self.design_tree.xview)
+        xscrollbar.grid(row = 2, column = 0, sticky = 'nsew')
+        
+        # Configure the Treeview to use the horizontal scrollbar
+        self.design_tree.configure(xscrollcommand=xscrollbar.set)
+              
         
     def convert_proper_datatype(self, fixed_factors, specifications):
         
@@ -2802,68 +3431,358 @@ class New_Experiment_Window(tk.Toplevel):
     
         return converted_fixed_factors
        
+    
     def add_solver_to_experiment(self):
         
-        ''' Update fixed factors to user selections and add to master lists'''
-        
+        # get solver name entered by user & ensure it is unique
+        solver_name = self.get_unique_name(self.master_solver_dict, self.solver_name_var.get())
+        # convert factor values to proper data type
         fixed_factors = self.convert_proper_datatype(self.solver_defaults, self.solver_object.specifications)
+        
+        solver_list = [] # holds dictionary of dps and solver name
+        solver_list.append(fixed_factors)
+        solver_list.append(self.solver_object.name)
+        
+        solver_holder_list = [] # used so solver list matches datafarming format
+        solver_holder_list.append(solver_list)
+        
             
-        self.master_solver_factor_list.append(fixed_factors)
-        self.master_solver_name_list.append(self.solver_object.name)
-        print('master solver list', self.master_solver_factor_list)
-        print('master solver name list', self.master_solver_name_list)
+        self.master_solver_dict[solver_name] = solver_holder_list
+        print('master solver', self.master_solver_dict)
         
-        ''' Display solver in solver list'''
-        
-        solver_suffix = str(self.master_solver_name_list.count(self.solver_object.name)) # count number of times name is in list to display mult. version of same name
-        solver_display_name = f'{self.solver_object.name}_{solver_suffix}'
-        
-        solver_row = len(self.master_solver_name_list) - 1
-        
-        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_display_name, font = 'Calibir 13')
+        # add solver name to solver index
+        solver_row = len(self.master_solver_dict) - 1 
+        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_name, font = 'Calibir 13')
         self.solver_list_label.grid(row = solver_row, column = 1)
+        self.solver_list_labels[solver_name] = self.solver_list_label
         
+        # add delete and view/edit buttons
+        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibir 11', command = lambda:self.edit_solver(solver_name))
+        self.solver_edit_button.grid(row = solver_row, column =2)
+        self.solver_edit_buttons[solver_name] = self.solver_edit_button
+        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_solver(solver_name))
+        self.solver_del_button.grid(row = solver_row, column =3)
+        self.solver_del_buttons[solver_name] = self.solver_del_button
+        
+        # refresh solver name entry box
+        self.solver_name_var.set(self.get_unique_name(self.master_solver_dict, solver_name))
         
     def add_problem_to_experiment(self):
         
-        ''' Update fixed factors to user selections and add to master lists'''
-        
-
+        # Convect problem and model factor values to proper data type
         prob_fixed_factors = self.convert_proper_datatype(self.problem_defaults, self.problem_object.specifications)
-     
         mod_fixed_factors = self.convert_proper_datatype(self.model_defaults, self.model_object.specifications)
-        
         append_list = [prob_fixed_factors, mod_fixed_factors]
         
-            
-        self.master_problem_factor_list.append(append_list)
-        self.master_problem_name_list.append(self.problem_object.name)
-        print('master problem list', self.master_problem_factor_list)
-        print('master problem name list', self.master_problem_name_list)
-        
-        ''' Display solver in solver list'''
-        
-        problem_suffix = str(self.master_problem_name_list.count(self.problem_object.name)) # count number of times name is in list to display mult. version of same name
-        problem_display_name = f'{self.problem_object.name}_{problem_suffix}'
-        
-        problem_row = len(self.master_problem_name_list) - 1
-        
-        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_display_name, font = 'Calibir 13')
-        self.problem_list_label.grid(row = problem_row, column = 1)
-        
-        
-    def create_experiment(self):
-        
-        ''' Create Experiment Name'''
-        
-        solver_names_string = "_".join(set(self.master_solver_name_list))
-        problem_names_string = "_".join(set(self.master_problem_name_list))
-        experiment_name = f"{solver_names_string}_on_{problem_names_string}"
-        
+        # get problem name and ensure it is unique
+        problem_name = self.get_unique_name(self.master_problem_dict, self.problem_name_var.get())
 
         
-        '''Call ProblemsSolvers to intitialize experiment'''
+        problem_list = [] # holds dictionary of dps and solver name
+        problem_list.append(append_list)
+        problem_list.append(self.problem_object.name)
         
+        problem_holder_list = [] # used so problem list matches datafarming format
+        problem_holder_list.append(problem_list)
+
+            
+        self.master_problem_dict[problem_name] = problem_holder_list
+        print('master problem', self.master_problem_dict)
+
+        
+        # add problem name to problem index
+        problem_row = len(self.master_problem_dict) - 1
+        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_name, font = 'Calibir 13')
+        self.problem_list_label.grid(row = problem_row, column = 1)
+        self.problem_list_labels[problem_name] = self.problem_list_label
+        
+        # add delete and view/edit buttons
+        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.problem_edit_button.grid(row = problem_row, column =2)
+        self.problem_edit_buttons[problem_name] = self.problem_edit_button
+        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_problem(problem_name))
+        self.problem_del_button.grid(row = problem_row, column =3)
+        self.problem_del_buttons[problem_name] = self.problem_del_button
+        
+        # refresh problem name entry box
+        self.problem_name_var.set(self.get_unique_name(self.master_problem_dict, problem_name))
+        
+        
+    def add_problem_design_to_experiment(self):
+        
+        #convert fixed factors to proper data type
+        model_fixed_factors = self.convert_proper_datatype(self.model_datafarm_defaults, self.model_datafarm_object.specifications)
+        
+        # add fixed model factors to design list
+        for dp in self.problem_design_list:
+            for model_factor in model_fixed_factors:
+                dp[model_factor] = model_fixed_factors[model_factor]
+
+        problem_design_name = self.problem_design_name
+        
+        problem_holder_list = [] # holds all problem lists within design name
+        for dp in self.problem_design_list:
+            problem_list = [] # holds dictionary of dps and problem name
+            problem_list.append(dp)
+            problem_list.append(self.problem_datafarm_object.name)
+            problem_holder_list.append(problem_list)
+
+            
+        self.master_problem_dict[problem_design_name] = problem_holder_list
+        print('master problem', self.master_problem_dict)
+        
+        self.add_problem_design_to_list()
+        
+    def add_model_design_to_experiment(self):
+        
+        #convert fixed factors to proper data type
+        problem_fixed_factors = self.convert_proper_datatype(self.problem_datafarm_defaults, self.problem_datafarm_object.specifications)
+        
+        # add fixed model factors to design list
+        for dp in self.model_design_list:
+            for problem_factor in problem_fixed_factors:
+                dp[problem_factor] = problem_fixed_factors[problem_factor]
+
+        problem_design_name = self.problem_design_name
+        
+        problem_holder_list = [] # holds all problem lists within design name
+        for dp in self.model_design_list:
+            problem_list = [] # holds dictionary of dps and problem name
+            problem_list.append(dp)
+            problem_list.append(self.problem_datafarm_object.name)
+            problem_holder_list.append(problem_list)
+           
+        self.master_problem_dict[problem_design_name] = problem_holder_list
+        print('master problem', self.master_problem_dict)
+        
+        self.add_problem_design_to_list()
+    
+    def add_problem_and_model_design_to_experiment(self):
+        
+        # comdine dps from problem and model designs
+        both_design_list = [] # will hold dictionaries for all dps for both problem and model
+        for problem_dp in self.problem_design_list:
+            for model_dp in self.model_design_list:
+                dp = {}
+                for problem_factor in problem_dp:
+                    dp[problem_factor] = problem_dp[problem_factor]
+                for model_factor in model_dp:
+                    dp[model_factor] = model_dp[model_factor]
+                both_design_list.append(dp)
+        
+
+        problem_design_name = self.problem_design_name
+        
+        problem_holder_list = [] # holds all problem lists within design name
+        for dp in both_design_list:
+            problem_list = [] # holds dictionary of dps and problem name
+            problem_list.append(dp)
+            problem_list.append(self.problem_datafarm_object.name)
+            problem_holder_list.append(problem_list)
+
+            
+        self.master_problem_dict[problem_design_name] = problem_holder_list
+        print('master problem', self.master_problem_dict)
+        
+        self.add_problem_design_to_list()    
+    
+    def add_problem_design_to_list(self):
+        
+        problem_design_name = self.problem_design_name
+        
+        # add solver name to solver index
+        problem_row = len(self.master_problem_dict) - 1 
+        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_design_name, font = 'Calibir 13')
+        self.problem_list_label.grid(row = problem_row, column = 1)
+        self.problem_list_labels[problem_design_name] = self.problem_list_label
+        
+        # add delete and view/edit buttons
+        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.problem_edit_button.grid(row = problem_row, column =2)
+        self.problem_edit_buttons[problem_design_name] = self.problem_edit_button
+        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_problem(problem_design_name))
+        self.problem_del_button.grid(row = problem_row, column =3)
+        self.problem_del_buttons[problem_design_name] = self.problem_del_button
+        
+        # refresh problem design name entry box
+        self.problem_name_var.set(self.get_unique_name(self.master_problem_dict, problem_design_name))
+    
+    def add_solver_design_to_experiment(self):
+
+        solver_design_name = self.solver_design_name
+        
+        solver_holder_list = [] # used so solver list matches datafarming format
+        for dp in self.solver_design_list:
+            solver_list = [] # holds dictionary of dps and solver name
+            solver_list.append(dp)
+            solver_list.append(self.solver_datafarm_object.name)
+            solver_holder_list.append(solver_list)
+
+            
+        self.master_solver_dict[solver_design_name] = solver_holder_list
+        print('master solver', self.master_solver_dict)
+        
+        # add solver name to solver index
+        solver_row = len(self.master_solver_dict) - 1 
+        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_design_name, font = 'Calibir 13')
+        self.solver_list_label.grid(row = solver_row, column = 1)
+        self.solver_list_labels[solver_design_name] = self.solver_list_label
+        
+        # add delete and view/edit buttons
+        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.solver_edit_button.grid(row = solver_row, column =2)
+        self.solver_edit_buttons[solver_design_name] = self.solver_edit_button
+        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_solver(solver_design_name))
+        self.solver_del_button.grid(row = solver_row, column =3)
+        self.solver_del_buttons[solver_design_name] = self.solver_del_button
+        
+        # refresh solver design name entry box
+        self.solver_name_var.set(self.get_unique_name(self.master_solver_dict, solver_design_name))
+
+    def edit_solver(self, solver_save_name):
+        
+        #clear previous selections
+        self.clear_frame(self.solver_frame)
+        
+        
+        ''' Initialize frames and headers'''
+        
+        self.solver_frame = tk.Frame(master = self.solver_notebook_frame)
+        self.solver_frame.grid(row = 1, column = 0)
+        self.factor_display_canvas = tk.Canvas(master = self.solver_frame)
+        self.factor_display_canvas.grid(row = 1, column = 0)
+
+        
+        # Create column for solver factor names
+        self.headername_label = tk.Label(master = self.solver_frame, text = 'Solver Factors', font = "Calibri 13 bold", width = 20, anchor = 'w')
+        self.headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
+         
+        # Create column for factor type
+        self.headertype_label = tk.Label(master = self.solver_frame, text = 'Factor Type', font = "Calibri 13 bold", width = 20, anchor = 'w' )
+        self.headertype_label.grid(row = 0, column = 1, sticky = tk.N + tk.W)  
+        
+        # Create column for factor default values
+        self.headerdefault_label = tk.Label(master = self.solver_frame, text = 'Default Value', font = "Calibri 13 bold", width = 20 )
+        self.headerdefault_label.grid(row = 0, column = 2, sticky = tk.N + tk.W)
+        
+        ''' Get solver information from master solver dict and display'''
+        solver = self.master_solver_dict[solver_save_name][0][1]
+        
+        self.solver_object = solver_directory[solver]()
+
+        # show problem factors and store default widgets to this dict
+        self.solver_defaults = self.show_factor_defaults(self.solver_object, self.factor_display_canvas, factor_dict = self.master_solver_dict[solver_save_name][0][0])
+        
+        # save previous name if user edits name
+        self.solver_prev_name = solver_save_name 
+            
+        # entry for solver name and add solver button
+        self.solver_name_label = tk.Label(master = self.solver_frame, text = 'Solver Name', font = "Calibri 13", width = 20 )
+        self.solver_name_label.grid(row = 2, column= 0)
+        self.solver_name_var = tk.StringVar() 
+        self.solver_name_var.set(solver_save_name)
+        self.solver_name_entry = tk.Entry(master = self.solver_frame, textvariable= self.solver_name_var, width = 20)
+        self.solver_name_entry.grid(row =2, column = 1)
+        self.add_sol_to_exp_button = tk.Button(master = self.solver_frame, text = "Save Edits", command = self.save_solver_edits)
+        self.add_sol_to_exp_button.grid(row = 3, column = 0)
+        
+    def save_solver_edits(self):
+        
+        # convert factor values to proper data type
+        fixed_factors = self.convert_proper_datatype(self.solver_defaults, self.solver_object.specifications)
+        
+        # Update fixed factors in solver master dict
+        self.master_solver_dict[self.solver_prev_name][0][0] = fixed_factors
+        
+        # Change solver save name if applicable
+        new_solver_name = self.solver_name_var.get()
+        if new_solver_name != self.solver_prev_name:
+            self.master_solver_dict[new_solver_name] = self.master_solver_dict[self.solver_prev_name]
+            del self.master_solver_dict[self.solver_prev_name]
+            # change solver name in labels & buttons
+            self.solver_list_labels[self.solver_prev_name].configure(text = new_solver_name)
+            self.solver_list_labels[new_solver_name] = self.solver_list_labels[self.solver_prev_name]
+            self.solver_edit_buttons[new_solver_name] = self.solver_edit_buttons[self.solver_prev_name]
+            self.solver_del_buttons[new_solver_name] = self.solver_del_buttons[self.solver_prev_name]
+            del self.solver_list_labels[self.solver_prev_name]
+            del self.solver_edit_buttons[self.solver_prev_name]
+            del self.solver_del_buttons[self.solver_prev_name]
+            
+        
+
+
+    def delete_solver(self, solver_name):
+        
+        print('delete name', solver_name)
+        #delete from master list
+        del self.master_solver_dict[solver_name]
+            
+        # delete label & edit/delete buttons
+        self.solver_list_labels[solver_name].destroy()
+        self.solver_edit_buttons[solver_name].destroy()
+        self.solver_del_buttons[solver_name].destroy()
+        del self.solver_list_labels[solver_name]
+        del self.solver_edit_buttons[solver_name]
+        del self.solver_del_buttons[solver_name]
+        
+        #re-display solver labels & buttons
+        for row, solver_group in enumerate(self.solver_list_labels):
+            print('solver group', solver_group)
+            self.solver_list_labels[solver_group].grid(row =row, column = 1)
+            self.solver_edit_buttons[solver_group].grid(row =row, column = 2)
+            self.solver_del_buttons[solver_group].grid(row =row, column = 3)
+            
+    def delete_problem(self, problem_name):
+        
+        print('delete name', problem_name)
+        #delete from master list
+        del self.master_problem_dict[problem_name]
+            
+        # delete label & edit/delete buttons
+        self.problem_list_labels[problem_name].destroy()
+        self.problem_edit_buttons[problem_name].destroy()
+        self.problem_del_buttons[problem_name].destroy()
+        del self.problem_list_labels[problem_name]
+        del self.problem_edit_buttons[problem_name]
+        del self.problem_del_buttons[problem_name]
+        
+        #re-display problem labels & buttons
+        for row, problem_group in enumerate(self.problem_list_labels):
+            self.problem_list_labels[problem_group].grid(row =row, column = 1)
+            self.problem_edit_buttons[problem_group].grid(row =row, column = 2)
+            self.problem_del_buttons[problem_group].grid(row =row, column = 3)
+
+    def create_experiment(self):
+        
+        # get unique experiment name
+        experiment_name = self.get_unique_name(self.master_experiment_dict, self.experiment_name_var.get())
+
+        
+        # Extract solver and problem information from master dictionaries
+        self.master_solver_factor_list = [] # holds dict of factors for each dp
+        self.master_solver_name_list = [] # holds name of each solver for each dp
+        self.master_problem_factor_list = [] # holds dict of factors for each dp
+        self.master_problem_name_list = [] # holds name of each solver for each dp
+        
+        for solver_group in self.master_solver_dict:
+            for dp in self.master_solver_dict[solver_group]:
+                factors = dp[0]
+                solver_name = dp[1]
+                self.master_solver_factor_list.append(factors)
+                self.master_solver_name_list.append(solver_name)
+            
+        for problem_group in self.master_problem_dict:
+            for dp in self.master_problem_dict[problem_group]:
+                factors = dp[0]
+                problem_name = dp[1]
+                self.master_problem_factor_list.append(factors)
+                self.master_problem_name_list.append(problem_name)
+
+        print('experiment solver factors', self.master_solver_factor_list )
+        print('experiment solver names', self.master_solver_name_list )
+        print('experiment problem factors', self.master_problem_factor_list )
+        print('experiment problem names', self.master_problem_name_list )
+        # use ProblemsSolvers to initialize exp 
         self.experiment = ProblemsSolvers(solver_factors = self.master_solver_factor_list,
                                           problem_factors = self.master_problem_factor_list,
                                           solver_names = self.master_solver_name_list,
@@ -2878,13 +3797,28 @@ class New_Experiment_Window(tk.Toplevel):
         #add to master experiment list
         self.master_experiment_dict[experiment_name] = self.experiment
         
-        '''Clear Master Lists & Delete solver/problems lists'''
+        # clear solver and problem lists
         self.master_solver_factor_list = []
         self.master_solver_name_list = []
         self.master_problem_factor_list = []
         self.master_problem_name_list  =[]
+        self.master_solver_dict = {}
+        self.master_problem_dict = {}         
         self.clear_frame(self.solver_list_canvas)
         self.clear_frame(self.problem_list_canvas)
+        
+        # reset default experiment name for next experiment
+        self.experiment_name_var.set(self.get_unique_name(self.master_experiment_dict, 'experiment'))
+        
+        # set experiment options as default
+        self.macro_reps[experiment_name] = self.macro_default
+        self.post_reps[experiment_name] = self.post_default
+        self.init_post_reps[experiment_name] = self.init_default
+        self.crn_budgets[experiment_name] = self.crn_budget_default
+        self.crn_macros[experiment_name] = self.crn_macro_default
+        self.crn_inits[experiment_name] = self.crn_init_default
+        self.solve_tols[experiment_name] = self.solve_tols_default
+        
         
         ''' Display experiment in list '''
         experiment_row = len(self.master_experiment_dict) - 1
@@ -2893,33 +3827,326 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment_list_label = tk.Label(master = self.current_experiment_frame, text = experiment_name, font = 'Calibir 13')
         self.experiment_list_label.grid(row = 0, column = 0)
         
+        # macro reps entry
+        self.macro_reps_label = tk.Label(master=self.current_experiment_frame, text='Macrorepliclations', font = 'Calibri 11')
+        self.macro_reps_label.grid(row=0, column = 1)
+        self.macro_reps_var = tk.StringVar()
+        self.macro_reps_var.set(self.macro_default)
+        self.macro_vars.append(self.macro_reps_var) # list only used to update entry widget when default macro number is changed
+        self.macro_reps[experiment_name] = self.macro_reps_var # add macrorep variable to dictionary
+        self.macro_reps_entry = tk.Entry(master = self.current_experiment_frame, textvariable = self.macro_reps_var, width = 5, justify = 'right' )
+        self.macro_reps_entry.grid(row = 0, column = 2)
+        self.macro_entries[experiment_name] = self.macro_reps_entry # add macro rep entry box to widget dict
+        # run button
+        self.run_experiment_button = tk.Button(master = self.current_experiment_frame, text = "Run", command = lambda:self.run_experiment(experiment_name = experiment_name))
+        self.run_experiment_button.grid(row = 0, column = 3)
+        self.run_buttons[experiment_name] = self.run_experiment_button # add run button to widget dict
+        # post processing buttons
+        self.post_process_opt_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Processing Options', font = 'Calibri 11', command = lambda:self.open_post_processing_window(experiment_name))
+        self.post_process_opt_button.grid(row = 0, column = 4)
+        self.post_process_opt_buttons[experiment_name] = self.post_process_opt_button # add option button to widget dict
+        self.post_process_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Process & Log Results', font = 'Calibri 11', command = lambda:self.post_process(experiment_name))
+        self.post_process_button.grid(row = 0, column = 5)
+        self.post_process_button.configure(state ='disabled')
+        self.post_process_buttons[experiment_name] = self.post_process_button # add post process button to widget dict
         
-        ''' Experiment Buttons'''
-        
-        n_macroreps = 10 # hard coded for now, eventually add user input option
-        
-        self.run_experiment_button = tk.Button(master = self.current_experiment_frame, text = "Run", command = lambda:self.run_experiment(experiment_name = experiment_name,
-                                                                                                                                          n_macroreps = n_macroreps))
-        self.run_experiment_button.grid(row = 0, column = 1)
-        
-    def run_experiment(self, experiment_name, n_macroreps):
+    def run_experiment(self, experiment_name):
         
         #get experiment object from master dict
         experiment = self.master_experiment_dict[experiment_name]
         
+        # get specified number of macro reps
+        n_macroreps = int(self.macro_reps[experiment_name].get())
         # use ProblemsSolvers run
-        experiment.run(n_macroreps = n_macroreps
-            )
+        experiment.run(n_macroreps = n_macroreps)
+        # disable run buttons
+        self.macro_entries[experiment_name].configure(state = 'disabled')
+        self.run_buttons[experiment_name].configure(state = 'disabled')
+        
+        # enable post-processing buttons
+        self.post_process_buttons[experiment_name].configure(state = 'normal')
+        
+
+    def open_defaults_window(self):
+        
+        # create new winow
+        self.experiment_defaults_window = tk.Toplevel(self.master)
+        self.experiment_defaults_window.title("Simopt Graphical User Interface - Experiment Options Defaults")
+        self.experiment_defaults_window.geometry("400x300")
+        
+        self.main_frame = tk.Frame(master = self.experiment_defaults_window)
+        self.main_frame.grid(row=0, column =0)
+        
+        # Title label
+        self.title_label = tk.Label(master = self.main_frame, text = ' Default experiment options for all experiments. Any changes made will affect all future and current un-run or processed experiments.', font = 'Calibri 15 bold')
+        self.title_label.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        # Macro replication number input
+        self.macro_rep_label = tk.Label(master = self.main_frame, text = 'Number of macro-replications of the solver run on the problem', font = 'Calibri 13')
+        self.macro_rep_label.grid(row =1, column =0)
+        self.macro_rep_var = tk.IntVar()
+        self.macro_rep_var.set(self.macro_default)
+        self.macro_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.macro_rep_var, width = 10, justify = 'right')
+        self.macro_rep_entry.grid(row = 1, column =1)
+        
+        # Post replication number input
+        self.post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications', font = 'Calibri 13')
+        self.post_rep_label.grid(row =2, column =0)
+        self.post_rep_var = tk.IntVar()
+        self.post_rep_var.set(self.post_default)
+        self.post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.post_rep_var, width = 10, justify = 'right')
+        self.post_rep_entry.grid(row = 2, column =1)
+        
+        # CRN across budget
+        self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
+        self.crn_budget_label.grid(row = 3, column =0)
+        self.crn_budget_var = tk.StringVar()
+        if self.crn_budget_default == True:
+            budget_display = 'yes'
+        else:
+            budget_display = 'no'
+        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, budget_display, 'yes','no')
+        self.crn_budget_opt.grid(row=3, column = 1)
+        
+        # CRN across macroreps
+        self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
+        self.crn_macro_label.grid(row = 4, column =0)
+        self.crn_macro_var = tk.StringVar()
+        if self.crn_macro_default == True:
+            macro_display = 'yes'
+        else:
+            macro_display = 'no'
+        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, macro_display, 'yes','no')
+        self.crn_macro_opt.grid(row=4, column = 1)
+ 
+        # Post reps at inital & optimal solution input
+        self.init_post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications at initial and optimal solutions', font = 'Calibri 13')
+        self.init_post_rep_label.grid(row =5, column =0)
+        self.init_post_rep_var = tk.IntVar()
+        self.init_post_rep_var.set(self.init_default)
+        self.init_post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.init_post_rep_var, width = 10, justify = 'right')
+        self.init_post_rep_entry.grid(row = 5, column =1)
+        
+        # CRN across init solutions
+        self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
+        self.crn_init_label.grid(row = 6, column =0)
+        self.crn_init_var = tk.StringVar()
+        if self.crn_init_default == True:
+            init_display = 'yes'
+        else:
+            init_display = 'no'
+        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, init_display, 'yes','no')
+        self.crn_init_opt.grid(row=6, column = 1)
+        
+        # solve tols
+        self.solve_tols_label = tk.Label(master = self.main_frame, text = 'Relative optimality gap(s) definining when a problem is solved; must be between 0 & 1, list in increasing order.')
+        self.solve_tols_label.grid(row = 7, column = 1)
+        self.solve_tols_frame = tk.Frame(master = self.main_frame)
+        self.solve_tols_frame.grid(row = 8, column = 0, columnspan = 2)
+        self.solve_tol_1_var = tk.StringVar()
+        self.solve_tol_2_var = tk.StringVar()
+        self.solve_tol_3_var = tk.StringVar()
+        self.solve_tol_4_var = tk.StringVar()
+        self.solve_tol_1_var.set(self.solve_tols_default[0])
+        self.solve_tol_2_var.set(self.solve_tols_default[1])
+        self.solve_tol_3_var.set(self.solve_tols_default[2])
+        self.solve_tol_4_var.set(self.solve_tols_default[3])
+        self.solve_tol_1_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_1_var, width = 5, justify = 'right')
+        self.solve_tol_2_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_2_var, width = 5, justify = 'right')
+        self.solve_tol_3_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_3_var, width = 5, justify = 'right')
+        self.solve_tol_4_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_4_var, width = 5, justify = 'right')
+        self.solve_tol_1_entry.grid(row = 0, column = 0, padx = 5)
+        self.solve_tol_2_entry.grid(row = 0, column = 1, padx = 5)
+        self.solve_tol_3_entry.grid(row = 0, column = 2, padx = 5)
+        self.solve_tol_4_entry.grid(row = 0, column = 3, padx = 5)
         
         
-        # for now do all post processing, eventually seperate into seperate functions w/ seperate buttons to allow for user input
+        # set options as default for future experiments
+        self.set_as_default_button = tk.Button(master = self.main_frame, text = 'Set options as default for all experiments', command = self.change_experiment_defaults)
+        self.set_as_default_button.grid(row = 9, column = 0)
+
+    def change_experiment_defaults(self):
         
-        experiment.post_replicate(n_postreps = 5)
-        experiment.post_normalize(n_postreps_init_opt = 200)
+        # Change default values to user input
+        self.macro_default = self.macro_rep_var.get()
+        self.post_default = self.post_rep_var.get()
+        self.init_default = self.init_post_rep_var.get()
+        
+        crn_budget_str = self.crn_budget_var.get()
+        if crn_budget_str == 'yes':
+            self.crn_budget_default = True
+        else:
+            self.crn_budget_default = False     
+        crn_macro_str = self.crn_macro_var.get()
+        if crn_macro_str == 'yes':
+            self.crn_macro_default = True
+        else:
+            self.crn_macro_default = False
+        crn_init_str = self.crn_init_var.get()
+        if crn_init_str == 'yes':
+            self.crn_init_default = True
+        else:
+            self.crn_init_default = False
+            
+        solve_tol_1 = float(self.solve_tol_1_var.get())
+        solve_tol_2 = float(self.solve_tol_2_var.get())    
+        solve_tol_3 = float(self.solve_tol_3_var.get())
+        solve_tol_4 = float(self.solve_tol_4_var.get())
+        self.solve_tols_default = [solve_tol_1, solve_tol_2, solve_tol_3, solve_tol_4]
+        
+        # update dictionaries for existing experiments
+        for experiment in self.master_experiment_dict:
+            self.post_reps[experiment] = self.post_default
+            self.init_post_reps[experiment] = self.init_default
+            self.crn_budgets[experiment] = self.crn_budget_default
+            self.crn_macros[experiment] = self.crn_macro_default
+            self.crn_inits[experiment] = self.crn_init_default
+            self.solve_tols[experiment] = self.solve_tols_default
+            
+        # update macro entry widgets
+        for var in self.macro_vars:
+            var.set(self.macro_default)
+
+
+
+    def open_post_processing_window(self, experiment_name):
+        
+        # create new winow
+        self.post_processing_window = tk.Toplevel(self.master)
+        self.post_processing_window.title("Simopt Graphical User Interface - Experiment Post Processing Options")
+        self.post_processing_window.geometry("400x300")
+        
+        self.main_frame = tk.Frame(master = self.post_processing_window)
+        self.main_frame.grid(row=0, column =0)
+        
+        # Title label
+        self.title_label = tk.Label(master = self.main_frame, text = f' Post Processing Options for {experiment_name}.', font = 'Calibri 15 bold')
+        self.title_label.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        # Post replication number input
+        self.post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications', font = 'Calibri 13')
+        self.post_rep_label.grid(row =1, column =0)
+        self.post_rep_var = tk.IntVar()
+        self.post_rep_var.set(self.post_reps[experiment_name])
+        self.post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.post_rep_var, width = 10, justify = 'right')
+        self.post_rep_entry.grid(row = 1, column =1)
+        
+        # CRN across budget
+        self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
+        self.crn_budget_label.grid(row = 2, column =0)
+        self.crn_budget_var = tk.StringVar()
+        if self.crn_budgets[experiment_name] == True:
+            budget_display = 'yes'
+        else:
+            budget_display = 'no'
+        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, budget_display, 'yes','no')
+        self.crn_budget_opt.grid(row=2, column = 1)
+        
+        # CRN across macroreps
+        self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
+        self.crn_macro_label.grid(row = 3, column =0)
+        self.crn_macro_var = tk.StringVar()
+        if self.crn_macros[experiment_name] == True:
+            macro_display = 'yes'
+        else:
+            macro_display = 'no'
+        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, macro_display, 'yes','no')
+        self.crn_macro_opt.grid(row=3, column = 1)
+ 
+        # Post reps at inital & optimal solution input
+        self.init_post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications at initial and optimal solutions', font = 'Calibri 13')
+        self.init_post_rep_label.grid(row =4, column =0)
+        self.init_post_rep_var = tk.IntVar()
+        self.init_post_rep_var.set(self.init_post_reps[experiment_name])
+        self.init_post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.init_post_rep_var, width = 10, justify = 'right')
+        self.init_post_rep_entry.grid(row = 4, column =1)
+        
+        # CRN across init solutions
+        self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
+        self.crn_init_label.grid(row = 5, column =0)
+        self.crn_init_var = tk.StringVar()
+        if self.crn_inits[experiment_name] == True:
+            init_display = 'yes'
+        else:
+            init_display = 'no'
+        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, init_display, 'yes','no')
+        self.crn_init_opt.grid(row=5, column = 1)
+        
+        # solve tols
+        self.solve_tols_label = tk.Label(master = self.main_frame, text = 'Relative optimality gap(s) definining when a problem is solved; must be between 0 & 1, list in increasing order.')
+        self.solve_tols_label.grid(row = 6, column = 1)
+        self.solve_tols_frame = tk.Frame(master = self.main_frame)
+        self.solve_tols_frame.grid(row = 7, column = 0, columnspan = 2)
+        self.solve_tol_1_var = tk.StringVar()
+        self.solve_tol_2_var = tk.StringVar()
+        self.solve_tol_3_var = tk.StringVar()
+        self.solve_tol_4_var = tk.StringVar()
+        self.solve_tol_1_var.set(self.solve_tols[experiment_name][0])
+        self.solve_tol_2_var.set(self.solve_tols[experiment_name][1])
+        self.solve_tol_3_var.set(self.solve_tols[experiment_name][2])
+        self.solve_tol_4_var.set(self.solve_tols[experiment_name][3])
+        self.solve_tol_1_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_1_var, width = 5, justify = 'right')
+        self.solve_tol_2_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_2_var, width = 5, justify = 'right')
+        self.solve_tol_3_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_3_var, width = 5, justify = 'right')
+        self.solve_tol_4_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_4_var, width = 5, justify = 'right')
+        self.solve_tol_1_entry.grid(row = 0, column = 0, padx = 5)
+        self.solve_tol_2_entry.grid(row = 0, column = 1, padx = 5)
+        self.solve_tol_3_entry.grid(row = 0, column = 2, padx = 5)
+        self.solve_tol_4_entry.grid(row = 0, column = 3, padx = 5)
+
+        
+        #save options for current experiment
+        self.set_as_default_button = tk.Button(master = self.main_frame, text = 'Save options for current experiment', command = lambda: self.save_experiment_options(experiment_name))
+        self.set_as_default_button.grid(row = 7, column = 0)
+        
+    def save_experiment_options(self, experiment_name):
+        
+        # get user specified values and save to dictionaries
+        self.post_reps[experiment_name] = self.post_rep_var.get()
+        self.init_post_reps[experiment_name] = self.init_post_rep_var.get()
+        
+        crn_budget_str = self.crn_budget_var.get()
+        if crn_budget_str == 'yes':
+            self.crn_budgets[experiment_name] = True
+        else:
+            self.crn_budgets[experiment_name] = False
+            
+        crn_macro_str = self.crn_macro_var.get()
+        if crn_macro_str == 'yes':
+            self.crn_macros[experiment_name] = True
+        else:
+            self.crn_macros[experiment_name] = False
+            
+        crn_init_str = self.crn_init_var.get()
+        if crn_init_str == 'yes':
+            self.crn_inits[experiment_name] = True
+        else:
+            self.crn_inits[experiment_name] = False
+            
+        solve_tol_1 = float(self.solve_tol_1_var.get())
+        solve_tol_2 = float(self.solve_tol_2_var.get())    
+        solve_tol_3 = float(self.solve_tol_3_var.get())
+        solve_tol_4 = float(self.solve_tol_4_var.get())
+        solve_tol_list = [solve_tol_1, solve_tol_2, solve_tol_3, solve_tol_4]
+        self.solve_tols[experiment_name] = solve_tol_list
+
+    
+    def post_process(self, experiment_name):
+        
+        #get experiment object from master dict
+        experiment = self.master_experiment_dict[experiment_name]
+        
+        # run post processing with parameters from dictionaries
+        experiment.post_replicate(n_postreps = self.post_reps[experiment_name])
+        experiment.post_normalize(n_postreps_init_opt = self.init_post_reps[experiment_name])
         experiment.record_group_experiment_results()
-        experiment.log_group_experiment_results()
-        experiment.report_group_statistics()
+        experiment.log_group_experiment_results(solve_tols_single_pair = self.solve_tols[experiment_name] )
+        experiment.report_group_statistics(solve_tols = self.solve_tols[experiment_name])
         
+        # disable post processing button
+        self.post_process_buttons[experiment_name].configure(state = 'disabled')
+        
+
             
      
         
