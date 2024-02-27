@@ -3866,6 +3866,8 @@ class New_Experiment_Window(tk.Toplevel):
         # enable post-processing buttons
         self.post_process_buttons[experiment_name].configure(state = 'normal')
         
+        print('experiments test', experiment.experiments)
+        
 
     def open_defaults_window(self):
         
@@ -4146,8 +4148,40 @@ class New_Experiment_Window(tk.Toplevel):
         # disable post processing button
         self.post_process_buttons[experiment_name].configure(state = 'disabled')
         
+        #temp automatically plot mean progress
+        self.plot_mean_progress(experiment_name = experiment_name)
+        
 
+    def plot_mean_progress(self, experiment_name):
+         
+        # get experiment object from master dict
+        experiment = self.master_experiment_dict[experiment_name]
+        
+        current_prob_names = []
+        all_exp_sep_by_prob = []
+        
+        print('experiment', experiment.experiments)
+        
+        # seperate by problem
+        for solver_group in experiment.experiments:
+            exp_by_prob = {}
+            for exp in solver_group:
+                if exp.problem not in current_prob_names:
+                    current_prob_names.append(exp.problem)
+            for prob in current_prob_names:
+                exp_by_prob[prob] = []
+                for exp in experiment.experiments:
+                    if exp.problem_name == prob:
+                        exp_by_prob[prob].append(exp)
+            all_exp_sep_by_prob.append(exp_by_prob)
             
+        for prob in all_exp_sep_by_prob:
+                for exp_list in prob:
+                    plot_progress_curves(exp_list, 'mean')
+        
+                
+            
+        
      
         
     
@@ -6530,52 +6564,7 @@ class Solver_Datafarming_Window(tk.Toplevel):
        
             self.factor_index += 1
         
-        # #Specify the name of the solver as it appears in directory.py
-        # # solver_name = "RNDSRCH"
-        # solver_name = self.solver_object.name # name of solver selected
-       
 
-        # # Specify the names of the model factors (in order) that will be varied.
-        # # solver_factor_headers = ["sample_size"]
-        # solver_factor_headers = self.factor_names 
-        
-        
-
-        # # Specify the name of the problem as it appears in directory.py
-        # # problem_name = "FACSIZE-2"
-        #problem_name = self.problem_object.name
-        
-        # cross_design_factors = self.cross_design_factors # factors included in cross design
-
-        
-        # solver_factor_settings_filename = None
-
-      
-        # design_filename = 'solver_factors_design'
-
-        # OPTIONAL: Provide additional overrides for default solver/problem/model factors.
-        # If empty, default factor settings are used.
-        # solver_fixed_factors = self.fixed_factors
-        # print('solver_fixed_factors', self.fixed_factors)
-        # problem_fixed_factors = self.problem_fixed_factors
-        # print('problem fixed factors', problem_fixed_factors)
-        # model_fixed_factors = self.model_fixed_factors
-        # print('model fixed factors', model_fixed_factors)
-   
-
-        # No code beyond this point needs to be edited.
-
-        # Create DataFarmingExperiment object.
-        # self.myDFMetaExperiment = DataFarmingMetaExperiment(solver_name=solver_name,
-        #                                                problem_name=problem_name,
-        #                                                solver_factor_headers=solver_factor_headers,
-        #                                                solver_factor_settings_filename=solver_factor_settings_filename,
-        #                                                design_filename=design_filename,
-        #                                                solver_fixed_factors=solver_fixed_factors,
-        #                                                problem_fixed_factors=problem_fixed_factors,
-        #                                                model_fixed_factors=model_fixed_factors,
-        #                                                cross_design_factors = cross_design_factors
-        #                                                )
         pair_name = self.pair_name_var.get() #name of problem pair
         self.experiment_pairs[pair_name] = [self.experiment, self.problem_object.name, self.problem_fixed_factors, self.model_fixed_factors] # Add experiment to dictionary by pair name
         

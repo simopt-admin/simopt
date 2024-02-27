@@ -1,0 +1,35 @@
+./experiments/outputs/group_RNDSRCH_on_EXAMPLE-1_CNTNEWS-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+EXAMPLE-1
+	Model Factors:
+
+	Problem Factors:
+		initial_solution: (2.0, 2.0)
+		budget: 500
+
+CNTNEWS-1
+	Model Factors:
+		purchase_price: 5.0
+		sales_price: 9.0
+		salvage_price: 1.0
+		Burr_c: 2.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		initial_solution: (0.0,)
+		budget: 1000
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+RNDSRCH
+	Solver Factors:
+		crn_across_solns: True
+		sample_size: 10
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+	RNDSRCH_on_EXAMPLE-1.pickle
+	RNDSRCH_on_CNTNEWS-1.pickle

@@ -7,6 +7,13 @@ EXAMPLE-1
 
 	Problem Factors:
 		initial_solution: (2.0, 2.0)
+		budget: 1000
+
+EXAMPLE-1
+	Model Factors:
+
+	Problem Factors:
+		initial_solution: (2.0, 2.0)
 		budget: 500
 
 MM1-1
@@ -30,5 +37,6 @@ RNDSRCH
 
 ----------------------------------------------------------------------------------------------
 The .pickle files for the associated Problem-Solver pairs are:
+	RNDSRCH_on_EXAMPLE-1.pickle
 	RNDSRCH_on_EXAMPLE-1.pickle
 	RNDSRCH_on_MM1-1.pickle
