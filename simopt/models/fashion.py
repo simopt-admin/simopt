@@ -1,10 +1,9 @@
 """
 Summary
 -------
-Simulate multiple periods worth of sales for a (s,S) inventory problem
-with continuous inventory.
+Simulate multiple periods worth of sales for a fashion retailer.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/fashion.html>`_.
 """
 import numpy as np
 from math import exp, log, sqrt
