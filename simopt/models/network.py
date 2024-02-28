@@ -49,12 +49,13 @@ class Network(Model):
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                # "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                "default": [1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10]
             },
             "cost_process": {
                 "description": "message processing cost of network i",
                 "datatype": list,
-                "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]
+                "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]  # Random
             },
             "cost_time": {
                 "description": "cost for the length of time a message spends in a network i per each unit of time",
@@ -64,22 +65,22 @@ class Network(Model):
             "mode_transit_time": {
                 "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
-                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # Random
             },
             "lower_limits_transit_time": {
                 "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]  # Random
             },
             "upper_limits_transit_time": {
                 "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
+                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]  # Random
             },
             "arrival_rate": {
                 "description": "arrival rate of messages following a Poisson process",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0  # Random
             },
             "n_messages": {
                 "description": "number of messages that arrives and needs to be routed",
@@ -183,7 +184,9 @@ class Network(Model):
         # Generate all interarrival, network routes, and service times before the simulation run.
         arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
                          for _ in range(total_arrivals)]
-        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
+        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors['process_prob'], k=total_arrivals)
+        # print(self.factors['process_prob'])
+        # print(len(range(self.factors['n_networks'])), len(list(self.factors['process_prob'])), np.sum(self.factors['process_prob']))
         service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
                                                 high=self.factors["upper_limits_transit_time"][network_routes[i]],
                                                 mode=self.factors["mode_transit_time"][network_routes[i]])
@@ -268,7 +271,7 @@ class NetworkMinTotalCost(Problem):
         upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_value : tuple
+    optimal_value : float
         optimal objective function value
     optimal_solution : tuple
         optimal solution
@@ -340,6 +343,10 @@ class NetworkMinTotalCost(Problem):
         self.dim = self.model.factors["n_networks"]
         self.lower_bounds = tuple([0 for _ in range(self.model.factors["n_networks"])])
         self.upper_bounds = tuple([1 for _ in range(self.model.factors["n_networks"])])
+        self.Ci = None
+        self.Ce = np.array([1 for _ in range(self.model.factors["n_networks"])]) #None
+        self.di = None
+        self.de = np.array([1]) #None
 
     def vector_to_factor_dict(self, vector):
         """
