@@ -28,8 +28,8 @@ class BoomProxGD(Solver):
             },
             "LSmethod": {
                 "description": "method",
-                "datatype": 'zoom',
-                "default": 'zoom'
+                "datatype": str,
+                "default": 'backtracking'
             },
             "r": {
                 "description": "number of replications taken at each solution",
@@ -59,12 +59,12 @@ class BoomProxGD(Solver):
             "theta": {
                 "description": "constant in the line search condition",
                 "datatype": int,
-                "default": 0.2
+                "default": 0.1
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
                 "datatype": int,
-                "default": 20
+                "default": 40
             },
             "ratio": {
                 "description": "decay ratio in line search",
@@ -84,7 +84,7 @@ class BoomProxGD(Solver):
             "zoom_inc_ratio": {
                 "description": "increment ratio in Zoom lien search",
                 "datatype": float,
-                "default": 1.1
+                "default": 1.5
             },
             "max_gamma":{
                 "description": "max distance possible",
@@ -94,17 +94,12 @@ class BoomProxGD(Solver):
             "backtrack":{
                 "description": "an indicator whether we do the backtrack",
                 "datatype": bool,
-                "default": 0
+                "default": 1
             },
             "proj_thres":{
                 "description": "proportion of the max iters to stop if have too many projections",
                 "datatype": float,
                 "default": 0.1
-            },
-            "algorithm":{
-                "description": "type of FW algorithm",
-                "datatype": str,
-                "default": "normal" #away, pairwise
             }
         }
         
@@ -214,7 +209,7 @@ class BoomProxGD(Solver):
         if((Ci is not None) and (di is not None)):
             #constraints += [Ci@(cur_x + step*d) <= di]
             ratio_val += list((di - Ci@cur_x)/(Ci@d))
-            denom += list(Ci@d)
+            denom += list([Ci@d])
         
         #print("ratio: ", ratio)
         ratio_val = np.array(ratio_val)
@@ -487,7 +482,7 @@ class BoomProxGD(Solver):
                 #new_step_size = ((-grad.dot(d))*((step_size*ratio)**2))/(2*(newF-curF-(step_size*ratio)*(grad.dot(d))))
                 new_step_size = self.full_min_quadratic(sign*grad.dot(d),sign*curF,sign*newF,0,step_size*ratio,problem)
                 #check if it's in the interval
-                if(new_step_size <= 0): #outside interval (too small)
+                if(new_step_size <= 1e-15): #outside interval (too small)
                     step_size = 0
                     break;
                 elif(new_step_size > step_size*ratio): #outside interval (too big)
@@ -793,16 +788,6 @@ class BoomProxGD(Solver):
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
                 grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
                 expended_budget += budget_spent
-                # A while loop to prevent zero gradient.
-                #while np.all((grad == 0)):
-                #    if expended_budget > problem.factors["budget"]:
-                #        break
-                    #grad, budget_spent  = self.finite_diff(new_solution, problem, r)
-                    #grad, budget_spent = self.get_FD_grad(self, x, problem, h, r)
-                #    grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
-                #    expended_budget += budget_spent
-                    # Update r after each iteration.
-                    #r = int(self.factors["lambda"] * r)
                     
             #print("max_step: ",max_step)
             direction = -grad/np.linalg.norm(grad)
@@ -873,8 +858,9 @@ class BoomProxGD(Solver):
             #if(t == max_step):
             #    max_step = min(max_gamma,max_step/self.factors["ratio"])
             #print("grad: ", grad)
+            #print("max step: ", max_step)
             #print("step: ", t)
-            #t = self.factors['step_f'](k) 
+ 
             #new_x = cur_x - t * grad
             new_x = cur_x + t * direction
             last_action = action
@@ -891,8 +877,13 @@ class BoomProxGD(Solver):
             expended_budget += r
             
             new_solution = candidate_solution
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
+            
+            # Append new solution.
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+                best_solution = new_solution
+                #recommended_solns.append(candidate_solution)
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
             
             #print("current budget: ",expended_budget)
             #print("========================")

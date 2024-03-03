@@ -48,7 +48,7 @@ class BoomFrankWolfe(Solver):
             "theta": {
                 "description": "constant in the line search condition",
                 "datatype": int,
-                "default": 0.2
+                "default": 0.1
             },
             "max_iters": {
                 "description": "maximum iterations",
@@ -63,7 +63,7 @@ class BoomFrankWolfe(Solver):
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
                 "datatype": int,
-                "default": 20
+                "default": 40
             },
             "ratio": {
                 "description": "decay ratio in line search",
@@ -83,7 +83,7 @@ class BoomFrankWolfe(Solver):
             "zoom_inc_ratio": {
                 "description": "increment ratio in Zoom lien search",
                 "datatype": float,
-                "default": 1.1
+                "default": 1.5
             },
             "atom_vectors":{
                 "description": "atom vectors for away/pairwise frank-wolfe",
@@ -103,7 +103,7 @@ class BoomFrankWolfe(Solver):
             "algorithm":{
                 "description": "type of FW algorithm",
                 "datatype": str,
-                "default": "normal"
+                "default": "away"
                 #away, pairwise
             }
             
@@ -185,7 +185,8 @@ class BoomFrankWolfe(Solver):
         if((Ci is not None) and (di is not None)):
             #constraints += [Ci@(cur_x + step*d) <= di]
             ratio_val += list((di - Ci@cur_x)/(Ci@d))
-            denom += list(Ci@d)
+            #print(Ci@d)
+            denom += list([Ci@d])
         
         #print("ratio: ", ratio_val)
         #print("denom: ", denom)
@@ -505,11 +506,12 @@ class BoomFrankWolfe(Solver):
             new_sol =  self.create_new_solution(tuple(new_x), problem)
             problem.simulate(new_sol, r)
             added_budget += r
-            
+            #print("dir size: ", np.linalg.norm(d))
             newF = -1 * problem.minmax[0] * new_sol.objectives_mean
             
             #sufficient decrease
             if(newF < curF + self.factors['theta'] * step_size * np.dot(grad, d)):
+                #print("sufficient by interpolation")
                 break;
             
             #quadratic interpolation using phi(0), phi'(0), phi(step)
@@ -521,9 +523,6 @@ class BoomFrankWolfe(Solver):
                 #if we can make some progress
                 #new_step_size = ((-grad.dot(d))*(step_size**2))/(2*(newF-curF-step_size*(grad.dot(d))))
                 step_size = min(new_step_size,max_step)
-            #elif(new_step_size == 0):
-            #    step_size = 0
-            #    break;
             else:
                 #if we did not make progress, use the informaiton {step*ratio}
                 temp_x = cur_x + (step_size*ratio)*d
@@ -535,7 +534,7 @@ class BoomFrankWolfe(Solver):
                 #new_step_size = ((-grad.dot(d))*((step_size*ratio)**2))/(2*(newF-curF-(step_size*ratio)*(grad.dot(d))))
                 new_step_size = self.full_min_quadratic(sign*grad.dot(d),sign*curF,sign*newF,0,step_size*ratio,problem)
                 #check if it's in the interval
-                if(new_step_size <= 0): #outside interval (too small)
+                if(new_step_size <= 1e-15): #outside interval (too small)
                     step_size = 0
                     break;
                 elif(new_step_size > step_size*ratio): #outside interval (too big)
@@ -920,14 +919,6 @@ class BoomFrankWolfe(Solver):
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
                 grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
                 expended_budget += budget_spent
-                # A while loop to prevent zero gradient.
-                #while np.all((grad == 0)):
-                #    if expended_budget > problem.factors["budget"]:
-                #        break
-                #    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
-                #    expended_budget += budget_spent
-                    # Update r after each iteration.
-                #    r = int(self.factors["lambda"] * r)
   
             v = self.get_dir(grad,Ce, Ci, de, di,lower,upper) 
             #direction = (v-cur_x)/np.linalg.norm(v-cur_x)
@@ -948,10 +939,6 @@ class BoomFrankWolfe(Solver):
                 gamma = min(self.factors["step_f"](k),max_gamma)
             
             #k = self.get_max_gamma_ratio_test(cur_x, direction, Ce, Ci, de, di, lower, upper)
-            #print("current max gamma: ", k)
-            #print("gamma: ", gamma)
-            #print("direction: ",direction)
-            #print("grad*direction: ", np.linalg.norm(grad.dot(direction)))
             #new_x = (1 - gamma)*np.array(cur_x) + gamma*v
             new_x = np.array(cur_x) + gamma*direction
             #print("new x: ",new_x)
@@ -961,8 +948,13 @@ class BoomFrankWolfe(Solver):
             expended_budget += r
             
             new_solution = candidate_solution
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
+            
+            # Append new solution.
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+                best_solution = new_solution
+                #recommended_solns.append(candidate_solution)
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
             
             k += 1
             #print("obj: ",candidate_solution.objectives_mean)
@@ -1114,14 +1106,6 @@ class BoomFrankWolfe(Solver):
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
                 grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
                 expended_budget += budget_spent
-                # A while loop to prevent zero gradient.
-                #while np.all((grad == 0)):
-                #    if expended_budget > problem.factors["budget"]:
-                #        break
-                #    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
-                #    expended_budget += budget_spent
-                    # Update r after each iteration.
-                #    r = int(self.factors["lambda"] * r)
                    
             #print("grad: ", grad)
             #print("active set: ")
@@ -1146,16 +1130,6 @@ class BoomFrankWolfe(Solver):
             else:#go to the open space
                 d_FW = s
                 s = d_FW
-
-            #d_FW = d_FW/np.linalg.norm(d_FW)
-            #d_FW = d_away/np.linalg.norm(d_away)
-            #print("dFW: ",d_FW)
-            #print("d_away: ",d_away)
-            #print("forward step direction: ",s)
-            #print("is bounded: ",is_bounded)
-            #print("away step direction: ", v)
-            #print("current point: ",cur_x)
-            #print("v: ",v)
             
             #there is no way to move further since we finished early
             if((d_FW == 0).all() and (d_away == 0).all()):
@@ -1316,11 +1290,17 @@ class BoomFrankWolfe(Solver):
             problem.simulate(candidate_solution, r)
             #print("obj: ",candidate_solution.objectives_mean)
             expended_budget += r
-
+            
             new_solution = candidate_solution
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            #print("obj: ",candidate_solution.objectives_mean)
+            
+            # Append new solution.
+            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+                best_solution = new_solution
+                #recommended_solns.append(candidate_solution)
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+
+                #print("obj: ",new_solution.objectives_mean)
             
             k += 1
             #print("--------------")
