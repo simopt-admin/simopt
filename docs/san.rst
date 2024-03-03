@@ -96,3 +96,62 @@ Unknown
 Optimal Objective Function Value:
 ---------------------------------
 Unknown
+
+
+Optimization Problem: Minimize Longest Path with Constraint on Sum of Arc Means (SAN-2)
+=======================================================================================
+
+Decision Variables:
+-------------------
+* arc_means
+
+Objectives:
+-----------
+Suppose that we can select :math:`\theta_i > 0` for each :math:`i`,
+but there is an associated cost. Unlike the original san problem, we now want to minimize :math:`ET(\theta)`,
+where :math:`T(\theta)` is the (random) duration of the longest path from :math:`a`
+to :math:`i`.
+
+The objective function is convex in :math:`\theta`. An IPA estimator of the gradient
+is also given in the code.
+
+Constraints:
+------------
+We require that :math:`\theta_i > 0` for each :math:`i`.
+Additionaly, we include another constraint to impose a lower bound to the sum of arc_means.
+which is :math:`\sum_i \theta_i \geq sum\_lb`
+
+Problem Factors:
+----------------
+* budget: Max # of replications for a solver to take.
+
+  * Default: 10000
+
+* arc_costs: Cost associated to each arc.
+
+  * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+
+* sum_lb: The lower bound for sum of arc_means.
+
+  * Default: 30.0
+
+Fixed Model Factors:
+--------------------
+* N/A
+
+Starting Solution: 
+------------------
+* initial_solution: (8,) * 13
+
+Random Solutions: 
+-----------------
+Use acceptance-rejection to sample each arc_mean uniformly from a lognormal distribution with 
+2.5- and 97.5-percentiles at 0.1 and 10 respectively such that the arc_mean remains on the feasible region.
+
+Optimal Solution:
+-----------------
+Unknown
+
+Optimal Objective Function Value:
+---------------------------------
+Unknown
