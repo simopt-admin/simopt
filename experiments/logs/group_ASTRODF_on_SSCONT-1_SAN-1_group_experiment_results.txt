@@ -34,9 +34,117 @@ ASTRODF
 	Solver Factors:
 		crn_across_solns: True
 		eta_1: 0.1
+		eta_2: 0.638
+		gamma_1: 1.0
+		gamma_2: 0.645
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.9
+		gamma_1: 1.0
+		gamma_2: 0.645
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.746
+		gamma_1: 1.0
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.5
+		eta_2: 0.746
+		gamma_1: 1.0
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.3
+		eta_2: 0.7
+		gamma_1: 2.0
+		gamma_2: 0.5
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.3
+		eta_2: 0.7
+		gamma_1: 1.0
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.3
+		eta_2: 0.7
+		gamma_1: 1.0
+		gamma_2: 0.5
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.5
+		eta_2: 0.587
+		gamma_1: 3.0
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
 		eta_2: 0.5
 		gamma_1: 1.74
 		gamma_2: 0.514
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.5
+		eta_2: 0.737
+		gamma_1: 1.633
+		gamma_2: 0.49
 		lambda_min: 4
 		easy_solve: True
 		reuse_points: True
@@ -57,10 +165,10 @@ ASTRODF
 ASTRODF
 	Solver Factors:
 		crn_across_solns: True
-		eta_1: 0.5
-		eta_2: 0.75
-		gamma_1: 1.74
-		gamma_2: 0.514
+		eta_1: 0.1
+		eta_2: 0.5
+		gamma_1: 1.633
+		gamma_2: 0.491
 		lambda_min: 4
 		easy_solve: True
 		reuse_points: True
@@ -70,9 +178,33 @@ ASTRODF
 	Solver Factors:
 		crn_across_solns: True
 		eta_1: 0.1
-		eta_2: 0.5
+		eta_2: 0.572
 		gamma_1: 1.0
-		gamma_2: 0.5
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.618
+		gamma_1: 1.0
+		gamma_2: 0.9
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.5
+		eta_2: 0.618
+		gamma_1: 1.0
+		gamma_2: 0.9
 		lambda_min: 4
 		easy_solve: True
 		reuse_points: True
@@ -83,8 +215,20 @@ ASTRODF
 		crn_across_solns: True
 		eta_1: 0.3
 		eta_2: 0.7
-		gamma_1: 2.0
-		gamma_2: 0.5
+		gamma_1: 1.0
+		gamma_2: 0.1
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.9
+		gamma_1: 3.0
+		gamma_2: 0.9
 		lambda_min: 4
 		easy_solve: True
 		reuse_points: True
@@ -97,6 +241,30 @@ The .pickle files for the associated Problem-Solver pairs are:
 	ASTRODF_on_SSCONT-1.pickle
 	ASTRODF_on_SSCONT-1.pickle
 	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SSCONT-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
+	ASTRODF_on_SAN-1.pickle
 	ASTRODF_on_SAN-1.pickle
 	ASTRODF_on_SAN-1.pickle
 	ASTRODF_on_SAN-1.pickle

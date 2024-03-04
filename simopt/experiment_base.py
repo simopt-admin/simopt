@@ -2977,8 +2977,7 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
             
     if cross_design_factors == None:
         cross_design_factors = {}
-             
-    print('design object', design_object)
+
     # Create solver factor design from .txt file of factor settings.
     # Hard-coded for a single-stack NOLHS.
     command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
