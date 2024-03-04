@@ -4,7 +4,7 @@ Model: Non-progressive Cascade Process (CASCADETIME)
 Description:
 ------------
 In each replication, we simulate non-progressive cascade(s) process within a finite time :math:`\tau`. The non-progressive cascade process is similar
-to the progressive one (see the .rst file for CASCADE) but within a finite tiem horizon and including the probability of becoming inactive 
+to the progressive one (see the .rst file for CASCADE) but within a finite time horizon and including the probability of becoming inactive 
 at each time step :math:`\beta_v` for node :math:`v \in V`. Besides, the initial node activation probabilities become :math:`u_v^t \in [0,1] \forall v \in V,
 t = \{1, 2, \ldots, \tau\}`, which is time-dependent.
 
