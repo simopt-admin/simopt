@@ -58,7 +58,7 @@ class BoomFrankWolfe(Solver):
             "LSmethod":{
                 "description": "methods for line search algorithm",
                 "datatype":str,
-                "default":self.backtrackLineSearch
+                "default":"backtracking"
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
@@ -98,7 +98,7 @@ class BoomFrankWolfe(Solver):
             "backtrack":{
                 "description": "an indicator whether we do the backtrack",
                 "datatype": bool,
-                "default": 0
+                "default": 1
             },
             "algorithm":{
                 "description": "type of FW algorithm",
