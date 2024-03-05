@@ -185,13 +185,17 @@ class BoomFrankWolfe(Solver):
         if((Ci is not None) and (di is not None)):
             #constraints += [Ci@(cur_x + step*d) <= di]
             ratio_val += list((di - Ci@cur_x)/(Ci@d))
-            #print(Ci@d)
-            if(type(Ci@d) == float or type(Ci@d) == int):
-                denom += list([Ci@d])
-            else:
+            denom += [Ci@d]
+            #print("check: ",Ci@d)
+            #if((type(Ci@d) == float) or (type(Ci@d) == int)):
+            #    print("float: ",type(Ci@d))
+            #    denom += [Ci@d]
+            #else:
+                #print()
+            #    print("not float",type(Ci@d))
                 #print(Ci@d)
                 #print(denom)
-                denom += [Ci@d]
+            #    denom += list(Ci@d)
         #print(denom)
         #print("ratio: ", ratio_val)
         #print("denom: ", denom)
