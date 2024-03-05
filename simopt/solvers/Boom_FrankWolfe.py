@@ -189,7 +189,9 @@ class BoomFrankWolfe(Solver):
             if(type(Ci@d) == float or type(Ci@d) == int):
                 denom += list([Ci@d])
             else:
-                denom += list(Ci@d)
+                #print(Ci@d)
+                #print(denom)
+                denom += [Ci@d]
         #print(denom)
         #print("ratio: ", ratio_val)
         #print("denom: ", denom)
