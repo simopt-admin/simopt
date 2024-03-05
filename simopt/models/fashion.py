@@ -13,17 +13,16 @@ from ..base import Model, Problem
 
 class Fashion(Model):
     """
-    A model that simulates multiple periods' worth of sales for a (s,S)
-    inventory problem with continuous inventory, exponentially distributed
-    demand, and poisson distributed lead time. Returns the various types of
-    average costs per period, order rate, stockout rate, fraction of demand
-    met with inventory on hand, average amount backordered given a stockout
-    occured, and average amount ordered given an order occured.
+
+    A model that simulates a redorder quantity dyring a sales season for an inventory 
+    replenishment problem with current inventory position, backlogged demand, 
+    forecasted future demand, customer's willingness to backorder, and returns taken
+    into account. Returns an optimal time t and an inventory reorder quantity Q2. 
 
     Attributes
     ----------
     name : str
-        name of model
+        name of model  
     n_rngs : int
         number of random-number generators used to run a simulation replication
     n_responses : int
@@ -40,26 +39,24 @@ class Fashion(Model):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-        ``demand_mean``
-            Mean of exponentially distributed demand in each period (`flt`)
-        ``lead_mean``
-            Mean of Poisson distributed order lead time (`flt`)
-        ``backorder_cost``
-            Cost per unit of demand not met with in-stock inventory (`flt`)
-        ``holding_cost``
-            Holding cost per unit per period (`flt`)
-        ``fixed_cost``
-            Order fixed cost (`flt`)
-        ``variable_cost``
-            Order variable cost per unit (`flt`)
-        ``s``
-            Inventory position threshold for placing order (`flt`)
-        ``S``
-            Max inventory position (`flt`)
-        ``n_days``
-            Number of periods to simulate (`int`)
-        ``warmup``
-            Number of periods as warmup before collecting statistics (`int`)
+        ``leadtime``
+            the time between the ordering and recieving of products (t+11) (int)
+
+        ``product_price``
+            fixed price of products, does NOT change (int)
+
+        ``n_weeks``
+            number of weeks to simulate (int)
+
+        ``return_limit``
+            the time given to return merchandise (after 1 week, items considered as sold) (int)
+
+         ``customer_wait``
+            the time a customer is willing to wait for a backorder 
+  
+
+        
+
     See also
     --------
     base.Model
@@ -67,110 +64,65 @@ class Fashion(Model):
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
-        self.name = "SSCONT"
+        self.name = "Fashion"
         self.n_rngs = 2
-        self.n_responses = 7
+        self.n_responses = 7 #????
         self.factors = fixed_factors
         self.specifications = {
-            "demand_mean": {
-                "description": "mean of exponentially distributed demand in each period",
-                "datatype": float,
-                "default": 100.0
-            },
-            "lead_mean": {
-                "description": "mean of Poisson distributed order lead time",
-                "datatype": float,
-                "default": 6.0
-            },
-            "backorder_cost": {
-                "description": "cost per unit of demand not met with in-stock inventory",
-                "datatype": float,
-                "default": 4.0
-            },
-            "holding_cost": {
-                "description": "holding cost per unit per period",
-                "datatype": float,
-                "default": 1.0
-            },
-            "fixed_cost": {
-                "description": "order fixed cost",
-                "datatype": float,
-                "default": 36.0
-            },
-            "variable_cost": {
-                "description": "order variable cost per unit",
-                "datatype": float,
-                "default": 2.0
-            },
-            "s": {
-                "description": "inventory threshold for placing order",
-                "datatype": float,
-                "default": 1000.0
-            },
-            "S": {
-                "description": "max inventory",
-                "datatype": float,
-                "default": 2000.0
-            },
-            "n_days": {
-                "description": "number of periods to simulate",
+            "leadtime": {
+                "description": " the time between the ordering and recieving of products (t+11)",
                 "datatype": int,
-                "default": 100
+                "default": 11
             },
-            "warmup": {
-                "description": "number of periods as warmup before collecting statistics",
+            "product_price": {
+                "description": "fixed price of products, does NOT change",
+                "datatype": float,
+                "default": 20.0 #20 dolllars a piece? 
+            },
+            "n_weeks": {
+                "description": "number of weeks to simulate",
                 "datatype": int,
-                "default": 20
+                "default": 22
+            },
+            "return_limit": {
+                "description": "the time given to return merchandise (after 1 week, items considered as sold)",
+                "datatype": int,
+                "default": 1
+            },
+              "customer_wait": {
+                "description": " the time a customer is willing to wait for a backorder ",
+                "datatype": float,
+                "default": # formula from onenote? 
             }
+
         }
         self.check_factor_list = {
-            "demand_mean": self.check_demand_mean,
-            "lead_mean": self.check_lead_mean,
-            "backorder_cost": self.check_backorder_cost,
-            "holding_cost": self.check_holding_cost,
-            "fixed_cost": self.check_fixed_cost,
-            "variable_cost": self.check_variable_cost,
-            "s": self.check_s,
-            "S": self.check_S,
-            "n_days": self.check_n_days,
-            "warmup": self.check_warmup
+            "leadtime": self.check_leadtime,
+            "product_price": self.check_product_price,
+            "n_weeks": self.check_n_weeks,
+            "return_limit": self.check_return_limit,
+            "customer_wait": self.check_customer_wait,  
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
-        return self.factors["demand_mean"] > 0
+    def check_leadtime(self):
+        return self.factors["leadtime"] > 11
 
-    def check_lead_mean(self):
-        return self.factors["lead_mean"] > 0
+    def check_product_price(self):
+        return self.factors["product_price"] > 0
 
-    def check_backorder_cost(self):
-        return self.factors["backorder_cost"] > 0
+    def check_n_weeks(self):
+        return self.factors["n_weeks"] > 1
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+    def check_return_limit(self):
+        return self.factors["return_limit"] > 0
 
-    def check_fixed_cost(self):
-        return self.factors["fixed_cost"] > 0
+    def check_customer_wait(self):
+        return self.factors["customer_wait"] > 0
 
-    def check_variable_cost(self):
-        return self.factors["variable_cost"] > 0
-
-    def check_s(self):
-        return self.factors["s"] > 0
-
-    def check_S(self):
-        return self.factors["S"] > 0
-
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
-
-    def check_warmup(self):
-        return self.factors["warmup"] >= 0
-
-    def check_simulatable_factors(self):
-        return self.factors["s"] < self.factors["S"]
+  
 
     def replicate(self, rng_list):
         """
