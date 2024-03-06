@@ -27,7 +27,7 @@ mean = [15,15,15] # mean parameter for poisson demand distribution
 
 # problem factors
 init_sol = [40, 40, 100]
-budget = 3000
+budget = 1000
 
 # datafarming factors
 max_m_cost = [5,5,5] # upper bound on material cost for each material type
