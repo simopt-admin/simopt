@@ -23,7 +23,10 @@ problem_names = ['SSCONT-1', 'SAN-1'] # list of problem names for solver design 
 design_filename = ".\data_farming_experiments\RNDSRCH_design.csv" 
 
 # list of dictionaries that provide fixed factors for problems when you don't want to use the default values, if you want to use all default values use empty dictionary (first problem factors then model), order must match problem 
-problem_fixed_factors = [[{},{}],[{},{}]]
+problem_fixed_factors = [[{'budget': 2000},{'demand_mean': 90.0, 'fixed_cost':25}],[{'budget': 500},{}]]
+
+# uncomment this version to run w/ only default problem factors
+#problem_fixed_factors = [[{},{}],[{},{}]]
 
 solver_fixed_factors = {} # use this dictionary to change any default solver factors that were not included in the design
 

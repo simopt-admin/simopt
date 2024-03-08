@@ -4,18 +4,18 @@ Problems:
 
 SSCONT-1
 	Model Factors:
-		demand_mean: 100.0
+		demand_mean: 90.0
+		fixed_cost: 25
 		lead_mean: 6.0
 		backorder_cost: 4.0
 		holding_cost: 1.0
-		fixed_cost: 36.0
 		variable_cost: 2.0
 		n_days: 100
 		warmup: 20
 
 	Problem Factors:
+		budget: 2000
 		initial_solution: (600, 600)
-		budget: 1000
 
 SAN-1
 	Model Factors:
@@ -23,8 +23,8 @@ SAN-1
 		arcs: [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5), (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
 
 	Problem Factors:
+		budget: 500
 		initial_solution: (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)
-		budget: 10000
 		arc_costs: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 ----------------------------------------------------------------------------------------------

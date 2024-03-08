@@ -2390,7 +2390,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # master list variables
         self.master_solver_dict = {} # for each name of solver or solver design has list that includes: list of dps, solver name
-        self.master_problem_dict =  {} # for each name of solver or solver design has list that includes: list of dps, solver name
+        self.master_problem_dict =  {} # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
         self.master_experiment_dict = {} # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
         self.ran_experiments_dict = {} # dictionary of experiments that have been run orgainized by experiment name
         self.design_types_list = ['nolhs'] # available design types that can be used during datafarming
@@ -2438,6 +2438,8 @@ class New_Experiment_Window(tk.Toplevel):
         self.problem_datafarm_frame = tk.Frame(master = self.master)
         self.model_datafarm_frame = tk.Frame(master = self.master)
         self.design_display_frame = tk.Frame(master = self.master)
+        
+
 
         
         '''Title'''
@@ -2900,6 +2902,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.clear_frame(self.design_display_frame )
         
         
+        
         ''' Initialize frames, headers, and data farming buttons'''
 
         self.problem_datafarm_frame = tk.Frame(master = self.problem_datafarm_notebook_frame)
@@ -3102,7 +3105,7 @@ class New_Experiment_Window(tk.Toplevel):
                             widget.configure(state = 'disabled')
                             
         # enable or disable problem and model design options depending on which factors are selected                    
-        if class_type == Problem or Model:
+        if class_type == Problem or class_type == Model:
             all_false_problem = all([var.get() == False for var in self.problem_checkstates.values()])
             all_false_model = all([var.get() == False for var in self.model_checkstates.values()])    
             if all_false_problem:
@@ -3513,19 +3516,20 @@ class New_Experiment_Window(tk.Toplevel):
         #convert fixed factors to proper data type
         model_fixed_factors = self.convert_proper_datatype(self.model_datafarm_defaults, self.model_datafarm_object.specifications)
         
-        # add fixed model factors to design list
-        for dp in self.problem_design_list:
-            for model_factor in model_fixed_factors:
-                dp[model_factor] = model_fixed_factors[model_factor]
+        # # add fixed model factors to design list
+        # for dp in self.problem_design_list:
+        #     for model_factor in model_fixed_factors:
+        #         dp[model_factor] = model_fixed_factors[model_factor]
 
         problem_design_name = self.problem_design_name
         
         problem_holder_list = [] # holds all problem lists within design name
-        for dp in self.problem_design_list:
-            problem_list = [] # holds dictionary of dps and problem name
-            problem_list.append(dp)
-            problem_list.append(self.problem_datafarm_object.name)
-            problem_holder_list.append(problem_list)
+        for index, dp in enumerate(self.problem_design_list):
+            dp_list = [] # holds dictionary of factors for current dp
+            dp_list.append(dp) # append problem factors
+            dp_list.append(model_fixed_factors) # append model factors
+            dp_list.append(self.problem_datafarm_object.name) #append name of problem
+            problem_holder_list.append(dp_list) # add current dp information to holder list
 
             
         self.master_problem_dict[problem_design_name] = problem_holder_list
@@ -3538,19 +3542,20 @@ class New_Experiment_Window(tk.Toplevel):
         #convert fixed factors to proper data type
         problem_fixed_factors = self.convert_proper_datatype(self.problem_datafarm_defaults, self.problem_datafarm_object.specifications)
         
-        # add fixed model factors to design list
-        for dp in self.model_design_list:
-            for problem_factor in problem_fixed_factors:
-                dp[problem_factor] = problem_fixed_factors[problem_factor]
+        # # add fixed model factors to design list
+        # for dp in self.model_design_list:
+        #     for problem_factor in problem_fixed_factors:
+        #         dp[problem_factor] = problem_fixed_factors[problem_factor]
 
         problem_design_name = self.problem_design_name
         
         problem_holder_list = [] # holds all problem lists within design name
-        for dp in self.model_design_list:
-            problem_list = [] # holds dictionary of dps and problem name
-            problem_list.append(dp)
-            problem_list.append(self.problem_datafarm_object.name)
-            problem_holder_list.append(problem_list)
+        for index, dp in enumerate(self.model_design_list):
+            dp_list = [] # holds dictionary of factors for current dp
+            dp_list.append(problem_fixed_factors) # append problem factors
+            dp_list.append(dp) # append model factors
+            dp_list.append(self.problem_datafarm_object.name) #append name of problem
+            problem_holder_list.append(dp_list) # add current dp information to holder list
            
         self.master_problem_dict[problem_design_name] = problem_holder_list
         print('master problem', self.master_problem_dict)
@@ -3559,26 +3564,29 @@ class New_Experiment_Window(tk.Toplevel):
     
     def add_problem_and_model_design_to_experiment(self):
         
-        # comdine dps from problem and model designs
-        both_design_list = [] # will hold dictionaries for all dps for both problem and model
-        for problem_dp in self.problem_design_list:
-            for model_dp in self.model_design_list:
-                dp = {}
-                for problem_factor in problem_dp:
-                    dp[problem_factor] = problem_dp[problem_factor]
-                for model_factor in model_dp:
-                    dp[model_factor] = model_dp[model_factor]
-                both_design_list.append(dp)
+        # # comdine dps from problem and model designs
+        # both_design_list = [] # will hold dictionaries for all dps for both problem and model
+        # for problem_dp in self.problem_design_list:
+        #     for model_dp in self.model_design_list:
+                
+                
+        #         dp = {}
+        #         for problem_factor in problem_dp:
+        #             dp[problem_factor] = problem_dp[problem_factor]
+        #         for model_factor in model_dp:
+        #             dp[model_factor] = model_dp[model_factor]
+        #         both_design_list.append(dp)
         
 
         problem_design_name = self.problem_design_name
         
         problem_holder_list = [] # holds all problem lists within design name
-        for dp in both_design_list:
-            problem_list = [] # holds dictionary of dps and problem name
-            problem_list.append(dp)
-            problem_list.append(self.problem_datafarm_object.name)
-            problem_holder_list.append(problem_list)
+        for index, dp in enumerate(self.problem_design_list):
+            dp_list = [] # holds dictionary of factors for current dp
+            dp_list.append(dp) # append problem factors
+            dp_list.append(self.model_design_list[index]) # append model factors
+            dp_list.append(self.problem_datafarm_object.name) #append name of problem
+            problem_holder_list.append(dp_list) # add current dp information to holder list
 
             
         self.master_problem_dict[problem_design_name] = problem_holder_list
@@ -3605,7 +3613,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.problem_del_buttons[problem_design_name] = self.problem_del_button
         
         # refresh problem design name entry box
-        self.problem_name_var.set(self.get_unique_name(self.master_problem_dict, problem_design_name))
+        self.problem_design_name_var.set(self.get_unique_name(self.master_problem_dict, problem_design_name))
     
     def add_solver_design_to_experiment(self):
 
@@ -3637,7 +3645,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.solver_del_buttons[solver_design_name] = self.solver_del_button
         
         # refresh solver design name entry box
-        self.solver_name_var.set(self.get_unique_name(self.master_solver_dict, solver_design_name))
+        self.solver_design_name_var.set(self.get_unique_name(self.master_solver_dict, solver_design_name))
 
     def edit_solver(self, solver_save_name):
         
@@ -3773,8 +3781,8 @@ class New_Experiment_Window(tk.Toplevel):
             
         for problem_group in self.master_problem_dict:
             for dp in self.master_problem_dict[problem_group]:
-                factors = dp[0]
-                problem_name = dp[1]
+                factors = [dp[0],dp[1]]
+                problem_name = dp[2]
                 self.master_problem_factor_list.append(factors)
                 self.master_problem_name_list.append(problem_name)
 
