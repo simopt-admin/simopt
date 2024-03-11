@@ -4,18 +4,18 @@ Problems:
 
 SSCONT-1
 	Model Factors:
-		demand_mean: 100.0
+		demand_mean: 90.0
+		fixed_cost: 25
 		lead_mean: 6.0
 		backorder_cost: 4.0
 		holding_cost: 1.0
-		fixed_cost: 36.0
 		variable_cost: 2.0
 		n_days: 100
 		warmup: 20
 
 	Problem Factors:
+		budget: 2000
 		initial_solution: (600, 600)
-		budget: 1000
 
 SAN-1
 	Model Factors:
@@ -23,8 +23,8 @@ SAN-1
 		arcs: [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5), (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
 
 	Problem Factors:
+		budget: 500
 		initial_solution: (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)
-		budget: 10000
 		arc_costs: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 ----------------------------------------------------------------------------------------------
@@ -117,37 +117,37 @@ RNDSRCH
 
 ----------------------------------------------------------------------------------------------
 The .pickle files for the associated Problem-Solver pairs are:
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SSCONT-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	RNDSRCH_on_SAN-1.pickle
+RNDSRCH_0_on_SSCONT-1_0.pickle
+RNDSRCH_0_on_SAN-1_1.pickle
+RNDSRCH_1_on_SSCONT-1_0.pickle
+RNDSRCH_1_on_SAN-1_1.pickle
+RNDSRCH_2_on_SSCONT-1_0.pickle
+RNDSRCH_2_on_SAN-1_1.pickle
+RNDSRCH_3_on_SSCONT-1_0.pickle
+RNDSRCH_3_on_SAN-1_1.pickle
+RNDSRCH_4_on_SSCONT-1_0.pickle
+RNDSRCH_4_on_SAN-1_1.pickle
+RNDSRCH_5_on_SSCONT-1_0.pickle
+RNDSRCH_5_on_SAN-1_1.pickle
+RNDSRCH_6_on_SSCONT-1_0.pickle
+RNDSRCH_6_on_SAN-1_1.pickle
+RNDSRCH_7_on_SSCONT-1_0.pickle
+RNDSRCH_7_on_SAN-1_1.pickle
+RNDSRCH_8_on_SSCONT-1_0.pickle
+RNDSRCH_8_on_SAN-1_1.pickle
+RNDSRCH_9_on_SSCONT-1_0.pickle
+RNDSRCH_9_on_SAN-1_1.pickle
+RNDSRCH_10_on_SSCONT-1_0.pickle
+RNDSRCH_10_on_SAN-1_1.pickle
+RNDSRCH_11_on_SSCONT-1_0.pickle
+RNDSRCH_11_on_SAN-1_1.pickle
+RNDSRCH_12_on_SSCONT-1_0.pickle
+RNDSRCH_12_on_SAN-1_1.pickle
+RNDSRCH_13_on_SSCONT-1_0.pickle
+RNDSRCH_13_on_SAN-1_1.pickle
+RNDSRCH_14_on_SSCONT-1_0.pickle
+RNDSRCH_14_on_SAN-1_1.pickle
+RNDSRCH_15_on_SSCONT-1_0.pickle
+RNDSRCH_15_on_SAN-1_1.pickle
+RNDSRCH_16_on_SSCONT-1_0.pickle
+RNDSRCH_16_on_SAN-1_1.pickle

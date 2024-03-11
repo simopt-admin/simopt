@@ -2426,6 +2426,12 @@ class ProblemsSolvers(object):
 
     Parameters
     ----------
+    solver_factors: list[dict], optional
+        list of dictionaries that contain solver factors at different design points. Each variant of solver with be crossed together with each vairant of problem.
+        (requires solver_names with a name provided for each index in solver_factors)
+    problem_factors: list[dict], optional
+        list of dictionaries that contain problem and model factors at different design points. Each variant of problem will be crossed together with each variant of solver.
+        (requires problem_names with a name provided for each index in problem_factors)
     solver_names : list [str], optional
         List of solver names.
     problem_names : list [str], optional
@@ -2485,12 +2491,22 @@ class ProblemsSolvers(object):
             problems = []
             for index, dp in enumerate(problem_factors):
                 problem_name = problem_names[index] # get corresponding name of solver or problem from names 
-                
-                problem = problem_directory[problem_name](fixed_factors = dp[0], model_fixed_factors = dp[1])
+                fixed_factors = {} # will hold problem factor values for current dp
+                model_fixed_factors = {} # will hold model factor values for current dp
+                default_problem = problem_directory[problem_name]() # create default instance of problem to compare factor names
+                default_model = default_problem.model # default instance of model to compare factor names
 
+                # set factor values for current dp using problem/model specifications to determine if problem or model factor
+                for factor in dp:
+                    if factor in default_problem.specifications:
+                        fixed_factors[factor] = dp[factor]
+                    if factor in default_model.specifications:
+                        model_fixed_factors[factor] = dp[factor]
+                # create instance of problem and append to problems list
+                problem = problem_directory[problem_name](fixed_factors = fixed_factors, model_fixed_factors = model_fixed_factors)
                 problems.append(problem)
                 
-            self.experiments = [[ProblemSolver(solver=solver, problem=problem, file_name_path= f'./experiments/outputs/{solver.name}_{sol_indx}_on_{problem.name}_{prob_indx}') for prob_indx, problem in enumerate(problems)] for sol_indx, solver in enumerate(solvers)]
+            self.experiments = [[ProblemSolver(solver=solver, problem=problem, file_name_path= f'./experiments/outputs/{solver.name}_{sol_indx}_on_{problem.name}_{prob_indx}.pickle') for prob_indx, problem in enumerate(problems)] for sol_indx, solver in enumerate(solvers)]
             self.solvers = solvers
             self.problems = problems
             self.solver_names = solver_names
@@ -2499,11 +2515,7 @@ class ProblemsSolvers(object):
             self.problem_set = set(problem_names)
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
-            
-          
-        
-            
-            
+ 
         elif solvers is not None and problems is not None:  # Method #2
             
             self.experiments = [[ProblemSolver(solver=solver, problem=problem) for problem in problems] for solver in solvers]
@@ -2741,9 +2753,14 @@ class ProblemsSolvers(object):
             file.write("----------------------------------------------------------------------------------------------")
             # Write the name of pickle files for each Problem-Solver pair.
             file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
-            for p in self.problem_names:
-                for s in self.solver_names:
-                    file.write(f"\t{s}_on_{p}.pickle\n")
+            for solver_group in self.experiments:
+                for experiment in solver_group:
+                
+                    directory, file_name = os.path.split(experiment.file_name_path)
+                    file.write(f'{file_name}\n')
+            # for p in self.problem_names:
+            #     for s in self.solver_names:
+            #         file.write(f"\t{s}_on_{p}.pickle\n")
         file.close()
         
 
