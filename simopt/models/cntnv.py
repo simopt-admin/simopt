@@ -232,12 +232,14 @@ class CntNV(Model):
                 fact, power = n*fact, power*(self.factors["poi_mean"])[i]
                 cdf += (power/fact)*mul
             demand.append(n)
+        
+        stock_material = self.factors['order_quantity'] # use this for continuous 
 
-        # Generate binomial r.v for material levels based on yield rates
-        stock_material = [sum([1 for i in range(int(n))
-                               if demand_rng.random() < p])
-                          for p, n in zip(self.factors["purchase_yield"],
-                                          self.factors["order_quantity"])]
+        # # Generate binomial r.v for material levels based on yield rates
+        # stock_material = [sum([1 for i in range(int(n))
+        #                        if demand_rng.random() < p])
+        #                   for p, n in zip(self.factors["purchase_yield"],
+        #                                   self.factors["order_quantity"])]
         # If recourse cost is not specified, use an array of very large numbers
         # This heuristically makes it impossible to buy any recourse material
         if self.factors["recourse_cost"] is None:
@@ -250,10 +252,10 @@ class CntNV(Model):
         Objective: maximize profit => sum(sales) - sum(process cost) - sum(recourse cost)
         """
         X = pulp.LpVariable.dicts("X", range(self.factors["num_product"]),
-                                  lowBound=0, cat='Integer')
+                                  lowBound=0, cat='Continuous')
         Y = pulp.LpVariable.dicts("Y", range(self.factors["num_material"]),
-                                  lowBound=0, cat='Integer')
-        prob = pulp.LpProblem("Integer_Program", pulp.LpMaximize)
+                                  lowBound=0, cat='Continuous')
+        prob = pulp.LpProblem("Continuous Problem", pulp.LpMaximize)
         prob += pulp.lpSum(self.factors["sales_price"][i] * X[i]
                            for i in range(self.factors["num_product"])) - \
             pulp.lpSum([X[i] * self.factors["process_cost"][i]
@@ -265,6 +267,7 @@ class CntNV(Model):
         C1: sum(recourse cost) + sum(process cost) <= total budget - sum(material cost)
         C2: for each material, amount used <= (initial material + recourse quantity)
         """
+
         prob += (pulp.lpSum([Y[i]*self.factors["recourse_cost"][i]
                             for i in range(self.factors["num_material"])]) +
                  pulp.lpSum([X[i]*self.factors["process_cost"][i]
@@ -388,7 +391,7 @@ class CntNVMaxProfit(Problem):
         self.n_stochastic_constraints = 0
         self.minmax = (1,)
         self.constraint_type = "deterministic"
-        self.variable_type = "discrete"
+        self.variable_type = "continuous"
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
