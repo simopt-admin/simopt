@@ -153,7 +153,7 @@ class BoomProxGD(Solver):
 
         #constraints = [A@u <= b]
         prob = cp.Problem(objective, constraints)
-        prob.solve()#solver=cp.ECOS
+        prob.solve(abstol=1e-6)#solver=cp.ECOS
 
         return u.value
     

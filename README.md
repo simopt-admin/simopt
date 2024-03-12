@@ -8,6 +8,9 @@ AS-Linesearch
 Linesearch B, I, Z, ASS
 2. Update .rst files.
 
+## Replicate the experiments
+To replicate the experiments conducted in the paper, run the command ```python demo/demo_problems_solvers.py ```
+
 ## Description
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
