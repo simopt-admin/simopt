@@ -47,7 +47,7 @@ class Cascade(Model):
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
-        self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
+        self.G = nx.read_graphml('DAG.graphml')
         self.num_nodes = len(self.G)
         self.specifications = {
             "num_subgraph": {
@@ -217,7 +217,7 @@ class CascadeMax(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
+        self.G = nx.read_graphml('DAG.graphml')
         self.model_default_factors = {}
         self.model_decision_factors = {"init_prob"}
         self.factors = fixed_factors

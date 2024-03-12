@@ -12,9 +12,6 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 # Import the ProblemsSolvers class and other useful functions
 from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 from simopt.models.san import SANLongestPath
-from simopt.models.smf_origin import SMF_Max
-from simopt.models.rmitd import RMITDMaxRevenue
-from simopt.models.mm1queue import MM1MinMeanSojournTime
 # from simopt.models.san_1 import SANLongestPath1
 from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
 
@@ -28,10 +25,10 @@ from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_n
 # These names are strings and should match those input to directory.py.
 # Ex:
 # solver_names = ["ASTRODF", "Boom-PGD", "Boom-FW", "RNDSRCH", "GASSO", "NELDMD"]
-solver_names = ['ACTIVESET', 'Boom-FW', 'Boom-PGD', 'PGD-SS']
-problem_names = ["OPENJACKSON-1", 'SAN-1', 'SMFCVX-1', 'SMF-1', 'CASCADE-1', 'NETWORK-1']
+solver_names = ['ACTIVESET','Boom-PGD', "Boom-FW"]
+# problem_names = ["OPENJACKSON-1", 'SAN-1', 'SMFCVX-1', 'SMF-1', 'CASCADE-1', 'NETWORK-1']
 # problem_names = ["DYNAMNEWS-1", "SSCONT-1", "SAN-1"] "OPENJ-1"
-# problem_names = ["SMF-1", "SAN-1", "RMITD-1", "MM1-1"]
+problem_names = ["SMF-1", 'SMFCVX-1', 'CASCADE-1']
 # problems = [SANLongestPath, SMF_Max, RMITDMaxRevenue, MM1MinMeanSojournTime]
 
 
@@ -43,7 +40,7 @@ n_solvers = len(mymetaexperiment.experiments)
 n_problems = len(mymetaexperiment.experiments[0])
 
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=20)
+mymetaexperiment.run(n_macroreps=10)
 
 
 print("Post-processing results.")

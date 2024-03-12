@@ -16,8 +16,8 @@ import pickle
 import importlib
 import time
 import os
-# from mrg32k3a.mrg32k3a import MRG32k3a
-from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
+from mrg32k3a.mrg32k3a import MRG32k3a
+# from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
 
 from .base import Solution
 from .directory import solver_directory, problem_directory

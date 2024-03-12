@@ -307,7 +307,7 @@ class SMF_Max(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 100000
+                "default": 10000
             },
             "cap": {
                 "description": "total set-capacity to be allocated to arcs.",

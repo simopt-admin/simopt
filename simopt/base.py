@@ -10,10 +10,9 @@ import numpy as np
 from copy import deepcopy
 import sys
 import os.path as o
-# from mrg32k3a.mrg32k3a import MRG32k3a
-from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
-
-from simopt.auto_diff_util import bi_dict, replicate_wrapper
+from mrg32k3a.mrg32k3a import MRG32k3a
+# from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
+# from simopt.auto_diff_util import bi_dict, replicate_wrapper
 
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 

@@ -1,6 +1,5 @@
 import numpy as np
 import cvxpy as cp
-import gurobipy
 import matplotlib.pyplot as plt
 #import cdd
 

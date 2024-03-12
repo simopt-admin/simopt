@@ -12,14 +12,13 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
-from rng.mrg32k3a import MRG32k3a
+from mrg32k3a.mrg32k3a import MRG32k3a
+# from rng.mrg32k3a import MRG32k3a
 from simopt.models.san_2 import SANLongestPath, SANLongestPathConstr
 from simopt.models.smf import SMF_Max
 from simopt.models.smfcvx import SMFCVX_Max
-from simopt.models.rmitd0 import RMITDMaxRevenue
-from simopt.models.mm1queue import MM1MinMeanSojournTime
 from simopt.models.cascade import CascadeMax
-from simopt.models.network_2 import NetworkMinTotalCost
+from simopt.models.network import NetworkMinTotalCost
 
 
 # !! When testing a new solver/problem, first go to directory.py.

@@ -100,6 +100,11 @@ class ACTIVESET(Solver):
                 "description": "step size for finite difference",
                 "datatype": float,
                 "default": 1e-5
+            },
+            "line_search_max_iters": {
+                "description": "maximum iterations for line search",
+                "datatype": int,
+                "default": 40
             }
         }
         self.check_factor_list = {
@@ -273,16 +278,16 @@ class ACTIVESET(Solver):
                 dir, lmbd, = self.compute_search_direction(acidx, grad, problem, C)
             # If the optimal search direction is 0
             if (np.isclose(np.linalg.norm(dir), 0, rtol=0, atol=tol2)):
-                print('dir: ', dir)
+                # print('zero search dir')
                 # Terminate if Lagrange multipliers of the inequality constraints in the active set are all nonnegative.
                 if unconstr_flag or np.all(lmbd[neq:] >= 0):
-                    print('break')
+                    # print('break')
                     break
                 # Otherwise, drop the inequality constraint in the active set with the most negative Lagrange multiplier.
                 else: 
                     # q = acidx[neq + np.argmin(lmbd[neq:][lmbd[neq:] < 0])]
                     q = acidx[neq + np.argmin(lmbd[neq:])]
-                    print('q: ', q)
+                    # print('q: ', q)
                     acidx.remove(q)
             else:
                 if not unconstr_flag:
@@ -290,11 +295,14 @@ class ACTIVESET(Solver):
                 # If all constraints are feasible.
                 if unconstr_flag or np.all(C[idx,:] @ dir <= 0):
                     # Line search to determine a step_size.
-                    print('line search 1')
+                    # print('line search 1')
                     new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
-                    print('budget: ', expended_budget)
+                    # print('budget: ', expended_budget)
                     # Update maximum step size for the next iteration.
-                    max_step = step_size
+                    if (step_size == max_step):
+                        max_step = max_step / beta
+                    else:
+                        max_step = step_size
 
                 # Ratio test to determine the maximum step size possible
                 else:
@@ -314,30 +322,32 @@ class ACTIVESET(Solver):
                             if s < s_star:
                                 s_star = s
                                 q = r_idx[i]
-                    # If there is no blocking constraint (i.e., s_star >= 1)
-                    if s_star >= 1:
-                        # print('no blocking c')
+                    # If there is no blocking constraint
+                    if s_star >= max_step:
                         # Line search to determine a step_size.
-                        print('line search 2')
-                        new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-                        print('budget: ', expended_budget)
-                    # If there is a blocking constraint (i.e., s_star < 1)
+                        # print('line search 2')
+                        new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, max_step, dir, alpha, beta)
+                        # print('budget: ', expended_budget)
+                    # If there can be a blocking constraint
                     else:
-                        # Add blocking constraint to the active set.
-                        if q not in acidx:
-                            acidx.append(q)
                         # No need to do line search if s_star is 0.
                         if s_star > 0:
                             # Line search to determine a step_size.
-                            print('line search 3')
+                            # print('line search 3')
                             new_solution, step_size, expended_budget, count = self.line_search(problem, expended_budget, r, grad, new_solution, s_star, dir, alpha, beta)
-                            print('budget: ', expended_budget)
+                            if (step_size == s_star) & (q not in acidx):
+                                # Add blocking constraint to the active set.
+                                acidx.append(q)
+                            # print('budget: ', expended_budget)
+                        elif (q not in acidx):
+                            # Add blocking constraint to the active set if s_star =0.
+                            acidx.append(q)
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-                print(problem.minmax[0] * new_solution.objectives_mean)
+                # print(problem.minmax[0] * new_solution.objectives_mean)
         return recommended_solns, intermediate_budgets
 
 
@@ -536,8 +546,11 @@ class ACTIVESET(Solver):
         step_size = alpha_0
         count = 0
         x_new_solution = cur_sol
+
+        max_iter = self.factors["line_search_max_iters"]
+
         while True:
-            if expended_budget > problem.factors["budget"]:
+            if (expended_budget > problem.factors["budget"]) | (count >= max_iter):
                 break
             x_new = x + step_size * d
             # Create a solution object for x_new.

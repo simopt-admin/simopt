@@ -1,14 +1,13 @@
 This branch is dedicated to the experiments conducted for the 2024 Winter Simulation Conference paper.
 
 ## Paper TODO
-1. Debug network problem
-2. Debug fw solver
-3. Rename solvers:
+1. Rename solvers in directory.py:
 PGD-Linesearch
 FW-Linesearch
 AS-Linesearch
 Linesearch B, I, Z, ASS
-4. Update .rst files.
+2. Debug activeset
+3. Update .rst files.
 
 ## Description
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
