@@ -53,12 +53,11 @@ dp_factors["num_product"] = n_p
 # dp_factors["order quantity"] = order_quantity
 # dp_factors["poi_mean"] = mean
 
-prob_dp_factors["initial_solution"] = init_sol
-prob_dp_factors["budget"] = budget
-dp.append(prob_dp_factors)
+dp_factors["initial_solution"] = init_sol
+dp_factors["budget"] = budget
 dp.append(dp_factors)
 problem_names.append(problem_name)
-problem_factors.append(dp)
+
 print(dp)
 # solver options
 solver_name = "ASTRODF"
@@ -74,7 +73,7 @@ solver_factors = [{}]
 
 
 # call problemssolvers
-experiment = ProblemsSolvers(problem_factors = problem_factors,
+experiment = ProblemsSolvers(problem_factors = dp,
                               solver_factors = solver_factors,
                               problem_names = problem_names,
                               solver_names = solver_names)

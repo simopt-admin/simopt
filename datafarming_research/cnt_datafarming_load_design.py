@@ -20,8 +20,8 @@ problem_name = 'CNTNEWS-1'
 # process_cost = [0.1, 0.1, 0.1] # processing cost per product unit
 # order_cost = 20 # one time ordering cost
 # purchase_yeild = [.9,.9,.9] # yeild rates for initially purchased materials
-total_budget = 5000 # budget for all purchases
-sales_price = [20,20,20,20] # sales price per product unit
+#total_budget = 5000 # budget for all purchases
+#sales_price = [20,20,20,20] # sales price per product unit
 # order_quantity = [20,20,20] # intial order quantity per material
 # mean = [15,15,15] # mean parameter for poisson demand distribution
 
@@ -61,8 +61,6 @@ for row in range(n_dp):
     
     # create dictionary of all factor values at this dp
     dp_factors = {}
-    prob_dp_factors = {} # holds fixed problem factor values
-    dp = [] # list for current dp
     dp_factors["material_cost"] = m_cost
     dp_factors["recourse_cost"] = r_cost
     dp_factors["salvage_price"] = s_price
@@ -77,11 +75,10 @@ for row in range(n_dp):
     # dp_factors["order quantity"] = order_quantity
     # dp_factors["poi_mean"] = mean
     
-    prob_dp_factors["initial_solution"] = init_sol
-    prob_dp_factors["budget"] = budget
-    dp.append(prob_dp_factors)
-    dp.append(dp_factors)
-    problem_factors.append(dp)
+    dp_factors["initial_solution"] = init_sol
+    dp_factors["budget"] = budget
+
+    problem_factors.append(dp_factors)
     problem_names.append(problem_name)
 
 # solver options
