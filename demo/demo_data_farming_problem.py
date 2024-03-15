@@ -11,29 +11,33 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 from simopt.experiment_base import create_design, ProblemsSolvers
 
 
-
-# Specify the name of the solver as it appears in directory.py
-solver_name = "ASTRODF"
-# list of problem names for solver design to be run on (if more than one version of same problem, repeat name)
 # Specify the name of the problem as it appears in directory.py
-problem_names = ['SSCONT-1', 'SAN-1']
+problem_name = "CNTNEWS-1"
+# Specify the name of the model as it appears in directory.py
+model_name = "CNTNEWS"
+# Specify the name of the solver as it appears in directory.py
+solver_names = ["ASTRODF","RNDSRCH"]
 
-# Specify the names of the sovler factors (in order) that will be varied.
-solver_factor_headers = ["eta_1", "eta_2", "lambda_min" ]
-
+# Specify the names of the model factors (in order) that will be varied.
+model_factor_headers = ["purchase_price", "sales_price", "order_quantity"]
 
 # OPTIONAL: factors chosen for cross design
 # factor name followed by list containing factor values to cross design over
-solver_cross_design_factors = {'crn_across_solns': [True, False]} 
+#model_cross_design_factors = {}
+
+
+# OPTIONAL: Provide additional overrides for model default factors.
+# If empty, default factor settings are used.
+model_fixed_factors = {"salvage_price": 5, "Burr_c": 1}
 
 # OPTIONAL: Provide additional overrides for solver default factors.
 # If empty, default factor settings are used.
-solver_fixed_factors = {}
-# OPTIONAL: Provide additional overrides for problem default factors.
-# If empty, default factor settings are used.
 # list of dictionaries that provide fixed factors for problems when you don't want to use the default values
-# if you want to use all default values use empty dictionary, order must match problem names 
-problem_fixed_factors = [{'budget': 2000, 'demand_mean': 90.0, 'fixed_cost':25},{'budget': 500}]
+# if you want to use all default values use empty dictionary, order must match problem names
+solver_fixed_factors = [{"eta_1": .5, "eta_2": .4}, {"sample_size": 15}]
+
+# uncomment this version to run w/ only default solver factors
+#sp;ver_fixed_factors = [{},{}]
 
 # Provide the name of a file  .txt locatated in the datafarming_experiments folder containing
 # the following:
@@ -43,10 +47,11 @@ problem_fixed_factors = [{'budget': 2000, 'demand_mean': 90.0, 'fixed_cost':25},
 #         - second column: upper bound for factor value
 #         - third column: (integer) number of digits for discretizing values
 #                         (e.g., 0 corresponds to integral values for the factor)
-solver_factor_settings_filename = "astrodf_testing"
+model_factor_settings_filename = "testing_model_cntnews_1"
 
 # Specify the number stacks to use for ruby design creation
-solver_n_stacks = 1
+problem_n_stacks = 1
+
 
 # Specify a common number of macroreplications of each unique solver/problem combination
 # i.e., the number of runs at each design point.
@@ -64,24 +69,24 @@ crn_across_budget = True  # Default
 crn_across_macroreps = False  # Default
 crn_across_init_opt = True  # Default
 
-# Create DataFarmingExperiment object for sovler design
-solver_design_list = create_design(name=solver_name,
-                factor_headers=solver_factor_headers,
-                factor_settings_filename=solver_factor_settings_filename,
-                n_stacks=solver_n_stacks,
-                fixed_factors=solver_fixed_factors, #optional
-                cross_design_factors= solver_cross_design_factors, #optional
+# Create DataFarmingExperiment object for model design
+model_design_list = create_design(name=model_name,
+                factor_headers=model_factor_headers,
+                factor_settings_filename=model_factor_settings_filename,
+                n_stacks=problem_n_stacks,
+                fixed_factors=model_fixed_factors, #optional
+                #cross_design_factors=model_cross_design_factors, #optional
                 )
 
-# create solver name list for ProblemsSolvers (do not edit)
-solver_names = []
-for i in range(len(solver_design_list)): 
-    solver_names.append(solver_name)
     
+# create proble name list for ProblemsSolvers (do not edit)
+problem_names = []
+for i in range(len(model_design_list)): 
+    problem_names.append(problem_name)
 
 # Create ProblemsSovlers experiment with solver and model design
-experiment = ProblemsSolvers(solver_factors = solver_design_list,
-                              problem_factors = problem_fixed_factors,
+experiment = ProblemsSolvers(solver_factors = solver_fixed_factors,
+                              problem_factors = model_design_list,
                               solver_names = solver_names,
                               problem_names = problem_names
                               )

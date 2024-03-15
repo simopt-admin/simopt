@@ -19,7 +19,6 @@ from simopt.experiment_base import  ProblemsSolvers
 import pandas as pd
 
 # run this script in the terminal from the simopt directory
-
 solver_name = 'RNDSRCH' # name of solver that design was created on
 problem_names = ['SSCONT-1', 'SAN-1'] # list of problem names for solver design to be run on (if more than one version of same problem, repeat name)
 
