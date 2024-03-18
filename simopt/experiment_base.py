@@ -444,6 +444,8 @@ class ProblemSolver(object):
         n_macroreps : int
             Number of macroreplications of the solver to run on the problem.
         """
+        print("Running Solver", self.solver.name, "on Problem", self.problem.name + ".")
+
         self.n_macroreps = n_macroreps
         self.timings = []
         # Create variables for recommended solutions and intermediate budgets
@@ -470,51 +472,56 @@ class ProblemSolver(object):
 
         # Start a timer
         tic = time.perf_counter()
-        # Run n_macroreps of the solver on the problem.
-        # Report recommended solutions and corresponding intermediate budgets.
-        # Create an array of Process objects, one for each macroreplication.
-        Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
-        # Start each process.
-        for mrep in range(self.n_macroreps):
-            Processes[mrep].start()
-        # Wait for each process to finish.
-        for mrep in range(self.n_macroreps):
-            Processes[mrep].join()
-        # Stop the threads
-        for mrep in range(self.n_macroreps):
-            Processes[mrep].terminate()
+
+        # If we're only doing one macroreplication or we have fewer than 4 cores, run macroreps in serial.
+        # It just isn't worth the overhead to run in parallel.
+        if n_macroreps == 1 or os.cpu_count() < 4:
+            for mrep in range(n_macroreps):
+                self.run_multithread(mrep)
+        else:
+            # Run n_macroreps of the solver on the problem.
+            # Report recommended solutions and corresponding intermediate budgets.
+            # Create an array of Process objects, one for each macroreplication.
+            Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
+            # Start each process.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].start()
+            # Wait for each process to finish.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].join()
+            # Stop the threads.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].terminate()
+
         # Stop the timer.
         toc = time.perf_counter()
         # Print the total runtime.
-        print(f"Total runtime: {toc - tic:0.4f} seconds.")
-        print(f"Average runtime: {(toc - tic) / self.n_macroreps:0.4f} seconds.")
+        print(f"Total runtime: {toc - tic:0.4f} seconds ({(toc - tic) / self.n_macroreps:0.4f} seconds per macroreplication)\r\n")
 
-        # Convert the budgets and solutions into lists
-        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(self.n_macroreps)]
-        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(self.n_macroreps)]
+        # Convert the budgets and solutions into lists.
+        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(len(self.all_recommended_xs.keys()))]
+        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(len(self.all_intermediate_budgets.keys()))]
 
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
     def run_multithread(self, mrep):
-        print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
+        print(f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}.")
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
+        # Create a new set of RNGs for the solver based on the current macroreplication.
+        # Tried re-using the progentior RNGs, but we need to match the number needed by the solver, not the problem
+        solver_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, self.problem.model.n_rngs + rng_index, 0]) for rng_index in range(len(self.solver.rng_list))]
 
         # Set progenitor_rngs and rng_list for solver.
         self.solver.solution_progenitor_rngs = progenitor_rngs
-        self.solver.rng_list = self.solver.solution_progenitor_rngs # + self.solver.rng_list
+        self.solver.rng_list = solver_rngs
 
         # print([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
-        
         recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
         toc = time.perf_counter()
-
-        # Print out solutions and intermediate budgets.
-        print(f"{mrep} | Recommended solutions: {[solution.x for solution in recommended_solns]}")
-        print(f"{mrep} | Intermediate budgets: {intermediate_budgets}")
 
         # Record the run time of the macroreplication.
         self.timings.append(toc - tic)
@@ -524,7 +531,7 @@ class ProblemSolver(object):
         # Record recommended solutions and intermediate budgets.
         self.all_recommended_xs[mrep] = [solution.x for solution in recommended_solns]
         self.all_intermediate_budgets[mrep] = intermediate_budgets
-        print(f"Macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name} completed in {toc - tic:0.4f} seconds.")
+        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {toc - tic:0.4f} seconds.")
 
     def check_run(self):
         """Check if the experiment has been run.
@@ -860,7 +867,7 @@ class ProblemSolver(object):
                     # If postreplicated, add estimated objective function values.
                     if self.check_postreplicate():
                         file.write(f"\tEstimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n")
-                file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
+                # file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
         file.close()
 
 
