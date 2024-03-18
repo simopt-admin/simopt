@@ -13,15 +13,18 @@ import pandas as pd
 from scipy.stats import norm
 import pickle
 import importlib
+import ast
 import time
 import os
+import csv
+import itertools
 from mrg32k3a.mrg32k3a import MRG32k3a
 import multiprocessing
 from multiprocessing import Process
 
 
 from .base import Solution
-from .directory import solver_directory, problem_directory
+from .directory import solver_directory, problem_directory, model_directory
 
 
 class Curve(object):
@@ -943,7 +946,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     print(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
-        # Stream 0: reserved for post-replications.
+    #     Stream 0: reserved for post-replications.
     baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
@@ -2463,6 +2466,14 @@ class ProblemsSolvers(object):
 
     Parameters
     ----------
+    solver_factors: list [dict], optional
+        List of dictionaries that contain solver factors at different design points.
+        Each variant of solver with be crossed together with each vairant of problem.
+        (Requires solver_names with a name provided for each index in solver_factors.)
+    problem_factors: list [dict], optional
+        List of dictionaries that contain problem and model factors at different design points.
+        Each variant of problem will be crossed together with each variant of solver.
+        (Requires problem_names with a name provided for each index in problem_factors.)
     solver_names : list [str], optional
         List of solver names.
     problem_names : list [str], optional
@@ -2483,7 +2494,8 @@ class ProblemsSolvers(object):
     file_name_path : str
         Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
     """
-    def __init__(self, solver_names=None, problem_names=None, solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
+    def __init__(self, solver_factors=None, problem_factors=None, solver_names=None, problem_names=None,
+                 solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2502,6 +2514,55 @@ class ProblemsSolvers(object):
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
+
+        elif solver_factors is not None and problem_factors is not None:
+            # Create solvers list.
+            solvers = []
+            for index, dp in enumerate(solver_factors):
+                # Get corresponding name of solver from names.
+                solver_name = solver_names[index]
+                # Assign all factor values from current dp to solver object.
+                solver = solver_directory[solver_name](fixed_factors=dp)
+                solvers.append(solver)
+
+            # Create problems list.
+            problems = []
+            for index, dp in enumerate(problem_factors):
+                # Get corresponding name of problem from names.
+                problem_name = problem_names[index]
+                fixed_factors = {}  # Will hold problem factor values for current dp.
+                model_fixed_factors = {}  # Will hold model factor values for current dp.
+                # Create default instances of problem and model to compare factor names.
+                default_problem = problem_directory[problem_name]()
+                default_model = default_problem.model
+
+                # Set factor values for current dp using problem/model specifications
+                # to determine if problem or model factor.
+                for factor in dp:
+                    if factor in default_problem.specifications:
+                        fixed_factors[factor] = dp[factor]
+                    if factor in default_model.specifications:
+                        model_fixed_factors[factor] = dp[factor]
+                # Create instance of problem and append to problems list.
+                problem = problem_directory[problem_name](fixed_factors=fixed_factors, model_fixed_factors=model_fixed_factors)
+                problems.append(problem)
+
+            self.experiments = [[ProblemSolver(solver=solver,
+                                               problem=problem,
+                                               file_name_path=f'./experiments/outputs/{solver.name}_{sol_indx}_on_{problem.name}_{prob_indx}.pickle')
+                                 for prob_indx, problem in enumerate(problems)]
+                                for sol_indx, solver in enumerate(solvers)]
+            self.solvers = solvers
+            self.problems = problems
+            self.solver_names = solver_names
+            self.problem_names = problem_names
+            self.solver_set = set(solver_names)
+            self.problem_set = set(problem_names)
+            self.n_solvers = len(self.solvers)
+            self.n_problems = len(self.problems)
+
         elif solvers is not None and problems is not None:  # Method #2
             self.experiments = [[ProblemSolver(solver=solver, problem=problem) for problem in problems] for solver in solvers]
             self.solvers = solvers
@@ -2510,6 +2571,9 @@ class ProblemsSolvers(object):
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
+
         else:  # Method #1
             if solver_renames is None:
                 self.solver_names = solver_names
@@ -2521,6 +2585,10 @@ class ProblemsSolvers(object):
                 self.problem_names = problem_renames
             self.n_solvers = len(solver_names)
             self.n_problems = len(problem_names)
+
+            # Use this for naming file.
+            self.solver_set = solver_names
+            self.problem_set = problem_names
             # Read in fixed solver/problem/model factors from .py file in the experiments folder.
             # File should contain three dictionaries of dictionaries called
             #   - all_solver_fixed_factors
@@ -2536,7 +2604,7 @@ class ProblemsSolvers(object):
                 self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
                 self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
                 self.all_model_fixed_factors = getattr(all_factors, "all_model_fixed_factors")
-            # Create all problem-solver pairs (i.e., instances of ProblemSolver class)
+            # Create all problem-solver pairs (i.e., instances of ProblemSolver class).
             self.experiments = []
             for solver_idx in range(self.n_solvers):
                 solver_experiments = []
@@ -2564,11 +2632,14 @@ class ProblemsSolvers(object):
                 self.problems = [experiment.problem for experiment in self.experiments[0]]
         # Initialize file path.
         if file_name_path is None:
-            solver_names_string = "_".join(self.solver_names)
-            problem_names_string = "_".join(self.problem_names)
+            solver_names_string = "_".join(self.solver_set)
+            problem_names_string = "_".join(self.problem_set)
             self.file_name_path = f"./experiments/outputs/group_{solver_names_string}_on_{problem_names_string}.pickle"
         else:
             self.file_name_path = file_name_path
+
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
 
     def check_compatibility(self):
         """Check whether all experiments' solvers and problems are compatible.
@@ -2663,8 +2734,16 @@ class ProblemsSolvers(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-    def log_group_experiment_results(self):
+    def log_group_experiment_results(self, solve_tols_single_pair=[0.05, 0.10, 0.20, 0.50], csv_filename_single_pair="df_solver_results"):
         """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
+        Parameters
+        ----------
+        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+            Relative optimality gap(s) definining when a problem is solved; in (0,1].
+        csv_filename : str, default="df_solver_results"
+            Name of .csv file to print output to
+
+            both parameters only used if only one solver and problem are included in experiment and will be fed into report_statistics_single_problem_solver_pair
         """
         # Create a new text file in experiments/logs folder with correct name.
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
@@ -2702,16 +2781,90 @@ class ProblemsSolvers(object):
             for j in range(self.n_solvers):
                 file.write(f"{self.solver_names[j]}\n\t")
                 file.write("Solver Factors:\n")
-                for key, value in self.solvers[i].factors.items():
+                for key, value in self.solvers[j].factors.items():  # changed from i to j
                     file.write(f"\t\t{key}: {value}\n")
                 file.write("\n")
             file.write("----------------------------------------------------------------------------------------------")
             # Write the name of pickle files for each Problem-Solver pair.
             file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
-            for p in self.problem_names:
-                for s in self.solver_names:
-                    file.write(f"\t{s}_on_{p}.pickle\n")
+            for solver_group in self.experiments:
+                for experiment in solver_group:
+                    directory, file_name = os.path.split(experiment.file_name_path)
+                    file.write(f'{file_name}\n')
+            # for p in self.problem_names:
+            #     for s in self.solver_names:
+            #         file.write(f"\t{s}_on_{p}.pickle\n")
         file.close()
+
+    def report_group_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+        # create dictionary of common solvers and problems
+        pair_dict = {}  # used to hold pairs of
+
+        for sublist in self.experiments:
+            for obj in sublist:
+                solver = obj.solver.name
+                problem = obj.problem.name
+                key = (solver, problem)
+                if key not in pair_dict:
+                    pair_dict[key] = [obj]
+                else:
+                    pair_dict[key].append(obj)
+
+        for (solver, problem), pair_list in pair_dict.items():
+            csv_filename = f'{solver}_on_{problem}_results'
+            self.report_statistics(pair_list=pair_list, solve_tols=solve_tols, csv_filename=csv_filename)
+
+    def report_statistics(self, pair_list, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+        """For each design point, calculate statistics from each macoreplication and print to csv.
+
+        Parameters
+        ----------
+        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+            Relative optimality gap(s) definining when a problem is solved; in (0,1].
+        csv_filename : str, default="df_solver_results"
+            Name of .csv file to print output to.
+        """
+        # Create directory if they do no exist.
+        if not os.path.exists("./experiments"):
+            os.makedirs("./experiments")
+        # if csv_filename == 'df_solver_results':
+        file_path = "./experiments/logs/"
+        # else:
+        #     file_path = ""
+        with open(file_path + csv_filename + ".csv", mode="w", newline="") as output_file:
+            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            base_experiment = pair_list[0]
+            solver_factor_names = list(base_experiment.solver.specifications.keys())
+            problem_factor_names = list(base_experiment.problem.specifications.keys())
+            model_factor_names = list(set(base_experiment.problem.model.specifications.keys()) - base_experiment.problem.model_decision_factors)
+            # Concatenate solve time headers.
+            solve_time_headers = [[f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"] for solve_tol in solve_tols]
+            solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
+            # Print headers.
+            csv_writer.writerow(["DesignPt#"] +
+                                solver_factor_names +
+                                problem_factor_names +
+                                model_factor_names +
+                                ["MacroRep#"] +
+                                ["Final Relative Optimality Gap"] +
+                                ["Area Under Progress Curve"] +
+                                solve_time_headers)
+            # Compute performance metrics.
+            for designpt_index in range(len(pair_list)):
+                experiment = pair_list[designpt_index]
+                # Parse lists of factors.
+                solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
+                problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
+                model_factor_list = [experiment.problem.model.factors[model_factor_name] for model_factor_name in model_factor_names]
+                for mrep in range(experiment.n_macroreps):
+                    progress_curve = experiment.progress_curves[mrep]
+                    # Parse list of statistics.
+                    solve_time_values = [[progress_curve.compute_crossing_time(threshold=solve_tol)] + [int(progress_curve.compute_crossing_time(threshold=solve_tol) < np.infty)] for solve_tol in solve_tols]
+                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
+                    statistics_list = [progress_curve.y_vals[-1],
+                                       progress_curve.compute_area_under_curve()] + solve_time_values
+                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
+                    csv_writer.writerow(print_list)
 
 
 def read_group_experiment_results(file_name_path):
@@ -2819,3 +2972,123 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
         full_experiments[solver_idx][problem_idx] = ProblemSolver(solver=pair[0], problem=pair[1])
     metaexperiment = ProblemsSolvers(experiments=full_experiments)
     return metaexperiment
+
+
+def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None):
+    """
+    Parameters
+    ----------
+    name : str
+        Name of solver, problem, or model.
+    factor_headers : lst
+        List of factor names that are changing in the design.
+    factor_settings_filename : str
+        name of factor settings file within data_farming_experiments folder.
+    fixed_factors : dict
+        dict of fixed factor values that are different that defaults.
+    n_stacks : int, optional
+        number of stacks for ruby calculation. The default is '1'.
+    design_type : str, optional
+        design type for ruby calculation. The default is 'nolhs'.
+    cross_design_factors : dict, optional
+        dict of lists of values of factors to include in cross design. The default is None.
+
+    Returns
+    -------
+    design_list : list
+        list that contains a dict of factor values for every design point.
+    """
+    # Search directories to create object based on name provided.
+    try:
+        design_object = solver_directory[name]()
+
+    except:
+        try:
+            design_object = problem_directory[name]()
+        except:
+            design_object = model_directory[name]()
+
+    if cross_design_factors is None:
+        cross_design_factors = {}
+
+    print('design object', design_object)
+    # Create solver factor design from .txt file of factor settings.
+    # Hard-coded for a single-stack NOLHS.
+    command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+    os.system(command)
+    # Append design to base filename.
+    design_filename = f"{factor_settings_filename}_design"
+    # design_filename =  "astrodf_testing_design" # hard coded for now because can't find file location
+
+    # Read in design matrix from .txt file. Result is a pandas DataFrame.
+    design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
+
+    # Create design csv file from design table.
+    csv_filename = f"./data_farming_experiments/{design_filename}.csv"
+
+    design_table.columns = factor_headers  # Add factor headers names to dt.
+
+    for factor in design_object.specifications:  # Add default values to str dict for unspecified factors.
+        default = design_object.specifications[factor].get("default")
+        if factor not in fixed_factors and factor not in factor_headers:
+            fixed_factors[factor] = default
+            print('fixed factors', fixed_factors)
+
+    print('design table before fixed', design_table)
+    # Add fixed factors to dt.
+    for factor in fixed_factors:
+        design_table[factor] = str(fixed_factors[factor])  # Change to string to ensure correct addition of tuples & list data types.
+
+    # Add cross design factors to design table.
+    if len(cross_design_factors) != 0:
+        # num_cross = 0 # number of times cross design is run
+
+        # Create combination of categorical factor options.
+        cross_factor_names = list(cross_design_factors.keys())
+        combinations = itertools.product(*(cross_design_factors[opt] for opt in cross_factor_names))
+
+        new_design_table = pd.DataFrame()  # Temp empty value.
+        for combination in combinations:
+            combination_dict = dict(zip(cross_factor_names, combination))  # Dictionary containing current combination of cross design factor values.
+            working_design_table = design_table.copy()
+
+            for factor in combination_dict:
+                str_factor_val = str(combination_dict[factor])
+                working_design_table[factor] = str_factor_val
+
+            new_design_table = pd.concat([new_design_table, working_design_table], ignore_index=True)
+
+        design_table = new_design_table
+    # Create list of solver or problem objects for each dp using design_table.
+    design_list = []
+    dp_dict = design_table.to_dict(orient='list')  # Creates dictonary of table to convert values to proper datatypes.
+    for dp in range(len(design_table)):
+        dp_factors = {}
+        for factor in dp_dict:
+            factor_datatype = design_object.specifications[factor].get("datatype")
+            factor_str = dp_dict[factor][dp]  # Get factor value for each factor within current design point.
+            # Set factor values to corret type.
+            if factor_datatype == int or float:
+                factor_val = factor_datatype(factor_str)
+            if factor_datatype == list:
+                factor_val = ast.literal_eval(factor_str)
+            if factor_datatype == tuple:
+                # tuple_str = tuple(factor_str[1:-1].split(","))
+                factor_val = ast.literal_eval(factor_str)
+            if factor_datatype == bool:
+                if factor_str == 'True':
+                    factor_val = True
+                else:
+                    factor_val = False
+            dp_factors[factor] = factor_val
+        design_list.append(dp_factors)
+
+    # Add design information to table.
+    design_table.insert(0, 'Design #', range(len(design_table)))
+    design_table['Name'] = design_object.name
+    design_table['Design Type'] = design_type
+    design_table['Number Stacks'] = str(n_stacks)
+
+    design_table.to_csv(csv_filename, mode='w', header=True, index=False)
+
+    return design_list
