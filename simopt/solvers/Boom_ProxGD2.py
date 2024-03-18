@@ -10,11 +10,11 @@ warnings.filterwarnings("ignore")
 
 from ..base import Solver
 
-class BoomProxGD(Solver):
+class BoomProxGD2(Solver):
     """
     
     """
-    def __init__(self, name="PGD-backtracking", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
+    def __init__(self, name="PGD-zoom", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -29,7 +29,7 @@ class BoomProxGD(Solver):
             "LSmethod": {
                 "description": "method",
                 "datatype": str,
-                "default": 'backtracking'
+                "default": 'zoom'
             },
             "r": {
                 "description": "number of replications taken at each solution",
@@ -877,10 +877,12 @@ class BoomProxGD(Solver):
             expended_budget += r
             
             new_solution = candidate_solution
+            # print('new sol: ', new_solution.x)
             
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
+                # print('new sol: ', new_solution)
                 #recommended_solns.append(candidate_solution)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

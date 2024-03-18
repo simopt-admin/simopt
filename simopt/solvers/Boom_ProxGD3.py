@@ -10,11 +10,11 @@ warnings.filterwarnings("ignore")
 
 from ..base import Solver
 
-class BoomProxGD(Solver):
+class BoomProxGD3(Solver):
     """
-    
+
     """
-    def __init__(self, name="PGD-backtracking", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
+    def __init__(self, name="PGD-SS", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -29,7 +29,7 @@ class BoomProxGD(Solver):
             "LSmethod": {
                 "description": "method",
                 "datatype": str,
-                "default": 'backtracking'
+                "default": 'zoom'
             },
             "r": {
                 "description": "number of replications taken at each solution",
@@ -60,6 +60,31 @@ class BoomProxGD(Solver):
                 "description": "constant in the line search condition",
                 "datatype": int,
                 "default": 0.1
+            },
+            "alpha_max": {
+                "description": "maximum step size",
+                "datatype": int,
+                "default": 10
+            }, 
+            "alpha": {
+                "description": "initial step size",
+                "datatype": int,
+                "default": 1
+            },
+            "alpha_0": {
+                "description": "initial step size",
+                "datatype": int,
+                "default": 1
+            },
+            "epsilon_f": {
+                "description": "additive constant in the Armijo condition",
+                "datatype": int,
+                "default": 1e-3  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
+            },
+            "gamma": {
+                "description": "constant for shrinking the step size",
+                "datatype": int,
+                "default": 0.8
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
@@ -495,6 +520,57 @@ class BoomProxGD(Solver):
             #print("=============")  
         #print("determined step: ", step_size)
         return step_size, added_budget
+
+    def stepLineSearch(self,cur_sol,grad,d,max_step,problem,expended_budget):
+        """
+        carry out line search on the function F where we 
+        min F(x + alpha*d) s.t. alpha >=0 
+
+        cur_sol: starting point
+        d: direction
+        grad: gradient at the point cur_sol
+        max_step: literally max step
+        ratio: decay ratio if fails
+        """
+        
+        r = self.factors["r"]
+        theta = self.factors['theta']
+        epsilon_f = self.factors['epsilon_f']
+        alpha_max = self.factors['alpha_max']
+        gamma = self.factors['gamma']
+        alpha = self.factors['alpha']
+        alpha_0 = max_step
+        
+        step_size = max_step
+        added_budget = 0
+        
+        x = cur_sol.x
+        fx = -1 * problem.minmax[0] * cur_sol.objectives_mean
+        # step_size = self.factors['alpha_0']
+        new_solution = cur_sol
+        x_new = x + step_size * d
+        # Create a solution object for x_new.
+        x_new_solution = self.create_new_solution(tuple(x_new), problem)
+        # Use r simulated observations to estimate the objective value.
+        problem.simulate(x_new_solution, r)
+        added_budget += r
+            
+        # Check the modified Armijo condition for sufficient decrease.
+        if (-1 * problem.minmax[0] * x_new_solution.objectives_mean) <= (
+                -1 * problem.minmax[0] * cur_sol.objectives_mean + alpha * theta * np.dot(grad, d) + 2 * epsilon_f):
+            # Successful step
+            new_solution = x_new_solution
+            # Enlarge step size.
+            # alpha = min(alpha_max, alpha / gamma)
+            step_size = min(alpha_0, step_size/gamma)
+        else:
+            # Unsuccessful step - reduce step size.
+            # alpha = gamma * alpha
+            step_size = gamma * step_size
+            
+        # self.factors['alpha'] = alpha
+        
+        return step_size, added_budget
     
     def zoomLineSearch(self,cur_sol,grad,d,max_step,problem,expended_budget):
         """
@@ -736,8 +812,10 @@ class BoomProxGD(Solver):
             self.factors["LSfn"] = self.backtrackLineSearch
         elif(ls_type == 'interpolation'):
             self.factors["LSfn"] = self.interpolateLineSearch
-        else:
+        elif(ls_type == 'zoom'):
             self.factors["LSfn"] = self.zoomLineSearch
+        else:
+            self.factors['LSfn'] = self.stepLineSearch
             
         #t = 1 #first max step size
         dim = problem.dim
@@ -877,10 +955,12 @@ class BoomProxGD(Solver):
             expended_budget += r
             
             new_solution = candidate_solution
+            # print('new sol: ', new_solution.x)
             
             # Append new solution.
             if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
                 best_solution = new_solution
+                # print('new sol: ', new_solution)
                 #recommended_solns.append(candidate_solution)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

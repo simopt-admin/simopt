@@ -10,11 +10,11 @@ warnings.filterwarnings("ignore")
 
 from ..base import Solver
 
-class BoomProxGD(Solver):
+class BoomProxGD1(Solver):
     """
     
     """
-    def __init__(self, name="PGD-backtracking", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
+    def __init__(self, name="PGD-interpolation", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -29,7 +29,7 @@ class BoomProxGD(Solver):
             "LSmethod": {
                 "description": "method",
                 "datatype": str,
-                "default": 'backtracking'
+                "default": 'interpolation'
             },
             "r": {
                 "description": "number of replications taken at each solution",

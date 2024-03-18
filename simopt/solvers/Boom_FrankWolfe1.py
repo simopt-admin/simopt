@@ -14,11 +14,11 @@ from ..base import Solver
 #env.setParam('MIPGap',0)
 
 
-class BoomFrankWolfe(Solver):
+class BoomFrankWolfe1(Solver):
     """
     """
     
-    def __init__(self, name="FW-backtracking", fixed_factors={}):
+    def __init__(self, name="FW-interpolattion", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -53,12 +53,12 @@ class BoomFrankWolfe(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 100
+                "default": 30
             },  
             "LSmethod":{
                 "description": "methods for line search algorithm",
                 "datatype":str,
-                "default":"backtracking"
+                "default":'interpolation'
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
@@ -68,7 +68,7 @@ class BoomFrankWolfe(Solver):
             "ratio": {
                 "description": "decay ratio in line search",
                 "datatype": float,
-                "default": 0.9
+                "default": 0.8
             },
             "curve_const": {
                 "description": "constant in curvature wolfe conditions, usually greater than theta",
