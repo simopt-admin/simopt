@@ -222,7 +222,14 @@ class FrankWolfeSS(Solver):
         #print("denom: ", denom)
         #print("ratio_val: ", ratio_val)
         
-        return min(ratio_val[denom > 1e-6])
+        result = min(ratio_val[denom > 1e-6])
+        
+        if(result < 0):
+            return 0
+        else:
+            return result
+        
+        #return min(ratio_val[denom > 1e-6])
         #prob = cp.Problem(objective, constraints)
         #prob.solve()
     
@@ -752,7 +759,7 @@ class FrankWolfeSS(Solver):
                     #print("bounded")
                     max_gamma = 1
                     gamma = min(gamma, max_gamma)
-
+                    #print(gamma)
                     new_x = cur_x + gamma*direction
                     candidate_solution = self.create_new_solution(tuple(new_x), problem)
                     # Use r simulated observations to estimate the objective value.
@@ -859,8 +866,13 @@ class FrankWolfeSS(Solver):
                 #print("max_dist: ", max_dist)
                 
                 #max_gamma = 1
+                #print("cur_x: ", cur_x)
+                #print("gamma star:", gamma_star)
+                #print("coeff: ", alphas[tuple(v)])
+                #print("maxdist: ", max_dist)
+                #print("old_gamma: ",gamma)
                 gamma = min(gamma, max_dist)
-
+                
                 new_x = cur_x + gamma*direction
                 candidate_solution = self.create_new_solution(tuple(new_x), problem)
                 # Use r simulated observations to estimate the objective value.
