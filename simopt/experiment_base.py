@@ -16,6 +16,8 @@ import importlib
 import time
 import os
 from mrg32k3a.mrg32k3a import MRG32k3a
+import multiprocessing
+from multiprocessing import Process
 
 
 from .base import Solution
@@ -440,9 +442,12 @@ class ProblemSolver(object):
             Number of macroreplications of the solver to run on the problem.
         """
         self.n_macroreps = n_macroreps
-        self.all_recommended_xs = []
-        self.all_intermediate_budgets = []
         self.timings = []
+        # Create variables for recommended solutions and intermediate budgets
+        # so we can append to them in parallel.
+        self.all_recommended_xs = multiprocessing.Manager().dict()
+        self.all_intermediate_budgets = multiprocessing.Manager().dict()
+
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
         #     Stream 1: reserved for bootstrapping
@@ -459,28 +464,64 @@ class ProblemSolver(object):
         rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
         rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])
         self.solver.attach_rngs([rng1, rng2, rng3])
+
+        # Start a timer
+        tic = time.perf_counter()
         # Run n_macroreps of the solver on the problem.
         # Report recommended solutions and corresponding intermediate budgets.
+        # Create an array of Process objects, one for each macroreplication.
+        Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
+        # Start each process.
         for mrep in range(self.n_macroreps):
-            print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
-            # Create, initialize, and attach RNGs used for simulating solutions.
-            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
-            self.solver.solution_progenitor_rngs = progenitor_rngs
-            # print([rng.s_ss_sss_index for rng in progenitor_rngs])
-            # Run the solver on the problem.
-            tic = time.perf_counter()
-            recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
-            toc = time.perf_counter()
-            # Record the run time of the macroreplication.
-            self.timings.append(toc - tic)
-            # Trim solutions recommended after final budget.
-            recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
-            # Extract decision-variable vectors (x) from recommended solutions.
-            # Record recommended solutions and intermediate budgets.
-            self.all_recommended_xs.append([solution.x for solution in recommended_solns])
-            self.all_intermediate_budgets.append(intermediate_budgets)
+            Processes[mrep].start()
+        # Wait for each process to finish.
+        for mrep in range(self.n_macroreps):
+            Processes[mrep].join()
+        # Stop the threads
+        for mrep in range(self.n_macroreps):
+            Processes[mrep].terminate()
+        # Stop the timer.
+        toc = time.perf_counter()
+        # Print the total runtime.
+        print(f"Total runtime: {toc - tic:0.4f} seconds.")
+        print(f"Average runtime: {(toc - tic) / self.n_macroreps:0.4f} seconds.")
+
+        # Convert the budgets and solutions into lists
+        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(self.n_macroreps)]
+        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(self.n_macroreps)]
+
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
+
+    def run_multithread(self, mrep):
+        print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
+        # Create, initialize, and attach RNGs used for simulating solutions.
+        progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
+
+        # Set progenitor_rngs and rng_list for solver.
+        self.solver.solution_progenitor_rngs = progenitor_rngs
+        self.solver.rng_list = self.solver.solution_progenitor_rngs # + self.solver.rng_list
+
+        # print([rng.s_ss_sss_index for rng in progenitor_rngs])
+        # Run the solver on the problem.
+        tic = time.perf_counter()
+        
+        recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
+        toc = time.perf_counter()
+
+        # Print out solutions and intermediate budgets.
+        print(f"{mrep} | Recommended solutions: {[solution.x for solution in recommended_solns]}")
+        print(f"{mrep} | Intermediate budgets: {intermediate_budgets}")
+
+        # Record the run time of the macroreplication.
+        self.timings.append(toc - tic)
+        # Trim solutions recommended after final budget.
+        recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
+        # Extract decision-variable vectors (x) from recommended solutions.
+        # Record recommended solutions and intermediate budgets.
+        self.all_recommended_xs[mrep] = [solution.x for solution in recommended_solns]
+        self.all_intermediate_budgets[mrep] = intermediate_budgets
+        print(f"Macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name} completed in {toc - tic:0.4f} seconds.")
 
     def check_run(self):
         """Check if the experiment has been run.
@@ -2690,7 +2731,6 @@ def read_group_experiment_results(file_name_path):
         groupexperiment = pickle.load(file)
     return groupexperiment
 
-
 def find_unique_solvers_problems(experiments):
     """Identify the unique problems and solvers in a collection
     of experiments.
@@ -2717,7 +2757,6 @@ def find_unique_solvers_problems(experiments):
         if experiment.problem not in unique_problems:
             unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
-
 
 def find_missing_experiments(experiments):
     """Identify problem-solver pairs that are not part of a list
