@@ -25,7 +25,7 @@ problem_names = ["CNTNEWS-1", "SAN-1"]
 
 
 # Initialize an instance of the experiment class.
-mymetaexperiment = ProblemsSolvers(solver_names, problem_names)
+mymetaexperiment = ProblemsSolvers(solver_names = solver_names, problem_names = problem_names)
 
 # Write to log file.
 mymetaexperiment.log_group_experiment_results()
