@@ -5,7 +5,7 @@ This branch is dedicated to the experiments conducted for the 2024 Winter Simula
 PGD-Linesearch
 FW-Linesearch
 AS-Linesearch
-Linesearch B, I, Z, ASS
+Linesearch B, I, Z, SS
 2. Update .rst files.
 
 ## Replicate the experiments
