@@ -7,7 +7,7 @@ import sys
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 import pandas as pd
-from simopt.experiment_base import ProblemsSolvers 
+from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 
 problem_name = 'CNTNEWS-1' # name of problem
 
@@ -80,14 +80,13 @@ for row in range(n_dp):
     problem_names.append(problem_name)
 
 # solver information
-solver_name = "RNDSRCH" # name of solver 
+solver_name = "ASTRODF" # name of solver 
 
 # fixed solver factors (only need to have these if changing from default)
-crn = True
-sample_size = 10 
+gamma_1 = 4
 
 # example of running one version of solver
-solver_factors = [{'crn_across_solns': crn, 'sample_size': sample_size}] # fixed factors of solver (only need to included factors in dictionary that are different from default values)
+solver_factors = [{'gamma_1': gamma_1}] # fixed factors of solver (only need to included factors in dictionary that are different from default values)
 solver_names = [solver_name]
 
 # # example of running solver using only default values
@@ -117,6 +116,11 @@ experiment.record_group_experiment_results()
 experiment.log_group_experiment_results()
 experiment.report_group_statistics()
 
+print("Plotting results.")
+# Produce basic plots of the solvers on the problems.
+plot_solvability_profiles(experiments=experiment.experiments, plot_type="cdf_solvability")
+# Plots will be saved in the folder experiments/plots.
+print("Finished. Plots can be found in experiments/plots folder.")
 
 
 
