@@ -7,7 +7,7 @@ at a given solution.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
 
 # Import random number generator.
 from mrg32k3a.mrg32k3a import MRG32k3a
