@@ -1357,6 +1357,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         List compiling path names for plots produced.
     """
     # Check if problems are the same with the same x0 and x*.
+    
     check_common_problem_and_reference(experiments)
     file_list = []
     # Set up plot.
@@ -1373,19 +1374,21 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         solver_curve_handles = []
         if print_max_hw:
             curve_pairs = []
+        from matplotlib.pyplot import cm
+        color = iter(cm.rainbow(np.linspace(0, 1, n_experiments)))
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
-            color_str = "C" + str(exp_idx)
+            color_str = next(color)
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
-                    handle = experiment.progress_curves[0].plot(color_str=color_str)
+                    handle = experiment.progress_curves[0].plot(color =color_str)
                     for curve in experiment.progress_curves[1:]:
                         curve.plot(color_str=color_str)
                 else:
-                    handle = experiment.objective_curves[0].plot(color_str=color_str)
+                    handle = experiment.objective_curves[0].plot(color =color_str)
                     for curve in experiment.objective_curves[1:]:
-                        curve.plot(color_str=color_str)
+                        curve.plot(color_str=color)
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
@@ -1417,7 +1420,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1479,6 +1482,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                        normalize=normalize,
                                        extra=beta
                                        ))
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
     return file_list
 
 
@@ -1543,7 +1547,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1668,7 +1672,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names,loc='center left', bbox_to_anchor=(1, 0.5))
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="area",
@@ -1836,7 +1840,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     if print_max_hw:
                         curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1846,7 +1850,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                        extra=solve_tol
                                        ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1880,7 +1884,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                         if print_max_hw:
                             curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc='center left', bbox_to_anchor=(1, 0.5))
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level, difference=True)
             if plot_type == "diff_cdf_solvability":
@@ -2144,7 +2148,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
                 std_dev_estimator = np.std(terminals, ddof=1)
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="terminal_scatter",
