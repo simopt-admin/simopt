@@ -2981,7 +2981,7 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
     return metaexperiment
 
 
-def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None):
+def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None, IsProblem = False,):
     """
     Parameters
     ----------
@@ -2999,6 +2999,8 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
         dict of lists of values of factors to include in cross design. The default is None.
+    IsProblem : bool, optional
+        False if creating design over solver factors, True if creating design over problem/model factors  
 
     Returns
     -------
@@ -3006,21 +3008,17 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         list that contains a dict of factor values for every design point.
     """
     # Search directories to create object based on name provided.
-    try:
+    if IsProblem == False:
         design_object = solver_directory[name]()
+    else:
+        design_object = problem_directory[name]()
 
-    except:
-        try:
-            design_object = problem_directory[name]()
-        except:
-            design_object = model_directory[name]()
 
     if cross_design_factors is None:
         cross_design_factors = {}
 
     print('design object', design_object)
     # Create solver factor design from .txt file of factor settings.
-    # Hard-coded for a single-stack NOLHS.
     command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
     os.system(command)
     # Append design to base filename.
@@ -3034,9 +3032,16 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     csv_filename = f"./data_farming_experiments/{design_filename}.csv"
 
     design_table.columns = factor_headers  # Add factor headers names to dt.
+    
+    # Combine model and problem specifications for problems
+    if IsProblem == True:
+        specifications = {**design_object.specifications, **design_object.model.specifications}
+    else:
+        specifications = design_object.specifications
 
-    for factor in design_object.specifications:  # Add default values to str dict for unspecified factors.
-        default = design_object.specifications[factor].get("default")
+
+    for factor in specifications:  # Add default values to str dict for unspecified factors.
+        default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
             print('fixed factors', fixed_factors)
@@ -3072,7 +3077,7 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     for dp in range(len(design_table)):
         dp_factors = {}
         for factor in dp_dict:
-            factor_datatype = design_object.specifications[factor].get("datatype")
+            factor_datatype = specifications[factor].get("datatype")
             factor_str = dp_dict[factor][dp]  # Get factor value for each factor within current design point.
             # Set factor values to corret type.
             if factor_datatype == int or float:
