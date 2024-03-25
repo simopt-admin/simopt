@@ -19,11 +19,16 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 from rng.mrg32k3a import MRG32k3a
 from simopt.base import Solution
-from simopt.models.smf import SMF_Max
-from simopt.models.rmitd import RMITDMaxRevenue
+from simopt.models.smf_2 import SMF_Max
+# from simopt.models.rmitd import RMITDMaxRevenue
 from simopt.models.san_2 import SANLongestPath, SANLongestPathConstr
-from simopt.models.mm1queue import MM1MinMeanSojournTime
+# from simopt.models.mm1queue import MM1MinMeanSojournTime
+from simopt.models.smfcvx_2 import SMFCVX_Max
+from simopt.models.openjackson import OpenJacksonMinQueue
+from simopt.models.cascade_2 import CascadeMax
+from simopt.models.network_2 import NetworkMinTotalCost
 
+# path = '/Users/liulitong/Desktop/test_input.txt'
 
 # !! When testing a new solver/problem, first import problems from the random code file,
 # Then create a test_input.txt file in your computer.
@@ -151,13 +156,13 @@ for i in range(len(L_num)):
 mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems)
 
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=3)
+mymetaexperiment.run(n_macroreps=10)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=20)
+mymetaexperiment.post_replicate(n_postreps=30)
 # Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=20)
+mymetaexperiment.post_normalize(n_postreps_init_opt=30)
 
 print("Plotting results.")
 # Produce basic plots of the solvers on the problems.
