@@ -54,7 +54,7 @@ class BoomProxGD2(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 300
+                "default": 1000
             },
             "theta": {
                 "description": "constant in the line search condition",
