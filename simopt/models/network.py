@@ -38,24 +38,27 @@ class Network(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None, random = False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "NETWORK"
         self.n_rngs = 3
         self.n_responses = 1
+        self.n_random = 2
+        # random instance factors: cost_time, arrival_rate
         self.factors = fixed_factors
+        self.random = random
+        self.n_random = 2
         self.specifications = {
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
-                # "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-                "default": [1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10, 1/10]
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
             },
             "cost_process": {
                 "description": "message processing cost of network i",
                 "datatype": list,
-                "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]  # Random
+                "default": [0,0,0,0,0,0,0,0,0,0]
             },
             "cost_time": {
                 "description": "cost for the length of time a message spends in a network i per each unit of time",
@@ -65,27 +68,27 @@ class Network(Model):
             "mode_transit_time": {
                 "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
-                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # Random
+                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             },
             "lower_limits_transit_time": {
                 "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]  # Random
+                "default": [0,0,0,0,0,0,0,0,0,0]
             },
             "upper_limits_transit_time": {
                 "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]  # Random
+                "default": [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
             },
             "arrival_rate": {
                 "description": "arrival rate of messages following a Poisson process",
                 "datatype": float,
-                "default": 1.0  # Random
+                "default": 7*np.log(10)
             },
             "n_messages": {
                 "description": "number of messages that arrives and needs to be routed",
                 "datatype": int,
-                "default": 1000
+                "default": 10000
             },
             "n_networks": {
                 "description": "number of networks",
@@ -157,6 +160,16 @@ class Network(Model):
             return False
         else:
             return True
+        
+    def attach_rng(self, random_rng):
+        self.random_rng = random_rng
+        cost_time = []
+        for i in range(self.factors['n_networks']):
+            cost_time.append(random_rng[0].expovariate(200))
+        arrival_rate = random_rng[1].expovariate(0.065)
+        self.factors['cost_time'] = cost_time
+        self.factors['arrival_rate'] = arrival_rate
+        return
 
     def replicate(self, rng_list):
         """
@@ -184,9 +197,7 @@ class Network(Model):
         # Generate all interarrival, network routes, and service times before the simulation run.
         arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
                          for _ in range(total_arrivals)]
-        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors['process_prob'], k=total_arrivals)
-        # print(self.factors['process_prob'])
-        # print(len(range(self.factors['n_networks'])), len(list(self.factors['process_prob'])), np.sum(self.factors['process_prob']))
+        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
         service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
                                                 high=self.factors["upper_limits_transit_time"][network_routes[i]],
                                                 mode=self.factors["mode_transit_time"][network_routes[i]])
@@ -273,7 +284,7 @@ class NetworkMinTotalCost(Problem):
         upper bound for each decision variable
     gradient_available : bool
         indicates if gradient of objective function is available
-    optimal_value : float
+    optimal_value : tuple
         optimal objective function value
     optimal_solution : tuple
         optimal solution
@@ -306,12 +317,13 @@ class NetworkMinTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="NETWORK-1", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="NETWORK-1", fixed_factors=None, model_fixed_factors=None, random = False, random_rng = None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
+        self.random = random
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
@@ -323,6 +335,8 @@ class NetworkMinTotalCost(Problem):
         self.model_default_factors = {}
         self.model_decision_factors = {"process_prob"}
         self.factors = fixed_factors
+        self.random = random
+        self.n_rngs = 1
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
@@ -332,7 +346,7 @@ class NetworkMinTotalCost(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 5000
             }
         }
         self.check_factor_list = {
@@ -342,13 +356,21 @@ class NetworkMinTotalCost(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = Network(self.model_fixed_factors)
+        if random and random_rng:
+            self.model.attach_rng(random_rng)
         self.dim = self.model.factors["n_networks"]
         self.lower_bounds = tuple([0 for _ in range(self.model.factors["n_networks"])])
         self.upper_bounds = tuple([1 for _ in range(self.model.factors["n_networks"])])
         self.Ci = None
-        self.Ce = np.array([1 for _ in range(self.model.factors["n_networks"])]) #None
+        self.Ce = None
         self.di = None
-        self.de = np.array([1]) #None
+        self.de = None
+
+    def attach_rngs(self, random_rng):
+        self.random_rng = random_rng
+        total_mode = sum(self.model.factors['mode_transit_time'])
+        self.factors['initial_solution'] = [self.model.factors['mode_transit_time']/total_mode for i in range(self.model.factors['n_networks'])]
+        return
 
     def vector_to_factor_dict(self, vector):
         """
