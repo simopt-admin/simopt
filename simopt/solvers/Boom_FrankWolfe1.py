@@ -53,7 +53,7 @@ class BoomFrankWolfe1(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 30
+                "default": 1000
             },  
             "LSmethod":{
                 "description": "methods for line search algorithm",
