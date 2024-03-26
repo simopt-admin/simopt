@@ -369,7 +369,7 @@ class NetworkMinTotalCost(Problem):
     def attach_rngs(self, random_rng):
         self.random_rng = random_rng
         total_mode = sum(self.model.factors['mode_transit_time'])
-        self.factors['initial_solution'] = [self.model.factors['mode_transit_time']/total_mode for i in range(self.model.factors['n_networks'])]
+        self.factors['initial_solution'] = [self.model.factors['mode_transit_time'][i]/total_mode for i in range(self.model.factors['n_networks'])]
         return
 
     def vector_to_factor_dict(self, vector):
