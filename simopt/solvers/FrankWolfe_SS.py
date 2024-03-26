@@ -52,7 +52,7 @@ class FrankWolfeSS(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 300
+                "default": 1000
             },
             "gamma": {
                 "description": "constant for shrinking the step size",
