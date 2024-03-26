@@ -59,7 +59,7 @@ Suppose that we can select :math:`\theta_i > 0` for each :math:`i`,
 but there is an associated cost. In particular, we want to minimize :math:`ET(\theta) + f(\theta)`,
 where :math:`T(\theta)` is the (random) duration of the longest path from source node
 to sink node (i.e. from :math:`a` to :math:`i` in the above example with 13 arcs) 
-and :math:`f(\theta) = \sum_{i=1}^{n}\theta_i^{-1}` where :math:`n`
+and :math:`f(\theta) = \sum_i \theta_i^{-1}` where :math:`n`
 is the number of arcs.
 
 The objective function is convex in :math:`\theta`. An IPA estimator of the gradient
