@@ -88,7 +88,7 @@ def main():
     gamma_1 = 4
     
     # example of running one version of solver
-    solver_factors = [{'gamma_1': gamma_1}] # fixed factors of solver (only need to included factors in dictionary that are different from default values)
+    solver_factors = [{}] # fixed factors of solver (only need to included factors in dictionary that are different from default values)
     solver_names = [solver_name]
     
     # # example of running solver using only default values
