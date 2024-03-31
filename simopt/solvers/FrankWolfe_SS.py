@@ -1,6 +1,5 @@
 import numpy as np
 import cvxpy as cp
-import matplotlib.pyplot as plt
 #import cdd
 
 
@@ -601,20 +600,20 @@ class FrankWolfeSS(Solver):
 
         return x0
 
-    def get_atom_vectors(self,Ci,di):
-        """
-        get vertices of a polytope defined by the 
-        constraints Ci <= di
-        """
-        a,b = Ci.shape
-        mat = np.concatenate((di.reshape(a,1),-Ci),axis = 1)
-        mat = cdd.Matrix(mat,linear=False,number_type='float')
+    # def get_atom_vectors(self,Ci,di):
+    #     """
+    #     get vertices of a polytope defined by the 
+    #     constraints Ci <= di
+    #     """
+    #     a,b = Ci.shape
+    #     mat = np.concatenate((di.reshape(a,1),-Ci),axis = 1)
+    #     mat = cdd.Matrix(mat,linear=False,number_type='float')
         
-        P = cdd.Polyhedron(mat)
-        poly = cdd.Polyhedron(mat)
-        ext = poly.get_generators()
+    #     P = cdd.Polyhedron(mat)
+    #     poly = cdd.Polyhedron(mat)
+    #     ext = poly.get_generators()
 
-        return np.array(ext)[:,1:] 
+    #     return np.array(ext)[:,1:] 
     
     def get_random_vertex(self,Ci,di,lower,upper):
         

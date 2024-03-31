@@ -5,37 +5,25 @@ Summary
 Provide dictionary directories listing solvers, problems, and models.
 """
 # import solvers
-from .solvers.randomsearch import RandomSearch
-from .solvers.neldmd_det import NelderMead
-from .solvers.astrodf_det import ASTRODF
-
 from .solvers.Boom_FrankWolfe import BoomFrankWolfe
 from .solvers.Boom_FrankWolfe1 import BoomFrankWolfe1
 from .solvers.Boom_FrankWolfe2 import BoomFrankWolfe2
-from .solvers.Boom_FrankWolfe3 import BoomFrankWolfe3
+from .solvers.FrankWolfe_SS import FrankWolfeSS
 from .solvers.Boom_ProxGD import BoomProxGD
 from .solvers.Boom_ProxGD1 import BoomProxGD1
 from .solvers.Boom_ProxGD2 import BoomProxGD2
 from .solvers.Boom_ProxGD3 import BoomProxGD3 #pgdss
-# from .solvers.active_set_fixed_joe_v2 import ACTIVESET
 from .solvers.active_set import ACTIVESET
-# from .solvers.active_set_copy import ACTIVESET
 from .solvers.active_set1 import ACTIVESET1
 from .solvers.active_set2 import ACTIVESET2
 from .solvers.active_set3 import ACTIVESET3
 # import models and problems
-# from .models.san_2 import SAN, SANLongestPath
-# from .models.san_1 import SAN1, SANLongestPath1
 from .models.san import SAN, SANLongestPath, SANLongestPathConstr
 from .models.network import Network, NetworkMinTotalCost
-# from .models.vac import COVID_vac, CovidMinInfectVac  #orginal method
-# from .models.vac_alias import COVID_vac, CovidMinInfectVac  #by multinomial 
 from .models.smf import SMF, SMF_Max
-from .models.openjackson import OpenJackson, OpenJacksonMinQueue   #6
+from .models.openjackson import OpenJackson, OpenJacksonMinQueue
 from .models.cascade import Cascade, CascadeMax
 from .models.smfcvx import SMFCVX0, SMFCVX_Max0
-# from .models.smfcvx import SMFCVX, SMFCVX_Max
-
 
 # directory dictionaries
 solver_directory = {
@@ -43,27 +31,21 @@ solver_directory = {
     "AS-I": ACTIVESET1,
     "AS-Z": ACTIVESET2,
     "AS-SS": ACTIVESET3,
-    "RNDSRCH": RandomSearch,
-    "NELDMD": NelderMead,
     "PGD-B": BoomProxGD,
     "PGD-I": BoomProxGD1,
     "PGD-Z": BoomProxGD2,
+    "PGD-SS": BoomProxGD3,
     "FW-B": BoomFrankWolfe,
     "FW-I": BoomFrankWolfe1,
     "FW-Z": BoomFrankWolfe2,
-    "FW-SS": BoomFrankWolfe3,
-    "PGD-SS": BoomProxGD3,
-    'ASTRODF': ASTRODF
+    "FW-SS": FrankWolfeSS,
 }
 
 solver_unabbreviated_directory = {
-    'ASTRODF': ASTRODF,
     "Active Set (SBCN)": ACTIVESET,
     "Active Set1 (SBCN)": ACTIVESET1,
     "Active Set2 (SBCN)": ACTIVESET2,
     "Active Set3 (SBCN)": ACTIVESET3,
-    "Random Search (SSMN)": RandomSearch,
-    "Nelder-Mead (SBCN)": NelderMead,
     "PGD-backtracking (SBCN)": BoomProxGD,
     "PGD-interpolation (SBCN)": BoomProxGD1,
     "PGD-zoom (SBCN)": BoomProxGD2,
@@ -71,7 +53,7 @@ solver_unabbreviated_directory = {
     "FW-backtracking (SBCN)": BoomFrankWolfe,
     "FW-interpolation (SBCN)": BoomFrankWolfe1,
     "FW-zoom (SBCN)": BoomFrankWolfe2,
-    "FW-SS (SBCN)": BoomFrankWolfe3,
+    "FW-SS (SBCN)": FrankWolfeSS,
 }
 
 problem_directory = {
