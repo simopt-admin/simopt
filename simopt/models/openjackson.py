@@ -6,6 +6,7 @@ Simulate an open jackson network
 import autograd.numpy as np
 import math as math
 from collections import deque
+from ..auto_diff_util import bi_dict, replicate_wrapper, factor_dict, resp_dict_to_array
 
 from ..base import Model, Problem
 
@@ -392,6 +393,7 @@ class OpenJackson(Model):
         while clock < self.factors['t_end']:
             next_arrival = min(next_arrivals)
             next_completion = min(completion_times)
+            # print(next_completion)
             clock = min(next_arrival, next_completion)
             for i in range(self.factors['number_queues']):
                 time_sum_queue_length[i] += queues[i] * (clock - previous_clock)
@@ -521,7 +523,7 @@ class OpenJacksonMinQueue(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="OPENJACKSON-1", fixed_factors=None, model_fixed_factors=None, random = False, random_rng = None):
+    def __init__(self, name="OPENJ-1", fixed_factors=None, model_fixed_factors=None, random = False, random_rng = None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -548,7 +550,7 @@ class OpenJacksonMinQueue(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 10000
             },
             "service_rates_budget" :{
                 "description": "budget for total service rates sum",
@@ -603,7 +605,7 @@ class OpenJacksonMinQueue(Problem):
 
         lambdas = self.model.calc_lambdas()
         r = self.factors["service_rates_budget"]/sum(lambdas)
-        self.factors['initial_solution'] = tuple([r*lambda_i for lambda_i in lambdas])
+        # self.factors['initial_solution'] = tuple([r*lambda_i for lambda_i in lambdas])
         
         return
     

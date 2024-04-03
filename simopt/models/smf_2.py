@@ -256,7 +256,10 @@ class SMF(Model):
         
         self.factors["mean_noise"] = [0 for i in range(len(self.factors["arcs"]))]
         
-        self.factors["cov_noise"] = self.get_covariance(self.factors["num_arcs"], random_rng[1])
+        # self.factors["cov_noise"] = self.get_covariance(self.factors["num_arcs"], random_rng[1])
+        cov_fac = np.zeros((len(self.factors["arcs"]), len(self.factors["arcs"])))
+        np.fill_diagonal(cov_fac, 4)
+        self.factors['cov_noise'] = cov_fac.tolist()
         
 
     def replicate(self, rng_list):
