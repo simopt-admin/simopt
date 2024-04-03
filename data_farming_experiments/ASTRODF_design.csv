@@ -1,18 +1,18 @@
-Design #,lambda_min,crn_across_solns,eta_1,eta_2,gamma_1,gamma_2,easy_solve,reuse_points,ps_sufficient_reduction,Solver Name,Design Type,Number Stacks
-0,36,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-1,31,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-2,33,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-3,34,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-4,45,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-5,50,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-6,43,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-7,41,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-8,40,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-9,44,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-10,49,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-11,48,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-12,46,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-13,35,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-14,30,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-15,38,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
-16,39,True,0.1,0.8,1.5,0.5,True,True,0.1,ASTRODF,nolhs,1
+Design #,eta_1,eta_2,gamma_1,gamma_2,crn_across_solns,lambda_min,easy_solve,reuse_points,ps_sufficient_reduction,Solver Name,Design Type,Number Stacks
+0,0.23,0.9,2.72,0.4,True,4,True,True,0.1,ASTRODF,nolhs,1
+1,0.13,0.6,2.81,0.55,True,4,True,True,0.1,ASTRODF,nolhs,1
+2,0.15,0.68,1.59,0.3,True,4,True,True,0.1,ASTRODF,nolhs,1
+3,0.18,0.75,1.97,0.9,True,4,True,True,0.1,ASTRODF,nolhs,1
+4,0.4,0.88,2.16,0.2,True,4,True,True,0.1,ASTRODF,nolhs,1
+5,0.5,0.63,2.06,0.75,True,4,True,True,0.1,ASTRODF,nolhs,1
+6,0.35,0.57,3.0,0.35,True,4,True,True,0.1,ASTRODF,nolhs,1
+7,0.33,0.85,2.63,0.85,True,4,True,True,0.1,ASTRODF,nolhs,1
+8,0.3,0.7,2.25,0.5,True,4,True,True,0.1,ASTRODF,nolhs,1
+9,0.38,0.5,1.78,0.6,True,4,True,True,0.1,ASTRODF,nolhs,1
+10,0.48,0.8,1.69,0.45,True,4,True,True,0.1,ASTRODF,nolhs,1
+11,0.45,0.73,2.91,0.7,True,4,True,True,0.1,ASTRODF,nolhs,1
+12,0.43,0.65,2.53,0.1,True,4,True,True,0.1,ASTRODF,nolhs,1
+13,0.2,0.53,2.34,0.8,True,4,True,True,0.1,ASTRODF,nolhs,1
+14,0.1,0.78,2.44,0.25,True,4,True,True,0.1,ASTRODF,nolhs,1
+15,0.25,0.83,1.5,0.65,True,4,True,True,0.1,ASTRODF,nolhs,1
+16,0.28,0.55,1.88,0.15,True,4,True,True,0.1,ASTRODF,nolhs,1

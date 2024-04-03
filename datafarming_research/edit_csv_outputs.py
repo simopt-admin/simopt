@@ -7,10 +7,10 @@ Created on Wed Mar 27 16:00:53 2024
 
 import pandas as pd
 
-results_filename = './first_ASTRODF_and_cnt_design/ASTRODF_on_CNTNEWS-1_results.csv' # location of csv file that you want to edit
+results_filename = './post_and_norm_same/ASTRODF_on_CNTNEWS-1_results.csv' # location of csv file that you want to edit
 problem_design_filename =  'expt1_test_inputs.txt' # location of file with  problem design points
-solver_design_filename = 'ASTRODF_factor_settings_design.txt' #location of file with solver design points
-new_save_name = 'first_ASTRODF_cnt_design_results_edited.csv' # save name of new edited file
+solver_design_filename = 'ASTRODF_design.txt' #location of file with solver design points
+new_save_name = 'same_postnorm_cnt_design_results_edited.csv' # save name of new edited file
 problem_design = pd.read_csv(problem_design_filename, sep = ' ')
 solver_design = pd.read_csv(solver_design_filename, sep = '\t', header=None)
 results = pd.read_csv(results_filename)

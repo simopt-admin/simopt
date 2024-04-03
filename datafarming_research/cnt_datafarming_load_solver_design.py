@@ -14,7 +14,7 @@ def main():
     solver_name = 'ASTRODF' # name of solver
     
     # turn design txt file into dataframe
-    design_filename = "ASTRODF_factor_settings_design.txt" # location of design file
+    design_filename = "ASTRODF_design.txt" # location of design file
     df = pd.read_csv(design_filename, sep='\t', encoding="utf-8") # may need to change sep depending on type of file uploaded
     
         
@@ -125,7 +125,7 @@ def main():
     
     # run experiment (can change any of these values as desired)
     n_macro = 10 # number of macro replications at each design point
-    n_post = 100 # number of post replications of each macro rep
+    n_post = 200 # number of post replications of each macro rep
     n_postnormal = 200 # number of post replications at x0 and x*
     
     experiment.run(n_macroreps = n_macro)
