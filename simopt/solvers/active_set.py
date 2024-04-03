@@ -443,7 +443,7 @@ class ACTIVESET(Solver):
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
-                    if s < steph1:
+                    if s < temp_steph1:
                         temp_steph1 = s
             steph1 = min(temp_steph1, steph1)
 
@@ -458,13 +458,13 @@ class ACTIVESET(Solver):
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
-                    if s < steph2:
+                    if s < temp_steph2:
                         temp_steph2 = s
             steph2 = min(temp_steph2, steph2)
 
             if np.isclose(steph2, 0 , atol= tol):
                 # Address numerical stability of step size.
-                steph1 = 0
+                steph2 = 0
             
             # Determine whether to use central diff, backward diff, or forward diff.
             if (steph1 != 0) & (steph2 != 0):
@@ -515,9 +515,6 @@ class ACTIVESET(Solver):
             elif BdsCheck[i] == -1:
                 grad[i] = (fn - fn2) / h[i]
 
-        print('BdsCheck', BdsCheck)
-        print('step size', h)
-        print('grad', grad)
         return grad, budget_spent
 
     def line_search(self, problem, expended_budget, r, grad, cur_sol, alpha_0, d, alpha, beta):
