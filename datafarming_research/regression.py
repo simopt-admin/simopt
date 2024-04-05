@@ -8,13 +8,10 @@ Created on Wed Mar 27 15:52:50 2024
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence \
 import variance_inflation_factor as VIF
 from statsmodels.stats.anova import anova_lm
-from ISLP import load_data
 from ISLP.models import (ModelSpec as MS,
 summarize ,
 poly)

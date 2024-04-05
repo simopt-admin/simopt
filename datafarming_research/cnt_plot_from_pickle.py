@@ -12,17 +12,32 @@ import pickle
 
 pickle_1 = './datafarming_research/first_ASTRODF_and_cnt_design/pickles/group_ASTRODF_on_CNTNEWS-1.pickle'
 with open(pickle_1, 'rb') as f:
-    experiment_1 = pickle.load(f)
+    experiment = pickle.load(f)
 
-# pickle_2 = './datafarming_research/ASTRODF_cnt_design_1/group_ASTRODF_on_CNTNEWS-1.pickle'
-# with open(pickle_2, 'rb') as f:
-#     experiment_2 = pickle.load(f)
+pickle_2 = './datafarming_research/ASTRODF_cnt_design_1/group_ASTRODF_on_CNTNEWS-1.pickle'
+with open(pickle_2, 'rb') as f:
+    default = pickle.load(f)
     
-# # give new names to differentiate between solver variants
-# for solver in experiment_1.experiments:
-#     for dp in solver:
-#         print(dp)
-#         dp.solver.name = 'ASTRODF_gamma_1-4' 
+solver_design = pd.read_csv('ASTRODF_design.txt',sep='\t', encoding="utf-8" )
+ 
+default_experiments = default.experiments   
+
+for solver in default_experiments:
+    for dp in solver:
+        dp.solver.name = 'default_ASTRODF'
+
+for index, row in solver_design.iterrows():       
+    for solver in experiment.experiments:
+        for dp in solver:
+            
+        
+    
+# give new names to differentiate between solver variants
+for solver in experiment_1.experiments:
+    for dp in solver:
+        print(dp)
+        dp.solver.name = 'ASTRODF_gamma_1-4' 
+        
 
 experiments = experiment_1.experiments 
 

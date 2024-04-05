@@ -111,7 +111,7 @@ def main():
     n_postnormal = 200 # number of post replications at x0 and x*
     
     experiment.run(n_macroreps = n_macro)
-    experiment.post_replicate( n_postreps = n_post)
+    experiment.post_replicate( n_postreps = n_post, crn_across_macroreps =True)
     experiment.post_normalize(n_postreps_init_opt = n_postnormal)
     experiment.record_group_experiment_results()
     experiment.log_group_experiment_results()

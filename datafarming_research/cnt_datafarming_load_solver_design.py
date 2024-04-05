@@ -43,47 +43,50 @@ def main():
     #fixed factors (uncomment any of these if you want to change from problem default)
     # n_p = 3 # number of products
     # n_m = 4 # number of materials
-    # mat_to_prod = [[1, 2, 1, 3], [1, 1, 3, 1],[2, 0, 4, 1]] # maps materials to products (currently every product uses all materials)
+    mat_to_prod = [[1, 1, 1, 0], [1, 2, 2, 0],[0, 0, 3, 3]] # maps materials to products (currently every product uses all materials)
     # process_cost = [0.1, 0.1, 0.1,0.1] # processing cost per product unit
-    # order_cost = 20 # one time ordering cost
-    # purchase_yeild = [.9,.9,.9,.9] # yeild rates for initially purchased materials
+    order_cost = 0 # one time ordering cost
+    purchase_yeild = [1,1,1,1] # yeild rates for initially purchased materials
     #total_budget = 5000 # budget for all purchases
-    #sales_price = [20,20,20,20] # sales price per product unit
+    sales_price = [6,12,20] # sales price per product unit
     # order_quantity = [20,20,20,20] # intial order quantity per material
-    # mean = [15,15,15,15] # mean parameter for poisson demand distribution
+    mean = [20,25,15] # mean parameter for poisson demand distribution
     
     # problem factors (can change these as desired, comment out to use problem defaults)
     init_sol = [20, 20, 20, 20]
     budget = 1000
      
     # turn design txt file into dataframe
-    design_filename = "expt1_test_inputs.txt" # location of design file
-    df = pd.read_csv(design_filename, sep=' ', encoding="utf-8") # may need to change sep depending on type of file uploaded
+    design_filename = "cnt_design.xlsx" # location of design file
+    df = pd.read_excel(design_filename) # may need to change sep depending on type of file uploaded
     
-    # get tables for each design factor depending on rows in design file
-    # will need to add a new table if changing more than 3 problem factors
-    # if more than 4 material types will need to adjust column numbers to match design file
-    c_m = df.iloc[:, :4]
-    c_r = df.iloc[:,4:8]
-    p_v = df.iloc[:,8:12]
-    
-    # these are just used as validation, can remove if desired
-    print('c_m', c_m)
-    print('c_r', c_r)
-    print('p_v', p_v)
+
         
     n_dp = len(df) # number of design points(
     problem_factors = [] # list to hold dictionary of problem factors for each dp of problem (don't change)
     problem_names = [] # list to hold problem names (don't change)
     
     # concatinate tables back into arrays for each design point
-    for row in range(n_dp):
+    for index, row in df.iterrows():
         # get problem factor arrays for each design point
         # will need to add an additional index to each array if increaseing the number of materials
         # will need to create an additional array if varying more than 3 problem factors
-        m_cost = [c_m.iloc[row,0], c_m.iloc[row,1], c_m.iloc[row,2], c_m.iloc[row,3]]
-        r_cost = [c_r.iloc[row,0], c_r.iloc[row,1], c_r.iloc[row,2], c_r.iloc[row,3]]
-        s_price = [p_v.iloc[row,0], p_v.iloc[row,1], p_v.iloc[row,2], p_v.iloc[row,3]]
+        cm_1 = row['cm1']
+        cm_2 = row['cm2']
+        cm_3 = row['cm3']
+        cm_4 = row['cm4']
+        rm_1 = row['rm1']
+        rm_2 = row['rm2']
+        rm_3 = row['rm3']
+        rm_4 = row['rm4']
+        sm_1 = row['sm1']
+        sm_2 = row['sm2']
+        sm_3 = row['sm3']
+        sm_4 = row['sm4']
+        m_cost = [round(cm_1,4), round(cm_2,4), round(cm_3,4), round(cm_4,4)]
+        r_cost = [round(rm_1,4), round(rm_2,4), round(rm_3,4), round(rm_4,4)]
+        s_price = [round(sm_1,4), round(sm_2,4), round(sm_3,4), round(sm_4,4)]
+
     
         
         # create dictionary of all factor values at this dp
@@ -94,14 +97,14 @@ def main():
         dp_factors["salvage_price"] = s_price
         # dp_factors["num_material"] = n_m
         # dp_factors["num_product"] = n_p
-        # dp_factors["mat_to_prod"] = mat_to_prod
+        dp_factors["mat_to_prod"] = mat_to_prod
         # dp_factors["process_cost"] = process_cost 
-        # dp_factors["order_cost"] = order_cost
-        # dp_factors["purchase_yield"] = purchase_yeild
+        dp_factors["order_cost"] = order_cost
+        dp_factors["purchase_yield"] = purchase_yeild
         # dp_factors["total_budget"] = total_budget
-        # dp_factors["sales price"] = sales_price
+        dp_factors["sales price"] = sales_price
         # dp_factors["order quantity"] = order_quantity
-        # dp_factors["poi_mean"] = mean    
+        dp_factors["poi_mean"] = mean    
         dp_factors["initial_solution"] = init_sol
         dp_factors["budget"] = budget
     
@@ -129,7 +132,7 @@ def main():
     n_postnormal = 200 # number of post replications at x0 and x*
     
     experiment.run(n_macroreps = n_macro)
-    experiment.post_replicate( n_postreps = n_post)
+    experiment.post_replicate( n_postreps = n_post, crn_across_macroreps =True)
     experiment.post_normalize(n_postreps_init_opt = n_postnormal)
     experiment.record_group_experiment_results()
     experiment.log_group_experiment_results()
