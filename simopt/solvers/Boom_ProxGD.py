@@ -14,7 +14,7 @@ class BoomProxGD(Solver):
     """
     
     """
-    def __init__(self, name="PGD-backtracking", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
+    def __init__(self, name="Boom-PGD", fixed_factors={"max_iters": 300, "backtrack": 1, "curve_const": 0.3, "LSmethod": 'zoom', "algorithm": 'away'}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -54,7 +54,7 @@ class BoomProxGD(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 300
+                "default": 1000
             },
             "theta": {
                 "description": "constant in the line search condition",
@@ -391,6 +391,20 @@ class BoomProxGD(Solver):
             
             newF = -1 * problem.minmax[0] * new_sol.objectives_mean
             
+            #xrange = np.arange(0,max_step,0.01)
+            #nn = len(xrange)
+            #fval = np.zeros(nn)
+            #for i in range(nn):
+            #    temp_x = cur_x + xrange[i]*d
+            #    temp_sol = self.create_new_solution(tuple(temp_x), problem)
+            #    problem.simulate(temp_sol, r)
+            #    fval[i] = -1 * problem.minmax[0] * temp_sol.objectives_mean
+            #    fval[i] = temp_sol.objectives_mean
+            #plt.scatter(xrange,fval)
+            #line = -1*problem.minmax[0]*curF + self.factors["theta"]*xrange*(-1*problem.minmax[0]* grad.dot(d))
+            #plt.scatter(xrange,line,color='red')
+            #plt.show()
+            
             #newF, budget_spent = self.get_simulated_values(problem,cur_x + step_size*d,value = 'val')
             #added_budget += budget_spent
             #new_grad = -1 * problem.minmax[0] * new_sol.objectives_gradients_mean[0]
@@ -401,7 +415,8 @@ class BoomProxGD(Solver):
                 
             step_size = step_size*ratio
             cur_iter += 1
-            #print("---------------") 
+            #print("---------------")
+        print("step size from backtracking: ", step_size)
         return step_size, added_budget
     
     def interpolateLineSearch(self,cur_sol,grad,d,max_step,problem,expended_budget):
@@ -790,6 +805,7 @@ class BoomProxGD(Solver):
                 expended_budget += budget_spent
                     
             #print("max_step: ",max_step)
+            print("g: ", grad)
             direction = -grad/np.linalg.norm(grad)
             temp_x = cur_x + max_step * direction
             #print("cur x: ",cur_x)
@@ -800,8 +816,9 @@ class BoomProxGD(Solver):
                 action = "project"
                 proj_x = self.proj(temp_x,Ci,di,Ce,de,lower,upper)
                 #print("proj x: ",proj_x)
-                direction = proj_x - cur_x #change direction to the projected point
-                max_step = 1
+                #direction = proj_x - cur_x #change direction to the projected point
+                #max_step = 1
+                direction = (proj_x - cur_x)/max_step
                 
                 #if(last_action == "project"):
                     #consecutive projection: should increase max proj step
@@ -822,8 +839,6 @@ class BoomProxGD(Solver):
             #print("max step: ", max_step)
             #step sizes
             if(self.factors["backtrack"]):
-                #t, added_budget = self.LineSearch(new_solution,grad,direction,self.factors["max_gamma"],problem,expended_budget)
-                #t, added_budget = self.LineSearch(new_solution,grad,direction,t,problem,expended_budget)
                 t, added_budget = self.factors['LSfn'](new_solution,grad,direction,max_step,problem,expended_budget)
                 expended_budget += added_budget
             else:
@@ -836,7 +851,7 @@ class BoomProxGD(Solver):
                 if(t == max_step):
                     #if we reach max step, then next iteration should move further
                     #max_step = min(max_gamma,max_step/self.factors["ratio"])
-                    max_step = min(self.factors["max_step_size"],max_step/self.factors["ratio"])
+                    max_step = min(self.factors["max_gamma"],max_step/self.factors["ratio"])
                 #t = min(t,max_step_feas)
                 else:
                     max_step = max(1,max_step*self.factors["ratio"])
@@ -848,18 +863,16 @@ class BoomProxGD(Solver):
                 if(t == max_step):
                     #print("full projection")
                     #max_step = min(self.factors["max_step_size"],last_proj_maxstep/self.factors["ratio"])
-                    last_proj_maxstep = min(self.factors["max_step_size"],last_proj_maxstep/self.factors["ratio"])
+                    last_proj_maxstep = min(self.factors["max_gamma"],last_proj_maxstep/self.factors["ratio"])
                     max_step = last_proj_maxstep
                 else:
                     #use this for the next iteration, assume to be normal
                     last_proj_maxstep = max(1,last_proj_maxstep*self.factors["ratio"])
                     max_step = last_normal_maxstep 
             #print("act: ", action)
-            #if(t == max_step):
-            #    max_step = min(max_gamma,max_step/self.factors["ratio"])
             #print("grad: ", grad)
             #print("max step: ", max_step)
-            #print("step: ", t)
+            print("step: ", t)
  
             #new_x = cur_x - t * grad
             new_x = cur_x + t * direction
@@ -886,7 +899,7 @@ class BoomProxGD(Solver):
                 intermediate_budgets.append(expended_budget)
             
             #print("current budget: ",expended_budget)
-            #print("========================")
+            print("========================")
             
             k += 1
         #print("obj: ",candidate_solution.objectives_mean)

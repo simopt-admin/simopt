@@ -747,7 +747,12 @@ class ACTIVESET2(Solver):
             cur_step_size = min(max_step,cur_step_size*self.factors["zoom_inc_ratio"])
 
             if(cur_step_size >= max_step):
-                break;
+                #break;
+                x_new = cur_x + cur_step_size*d
+                x_new_solution = self.create_new_solution(tuple(x_new), problem)
+                problem.simulate(x_new_solution, r)
+                expended_budget += r
+                return x_new_solution, max_step, expended_budget, count
             #    return max_step, added_budget
 
             lastF = nextF
@@ -757,8 +762,8 @@ class ACTIVESET2(Solver):
 
             count += 1
             cur_iter +=1
-            if count >= 20:
-                break
+            #if count >= 20:
+            #    break
             #print("new step: ", cur_step_size)
             #print("---------------")  
         if(cur_iter == self.factors["line_search_max_iters"] or (cur_step_size >= max_step)):

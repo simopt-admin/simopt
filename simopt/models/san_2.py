@@ -1,3 +1,4 @@
+# Newest version with a lower bound for arcs
 """
 Summary
 -------
@@ -146,23 +147,6 @@ class SAN(Model):
         return output
     
     def get_arcs(self, num_nodes, num_arcs, uni_rng):
-        """
-        Getting a random set of valid arcs.
-
-        Arguments
-        ---------
-        num_nodes: int
-            number of nodes for the random graph
-        num_arcs: int
-            number of arcs for the random graph
-        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a
-            rngs for model to use when simulating a replication
-
-        Returns
-        -------
-        arcs : list
-            Generated random arcs to be used in the following simulation
-        """
         # Calculate the total set of possible arcs in the graph
         set_arcs = []
         for n1 in range(1, num_nodes):
@@ -232,19 +216,6 @@ class SAN(Model):
         return list(arcs)
     
     def attach_rng(self, random_rng):
-        """
-        Attach rng to random model class and generate random factors and update corresponding problem dimension.
-
-        Arguments
-        ---------
-        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a
-            rngs for model to use when generating random factors
-
-        Returns
-        -------
-        arcs : list
-            Generated random arcs to be used in the following simulation
-        """
         self.random_rng = random_rng
         arcs_set = self.get_arcs(self.factors["num_nodes"], self.factors["num_arcs"], random_rng[0])
         
@@ -283,6 +254,7 @@ class SAN(Model):
             graph_in[a[1]].add(a[0])
             graph_out[a[0]].add(a[1])
         indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
+        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
         queue = []
         topo_order = []
         for n in range(self.factors["num_nodes"]):
@@ -302,6 +274,16 @@ class SAN(Model):
             arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
 
         ## Calculate the length of the longest path.
+        # T = np.zeros(self.factors["num_nodes"])
+        # prev = np.zeros(self.factors["num_nodes"])
+        # for i in range(1, self.factors["num_nodes"]):
+        #     vi = topo_order[i - 1]
+        #     for j in graph_out[vi]:
+        #         if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
+        #             T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+        #             prev[j - 1] = vi
+        # longest_path = T[self.factors["num_nodes"] - 1]
+        
         allpaths = self.allPathsStartEnd(graph_out)
         L = []
         for p in allpaths:
@@ -311,11 +293,9 @@ class SAN(Model):
             L.append(l)
         longest_path = np.max(L)
         longest_P = allpaths[np.argmax(L)]
-
-        # Calculate the IPA gradient w.r.t. arc means.
-        # If an arc is on the longest path, the component of the gradient
-        # is the length of the length of that arc divided by its mean.
-        # If an arc is not on the longest path, the component of the gradient is zero.
+        # print(' ')
+        # print('longest path: ', longest_P)
+        
         gradient = np.zeros(len(self.factors["arcs"]))
 
         for i in range(len(longest_P)-1,0,-1):
@@ -323,6 +303,20 @@ class SAN(Model):
             current = longest_P[i]
             idx = self.factors["arcs"].index((backtrack, current))
             gradient[idx] = arc_length[str((backtrack, current))] / (self.factors["arc_means"][idx])
+
+        # Calculate the IPA gradient w.r.t. arc means.
+        # If an arc is on the longest path, the component of the gradient
+        # is the length of the length of that arc divided by its mean.
+        # If an arc is not on the longest path, the component of the gradient is zero.
+        
+        # gradient = np.zeros(len(self.factors["arcs"]))
+        # current = topo_order[-1]
+        # backtrack = int(prev[self.factors["num_nodes"] - 1])
+        # while current != topo_order[0]:
+        #     idx = self.factors["arcs"].index((backtrack, current))
+        #     gradient[idx] = arc_length[str((backtrack, current))] / (self.factors["arc_means"][idx])
+        #     current = backtrack
+        #     backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
@@ -389,10 +383,6 @@ class SANLongestPath(Problem):
                 max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
-    random: bool
-        indicator of whether user want to build a random problem or a deterministic model
-    n_rng: int
-        Number of random number generator needed to build a random problem instance
 
     Arguments
     ---------
@@ -424,7 +414,7 @@ class SANLongestPath(Problem):
         self.model_default_factors = {}
         self.model_decision_factors = {"arc_means"}
         self.factors = fixed_factors
-        self.random = random  # Randomlize problem and model or not
+        self.random = random
         self.n_rngs = 3  # Number of rngs used for the random instance
         self.specifications = {
             "initial_solution": {
@@ -451,43 +441,26 @@ class SANLongestPath(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors, random)
-        # If random, generate random model factors and update model class
         if random==True and random_rng != None:
             self.model.attach_rng(random_rng)
         self.dim = len(self.model.factors["arcs"])
-        # Update every value and dimension according to the randomly generated case
+        # Update every values according to the randomly generated case
         self.factors["initial_solution"] = (8,) * self.dim
-        self.factors["c"] = (1,) * self.dim
+        self.factors["c"] = (1,) * self.dim 
         self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
+        self.upper_bounds = (10000000,) * self.dim  #np.inf
         self.Ci = None
         self.Ce = None
         self.di = None
         self.de = None
     
     def check_arc_costs(self):
-        """
-        Check if the arc costs are positive.
-
-        Returns
-        -------
-        bool
-            indicates if arc costs are positive
-        """
         positive = True
         for x in list(self.factors["c"]):
             positive = positive & x > 0
         return (len(self.factors["c"]) != self.dim) & positive
     
     def check_budget(self):
-        """
-        Check if the budget is positive.
-
-        Returns
-        -------
-        bool
-            indicates if the budget is positive
-        """
         return self.factors["budget"] > 0
 
     def vector_to_factor_dict(self, vector):
@@ -528,19 +501,6 @@ class SANLongestPath(Problem):
         return vector
     
     def get_coefficient(self, exp_rng):
-        """
-        Generate random coefficients for each arc.
-
-        Arguments
-        ---------
-        exp_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample random coefficients
-
-        Returns
-        -------
-        c : list
-            vector of coefficients
-        """
         c = []
         for i in range(len(self.factors["c"])):
             ci = exp_rng.expovariate(1)
@@ -549,27 +509,13 @@ class SANLongestPath(Problem):
         return c
     
     def random_budget(self, uni_rng):
-        """
-        Generate random budget for the problem, proportional to the dimension.
-
-        Arguments
-        ---------
-        uni_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample random budget
-        """
-        l = [100, 200, 300, 400, 500]
+        # Generate random budget proportion to the dimension
+        # l = [100, 200, 300, 400, 500]
+        l = [1000, 2000, 3000] # For GASSO
         budget = uni_rng.choice(l) * self.dim
         return budget
                        
     def attach_rngs(self, random_rng):
-        """
-        Attach random-number generators to the problem.
-
-        Arguments
-        ---------
-        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            list of rngs for problem to use when generating random instances
-        """
         # Attach rng for problem class and generate random problem factors for random instances
         self.random_rng = random_rng
         
@@ -695,7 +641,7 @@ class SANLongestPath(Problem):
 """
 Summary
 -------
-Minimize the duration of the longest path from a to i subject to some lower bounds in sum of arc_means.
+Minimize the duration of the longest path from a to i subject to a lower bound in sum of arc_means.
 """
 
 class SANLongestPathConstr(Problem):
@@ -749,12 +695,6 @@ class SANLongestPathConstr(Problem):
                 max number of replications (fn evals) for a solver to take
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
-    random: bool
-        indicator of whether user want to build a random problem or a deterministic model
-    n_rng: int
-        Number of random number generator needed to build a random problem instance
-    random_const: bool
-        indicator of whether to generate random constraints for the random problem instance or not
 
     Arguments
     ---------
@@ -778,7 +718,7 @@ class SANLongestPathConstr(Problem):
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
-        self.constraint_type = "box"
+        self.constraint_type = "deterministic"
         self.variable_type = "continuous"
         self.gradient_available = True
         self.optimal_value = None
@@ -787,9 +727,9 @@ class SANLongestPathConstr(Problem):
         self.model_decision_factors = {"arc_means"}
         self.factors = fixed_factors
         self.random = random
-        self.random_const = False  # Turn on if want to generate random constraints for random problem instance
+        self.random_const = False
         if self.random_const:
-            self.num_con = 3  # Number of random constraints to generate
+            self.num_con = 3
         else:
             self.num_con = 1
         self.n_rngs = 3  # Number of rngs used for the random instance
@@ -802,7 +742,7 @@ class SANLongestPathConstr(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 100000
+                "default": 1000000
             },
             "arc_costs": {
                 "description": "cost associated to each arc",
@@ -842,68 +782,28 @@ class SANLongestPathConstr(Problem):
         self.factors["initial_solution"] = (15,) * self.dim
         self.factors["arc_costs"] = (1,) * self.dim 
         self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
-        self.Ci = -1 * np.ones(self.dim)
+        self.upper_bounds = (100000,) * self.dim #np.inf
+        self.Ci = -1 * np.ones(13)
         self.Ce = None
         self.di = -1 * np.array([self.factors["sum_lb"]])
         self.de = None
     
     def check_arc_costs(self):
-        """
-        Check if the arc costs are positive.
-
-        Returns
-        -------
-        bool
-            indicates if arc costs are positive
-        """
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
         return (len(self.factors["arc_costs"]) != self.dim) & positive
     
     def check_budget(self):
-        """
-        Check if the budget is positive.
-
-        Returns
-        -------
-        bool
-            indicates if the budget is positive
-        """
         return self.factors["budget"] > 0
     
     def check_const(self):
-        """
-        Check if the random constraint is positive.
-
-        Returns
-        -------
-        bool
-            indicates if the random constraint is positive
-        """
         return self.factors["r_const"] >= 0
     
     def check_lb(self):
-        """
-        Check if the lower bound for sum of all arc rates is positive.
-
-        Returns
-        -------
-        bool
-            indicates if the lower bound is positive
-        """
         return self.factors["sum_lb"] >= 0
     
     def check_lbs(self):
-        """
-        Check if other potential lower bound is positive.
-
-        Returns
-        -------
-        bool
-            indicates if other lower bound is positive
-        """
         return self.factors["lbs"] >= 0
 
     def vector_to_factor_dict(self, vector):
@@ -944,14 +844,6 @@ class SANLongestPathConstr(Problem):
         return vector
     
     def get_coefficient(self, exp_rng):
-        """
-        Generate random coefficients for each arc.
-
-        Arguments
-        ---------
-        exp_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample random coefficients
-        """
         if self.random == True:
             c = []
             for i in range(len(self.factors["arc_costs"])):
@@ -962,32 +854,14 @@ class SANLongestPathConstr(Problem):
             return self.factors['arc_costs']
     
     def random_budget(self, random_rng):
-        """
-        Generate random budget for the problem, proportional to the dimension.
-
-        Arguments
-        ---------
-        uni_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample random budget
-        """
         if self.random == True:
-            l = [10000, 20000]
+            l = [300, 400, 500, 600]
             budget = random_rng.choice(l) * self.dim
             return budget
         else:
             return self.factors['budget']
     
     def get_const(self, n, uni_rng):
-        """
-        Generate random constraint for the problem, proportional to the dimension.
-
-        Arguments
-        ---------
-        n : int
-            number of constraints want to generate
-        uni_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample random budget
-        """
         # Randomly choose a subset of arcs that have limited budget
         C = []
         L = []
@@ -1003,14 +877,6 @@ class SANLongestPathConstr(Problem):
         return C, L
                        
     def attach_rngs(self, random_rng):
-        """
-        Attach random-number generators to the problem.
-
-        Arguments
-        ---------
-        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            list of rngs for problem to use when generating random instances
-        """
         # Attach rng for problem class and generate random problem factors for random instances
         self.random_rng = random_rng
         
@@ -1025,6 +891,8 @@ class SANLongestPathConstr(Problem):
                 self.factors["r_const"], self.factors['lbs'] = self.get_const(self.num_con, random_rng[2])
                 self.factors["lbs"].append(self.factors["sum_lb"])  # Combine the sum_lb with the partial_lb
                 self.factors["r_const"].append([i for i in range(self.dim)])  # Combine the index related to sum_lb with the r_const
+                # print('r_const: ', self.factors["r_const"])
+                # print('partial_lb: ', self.factors['partial_lb'])
             else:
                 self.factors["r_const"], self.factors['sum_lb'] = self.get_const(self.num_con, random_rng[2])
                 self.factors["lbs"] = [self.factors["sum_lb"]]
@@ -1163,7 +1031,79 @@ class SANLongestPathConstr(Problem):
         res = linprog(c, A_ub=A, b_ub=b, bounds=(0, None), method='interior-point')
         
         return res.x
-   
+
+    
+    def hit_and_run_single(self, x, rand_sol_rng, partial_lb = None, indices = None):
+        """
+        Find an random feasible solution by running hit-and-run algorithm
+        for one iteration.
+
+        Arguments
+        ---------
+        x : ndarray/list
+            starting point
+        partial_lb : list
+            lower bounds for the selected sum of arc means
+        indices : list of list
+            list of indices of the selected arcs
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : ndarray
+            a random feasible solution after one iteration
+        """
+        while True:
+            dk = np.array([rand_sol_rng.uniform(-1, 1) for _ in range(self.dim)])
+            dk = dk/np.linalg.norm(dk)
+            # print(dk)
+            # crit = -x/dk
+            crit = []
+            for i in range(len(x)):
+                if dk[i] == 0:
+                    crit.append(0)
+                else:
+                    crit.append(-x[i]/dk[i])
+            ub, lb = [], []
+            if np.sum(dk) >= 0:
+                lb.append((self.factors['sum_lb'] - sum(x))/sum(dk))
+            if np.sum(dk) < 0:
+                ub.append((self.factors['sum_lb'] - sum(x))/sum(dk))
+            
+            if self.random_const:
+                for i in range(len(partial_lb)):
+                    xl = [x[j] for j in indices[i]]
+                    dl = [dk[j] for j in indices[i]]
+                    if np.sum(dl) >= 0:
+                        lb.append((partial_lb[i] - sum(xl))/sum(dl))
+                    else:
+                        ub.append((partial_lb[i] - sum(xl))/sum(dl))
+                
+            # lamb * dk[i] + x[i] >= 0 --> lamb >= -x[i]/dk[i] for dk[i]>0
+            if np.all(dk>=0):
+                lb.append(max([i for i in crit if i <= 0]))
+            elif np.all(dk<=0):
+                ub.append(min([i for i in crit if i >= 0]))
+            else:
+                ub.append(min([i for i in crit if i >= 0]))
+                lb.append(max([i for i in crit if i <= 0]))
+            if len(ub) == 0:
+                lbb = max(lb)
+                ubb = lbb + 1
+            elif len(lb) == 0:
+                ubb = min(ub)
+                lbb = ubb - 1
+            else:
+                ubb = min(ub)
+                lbb = max(lb)
+            if lbb<=ubb:
+                break
+        
+        lamb = rand_sol_rng.uniform(lbb, ubb)
+        
+        return x + lamb * dk
+    
     def check_feasible(self, x):
         """
         Check whether a solution is feasible or not.
@@ -1186,6 +1126,131 @@ class SANLongestPathConstr(Problem):
         else:
             return False
     
+    # def hit_and_run(self, x, rand_sol_rng, max_iter=20):
+    #     """
+    #     Find an random feasible solution by running hit-and-run algorithm with maximum
+    #     step numbers as stopping criteria.
+        
+    #     Arguments
+    #     ---------
+    #     x : ndarray/list
+    #         starting point
+    #     rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+    #         random-number generator used to sample a new random solution
+    #     max_iter : int
+    #         maximum number of iterations
+            
+    #     Returns
+    #     -------
+    #     x : ndarray
+    #         a random feasible solution that meets the stopping creteria
+    #     """
+    #     # if not self.check_feasible(x):
+    #     #     x = self.find_feasible_initial(None, self.Ci, None, self.di)
+        
+    #     x = self.find_feasible()
+        
+    #     if self.random_const:
+    #         partial_lb = self.factors['partial_lb']
+    #         indices = self.factors['r_const']
+    #     else:
+    #         partial_lb = None
+    #         indices = None
+        
+    #     for i in range(max_iter):
+    #         x = self.hit_and_run_single(x, rand_sol_rng, partial_lb, indices)
+    #     return x
+    
+    # def get_random_solution(self, rand_sol_rng):
+    #     """
+    #     Generate a random solution for starting or restarting solvers.
+
+    #     Arguments
+    #     ---------
+    #     rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+    #         random-number generator used to sample a new random solution
+
+    #     Returns
+    #     -------
+    #     x : tuple
+    #         vector of decision variables
+    #     """
+        
+    #     x = self.hit_and_run(self.factors["initial_solution"], rand_sol_rng)
+        
+    #     x = tuple(x)
+    #     # print('random solution: ', x)
+        
+    #     return x
+    
+    
+    # def hit_and_run(self, x, rand_sol_rng, upper_bounds, upper_indices, lower_bounds, lower_indices, dim, n = 50):
+    #     """
+    #     Find an random feasible solution by running hit-and-run algorithm
+    #     for one iteration.
+
+    #     Arguments
+    #     ---------
+    #     x : ndarray/list
+    #         starting point
+    #     rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
+    #         random-number generator used to sample a new random solution
+    #     upper_bounds : list
+    #         upper bounds of the linear constraints
+    #     lower_bounds : list
+    #         lower bounds of the linear constraints
+    #     upper_indices : list of lists
+    #         ith list corresponds to the indices of x that bounded by ith upper_bounds
+    #     lower_indices : list of lists
+    #         ith list corresponds to the indices of x that bounded by ith lower_bounds
+    #     dim : int
+    #         dimension of the problem
+    #     n: int
+    #         number of maximum iterations to run before returning the current solution
+
+    #     Returns
+    #     -------
+    #     x : ndarray
+    #         a random feasible solution after one iteration
+    #     """
+        
+    #     for step in range(n):
+    #         while True:
+    #             dk = np.array([rand_sol_rng.uniform(-1, 1) for _ in range(dim)])
+    #             dk = dk/np.linalg.norm(dk)
+                
+    #             ub, lb = [], []
+
+    #             for i in range(len(upper_bounds)):
+    #                 xl = [x[j] for j in upper_indices[i]]
+    #                 dl = [dk[j] for j in upper_indices[i]]
+    #                 if np.sum(dl) > 0:
+    #                     ub.append((upper_bounds[i] - sum(xl))/sum(dl))
+    #                 else:
+    #                     lb.append((upper_bounds[i] - sum(xl))/sum(dl))
+
+    #             for i in range(len(lower_bounds)):
+    #                 xl = [x[j] for j in lower_indices[i]]
+    #                 dl = [dk[j] for j in lower_indices[i]]
+    #                 if np.sum(dl) > 0:
+    #                     lb.append((lower_bounds[i] - sum(xl))/sum(dl))
+    #                 else:
+    #                     ub.append((lower_bounds[i] - sum(xl))/sum(dl))
+                
+    #             if len(ub) == 0 or len(lb) == 0:
+    #                 return ValueError("The Feasible Region is not Bounded")
+    #             else:
+    #                 ubb = min(ub)
+    #                 lbb = max(lb)
+    #             if lbb<=ubb:
+    #                 break
+            
+    #         lamb = rand_sol_rng.uniform(lbb, ubb)
+            
+    #         x += lamb * dk
+        
+    #     return x
+    
     def get_random_solution(self, rand_sol_rng):
         """
         Generate a random solution for starting or restarting solvers.
@@ -1205,6 +1270,9 @@ class SANLongestPathConstr(Problem):
         else:
             x0 = self.find_feasible()
         x = rand_sol_rng.hit_and_run(x0, [10 * self.factors['sum_lb']], [[i for i in range(self.dim)]], self.factors["lbs"], self.factors["r_const"], self.dim, 20)
-
+        # x = self.hit_and_run(self.factors["initial_solution"], rand_sol_rng, [10 * self.factors['sum_lb']], [[i for i in range(self.dim)]], self.factors["lbs"], self.factors["r_const"], self.dim, 20)
         x = tuple(x)
+        # print('random solution: ', x)
+        # if not self.check_feasible(x):
+        #     print('not feasible: ', x)
         return x

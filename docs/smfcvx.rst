@@ -16,9 +16,9 @@ An example of a network with 10 total nodes and 20 arcs is shown below
 
 Sources of Randomness:
 ----------------------
-Noise in reduction of arc capacity is multivariate normally distributed
-with mean mean_noise and covariance matrix of cov_noise.
-The capacity of arc i to the max-flow solver model would be :math:`1000*max(assigned\_capacities[i]-noise[i],0)`, it was scaled up 1000 times since the maxflow solver would only solve for integer flow
+The capacities are scaled by non-negative random variable, which is distributed with Erlang distribution. 
+
+The capacity of arc i to the max-flow solver model would be :math:`1000*assigned\_capacities[i]*scale[i]`, it was scaled up 1000 times since the maxflow solver would only solve for integer flow.
 
 
 Model Factors:
@@ -43,13 +43,6 @@ Model Factors:
 
   * default: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 
-* mean_noise: The mean noise in reduction of arc capacities
-
-  * default: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-* cov_noise: Covariance matrix of noise
-
-  * default: Diagonal of 4, the rest 0
           
 Responses:
 ----------

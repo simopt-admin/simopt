@@ -25,10 +25,10 @@ from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_n
 # These names are strings and should match those input to directory.py.
 # Ex:
 # solver_names = ["ASTRODF", "Boom-PGD", "Boom-FW", "RNDSRCH", "GASSO", "NELDMD"]
-solver_names = ['ACTIVESET','Boom-PGD', "Boom-FW"]
+solver_names = ["AS-B"]
 # problem_names = ["OPENJACKSON-1", 'SAN-1', 'SMFCVX-1', 'SMF-1', 'CASCADE-1', 'NETWORK-1']
 # problem_names = ["DYNAMNEWS-1", "SSCONT-1", "SAN-1"] "OPENJ-1"
-problem_names = ["SMF-1", 'SMFCVX-1', 'CASCADE-1']
+problem_names = ["CC-1"]
 # problems = [SANLongestPath, SMF_Max, RMITDMaxRevenue, MM1MinMeanSojournTime]
 
 

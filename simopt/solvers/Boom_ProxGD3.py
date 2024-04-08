@@ -54,7 +54,7 @@ class BoomProxGD3(Solver):
             "max_iters": {
                 "description": "maximum iterations",
                 "datatype": int,
-                "default": 300
+                "default": 1000
             },
             "theta": {
                 "description": "constant in the line search condition",
@@ -878,8 +878,8 @@ class BoomProxGD3(Solver):
                 action = "project"
                 proj_x = self.proj(temp_x,Ci,di,Ce,de,lower,upper)
                 #print("proj x: ",proj_x)
-                direction = proj_x - cur_x #change direction to the projected point
-                max_step = 1
+                direction = (proj_x - cur_x)/max_step #change direction to the projected point
+                #max_step = 1
                 
                 #if(last_action == "project"):
                     #consecutive projection: should increase max proj step
