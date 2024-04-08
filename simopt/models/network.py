@@ -197,6 +197,9 @@ class Network(Model):
         # Generate all interarrival, network routes, and service times before the simulation run.
         arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
                          for _ in range(total_arrivals)]
+        if sum(self.factors['process_prob']) < 0.97:
+            print('PROBLEM: The sum of the probabilities is not equal to 1')
+            print(self.factors['process_prob'])
         network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
         service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
                                                 high=self.factors["upper_limits_transit_time"][network_routes[i]],
@@ -346,7 +349,7 @@ class NetworkMinTotalCost(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 5000
+                "default": 3000
             }
         }
         self.check_factor_list = {
@@ -362,9 +365,9 @@ class NetworkMinTotalCost(Problem):
         self.lower_bounds = tuple([0 for _ in range(self.model.factors["n_networks"])])
         self.upper_bounds = tuple([1 for _ in range(self.model.factors["n_networks"])])
         self.Ci = None
-        self.Ce = None
+        self.Ce = np.array([1 for _ in range(self.model.factors["n_networks"])])
         self.di = None
-        self.de = None
+        self.de = 1
 
     def attach_rngs(self, random_rng):
         self.random_rng = random_rng
