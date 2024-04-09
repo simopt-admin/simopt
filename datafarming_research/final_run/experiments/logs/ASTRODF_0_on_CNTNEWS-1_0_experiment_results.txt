@@ -1,0 +1,214 @@
+./experiments/outputs/ASTRODF_0_on_CNTNEWS-1_0.pickle
+Problem: CNTNEWS-1
+Solver: ASTRODF
+
+Model Factors:
+	material_cost: [0.925, 1.11, 1.332, 1.5984]
+	recourse_cost: [2.1391, 2.5669, 3.0803, 3.6963]
+	salvage_price: [0.4394, 0.5272, 0.6327, 0.7592]
+	mat_to_prod: [[1, 1, 1, 0], [1, 2, 2, 0], [0, 0, 3, 3]]
+	order_cost: 0
+	purchase_yield: [1, 1, 1, 1]
+	poi_mean: [20, 25, 15]
+	num_material: 4
+	num_product: 3
+	process_cost: [0.1, 0.1, 0.1]
+	total_budget: 600
+	sales_price: [12.0, 12.0, 12.0]
+
+Problem Factors:
+	initial_solution: [20, 20, 20, 20]
+	budget: 1000
+
+Solver Factors:
+	crn_across_solns: True
+	eta_1: 0.1
+	eta_2: 0.8
+	gamma_1: 1.5
+	gamma_2: 0.5
+	lambda_min: 4
+	easy_solve: True
+	reuse_points: True
+	ps_sufficient_reduction: 0.1
+
+10 macroreplications were run.
+200 postreplications were run at each recommended solution.
+
+The initial solution is (20, 20, 20, 20). Its estimated objective is 205.9882.
+The proxy optimal solution is (49.5107, 74.1611, 120.0561, 48.3914). Its estimated objective is 483.7962.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.418, 22.8808, 23.2159, 21.1399)	Estimated Objective: 223.6648
+	Budget: 72	Recommended Solution: (28.9365, 27.1823, 27.6352, 22.7719)	Estimated Objective: 251.9593
+	Budget: 104	Recommended Solution: (37.0908, 33.7987, 34.1054, 25.5928)	Estimated Objective: 294.4235
+	Budget: 136	Recommended Solution: (47.9467, 43.979, 45.7021, 27.6497)	Estimated Objective: 346.0455
+	Budget: 168	Recommended Solution: (56.8864, 58.2644, 68.1111, 32.5793)	Estimated Objective: 406.4749
+	Budget: 200	Recommended Solution: (58.214, 77.0118, 101.4087, 51.5944)	Estimated Objective: 468.596
+	Budget: 232	Recommended Solution: (54.6125, 83.105, 142.8436, 44.0726)	Estimated Objective: 469.4271
+	Budget: 296	Recommended Solution: (45.6204, 88.7132, 143.1035, 62.6065)	Estimated Objective: 463.1251
+	Budget: 338	Recommended Solution: (53.9496, 78.6849, 129.9868, 51.9343)	Estimated Objective: 479.5723
+	Budget: 460	Recommended Solution: (47.5385, 80.6193, 130.234, 56.3166)	Estimated Objective: 478.0459
+	Budget: 500	Recommended Solution: (51.6691, 77.9331, 124.9334, 52.8909)	Estimated Objective: 481.8321
+	Budget: 580	Recommended Solution: (48.3936, 78.3613, 127.0882, 53.5781)	Estimated Objective: 481.2718
+	Budget: 670	Recommended Solution: (46.9778, 77.0948, 124.7731, 53.3612)	Estimated Objective: 481.8458
+	Budget: 1000	Recommended Solution: (46.9778, 77.0948, 124.7731, 53.3612)	Estimated Objective: 481.8458
+
+Macroreplication 2:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (22.9923, 23.1056, 23.4015, 21.2057)	Estimated Objective: 223.418
+	Budget: 72	Recommended Solution: (27.7567, 27.8621, 28.1848, 22.9228)	Estimated Objective: 251.0331
+	Budget: 104	Recommended Solution: (35.6177, 34.7566, 34.9017, 25.2984)	Estimated Objective: 293.7292
+	Budget: 136	Recommended Solution: (46.4195, 44.7842, 46.6761, 27.3802)	Estimated Objective: 347.7462
+	Budget: 168	Recommended Solution: (52.9605, 63.4969, 66.7585, 31.1493)	Estimated Objective: 409.8001
+	Budget: 268	Recommended Solution: (52.4899, 67.7608, 76.1284, 33.9374)	Estimated Objective: 430.3629
+	Budget: 300	Recommended Solution: (50.5617, 70.5252, 91.3298, 37.6782)	Estimated Objective: 457.9764
+	Budget: 342	Recommended Solution: (51.5303, 78.465, 110.8259, 49.2063)	Estimated Objective: 480.5502
+	Budget: 468	Recommended Solution: (50.5749, 75.8632, 118.7728, 45.9969)	Estimated Objective: 483.7814
+	Budget: 588	Recommended Solution: (49.5107, 74.1611, 120.0561, 48.3914)	Estimated Objective: 483.7962
+	Budget: 628	Recommended Solution: (50.0109, 73.8797, 121.9573, 45.659)	Estimated Objective: 483.4419
+	Budget: 760	Recommended Solution: (50.9877, 75.2856, 123.4862, 46.7312)	Estimated Objective: 483.3583
+	Budget: 808	Recommended Solution: (50.976, 75.2382, 123.486, 47.0349)	Estimated Objective: 483.412
+	Budget: 856	Recommended Solution: (48.4638, 74.3236, 118.7366, 45.3656)	Estimated Objective: 483.5854
+	Budget: 905	Recommended Solution: (49.1894, 72.7309, 120.9751, 47.3889)	Estimated Objective: 483.5404
+	Budget: 1000	Recommended Solution: (47.4218, 72.784, 119.4018, 41.4291)	Estimated Objective: 481.5364
+
+Macroreplication 3:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.2377, 22.9703, 23.308, 21.1726)	Estimated Objective: 223.5769
+	Budget: 72	Recommended Solution: (28.4533, 27.5605, 27.7711, 22.8927)	Estimated Objective: 251.6045
+	Budget: 104	Recommended Solution: (36.2331, 34.3328, 34.3674, 26.0847)	Estimated Objective: 294.0347
+	Budget: 136	Recommended Solution: (46.8412, 44.7151, 45.9619, 28.419)	Estimated Objective: 347.2644
+	Budget: 168	Recommended Solution: (55.8228, 59.0313, 68.0705, 34.4225)	Estimated Objective: 408.3744
+	Budget: 200	Recommended Solution: (56.7726, 70.0817, 92.8265, 67.4021)	Estimated Objective: 445.2816
+	Budget: 232	Recommended Solution: (60.171, 91.886, 125.4873, 50.9758)	Estimated Objective: 473.4997
+	Budget: 264	Recommended Solution: (37.303, 58.2722, 128.4541, 52.6104)	Estimated Objective: 464.9953
+	Budget: 338	Recommended Solution: (51.8459, 86.5289, 124.5086, 53.0912)	Estimated Objective: 479.1618
+	Budget: 418	Recommended Solution: (50.1521, 73.61, 115.8597, 49.6472)	Estimated Objective: 482.8569
+	Budget: 458	Recommended Solution: (50.7416, 75.4545, 118.0229, 49.9275)	Estimated Objective: 483.3988
+	Budget: 770	Recommended Solution: (51.8077, 77.1319, 118.9848, 49.4849)	Estimated Objective: 483.4058
+	Budget: 903	Recommended Solution: (52.8737, 78.8092, 119.9467, 49.0422)	Estimated Objective: 483.0703
+	Budget: 951	Recommended Solution: (51.9079, 78.8484, 119.0081, 49.1717)	Estimated Objective: 483.2485
+	Budget: 1000	Recommended Solution: (51.9079, 78.8484, 119.0081, 49.1717)	Estimated Objective: 483.2485
+
+Macroreplication 4:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.3765, 23.0436, 23.1201, 21.106)	Estimated Objective: 223.6229
+	Budget: 72	Recommended Solution: (28.9758, 27.3535, 27.483, 22.5856)	Estimated Objective: 251.9314
+	Budget: 104	Recommended Solution: (35.0295, 31.4535, 31.519, 23.7708)	Estimated Objective: 280.7615
+	Budget: 136	Recommended Solution: (44.0218, 36.923, 38.1429, 26.1026)	Estimated Objective: 318.2786
+	Budget: 204	Recommended Solution: (50.132, 41.4078, 43.5247, 28.0103)	Estimated Objective: 339.3403
+	Budget: 236	Recommended Solution: (55.936, 49.5999, 53.184, 30.9282)	Estimated Objective: 368.6103
+	Budget: 268	Recommended Solution: (57.1255, 56.6767, 63.6178, 37.4286)	Estimated Objective: 397.9797
+	Budget: 300	Recommended Solution: (58.6016, 69.384, 80.6629, 38.7285)	Estimated Objective: 437.9723
+	Budget: 342	Recommended Solution: (57.8836, 73.2361, 112.4254, 39.9631)	Estimated Objective: 478.0989
+	Budget: 423	Recommended Solution: (56.0988, 87.2074, 128.3447, 51.151)	Estimated Objective: 476.7912
+	Budget: 548	Recommended Solution: (53.8836, 87.1466, 131.5132, 43.0155)	Estimated Objective: 474.3766
+	Budget: 683	Recommended Solution: (55.1046, 88.9002, 131.3245, 45.6248)	Estimated Objective: 474.6024
+	Budget: 922	Recommended Solution: (54.0551, 87.3502, 129.6181, 45.6761)	Estimated Objective: 476.7389
+	Budget: 970	Recommended Solution: (56.0481, 87.15, 126.4987, 44.8407)	Estimated Objective: 477.269
+	Budget: 1000	Recommended Solution: (56.0481, 87.15, 126.4987, 44.8407)	Estimated Objective: 477.269
+
+Macroreplication 5:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.2849, 22.8861, 23.3635, 21.091)	Estimated Objective: 223.6073
+	Budget: 72	Recommended Solution: (28.4103, 27.1395, 28.2657, 22.7516)	Estimated Objective: 251.6643
+	Budget: 104	Recommended Solution: (36.5808, 33.9292, 34.699, 25.1691)	Estimated Objective: 294.2825
+	Budget: 136	Recommended Solution: (48.196, 43.7399, 45.8905, 27.1165)	Estimated Objective: 345.8618
+	Budget: 168	Recommended Solution: (58.5673, 57.9728, 67.7799, 31.7177)	Estimated Objective: 404.3968
+	Budget: 200	Recommended Solution: (59.4458, 78.3746, 102.0038, 47.0555)	Estimated Objective: 470.3955
+	Budget: 232	Recommended Solution: (64.6259, 102.3419, 153.7357, 46.3051)	Estimated Objective: 447.9977
+	Budget: 342	Recommended Solution: (59.9809, 90.5615, 138.6239, 60.0257)	Estimated Objective: 463.3461
+	Budget: 428	Recommended Solution: (54.0325, 79.7832, 131.6497, 48.8743)	Estimated Objective: 479.0041
+	Budget: 653	Recommended Solution: (52.8384, 79.9576, 130.0886, 51.6159)	Estimated Objective: 479.6803
+	Budget: 731	Recommended Solution: (50.0967, 80.132, 128.5276, 50.4218)	Estimated Objective: 481.2149
+	Budget: 973	Recommended Solution: (48.9727, 78.483, 129.3915, 51.7216)	Estimated Objective: 480.9085
+	Budget: 1000	Recommended Solution: (48.9727, 78.483, 129.3915, 51.7216)	Estimated Objective: 480.9085
+
+Macroreplication 6:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.2691, 23.0361, 23.2264, 21.1437)	Estimated Objective: 223.5826
+	Budget: 72	Recommended Solution: (28.586, 27.4187, 27.8045, 22.7916)	Estimated Objective: 251.7302
+	Budget: 104	Recommended Solution: (34.4789, 31.5508, 32.102, 23.7312)	Estimated Objective: 280.5788
+	Budget: 136	Recommended Solution: (42.3542, 37.6018, 39.5162, 26.2777)	Estimated Objective: 319.5238
+	Budget: 168	Recommended Solution: (51.0662, 48.6521, 51.8761, 29.3485)	Estimated Objective: 365.2036
+	Budget: 200	Recommended Solution: (52.695, 66.7787, 73.7629, 29.79)	Estimated Objective: 423.8486
+	Budget: 232	Recommended Solution: (52.5816, 83.3899, 104.187, 53.6655)	Estimated Objective: 471.2255
+	Budget: 342	Recommended Solution: (51.1139, 77.8071, 117.5803, 47.0525)	Estimated Objective: 483.646
+	Budget: 856	Recommended Solution: (51.1139, 77.8071, 115.5786, 47.0525)	Estimated Objective: 483.2686
+	Budget: 1000	Recommended Solution: (51.1139, 77.8071, 115.5786, 47.0525)	Estimated Objective: 483.2686
+
+Macroreplication 7:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.5258, 22.8825, 23.1094, 21.1022)	Estimated Objective: 223.697
+	Budget: 72	Recommended Solution: (29.2599, 26.9859, 27.4793, 22.6307)	Estimated Objective: 252.1355
+	Budget: 104	Recommended Solution: (37.6824, 33.3948, 33.8621, 25.3396)	Estimated Objective: 294.5149
+	Budget: 136	Recommended Solution: (47.7157, 43.367, 46.3087, 27.614)	Estimated Objective: 346.054
+	Budget: 168	Recommended Solution: (54.1395, 61.1309, 66.9657, 32.8029)	Estimated Objective: 408.5943
+	Budget: 232	Recommended Solution: (51.6842, 72.166, 84.5903, 36.9804)	Estimated Objective: 447.5042
+	Budget: 264	Recommended Solution: (49.8106, 87.322, 112.6239, 39.5571)	Estimated Objective: 477.3951
+	Budget: 338	Recommended Solution: (46.6065, 78.0467, 118.9403, 60.5519)	Estimated Objective: 477.2777
+	Budget: 464	Recommended Solution: (47.0622, 73.4984, 119.8058, 52.8387)	Estimated Objective: 482.0254
+	Budget: 589	Recommended Solution: (45.7096, 71.4813, 118.5042, 50.8847)	Estimated Objective: 481.6995
+	Budget: 629	Recommended Solution: (47.3675, 72.1545, 118.1402, 51.2967)	Estimated Objective: 482.2486
+	Budget: 679	Recommended Solution: (50.5664, 75.806, 123.0132, 54.5295)	Estimated Objective: 481.6622
+	Budget: 728	Recommended Solution: (49.1142, 76.0059, 123.7248, 53.3308)	Estimated Objective: 482.2584
+	Budget: 777	Recommended Solution: (50.153, 77.1068, 124.352, 54.3038)	Estimated Objective: 481.6399
+	Budget: 874	Recommended Solution: (46.206, 75.2468, 124.5865, 52.5533)	Estimated Objective: 481.9658
+	Budget: 1000	Recommended Solution: (46.206, 75.2468, 124.5865, 52.5533)	Estimated Objective: 481.9658
+
+Macroreplication 8:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.0625, 23.0805, 23.3661, 21.1932)	Estimated Objective: 223.464
+	Budget: 72	Recommended Solution: (28.3566, 26.7616, 27.3885, 24.8529)	Estimated Objective: 250.6675
+	Budget: 104	Recommended Solution: (36.6249, 32.7072, 34.863, 25.5655)	Estimated Objective: 293.1127
+	Budget: 136	Recommended Solution: (47.1185, 44.751, 43.7523, 30.6659)	Estimated Objective: 344.7749
+	Budget: 168	Recommended Solution: (54.8496, 62.8278, 64.2983, 31.9998)	Estimated Objective: 404.9066
+	Budget: 200	Recommended Solution: (61.894, 82.3759, 101.6039, 32.2629)	Estimated Objective: 462.818
+	Budget: 264	Recommended Solution: (52.6615, 74.9118, 115.4448, 58.5918)	Estimated Objective: 477.7201
+	Budget: 379	Recommended Solution: (55.2339, 82.5559, 122.6557, 53.3766)	Estimated Objective: 479.8907
+	Budget: 419	Recommended Solution: (52.1859, 79.6623, 129.4846, 62.318)	Estimated Objective: 474.2219
+	Budget: 504	Recommended Solution: (53.3592, 80.7102, 132.1021, 57.1474)	Estimated Objective: 475.8792
+	Budget: 544	Recommended Solution: (54.1944, 79.5877, 134.951, 60.3836)	Estimated Objective: 472.3245
+	Budget: 684	Recommended Solution: (53.1144, 78.9433, 134.3633, 57.3042)	Estimated Objective: 475.0454
+	Budget: 733	Recommended Solution: (50.0233, 76.4361, 136.6203, 59.4807)	Estimated Objective: 473.4547
+	Budget: 781	Recommended Solution: (50.9598, 78.6428, 136.8488, 55.0227)	Estimated Objective: 475.5373
+	Budget: 1000	Recommended Solution: (50.9598, 78.6428, 136.8488, 55.0227)	Estimated Objective: 475.5373
+
+Macroreplication 9:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.5951, 22.8893, 23.0322, 21.0748)	Estimated Objective: 223.7093
+	Budget: 72	Recommended Solution: (29.5037, 26.8991, 27.2909, 22.4979)	Estimated Objective: 252.2191
+	Budget: 104	Recommended Solution: (37.5961, 32.8046, 34.7416, 24.5513)	Estimated Objective: 294.5621
+	Budget: 136	Recommended Solution: (45.29, 43.4427, 47.0693, 30.5399)	Estimated Objective: 347.0475
+	Budget: 168	Recommended Solution: (48.8084, 59.3819, 70.0876, 34.3053)	Estimated Objective: 412.8092
+	Budget: 200	Recommended Solution: (50.6247, 63.4932, 111.399, 44.1386)	Estimated Objective: 476.5079
+	Budget: 300	Recommended Solution: (47.0565, 65.2213, 112.304, 59.6272)	Estimated Objective: 471.2721
+	Budget: 342	Recommended Solution: (49.6054, 77.3901, 120.3797, 44.8157)	Estimated Objective: 483.5007
+	Budget: 464	Recommended Solution: (48.8416, 72.944, 116.5631, 51.6142)	Estimated Objective: 482.2008
+	Budget: 504	Recommended Solution: (43.6678, 70.9128, 117.3873, 54.4623)	Estimated Objective: 478.6927
+	Budget: 544	Recommended Solution: (51.9836, 77.3184, 114.944, 55.347)	Estimated Objective: 479.7972
+	Budget: 625	Recommended Solution: (42.1537, 69.4244, 122.0494, 50.697)	Estimated Objective: 479.4732
+	Budget: 724	Recommended Solution: (47.9586, 70.9867, 112.4501, 51.9947)	Estimated Objective: 479.5918
+	Budget: 823	Recommended Solution: (46.7649, 68.2376, 117.1171, 50.68)	Estimated Objective: 480.5195
+	Budget: 920	Recommended Solution: (46.2803, 71.5497, 119.5526, 49.6121)	Estimated Objective: 482.338
+	Budget: 1000	Recommended Solution: (46.2803, 71.5497, 119.5526, 49.6121)	Estimated Objective: 482.338
+
+Macroreplication 10:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 205.9882
+	Budget: 40	Recommended Solution: (23.3859, 22.8903, 23.2383, 21.1479)	Estimated Objective: 223.6517
+	Budget: 72	Recommended Solution: (28.799, 26.8474, 28.083, 22.7973)	Estimated Objective: 251.9235
+	Budget: 104	Recommended Solution: (36.9705, 26.2369, 26.917, 21.1708)	Estimated Objective: 268.0052
+	Budget: 136	Recommended Solution: (45.0456, 32.072, 34.3434, 23.5548)	Estimated Objective: 304.2197
+	Budget: 168	Recommended Solution: (50.2515, 43.4789, 48.0522, 27.4346)	Estimated Objective: 349.9848
+	Budget: 200	Recommended Solution: (52.0018, 45.5221, 52.527, 55.4203)	Estimated Objective: 359.8226
+	Budget: 232	Recommended Solution: (49.1489, 54.9476, 79.1892, 57.0341)	Estimated Objective: 418.4612
+	Budget: 264	Recommended Solution: (54.9019, 76.506, 115.3629, 52.895)	Estimated Objective: 480.6883
+	Budget: 383	Recommended Solution: (47.1125, 67.8293, 123.8458, 59.8602)	Estimated Objective: 475.8683
+	Budget: 508	Recommended Solution: (44.429, 68.5158, 126.4961, 55.2381)	Estimated Objective: 477.8849
+	Budget: 548	Recommended Solution: (43.3438, 64.5839, 122.498, 57.0926)	Estimated Objective: 473.9255
+	Budget: 830	Recommended Solution: (44.6595, 66.4109, 122.5432, 57.079)	Estimated Objective: 475.9388
+	Budget: 1000	Recommended Solution: (43.1603, 66.1832, 121.3681, 55.8997)	Estimated Objective: 475.6463

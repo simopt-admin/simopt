@@ -26,16 +26,22 @@ def main():
     solver_factors.append({})
     solver_names.append(solver_name)
     
+    solver_renames = []
+    solver_renames.append("ASTRODF_default")
     # concatinate tables back into arrays for each design point
     for row in range(n_dp):
+        print(row)
         dp_factors = {}
-        dp_factors["gamma_1"] = float(df.iloc[row, 0])
-        dp_factors["gamma_2"] = float(df.iloc[row, 1])
-        dp_factors["eta_1"] = float(df.iloc[row, 2])
-        dp_factors["eta_2"] = float(df.iloc[row, 3])
+        dp_factors["eta_1"] = float(df.iloc[row, 0])
+        dp_factors["eta_2"] = float(df.iloc[row, 1])
+        dp_factors["gamma_1"] = float(df.iloc[row, 2])
+        dp_factors["gamma_2"] = float(df.iloc[row, 3])
     
         solver_factors.append(dp_factors)
         solver_names.append(solver_name)
+        solver_renames.append(f"{solver_name}_{row}")
+        print(solver_factors)
+    print(solver_renames)
     print('factors', solver_factors)
     # solver information
     problem_name = "CNTNEWS-1" # name of solver
@@ -67,6 +73,7 @@ def main():
     problem_names = [] # list to hold problem names (don't change)
     
     # concatinate tables back into arrays for each design point
+    problem_renames = []
     for index, row in df.iterrows():
         # get problem factor arrays for each design point
         # will need to add an additional index to each array if increaseing the number of materials
@@ -102,7 +109,7 @@ def main():
         dp_factors["order_cost"] = order_cost
         dp_factors["purchase_yield"] = purchase_yeild
         # dp_factors["total_budget"] = total_budget
-        dp_factors["sales price"] = sales_price
+        dp_factors["sales_price"] = sales_price
         # dp_factors["order quantity"] = order_quantity
         dp_factors["poi_mean"] = mean    
         dp_factors["initial_solution"] = init_sol
@@ -110,20 +117,17 @@ def main():
     
         problem_factors.append(dp_factors)
         problem_names.append(problem_name)
+        problem_renames.append(f"{problem_name}_{index}")
+        
 
-    # # example of running solver using only default values
-    # solver_factors = [{}]
-    # solver_names = [solver_name]
-    
-    # # example of running a solver cross design over sample size values of 5, 10 and 50
-    # solver_factors = [{'crn_across_solns': crn, 'sample_size': 5}, {'crn_across_solns': crn, 'sample_size': 10}, {'crn_across_solns': crn, 'sample_size': 50}] #include a dictionary for each version of solver
-    # solver_names = [solver_name, solver_name, solver_name] # repeat solver name for every version of solver
-    
+
     # call problemssolvers
     experiment = ProblemsSolvers(problem_factors = problem_factors,
                                   solver_factors = solver_factors,
                                   problem_names = problem_names,
-                                  solver_names = solver_names)
+                                  solver_names = solver_names,
+                                  problem_renames = problem_renames,
+                                  solver_renames = solver_renames)
     
     
     # run experiment (can change any of these values as desired)
