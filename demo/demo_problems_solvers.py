@@ -8,12 +8,12 @@ import sys
 import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
+sys.path.insert(0, "/Users/CarolineHerr/Documents/Research/simopt")
 
 # Import the ProblemsSolvers class and other useful functions
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 from simopt.models.san import SANLongestPath
 # from simopt.models.san_1 import SANLongestPath1
-from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
+from simopt.experiment_base import ProblemsSolvers, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
 
 
 # !! When testing a new solver/problem, first go to directory.py.
@@ -25,10 +25,10 @@ from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_n
 # These names are strings and should match those input to directory.py.
 # Ex:
 # solver_names = ["ASTRODF", "Boom-PGD", "Boom-FW", "RNDSRCH", "GASSO", "NELDMD"]
-solver_names = ["AS-B"]
+solver_names = ['FW-B', 'FW-I', 'PGD-B', 'PGD-I','NELDMD','ASTRODF','AS-B', 'AS-I', 'AS-Z', 'AS-SS', 'PGD-Z', 'FW-Z', 'FW-SS', 'PGD-SS']
 # problem_names = ["OPENJACKSON-1", 'SAN-1', 'SMFCVX-1', 'SMF-1', 'CASCADE-1', 'NETWORK-1']
 # problem_names = ["DYNAMNEWS-1", "SSCONT-1", "SAN-1"] "OPENJ-1"
-problem_names = ["CC-1"]
+problem_names = ["NETWORK-1"]
 # problems = [SANLongestPath, SMF_Max, RMITDMaxRevenue, MM1MinMeanSojournTime]
 
 
@@ -40,7 +40,7 @@ n_solvers = len(mymetaexperiment.experiments)
 n_problems = len(mymetaexperiment.experiments[0])
 
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=10)
+mymetaexperiment.run(n_macroreps=20)
 
 
 print("Post-processing results.")
