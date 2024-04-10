@@ -200,6 +200,7 @@ class Network(Model):
         if sum(self.factors['process_prob']) < 0.97:
             print('PROBLEM: The sum of the probabilities is not equal to 1')
             print(self.factors['process_prob'])
+            print(self.factors)
         network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
         service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
                                                 high=self.factors["upper_limits_transit_time"][network_routes[i]],
@@ -332,7 +333,7 @@ class NetworkMinTotalCost(Problem):
         self.minmax = (-1,)
         self.constraint_type = "deterministic"
         self.variable_type = "continuous"
-        self.gradient_available = False
+        self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
         self.model_default_factors = {}
@@ -367,7 +368,7 @@ class NetworkMinTotalCost(Problem):
         self.Ci = None
         self.Ce = np.array([1 for _ in range(self.model.factors["n_networks"])])
         self.di = None
-        self.de = 1
+        self.de = np.array([1])
 
     def attach_rngs(self, random_rng):
         self.random_rng = random_rng
