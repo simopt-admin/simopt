@@ -464,7 +464,7 @@ class NetworkMinTotalCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = (0, ) * self.model.factors["n_networks"]
+        det_objectives_gradients = ((0, ) * self.model.factors["n_networks"],)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
