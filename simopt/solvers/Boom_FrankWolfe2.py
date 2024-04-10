@@ -311,7 +311,7 @@ class BoomFrankWolfe2(Solver):
     #    [a,b] where a < b
     #    """
 
-    def combine_constraint(self,Ci,di,Ce,de,lower, upper):
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper,problem):
         '''
         combine all constraints together
         '''
@@ -1226,7 +1226,7 @@ class BoomFrankWolfe2(Solver):
         lower = np.array(problem.lower_bounds)
         upper = np.array(problem.upper_bounds)
 
-         A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper)
+        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper,problem)
         
         scale_factor = self.factors["ratio"]
         LSmax_iter = self.factors["line_search_max_iters"]
