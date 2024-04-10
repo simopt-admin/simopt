@@ -309,7 +309,7 @@ class BoomFrankWolfe(Solver):
     #    the given info q'(0), q(0), q(alpha) in the interval
     #    [a,b] where a < b
     #    """
-    def combine_constraint(self,Ci,di,Ce,de,lower, upper):
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper, problem):
         '''
         combine all constraints together
         '''
@@ -1227,7 +1227,7 @@ class BoomFrankWolfe(Solver):
         lower = np.array(problem.lower_bounds)
         upper = np.array(problem.upper_bounds)
 
-        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper)
+        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper,problem)
         
         scale_factor = self.factors["ratio"]
         LSmax_iter = self.factors["line_search_max_iters"]
@@ -1278,7 +1278,7 @@ class BoomFrankWolfe(Solver):
                 grad, budget_spent = self.finite_diff(new_solution, problem, r, A, b, stepsize=self.factors["h"])
                 expended_budget += budget_spent
                 while np.all((grad == 0)):
-                    print("recompute gradient")
+                    #print("recompute gradient")
                     if expended_budget > problem.factors["budget"]:
                         break
                     grad, budget_spent  = self.finite_diff(new_solution, problem, r, A, b)
