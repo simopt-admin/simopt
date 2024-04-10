@@ -309,6 +309,172 @@ class BoomFrankWolfe(Solver):
     #    the given info q'(0), q(0), q(alpha) in the interval
     #    [a,b] where a < b
     #    """
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper):
+        '''
+        combine all constraints together
+        '''
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper))[0]
+        lb_inf_idx = np.where(~np.isinf(lower))[0]
+        
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            A = np.vstack((Ce,  Ci))
+            b = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            A = Ce
+            b = de.T
+            A = np.vstack((A, -Ce))
+            b = np.vstack((b, -de.T))
+        elif (Ci is not None) and (di is not None):
+            A = Ci
+            b = di.T
+        else:
+            A = np.empty([1, problem.dim])
+            b = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            A = np.vstack((A, np.identity(upper.shape[0])))
+            b = np.vstack((b, upper[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            A = np.vstack((A, -np.identity(lower.shape[0])))
+            b = np.vstack((b, -lower[np.newaxis].T))
+            
+        return A, b
+        
+    def finite_diff(self, new_solution, problem, r, A, b, stepsize = 1e-4, tol = 1e-7):
+        '''
+        Finite difference for approximating objective gradient at new_solution.
+
+        Arguments
+        ---------
+        new_solution : Solution object
+            a solution to the problem
+        problem : Problem object
+            simulation-optimization problem to solve
+        r : int 
+            number of replications taken at each solution
+        C : ndarray
+            constraint matrix
+        d : ndarray
+            constraint vector
+        stepsize: float
+            step size for finite differences
+
+        Returns
+        -------
+        grad : ndarray
+            the estimated objective gradient at new_solution
+        budget_spent : int
+            budget spent in finite difference
+        '''
+
+        BdsCheck = np.zeros(problem.dim)
+        fn = -1 * problem.minmax[0] * new_solution.objectives_mean
+        new_x = new_solution.x
+        grad = np.zeros(problem.dim)
+        h = np.zeros(problem.dim)
+        budget_spent = 0
+
+        for i in range(problem.dim):
+            # Initialization.
+            x1 = list(new_x)
+            x2 = list(new_x)
+            # Forward stepsize.
+            steph1 = stepsize
+            # Backward stepsize.
+            steph2 = stepsize
+
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = 1
+            dir2 = np.zeros(problem.dim)
+            dir2[i] = -1 
+
+            ra = b.flatten() - A @ new_x
+            ra_d = A @ dir1
+            # Initialize maximum step size.
+            temp_steph1 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < temp_steph1:
+                        temp_steph1 = s
+            steph1 = min(temp_steph1, steph1)
+
+            if np.isclose(steph1, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph1 = 0
+
+            ra_d = A @ dir2
+            # Initialize maximum step size.
+            temp_steph2 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < temp_steph2:
+                        temp_steph2 = s
+            steph2 = min(temp_steph2, steph2)
+
+            if np.isclose(steph2, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph2 = 0
+        
+            # Determine whether to use central diff, backward diff, or forward diff.
+            if (steph1 != 0) & (steph2 != 0):
+                BdsCheck[i] = 0
+            elif (steph1 == 0) & (steph2 != 0):
+                BdsCheck[i] = -1
+            elif (steph2 == 0) & (steph1 != 0):
+                BdsCheck[i] = 1
+            else:
+                # Set gradient to 0 if unable to move.
+                grad[i] = 0
+                continue
+            
+            # Decide stepsize
+            # Central diff.
+            if BdsCheck[i] == 0:
+                h[i] = min(steph1, steph2)
+                x1[i] = x1[i] + h[i]
+                x2[i] = x2[i] - h[i]
+            # Forward diff.
+            elif BdsCheck[i] == 1:
+                h[i] = steph1
+                x1[i] = x1[i] + h[i]
+            # Backward diff.
+            else:
+                h[i] = steph2
+                x2[i] = x2[i] - h[i]
+
+            # Evaluate solutions
+            x1_solution = self.create_new_solution(tuple(x1), problem)
+            if BdsCheck[i] != -1:
+                # x+h
+                problem.simulate_up_to([x1_solution], r)
+                budget_spent += r -x1_solution.n_reps
+                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
+            x2_solution = self.create_new_solution(tuple(x2), problem)
+            if BdsCheck[i] != 1:
+                # x-h
+                problem.simulate_up_to([x2_solution], r)
+                budget_spent += r -x2_solution.n_reps
+                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
+
+            # Calculate gradient.
+            if BdsCheck[i] == 0:
+                grad[i] = (fn1 - fn2) / (2 * h[i])
+            elif BdsCheck[i] == 1:
+                grad[i] = (fn1 - fn) / h[i]
+            elif BdsCheck[i] == -1:
+                grad[i] = (fn - fn2) / h[i]
+
+        return grad, budget_spent
+
+
+    
     def get_gradient(self,problem,x,sol):
         """
         getting the gradient of the function at point x where
@@ -1060,6 +1226,8 @@ class BoomFrankWolfe(Solver):
         
         lower = np.array(problem.lower_bounds)
         upper = np.array(problem.upper_bounds)
+
+        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper)
         
         scale_factor = self.factors["ratio"]
         LSmax_iter = self.factors["line_search_max_iters"]
@@ -1105,8 +1273,19 @@ class BoomFrankWolfe(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
-                grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
+                #grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
+                #expended_budget += budget_spent
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, A, b, stepsize=self.factors["h"])
                 expended_budget += budget_spent
+                while np.all((grad == 0)):
+                    print("recompute gradient")
+                    if expended_budget > problem.factors["budget"]:
+                        break
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r, A, b)
+                    expended_budget += budget_spent
+                    # Update r after each iteration.
+                    #r = int(self.factors["lambda"] * r)
+                    r = int(2 * r)
                    
             #print("grad: ", grad)
             #print("active set: ")
@@ -1306,223 +1485,3 @@ class BoomFrankWolfe(Solver):
             k += 1
             #print("--------------")
         return recommended_solns, intermediate_budgets 
-    
-    def pairwise_FrankWolfe(self, problem):
-        
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-        
-        Ci = problem.Ci
-        di = problem.di
-        Ce = problem.Ce
-        de = problem.de
-
-        r = self.factors["r"]
-        
-        lower = np.array(problem.lower_bounds)
-        upper = np.array(problem.upper_bounds)
-        
-        # Start with the initial solution.
-        #new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        #new_x = new_solution.x
-        
-        #if(not self.is_feasible(new_x, problem)):
-        #    new_x = self.find_feasible_initial(problem, Ce, Ci, de, di)
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        # Start with the initial solution.
-        #new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        #new_x = new_solution.x
-        
-        #if(not self.is_feasible(new_x, Ci,di,Ce,de,lower,upper)):
-            #new_x = self.find_feasible_initial(problem, Ce, Ci, de, di,lower,upper)
-        #    new_x = self.get_random_vertex(Ci,di,lower,upper)
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        new_x = self.get_random_vertex(Ci,di,lower,upper)
-        new_solution = self.create_new_solution(tuple(new_x), problem)
-        #initiailizing a dictionary of atom vectors and their coefficients
-        #atom_vectors = self.factors["atom_vectors"]
-        #if(self.factors["atom_vectors"] is None):
-        #    atom_vectors = self.get_atom_vectors(Ci,di)
-        #    num_atoms = atom_vectors.shape[0]
-        #    alpha_vec = np.zeros(num_atoms)
-        #    alpha_vec[0] = 1
-            
-        #    new_x = atom_vectors[0]
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        #else:
-        #    atom_vectors = self.factors["atom_vectors"]
-        #    num_atoms = atom_vectors.shape[0]
-        #    alpha_vec = self.get_alpha_vec(new_x,atom_vectors)
-        
-        #initiailizing a dictionary of atom vectors and their coefficients
-        #atom_vectors = self.factors["atom_vectors"]
-        #atom_vectors = self.get_atom_vectors(Ci,di)
-        #num_atoms = atom_vectors.shape[0]
-        #active_vectors = {0:[]}
-        #alphas = {tuple(v):0 for v in atom_vectors}
-        
-        atom_vectors = np.array([new_x])
-        active_vectors = [np.array(new_x)]
-        #alphas = {tuple(v):0 for v in atom_vectors}
-        alphas = {tuple(new_x):1}
-        
-        #new_x = atom_vectors[0]
-        #new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        #for i in range(num_atoms): 
-        #    alphas[tuple(atom_vectors[i])] = alpha_vec[i]
-        #    if(alpha_vec[i] > 0):
-        #        active_vectors[0].append(atom_vectors[i])
-        
-        # Use r simulated observations to estimate the objective value.
-        problem.simulate(new_solution, r)
-        expended_budget += r
-        best_solution = new_solution
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
-        
-        k = 0
-        
-        while expended_budget < problem.factors["budget"]:
-            cur_x = new_solution.x
-            
-            #print("cur_x: ", cur_x)
-            
-            if problem.gradient_available:
-                # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-            else:
-                # Use finite difference to estimate gradient if IPA gradient is not available.
-                #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
-                grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
-                expended_budget += budget_spent
-                # A while loop to prevent zero gradient.
-                #while np.all((grad == 0)):
-                #    if expended_budget > problem.factors["budget"]:
-                #        break
-                #    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
-                #    expended_budget += budget_spent
-                    # Update r after each iteration.
-                #    r = int(self.factors["lambda"] * r)
-
-            s = self.get_dir(grad,Ce, Ci, de, di,lower, upper)
-            
-            #compute the directions
-            if(len(active_vectors) > 0):
-                gv = np.array([grad.dot(a) for a in active_vectors])
-                #v = active_vectors[k][np.argmax(gv)]
-                v = active_vectors[np.argmax(gv)]
-                d_pw = s-v
-            else:
-                d_pw = np.zeros(problem.dim)
-            #direction = s - v
-            d_FW = s - cur_x
-            
-            #print("s-v: ", s-v)
-            #print("foward direction: ", s)
-            #print("pairwise direction: ", s-v)
-            #print("grad :", grad)
-            #print("current point: ",cur_x)
-            #print("dir: ", direction)
-            #print("v: ", v)
-            #max_gamma = min(alphas[tuple(v)]*np.linalg.norm(s-v),self.factors["max_gamma"])
-            #max_gamma = self.get_max_gamma_ratio_test(cur_x, direction, Ce, Ci, de, di, lower, upper)
-            #away vector v = 0
-            if((-grad.dot(d_FW) >= -grad.dot(d_pw)) or (d_pw == 0).all()):
-                #print('Forward')
-                direction = d_FW
-                #print("direcition: ", direction)
-                max_gamma = 1
-                
-                if(self.factors["backtrack"]):
-                    #gamma = LineSearch(F=F,x=cur_x,d=d_away,max_step=max_gamma/2)
-                    gamma, added_budget = self.LineSearch(new_solution,grad,direction,max_gamma,problem,expended_budget)
-                    expended_budget += added_budget
-                else:
-                    #gamma = self.factors["step_f"](k)
-                    gamma = min(self.factors["step_f"](k),max_gamma)
-                    
-                #update the active set
-                if(gamma < 1):
-                    for vec in active_vectors:
-                        if((s != vec).any()):
-                            add = 1
-                        else:
-                            add = 0
-                            break;
-                    if(add):
-                        #active_vectors[k+1].append(s)
-                        active_vectors.append(s)
-                        alphas[tuple(s)] = 0
-                else:
-                    active_vectors = [s]
-                    alphas = {tuple(s):0}
-
-                #updating weights/coefficients
-                for atom in active_vectors:
-                    if((atom == s).all()):
-                        alphas[tuple(atom)] = (1-gamma)*alphas[tuple(atom)] + gamma
-                    else:
-                        alphas[tuple(atom)] = (1-gamma)*alphas[tuple(atom)]
-                
-            else:
-                #print("pairwise")
-                direction = d_pw
-                #print("direcition: ", direction)
-                max_gamma = alphas[tuple(v)]
-                #print("max_step: ", max_gamma)
-                if(self.factors["backtrack"]):
-                    #gamma = LineSearch(F=F,x=cur_x,d=d_away,max_step=max_gamma/2)
-                    gamma, added_budget = self.LineSearch(new_solution,grad,direction,max_gamma,problem,expended_budget)
-                    expended_budget += added_budget
-                else:
-                    #gamma = self.factors["step_f"](k)
-                    gamma = min(self.factors["step_f"](k),max_gamma)
-                #print("active set in pairwise: ", active_vectors)
-                #found a new vertex not in the past vertices
-                for vec in active_vectors:
-                    #different/a new vertex
-                    if((s != vec).any()):
-                    #if(sum(abs(s-vec)/(problem.dim*(vec+1e-10))) > 1e-2):
-                        add = 1
-                    else:
-                        add = 0
-                        break;
-                if(add):
-                    active_vectors.append(s)
-                    alphas[tuple(s)] = 0
-                #print("active set in pairwise: ", active_vectors)
-                alphas[tuple(s)] = alphas[tuple(s)] + gamma
-                alphas[tuple(v)] = alphas[tuple(v)] - gamma
-                
-            #print("Displaying Alphas:")
-            #for key,val in alphas.items():
-            #    print(key)
-            #    print(val)
-            #    print('**************')
-            
-        
-            #print("max_gamma: ", max_gamma)
-            #print("gamma: ", gamma)
-            new_x = cur_x + gamma*direction
-            #print("next x: ",new_x)
-            candidate_solution = self.create_new_solution(tuple(new_x), problem)
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(candidate_solution, r)
-            expended_budget += r
-           
-            
-            new_solution = candidate_solution
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            
-            k += 1
-            #print("obj: ",candidate_solution.objectives_mean)
-            #print("------------------")
-            #print("------------------")
-            
-        return recommended_solns, intermediate_budgets 
-        
