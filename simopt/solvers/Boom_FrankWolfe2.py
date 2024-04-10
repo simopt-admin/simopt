@@ -310,6 +310,170 @@ class BoomFrankWolfe2(Solver):
     #    the given info q'(0), q(0), q(alpha) in the interval
     #    [a,b] where a < b
     #    """
+
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper):
+        '''
+        combine all constraints together
+        '''
+        # Remove redundant upper/lower bounds.
+        ub_inf_idx = np.where(~np.isinf(upper))[0]
+        lb_inf_idx = np.where(~np.isinf(lower))[0]
+        
+        # Form a constraint coefficient matrix where all the equality constraints are put on top and
+        # all the bound constraints in the bottom and a constraint coefficient vector.  
+        if (Ce is not None) and (de is not None) and (Ci is not None) and (di is not None):
+            A = np.vstack((Ce,  Ci))
+            b = np.vstack((de.T, di.T))
+        elif (Ce is not None) and (de is not None):
+            A = Ce
+            b = de.T
+            A = np.vstack((A, -Ce))
+            b = np.vstack((b, -de.T))
+        elif (Ci is not None) and (di is not None):
+            A = Ci
+            b = di.T
+        else:
+            A = np.empty([1, problem.dim])
+            b = np.empty([1, 1])
+        
+        if len(ub_inf_idx) > 0:
+            A = np.vstack((A, np.identity(upper.shape[0])))
+            b = np.vstack((b, upper[np.newaxis].T))
+        if len(lb_inf_idx) > 0:
+            A = np.vstack((A, -np.identity(lower.shape[0])))
+            b = np.vstack((b, -lower[np.newaxis].T))
+            
+        return A, b
+        
+    def finite_diff(self, new_solution, problem, r, A, b, stepsize = 1e-4, tol = 1e-7):
+        '''
+        Finite difference for approximating objective gradient at new_solution.
+
+        Arguments
+        ---------
+        new_solution : Solution object
+            a solution to the problem
+        problem : Problem object
+            simulation-optimization problem to solve
+        r : int 
+            number of replications taken at each solution
+        C : ndarray
+            constraint matrix
+        d : ndarray
+            constraint vector
+        stepsize: float
+            step size for finite differences
+
+        Returns
+        -------
+        grad : ndarray
+            the estimated objective gradient at new_solution
+        budget_spent : int
+            budget spent in finite difference
+        '''
+
+        BdsCheck = np.zeros(problem.dim)
+        fn = -1 * problem.minmax[0] * new_solution.objectives_mean
+        new_x = new_solution.x
+        grad = np.zeros(problem.dim)
+        h = np.zeros(problem.dim)
+        budget_spent = 0
+
+        for i in range(problem.dim):
+            # Initialization.
+            x1 = list(new_x)
+            x2 = list(new_x)
+            # Forward stepsize.
+            steph1 = stepsize
+            # Backward stepsize.
+            steph2 = stepsize
+
+            dir1 = np.zeros(problem.dim)
+            dir1[i] = 1
+            dir2 = np.zeros(problem.dim)
+            dir2[i] = -1 
+
+            ra = b.flatten() - A @ new_x
+            ra_d = A @ dir1
+            # Initialize maximum step size.
+            temp_steph1 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < temp_steph1:
+                        temp_steph1 = s
+            steph1 = min(temp_steph1, steph1)
+
+            if np.isclose(steph1, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph1 = 0
+
+            ra_d = A @ dir2
+            # Initialize maximum step size.
+            temp_steph2 = np.inf
+            # Perform ratio test.
+            for j in range(len(ra)):
+                if ra_d[j] - tol > 0:
+                    s = ra[j]/ra_d[j]
+                    if s < temp_steph2:
+                        temp_steph2 = s
+            steph2 = min(temp_steph2, steph2)
+
+            if np.isclose(steph2, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph2 = 0
+
+            # Determine whether to use central diff, backward diff, or forward diff.
+            if (steph1 != 0) & (steph2 != 0):
+                BdsCheck[i] = 0
+            elif (steph1 == 0) & (steph2 != 0):
+                BdsCheck[i] = -1
+            elif (steph2 == 0) & (steph1 != 0):
+                BdsCheck[i] = 1
+            else:
+                # Set gradient to 0 if unable to move.
+                grad[i] = 0
+                continue
+            
+            # Decide stepsize
+            # Central diff.
+            if BdsCheck[i] == 0:
+                h[i] = min(steph1, steph2)
+                x1[i] = x1[i] + h[i]
+                x2[i] = x2[i] - h[i]
+            # Forward diff.
+            elif BdsCheck[i] == 1:
+                h[i] = steph1
+                x1[i] = x1[i] + h[i]
+            # Backward diff.
+            else:
+                h[i] = steph2
+                x2[i] = x2[i] - h[i]
+
+            # Evaluate solutions
+            x1_solution = self.create_new_solution(tuple(x1), problem)
+            if BdsCheck[i] != -1:
+                # x+h
+                problem.simulate_up_to([x1_solution], r)
+                budget_spent += r -x1_solution.n_reps
+                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
+            x2_solution = self.create_new_solution(tuple(x2), problem)
+            if BdsCheck[i] != 1:
+                # x-h
+                problem.simulate_up_to([x2_solution], r)
+                budget_spent += r -x2_solution.n_reps
+                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
+
+            # Calculate gradient.
+            if BdsCheck[i] == 0:
+                grad[i] = (fn1 - fn2) / (2 * h[i])
+            elif BdsCheck[i] == 1:
+                grad[i] = (fn1 - fn) / h[i]
+            elif BdsCheck[i] == -1:
+                grad[i] = (fn - fn2) / h[i]
+
+        return grad, budget_spent
     def get_gradient(self,problem,x,sol):
         """
         getting the gradient of the function at point x where
@@ -1061,6 +1225,8 @@ class BoomFrankWolfe2(Solver):
         
         lower = np.array(problem.lower_bounds)
         upper = np.array(problem.upper_bounds)
+
+         A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper)
         
         scale_factor = self.factors["ratio"]
         LSmax_iter = self.factors["line_search_max_iters"]
@@ -1107,7 +1273,18 @@ class BoomFrankWolfe2(Solver):
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
                 grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
+                #expended_budget += budget_spent
+                grad, budget_spent = self.finite_diff(new_solution, problem, r, A, b, stepsize=self.factors["h"])
                 expended_budget += budget_spent
+                while np.all((grad == 0)):
+                    #print("recompute gradient")
+                    if expended_budget > problem.factors["budget"]:
+                        break
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r, A, b)
+                    expended_budget += budget_spent
+                    # Update r after each iteration.
+                    #r = int(self.factors["lambda"] * r)
+                    r = int(2 * r)
                    
             #print("grad: ", grad)
             #print("active set: ")
