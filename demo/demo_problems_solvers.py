@@ -8,7 +8,6 @@ import sys
 import os.path as o
 import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
-sys.path.insert(0, "/Users/CarolineHerr/Documents/Research/simopt")
 
 # Import the ProblemsSolvers class and other useful functions
 from simopt.models.san import SANLongestPath
@@ -25,11 +24,10 @@ from simopt.experiment_base import ProblemsSolvers, plot_area_scatterplots, post
 # These names are strings and should match those input to directory.py.
 # Ex:
 # solver_names = ["ASTRODF", "Boom-PGD", "Boom-FW", "RNDSRCH", "GASSO", "NELDMD"]
-solver_names = ['FW-B', 'FW-I', 'PGD-B', 'PGD-I','NELDMD','ASTRODF','AS-B', 'AS-I', 'AS-Z', 'AS-SS', 'PGD-Z', 'FW-Z', 'FW-SS', 'PGD-SS']
+solver_names = ['AS-B', 'AS-I', 'AS-Z', 'AS-SS', 'FW-B', 'FW-I', 'PGD-B', 'PGD-I','PGD-Z', 'FW-Z', 'FW-SS', 'PGD-SS']
 # problem_names = ["OPENJACKSON-1", 'SAN-1', 'SMFCVX-1', 'SMF-1', 'CASCADE-1', 'NETWORK-1']
 # problem_names = ["DYNAMNEWS-1", "SSCONT-1", "SAN-1"] "OPENJ-1"
-problem_names = ["NETWORK-1"]
-# problems = [SANLongestPath, SMF_Max, RMITDMaxRevenue, MM1MinMeanSojournTime]
+problem_names = ["NW-1"]
 
 
 # Initialize an instance of the experiment class.

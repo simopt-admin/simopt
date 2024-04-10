@@ -1,6 +1,5 @@
 import numpy as np
 import cvxpy as cp
-
 #import cdd
 
 
@@ -13,11 +12,11 @@ from ..base import Solver
 #env.setParam('MIPGap',0)
 
 
-class BoomFrankWolfe2(Solver):
+class BoomFrankWolfe1(Solver):
     """
     """
     
-    def __init__(self, name="FW-zoom", fixed_factors={}):
+    def __init__(self, name="FW-interpolattion", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -57,7 +56,7 @@ class BoomFrankWolfe2(Solver):
             "LSmethod":{
                 "description": "methods for line search algorithm",
                 "datatype":str,
-                "default":'zoom'
+                "default":'interpolation'
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
@@ -102,7 +101,7 @@ class BoomFrankWolfe2(Solver):
             "algorithm":{
                 "description": "type of FW algorithm",
                 "datatype": str,
-                "default": "normal"
+                "default": "away"
                 #away, pairwise
             }
             
@@ -253,7 +252,9 @@ class BoomFrankWolfe2(Solver):
 
         prob = cp.Problem(objective, constraints)
         #prob.solve(solver=cp.GUROBI,env=env)#solver=cp.ECOS
-        prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        # prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        prob.solve(solver=cp.SCIPY)
+
         
         if('unbounded' in prob.status):
             result = np.array([prob.solver_stats.extra_stats.getVars()[j].unbdray for j in range(n)])
@@ -423,7 +424,9 @@ class BoomFrankWolfe2(Solver):
             if np.isclose(steph2, 0 , atol= tol):
                 # Address numerical stability of step size.
                 steph2 = 0
-
+            
+            #print("steph1: ", steph1)
+            #print("steph2: ", steph2)
             # Determine whether to use central diff, backward diff, or forward diff.
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
@@ -474,6 +477,7 @@ class BoomFrankWolfe2(Solver):
                 grad[i] = (fn - fn2) / h[i]
 
         return grad, budget_spent
+    
     def get_gradient(self,problem,x,sol):
         """
         getting the gradient of the function at point x where

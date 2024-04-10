@@ -12,11 +12,11 @@ from ..base import Solver
 #env.setParam('MIPGap',0)
 
 
-class BoomFrankWolfe1(Solver):
+class BoomFrankWolfe(Solver):
     """
     """
     
-    def __init__(self, name="FW-interpolattion", fixed_factors={}):
+    def __init__(self, name="FW-backtracking", fixed_factors={}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "deterministic"
@@ -56,7 +56,7 @@ class BoomFrankWolfe1(Solver):
             "LSmethod":{
                 "description": "methods for line search algorithm",
                 "datatype":str,
-                "default":'interpolation'
+                "default":"backtracking"
             },
             "line_search_max_iters": {
                 "description": "maximum iterations for line search",
@@ -66,7 +66,7 @@ class BoomFrankWolfe1(Solver):
             "ratio": {
                 "description": "decay ratio in line search",
                 "datatype": float,
-                "default": 0.8
+                "default": 0.9
             },
             "curve_const": {
                 "description": "constant in curvature wolfe conditions, usually greater than theta",
@@ -252,7 +252,9 @@ class BoomFrankWolfe1(Solver):
 
         prob = cp.Problem(objective, constraints)
         #prob.solve(solver=cp.GUROBI,env=env)#solver=cp.ECOS
-        prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        # prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        prob.solve(solver=cp.SCIPY)
+
         
         if('unbounded' in prob.status):
             result = np.array([prob.solver_stats.extra_stats.getVars()[j].unbdray for j in range(n)])
@@ -309,8 +311,7 @@ class BoomFrankWolfe1(Solver):
     #    the given info q'(0), q(0), q(alpha) in the interval
     #    [a,b] where a < b
     #    """
-
-    def combine_constraint(self,Ci,di,Ce,de,lower, upper,problem):
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper, problem):
         '''
         combine all constraints together
         '''
@@ -422,9 +423,7 @@ class BoomFrankWolfe1(Solver):
             if np.isclose(steph2, 0 , atol= tol):
                 # Address numerical stability of step size.
                 steph2 = 0
-            
-            #print("steph1: ", steph1)
-            #print("steph2: ", steph2)
+        
             # Determine whether to use central diff, backward diff, or forward diff.
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
@@ -475,6 +474,8 @@ class BoomFrankWolfe1(Solver):
                 grad[i] = (fn - fn2) / h[i]
 
         return grad, budget_spent
+
+
     
     def get_gradient(self,problem,x,sol):
         """
@@ -1274,7 +1275,7 @@ class BoomFrankWolfe1(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
-                grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
+                #grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
                 #expended_budget += budget_spent
                 grad, budget_spent = self.finite_diff(new_solution, problem, r, A, b, stepsize=self.factors["h"])
                 expended_budget += budget_spent
@@ -1486,223 +1487,3 @@ class BoomFrankWolfe1(Solver):
             k += 1
             #print("--------------")
         return recommended_solns, intermediate_budgets 
-    
-    def pairwise_FrankWolfe(self, problem):
-        
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-        
-        Ci = problem.Ci
-        di = problem.di
-        Ce = problem.Ce
-        de = problem.de
-
-        r = self.factors["r"]
-        
-        lower = np.array(problem.lower_bounds)
-        upper = np.array(problem.upper_bounds)
-        
-        # Start with the initial solution.
-        #new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        #new_x = new_solution.x
-        
-        #if(not self.is_feasible(new_x, problem)):
-        #    new_x = self.find_feasible_initial(problem, Ce, Ci, de, di)
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        # Start with the initial solution.
-        #new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        #new_x = new_solution.x
-        
-        #if(not self.is_feasible(new_x, Ci,di,Ce,de,lower,upper)):
-            #new_x = self.find_feasible_initial(problem, Ce, Ci, de, di,lower,upper)
-        #    new_x = self.get_random_vertex(Ci,di,lower,upper)
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        new_x = self.get_random_vertex(Ci,di,lower,upper)
-        new_solution = self.create_new_solution(tuple(new_x), problem)
-        #initiailizing a dictionary of atom vectors and their coefficients
-        #atom_vectors = self.factors["atom_vectors"]
-        #if(self.factors["atom_vectors"] is None):
-        #    atom_vectors = self.get_atom_vectors(Ci,di)
-        #    num_atoms = atom_vectors.shape[0]
-        #    alpha_vec = np.zeros(num_atoms)
-        #    alpha_vec[0] = 1
-            
-        #    new_x = atom_vectors[0]
-        #    new_solution = self.create_new_solution(tuple(new_x), problem)
-        #else:
-        #    atom_vectors = self.factors["atom_vectors"]
-        #    num_atoms = atom_vectors.shape[0]
-        #    alpha_vec = self.get_alpha_vec(new_x,atom_vectors)
-        
-        #initiailizing a dictionary of atom vectors and their coefficients
-        #atom_vectors = self.factors["atom_vectors"]
-        #atom_vectors = self.get_atom_vectors(Ci,di)
-        #num_atoms = atom_vectors.shape[0]
-        #active_vectors = {0:[]}
-        #alphas = {tuple(v):0 for v in atom_vectors}
-        
-        atom_vectors = np.array([new_x])
-        active_vectors = [np.array(new_x)]
-        #alphas = {tuple(v):0 for v in atom_vectors}
-        alphas = {tuple(new_x):1}
-        
-        #new_x = atom_vectors[0]
-        #new_solution = self.create_new_solution(tuple(new_x), problem)
-        
-        #for i in range(num_atoms): 
-        #    alphas[tuple(atom_vectors[i])] = alpha_vec[i]
-        #    if(alpha_vec[i] > 0):
-        #        active_vectors[0].append(atom_vectors[i])
-        
-        # Use r simulated observations to estimate the objective value.
-        problem.simulate(new_solution, r)
-        expended_budget += r
-        best_solution = new_solution
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
-        
-        k = 0
-        
-        while expended_budget < problem.factors["budget"]:
-            cur_x = new_solution.x
-            
-            #print("cur_x: ", cur_x)
-            
-            if problem.gradient_available:
-                # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
-            else:
-                # Use finite difference to estimate gradient if IPA gradient is not available.
-                #grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
-                grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
-                expended_budget += budget_spent
-                # A while loop to prevent zero gradient.
-                #while np.all((grad == 0)):
-                #    if expended_budget > problem.factors["budget"]:
-                #        break
-                #    grad, budget_spent  = self.finite_diff(new_solution, problem, r)
-                #    expended_budget += budget_spent
-                    # Update r after each iteration.
-                #    r = int(self.factors["lambda"] * r)
-
-            s = self.get_dir(grad,Ce, Ci, de, di,lower, upper)
-            
-            #compute the directions
-            if(len(active_vectors) > 0):
-                gv = np.array([grad.dot(a) for a in active_vectors])
-                #v = active_vectors[k][np.argmax(gv)]
-                v = active_vectors[np.argmax(gv)]
-                d_pw = s-v
-            else:
-                d_pw = np.zeros(problem.dim)
-            #direction = s - v
-            d_FW = s - cur_x
-            
-            #print("s-v: ", s-v)
-            #print("foward direction: ", s)
-            #print("pairwise direction: ", s-v)
-            #print("grad :", grad)
-            #print("current point: ",cur_x)
-            #print("dir: ", direction)
-            #print("v: ", v)
-            #max_gamma = min(alphas[tuple(v)]*np.linalg.norm(s-v),self.factors["max_gamma"])
-            #max_gamma = self.get_max_gamma_ratio_test(cur_x, direction, Ce, Ci, de, di, lower, upper)
-            #away vector v = 0
-            if((-grad.dot(d_FW) >= -grad.dot(d_pw)) or (d_pw == 0).all()):
-                #print('Forward')
-                direction = d_FW
-                #print("direcition: ", direction)
-                max_gamma = 1
-                
-                if(self.factors["backtrack"]):
-                    #gamma = LineSearch(F=F,x=cur_x,d=d_away,max_step=max_gamma/2)
-                    gamma, added_budget = self.LineSearch(new_solution,grad,direction,max_gamma,problem,expended_budget)
-                    expended_budget += added_budget
-                else:
-                    #gamma = self.factors["step_f"](k)
-                    gamma = min(self.factors["step_f"](k),max_gamma)
-                    
-                #update the active set
-                if(gamma < 1):
-                    for vec in active_vectors:
-                        if((s != vec).any()):
-                            add = 1
-                        else:
-                            add = 0
-                            break;
-                    if(add):
-                        #active_vectors[k+1].append(s)
-                        active_vectors.append(s)
-                        alphas[tuple(s)] = 0
-                else:
-                    active_vectors = [s]
-                    alphas = {tuple(s):0}
-
-                #updating weights/coefficients
-                for atom in active_vectors:
-                    if((atom == s).all()):
-                        alphas[tuple(atom)] = (1-gamma)*alphas[tuple(atom)] + gamma
-                    else:
-                        alphas[tuple(atom)] = (1-gamma)*alphas[tuple(atom)]
-                
-            else:
-                #print("pairwise")
-                direction = d_pw
-                #print("direcition: ", direction)
-                max_gamma = alphas[tuple(v)]
-                #print("max_step: ", max_gamma)
-                if(self.factors["backtrack"]):
-                    #gamma = LineSearch(F=F,x=cur_x,d=d_away,max_step=max_gamma/2)
-                    gamma, added_budget = self.LineSearch(new_solution,grad,direction,max_gamma,problem,expended_budget)
-                    expended_budget += added_budget
-                else:
-                    #gamma = self.factors["step_f"](k)
-                    gamma = min(self.factors["step_f"](k),max_gamma)
-                #print("active set in pairwise: ", active_vectors)
-                #found a new vertex not in the past vertices
-                for vec in active_vectors:
-                    #different/a new vertex
-                    if((s != vec).any()):
-                    #if(sum(abs(s-vec)/(problem.dim*(vec+1e-10))) > 1e-2):
-                        add = 1
-                    else:
-                        add = 0
-                        break;
-                if(add):
-                    active_vectors.append(s)
-                    alphas[tuple(s)] = 0
-                #print("active set in pairwise: ", active_vectors)
-                alphas[tuple(s)] = alphas[tuple(s)] + gamma
-                alphas[tuple(v)] = alphas[tuple(v)] - gamma
-                
-            #print("Displaying Alphas:")
-            #for key,val in alphas.items():
-            #    print(key)
-            #    print(val)
-            #    print('**************')
-            
-        
-            #print("max_gamma: ", max_gamma)
-            #print("gamma: ", gamma)
-            new_x = cur_x + gamma*direction
-            #print("next x: ",new_x)
-            candidate_solution = self.create_new_solution(tuple(new_x), problem)
-            # Use r simulated observations to estimate the objective value.
-            problem.simulate(candidate_solution, r)
-            expended_budget += r
-           
-            
-            new_solution = candidate_solution
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            
-            k += 1
-            #print("obj: ",candidate_solution.objectives_mean)
-            #print("------------------")
-            #print("------------------")
-            
-        return recommended_solns, intermediate_budgets 
-        

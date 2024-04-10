@@ -5,18 +5,18 @@ Summary
 Provide dictionary directories listing solvers, problems, and models.
 """
 # import solvers
-from .solvers.Boom_FrankWolfe import BoomFrankWolfe
-from .solvers.Boom_FrankWolfe1 import BoomFrankWolfe1
-from .solvers.Boom_FrankWolfe2 import BoomFrankWolfe2
-from .solvers.FrankWolfe_SS import FrankWolfeSS  #Boom_FrankWolfe3
-from .solvers.Boom_ProxGD import BoomProxGD
-from .solvers.Boom_ProxGD1 import BoomProxGD1
-from .solvers.Boom_ProxGD2 import BoomProxGD2
-from .solvers.Boom_ProxGD3 import BoomProxGD3 #pgdss
-from .solvers.active_set import ACTIVESET
-from .solvers.active_set1 import ACTIVESET1
-from .solvers.active_set2 import ACTIVESET2
-from .solvers.active_set3 import ACTIVESET3
+from .solvers.FW_B import BoomFrankWolfe
+from .solvers.FW_I import BoomFrankWolfe1
+from .solvers.FW_Z import BoomFrankWolfe2
+from .solvers.FW_SS import FrankWolfeSS  #Boom_FrankWolfe3
+from .solvers.PGD_B import BoomProxGD
+from .solvers.PGD_I import BoomProxGD1
+from .solvers.PGD_Z import BoomProxGD2
+from .solvers.PGD_SS import BoomProxGD3 #pgdss
+from .solvers.AS_B import ACTIVESET
+from .solvers.AS_I import ACTIVESET1
+from .solvers.AS_Z import ACTIVESET2
+from .solvers.AS_SS import ACTIVESET3
 # import models and problems
 from .models.san import SAN, SANLongestPathConstr
 from .models.network import Network, NetworkMinTotalCost
