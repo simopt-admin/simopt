@@ -310,7 +310,7 @@ class BoomFrankWolfe1(Solver):
     #    [a,b] where a < b
     #    """
 
-    def combine_constraint(self,Ci,di,Ce,de,lower, upper):
+    def combine_constraint(self,Ci,di,Ce,de,lower, upper,problem):
         '''
         combine all constraints together
         '''
@@ -423,8 +423,8 @@ class BoomFrankWolfe1(Solver):
                 # Address numerical stability of step size.
                 steph2 = 0
             
-            print("steph1: ", steph1)
-            print("steph2: ", steph2)
+            #print("steph1: ", steph1)
+            #print("steph2: ", steph2)
             # Determine whether to use central diff, backward diff, or forward diff.
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
@@ -1228,7 +1228,7 @@ class BoomFrankWolfe1(Solver):
         lower = np.array(problem.lower_bounds)
         upper = np.array(problem.upper_bounds)
 
-        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper)
+        A, b = self.combine_constraint(Ci,di,Ce,de,lower, upper,problem)
         
         scale_factor = self.factors["ratio"]
         LSmax_iter = self.factors["line_search_max_iters"]
