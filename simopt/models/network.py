@@ -251,6 +251,7 @@ class Network(Model):
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
         gradient = [total_arrivals*self.factors['cost_process'][i] + (total_cost * (message_mat[:,1] == i).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
         gradients['total_cost']['process_prob'] = tuple(gradient)
+        print(gradient)
         return responses, gradients
 
 
