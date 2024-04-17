@@ -201,6 +201,7 @@ class Network(Model):
             print('PROBLEM: The sum of the probabilities is not equal to 1')
             print(self.factors['process_prob'])
             print(self.factors)
+            
         network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
         service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
                                                 high=self.factors["upper_limits_transit_time"][network_routes[i]],
@@ -248,7 +249,7 @@ class Network(Model):
         total_cost = sum(message_mat[:, 8])
         responses = {"total_cost": total_cost}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        gradient = [total_arrivals*self.factors['cost_process'][i] + ((total_cost * message_mat[:,1] == i).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
+        gradient = [total_arrivals*self.factors['cost_process'][i] + (total_cost * (message_mat[:,1][i]).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
         gradients['total_cost']['process_prob'] = tuple(gradient)
         return responses, gradients
 
@@ -350,7 +351,7 @@ class NetworkMinTotalCost(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 3000
+                "default": 2000
             }
         }
         self.check_factor_list = {
