@@ -46,7 +46,7 @@ class Cascade(Model):
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
-        self.G = nx.read_graphml('simopt/models/DAG.graphml')
+        self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
         self.num_nodes = len(self.G)
         self.random = random
         self.n_random = 1
@@ -70,6 +70,11 @@ class Cascade(Model):
                 "description": "number of edges in each graph",
                 "datatype": int,
                 "default": 100
+            },
+            "p": {
+                "description": "probability",
+                "datatype": float,
+                "default": 0.4
             }
         }
 
@@ -98,21 +103,79 @@ class Cascade(Model):
     def check_simulatable_factors(self):
         return True
     
+    # def generate_random_graph(self, uni_rng):
+    #     num_nodes = self.factors["num_nodes"]
+    #     num_edges = self.factors["num_edges"]
+    #     # Check if the number of edges is sufficient to create a weakly connected DAG
+    #     if num_edges < num_nodes - 1:
+    #         raise ValueError("Number of edges is too few to form a weakly connected DAG with the given number of nodes.")
+
+    #     # Create an empty adjacency matrix
+    #     adj_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
+
+    #     # Add edges to ensure at least one incoming and one outgoing edge for each node, ensuring weak connectivity
+    #     for i in range(1, num_nodes):
+    #         adj_matrix[i-1, i] = 1  # Add edge from node i-1 to i
+
+    #     # Remaining edges to randomly add, avoiding the main diagonal and the edges already added
+    #     remaining_edges = num_edges - (num_nodes - 1)
+    #     upper_triangle_indices = np.triu_indices(num_nodes, k=1)
+    #     # Mask out the already added edges
+    #     mask = np.ones(len(upper_triangle_indices[0]), dtype=bool)
+    #     for i in range(1, num_nodes):
+    #         mask &= ~((upper_triangle_indices[0] == i-1) & (upper_triangle_indices[1] == i))
+    #     random_indices = uni_rng.choices(np.where(mask)[0], k = remaining_edges)#, replace=False)
+    #     # print(random_indices)
+    #     # print(len(random_indices))
+
+    #     # Add the additional edges
+    #     for idx in random_indices:
+    #         adj_matrix[upper_triangle_indices[0][idx], upper_triangle_indices[1][idx]] = 1
+
+    #     # Create a directed graph, add nodes with costs, and add edges
+    #     G = nx.DiGraph()
+    #     for i in range(num_nodes):
+    #         cost = uni_rng.uniform(1, 100)  # Random cost for each node
+    #         G.add_node(i, cost=cost)
+
+    #     for i in range(num_nodes):
+    #         for j in range(i + 1, num_nodes):
+    #             if adj_matrix[i, j] == 1:
+    #                 weight = uni_rng.uniform(0, 1)
+    #                 G.add_edge(i, j, weight=weight)
+                    
+    #     return G
+    
     def generate_random_graph(self, uni_rng):
         num_nodes = self.factors["num_nodes"]
+        num_edges = self.factors["num_edges"]
+        p = self.factors["p"]
 
         # Create a directed graph, add nodes with costs, and add edges
         G = nx.DiGraph()
+        cs = []
         G.add_nodes_from(range(num_nodes))
         for node in G.nodes:
-            G.nodes[node]['cost'] = round(uni_rng.uniform(1, 80), 4)
+            G.nodes[node]['cost'] = round(uni_rng.uniform(1, 30), 4)
+            cs.append(G.nodes[node]['cost'])
         
+        arcs, ws, cnt = [], [], 0
         for i in range(num_nodes):
             for j in range(i + 1, num_nodes):
-                if uni_rng.uniform(0, 1) < 0.4:
+                if uni_rng.uniform(0,1) < p:
                     weight = round(uni_rng.uniform(0, 1), 4)
+                    if cnt == 0:
+                        if weight < 0.1:
+                            weight = round(uni_rng.uniform(0.2, 0.8), 4)
+                    if weight <= 0.0001:
+                        weight = round(uni_rng.uniform(0.005, 0.8), 4)
                     G.add_edge(i, j, weight = weight)
-                    
+                    cnt += 1
+                    arcs.append((i, j))
+                    ws.append(weight)
+        print(cs)
+        print(arcs) 
+        print(ws)
         return G
     
     def attach_rng(self, random_rng):
@@ -258,6 +321,7 @@ class CascadeMax(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
+        # self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
         self.model_default_factors = {}
         self.model_decision_factors = {"init_prob"}
         self.factors = fixed_factors
@@ -354,13 +418,15 @@ class CascadeMax(Problem):
         return objectives
     
     def random_budget(self, uni_rng):
-        # l = [100, 200, 300, 400, 500]
-        l = [500, 600, 700, 800]
+        # l = [1000, 2000, 3000]
+        l = 1000
+        # l = [600, 700, 800, 900, 1000]
         budget = uni_rng.choice(l) * self.dim
         return budget
     
     def get_cost(self, exp_rng):
-        B = max(exp_rng.expovariate(1/self.factors["B"]), self.factors["B"]/5)
+        b0 = np.dot(self.Ci, self.factors['initial_solution']) * 10
+        B = max(exp_rng.expovariate(1/self.factors["B"]), self.factors["B"]/5, b0)
         return B
     
     def attach_rngs(self, random_rng):

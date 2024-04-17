@@ -6,6 +6,7 @@ Simulate an open jackson network
 import autograd.numpy as np
 import math as math
 from collections import deque
+from ..auto_diff_util import bi_dict, replicate_wrapper, factor_dict, resp_dict_to_array
 
 from ..base import Model, Problem
 
