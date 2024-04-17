@@ -88,7 +88,7 @@ class Network(Model):
             "n_messages": {
                 "description": "number of messages that arrives and needs to be routed",
                 "datatype": int,
-                "default": 10000
+                "default": 500
             },
             "n_networks": {
                 "description": "number of networks",
@@ -246,12 +246,17 @@ class Network(Model):
             message_mat[i, 8] = message_mat[i, 6] + message_mat[i, 7]
             last_in_line[network] = i
         # Compute total costs for the simulation run.
-        total_cost = sum(message_mat[:, 8])
-        responses = {"total_cost": total_cost}
+        holding_cost = sum(message_mat[:, 7])
+        responses = {"total_cost": holding_cost}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        gradient = [total_arrivals*self.factors['cost_process'][i] + (total_cost * (message_mat[:,1] == i).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
+        gradient = []
+        for i in range(self.factors['n_networks']):
+            if self.factors['process_prob'][i] == 0:
+                gradient.append(0)
+            else:
+                gradient.append(total_arrivals*self.factors['cost_process'][i] + (holding_cost * ((message_mat[:,1] == i).sum()) / self.factors['process_prob'][i]))
+
         gradients['total_cost']['process_prob'] = tuple(gradient)
-        print(gradient)
         return responses, gradients
 
 
@@ -352,7 +357,7 @@ class NetworkMinTotalCost(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 2000
+                "default": 3000
             }
         }
         self.check_factor_list = {
