@@ -197,7 +197,7 @@ class Network(Model):
         # Generate all interarrival, network routes, and service times before the simulation run.
         arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
                          for _ in range(total_arrivals)]
-        if sum(self.factors['process_prob']) < 0.97:
+        if sum(self.factors['process_prob']) < 0.99:
             print('PROBLEM: The sum of the probabilities is not equal to 1')
             print(self.factors['process_prob'])
             print(self.factors)
@@ -249,7 +249,7 @@ class Network(Model):
         total_cost = sum(message_mat[:, 8])
         responses = {"total_cost": total_cost}
         gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
-        gradient = [total_arrivals*self.factors['cost_process'][i] + (total_cost * (message_mat[:,1][i]).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
+        gradient = [total_arrivals*self.factors['cost_process'][i] + (total_cost * (message_mat[:,1] == i).sum() / self.factors['process_prob'][i]) for i in range(self.factors['n_networks'])]
         gradients['total_cost']['process_prob'] = tuple(gradient)
         return responses, gradients
 
