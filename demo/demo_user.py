@@ -161,13 +161,13 @@ experiment_name = 'EXPERIMENTS1'
 mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=10)
+mymetaexperiment.run(n_macroreps=30)
 
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=20)
+mymetaexperiment.post_replicate(n_postreps=50)
 # Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=20)
+mymetaexperiment.post_normalize(n_postreps_init_opt=50)
 
 print("Plotting results.")
 # Produce basic plots of the solvers on the problems.
