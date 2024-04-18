@@ -189,6 +189,7 @@ class Network(Model):
             gradient estimates for each response
         """
         # Determine total number of arrivals to simulate.
+        self.factors['n_messages'] = 500
         total_arrivals = self.factors["n_messages"]
         # Designate separate random number generators.
         arrival_rng = rng_list[0]
@@ -357,7 +358,7 @@ class NetworkMinTotalCost(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 3000
+                "default": 5000
             }
         }
         self.check_factor_list = {
