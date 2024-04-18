@@ -5,16 +5,14 @@
 # from simopt.models.mm1queue import MM1MinMeanSojournTime
 
 # Create a list named "solver_names"
-# solver_names = ["PGD-B", "PGD-I", "PGD-Z", "PGD-SS", "AS-B", "AS-I", "AS-Z", "AS-SS", "FW-B", "FW-I", "FW-Z", "FW-SS", "NELDMD", "ASTRODF"]
-solver_names = ["AS-B"]
+solver_names = ["PGD-B", "PGD-I", "PGD-Z", "PGD-SS", "AS-B", "AS-I", "AS-Z", "AS-SS", "FW-B", "FW-I", "FW-Z", "FW-SS"]
+
 
 #Create a list for each problem
-#problem1 = [SANLongestPath, 2, {'num_nodes':8, 'num_arcs':12}]
-
-#Problem1 = [OpenJacksonMinQueue, 5, {}]
-#problem2 = [SANLongestPathConstr, 5, {}]
-#problem3 = [SMFCVX_Max, 5, {}]
-#problem4 = [SMF_Max, 5, {}]
+Problem1 = [OpenJacksonMinQueue, 5, {}]
+problem2 = [SANLongestPathConstr, 5, {}]
+problem3 = [SMFCVX_Max, 5, {}]
+problem4 = [SMF_Max, 5, {}]
 problem5 = [CascadeMax, 5, {}]
 #Problem6 = [NetworkMinTotalCost, 5, {}]
 

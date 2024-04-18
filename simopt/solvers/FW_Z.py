@@ -214,10 +214,21 @@ class BoomFrankWolfe2(Solver):
         objective = cp.Minimize(s@g)
         constraints = []
         
-        if(lower is not None):
-            constraints += [s >= lower]
-        if(upper is not None):
-            constraints += [s <= upper]
+        if (upper is not None):
+            ub_inf_idx = np.where(~np.isinf(upper))[0]
+            if len(ub_inf_idx) > 0:
+                for i in ub_inf_idx:
+                    constraints.append(s[i] <= upper[i])
+        if (lower is not None):
+            lb_inf_idx = np.where(~np.isinf(lower))
+            if len(lb_inf_idx) > 0:
+                for i in lb_inf_idx:
+                    constraints.append(s[i] >= lower[i])
+
+        # if(lower is not None):
+        #     constraints += [s >= lower]
+        # if(upper is not None):
+        #     constraints += [s <= upper]
         if((Ci is not None) and (di is not None)):
             constraints += [Ci@s <= di]
         if((Ce is not None) and (de is not None)):
@@ -242,10 +253,21 @@ class BoomFrankWolfe2(Solver):
         objective = cp.Minimize(s@g)
         constraints = []
         
-        if(lower is not None):
-            constraints += [s >= lower]
-        if(upper is not None):
-            constraints += [s <= upper]
+        if (upper is not None):
+            ub_inf_idx = np.where(~np.isinf(upper))[0]
+            if len(ub_inf_idx) > 0:
+                for i in ub_inf_idx:
+                    constraints.append(s[i] <= upper[i])
+        if (lower is not None):
+            lb_inf_idx = np.where(~np.isinf(lower))
+            if len(lb_inf_idx) > 0:
+                for i in lb_inf_idx:
+                    constraints.append(s[i] >= lower[i])
+
+        # if(lower is not None):
+        #     constraints += [s >= lower]
+        # if(upper is not None):
+        #     constraints += [s <= upper]
         if((Ci is not None) and (di is not None)):
             constraints += [Ci@s <= di]
         if((Ce is not None) and (de is not None)):

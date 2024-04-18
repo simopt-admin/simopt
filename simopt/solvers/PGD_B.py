@@ -582,7 +582,7 @@ class BoomProxGD(Solver):
             step_size = step_size*ratio
             cur_iter += 1
             #print("---------------")
-        print("step size from backtracking: ", step_size)
+        # print("step size from backtracking: ", step_size)
         return step_size, added_budget
     
     def interpolateLineSearch(self,cur_sol,grad,d,max_step,problem,expended_budget):
@@ -984,7 +984,7 @@ class BoomProxGD(Solver):
                     r = int(2 * r)
                     
             #print("max_step: ",max_step)
-            print("g: ", grad)
+            # print("g: ", grad)
             direction = -grad/np.linalg.norm(grad)
             temp_x = cur_x + max_step * direction
             #print("cur x: ",cur_x)
@@ -1051,7 +1051,7 @@ class BoomProxGD(Solver):
             #print("act: ", action)
             #print("grad: ", grad)
             #print("max step: ", max_step)
-            print("step: ", t)
+            # print("step: ", t)
  
             #new_x = cur_x - t * grad
             new_x = cur_x + t * direction
@@ -1078,7 +1078,7 @@ class BoomProxGD(Solver):
                 intermediate_budgets.append(expended_budget)
             
             #print("current budget: ",expended_budget)
-            print("========================")
+            # print("========================")
             
             k += 1
         #print("obj: ",candidate_solution.objectives_mean)

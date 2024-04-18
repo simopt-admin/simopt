@@ -4,7 +4,6 @@ Summary
 -------
 Provide base classes for problem-solver pairs and helper functions
 for reading/writing data and plotting.
-This is the modified version to generate and solve random problem instances by solvers.
 """
 
 import numpy as np
@@ -14,13 +13,18 @@ import pandas as pd
 from scipy.stats import norm
 import pickle
 import importlib
+import ast
 import time
 import os
+import csv
+import itertools
 from mrg32k3a.mrg32k3a import MRG32k3a
-# from rng.mrg32k3a import MRG32k3a #when do the multinomial, change to the local
+import multiprocessing
+from multiprocessing import Process
+
 
 from .base import Solution
-from .directory import solver_directory, problem_directory
+from .directory import solver_directory, problem_directory, model_directory
 
 
 class Curve(object):
@@ -440,10 +444,15 @@ class ProblemSolver(object):
         n_macroreps : int
             Number of macroreplications of the solver to run on the problem.
         """
+        print("Running Solver", self.solver.name, "on Problem", self.problem.name + ".")
+
         self.n_macroreps = n_macroreps
-        self.all_recommended_xs = []
-        self.all_intermediate_budgets = []
         self.timings = []
+        # Create variables for recommended solutions and intermediate budgets
+        # so we can append to them in parallel.
+        self.all_recommended_xs = multiprocessing.Manager().dict()
+        self.all_intermediate_budgets = multiprocessing.Manager().dict()
+
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
         #     Stream 1: reserved for bootstrapping
@@ -460,28 +469,69 @@ class ProblemSolver(object):
         rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
         rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])
         self.solver.attach_rngs([rng1, rng2, rng3])
-        # Run n_macroreps of the solver on the problem.
-        # Report recommended solutions and corresponding intermediate budgets.
-        for mrep in range(self.n_macroreps):
-            print(f"Running macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
-            # Create, initialize, and attach RNGs used for simulating solutions.
-            progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 2, ss, 0]) for ss in range(self.problem.model.n_rngs)]
-            self.solver.solution_progenitor_rngs = progenitor_rngs
-            # print([rng.s_ss_sss_index for rng in progenitor_rngs])
-            # Run the solver on the problem.
-            tic = time.perf_counter()
-            recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
-            toc = time.perf_counter()
-            # Record the run time of the macroreplication.
-            self.timings.append(toc - tic)
-            # Trim solutions recommended after final budget.
-            recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
-            # Extract decision-variable vectors (x) from recommended solutions.
-            # Record recommended solutions and intermediate budgets.
-            self.all_recommended_xs.append([solution.x for solution in recommended_solns])
-            self.all_intermediate_budgets.append(intermediate_budgets)
+
+        # Start a timer
+        tic = time.perf_counter()
+
+        # If we're only doing one macroreplication or we have fewer than 4 cores, run macroreps in serial.
+        # It just isn't worth the overhead to run in parallel.
+        if n_macroreps == 1 or os.cpu_count() < 4:
+            for mrep in range(n_macroreps):
+                self.run_multithread(mrep)
+        else:
+            # Run n_macroreps of the solver on the problem.
+            # Report recommended solutions and corresponding intermediate budgets.
+            # Create an array of Process objects, one for each macroreplication.
+            Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
+            # Start each process.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].start()
+            # Wait for each process to finish.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].join()
+            # Stop the threads.
+            for mrep in range(self.n_macroreps):
+                Processes[mrep].terminate()
+
+        # Stop the timer.
+        toc = time.perf_counter()
+        # Print the total runtime.
+        print(f"Total runtime: {toc - tic:0.4f} seconds ({(toc - tic) / self.n_macroreps:0.4f} seconds per macroreplication)\r\n")
+
+        # Convert the budgets and solutions into lists.
+        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(len(self.all_recommended_xs.keys()))]
+        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(len(self.all_intermediate_budgets.keys()))]
+
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
+
+    def run_multithread(self, mrep):
+        print(f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}.")
+        # Create, initialize, and attach RNGs used for simulating solutions.
+        progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
+        # Create a new set of RNGs for the solver based on the current macroreplication.
+        # Tried re-using the progentior RNGs, but we need to match the number needed by the solver, not the problem
+        solver_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, self.problem.model.n_rngs + rng_index, 0]) for rng_index in range(len(self.solver.rng_list))]
+
+        # Set progenitor_rngs and rng_list for solver.
+        self.solver.solution_progenitor_rngs = progenitor_rngs
+        self.solver.rng_list = solver_rngs
+
+        # print([rng.s_ss_sss_index for rng in progenitor_rngs])
+        # Run the solver on the problem.
+        tic = time.perf_counter()
+        recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
+        toc = time.perf_counter()
+
+        # Record the run time of the macroreplication.
+        self.timings.append(toc - tic)
+        # Trim solutions recommended after final budget.
+        recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
+        # Extract decision-variable vectors (x) from recommended solutions.
+        # Record recommended solutions and intermediate budgets.
+        self.all_recommended_xs[mrep] = [solution.x for solution in recommended_solns]
+        self.all_intermediate_budgets[mrep] = intermediate_budgets
+        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {toc - tic:0.4f} seconds.")
 
     def check_run(self):
         """Check if the experiment has been run.
@@ -525,6 +575,7 @@ class ProblemSolver(object):
         self.all_post_replicates = [[[] for _ in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
         # Simulate intermediate recommended solutions.
         for mrep in range(self.n_macroreps):
+            print(f"Postreplicating macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
             for budget_index in range(len(self.all_intermediate_budgets[mrep])):
                 x = self.all_recommended_xs[mrep][budget_index]
                 fresh_soln = Solution(x, self.problem)
@@ -760,7 +811,7 @@ class ProblemSolver(object):
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
         new_path2 = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
 
-        # Create directories if they do no exist.
+        # Create directories if they do not exist.
         if "./experiments/logs" in new_path2 and not os.path.exists("./experiments/logs"):
             os.makedirs("./experiments", exist_ok=True)
             os.makedirs("./experiments/logs")
@@ -799,7 +850,10 @@ class ProblemSolver(object):
             # and how many replications were taken of them (n_postreps_init_opt).
             if self.check_postnormalize():
                 file.write(f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n")
-                file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
+                if self.xstar is None:
+                    file.write(f"No proxy optimal solution was used. A proxy optimal objective function value of {self.problem.optimal_value[0]} was provided.\n")
+                else:
+                    file.write(f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n")
                 file.write(f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n")
             # Display recommended solution at each budget value for each macroreplication.
             file.write('Macroreplication Results:\n')
@@ -813,7 +867,7 @@ class ProblemSolver(object):
                     # If postreplicated, add estimated objective function values.
                     if self.check_postreplicate():
                         file.write(f"\tEstimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n")
-                file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
+                # file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
         file.close()
 
 
@@ -896,9 +950,10 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         elif getattr(experiment, "n_postreps", None) != getattr(ref_experiment, "n_postreps", None):
             print("At least two experiments have different numbers of post-replications.")
             print("Estimation of optimal solution x* may be based on different numbers of post-replications.")
+    print(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
-        # Stream 0: reserved for post-replications.
+    #     Stream 0: reserved for post-replications.
     baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
@@ -916,11 +971,17 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
+    print("Finding f(x*)...")
     if proxy_opt_val is not None:
-        xstar = None
+        if proxy_opt_x is None:
+            xstar = None
+        else:
+            xstar = proxy_opt_x  # Assuming the provided x is optimal in this case.
+        print("\t...using provided proxy f(x*).")
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
+        print("\t...using provided proxy x*.")
         xstar = proxy_opt_x
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -929,10 +990,14 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         xstar_postreps = list(opt_soln.objectives[:n_postreps_init_opt][:, 0])  # 0 <- assuming only one objective
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
+        print("\t...using coded f(x*).")
         xstar = None
-        xstar_postreps = [ref_experiment.problem.optimal_value] * n_postreps_init_opt
+        # NOTE: optimal_value is a tuple.
+        # Currently hard-coded for single objective case, i.e., optimal_value[0].
+        xstar_postreps = [ref_experiment.problem.optimal_value[0]] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
+        print("\t...using coded x*.")
         xstar = ref_experiment.problem.optimal_solution
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -942,6 +1007,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
+        print("\t...using best postreplicated solution as proxy for x*.")
         # TO DO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
@@ -1064,7 +1130,7 @@ def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=N
             "quantile_solvability" : quantile solvability profile;
 
             "diff_cdf_solvability" : difference of cdf solvability profiles;
-            
+
             "diff_quantile_solvability" : difference of quantile solvability profiles.
     beta : float, optional
         Quantile to plot, e.g., beta quantile; in (0, 1).
@@ -1140,7 +1206,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
             "solve_time_quantile" : beta quantile of solve time;
 
             "solve_time_cdf" : cdf of solve time;
-            
+
             "cdf_solvability" : cdf solvability profile;
 
             "quantile_solvability" : quantile solvability profile;
@@ -1357,7 +1423,6 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         List compiling path names for plots produced.
     """
     # Check if problems are the same with the same x0 and x*.
-    
     check_common_problem_and_reference(experiments)
     file_list = []
     # Set up plot.
@@ -1374,21 +1439,19 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         solver_curve_handles = []
         if print_max_hw:
             curve_pairs = []
-        from matplotlib.pyplot import cm
-        color = iter(cm.rainbow(np.linspace(0, 1, n_experiments)))
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
-            color_str = next(color)
+            color_str = "C" + str(exp_idx)
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
-                    handle = experiment.progress_curves[0].plot(color =color_str)
+                    handle = experiment.progress_curves[0].plot(color_str=color_str)
                     for curve in experiment.progress_curves[1:]:
                         curve.plot(color_str=color_str)
                 else:
-                    handle = experiment.objective_curves[0].plot(color =color_str)
+                    handle = experiment.objective_curves[0].plot(color_str=color_str)
                     for curve in experiment.objective_curves[1:]:
-                        curve.plot(color_str=color)
+                        curve.plot(color_str=color_str)
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
@@ -1420,7 +1483,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1482,7 +1545,6 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                        normalize=normalize,
                                        extra=beta
                                        ))
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
     return file_list
 
 
@@ -1547,7 +1609,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1672,7 +1734,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names,loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="area",
@@ -1840,7 +1902,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     if print_max_hw:
                         curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1850,7 +1912,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                        extra=solve_tol
                                        ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1884,7 +1946,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                         if print_max_hw:
                             curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level, difference=True)
             if plot_type == "diff_cdf_solvability":
@@ -2025,7 +2087,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         ProblemSolver pairs of different solvers on a common problem.
     plot_type : str, default="violin"
         String indicating which type of plot to produce:
-        
+
             "box" : comparative box plots;
 
             "violin" : comparative violin plots.
@@ -2148,7 +2210,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
                 std_dev_estimator = np.std(terminals, ddof=1)
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="terminal_scatter",
@@ -2411,6 +2473,14 @@ class ProblemsSolvers(object):
 
     Parameters
     ----------
+    solver_factors: list [dict], optional
+        List of dictionaries that contain solver factors at different design points.
+        Each variant of solver with be crossed together with each vairant of problem.
+        (Requires solver_names with a name provided for each index in solver_factors.)
+    problem_factors: list [dict], optional
+        List of dictionaries that contain problem and model factors at different design points.
+        Each variant of problem will be crossed together with each variant of solver.
+        (Requires problem_names with a name provided for each index in problem_factors.)
     solver_names : list [str], optional
         List of solver names.
     problem_names : list [str], optional
@@ -2431,7 +2501,8 @@ class ProblemsSolvers(object):
     file_name_path : str
         Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
     """
-    def __init__(self, solver_names=None, problem_names=None, solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
+    def __init__(self, solver_factors=None, problem_factors=None, solver_names=None, problem_names=None,
+                 solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2450,6 +2521,55 @@ class ProblemsSolvers(object):
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
+
+        elif solver_factors is not None and problem_factors is not None:
+            # Create solvers list.
+            solvers = []
+            for index, dp in enumerate(solver_factors):
+                # Get corresponding name of solver from names.
+                solver_name = solver_names[index]
+                # Assign all factor values from current dp to solver object.
+                solver = solver_directory[solver_name](fixed_factors=dp)
+                solvers.append(solver)
+
+            # Create problems list.
+            problems = []
+            for index, dp in enumerate(problem_factors):
+                # Get corresponding name of problem from names.
+                problem_name = problem_names[index]
+                fixed_factors = {}  # Will hold problem factor values for current dp.
+                model_fixed_factors = {}  # Will hold model factor values for current dp.
+                # Create default instances of problem and model to compare factor names.
+                default_problem = problem_directory[problem_name]()
+                default_model = default_problem.model
+
+                # Set factor values for current dp using problem/model specifications
+                # to determine if problem or model factor.
+                for factor in dp:
+                    if factor in default_problem.specifications:
+                        fixed_factors[factor] = dp[factor]
+                    if factor in default_model.specifications:
+                        model_fixed_factors[factor] = dp[factor]
+                # Create instance of problem and append to problems list.
+                problem = problem_directory[problem_name](fixed_factors=fixed_factors, model_fixed_factors=model_fixed_factors)
+                problems.append(problem)
+
+            self.experiments = [[ProblemSolver(solver=solver,
+                                               problem=problem,
+                                               file_name_path=f'./experiments/outputs/{solver.name}_{sol_indx}_on_{problem.name}_{prob_indx}.pickle')
+                                 for prob_indx, problem in enumerate(problems)]
+                                for sol_indx, solver in enumerate(solvers)]
+            self.solvers = solvers
+            self.problems = problems
+            self.solver_names = solver_names
+            self.problem_names = problem_names
+            self.solver_set = set(solver_names)
+            self.problem_set = set(problem_names)
+            self.n_solvers = len(self.solvers)
+            self.n_problems = len(self.problems)
+
         elif solvers is not None and problems is not None:  # Method #2
             self.experiments = [[ProblemSolver(solver=solver, problem=problem) for problem in problems] for solver in solvers]
             self.solvers = solvers
@@ -2458,14 +2578,9 @@ class ProblemsSolvers(object):
             self.problem_names = [problem.name for problem in self.problems]
             self.n_solvers = len(self.solvers)
             self.n_problems = len(self.problems)
-        elif solvers is None and problems is not None:  # Method by providing solver and problem names
-            self.experiments = [[ProblemSolver(solver_name=solver_name, problem=problem) for problem in problems] for solver_name in solver_names]
-            self.solvers = [solver_directory[solver_name](name=solver_name) for solver_name in solver_names]
-            self.solver_names = solver_names
-            self.problems = problems
-            self.problem_names = [problem.name for problem in self.problems]
-            self.n_solvers = len(self.solvers)
-            self.n_problems = len(self.problems)
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
+
         else:  # Method #1
             if solver_renames is None:
                 self.solver_names = solver_names
@@ -2477,6 +2592,10 @@ class ProblemsSolvers(object):
                 self.problem_names = problem_renames
             self.n_solvers = len(solver_names)
             self.n_problems = len(problem_names)
+
+            # Use this for naming file.
+            self.solver_set = solver_names
+            self.problem_set = problem_names
             # Read in fixed solver/problem/model factors from .py file in the experiments folder.
             # File should contain three dictionaries of dictionaries called
             #   - all_solver_fixed_factors
@@ -2492,7 +2611,7 @@ class ProblemsSolvers(object):
                 self.all_solver_fixed_factors = getattr(all_factors, "all_solver_fixed_factors")
                 self.all_problem_fixed_factors = getattr(all_factors, "all_problem_fixed_factors")
                 self.all_model_fixed_factors = getattr(all_factors, "all_model_fixed_factors")
-            # Create all problem-solver pairs (i.e., instances of ProblemSolver class)
+            # Create all problem-solver pairs (i.e., instances of ProblemSolver class).
             self.experiments = []
             for solver_idx in range(self.n_solvers):
                 solver_experiments = []
@@ -2520,11 +2639,14 @@ class ProblemsSolvers(object):
                 self.problems = [experiment.problem for experiment in self.experiments[0]]
         # Initialize file path.
         if file_name_path is None:
-            solver_names_string = "_".join(self.solver_names)
-            problem_names_string = "_".join(self.problem_names)
+            solver_names_string = "_".join(self.solver_set)
+            problem_names_string = "_".join(self.problem_set)
             self.file_name_path = f"./experiments/outputs/group_{solver_names_string}_on_{problem_names_string}.pickle"
         else:
             self.file_name_path = file_name_path
+
+            self.solver_set = self.solver_names
+            self.problem_set = self.problem_names
 
     def check_compatibility(self):
         """Check whether all experiments' solvers and problems are compatible.
@@ -2619,6 +2741,138 @@ class ProblemsSolvers(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
+    def log_group_experiment_results(self, solve_tols_single_pair=[0.05, 0.10, 0.20, 0.50], csv_filename_single_pair="df_solver_results"):
+        """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
+        Parameters
+        ----------
+        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+            Relative optimality gap(s) definining when a problem is solved; in (0,1].
+        csv_filename : str, default="df_solver_results"
+            Name of .csv file to print output to
+
+            both parameters only used if only one solver and problem are included in experiment and will be fed into report_statistics_single_problem_solver_pair
+        """
+        # Create a new text file in experiments/logs folder with correct name.
+        new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
+        new_path = new_path.replace(".pickle", "")  # Remove .pickle from .txt file name.
+
+        # Create directories if they do no exist.
+        if "./experiments/logs" in new_path and not os.path.exists("./experiments/logs"):
+            os.makedirs("./experiments", exist_ok=True)
+            os.makedirs("./experiments/logs")
+        # Create text file.
+        with open(new_path + "_group_experiment_results.txt", "w") as file:
+            # Title text file with experiment information.
+            file.write(self.file_name_path)
+            file.write('\n')
+            # Write the name of each problem.
+            file.write("----------------------------------------------------------------------------------------------")
+            file.write("\nProblems:\n\n")
+            for i in range(self.n_problems):
+                file.write(f"{self.problem_names[i]}\n\t")
+                # Write model factors for each problem.
+                file.write("Model Factors:\n")
+                for key, value in self.problems[i].model.factors.items():
+                    # Excluding model factors corresponding to decision variables.
+                    if key not in self.problems[i].model_decision_factors:
+                        file.write(f"\t\t{key}: {value}\n")
+                # Write problem factors for each problem.
+                file.write("\n\tProblem Factors:\n")
+                for key, value in self.problems[i].factors.items():
+                    file.write(f"\t\t{key}: {value}\n")
+                file.write("\n")
+            file.write("----------------------------------------------------------------------------------------------")
+            # Write the name of each Solver.
+            file.write("\nSolvers:\n\n")
+            # Write solver factors for each solver.
+            for j in range(self.n_solvers):
+                file.write(f"{self.solver_names[j]}\n\t")
+                file.write("Solver Factors:\n")
+                for key, value in self.solvers[j].factors.items():  # changed from i to j
+                    file.write(f"\t\t{key}: {value}\n")
+                file.write("\n")
+            file.write("----------------------------------------------------------------------------------------------")
+            # Write the name of pickle files for each Problem-Solver pair.
+            file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
+            for solver_group in self.experiments:
+                for experiment in solver_group:
+                    directory, file_name = os.path.split(experiment.file_name_path)
+                    file.write(f'{file_name}\n')
+            # for p in self.problem_names:
+            #     for s in self.solver_names:
+            #         file.write(f"\t{s}_on_{p}.pickle\n")
+        file.close()
+
+    def report_group_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+        # create dictionary of common solvers and problems
+        pair_dict = {}  # used to hold pairs of
+
+        for sublist in self.experiments:
+            for obj in sublist:
+                solver = obj.solver.name
+                problem = obj.problem.name
+                key = (solver, problem)
+                if key not in pair_dict:
+                    pair_dict[key] = [obj]
+                else:
+                    pair_dict[key].append(obj)
+
+        for (solver, problem), pair_list in pair_dict.items():
+            csv_filename = f'{solver}_on_{problem}_results'
+            self.report_statistics(pair_list=pair_list, solve_tols=solve_tols, csv_filename=csv_filename)
+
+    def report_statistics(self, pair_list, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+        """For each design point, calculate statistics from each macoreplication and print to csv.
+
+        Parameters
+        ----------
+        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+            Relative optimality gap(s) definining when a problem is solved; in (0,1].
+        csv_filename : str, default="df_solver_results"
+            Name of .csv file to print output to.
+        """
+        # Create directory if they do no exist.
+        if not os.path.exists("./experiments"):
+            os.makedirs("./experiments")
+        # if csv_filename == 'df_solver_results':
+        file_path = "./experiments/logs/"
+        # else:
+        #     file_path = ""
+        with open(file_path + csv_filename + ".csv", mode="w", newline="") as output_file:
+            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            base_experiment = pair_list[0]
+            solver_factor_names = list(base_experiment.solver.specifications.keys())
+            problem_factor_names = list(base_experiment.problem.specifications.keys())
+            model_factor_names = list(set(base_experiment.problem.model.specifications.keys()) - base_experiment.problem.model_decision_factors)
+            # Concatenate solve time headers.
+            solve_time_headers = [[f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"] for solve_tol in solve_tols]
+            solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
+            # Print headers.
+            csv_writer.writerow(["DesignPt#"] +
+                                solver_factor_names +
+                                problem_factor_names +
+                                model_factor_names +
+                                ["MacroRep#"] +
+                                ["Final Relative Optimality Gap"] +
+                                ["Area Under Progress Curve"] +
+                                solve_time_headers)
+            # Compute performance metrics.
+            for designpt_index in range(len(pair_list)):
+                experiment = pair_list[designpt_index]
+                # Parse lists of factors.
+                solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
+                problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
+                model_factor_list = [experiment.problem.model.factors[model_factor_name] for model_factor_name in model_factor_names]
+                for mrep in range(experiment.n_macroreps):
+                    progress_curve = experiment.progress_curves[mrep]
+                    # Parse list of statistics.
+                    solve_time_values = [[progress_curve.compute_crossing_time(threshold=solve_tol)] + [int(progress_curve.compute_crossing_time(threshold=solve_tol) < np.infty)] for solve_tol in solve_tols]
+                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
+                    statistics_list = [progress_curve.y_vals[-1],
+                                       progress_curve.compute_area_under_curve()] + solve_time_values
+                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
+                    csv_writer.writerow(print_list)
+
 
 def read_group_experiment_results(file_name_path):
     """Read in ``experiment_base.ProblemsSolvers`` object from .pickle file.
@@ -2636,7 +2890,6 @@ def read_group_experiment_results(file_name_path):
     with open(file_name_path, "rb") as file:
         groupexperiment = pickle.load(file)
     return groupexperiment
-
 
 def find_unique_solvers_problems(experiments):
     """Identify the unique problems and solvers in a collection
@@ -2664,7 +2917,6 @@ def find_unique_solvers_problems(experiments):
         if experiment.problem not in unique_problems:
             unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
-
 
 def find_missing_experiments(experiments):
     """Identify problem-solver pairs that are not part of a list
@@ -2727,3 +2979,123 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
         full_experiments[solver_idx][problem_idx] = ProblemSolver(solver=pair[0], problem=pair[1])
     metaexperiment = ProblemsSolvers(experiments=full_experiments)
     return metaexperiment
+
+
+def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None):
+    """
+    Parameters
+    ----------
+    name : str
+        Name of solver, problem, or model.
+    factor_headers : lst
+        List of factor names that are changing in the design.
+    factor_settings_filename : str
+        name of factor settings file within data_farming_experiments folder.
+    fixed_factors : dict
+        dict of fixed factor values that are different that defaults.
+    n_stacks : int, optional
+        number of stacks for ruby calculation. The default is '1'.
+    design_type : str, optional
+        design type for ruby calculation. The default is 'nolhs'.
+    cross_design_factors : dict, optional
+        dict of lists of values of factors to include in cross design. The default is None.
+
+    Returns
+    -------
+    design_list : list
+        list that contains a dict of factor values for every design point.
+    """
+    # Search directories to create object based on name provided.
+    try:
+        design_object = solver_directory[name]()
+
+    except:
+        try:
+            design_object = problem_directory[name]()
+        except:
+            design_object = model_directory[name]()
+
+    if cross_design_factors is None:
+        cross_design_factors = {}
+
+    print('design object', design_object)
+    # Create solver factor design from .txt file of factor settings.
+    # Hard-coded for a single-stack NOLHS.
+    command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+    os.system(command)
+    # Append design to base filename.
+    design_filename = f"{factor_settings_filename}_design"
+    # design_filename =  "astrodf_testing_design" # hard coded for now because can't find file location
+
+    # Read in design matrix from .txt file. Result is a pandas DataFrame.
+    design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
+
+    # Create design csv file from design table.
+    csv_filename = f"./data_farming_experiments/{design_filename}.csv"
+
+    design_table.columns = factor_headers  # Add factor headers names to dt.
+
+    for factor in design_object.specifications:  # Add default values to str dict for unspecified factors.
+        default = design_object.specifications[factor].get("default")
+        if factor not in fixed_factors and factor not in factor_headers:
+            fixed_factors[factor] = default
+            print('fixed factors', fixed_factors)
+
+    print('design table before fixed', design_table)
+    # Add fixed factors to dt.
+    for factor in fixed_factors:
+        design_table[factor] = str(fixed_factors[factor])  # Change to string to ensure correct addition of tuples & list data types.
+
+    # Add cross design factors to design table.
+    if len(cross_design_factors) != 0:
+        # num_cross = 0 # number of times cross design is run
+
+        # Create combination of categorical factor options.
+        cross_factor_names = list(cross_design_factors.keys())
+        combinations = itertools.product(*(cross_design_factors[opt] for opt in cross_factor_names))
+
+        new_design_table = pd.DataFrame()  # Temp empty value.
+        for combination in combinations:
+            combination_dict = dict(zip(cross_factor_names, combination))  # Dictionary containing current combination of cross design factor values.
+            working_design_table = design_table.copy()
+
+            for factor in combination_dict:
+                str_factor_val = str(combination_dict[factor])
+                working_design_table[factor] = str_factor_val
+
+            new_design_table = pd.concat([new_design_table, working_design_table], ignore_index=True)
+
+        design_table = new_design_table
+    # Create list of solver or problem objects for each dp using design_table.
+    design_list = []
+    dp_dict = design_table.to_dict(orient='list')  # Creates dictonary of table to convert values to proper datatypes.
+    for dp in range(len(design_table)):
+        dp_factors = {}
+        for factor in dp_dict:
+            factor_datatype = design_object.specifications[factor].get("datatype")
+            factor_str = dp_dict[factor][dp]  # Get factor value for each factor within current design point.
+            # Set factor values to corret type.
+            if factor_datatype == int or float:
+                factor_val = factor_datatype(factor_str)
+            if factor_datatype == list:
+                factor_val = ast.literal_eval(factor_str)
+            if factor_datatype == tuple:
+                # tuple_str = tuple(factor_str[1:-1].split(","))
+                factor_val = ast.literal_eval(factor_str)
+            if factor_datatype == bool:
+                if factor_str == 'True':
+                    factor_val = True
+                else:
+                    factor_val = False
+            dp_factors[factor] = factor_val
+        design_list.append(dp_factors)
+
+    # Add design information to table.
+    design_table.insert(0, 'Design #', range(len(design_table)))
+    design_table['Name'] = design_object.name
+    design_table['Design Type'] = design_type
+    design_table['Number Stacks'] = str(n_stacks)
+
+    design_table.to_csv(csv_filename, mode='w', header=True, index=False)
+
+    return design_list

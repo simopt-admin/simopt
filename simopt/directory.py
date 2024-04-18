@@ -18,12 +18,12 @@ from .solvers.AS_I import ACTIVESET1
 from .solvers.AS_Z import ACTIVESET2
 from .solvers.AS_SS import ACTIVESET3
 # import models and problems
-from .models.san import SAN, SANLongestPathConstr
+from .models.san_2 import SAN, SANLongestPathConstr
 from .models.network import Network, NetworkMinTotalCost
-from .models.smf import SMF, SMF_Max
+from .models.smf_2 import SMF, SMF_Max
 from .models.openjackson import OpenJackson, OpenJacksonMinQueue   #6
-from .models.cascade import Cascade, CascadeMax
-from .models.smfcvx import SMFCVX0, SMFCVX_Max0
+from .models.cascade_2 import Cascade, CascadeMax
+from .models.smfcvx_2 import SMFCVX, SMFCVX_Max
 
 
 # directory dictionaries
@@ -62,7 +62,7 @@ problem_directory = {
     "SMF-1": SMF_Max,
     "OPENJ-1": OpenJacksonMinQueue,
     "CC-1": CascadeMax,
-    "SMFCVX-1": SMFCVX_Max0
+    "SMFCVX-1": SMFCVX_Max
 }
 
 problem_unabbreviated_directory = {
@@ -71,7 +71,7 @@ problem_unabbreviated_directory = {
     "Min Total Max Flow for SMF()": SMF_Max,
     "Min Total Queue": OpenJacksonMinQueue,
     "Min": CascadeMax,
-    "Max Flow Problem Convex": SMFCVX_Max0
+    "Max Flow Problem Convex": SMFCVX
 }
 model_directory = {
     "SAN": SAN,
@@ -79,7 +79,7 @@ model_directory = {
     "SMF": SMF,
     "OPENJACKSON": OpenJackson,
     "CASCADE": Cascade,
-    "SMFCVX": SMFCVX0,
+    "SMFCVX": SMFCVX,
 }
 model_unabbreviated_directory = {
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",

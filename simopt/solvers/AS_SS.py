@@ -417,7 +417,7 @@ class ACTIVESET3(Solver):
 
         return dir, lmbd
 
-    def finite_diff(self, new_solution, problem, r, C, d, stepsize = 1e-5, tol = 1e-7):
+    def finite_diff(self, new_solution, problem, r, C, d, stepsize = 1e-4, tol = 1e-7):
         '''
         Finite difference for approximating objective gradient at new_solution.
 
@@ -447,9 +447,9 @@ class ACTIVESET3(Solver):
         BdsCheck = np.zeros(problem.dim)
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
-        # Store values for each dimension.
-        FnPlusMinus = np.zeros((problem.dim, 3))
         grad = np.zeros(problem.dim)
+        h = np.zeros(problem.dim)
+        budget_spent = 0
 
         for i in range(problem.dim):
             # Initialization.
@@ -473,9 +473,13 @@ class ACTIVESET3(Solver):
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
-                    if s < steph1:
+                    if s < temp_steph1:
                         temp_steph1 = s
             steph1 = min(temp_steph1, steph1)
+
+            if np.isclose(steph1, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph1 = 0
 
             ra_d = C @ dir2
             # Initialize maximum step size.
@@ -484,52 +488,63 @@ class ACTIVESET3(Solver):
             for j in range(len(ra)):
                 if ra_d[j] - tol > 0:
                     s = ra[j]/ra_d[j]
-                    if s < steph2:
+                    if s < temp_steph2:
                         temp_steph2 = s
             steph2 = min(temp_steph2, steph2)
+
+            if np.isclose(steph2, 0 , atol= tol):
+                # Address numerical stability of step size.
+                steph2 = 0
             
+            # Determine whether to use central diff, backward diff, or forward diff.
             if (steph1 != 0) & (steph2 != 0):
                 BdsCheck[i] = 0
-            elif steph1 == 0:
+            elif (steph1 == 0) & (steph2 != 0):
                 BdsCheck[i] = -1
-            else:
+            elif (steph2 == 0) & (steph1 != 0):
                 BdsCheck[i] = 1
+            else:
+                # Set gradient to 0 if unable to move.
+                grad[i] = 0
+                continue
             
-            # Decide stepsize.
+            # Decide stepsize
             # Central diff.
             if BdsCheck[i] == 0:
-                FnPlusMinus[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+                h[i] = min(steph1, steph2)
+                x1[i] = x1[i] + h[i]
+                x2[i] = x2[i] - h[i]
             # Forward diff.
             elif BdsCheck[i] == 1:
-                FnPlusMinus[i, 2] = steph1
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
+                h[i] = steph1
+                x1[i] = x1[i] + h[i]
             # Backward diff.
             else:
-                FnPlusMinus[i, 2] = steph2
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+                h[i] = steph2
+                x2[i] = x2[i] - h[i]
 
+            # Evaluate solutions
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if BdsCheck[i] != -1:
+                # x+h
                 problem.simulate_up_to([x1_solution], r)
+                budget_spent += r -x1_solution.n_reps
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
-                # First column is f(x+h,y).
-                FnPlusMinus[i, 0] = fn1
             x2_solution = self.create_new_solution(tuple(x2), problem)
             if BdsCheck[i] != 1:
+                # x-h
                 problem.simulate_up_to([x2_solution], r)
+                budget_spent += r -x2_solution.n_reps
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
-                # Second column is f(x-h,y).
-                FnPlusMinus[i, 1] = fn2
+
             # Calculate gradient.
             if BdsCheck[i] == 0:
-                grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
+                grad[i] = (fn1 - fn2) / (2 * h[i])
             elif BdsCheck[i] == 1:
-                grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
+                grad[i] = (fn1 - fn) / h[i]
             elif BdsCheck[i] == -1:
-                grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-        budget_spent = (2 * problem.dim - np.sum(BdsCheck != 0)) * r        
+                grad[i] = (fn - fn2) / h[i]
+
         return grad, budget_spent
 
     #self.line_search(problem, expended_budget, r,

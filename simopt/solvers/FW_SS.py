@@ -245,10 +245,21 @@ class FrankWolfeSS(Solver):
         objective = cp.Minimize(s@g)
         constraints = []
         
-        if(lower is not None):
-            constraints += [s >= lower]
-        if(upper is not None):
-            constraints += [s <= upper]
+        if (upper is not None):
+            ub_inf_idx = np.where(~np.isinf(upper))[0]
+            if len(ub_inf_idx) > 0:
+                for i in ub_inf_idx:
+                    constraints.append(s[i] <= upper[i])
+        if (lower is not None):
+            lb_inf_idx = np.where(~np.isinf(lower))
+            if len(lb_inf_idx) > 0:
+                for i in lb_inf_idx:
+                    constraints.append(s[i] >= lower[i])
+
+        # if(lower is not None):
+        #     constraints += [s >= lower]
+        # if(upper is not None):
+        #     constraints += [s <= upper]
         if((Ci is not None) and (di is not None)):
             constraints += [Ci@s <= di]
         if((Ce is not None) and (de is not None)):
@@ -273,10 +284,21 @@ class FrankWolfeSS(Solver):
         objective = cp.Minimize(s@g)
         constraints = []
         
-        if(lower is not None):
-            constraints += [s >= lower]
-        if(upper is not None):
-            constraints += [s <= upper]
+        if (upper is not None):
+            ub_inf_idx = np.where(~np.isinf(upper))[0]
+            if len(ub_inf_idx) > 0:
+                for i in ub_inf_idx:
+                    constraints.append(s[i] <= upper[i])
+        if (lower is not None):
+            lb_inf_idx = np.where(~np.isinf(lower))
+            if len(lb_inf_idx) > 0:
+                for i in lb_inf_idx:
+                    constraints.append(s[i] >= lower[i])
+
+        # if(lower is not None):
+        #     constraints += [s >= lower]
+        # if(upper is not None):
+        #     constraints += [s <= upper]
         if((Ci is not None) and (di is not None)):
             constraints += [Ci@s <= di]
         if((Ce is not None) and (de is not None)):
@@ -284,7 +306,9 @@ class FrankWolfeSS(Solver):
 
         prob = cp.Problem(objective, constraints)
         #prob.solve(solver=cp.GUROBI,env=env)#solver=cp.ECOS
-        prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        # prob.solve(solver=cp.GUROBI,InfUnbdInfo= 1)
+        prob.solve(solver=cp.SCIPY)
+
         
         if('unbounded' in prob.status):
             result = np.array([prob.solver_stats.extra_stats.getVars()[j].unbdray for j in range(n)])

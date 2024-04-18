@@ -128,15 +128,15 @@ class SMFCVX(Model):
             capacities.append(1000*self.factors["assigned_capacities"][i]*sum([rng.expovariate(lamb) for j in range(k)]))
         return capacities
         
-    def pos_part_capacity(self):
-        #generate capacity of the form [x - noise]^{+}
-        for i in range(self.num_arcs):
-            noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
-        capacities = []
-        for i in range(self.num_arcs):
-            capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
+    # def pos_part_capacity(self):
+    #     #generate capacity of the form [x - noise]^{+}
+    #     for i in range(self.num_arcs):
+    #         noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
+    #     capacities = []
+    #     for i in range(self.num_arcs):
+    #         capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
         
-        return capacities
+    #     return capacities
         
 
     def dfs(self, graph, start, visited=None):
