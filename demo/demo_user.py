@@ -37,6 +37,12 @@ warnings.filterwarnings("ignore")
 # solver_names = ["RNDSRCH", "ASTRODF", "NELDMD"]
 # problem1 = [SANLongestPath, 2, {'num_nodes':8, 'num_arcs':12}]
 # problem2 = [SMF_Max, 3, {'num_nodes':7, 'num_arcs':16}]
+from simopt.models.smf_2 import SMF_Max
+from simopt.models.san_2 import SANLongestPath, SANLongestPathConstr
+from simopt.models.smfcvx_2 import SMFCVX_Max
+from simopt.models.openjackson import OpenJacksonMinQueue
+from simopt.models.cascade_2 import CascadeMax
+from simopt.models.network import NetworkMinTotalCost
 
 # Grab information from the input file
 def get_info(path):
@@ -146,7 +152,8 @@ for i in range(len(L_num)):
 
 # Initialize an instance of the experiment class.
 experiment_name = 'RANDOM_EXPERIMENTS1'
-mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
+mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, 
+                                   problem_names = problem_names, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
 # # Write to log file.
 # mymetaexperiment.log_group_experiment_results()

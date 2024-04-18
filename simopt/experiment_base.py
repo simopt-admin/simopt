@@ -2625,14 +2625,25 @@ class ProblemsSolvers(object):
                     except Exception:
                         # If no file exists, create new ProblemSolver object.
                         print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
-                        next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
+                        if problems is not None:
+                            next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
                                                         problem_name=problem_names[problem_idx],
                                                         solver_rename=self.solver_names[solver_idx],
                                                         problem_rename=self.problem_names[problem_idx],
                                                         solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
                                                         problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                        model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]]
+                                                        model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]],
+                                                        problem = problems[problem_idx]
                                                         )
+                        else:
+                            next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
+                                                            problem_name=problem_names[problem_idx],
+                                                            solver_rename=self.solver_names[solver_idx],
+                                                            problem_rename=self.problem_names[problem_idx],
+                                                            solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                            problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                            model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]]
+                                                            )
                     solver_experiments.append(next_experiment)
                 self.experiments.append(solver_experiments)
                 self.solvers = [self.experiments[idx][0].solver for idx in range(len(self.experiments))]
