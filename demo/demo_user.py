@@ -44,138 +44,143 @@ from simopt.models.openjackson import OpenJacksonMinQueue
 from simopt.models.cascade_2 import CascadeMax
 from simopt.models.network import NetworkMinTotalCost
 
-# Grab information from the input file
-def get_info(path):
-    L = []
-    with open(path) as file:
-        lines = [line.rstrip() for line in file]
+def main():
+
+    # Grab information from the input file
+    def get_info(path):
+        L = []
+        with open(path) as file:
+            lines = [line.rstrip() for line in file]
+            for line in lines:
+                if not line.startswith("#") and line:
+                    L.append(line)
+        lines = L
+        command_lines = []
+        problem_sets = []
         for line in lines:
-            if not line.startswith("#") and line:
-                L.append(line)
-    lines = L
-    command_lines = []
-    problem_sets = []
-    for line in lines:
-        if 'import' in line:
-            command_lines.append(line)
-        elif 'solver_names' in line:
-            solver_names = line
+            if 'import' in line:
+                command_lines.append(line)
+            elif 'solver_names' in line:
+                solver_names = line
+            else:
+                problem_sets.append(line)
+
+        for i in command_lines:
+            exec(i)
+        
+        problems = []
+        solver_names = eval(re.findall(r'\[.*?\]', solver_names)[0])
+        for l in problem_sets:
+            o = re.findall(r'\[.*?\]', l)[0]
+            problems.append(eval(o))
+        
+        problem_sets = [p[0] for p in problems]
+        L_num = [p[1] for p in problems]
+        L_para = [p[2] for p in problems]
+        
+        return solver_names, problem_sets, L_num, L_para
+
+    # Read input file and process information
+    # path = input('Please input the path of the input file: ')
+    # if "'" in path:  # If the input path already has quotation marks
+    #     path = path.replace("'", "")
+    path = "demo/test_input.txt"
+        
+    solver_names, problem_set, L_num, L_para = get_info(path)
+    rands = [True for i in range(len(problem_set))]
+
+    # Check whether the input file is valid
+    if len(L_num) != len(problem_set) or len(L_para) != len(problem_set):
+        print('Invalid input. The input number of random instances does not match with the number of problems you want.')
+        print('Please check your input file')
+
+    def rebase(random_rng, n):
+        new_rngs = []
+        for rng in random_rng:
+            stream_index = rng.s_ss_sss_index[0]
+            substream_index = rng.s_ss_sss_index[1]
+            subsubstream_index = rng.s_ss_sss_index[2]
+            new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index + n, subsubstream_index]))
+        random_rng = new_rngs
+        return random_rng
+
+    myproblems = problem_set
+
+    # Check whether the problem is random
+    for i in range(len(problem_set)):
+        if L_num[i] == 0:
+            L_num[i] = 1
+            rands[i] = False
         else:
-            problem_sets.append(line)
+            rands[i] = True
 
-    for i in command_lines:
-        exec(i)
-    
     problems = []
-    solver_names = eval(re.findall(r'\[.*?\]', solver_names)[0])
-    for l in problem_sets:
-        o = re.findall(r'\[.*?\]', l)[0]
-        problems.append(eval(o))
-    
-    problem_sets = [p[0] for p in problems]
-    L_num = [p[1] for p in problems]
-    L_para = [p[2] for p in problems]
-    
-    return solver_names, problem_sets, L_num, L_para
+    problem_names = []
 
-# Read input file and process information
-# path = input('Please input the path of the input file: ')
-# if "'" in path:  # If the input path already has quotation marks
-#     path = path.replace("'", "")
-path = "demo/test_input.txt"
-    
-solver_names, problem_set, L_num, L_para = get_info(path)
-rands = [True for i in range(len(problem_set))]
-
-# Check whether the input file is valid
-if len(L_num) != len(problem_set) or len(L_para) != len(problem_set):
-    print('Invalid input. The input number of random instances does not match with the number of problems you want.')
-    print('Please check your input file')
-
-def rebase(random_rng, n):
-    new_rngs = []
-    for rng in random_rng:
-        stream_index = rng.s_ss_sss_index[0]
-        substream_index = rng.s_ss_sss_index[1]
-        subsubstream_index = rng.s_ss_sss_index[2]
-        new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index + n, subsubstream_index]))
-    random_rng = new_rngs
-    return random_rng
-
-myproblems = problem_set
-
-# Check whether the problem is random
-for i in range(len(problem_set)):
-    if L_num[i] == 0:
-        L_num[i] = 1
-        rands[i] = False
-    else:
-        rands[i] = True
-
-problems = []
-problem_names = []
-
-def generate_problem(i, myproblems, rands, problems, L_num, L_para):
-    print('For problem ', myproblems[i]().name, ':')  
-    model_fixed_factors = L_para[i]
-    
-    name = myproblems[i]
-    myproblem = name(model_fixed_factors=model_fixed_factors, random=rands[i])
-    random_rng = [MRG32k3a(s_ss_sss_index=[2, 4 + L_num[i], ss]) for ss in range(myproblem.n_rngs)]
-    rng_list2 = [MRG32k3a(s_ss_sss_index=[2, 4, ss]) for ss in range(myproblem.model.n_random)]
-    
-    if rands[i] == False:  # Determinant case
-        problems.append(myproblem)
-        myproblem.name = str(myproblem.model.name) + str(0)
-        problem_names.append(myproblem.name)
-        print('')
-    
-    else:
-        for j in range(L_num[i]):
-            random_rng = rebase(random_rng, 1)  # Advance the substream for different instances
-            rng_list2 = rebase(rng_list2, 1)
-            name = myproblems[i]
-            myproblem = name(model_fixed_factors=model_fixed_factors, random=rands[i], random_rng=rng_list2)
-            myproblem.attach_rngs(random_rng)
-            # myproblem.name = str(myproblem.model.name) + str(j)
-            pre_name = str(myproblem.name).split('-')[0]
-            myproblem.name = pre_name + str(j)            
+    def generate_problem(i, myproblems, rands, problems, L_num, L_para):
+        print('For problem ', myproblems[i]().name, ':')  
+        model_fixed_factors = L_para[i]
+        
+        name = myproblems[i]
+        myproblem = name(model_fixed_factors=model_fixed_factors, random=rands[i])
+        random_rng = [MRG32k3a(s_ss_sss_index=[2, 4 + L_num[i], ss]) for ss in range(myproblem.n_rngs)]
+        rng_list2 = [MRG32k3a(s_ss_sss_index=[2, 4, ss]) for ss in range(myproblem.model.n_random)]
+        
+        if rands[i] == False:  # Determinant case
             problems.append(myproblem)
+            myproblem.name = str(myproblem.model.name) + str(0)
             problem_names.append(myproblem.name)
             print('')
+        
+        else:
+            for j in range(L_num[i]):
+                random_rng = rebase(random_rng, 1)  # Advance the substream for different instances
+                rng_list2 = rebase(rng_list2, 1)
+                name = myproblems[i]
+                myproblem = name(model_fixed_factors=model_fixed_factors, random=rands[i], random_rng=rng_list2)
+                myproblem.attach_rngs(random_rng)
+                # myproblem.name = str(myproblem.model.name) + str(j)
+                pre_name = str(myproblem.name).split('-')[0]
+                myproblem.name = pre_name + str(j)            
+                problems.append(myproblem)
+                problem_names.append(myproblem.name)
+                print('')
+        
+        return problems, problem_names
     
-    return problems, problem_names
-   
-# Generate problems
-for i in range(len(L_num)):
-    problems, problem_names = generate_problem(i, myproblems, rands, problems, L_num, L_para)
+    # Generate problems
+    for i in range(len(L_num)):
+        problems, problem_names = generate_problem(i, myproblems, rands, problems, L_num, L_para)
 
-# Initialize an instance of the experiment class.
-experiment_name = 'RANDOM_EXPERIMENTS1'
-mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, 
-                                   problem_names = problem_names, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
+    # Initialize an instance of the experiment class.
+    experiment_name = 'RANDOM_EXPERIMENTS1'
+    mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, 
+                                    problem_names = problem_names, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
-# # Write to log file.
-# mymetaexperiment.log_group_experiment_results()
-# Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=30)
+    # # Write to log file.
+    # mymetaexperiment.log_group_experiment_results()
+    # Run a fixed number of macroreplications of each solver on each problem.
+    mymetaexperiment.run(n_macroreps=30)
 
-print("Post-processing results.")
-# Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=50)
-# Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=50)
+    print("Post-processing results.")
+    # Run a fixed number of postreplications at all recommended solutions.
+    mymetaexperiment.post_replicate(n_postreps=50)
+    # Find an optimal solution x* for normalization.
+    mymetaexperiment.post_normalize(n_postreps_init_opt=50)
 
-print("Plotting results.")
-# Produce basic plots of the solvers on the problems.
-plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
+    print("Plotting results.")
+    # Produce basic plots of the solvers on the problems.
+    plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
 
-n_solvers = len(mymetaexperiment.experiments)
-n_problems = len(mymetaexperiment.experiments[0])
-CI_param = True
-for i in range(n_problems):
-    plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
+    n_solvers = len(mymetaexperiment.experiments)
+    n_problems = len(mymetaexperiment.experiments[0])
+    CI_param = True
+    for i in range(n_problems):
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
 
 
-# Plots will be saved in the folder experiments/plots.
-print("Finished. Plots can be found in experiments/plots folder.")
+    # Plots will be saved in the folder experiments/plots.
+    print("Finished. Plots can be found in experiments/plots folder.")
+
+if __name__ == "__main__":
+    main()
