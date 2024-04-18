@@ -16,8 +16,9 @@ import re
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemsSolvers class and other useful functions
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves
-from rng.mrg32k3a import MRG32k3a
+from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
+# from rng.mrg32k3a import MRG32k3a
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Solution
 from simopt.models.smf_2 import SMF_Max
 # from simopt.models.rmitd import RMITDMaxRevenue
@@ -27,8 +28,6 @@ from simopt.models.smfcvx_2 import SMFCVX_Max
 from simopt.models.openjackson import OpenJacksonMinQueue
 from simopt.models.cascade_2 import CascadeMax
 from simopt.models.network_2 import NetworkMinTotalCost
-
-# path = '/Users/liulitong/Desktop/test_input.txt'
 
 # !! When testing a new solver/problem, first import problems from the random code file,
 # Then create a test_input.txt file in your computer.
@@ -86,8 +85,7 @@ def get_info(path):
 # path = input('Please input the path of the input file: ')
 # if "'" in path:  # If the input path already has quotation marks
 #     path = path.replace("'", "")
-#for convinence:
-path = '/Users/liulitong/Desktop/test_input.txt'
+path = "demo/test_input.txt"
     
 solver_names, problem_set, L_num, L_para = get_info(path)
 rands = [True for i in range(len(problem_set))]
@@ -142,10 +140,8 @@ def generate_problem(i, myproblems, rands, problems, L_num, L_para):
             name = myproblems[i]
             myproblem = name(model_fixed_factors=model_fixed_factors, random=rands[i], random_rng=rng_list2)
             myproblem.attach_rngs(random_rng)
-            # myproblem.name = str(myproblem.model.name) + str(j) # original one
-            pre_name = str(myproblem.name).split('-')[0]
-            myproblem.name = pre_name + str(j)
-            # myproblem.name = str(myproblem.name) + '-' + str(j)
+            # myproblem.name = str(myproblem.model.name) + str(j)
+            myproblem.name = str(myproblem.name) + '-' + str(j)
             problems.append(myproblem)
             problem_names.append(myproblem.name)
             print('')
@@ -154,30 +150,24 @@ def generate_problem(i, myproblems, rands, problems, L_num, L_para):
    
 # Generate problems
 for i in range(len(L_num)):
-        problems, problem_names = generate_problem(i, myproblems, rands, problems, L_num, L_para)
+    problems, problem_names = generate_problem(i, myproblems, rands, problems, L_num, L_para)
 
 # Initialize an instance of the experiment class.
-experiment_name = 'EXPERIMENTS1'
-mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
+mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems)
 
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=30)
+mymetaexperiment.run(n_macroreps=10)
 
+#BUG: this only plots one random instance.
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=50)
+mymetaexperiment.post_replicate(n_postreps=30)
 # Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=50)
+mymetaexperiment.post_normalize(n_postreps_init_opt=30)
 
 print("Plotting results.")
 # Produce basic plots of the solvers on the problems.
 plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
-
-n_solvers = len(mymetaexperiment.experiments)
-n_problems = len(mymetaexperiment.experiments[0])
-CI_param = True
-for i in range(n_problems):
-    plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
 
 # Plots will be saved in the folder experiments/plots.
 print("Finished. Plots can be found in experiments/plots folder.")
