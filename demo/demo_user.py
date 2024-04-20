@@ -157,8 +157,8 @@ def main():
     mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = problems, 
                                     problem_names = problem_names, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle") # file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
-    # # Write to log file.
-    # mymetaexperiment.log_group_experiment_results()
+    # Write to log file.
+    mymetaexperiment.log_group_experiment_results()
     # Run a fixed number of macroreplications of each solver on each problem.
     mymetaexperiment.run(n_macroreps=30)
 
@@ -172,11 +172,14 @@ def main():
     # Produce basic plots of the solvers on the problems.
     plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
 
+    print('Plotting progress curves')
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])
     CI_param = True
     for i in range(n_problems):
-        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = False, all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'quantile', normalize = False, all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
+
 
 
     # Plots will be saved in the folder experiments/plots.

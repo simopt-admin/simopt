@@ -6,6 +6,6 @@
 #SBATCH -t2-00:00:00                               # Duration of the job (Ex: 15 mins)
 #SBATCH -qinferno                          # Partition name (where job is submitted)
 #SBATCH --output=/storage/home/hcoda1/0/tye63/p-phentenryck3-1/simopt/experiments/logs/demo_user-%a.out  # Combined output and error messages file
-#SBATCH --array=1        # Array range
+#SBATCH --array=2        # Array range
 
 /storage/coda1/p-phentenryck3/1/tye63/miniconda3/envs/simopt/bin/python /storage/home/hcoda1/0/tye63/p-phentenryck3-1/simopt/demo/demo_user.py
