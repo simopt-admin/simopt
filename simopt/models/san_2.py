@@ -222,7 +222,7 @@ class SAN(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        print('arcs: ', arcs_set)
+        # print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         self.factors["arc_means"] = (1,) * len(self.factors["arcs"])
 
@@ -523,8 +523,8 @@ class SANLongestPath(Problem):
             self.factors["budget"] = self.random_budget(random_rng[0])
             self.factors["c"] = self.get_coefficient(random_rng[1])
             
-        print('budget: ', self.factors['budget'])
-        print('c: ', self.factors["c"])
+        # print('budget: ', self.factors['budget'])
+        # print('c: ', self.factors["c"])
         
         return random_rng
 
@@ -884,7 +884,7 @@ class SANLongestPathConstr(Problem):
             self.factors["budget"] = self.random_budget(random_rng[0])
             
             self.factors["arc_costs"] = self.get_coefficient(random_rng[1])
-            print('c: ', self.factors["arc_costs"])
+            # print('c: ', self.factors["arc_costs"])
         
             # Random constraint
             if self.random_const:
@@ -902,8 +902,8 @@ class SANLongestPathConstr(Problem):
         
         self.factors["lbs"] += [0 for i in range(self.dim)]  # Require each arc means larger or equal to 0
         self.factors["r_const"] += [[i] for i in range(self.dim)]
-        print('r_const: ', self.factors["r_const"])
-        print('lbs: ', self.factors['lbs'])
+        # print('r_const: ', self.factors["r_const"])
+        # print('lbs: ', self.factors['lbs'])
         
         return random_rng
 

@@ -2587,6 +2587,43 @@ class ProblemsSolvers(object):
             self.solver_set = self.solver_names
             self.problem_set = self.problem_names
 
+        elif problems is not None: # Given solver_names and problems
+            self.problems = problems
+            self.problem_names = [problem.name for problem in self.problems]
+            self.n_problems = len(self.problems)
+            self.problem_set = self.problem_names
+
+            if solver_renames is None:
+                self.solver_names = solver_names
+            else:
+                self.solver_names = solver_renames
+            self.n_solvers = len(solver_names)
+            # Use this for naming file.
+            self.solver_set = solver_names
+
+            # Create all problem-solver pairs (i.e., instances of ProblemSolver class).
+            self.experiments = []
+            for solver_idx in range(self.n_solvers):
+                solver_experiments = []
+                for problem_idx in range(self.n_problems):
+                    try:
+                        # If a file exists, read in ProblemSolver object.
+                        with open(f"./experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
+                            next_experiment = pickle.load(file)
+                        # TODO: Check if the solver/problem/model factors in the file match
+                        # those for the ProblemsSolvers.
+                    except Exception:
+                        # If no file exists, create new ProblemSolver object.
+                        print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
+                        next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
+                                                        solver_rename=self.solver_names[solver_idx],
+                                                        problem = problems[problem_idx]
+                                                        )
+                        
+                    solver_experiments.append(next_experiment)
+                self.experiments.append(solver_experiments)
+                self.solvers = [self.experiments[idx][0].solver for idx in range(len(self.experiments))]
+    
         else:  # Method #1
             if solver_renames is None:
                 self.solver_names = solver_names
@@ -2631,18 +2668,7 @@ class ProblemsSolvers(object):
                     except Exception:
                         # If no file exists, create new ProblemSolver object.
                         print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
-                        if problems is not None:
-                            next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
-                                                        problem_name=problem_names[problem_idx],
-                                                        solver_rename=self.solver_names[solver_idx],
-                                                        problem_rename=self.problem_names[problem_idx],
-                                                        solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
-                                                        problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                        model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]],
-                                                        problem = problems[problem_idx]
-                                                        )
-                        else:
-                            next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
+                        next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
                                                             problem_name=problem_names[problem_idx],
                                                             solver_rename=self.solver_names[solver_idx],
                                                             problem_rename=self.problem_names[problem_idx],

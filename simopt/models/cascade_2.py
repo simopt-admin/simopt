@@ -118,6 +118,7 @@ class Cascade(Model):
     def attach_rng(self, random_rng):
         self.random_rng = random_rng
         self.G = self.generate_random_graph(random_rng[0])
+        self.factors['num_edges'] = self.G.number_of_edges()
 
     def replicate(self, rng_list):
         """
@@ -371,8 +372,8 @@ class CascadeMax(Problem):
             self.factors["B"] = self.get_cost(random_rng[1])
             self.di = np.array([self.factors["B"]])
             
-        print("Budget: ", self.factors['budget'])
-        print("B: ", self.factors["B"])
+        # print("Budget: ", self.factors['budget'])
+        # print("B: ", self.factors["B"])
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """
