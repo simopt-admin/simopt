@@ -19,3 +19,4 @@ docs/_build/**
 *.pickle
 
 demo_user.sbatch
+demo_user2.sbatch

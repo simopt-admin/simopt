@@ -2,96 +2,6 @@
 ----------------------------------------------------------------------------------------------
 Problems:
 
-OPENJ0
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 200
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 16.410656836133427
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ1
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 200
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 6.276185602629773
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ2
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 200
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 15.573040404147019
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ3
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 200
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 30.841207952092766
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ4
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 200
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 15.20186774224037
-		gamma_mean: 0.5
-		gamma_scale: 5
-
 SAN0
 	Model Factors:
 		num_nodes: 9
@@ -381,7 +291,7 @@ PGD-B
 		LSmethod: backtracking
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD.default_step_f of <simopt.solvers.PGD_B.BoomProxGD object at 0x2aabeefdbc20>>
+		step_f: <bound method BoomProxGD.default_step_f of <simopt.solvers.PGD_B.BoomProxGD object at 0x2aabef0bb950>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -400,7 +310,7 @@ PGD-I
 		LSmethod: interpolation
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD1.default_step_f of <simopt.solvers.PGD_I.BoomProxGD1 object at 0x2aabf708c7a0>>
+		step_f: <bound method BoomProxGD1.default_step_f of <simopt.solvers.PGD_I.BoomProxGD1 object at 0x2aabef0bb740>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -419,7 +329,7 @@ PGD-Z
 		LSmethod: zoom
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD2.default_step_f of <simopt.solvers.PGD_Z.BoomProxGD2 object at 0x2aabeefd9940>>
+		step_f: <bound method BoomProxGD2.default_step_f of <simopt.solvers.PGD_Z.BoomProxGD2 object at 0x2aabefebf080>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -438,7 +348,7 @@ PGD-SS
 		LSmethod: zoom
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD3.default_step_f of <simopt.solvers.PGD_SS.BoomProxGD3 object at 0x2aabfbee5e50>>
+		step_f: <bound method BoomProxGD3.default_step_f of <simopt.solvers.PGD_SS.BoomProxGD3 object at 0x2aabefedcaa0>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -527,7 +437,7 @@ FW-B
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe.default_step_f of <simopt.solvers.FW_B.BoomFrankWolfe object at 0x2aabe94b4800>>
+		step_f: <bound method BoomFrankWolfe.default_step_f of <simopt.solvers.FW_B.BoomFrankWolfe object at 0x2aabf0400fe0>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: backtracking
@@ -546,7 +456,7 @@ FW-I
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe1.default_step_f of <simopt.solvers.FW_I.BoomFrankWolfe1 object at 0x2aabef072a80>>
+		step_f: <bound method BoomFrankWolfe1.default_step_f of <simopt.solvers.FW_I.BoomFrankWolfe1 object at 0x2aabf0412270>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: interpolation
@@ -565,7 +475,7 @@ FW-Z
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe2.default_step_f of <simopt.solvers.FW_Z.BoomFrankWolfe2 object at 0x2aac065559d0>>
+		step_f: <bound method BoomFrankWolfe2.default_step_f of <simopt.solvers.FW_Z.BoomFrankWolfe2 object at 0x2aabf05e8a40>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: zoom
@@ -584,7 +494,7 @@ FW-SS
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method FrankWolfeSS.default_step_f of <simopt.solvers.FW_SS.FrankWolfeSS object at 0x2aac07cd41d0>>
+		step_f: <bound method FrankWolfeSS.default_step_f of <simopt.solvers.FW_SS.FrankWolfeSS object at 0x2aabf05f15b0>>
 		theta: 0.1
 		max_iters: 1000
 		gamma: 0.8
@@ -605,11 +515,6 @@ FW-SS
 
 ----------------------------------------------------------------------------------------------
 The .pickle files for the associated Problem-Solver pairs are:
-PGD-B_on_OPENJ0.pickle
-PGD-B_on_OPENJ1.pickle
-PGD-B_on_OPENJ2.pickle
-PGD-B_on_OPENJ3.pickle
-PGD-B_on_OPENJ4.pickle
 PGD-B_on_SAN0.pickle
 PGD-B_on_SAN1.pickle
 PGD-B_on_SAN2.pickle
@@ -630,11 +535,6 @@ PGD-B_on_CASCADE1.pickle
 PGD-B_on_CASCADE2.pickle
 PGD-B_on_CASCADE3.pickle
 PGD-B_on_CASCADE4.pickle
-PGD-I_on_OPENJ0.pickle
-PGD-I_on_OPENJ1.pickle
-PGD-I_on_OPENJ2.pickle
-PGD-I_on_OPENJ3.pickle
-PGD-I_on_OPENJ4.pickle
 PGD-I_on_SAN0.pickle
 PGD-I_on_SAN1.pickle
 PGD-I_on_SAN2.pickle
@@ -655,11 +555,6 @@ PGD-I_on_CASCADE1.pickle
 PGD-I_on_CASCADE2.pickle
 PGD-I_on_CASCADE3.pickle
 PGD-I_on_CASCADE4.pickle
-PGD-Z_on_OPENJ0.pickle
-PGD-Z_on_OPENJ1.pickle
-PGD-Z_on_OPENJ2.pickle
-PGD-Z_on_OPENJ3.pickle
-PGD-Z_on_OPENJ4.pickle
 PGD-Z_on_SAN0.pickle
 PGD-Z_on_SAN1.pickle
 PGD-Z_on_SAN2.pickle
@@ -680,11 +575,6 @@ PGD-Z_on_CASCADE1.pickle
 PGD-Z_on_CASCADE2.pickle
 PGD-Z_on_CASCADE3.pickle
 PGD-Z_on_CASCADE4.pickle
-PGD-SS_on_OPENJ0.pickle
-PGD-SS_on_OPENJ1.pickle
-PGD-SS_on_OPENJ2.pickle
-PGD-SS_on_OPENJ3.pickle
-PGD-SS_on_OPENJ4.pickle
 PGD-SS_on_SAN0.pickle
 PGD-SS_on_SAN1.pickle
 PGD-SS_on_SAN2.pickle
@@ -705,11 +595,6 @@ PGD-SS_on_CASCADE1.pickle
 PGD-SS_on_CASCADE2.pickle
 PGD-SS_on_CASCADE3.pickle
 PGD-SS_on_CASCADE4.pickle
-AS-B_on_OPENJ0.pickle
-AS-B_on_OPENJ1.pickle
-AS-B_on_OPENJ2.pickle
-AS-B_on_OPENJ3.pickle
-AS-B_on_OPENJ4.pickle
 AS-B_on_SAN0.pickle
 AS-B_on_SAN1.pickle
 AS-B_on_SAN2.pickle
@@ -730,11 +615,6 @@ AS-B_on_CASCADE1.pickle
 AS-B_on_CASCADE2.pickle
 AS-B_on_CASCADE3.pickle
 AS-B_on_CASCADE4.pickle
-AS-I_on_OPENJ0.pickle
-AS-I_on_OPENJ1.pickle
-AS-I_on_OPENJ2.pickle
-AS-I_on_OPENJ3.pickle
-AS-I_on_OPENJ4.pickle
 AS-I_on_SAN0.pickle
 AS-I_on_SAN1.pickle
 AS-I_on_SAN2.pickle
@@ -755,11 +635,6 @@ AS-I_on_CASCADE1.pickle
 AS-I_on_CASCADE2.pickle
 AS-I_on_CASCADE3.pickle
 AS-I_on_CASCADE4.pickle
-AS-Z_on_OPENJ0.pickle
-AS-Z_on_OPENJ1.pickle
-AS-Z_on_OPENJ2.pickle
-AS-Z_on_OPENJ3.pickle
-AS-Z_on_OPENJ4.pickle
 AS-Z_on_SAN0.pickle
 AS-Z_on_SAN1.pickle
 AS-Z_on_SAN2.pickle
@@ -780,11 +655,6 @@ AS-Z_on_CASCADE1.pickle
 AS-Z_on_CASCADE2.pickle
 AS-Z_on_CASCADE3.pickle
 AS-Z_on_CASCADE4.pickle
-AS-SS_on_OPENJ0.pickle
-AS-SS_on_OPENJ1.pickle
-AS-SS_on_OPENJ2.pickle
-AS-SS_on_OPENJ3.pickle
-AS-SS_on_OPENJ4.pickle
 AS-SS_on_SAN0.pickle
 AS-SS_on_SAN1.pickle
 AS-SS_on_SAN2.pickle
@@ -805,11 +675,6 @@ AS-SS_on_CASCADE1.pickle
 AS-SS_on_CASCADE2.pickle
 AS-SS_on_CASCADE3.pickle
 AS-SS_on_CASCADE4.pickle
-FW-B_on_OPENJ0.pickle
-FW-B_on_OPENJ1.pickle
-FW-B_on_OPENJ2.pickle
-FW-B_on_OPENJ3.pickle
-FW-B_on_OPENJ4.pickle
 FW-B_on_SAN0.pickle
 FW-B_on_SAN1.pickle
 FW-B_on_SAN2.pickle
@@ -830,11 +695,6 @@ FW-B_on_CASCADE1.pickle
 FW-B_on_CASCADE2.pickle
 FW-B_on_CASCADE3.pickle
 FW-B_on_CASCADE4.pickle
-FW-I_on_OPENJ0.pickle
-FW-I_on_OPENJ1.pickle
-FW-I_on_OPENJ2.pickle
-FW-I_on_OPENJ3.pickle
-FW-I_on_OPENJ4.pickle
 FW-I_on_SAN0.pickle
 FW-I_on_SAN1.pickle
 FW-I_on_SAN2.pickle
@@ -855,11 +715,6 @@ FW-I_on_CASCADE1.pickle
 FW-I_on_CASCADE2.pickle
 FW-I_on_CASCADE3.pickle
 FW-I_on_CASCADE4.pickle
-FW-Z_on_OPENJ0.pickle
-FW-Z_on_OPENJ1.pickle
-FW-Z_on_OPENJ2.pickle
-FW-Z_on_OPENJ3.pickle
-FW-Z_on_OPENJ4.pickle
 FW-Z_on_SAN0.pickle
 FW-Z_on_SAN1.pickle
 FW-Z_on_SAN2.pickle
@@ -880,11 +735,6 @@ FW-Z_on_CASCADE1.pickle
 FW-Z_on_CASCADE2.pickle
 FW-Z_on_CASCADE3.pickle
 FW-Z_on_CASCADE4.pickle
-FW-SS_on_OPENJ0.pickle
-FW-SS_on_OPENJ1.pickle
-FW-SS_on_OPENJ2.pickle
-FW-SS_on_OPENJ3.pickle
-FW-SS_on_OPENJ4.pickle
 FW-SS_on_SAN0.pickle
 FW-SS_on_SAN1.pickle
 FW-SS_on_SAN2.pickle

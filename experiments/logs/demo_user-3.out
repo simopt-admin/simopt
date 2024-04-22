@@ -1,0 +1,239 @@
+---------------------------------------
+Begin Slurm Prolog: Apr-21-2024 22:08:49
+Job ID:    5753326
+User ID:   tye63
+Account:   gts-phentenryck3-ai4opt
+Job name:  demo_user
+Partition: cpu-medium
+QOS:       inferno
+---------------------------------------
+(CVXPY) Apr 21 10:08:55 PM: Encountered unexpected exception importing solver GLOP:
+RuntimeError('Unrecognized new version of ortools (9.9.3963). Expected < 9.8.0. Please open a feature request on cvxpy to enable support for this version.')
+(CVXPY) Apr 21 10:08:55 PM: Encountered unexpected exception importing solver PDLP:
+RuntimeError('Unrecognized new version of ortools (9.9.3963). Expected < 9.8.0. Please open a feature request on cvxpy to enable support for this version.')
+n_macroreps: 30, n_postreps: 50
+For problem  SAN-2 :
+arcs:  [(1, 2), (1, 5), (1, 7), (1, 8), (2, 3), (2, 4), (2, 8), (3, 6), (4, 6), (5, 9), (6, 8), (7, 8), (8, 9)]
+c:  [3.9520811959550453, 2.330965629732502, 0.2953394121366175, 0.1896909531440843, 0.00225749295303274, 5.269842220828829, 0.08429831731709593, 1.0711240727856701, 1.3835278159429734, 0.18978590594462283, 0.8763537801380243, 0.8139330756283609, 2.1808856817637134]
+r_const:  [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12]]
+lbs:  [100.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+arcs:  [(1, 2), (1, 3), (1, 6), (1, 8), (2, 9), (3, 4), (4, 5), (4, 7), (4, 8), (5, 8), (6, 8), (7, 9), (8, 9)]
+c:  [0.7474992943387887, 1.2269497797206455, 2.730558054379457, 0.6681309918941376, 0.016871869481299255, 1.8534964609164377, 0.8355764406214701, 0.1217404278131213, 1.0103973932093249, 0.7375819867047694, 0.9802230048516912, 1.1685962124259153, 2.19632292208952]
+r_const:  [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12]]
+lbs:  [100.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+arcs:  [(1, 2), (1, 6), (2, 3), (2, 4), (2, 5), (2, 7), (3, 5), (3, 6), (4, 8), (5, 8), (6, 9), (7, 9), (8, 9)]
+c:  [0.06683939591669785, 0.03243865157819348, 1.241300861390642, 4.536892657189842, 0.581124730236327, 1.0701899761367348, 1.8196486276336024, 2.5818933979109735, 1.0175252882197448, 0.15403871977331884, 3.9782279440237596, 0.39226506546672196, 0.2640892983109914]
+r_const:  [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12]]
+lbs:  [100.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+arcs:  [(1, 2), (2, 3), (2, 5), (2, 6), (3, 4), (3, 5), (3, 7), (4, 6), (5, 7), (6, 7), (7, 8), (7, 9), (8, 9)]
+c:  [1.3319439198519751, 0.2970725512587269, 0.829455146293829, 0.24627466033165327, 1.0006208024729686, 0.06789643149515454, 0.4328611032615903, 0.2131231213262189, 0.4242557789548885, 0.5481238556094313, 0.5064179249377055, 1.3476256849734405, 0.576309055393665]
+r_const:  [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12]]
+lbs:  [100.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+arcs:  [(1, 2), (1, 3), (1, 4), (1, 6), (1, 7), (2, 3), (3, 5), (3, 8), (4, 9), (5, 8), (6, 8), (7, 9), (8, 9)]
+c:  [0.3483245102211806, 2.872020998372329, 0.22613352177388965, 2.0113897295731546, 0.48077668785065464, 0.956509224604973, 0.9740680197376393, 2.838509706370273, 0.9075397815066439, 0.21736732289492838, 1.6846404348904296, 2.0378254444969697, 0.3080164716553807]
+r_const:  [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12]]
+lbs:  [100.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+For problem  SMFCVX-1 :
+[2]
+1
+[3]
+1
+[4]
+0
+[5]
+0
+[6]
+0
+[7]
+0
+[8]
+0
+[35, 4, 63, 60, 24, 45]
+arcs:  [(0, 1), (0, 7), (1, 2), (1, 6), (2, 3), (2, 4), (2, 8), (2, 9), (3, 8), (4, 3), (4, 5), (4, 6), (4, 8), (5, 2), (5, 9), (6, 2), (6, 4), (7, 2), (7, 5), (8, 9)]
+budget:  10000
+
+[2]
+0
+[3]
+1
+[4]
+1
+[5]
+1
+[6]
+1
+[7]
+0
+[8]
+0
+[48, 4, 62, 20, 47, 18]
+arcs:  [(0, 1), (0, 2), (0, 4), (0, 7), (1, 3), (1, 6), (1, 8), (2, 6), (2, 8), (3, 5), (3, 6), (4, 1), (4, 6), (5, 2), (5, 6), (5, 9), (6, 1), (7, 5), (8, 5), (8, 9)]
+budget:  12000
+
+[2]
+1
+[3]
+0
+[4]
+0
+[5]
+1
+[6]
+0
+[7]
+1
+[8]
+1
+[42, 32, 15, 18, 23, 40, 54]
+arcs:  [(0, 1), (0, 2), (0, 4), (1, 3), (2, 4), (2, 6), (3, 5), (3, 7), (3, 9), (4, 2), (4, 3), (4, 5), (4, 8), (5, 7), (5, 8), (6, 5), (7, 3), (7, 9), (8, 1), (8, 9)]
+budget:  6000
+
+[2]
+0
+[3]
+1
+[4]
+0
+[5]
+1
+[6]
+1
+[7]
+0
+[8]
+1
+[40, 53, 48, 39, 18, 30, 20]
+arcs:  [(0, 1), (0, 2), (0, 3), (0, 7), (1, 2), (2, 8), (3, 4), (3, 6), (4, 5), (4, 9), (5, 1), (5, 3), (5, 7), (5, 9), (6, 4), (6, 7), (7, 0), (7, 8), (8, 1), (8, 9)]
+budget:  12000
+
+[2]
+0
+[3]
+0
+[4]
+0
+[5]
+0
+[6]
+1
+[7]
+1
+[8]
+1
+[19, 3, 64, 45, 40, 61, 5]
+arcs:  [(0, 1), (0, 8), (1, 2), (1, 3), (1, 8), (2, 0), (2, 4), (2, 5), (2, 6), (3, 1), (3, 8), (4, 6), (4, 8), (4, 9), (5, 2), (6, 7), (7, 0), (7, 2), (8, 0), (8, 9)]
+budget:  10000
+
+For problem  SMF-1 :
+arcs:  [(0, 1), (0, 4), (0, 6), (0, 7), (0, 8), (1, 2), (1, 3), (1, 6), (2, 5), (3, 5), (3, 6), (4, 7), (4, 8), (4, 9), (5, 6), (5, 8), (5, 9), (6, 8), (7, 9), (8, 9)]
+budget:  18000
+
+arcs:  [(0, 1), (0, 2), (0, 5), (0, 7), (1, 2), (1, 3), (1, 8), (2, 3), (2, 6), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (4, 8), (4, 9), (5, 8), (6, 9), (7, 9), (8, 9)]
+budget:  20000
+
+arcs:  [(0, 1), (0, 2), (0, 8), (1, 2), (1, 3), (1, 4), (1, 6), (1, 9), (2, 5), (2, 9), (3, 7), (4, 5), (4, 7), (4, 9), (5, 8), (5, 9), (6, 7), (6, 8), (7, 8), (8, 9)]
+budget:  6000
+
+arcs:  [(0, 1), (0, 6), (0, 9), (1, 2), (1, 4), (1, 6), (2, 3), (2, 4), (2, 5), (2, 7), (2, 9), (3, 5), (4, 6), (4, 7), (4, 8), (5, 6), (6, 7), (6, 8), (7, 8), (8, 9)]
+budget:  12000
+
+arcs:  [(0, 1), (0, 3), (0, 4), (0, 5), (0, 6), (0, 8), (1, 2), (1, 5), (1, 9), (2, 3), (2, 4), (2, 7), (2, 8), (3, 8), (4, 5), (4, 9), (5, 8), (6, 9), (7, 9), (8, 9)]
+budget:  10000
+
+For problem  CASCADE-1 :
+Budget:  21000
+B:  790.416239191009
+
+Budget:  24000
+B:  149.49985886775772
+
+Budget:  15000
+B:  40.0
+
+Budget:  24000
+B:  266.388783970395
+
+Budget:  21000
+B:  69.66490204423611
+
+Post-processing results.
+Postnormalizing on Problem SAN0.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SAN1.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SAN2.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SAN3.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SAN4.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMFCVX0.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMFCVX1.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMFCVX2.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMFCVX3.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMFCVX4.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMF0.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMF1.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMF2.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMF3.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem SMF4.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem CASCADE0.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem CASCADE1.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem CASCADE2.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem CASCADE3.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Postnormalizing on Problem CASCADE4.
+Finding f(x*)...
+	...using best postreplicated solution as proxy for x*.
+Plotting results.
+Finished. Plots can be found in experiments/plots folder.
+---------------------------------------
+Begin Slurm Epilog: Apr-21-2024 23:01:36
+Job ID:        5753326
+Array Job ID:  5753326_3
+User ID:       tye63
+Account:       gts-phentenryck3-ai4opt
+Job name:      demo_user
+Resources:     cpu=30,mem=480G,node=1
+Rsrc Used:     cput=1-02:23:30,vmem=3415396K,walltime=00:52:47,mem=3025264K,energy_used=0
+Partition:     cpu-medium
+QOS:           inferno
+Nodes:         atl1-1-01-006-13-1
+---------------------------------------

@@ -114,7 +114,7 @@ class OpenJackson(Model):
             "t_end": {
                 "description": "A number of replications to run",
                 "datatype": int,
-                "default": 200
+                "default": 100
             },
             "warm_up": {
                 "description": "A number of replications to use as a warm up period",

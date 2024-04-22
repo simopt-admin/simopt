@@ -13,6 +13,9 @@ import sys
 import os.path as o
 import os
 import re
+import argparse
+import matplotlib.pyplot as plt
+
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemsSolvers class and other useful functions
@@ -45,6 +48,17 @@ from simopt.models.cascade_2 import CascadeMax
 from simopt.models.network import NetworkMinTotalCost
 
 def main():
+    # Create the parser
+    parser = argparse.ArgumentParser(description='Process some integers.')
+
+    # Add arguments with default values
+    parser.add_argument('--n_macroreps', type=int, default=30, help='Number of macrorepetitions')
+    parser.add_argument('--n_postreps', type=int, default=50, help='Number of postrepetitions')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    print(f'n_macroreps: {args.n_macroreps}, n_postreps: {args.n_postreps}')
 
     # Grab information from the input file
     def get_info(path):
@@ -160,26 +174,46 @@ def main():
     # Write to log file.
     mymetaexperiment.log_group_experiment_results()
     # Run a fixed number of macroreplications of each solver on each problem.
-    mymetaexperiment.run(n_macroreps=30)
+    mymetaexperiment.run(n_macroreps=args.n_macroreps)
 
     print("Post-processing results.")
     # Run a fixed number of postreplications at all recommended solutions.
-    mymetaexperiment.post_replicate(n_postreps=50)
+    mymetaexperiment.post_replicate(n_postreps=args.n_postreps)
     # Find an optimal solution x* for normalization.
-    mymetaexperiment.post_normalize(n_postreps_init_opt=50)
+    mymetaexperiment.post_normalize(n_postreps_init_opt=args.n_postreps)
 
     print("Plotting results.")
-    # Produce basic plots of the solvers on the problems.
-    plot_solvability_profiles(experiments=mymetaexperiment.experiments, plot_type="cdf_solvability")
+    # color_palette = [
+    #     "#00429d",
+    #     "#2558ac",
+    #     "#3f71b3",
+    #     "#568aba",
+    #     "#6ba2c1",
+    #     "#80bac8",
+    #     "#97d2cf",
+    #     "#afead6",
+    #     "#c9e2dd",
+    #     "#e3fbe4",
+    #     "#fdffbc",
+    #     "#f5c25c"
+    # ]
+    cmap = plt.get_cmap('tab20')
+    # Generate 20 distinct colors from the colormap
+    color_palette = [cmap(i) for i in range(cmap.N)]
 
-    print('Plotting progress curves')
+    # Produce basic plots of the solvers on the problems.
+    plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", color_palette = color_palette)
+
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])
     CI_param = True
-    for i in range(n_problems):
-        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = False, all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
-        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'quantile', normalize = False, all_in_one = True, plot_CIs = CI_param, print_max_hw = True)
 
+
+    for i in range(n_problems):
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = False, all_in_one = True, 
+                             plot_CIs = CI_param, print_max_hw = True, color_palette=color_palette)
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'quantile', beta = 0.9, normalize = False, all_in_one = True, 
+                             plot_CIs = CI_param, print_max_hw = True, color_palette=color_palette)
 
 
     # Plots will be saved in the folder experiments/plots.

@@ -1386,7 +1386,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, color_palette = None):
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1441,7 +1441,10 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             curve_pairs = []
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
-            color_str = "C" + str(exp_idx)
+            if color_palette is None:
+                color_str = "C" + str(exp_idx)
+            else:
+                color_str = color_palette[exp_idx]
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
@@ -1793,7 +1796,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, color_palette = None):
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -1869,7 +1872,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
         solver_curve_handles = []
         for solver_idx in range(n_solvers):
             solver_sub_curves = []
-            color_str = "C" + str(solver_idx)
+            if color_palette is None:
+                color_str = "C" + str(solver_idx)
+            else:
+                color_str = color_palette[solver_idx]
             # For each problem compute the cdf or quantile of solve times.
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
