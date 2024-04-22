@@ -5,6 +5,7 @@ Simulate expected revenue for a hotel.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/hotel.html>`_.
 """
+
 import numpy as np
 
 from ..base import Model, Problem
@@ -38,6 +39,7 @@ class Hotel(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -48,62 +50,533 @@ class Hotel(Model):
             "num_products": {
                 "description": "number of products: (rate, length of stay)",
                 "datatype": int,
-                "default": 56
+                "default": 56,
             },
             "lambda": {
                 "description": "arrival rates for each product",
                 "datatype": list,
-                "default": ((1 / 168) * np.array([1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, .25, .25,
-                                                  1, 1, 2, 2, 3, 3, 2, 2, 1, 1, .5, .5, 1, 1,
-                                                  2, 2, 3, 3, 2, 2, 1, 1, 1, 1, 2, 2, 3, 3,
-                                                  2, 2, 1, 1, 2, 2, 3, 3, 1, 1, 2, 2, 1, 1])).tolist()
+                "default": (
+                    (1 / 168)
+                    * np.array(
+                        [
+                            1,
+                            1,
+                            2,
+                            2,
+                            3,
+                            3,
+                            2,
+                            2,
+                            1,
+                            1,
+                            0.5,
+                            0.5,
+                            0.25,
+                            0.25,
+                            1,
+                            1,
+                            2,
+                            2,
+                            3,
+                            3,
+                            2,
+                            2,
+                            1,
+                            1,
+                            0.5,
+                            0.5,
+                            1,
+                            1,
+                            2,
+                            2,
+                            3,
+                            3,
+                            2,
+                            2,
+                            1,
+                            1,
+                            1,
+                            1,
+                            2,
+                            2,
+                            3,
+                            3,
+                            2,
+                            2,
+                            1,
+                            1,
+                            2,
+                            2,
+                            3,
+                            3,
+                            1,
+                            1,
+                            2,
+                            2,
+                            1,
+                            1,
+                        ]
+                    )
+                ).tolist(),
             },
             "num_rooms": {
                 "description": "hotel capacity",
                 "datatype": int,
-                "default": 100
+                "default": 100,
             },
             "discount_rate": {
                 "description": "discount rate",
                 "datatype": int,
-                "default": 100
+                "default": 100,
             },
             "rack_rate": {
                 "description": "rack rate (full price)",
                 "datatype": int,
-                "default": 200
+                "default": 200,
             },
             "product_incidence": {
                 "description": "incidence matrix",
                 "datatype": list,
-                "default": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-                            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1]]
+                "default": [
+                    [
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        0,
+                        0,
+                    ],
+                    [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                    ],
+                ],
             },
             "time_limit": {
                 "description": "time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27)",
                 "datatype": list,
-                "default": np.concatenate((27 * np.ones(14), 51 * np.ones(12), 75 * np.ones(10), 99 * np.ones(8), 123 * np.ones(6), 144 * np.ones(4), 168 * np.ones(2)), axis=None).tolist()
+                "default": np.concatenate(
+                    (
+                        27 * np.ones(14),
+                        51 * np.ones(12),
+                        75 * np.ones(10),
+                        99 * np.ones(8),
+                        123 * np.ones(6),
+                        144 * np.ones(4),
+                        168 * np.ones(2),
+                    ),
+                    axis=None,
+                ).tolist(),
             },
             "time_before": {
                 "description": "hours before t=0 to start running (e.g. 168 means start at time -168)",
                 "datatype": int,
-                "default": 168
+                "default": 168,
             },
             "runlength": {
                 "description": "runlength of simulation (in hours) after t=0",
                 "datatype": int,
-                "default": 168
+                "default": 168,
             },
             "booking_limits": {
                 "description": "booking limits",
                 "datatype": tuple,
-                "default": tuple([100 for _ in range(56)])
-            }
+                "default": tuple([100 for _ in range(56)]),
+            },
         }
         self.check_factor_list = {
             "num_products": self.check_num_products,
@@ -115,7 +588,7 @@ class Hotel(Model):
             "time_limit": self.check_time_limit,
             "time_before": self.check_time_before,
             "runlength": self.check_runlength,
-            "booking_limits": self.check_booking_limits
+            "booking_limits": self.check_booking_limits,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -197,7 +670,12 @@ class Hotel(Model):
         a = np.zeros(self.factors["num_products"], dtype=int)
         # Generate all interarrival times in advance.
         for i in range(self.factors["num_products"]):
-            arr_time[i] = np.array([arr_rng.expovariate(self.factors["lambda"][i]) for _ in range(arr_bound)])
+            arr_time[i] = np.array(
+                [
+                    arr_rng.expovariate(self.factors["lambda"][i])
+                    for _ in range(arr_bound)
+                ]
+            )
         # Extract first arrivals.
         for i in range(self.factors["num_products"]):
             arrival[i] = arrival[i] + arr_time[i, a[i]]
@@ -206,7 +684,9 @@ class Hotel(Model):
         while min_time <= self.factors["runlength"]:
             min_time = self.factors["runlength"] + 1
             for i in range(self.factors["num_products"]):
-                if ((arrival[i] < min_time) and (arrival[i] <= self.factors["time_limit"][i])):
+                if (arrival[i] < min_time) and (
+                    arrival[i] <= self.factors["time_limit"][i]
+                ):
                     min_time = arrival[i]
                     min_idx = i
             if min_time > self.factors["runlength"]:
@@ -225,7 +705,10 @@ class Hotel(Model):
             a[min_idx] = a[min_idx] + 1
         # Compose responses and gradients.
         responses = {"revenue": total_revenue}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -301,6 +784,7 @@ class HotelRevenue(Problem):
     --------
     base.Problem
     """
+
     def __init__(self, name="HOTEL-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -320,17 +804,17 @@ class HotelRevenue(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple([0 for _ in range(56)])
+                "default": tuple([0 for _ in range(56)]),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 100
-            }
+                "default": 100,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -367,9 +851,7 @@ class HotelRevenue(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "booking_limits": vector[:]
-        }
+        factor_dict = {"booking_limits": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -496,5 +978,10 @@ class HotelRevenue(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.randint(0, self.model.factors["num_rooms"])
+                for _ in range(self.dim)
+            ]
+        )
         return x

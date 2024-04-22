@@ -1,0 +1,9 @@
+matplotlib==3.7.2
+mrg32k3a==1.0.0
+numpy==1.24.3
+pandas==2.0.3
+Pillow==9.4.0
+Pillow==10.3.0
+scipy==1.11.1
+seaborn==0.13.2
+Sphinx==5.0.2

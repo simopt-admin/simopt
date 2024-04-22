@@ -7,12 +7,13 @@ whether or not a step is accepted. The algorithm includes the relaxation of the 
 an additive constant.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`_.
 """
+
 from numpy.linalg import norm
 import numpy as np
 import warnings
-warnings.filterwarnings("ignore")
-
 from ..base import Solver
+
+warnings.filterwarnings("ignore")
 
 
 class ALOE(Solver):
@@ -52,6 +53,7 @@ class ALOE(Solver):
     --------
     base.Solver
     """
+
     def __init__(self, name="ALOE", fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -64,47 +66,47 @@ class ALOE(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 30,
             },
             "theta": {
                 "description": "constant in the Armijo condition",
                 "datatype": float,
-                "default": 0.2
+                "default": 0.2,
             },
             "gamma": {
                 "description": "constant for shrinking the step size",
                 "datatype": float,
-                "default": 0.8
+                "default": 0.8,
             },
             "alpha_max": {
                 "description": "maximum step size",
                 "datatype": int,
-                "default": 10
+                "default": 10,
             },
             "alpha_0": {
                 "description": "initial step size",
                 "datatype": int,
-                "default": 1
+                "default": 1,
             },
             "epsilon_f": {
                 "description": "additive constant in the Armijo condition",
                 "datatype": int,
-                "default": 1  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
+                "default": 1,  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds",
                 "datatype": float,
-                "default": 10**(-7)
+                "default": 10 ** (-7),
             },
             "lambda": {
                 "description": "magnifying factor for n_r inside the finite difference function",
                 "datatype": int,
-                "default": 2
+                "default": 2,
             },
         }
         self.check_factor_list = {
@@ -116,7 +118,7 @@ class ALOE(Solver):
             "alpha_0": self.check_alpha_0,
             "epsilon_f": self.check_epsilon_f,
             "sensitivity": self.check_sensitivity,
-            "lambda": self.check_lambda
+            "lambda": self.check_lambda,
         }
         super().__init__(fixed_factors)
 
@@ -182,7 +184,9 @@ class ALOE(Solver):
         alpha = alpha_0
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_solution = self.create_new_solution(
+            problem.factors["initial_solution"], problem
+        )
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         problem.simulate(new_solution, r)
@@ -192,14 +196,20 @@ class ALOE(Solver):
         while expended_budget < problem.factors["budget"]:
             new_x = new_solution.x
             # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = self.factors["sensitivity"]).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = self.factors["sensitivity"]).astype(int)
+            forward = np.isclose(
+                new_x, lower_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
+            backward = np.isclose(
+                new_x, upper_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
 
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = (
+                    -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                )
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
@@ -216,7 +226,12 @@ class ALOE(Solver):
             # Calculate the candidate solution and adjust the solution to respect box constraints.
             candidate_x = list()
             for i in range(problem.dim):
-                candidate_x.append(min(max((new_x[i] - alpha * grad[i]), lower_bound[i]), upper_bound[i]))
+                candidate_x.append(
+                    min(
+                        max((new_x[i] - alpha * grad[i]), lower_bound[i]),
+                        upper_bound[i],
+                    )
+                )
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             # Use r simulated observations to estimate the objective value.
@@ -224,7 +239,11 @@ class ALOE(Solver):
             expended_budget += r
 
             # Check the modified Armijo condition for sufficient decrease.
-            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (-1 * problem.minmax[0] * new_solution.objectives_mean - alpha * theta * norm(grad)**2 + 2 * epsilon_f):
+            if (-1 * problem.minmax[0] * candidate_solution.objectives_mean) <= (
+                -1 * problem.minmax[0] * new_solution.objectives_mean
+                - alpha * theta * norm(grad) ** 2
+                + 2 * epsilon_f
+            ):
                 # Successful step.
                 new_solution = candidate_solution
                 alpha = min(alpha_max, alpha / gamma)
@@ -233,7 +252,10 @@ class ALOE(Solver):
                 alpha = gamma * alpha
 
             # Append new solution.
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+            if (
+                problem.minmax[0] * new_solution.objectives_mean
+                > problem.minmax[0] * best_solution.objectives_mean
+            ):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)

@@ -39,6 +39,7 @@ class Solver(object):
     fixed_factors : dict
         Dictionary of user-specified solver factors.
     """
+
     def __init__(self, fixed_factors):
         # Set factors of the solver.
         # Fill in missing factors with default values.
@@ -157,7 +158,9 @@ class Solver(object):
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name], self.specifications[factor_name]["datatype"]
+        )
         return is_right_type
 
     def create_new_solution(self, x, problem):
@@ -199,7 +202,9 @@ class Solver(object):
         for rng in self.solution_progenitor_rngs:
             stream_index = rng.s_ss_sss_index[0]
             substream_index = rng.s_ss_sss_index[1]
-            new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps]))
+            new_rngs.append(
+                MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps])
+            )
         self.solution_progenitor_rngs = new_rngs
 
 
@@ -259,6 +264,7 @@ class Problem(object):
     model_fixed_factors : dict
         Subset of user-specified non-decision factors to pass through to the model.
     """
+
     def __init__(self, fixed_factors, model_fixed_factors):
         # Set factors of the problem.
         # Fill in missing factors with default values.
@@ -290,7 +296,9 @@ class Problem(object):
         if type(self) == type(other):
             if self.factors == other.factors:
                 # Check if non-decision-variable factors of models are the same.
-                non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
+                non_decision_factors = (
+                    set(self.model.factors.keys()) - self.model_decision_factors
+                )
                 for factor in non_decision_factors:
                     if self.model.factors[factor] != other.model.factors[factor]:
                         # print("Model factors do not match")
@@ -313,7 +321,9 @@ class Problem(object):
         """
         if len(self.factors["initial_solution"]) != self.dim:
             return False
-        elif not self.check_deterministic_constraints(x=self.factors["initial_solution"]):
+        elif not self.check_deterministic_constraints(
+            x=self.factors["initial_solution"]
+        ):
             return False
         else:
             return True
@@ -375,7 +385,9 @@ class Problem(object):
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name], self.specifications[factor_name]["datatype"]
+        )
         return is_right_type
 
     def attach_rngs(self, rng_list):
@@ -529,7 +541,9 @@ class Problem(object):
             Vector of gradients of deterministic components of objectives.
         """
         det_objectives = (0,) * self.n_objectives
-        det_objectives_gradients = tuple([(0,) * self.dim for _ in range(self.n_objectives)])
+        det_objectives_gradients = tuple(
+            [(0,) * self.dim for _ in range(self.n_objectives)]
+        )
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -551,7 +565,9 @@ class Problem(object):
             stochastic constraints.
         """
         det_stoch_constraints = (0,) * self.n_stochastic_constraints
-        det_stoch_constraints_gradients = tuple([(0,) * self.dim for _ in range(self.n_stochastic_constraints)])
+        det_stoch_constraints_gradients = tuple(
+            [(0,) * self.dim for _ in range(self.n_stochastic_constraints)]
+        )
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
@@ -570,7 +586,14 @@ class Problem(object):
             otherwise False.
         """
         # Check box constraints.
-        return bool(np.prod([self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx] for idx in range(len(x))]))
+        return bool(
+            np.prod(
+                [
+                    self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx]
+                    for idx in range(len(x))
+                ]
+            )
+        )
 
     def get_random_solution(self, rand_sol_rng):
         """Generate a random solution for starting or restarting solvers.
@@ -603,8 +626,8 @@ class Problem(object):
             Number of replications to simulate at `x`.
         """
         if m < 1:
-            print('--* Error: Number of replications must be at least 1. ')
-            print('--* Aborting. ')
+            print("--* Error: Number of replications must be at least 1. ")
+            print("--* Aborting. ")
         else:
             # Pad numpy arrays if necessary.
             if solution.n_reps + m > solution.storage_size:
@@ -616,20 +639,43 @@ class Problem(object):
                 responses, gradients = self.model.replicate(solution.rng_list)
                 # Convert gradient subdictionaries to vectors mapping to decision variables.
                 if self.gradient_available:
-                    vector_gradients = {keys: self.factor_dict_to_vector_gradients(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                    vector_gradients = {
+                        keys: self.factor_dict_to_vector_gradients(gradient_dict)
+                        for (keys, gradient_dict) in gradients.items()
+                    }
                     # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # Convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives.
-                solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
+                solution.objectives[solution.n_reps] = [
+                    sum(pairs)
+                    for pairs in zip(
+                        self.response_dict_to_objectives(responses),
+                        solution.det_objectives,
+                    )
+                ]
                 if self.gradient_available:
                     # print(self.response_dict_to_objectives_gradients(vector_gradients))
                     # print(solution.det_objectives_gradients)
-                    solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives_gradients(vector_gradients), solution.det_objectives_gradients)]
+                    solution.objectives_gradients[solution.n_reps] = [
+                        [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
+                        for stoch_obj, det_obj in zip(
+                            self.response_dict_to_objectives_gradients(
+                                vector_gradients
+                            ),
+                            solution.det_objectives_gradients,
+                        )
+                    ]
                     # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
                     # Convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints.
-                    solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
+                    solution.stoch_constraints[solution.n_reps] = [
+                        sum(pairs)
+                        for pairs in zip(
+                            self.response_dict_to_stoch_constraints(responses),
+                            solution.det_stoch_constraints,
+                        )
+                    ]
                     # solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
                 # Increment counter.
                 solution.n_reps += 1
@@ -680,6 +726,7 @@ class Model(object):
     fixed_factors : dict
         Dictionary of user-specified model factors.
     """
+
     def __init__(self, fixed_factors):
         # Set factors of the simulation model.
         # Fill in missing factors with default values.
@@ -753,7 +800,9 @@ class Model(object):
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name], self.specifications[factor_name]["datatype"]
+        )
         return is_right_type
 
     def replicate(self, rng_list):
@@ -823,22 +872,33 @@ class Solution(object):
     problem : ``base.Problem``
         Problem to which `x` is a solution.
     """
+
     def __init__(self, x, problem):
         super().__init__()
         self.x = x
         self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
-        self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
-        self.det_stoch_constraints, self.det_stoch_constraints_gradients = problem.deterministic_stochastic_constraints_and_gradients(self.x)
+        self.det_objectives, self.det_objectives_gradients = (
+            problem.deterministic_objectives_and_gradients(self.x)
+        )
+        self.det_stoch_constraints, self.det_stoch_constraints_gradients = (
+            problem.deterministic_stochastic_constraints_and_gradients(self.x)
+        )
         init_size = 100  # Initialize numpy arrays to store up to 100 replications.
         self.storage_size = init_size
         # Raw data.
         self.objectives = np.zeros((init_size, problem.n_objectives))
-        self.objectives_gradients = np.zeros((init_size, problem.n_objectives, problem.dim))
+        self.objectives_gradients = np.zeros(
+            (init_size, problem.n_objectives, problem.dim)
+        )
         if problem.n_stochastic_constraints > 0:
-            self.stoch_constraints = np.zeros((init_size, problem.n_stochastic_constraints))
-            self.stoch_constraints_gradients = np.zeros((init_size, problem.n_stochastic_constraints, problem.dim))
+            self.stoch_constraints = np.zeros(
+                (init_size, problem.n_stochastic_constraints)
+            )
+            self.stoch_constraints_gradients = np.zeros(
+                (init_size, problem.n_stochastic_constraints, problem.dim)
+            )
         else:
             self.stoch_constraints = None
             self.stoch_constraints_gradients = None
@@ -890,12 +950,23 @@ class Solution(object):
         # If more space needed, append in multiples of 100.
         pad_size = int(np.ceil(m / base_pad_size)) * base_pad_size
         self.storage_size += pad_size
-        self.objectives = np.concatenate((self.objectives, np.zeros((pad_size, n_objectives))))
-        self.objectives_gradients = np.concatenate((self.objectives_gradients, np.zeros((pad_size, n_objectives, self.dim))))
+        self.objectives = np.concatenate(
+            (self.objectives, np.zeros((pad_size, n_objectives)))
+        )
+        self.objectives_gradients = np.concatenate(
+            (self.objectives_gradients, np.zeros((pad_size, n_objectives, self.dim)))
+        )
         if self.stoch_constraints is not None:
             n_stochastic_constraints = len(self.det_stoch_constraints)
-            self.stoch_constraints = np.concatenate((self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints))))
-            self.stoch_constraints_gradients = np.concatenate((self.stoch_constraints_gradients, np.zeros((pad_size, n_stochastic_constraints, self.dim))))
+            self.stoch_constraints = np.concatenate(
+                (self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints)))
+            )
+            self.stoch_constraints_gradients = np.concatenate(
+                (
+                    self.stoch_constraints_gradients,
+                    np.zeros((pad_size, n_stochastic_constraints, self.dim)),
+                )
+            )
 
     def recompute_summary_statistics(self):
         """Recompute summary statistics of the solution.
@@ -905,21 +976,48 @@ class Solution(object):
         Statistics for gradients of objectives and stochastic constraint LHSs
         are temporarily commented out. Under development.
         """
-        self.objectives_mean = np.mean(self.objectives[:self.n_reps], axis=0)
+        self.objectives_mean = np.mean(self.objectives[: self.n_reps], axis=0)
         if self.n_reps > 1:
-            self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
-            self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
-        self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
+            self.objectives_var = np.var(self.objectives[: self.n_reps], axis=0, ddof=1)
+            self.objectives_stderr = np.std(
+                self.objectives[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.objectives_cov = np.cov(
+                self.objectives[: self.n_reps], rowvar=False, ddof=1
+            )
+        self.objectives_gradients_mean = np.mean(
+            self.objectives_gradients[: self.n_reps], axis=0
+        )
         if self.n_reps > 1:
-            self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
-            self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+            self.objectives_gradients_var = np.var(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            )
+            self.objectives_gradients_stderr = np.std(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.objectives_gradients_cov = np.array(
+                [
+                    np.cov(
+                        self.objectives_gradients[: self.n_reps, obj],
+                        rowvar=False,
+                        ddof=1,
+                    )
+                    for obj in range(len(self.det_objectives))
+                ]
+            )
         if self.stoch_constraints is not None:
-            self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
-            self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
-            self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
+            self.stoch_constraints_mean = np.mean(
+                self.stoch_constraints[: self.n_reps], axis=0
+            )
+            self.stoch_constraints_var = np.var(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            )
+            self.stoch_constraints_stderr = np.std(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.stoch_constraints_cov = np.cov(
+                self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
+            )
             # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
             # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
             # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)

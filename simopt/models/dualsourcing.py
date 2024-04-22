@@ -5,6 +5,7 @@ Simulate multiple periods of ordering and sales for a dual sourcing inventory pr
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`_.
 """
+
 import numpy as np
 
 from ..base import Model, Problem
@@ -66,6 +67,7 @@ class DualSourcing(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -77,63 +79,63 @@ class DualSourcing(Model):
             "n_days": {
                 "description": "number of days to simulate",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "initial_inv": {
                 "description": "initial inventory",
                 "datatype": int,
-                "default": 40
+                "default": 40,
             },
             "cost_reg": {
                 "description": "regular ordering cost per unit",
                 "datatype": float,
-                "default": 100.00
+                "default": 100.00,
             },
             "cost_exp": {
                 "description": "expedited ordering cost per unit",
                 "datatype": float,
-                "default": 110.00
+                "default": 110.00,
             },
             "lead_reg": {
                 "description": "lead time for regular orders in days",
                 "datatype": int,
-                "default": 2
+                "default": 2,
             },
             "lead_exp": {
                 "description": "lead time for expedited orders in days",
                 "datatype": int,
-                "default": 0
+                "default": 0,
             },
             "holding_cost": {
                 "description": "holding cost per unit per period",
                 "datatype": float,
-                "default": 5.00
+                "default": 5.00,
             },
             "penalty_cost": {
                 "description": "penalty cost per unit per period for backlogging",
                 "datatype": float,
-                "default": 495.00
+                "default": 495.00,
             },
             "st_dev": {
                 "description": "standard deviation of demand distribution",
                 "datatype": float,
-                "default": 10.0
+                "default": 10.0,
             },
             "mu": {
                 "description": "mean of demand distribution",
                 "datatype": float,
-                "default": 30.0
+                "default": 30.0,
             },
             "order_level_reg": {
                 "description": "order-up-to level for regular orders",
                 "datatype": int,
-                "default": 80
+                "default": 80,
             },
             "order_level_exp": {
                 "description": "order-up-to level for expedited orders",
                 "datatype": int,
-                "default": 50
-            }
+                "default": 50,
+            },
         }
         self.check_factor_list = {
             "n_days": self.check_n_days,
@@ -147,7 +149,7 @@ class DualSourcing(Model):
             "st_dev": self.check_st_dev,
             "mu": self.check_mu,
             "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp
+            "order_level_exp": self.check_order_level_exp,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -190,7 +192,9 @@ class DualSourcing(Model):
         return self.factors["order_level_exp"] >= 0
 
     def check_simulatable_factors(self):
-        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_reg"])
+        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (
+            self.factors["cost_exp"] > self.factors["cost_reg"]
+        )
 
     def replicate(self, rng_list):
         """
@@ -221,7 +225,17 @@ class DualSourcing(Model):
         orders_exp = np.zeros(self.factors["lead_exp"])
 
         # Generate demand.
-        demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
+        demand = [
+            round(
+                max(
+                    0,
+                    demand_rng.normalvariate(
+                        mu=self.factors["mu"], sigma=self.factors["st_dev"]
+                    ),
+                )
+            )
+            for _ in range(self.factors["n_days"])
+        ]
 
         # Track total expenses.
         total_holding_cost = np.zeros(self.factors["n_days"])
@@ -232,13 +246,37 @@ class DualSourcing(Model):
         # Run simulation over time horizon.
         for day in range(self.factors["n_days"]):
             # Calculate inventory positions.
-            inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
+            inv_position_exp = round(
+                inv
+                + np.sum(orders_exp)
+                + np.sum(orders_reg[: self.factors["lead_exp"]])
+            )
             inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
             # Place orders if needed.
-            orders_exp = np.append(orders_exp, max(0, round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]]))
+            orders_exp = np.append(
+                orders_exp,
+                max(
+                    0,
+                    round(
+                        self.factors["order_level_exp"]
+                        - inv_position_exp
+                        - orders_reg[self.factors["lead_exp"]]
+                    ),
+                ),
+            )
+            orders_reg = np.append(
+                orders_reg,
+                (
+                    self.factors["order_level_reg"]
+                    - inv_position_reg
+                    - orders_exp[self.factors["lead_exp"]]
+                ),
+            )
             # Charge ordering cost.
-            total_ordering_cost[day] = self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]] + self.factors["cost_reg"] * orders_reg[self.factors["lead_reg"]]
+            total_ordering_cost[day] = (
+                self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]]
+                + self.factors["cost_reg"] * orders_reg[self.factors["lead_reg"]]
+            )
             # Orders arrive, update on-hand inventory.
             inv = inv + orders_exp[0] + orders_reg[0]
             orders_exp = np.delete(orders_exp, 0)
@@ -252,11 +290,15 @@ class DualSourcing(Model):
             total_holding_cost[day] = self.factors["holding_cost"] * max(0, inv)
 
         # Calculate responses from simulation data.
-        responses = {"average_ordering_cost": np.mean(total_ordering_cost),
-                     "average_penalty_cost": np.mean(total_penalty_cost),
-                     "average_holding_cost": np.mean(total_holding_cost)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "average_ordering_cost": np.mean(total_ordering_cost),
+            "average_penalty_cost": np.mean(total_penalty_cost),
+            "average_holding_cost": np.mean(total_holding_cost),
+        }
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -328,7 +370,10 @@ class DualSourcingMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DUALSOURCING-1", fixed_factors=None, model_fixed_factors=None):
+
+    def __init__(
+        self, name="DUALSOURCING-1", fixed_factors=None, model_fixed_factors=None
+    ):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -352,17 +397,17 @@ class DualSourcingMinCost(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (50, 80)
+                "default": (50, 80),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
@@ -382,10 +427,7 @@ class DualSourcingMinCost(Problem):
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "order_level_exp": vector[0],
-            "order_level_reg": vector[1]
-        }
+        factor_dict = {"order_level_exp": vector[0], "order_level_reg": vector[1]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -421,7 +463,11 @@ class DualSourcingMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["average_ordering_cost"] + response_dict["average_penalty_cost"] + response_dict["average_holding_cost"],)
+        objectives = (
+            response_dict["average_ordering_cost"]
+            + response_dict["average_penalty_cost"]
+            + response_dict["average_holding_cost"],
+        )
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
@@ -499,7 +545,7 @@ class DualSourcingMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return x[0] >= 0 and x[1] >= 0
 
     def get_random_solution(self, rand_sol_rng):
         """

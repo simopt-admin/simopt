@@ -38,6 +38,7 @@ class Network(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -49,47 +50,69 @@ class Network(Model):
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
             },
             "cost_process": {
                 "description": "message processing cost of network i",
                 "datatype": list,
-                "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]
+                "default": [
+                    1,
+                    1 / 2,
+                    1 / 3,
+                    1 / 4,
+                    1 / 5,
+                    1 / 6,
+                    1 / 7,
+                    1 / 8,
+                    1 / 9,
+                    1 / 10,
+                ],
             },
             "cost_time": {
                 "description": "cost for the length of time a message spends in a network i per each unit of time",
                 "datatype": list,
-                "default": [0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+                "default": [
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                    0.005,
+                ],
             },
             "mode_transit_time": {
                 "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
-                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             },
             "lower_limits_transit_time": {
                 "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5],
             },
             "upper_limits_transit_time": {
                 "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
+                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5],
             },
             "arrival_rate": {
                 "description": "arrival rate of messages following a Poisson process",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "n_messages": {
                 "description": "number of messages that arrives and needs to be routed",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "n_networks": {
                 "description": "number of networks",
                 "datatype": int,
-                "default": 10
+                "default": 10,
             },
         }
 
@@ -111,7 +134,10 @@ class Network(Model):
     def check_process_prob(self):
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
-        return all([1.0 >= prob_i >= 0 for prob_i in self.factors["process_prob"]]) and round(sum(self.factors["process_prob"]), 10) == 1.0
+        return (
+            all([1.0 >= prob_i >= 0 for prob_i in self.factors["process_prob"]])
+            and round(sum(self.factors["process_prob"]), 10) == 1.0
+        )
 
     def check_cost_process(self):
         return all(cost_i > 0 for cost_i in self.factors["cost_process"])
@@ -120,7 +146,9 @@ class Network(Model):
         return all(cost_time_i > 0 for cost_time_i in self.factors["cost_time"])
 
     def check_mode_transit_time(self):
-        return all(transit_time_i > 0 for transit_time_i in self.factors["mode_transit_time"])
+        return all(
+            transit_time_i > 0 for transit_time_i in self.factors["mode_transit_time"]
+        )
 
     def check_lower_limits_transit_time(self):
         return all(lower_i > 0 for lower_i in self.factors["lower_limits_transit_time"])
@@ -146,13 +174,29 @@ class Network(Model):
             return False
         elif len(self.factors["mode_transit_time"]) != self.factors["n_networks"]:
             return False
-        elif len(self.factors["lower_limits_transit_time"]) != self.factors["n_networks"]:
+        elif (
+            len(self.factors["lower_limits_transit_time"]) != self.factors["n_networks"]
+        ):
             return False
-        elif len(self.factors["upper_limits_transit_time"]) != self.factors["n_networks"]:
+        elif (
+            len(self.factors["upper_limits_transit_time"]) != self.factors["n_networks"]
+        ):
             return False
-        elif any([self.factors["mode_transit_time"][i] < self.factors["lower_limits_transit_time"][i] for i in range(self.factors["n_networks"])]):
+        elif any(
+            [
+                self.factors["mode_transit_time"][i]
+                < self.factors["lower_limits_transit_time"][i]
+                for i in range(self.factors["n_networks"])
+            ]
+        ):
             return False
-        elif any([self.factors["upper_limits_transit_time"][i] < self.factors["mode_transit_time"][i] for i in range(self.factors["n_networks"])]):
+        elif any(
+            [
+                self.factors["upper_limits_transit_time"][i]
+                < self.factors["mode_transit_time"][i]
+                for i in range(self.factors["n_networks"])
+            ]
+        ):
             return False
         else:
             return True
@@ -181,13 +225,23 @@ class Network(Model):
         network_rng = rng_list[1]
         transit_rng = rng_list[2]
         # Generate all interarrival, network routes, and service times before the simulation run.
-        arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
-                         for _ in range(total_arrivals)]
-        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
-        service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
-                                                high=self.factors["upper_limits_transit_time"][network_routes[i]],
-                                                mode=self.factors["mode_transit_time"][network_routes[i]])
-                         for i in range(total_arrivals)]
+        arrival_times = [
+            arrival_rng.expovariate(self.factors["arrival_rate"])
+            for _ in range(total_arrivals)
+        ]
+        network_routes = network_rng.choices(
+            range(self.factors["n_networks"]),
+            weights=self.factors["process_prob"],
+            k=total_arrivals,
+        )
+        service_times = [
+            transit_rng.triangular(
+                low=self.factors["lower_limits_transit_time"][network_routes[i]],
+                high=self.factors["upper_limits_transit_time"][network_routes[i]],
+                mode=self.factors["mode_transit_time"][network_routes[i]],
+            )
+            for i in range(total_arrivals)
+        ]
         # Create matrix storing times and metrics for each message:
         #     column 0 : arrival time to queue;
         #     column 1 : network route;
@@ -218,7 +272,10 @@ class Network(Model):
                 # With a message in line, message i's service completion time will be calculated using Lindley's recursion method.
                 # We first choose the maximum between the arrival time of message i and the last in line message's service completion time.
                 # We then add message's i service time to this value.
-                message_mat[i, 3] = max(message_mat[i, 0], message_mat[last_in_line[network], 3]) + message_mat[i, 2]
+                message_mat[i, 3] = (
+                    max(message_mat[i, 0], message_mat[last_in_line[network], 3])
+                    + message_mat[i, 2]
+                )
             # Calculate other statistics.
             message_mat[i, 4] = message_mat[i, 3] - message_mat[i, 0]
             message_mat[i, 5] = message_mat[i, 4] - message_mat[i, 2]
@@ -229,7 +286,10 @@ class Network(Model):
         # Compute total costs for the simulation run.
         total_cost = sum(message_mat[:, 8])
         responses = {"total_cost": total_cost}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -301,6 +361,7 @@ class NetworkMinTotalCost(Problem):
     --------
     base.Problem
     """
+
     def __init__(self, name="NETWORK-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -322,17 +383,17 @@ class NetworkMinTotalCost(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1)
+                "default": (0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
@@ -429,7 +490,7 @@ class NetworkMinTotalCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = (0, ) * self.model.factors["n_networks"]
+        det_objectives_gradients = (0,) * self.model.factors["n_networks"]
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
@@ -491,8 +552,7 @@ class NetworkMinTotalCost(Problem):
             vector of decision variables
         """
         # Generating a random pmf with length equal to number of networks.
-        x = rand_sol_rng.continuous_random_vector_from_simplex(n_elements=self.model.factors["n_networks"],
-                                                               summation=1.0,
-                                                               exact_sum=True
-                                                               )
+        x = rand_sol_rng.continuous_random_vector_from_simplex(
+            n_elements=self.model.factors["n_networks"], summation=1.0, exact_sum=True
+        )
         return x

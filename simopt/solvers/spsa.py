@@ -3,6 +3,7 @@ Summary
 -------
 Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for optimizing systems with multiple unknown parameters.
 """
+
 import numpy as np
 
 from ..base import Solver
@@ -33,18 +34,19 @@ class SPSA(Solver):
         details of each factor (for GUI, data validation, and defaults)
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
-    
+
     Parameters
     ----------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
-    
+
     See also
     --------
     base.Solver
     """
+
     def __init__(self, name="SPSA", fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -57,48 +59,48 @@ class SPSA(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "alpha": {
                 "description": "non-negative coefficient in the SPSA gain sequecence ak",
                 "datatype": float,
-                "default": 0.602
+                "default": 0.602,
             },
             "gamma": {
                 "description": "non-negative coefficient in the SPSA gain sequence ck",
                 "datatype": float,
-                "default": 0.101
+                "default": 0.101,
             },
             "step": {
                 "description": "initial desired magnitude of change in the theta elements",
                 "datatype": float,
-                "default": 0.1
+                "default": 0.1,
             },
             "gavg": {
                 "description": "averaged SP gradients used per iteration",
                 "datatype": int,
-                "default": 1
+                "default": 1,
             },
             "n_reps": {
                 "description": "number of replications takes at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 30,
             },
             "n_loss": {
                 "description": "number of loss function evaluations used in this gain calculation",
                 "datatype": int,
-                "default": 2
+                "default": 2,
             },
             "eval_pct": {
                 "description": "percentage of the expected number of loss evaluations per run",
                 "datatype": float,
-                "default": 2 / 3
+                "default": 2 / 3,
             },
             "iter_pct": {
                 "description": "percentage of the maximum expected number of iterations",
                 "datatype": float,
-                "default": 0.1
-            }
+                "default": 0.1,
+            },
         }
         self.check_factor_list = {
             "alpha": self.check_alpha,
@@ -108,7 +110,7 @@ class SPSA(Solver):
             "n_reps": self.check_n_reps,
             "n_loss": self.check_n_loss,
             "eval_pct": self.check_eval_pct,
-            "iter_pct": self.check_iter_pct
+            "iter_pct": self.check_iter_pct,
         }
         super().__init__(fixed_factors)
 
@@ -156,7 +158,7 @@ class SPSA(Solver):
         list
             Vector of -1's and 1's.
         """
-        SP_vect = self.rng_list[2].choices([-1, 1], [.5, .5], k=dim)
+        SP_vect = self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim)
         return SP_vect
 
     def solve(self, problem):
@@ -190,9 +192,12 @@ class SPSA(Solver):
         problem.simulate(theta_sol, self.factors["n_reps"])
         expended_budget = self.factors["n_reps"]
         # Determine initial value for the parameters c, a, and A (Aalg) (according to Section III.B of Spall (1998)).
-        c = float(max((theta_sol.objectives_var / self.factors["gavg"]) ** 0.5, .0001))
+        c = float(max((theta_sol.objectives_var / self.factors["gavg"]) ** 0.5, 0.0001))
         # Calculating the maximum expected number of loss evaluations per run.
-        nEvals = round((problem.factors["budget"] / self.factors["n_reps"]) * self.factors["eval_pct"])
+        nEvals = round(
+            (problem.factors["budget"] / self.factors["n_reps"])
+            * self.factors["eval_pct"]
+        )
         Aalg = self.factors["iter_pct"] * nEvals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
         for _ in range(int(self.factors["n_loss"] / (2 * self.factors["gavg"]))):
@@ -203,8 +208,12 @@ class SPSA(Solver):
                 # Determine points forward/backward relative to random direction.
                 thetaplus = np.add(theta, np.dot(c, delta))
                 thetaminus = np.subtract(theta, np.dot(c, delta))
-                thetaplus, step_weight_plus = check_cons(thetaplus, theta, problem.lower_bounds, problem.upper_bounds)
-                thetaminus, step_weight_minus = check_cons(thetaminus, theta, problem.lower_bounds, problem.upper_bounds)
+                thetaplus, step_weight_plus = check_cons(
+                    thetaplus, theta, problem.lower_bounds, problem.upper_bounds
+                )
+                thetaminus, step_weight_minus = check_cons(
+                    thetaminus, theta, problem.lower_bounds, problem.upper_bounds
+                )
                 thetaplus_sol = self.create_new_solution(tuple(thetaplus), problem)
                 thetaminus_sol = self.create_new_solution(tuple(thetaminus), problem)
                 # Evaluate two points and update budget spent.
@@ -214,7 +223,11 @@ class SPSA(Solver):
                 # Estimate gradient.
                 # (-minmax is needed to cast this as a minimization problem,
                 # but is not essential here because of the absolute value taken.)
-                ghat += np.dot(-1, problem.minmax) * np.divide((thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean) / ((step_weight_plus + step_weight_minus) * c), delta)
+                ghat += np.dot(-1, problem.minmax) * np.divide(
+                    (thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean)
+                    / ((step_weight_plus + step_weight_minus) * c),
+                    delta,
+                )
             gbar += np.abs(np.divide(ghat, self.factors["gavg"]))
         meangbar = np.mean(gbar) / (self.factors["n_loss"] / (2 * self.factors["gavg"]))
         a = self.factors["step"] * ((Aalg + 1) ** self.factors["alpha"]) / meangbar
@@ -231,8 +244,12 @@ class SPSA(Solver):
             # Determine points forward/backward relative to random direction.
             thetaplus = np.add(theta, np.dot(ck, delta))
             thetaminus = np.subtract(theta, np.dot(ck, delta))
-            thetaplus, step_weight_plus = check_cons(thetaplus, theta, problem.lower_bounds, problem.upper_bounds)
-            thetaminus, step_weight_minus = check_cons(thetaminus, theta, problem.lower_bounds, problem.upper_bounds)
+            thetaplus, step_weight_plus = check_cons(
+                thetaplus, theta, problem.lower_bounds, problem.upper_bounds
+            )
+            thetaminus, step_weight_minus = check_cons(
+                thetaminus, theta, problem.lower_bounds, problem.upper_bounds
+            )
             thetaplus_sol = self.create_new_solution(tuple(thetaplus), problem)
             thetaminus_sol = self.create_new_solution(tuple(thetaminus), problem)
             # Evaluate two points and update budget spent.
@@ -240,29 +257,41 @@ class SPSA(Solver):
             problem.simulate(thetaminus_sol, self.factors["n_reps"])
             expended_budget += 2 * self.factors["n_reps"]
             # Estimate current solution's objective funtion value by weighted average.
-            ftheta = ((thetaplus_sol.objectives_mean * step_weight_minus) + (thetaminus_sol.objectives_mean * step_weight_plus)) / (step_weight_plus + step_weight_minus)
+            ftheta = (
+                (thetaplus_sol.objectives_mean * step_weight_minus)
+                + (thetaminus_sol.objectives_mean * step_weight_plus)
+            ) / (step_weight_plus + step_weight_minus)
             # If on the first iteration, record the initial solution as best estimated objective.
             if k == 1:
                 ftheta_best = ftheta
             # Check if new solution is better than the best recorded and update accordingly.
-            if np.dot(-1, problem.minmax) * ftheta < np.dot(-1, problem.minmax) * ftheta_best:
+            if (
+                np.dot(-1, problem.minmax) * ftheta
+                < np.dot(-1, problem.minmax) * ftheta_best
+            ):
                 ftheta_best = ftheta
                 # Record data from the new best solution.
                 recommended_solns.append(theta_sol)
                 intermediate_budgets.append(expended_budget)
             # Estimate gradient. (-minmax is needed to cast this as a minimization problem.)
-            ghat = np.dot(-1, problem.minmax) * np.divide((thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean) / ((step_weight_plus + step_weight_minus) * c), delta)
+            ghat = np.dot(-1, problem.minmax) * np.divide(
+                (thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean)
+                / ((step_weight_plus + step_weight_minus) * c),
+                delta,
+            )
             # Take step and check feasibility.
             theta_next = np.subtract(theta, np.dot(ak, ghat))
-            theta, _ = check_cons(theta_next, theta, problem.lower_bounds, problem.upper_bounds)
+            theta, _ = check_cons(
+                theta_next, theta, problem.lower_bounds, problem.upper_bounds
+            )
             theta_sol = self.create_new_solution(tuple(theta), problem)
         return recommended_solns, intermediate_budgets
 
 
 def check_cons(candidate_x, new_x, lower_bound, upper_bound):
     """Evaluates the distance from the new vector (candiate_x) compared to the current vector (new_x) respecting the vector's boundaries of feasibility.
-        Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.
-        The weight (t2) is used to calculate the weigthed average in the ftheta calculation."""
+    Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.
+    The weight (t2) is used to calculate the weigthed average in the ftheta calculation."""
     # The current step.
     stepV = np.subtract(candidate_x, new_x)
     # Form a matrix to determine the possible stepsize.

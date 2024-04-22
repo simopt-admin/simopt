@@ -5,6 +5,7 @@ Simulate a M/M/1 queue.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/mm1queue.html>`_.
 """
+
 import numpy as np
 
 from ..base import Model, Problem
@@ -44,6 +45,7 @@ class MM1Queue(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -54,29 +56,29 @@ class MM1Queue(Model):
             "lambda": {
                 "description": "rate parameter of interarrival time distribution",
                 "datatype": float,
-                "default": 1.5
+                "default": 1.5,
             },
             "mu": {
                 "description": "rate parameter of service time distribution",
                 "datatype": float,
-                "default": 3.0
+                "default": 3.0,
             },
             "warmup": {
                 "description": "number of people as warmup before collecting statistics",
                 "datatype": int,
-                "default": 20
+                "default": 20,
             },
             "people": {
                 "description": "number of people from which to calculate the average sojourn time",
                 "datatype": int,
-                "default": 50
-            }
+                "default": 50,
+            },
         }
         self.check_factor_list = {
             "lambda": self.check_lambda,
             "mu": self.check_mu,
             "warmup": self.check_warmup,
-            "people": self.check_people
+            "people": self.check_people,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -123,10 +125,12 @@ class MM1Queue(Model):
         arrival_rng = rng_list[0]
         service_rng = rng_list[1]
         # Generate all interarrival and service times up front.
-        arrival_times = ([arrival_rng.expovariate(self.factors["lambda"])
-                         for _ in range(total)])
-        service_times = ([service_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
+        arrival_times = [
+            arrival_rng.expovariate(self.factors["lambda"]) for _ in range(total)
+        ]
+        service_times = [
+            service_rng.expovariate(self.factors["mu"]) for _ in range(total)
+        ]
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
         #     column 1 : service time;
@@ -152,38 +156,40 @@ class MM1Queue(Model):
         cust_mat[0, 9] = 0
         # Fill in entries for remaining customers' experiences.
         for i in range(1, total):
-            cust_mat[i, 2] = (max(cust_mat[i, 0], cust_mat[i - 1, 2])
-                              + cust_mat[i, 1])
+            cust_mat[i, 2] = max(cust_mat[i, 0], cust_mat[i - 1, 2]) + cust_mat[i, 1]
             cust_mat[i, 3] = cust_mat[i, 2] - cust_mat[i, 0]
             cust_mat[i, 4] = cust_mat[i, 3] - cust_mat[i, 1]
-            cust_mat[i, 5] = (sum(cust_mat[i - int(cust_mat[i - 1, 5]) - 1:i, 2]
-                                  > cust_mat[i, 0]))
-            cust_mat[i, 6] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i + 1, 1])
-                              / self.factors["mu"])
-            cust_mat[i, 7] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i, 1])
-                              / self.factors["mu"])
+            cust_mat[i, 5] = sum(
+                cust_mat[i - int(cust_mat[i - 1, 5]) - 1 : i, 2] > cust_mat[i, 0]
+            )
+            cust_mat[i, 6] = (
+                -sum(cust_mat[i - int(cust_mat[i, 5]) : i + 1, 1]) / self.factors["mu"]
+            )
+            cust_mat[i, 7] = (
+                -sum(cust_mat[i - int(cust_mat[i, 5]) : i, 1]) / self.factors["mu"]
+            )
             cust_mat[i, 8] = np.nan  # ... to be derived
             cust_mat[i, 9] = np.nan  # ... to be derived
         # Compute average sojourn time and its gradient.
-        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:, 3])
-        grad_mean_sojourn_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 6])
-        grad_mean_sojourn_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 8])
+        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"] :, 3])
+        grad_mean_sojourn_time_mu = np.mean(cust_mat[self.factors["warmup"] :, 6])
+        grad_mean_sojourn_time_lambda = np.mean(cust_mat[self.factors["warmup"] :, 8])
         # Compute average waiting time and its gradient.
-        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"]:, 4])
-        grad_mean_waiting_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 7])
-        grad_mean_waiting_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 9])
+        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"] :, 4])
+        grad_mean_waiting_time_mu = np.mean(cust_mat[self.factors["warmup"] :, 7])
+        grad_mean_waiting_time_lambda = np.mean(cust_mat[self.factors["warmup"] :, 9])
         # Compute fraction of customers who wait.
-        fraction_wait = np.mean(cust_mat[self.factors["warmup"]:, 5] > 0)
+        fraction_wait = np.mean(cust_mat[self.factors["warmup"] :, 5] > 0)
         # Compose responses and gradients.
         responses = {
             "avg_sojourn_time": mean_sojourn_time,
             "avg_waiting_time": mean_waiting_time,
-            "frac_cust_wait": fraction_wait
+            "frac_cust_wait": fraction_wait,
         }
-        gradients = {response_key:
-                     {factor_key: np.nan for factor_key in self.specifications}
-                     for response_key in responses
-                     }
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         gradients["avg_sojourn_time"]["mu"] = grad_mean_sojourn_time_mu
         gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
         gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
@@ -259,6 +265,7 @@ class MM1MinMeanSojournTime(Problem):
     --------
     base.Problem
     """
+
     def __init__(self, name="MM1-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -276,32 +283,29 @@ class MM1MinMeanSojournTime(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
-        self.model_default_factors = {
-            "warmup": 50,
-            "people": 200
-        }
+        self.model_default_factors = {"warmup": 50, "people": 200}
         self.model_decision_factors = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution from which solvers start",
                 "datatype": tuple,
-                "default": (5,)
+                "default": (5,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "cost": {
                 "description": "cost for increasing service rate",
                 "datatype": float,
-                "default": 0.1
-            }
+                "default": 0.1,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
@@ -321,9 +325,7 @@ class MM1MinMeanSojournTime(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "mu": vector[0]
-        }
+        factor_dict = {"mu": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -396,7 +398,7 @@ class MM1MinMeanSojournTime(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (self.factors["cost"] * (x[0]**2),)
+        det_objectives = (self.factors["cost"] * (x[0] ** 2),)
         det_objectives_gradients = ((2 * self.factors["cost"] * x[0],),)
         return det_objectives, det_objectives_gradients
 

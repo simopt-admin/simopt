@@ -6,11 +6,12 @@ An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`_.
 """
+
 import numpy as np
 import warnings
-warnings.filterwarnings("ignore")
-
 from ..base import Solver
+
+warnings.filterwarnings("ignore")
 
 
 class ADAM(Solver):
@@ -51,6 +52,7 @@ class ADAM(Solver):
     --------
     base.Solver
     """
+
     def __init__(self, name="ADAM", fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -63,38 +65,38 @@ class ADAM(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 30,
             },
             "beta_1": {
                 "description": "exponential decay of the rate for the first moment estimates",
                 "datatype": float,
-                "default": 0.9
+                "default": 0.9,
             },
             "beta_2": {
                 "description": "exponential decay rate for the second-moment estimates",
                 "datatype": float,
-                "default": 0.999
+                "default": 0.999,
             },
             "alpha": {
                 "description": "step size",
                 "datatype": float,
-                "default": 0.5  # Changing the step size matters a lot.
+                "default": 0.5,  # Changing the step size matters a lot.
             },
             "epsilon": {
                 "description": "a small value to prevent zero-division",
                 "datatype": float,
-                "default": 10**(-8)
+                "default": 10 ** (-8),
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds",
                 "datatype": float,
-                "default": 10**(-7)
-            }
+                "default": 10 ** (-7),
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -103,7 +105,7 @@ class ADAM(Solver):
             "beta_2": self.check_beta_2,
             "alpha": self.check_alpha,
             "epsilon": self.check_epsilon,
-            "sensitivity": self.check_sensitivity
+            "sensitivity": self.check_sensitivity,
         }
         super().__init__(fixed_factors)
 
@@ -159,7 +161,9 @@ class ADAM(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_solution = self.create_new_solution(
+            problem.factors["initial_solution"], problem
+        )
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         problem.simulate(new_solution, r)
@@ -176,13 +180,19 @@ class ADAM(Solver):
             t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = self.factors["sensitivity"]).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = self.factors["sensitivity"]).astype(int)
+            forward = np.isclose(
+                new_x, lower_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
+            backward = np.isclose(
+                new_x, upper_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
             BdsCheck = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = (
+                    -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                )
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, BdsCheck, problem)
@@ -195,20 +205,29 @@ class ADAM(Solver):
                 # Update biased first moment estimate.
                 m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
                 # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
+                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i] ** 2
                 # Compute bias-corrected first moment estimate.
                 mhat = m[i] / (1 - beta_1**t)
                 # Compute bias-corrected second raw moment estimate.
                 vhat = v[i] / (1 - beta_2**t)
                 # Update new_x and adjust it for box constraints.
-                new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
+                new_x[i] = min(
+                    max(
+                        new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon),
+                        lower_bound[i],
+                    ),
+                    upper_bound[i],
+                )
 
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+            if (
+                problem.minmax[0] * new_solution.objectives_mean
+                > problem.minmax[0] * best_solution.objectives_mean
+            ):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -216,8 +235,8 @@ class ADAM(Solver):
 
     # Finite difference for approximating gradients.
     def finite_diff(self, new_solution, BdsCheck, problem):
-        r = self.factors['r']
-        alpha = self.factors['alpha']
+        r = self.factors["r"]
+        alpha = self.factors["alpha"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean

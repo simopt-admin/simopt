@@ -6,7 +6,8 @@ replications at each configuration of the model. Outputs are printed to a file.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
+
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))  # type:ignore
 
 
 from simopt.data_farming_base import DataFarmingExperiment
@@ -52,12 +53,13 @@ output_filename = "cntnews_data_farming_output"
 # No code beyond this point needs to be edited.
 
 # Create DataFarmingExperiment object.
-myexperiment = DataFarmingExperiment(model_name=model_name,
-                                     factor_settings_filename=factor_settings_filename,
-                                     factor_headers=factor_headers,
-                                     design_filename=design_filename,
-                                     model_fixed_factors={}
-                                     )
+myexperiment = DataFarmingExperiment(
+    model_name=model_name,
+    factor_settings_filename=factor_settings_filename,
+    factor_headers=factor_headers,
+    design_filename=design_filename,
+    model_fixed_factors={},
+)
 
 # Run replications and print results to file.
 myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)

@@ -34,6 +34,7 @@ class DesignPoint(object):
     model : ``base.Model``
         Model with factors model_factors.
     """
+
     def __init__(self, model):
         super().__init__()
         # Create separate copy of Model object for use at this design point.
@@ -57,7 +58,7 @@ class DesignPoint(object):
             self.rng_list = rng_list
 
     def simulate(self, m=1):
-        """Simulate m replications for the current model factors and 
+        """Simulate m replications for the current model factors and
         append results to the responses and gradients dictionaries.
 
         Parameters
@@ -71,13 +72,20 @@ class DesignPoint(object):
             # If first replication, set up recording responses and gradients.
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}
-                self.gradients = {response_key: {factor_key: [] for factor_key in gradients[response_key]} for response_key in responses}
+                self.gradients = {
+                    response_key: {
+                        factor_key: [] for factor_key in gradients[response_key]
+                    }
+                    for response_key in responses
+                }
             # Append responses and gradients.
             for key in self.responses:
                 self.responses[key].append(responses[key])
             for outerkey in self.gradients:
                 for innerkey in self.gradients[outerkey]:
-                    self.gradients[outerkey][innerkey].append(gradients[outerkey][innerkey])
+                    self.gradients[outerkey][innerkey].append(
+                        gradients[outerkey][innerkey]
+                    )
             self.n_reps += 1
             # Advance rngs to start of next subsubstream.
             for rng in self.rng_list:
@@ -110,20 +118,32 @@ class DataFarmingExperiment(object):
     model_fixed_factors : dict
         Non-default values of model factors that will not be varied.
     """
-    def __init__(self, model_name, factor_settings_filename, factor_headers, design_filename=None, model_fixed_factors={}):
-        
+
+    def __init__(
+        self,
+        model_name,
+        factor_settings_filename,
+        factor_headers,
+        design_filename=None,
+        model_fixed_factors={},
+    ):
         # Initialize model object with fixed factors.
         self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
         if design_filename is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            #command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
+            # command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
             command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
             os.system(command)
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", engine="python")
+        design_table = pd.read_csv(
+            f"./data_farming_experiments/{design_filename}.txt",
+            header=None,
+            delimiter="\t",
+            engine="python",
+        )
         # Count number of design_points.
         self.n_design_pts = len(design_table)
         # Create all design points.
@@ -132,7 +152,9 @@ class DataFarmingExperiment(object):
         for dp_index in range(self.n_design_pts):
             for factor_idx in range(len(factor_headers)):
                 # Parse model factors for next design point.
-                design_pt_factors[factor_headers[factor_idx]] = design_table[factor_idx][dp_index]
+                design_pt_factors[factor_headers[factor_idx]] = design_table[
+                    factor_idx
+                ][dp_index]
             # Update model factors according to next design point.
             self.model.factors.update(design_pt_factors)
             # Create new design point and add to design.
@@ -150,7 +172,9 @@ class DataFarmingExperiment(object):
         """
         # Setup random number generators for model.
         # Use stream 0 for all runs; start with substreams 0, 1, ..., model.n_rngs-1.
-        main_rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.model.n_rngs)]
+        main_rng_list = [
+            MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.model.n_rngs)
+        ]
         # All design points will share the same random number generator objects.
         # Simulate n_reps replications from each design point.
         for design_pt in self.design:
@@ -181,20 +205,32 @@ class DataFarmingExperiment(object):
         # Create directory if they do no exist.
         if not os.path.exists("./data_farming_experiments"):
             os.makedirs("./data_farming_experiments")
-        with open( csv_filename + ".csv", mode="w", newline="") as output_file:
-            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(csv_filename + ".csv", mode="w", newline="") as output_file:
+            csv_writer = csv.writer(
+                output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
             # Print headers.
             model_factor_names = list(self.model.specifications.keys())
             response_names = list(self.design[0].responses.keys())
-            csv_writer.writerow(["DesignPt#"] + model_factor_names + ["MacroRep#"] + response_names)
+            csv_writer.writerow(
+                ["DesignPt#"] + model_factor_names + ["MacroRep#"] + response_names
+            )
             for designpt_index in range(self.n_design_pts):
                 designpt = self.design[designpt_index]
                 # Parse list of model factors.
-                model_factor_list = [designpt.model_factors[model_factor_name] for model_factor_name in model_factor_names]
+                model_factor_list = [
+                    designpt.model_factors[model_factor_name]
+                    for model_factor_name in model_factor_names
+                ]
                 for mrep in range(designpt.n_reps):
                     # Parse list of responses.
-                    response_list = [designpt.responses[response_name][mrep] for response_name in response_names]
-                    print_list = [designpt_index] + model_factor_list + [mrep] + response_list
+                    response_list = [
+                        designpt.responses[response_name][mrep]
+                        for response_name in response_names
+                    ]
+                    print_list = (
+                        [designpt_index] + model_factor_list + [mrep] + response_list
+                    )
                     csv_writer.writerow(print_list)
 
 
@@ -228,10 +264,21 @@ class DataFarmingMetaExperiment(object):
     model_fixed_factors : dict, default=None
         Dictionary of user-specified model factors that will not be varied.
     """
-    def __init__(self, solver_name = None, solver_factor_headers = None, n_stacks = 1, design_type = 'nolhs', solver_factor_settings_filename=None, design_filename=None, csv_filename = None, solver_fixed_factors=None, cross_design_factors = None):
-        
+
+    def __init__(
+        self,
+        solver_name=None,
+        solver_factor_headers=None,
+        n_stacks=1,
+        design_type="nolhs",
+        solver_factor_settings_filename=None,
+        design_filename=None,
+        csv_filename=None,
+        solver_fixed_factors=None,
+        cross_design_factors=None,
+    ):
         if solver_fixed_factors is None:
-            solver_fixed_factors={}
+            solver_fixed_factors = {}
         # if problem_fixed_factors is None:
         #     problem_fixed_factors={}
         # if model_fixed_factors is None:
@@ -239,96 +286,119 @@ class DataFarmingMetaExperiment(object):
         if cross_design_factors is None:
             cross_design_factors = {}
         if solver_name is not None:
-            self.solver_object = solver_directory[solver_name]() #creates solver object
+            self.solver_object = solver_directory[
+                solver_name
+            ]()  # creates solver object
         # TO DO: Extend to allow a design on problem/model factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None and csv_filename is None:
             # Create solver factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/" + solver_factor_settings_filename + ".txt > ./data_farming_experiments/" + solver_factor_settings_filename + "_design.txt"
+            command = (
+                f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/"
+                + solver_factor_settings_filename
+                + ".txt > ./data_farming_experiments/"
+                + solver_factor_settings_filename
+                + "_design.txt"
+            )
             os.system(command)
             # Append design to base filename.
-            design_filename =  f"{solver_factor_settings_filename}_design"
+            design_filename = f"{solver_factor_settings_filename}_design"
         # # Read in design matrix from .txt file. Result is a pandas DataFrame.
         # design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
-        
-        
-        if csv_filename is None:
-            
-             # Read in design matrix from .txt file. Result is a pandas DataFrame.
-             design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
-        
-             # Create design csv file from design table 
-   
-             csv_filename = f"./data_farming_experiments/{design_filename}.csv"
-             
-             #self.solver_object = solver_directory[solver_name]() #creates solver object
-           
-             design_table.columns = solver_factor_headers #add factor headers names to dt
-             
-             solver_fixed_str = {}
-             for factor in solver_fixed_factors: # make new dict containing strings of solver factors
-                 solver_fixed_str [factor] = str(solver_fixed_factors[factor])
-             
-             for factor in self.solver_object.specifications: #add default values to str dict for unspecified factors
-                 default = self.solver_object.specifications[factor].get("default")
-                 if factor not in solver_fixed_str and factor not in solver_factor_headers:
-                     print('default from df base', default)
-                     solver_fixed_str[factor] = str(default)
-                     
-             all_solver_factor_names = solver_factor_headers + list(solver_fixed_str.keys()) # list of all solver factor names 
-             
-             #all_solver_factor_names = solver_factor_headers + list(cross_design_factors.keys()) + list(solver_fixed_factors.keys()) #creates list of all solver factors in order of design, cross-design, then fixed factors
-             
-             
-             # Add fixed factors to dt
-             for factor in solver_fixed_str:
-                 design_table[factor] = solver_fixed_str[factor]
-                 
-            
-             # Add cross design factors to design table
-             if len(cross_design_factors) != 0:
-                  #num_cross = 0 # number of times cross design is run
-                 
-                  # create combination of categorical factor options
-                  cross_factor_names = list(cross_design_factors.keys())
-                  combinations = itertools.product(*(cross_design_factors[opt] for opt in cross_factor_names))
-                  
-                  new_design_table = pd.DataFrame() #temp empty value
-                  for combination in combinations:
-                      combination_dict = dict(zip(cross_factor_names, combination)) # dictionary containing current combination of cross design factor values
-                      working_design_table = design_table.copy()
-                 
-                      for factor in combination_dict:
-                          str_factor_val = str(combination_dict[factor])
-                          working_design_table[factor] = str_factor_val
-                          
-                      new_design_table = pd.concat([new_design_table, working_design_table], ignore_index=True)
-                      print(new_design_table)
-                      
-                  design_table = new_design_table
-                  
-             # Add design information to table
-             design_table.insert(0,'Design #', range(len(design_table)))
-             design_table['Solver Name'] = solver_name
-             design_table['Design Type'] = design_type 
-             design_table['Number Stacks'] = str(n_stacks) 
-                          
-               
-                 
-             design_table.to_csv(csv_filename, mode = 'w', header = True, index = False)
-       
-       
-        self.csv_filename = csv_filename     
-       
-        
 
-                        
-                        
-                   
+        if csv_filename is None:
+            # Read in design matrix from .txt file. Result is a pandas DataFrame.
+            design_table = pd.read_csv(
+                f"./data_farming_experiments/{design_filename}.txt",
+                header=None,
+                delimiter="\t",
+                encoding="utf-8",
+            )
+
+            # Create design csv file from design table
+
+            csv_filename = f"./data_farming_experiments/{design_filename}.csv"
+
+            # self.solver_object = solver_directory[solver_name]() #creates solver object
+
+            design_table.columns = (
+                solver_factor_headers  # add factor headers names to dt
+            )
+
+            solver_fixed_str = {}
+            for factor in (
+                solver_fixed_factors
+            ):  # make new dict containing strings of solver factors
+                solver_fixed_str[factor] = str(solver_fixed_factors[factor])
+
+            for factor in (
+                self.solver_object.specifications
+            ):  # add default values to str dict for unspecified factors
+                default = self.solver_object.specifications[factor].get("default")
+                if (
+                    factor not in solver_fixed_str
+                    and factor not in solver_factor_headers
+                ):
+                    print("default from df base", default)
+                    solver_fixed_str[factor] = str(default)
+
+            solver_factor_headers + list(
+                solver_fixed_str.keys()
+            )  # list of all solver factor names
+
+            # all_solver_factor_names = solver_factor_headers + list(cross_design_factors.keys()) + list(solver_fixed_factors.keys()) #creates list of all solver factors in order of design, cross-design, then fixed factors
+
+            # Add fixed factors to dt
+            for factor in solver_fixed_str:
+                design_table[factor] = solver_fixed_str[factor]
+
+            # Add cross design factors to design table
+            if len(cross_design_factors) != 0:
+                # num_cross = 0 # number of times cross design is run
+
+                # create combination of categorical factor options
+                cross_factor_names = list(cross_design_factors.keys())
+                combinations = itertools.product(
+                    *(cross_design_factors[opt] for opt in cross_factor_names)
+                )
+
+                new_design_table = pd.DataFrame()  # temp empty value
+                for combination in combinations:
+                    combination_dict = dict(
+                        zip(cross_factor_names, combination)
+                    )  # dictionary containing current combination of cross design factor values
+                    working_design_table = design_table.copy()
+
+                    for factor in combination_dict:
+                        str_factor_val = str(combination_dict[factor])
+                        working_design_table[factor] = str_factor_val
+
+                    new_design_table = pd.concat(
+                        [new_design_table, working_design_table], ignore_index=True
+                    )
+                    print(new_design_table)
+
+                design_table = new_design_table
+
+            # Add design information to table
+            design_table.insert(0, "Design #", range(len(design_table)))
+            design_table["Solver Name"] = solver_name
+            design_table["Design Type"] = design_type
+            design_table["Number Stacks"] = str(n_stacks)
+
+            design_table.to_csv(csv_filename, mode="w", header=True, index=False)
+
+        self.csv_filename = csv_filename
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def run(self, problem_name, problem_fixed_factors = None, model_fixed_factors = None, n_macroreps=10):
+    def run(
+        self,
+        problem_name,
+        problem_fixed_factors=None,
+        model_fixed_factors=None,
+        n_macroreps=10,
+    ):
         """Run n_macroreps of each problem-solver design point.
 
         Parameters
@@ -337,85 +407,90 @@ class DataFarmingMetaExperiment(object):
             Number of macroreplications for each design point.
         """
         if problem_fixed_factors is None:
-            problem_fixed_factors={}
+            problem_fixed_factors = {}
         if model_fixed_factors is None:
-            model_fixed_factors={}
-        solver_factors = {}#holds solver factors for individual dp
-        solver_factors_across_design = []#holds solver factors across all dps
+            model_fixed_factors = {}
+        solver_factors = {}  # holds solver factors for individual dp
+        solver_factors_across_design = []  # holds solver factors across all dps
         self.design = []
-        num_extra_col = 3 #change if extra columns in design table changes
-            
+        num_extra_col = 3  # change if extra columns in design table changes
+
         # Read design points from csv file
-        solver_factors_str = {} # holds design points as string for all factors
-        with open(self.csv_filename, 'r') as file:
+        solver_factors_str = {}  # holds design points as string for all factors
+        with open(self.csv_filename, "r") as file:
             reader = csv.reader(file)
             first_row = next(reader)
-            #next(reader)
-            #next(reader)
-            #solver_factor_headers = next(reader)[1:]
-            all_solver_factor_names = first_row[1:-1*num_extra_col]
-            #second_row = next(reader)
-            #solver_name = second_row[-1*num_extra_col]
+            # next(reader)
+            # next(reader)
+            # solver_factor_headers = next(reader)[1:]
+            all_solver_factor_names = first_row[1 : -1 * num_extra_col]
+            # second_row = next(reader)
+            # solver_name = second_row[-1*num_extra_col]
             row_index = 0
-            
+
             for row in reader:
-                solver_name = row[-1*num_extra_col]
-                dp = row[1:-1*num_extra_col]
+                solver_name = row[-1 * num_extra_col]
+                dp = row[1 : -1 * num_extra_col]
                 dp_index = 0
-                self.solver_object = solver_directory[solver_name]() # make this less bulky later
+                self.solver_object = solver_directory[
+                    solver_name
+                ]()  # make this less bulky later
                 for factor in all_solver_factor_names:
                     solver_factors_str[factor] = dp[dp_index]
                     dp_index += 1
                 # Convert str to proper data type
                 for factor in solver_factors_str:
-                    datatype = self.solver_object.specifications[factor].get('datatype')
+                    datatype = self.solver_object.specifications[factor].get("datatype")
                     val = solver_factors_str[factor]
-                    
+
                     if datatype == int:
                         solver_factors[factor] = int(val)
                     elif datatype == float:
                         solver_factors[factor] = float(val)
                     elif datatype == bool:
-                        if val == 'True':
+                        if val == "True":
                             solver_factors[factor] = True
                         else:
                             solver_factors[factor] = False
-                
+
                 solver_factors_insert = solver_factors.copy()
                 solver_factors_across_design.append(solver_factors_insert)
-                
+
                 row_index += 1
-            
-                
-                
+
             self.n_design_pts = len(solver_factors_across_design)
             for i in range(self.n_design_pts):
                 # Create design point on problem solver
-                
-                file_name_path = "./data_farming_experiments/outputs/" + solver_name + "_on_" + problem_name + "_designpt_" + str(i) + ".pickle"
+
+                file_name_path = (
+                    "./data_farming_experiments/outputs/"
+                    + solver_name
+                    + "_on_"
+                    + problem_name
+                    + "_designpt_"
+                    + str(i)
+                    + ".pickle"
+                )
                 current_solver_factors = solver_factors_across_design[i]
-                new_design_pt = ProblemSolver(solver_name=solver_name,
-                                            problem_name=problem_name,
-                                            solver_fixed_factors=current_solver_factors,
-                                            problem_fixed_factors=problem_fixed_factors,
-                                            model_fixed_factors=model_fixed_factors,
-                                            file_name_path=file_name_path)
-                
+                new_design_pt = ProblemSolver(
+                    solver_name=solver_name,
+                    problem_name=problem_name,
+                    solver_fixed_factors=current_solver_factors,
+                    problem_fixed_factors=problem_fixed_factors,
+                    model_fixed_factors=model_fixed_factors,
+                    file_name_path=file_name_path,
+                )
+
                 self.design.append(new_design_pt)
-                
-                
-            #self.n_design_pts = len(self.design)
-            
-                            
-                            
-                            
+
+            # self.n_design_pts = len(self.design)
+
         for design_pt_index in range(self.n_design_pts):
             # If the problem-solver pair has not been run in this way before,
             # run it now.
             experiment = self.design[design_pt_index]
-             
-            
-            if (getattr(experiment, "n_macroreps", None) != n_macroreps):
+
+            if getattr(experiment, "n_macroreps", None) != n_macroreps:
                 print("Running Design Point " + str(design_pt_index) + ".")
                 experiment.clear_run()
                 print(experiment.solver.name)
@@ -423,7 +498,9 @@ class DataFarmingMetaExperiment(object):
                 experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(
+        self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
+    ):
         """For each design point, run postreplications at solutions
         recommended by the solver on each macroreplication.
 
@@ -442,17 +519,24 @@ class DataFarmingMetaExperiment(object):
             experiment = self.design[design_pt_index]
             # If the problem-solver pair has not been post-processed in this way before,
             # post-process it now.
-            if (getattr(experiment, "n_postreps", None) != n_postreps
-                    or getattr(experiment, "crn_across_budget", None) != crn_across_budget
-                    or getattr(experiment, "crn_across_macroreps", None) != crn_across_macroreps):
+            if (
+                getattr(experiment, "n_postreps", None) != n_postreps
+                or getattr(experiment, "crn_across_budget", None) != crn_across_budget
+                or getattr(experiment, "crn_across_macroreps", None)
+                != crn_across_macroreps
+            ):
                 print("Post-processing Design Point " + str(design_pt_index) + ".")
                 experiment.clear_postreplicate()
-                experiment.post_replicate(n_postreps, crn_across_budget=crn_across_budget, crn_across_macroreps=crn_across_macroreps)
+                experiment.post_replicate(
+                    n_postreps,
+                    crn_across_budget=crn_across_budget,
+                    crn_across_macroreps=crn_across_macroreps,
+                )
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
         """Post-normalize problem-solver pairs.
-        
+
         Parameters
         ----------
         n_postreps_init_opt : int
@@ -460,12 +544,15 @@ class DataFarmingMetaExperiment(object):
         crn_across_init_opt : bool, default=True
             True if CRN are to be used for post-replications at solutions x0 and x*, otherwise False.
         """
-        post_normalize(experiments=self.design,
-                       n_postreps_init_opt=n_postreps_init_opt,
-                       crn_across_init_opt=crn_across_init_opt
-                       )
+        post_normalize(
+            experiments=self.design,
+            n_postreps_init_opt=n_postreps_init_opt,
+            crn_across_init_opt=crn_across_init_opt,
+        )
 
-    def report_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+    def report_statistics(
+        self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"
+    ):
         """For each design point, calculate statistics from each macoreplication and print to csv.
 
         Parameters
@@ -478,41 +565,84 @@ class DataFarmingMetaExperiment(object):
         # Create directory if they do no exist.
         if not os.path.exists("./data_farming_experiments"):
             os.makedirs("./data_farming_experiments")
-        if csv_filename == 'df_solver_results':
+        if csv_filename == "df_solver_results":
             file_path = "./data_farming_experiments/"
         else:
             file_path = ""
-        with open(file_path + csv_filename + ".csv", mode="w", newline="") as output_file:
-            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(
+            file_path + csv_filename + ".csv", mode="w", newline=""
+        ) as output_file:
+            csv_writer = csv.writer(
+                output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
             base_experiment = self.design[0]
             solver_factor_names = list(base_experiment.solver.specifications.keys())
             problem_factor_names = list(base_experiment.problem.specifications.keys())
-            model_factor_names = list(set(base_experiment.problem.model.specifications.keys()) - base_experiment.problem.model_decision_factors)
+            model_factor_names = list(
+                set(base_experiment.problem.model.specifications.keys())
+                - base_experiment.problem.model_decision_factors
+            )
             # Concatenate solve time headers.
-            solve_time_headers = [[f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"] for solve_tol in solve_tols]
+            solve_time_headers = [
+                [f"{solve_tol}-Solve Time"] + [f"{solve_tol}-Solved? (Y/N)"]
+                for solve_tol in solve_tols
+            ]
             solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
             # Print headers.
-            csv_writer.writerow(["DesignPt#"]
-                                + solver_factor_names
-                                + problem_factor_names
-                                + model_factor_names
-                                + ["MacroRep#"]
-                                + ["Final Relative Optimality Gap"]
-                                + ["Area Under Progress Curve"]
-                                + solve_time_headers)
+            csv_writer.writerow(
+                ["DesignPt#"]
+                + solver_factor_names
+                + problem_factor_names
+                + model_factor_names
+                + ["MacroRep#"]
+                + ["Final Relative Optimality Gap"]
+                + ["Area Under Progress Curve"]
+                + solve_time_headers
+            )
             # Compute performance metrics.
             for designpt_index in range(self.n_design_pts):
                 experiment = self.design[designpt_index]
                 # Parse lists of factors.
-                solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
-                problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
-                model_factor_list = [experiment.problem.model.factors[model_factor_name] for model_factor_name in model_factor_names]
+                solver_factor_list = [
+                    experiment.solver.factors[solver_factor_name]
+                    for solver_factor_name in solver_factor_names
+                ]
+                problem_factor_list = [
+                    experiment.problem.factors[problem_factor_name]
+                    for problem_factor_name in problem_factor_names
+                ]
+                model_factor_list = [
+                    experiment.problem.model.factors[model_factor_name]
+                    for model_factor_name in model_factor_names
+                ]
                 for mrep in range(experiment.n_macroreps):
                     progress_curve = experiment.progress_curves[mrep]
                     # Parse list of statistics.
-                    solve_time_values = [[progress_curve.compute_crossing_time(threshold=solve_tol)] + [int(progress_curve.compute_crossing_time(threshold=solve_tol) < np.infty)] for solve_tol in solve_tols]
-                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
-                    statistics_list = [progress_curve.y_vals[-1],
-                                       progress_curve.compute_area_under_curve()] + solve_time_values
-                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list
+                    solve_time_values = [
+                        [progress_curve.compute_crossing_time(threshold=solve_tol)]
+                        + [
+                            int(
+                                progress_curve.compute_crossing_time(
+                                    threshold=solve_tol
+                                )
+                                < np.infty
+                            )
+                        ]
+                        for solve_tol in solve_tols
+                    ]
+                    solve_time_values = list(
+                        itertools.chain.from_iterable(solve_time_values)
+                    )
+                    statistics_list = [
+                        progress_curve.y_vals[-1],
+                        progress_curve.compute_area_under_curve(),
+                    ] + solve_time_values
+                    print_list = (
+                        [designpt_index]
+                        + solver_factor_list
+                        + problem_factor_list
+                        + model_factor_list
+                        + [mrep]
+                        + statistics_list
+                    )
                     csv_writer.writerow(print_list)

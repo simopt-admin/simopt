@@ -5,6 +5,7 @@ Simulate a single day of operation for an amusement park queuing problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/amusementpark.html>`_.
 """
+
 import numpy as np
 import math as math
 
@@ -57,60 +58,62 @@ class AmusementPark(Model):
                                 attractions that can be maintained through \
                                 park facilities, distributed across the attractions.",
                 "datatype": int,
-                "default": 350
+                "default": 350,
             },
             "number_attractions": {
                 "description": "The number of attractions in the park.",
                 "datatype": int,
-                "default": 7
+                "default": 7,
             },
             "time_open": {
                 "description": "The number of minutes per day the park is open.",
                 "datatype": float,
-                "default": 480.0
+                "default": 480.0,
             },
             "erlang_shape": {
                 "description": "The shape parameter of the Erlang distribution for each attraction"
-                               "duration.",
+                "duration.",
                 "datatype": list,
-                "default": [2, 2, 2, 2, 2, 2, 2]
+                "default": [2, 2, 2, 2, 2, 2, 2],
             },
             "erlang_scale": {
                 "description": "The rate parameter of the Erlang distribution for each attraction"
-                               "duration.",
+                "duration.",
                 "datatype": list,
-                "default": [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9]
+                "default": [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9],
             },
             "queue_capacities": {
                 "description": "The capacity of the queue for each attraction \
                                 based on the portion of facilities allocated.",
                 "datatype": list,
-                "default": [50, 50, 50, 50, 50, 50, 50]
+                "default": [50, 50, 50, 50, 50, 50, 50],
             },
             "depart_probabilities": {
                 "description": "The probability that a tourist will depart the \
                                 park after visiting an attraction.",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+                "default": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
             },
             "arrival_gammas": {
                 "description": "The gamma values for the poisson distributions dictating the rates at which \
                                 tourists entering the park arrive at each attraction",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1, 1, 1]
+                "default": [1, 1, 1, 1, 1, 1, 1],
             },
             "transition_probabilities": {
                 "description": "The transition matrix that describes the probability \
                                 of a tourist visiting each attraction after their current attraction.",
                 "datatype": list,
-                "default": [[0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                            [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                            [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                            [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                            [0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.3],
-                            [0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.3],
-                            [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2]]
-            }
+                "default": [
+                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                    [0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.3],
+                    [0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.3],
+                    [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2],
+                ],
+            },
         }
 
         self.check_factor_list = {
@@ -122,7 +125,7 @@ class AmusementPark(Model):
             "arrival_gammas": self.check_arrival_gammas,
             "transition_probabilities": self.check_transition_probabilities,
             "erlang_shape": self.check_erlang_shape,
-            "erlang_scale": self.check_erlang_scale
+            "erlang_scale": self.check_erlang_scale,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -141,10 +144,15 @@ class AmusementPark(Model):
         return all([cap >= 0 for cap in self.factors["queue_capacities"]])
 
     def check_depart_probabilities(self):
-        if len(self.factors["depart_probabilities"]) != self.factors["number_attractions"]:
+        if (
+            len(self.factors["depart_probabilities"])
+            != self.factors["number_attractions"]
+        ):
             return False
         else:
-            return all([0 <= prob <= 1 for prob in self.factors["depart_probabilities"]])
+            return all(
+                [0 <= prob <= 1 for prob in self.factors["depart_probabilities"]]
+            )
 
     def check_arrival_gammas(self):
         if len(self.factors["arrival_gammas"]) != self.factors["number_attractions"]:
@@ -155,8 +163,15 @@ class AmusementPark(Model):
     # Check if transition matrix has same number of rows and columns and that each row + depart probability sums to 1.
     def check_transition_probabilities(self):
         transition_sums = list(map(sum, self.factors["transition_probabilities"]))
-        if all([len(row) == len(self.factors["transition_probabilities"]) for row in self.factors["transition_probabilities"]]) & \
-                all(transition_sums[i] + self.factors["depart_probabilities"][i] == 1 for i in range(self.factors["number_attractions"])):
+        if all(
+            [
+                len(row) == len(self.factors["transition_probabilities"])
+                for row in self.factors["transition_probabilities"]
+            ]
+        ) & all(
+            transition_sums[i] + self.factors["depart_probabilities"][i] == 1
+            for i in range(self.factors["number_attractions"])
+        ):
             return True
         else:
             return False
@@ -214,8 +229,10 @@ class AmusementPark(Model):
         queues = [0 for _ in range(self.factors["number_attractions"])]
 
         # create external arrival probabilities for each attraction.
-        arrival_probabalities = [self.factors["arrival_gammas"][i] / sum(self.factors["arrival_gammas"]) for i in
-                                 self.factors["arrival_gammas"]]
+        arrival_probabalities = [
+            self.factors["arrival_gammas"][i] / sum(self.factors["arrival_gammas"])
+            for i in self.factors["arrival_gammas"]
+        ]
 
         # Initialize quantities to track:
         total_visitors = 0
@@ -233,47 +250,70 @@ class AmusementPark(Model):
             for i in range(self.factors["number_attractions"]):
                 if completion_times[i] != math.inf:
                     riders += 1
-                    cumulative_util[i] += (clock - previous_clock)
+                    cumulative_util[i] += clock - previous_clock
             in_system = sum(queues) + riders
             time_average += in_system * (clock - previous_clock)
 
             previous_clock = clock
-            if next_arrival < min(completion_times):  # Next event is external tourist arrival.
+            if next_arrival < min(
+                completion_times
+            ):  # Next event is external tourist arrival.
                 total_visitors += 1
                 # Select attraction.
-                attraction_selection = arrival_rng.choices(population=potential_attractions,
-                                                           weights=arrival_probabalities)[0]
+                attraction_selection = arrival_rng.choices(
+                    population=potential_attractions, weights=arrival_probabalities
+                )[0]
                 # Check if attraction is currently available.
                 # If available, arrive at that attraction. Otherwise check queue.
                 if completion_times[attraction_selection] == math.inf:
                     # Generate completion time if attraction available.
-                    completion_times[attraction_selection] = next_arrival + time_rng.gammavariate(alpha=self.factors["erlang_shape"][attraction_selection],
-                                                                                                  beta=self.factors["erlang_scale"][attraction_selection])
+                    completion_times[attraction_selection] = (
+                        next_arrival
+                        + time_rng.gammavariate(
+                            alpha=self.factors["erlang_shape"][attraction_selection],
+                            beta=self.factors["erlang_scale"][attraction_selection],
+                        )
+                    )
                 # If unavailable, check if current queue is less than capacity. If queue is not full, join queue.
-                elif queues[attraction_selection] < self.factors["queue_capacities"][attraction_selection]:
+                elif (
+                    queues[attraction_selection]
+                    < self.factors["queue_capacities"][attraction_selection]
+                ):
                     queues[attraction_selection] += 1
                 # If queue is full, leave park + 1.
                 else:
                     total_departed += 1
                 # Use superposition of Poisson processes to generate next arrival time.
-                next_arrival += arrival_rng.expovariate(sum(self.factors["arrival_gammas"]))
+                next_arrival += arrival_rng.expovariate(
+                    sum(self.factors["arrival_gammas"])
+                )
 
             else:  # Next event is the completion of an attraction.
-                finished_attraction = completion_times.index(min(completion_times))  # Identify finished attraction.
+                finished_attraction = completion_times.index(
+                    min(completion_times)
+                )  # Identify finished attraction.
                 # Check if there is a queue for that attraction.
                 # If so then start new completion time and subtract 1 from queue.
                 if queues[finished_attraction] > 0:
-                    completion_times[finished_attraction] = min(completion_times) + time_rng.gammavariate(alpha=self.factors["erlang_shape"][finished_attraction],
-                                                                                                          beta=self.factors["erlang_scale"][finished_attraction])
+                    completion_times[finished_attraction] = min(
+                        completion_times
+                    ) + time_rng.gammavariate(
+                        alpha=self.factors["erlang_shape"][finished_attraction],
+                        beta=self.factors["erlang_scale"][finished_attraction],
+                    )
                     queues[finished_attraction] -= 1
                 else:  # If no one in queue, set next completion of that attraction to infinity.
                     completion_times[finished_attraction] = math.inf
 
                 # Check if that person will leave the park.
                 potential_destinations = range(self.factors["number_attractions"] + 1)
-                next_destination = transition_rng.choices(population=potential_destinations,
-                                                          weights=self.factors["transition_probabilities"][finished_attraction] + [self.factors["depart_probabilities"][finished_attraction]]
-                                                          )[0]
+                next_destination = transition_rng.choices(
+                    population=potential_destinations,
+                    weights=self.factors["transition_probabilities"][
+                        finished_attraction
+                    ]
+                    + [self.factors["depart_probabilities"][finished_attraction]],
+                )[0]
 
                 # Check if tourist leaves park.
                 if next_destination != potential_destinations[-1]:
@@ -281,10 +321,17 @@ class AmusementPark(Model):
                     # If available, arrive at that attraction. Otherwise check queue.
                     if completion_times[next_destination] == math.inf:
                         # Generate completion time if attraction available.
-                        completion_times[next_destination] = min(completion_times) + time_rng.gammavariate(alpha=self.factors["erlang_shape"][finished_attraction],
-                                                                                                           beta=self.factors["erlang_scale"][finished_attraction])
+                        completion_times[next_destination] = min(
+                            completion_times
+                        ) + time_rng.gammavariate(
+                            alpha=self.factors["erlang_shape"][finished_attraction],
+                            beta=self.factors["erlang_scale"][finished_attraction],
+                        )
                     # if unavailable, check if current queue is less than capacity. If queue is not full, join queue.
-                    elif queues[next_destination] < self.factors["queue_capacities"][next_destination]:
+                    elif (
+                        queues[next_destination]
+                        < self.factors["queue_capacities"][next_destination]
+                    ):
                         queues[next_destination] += 1
                     # If queue is full, leave park + 1.
                     else:
@@ -296,13 +343,16 @@ class AmusementPark(Model):
             cumulative_util[i] = cumulative_util[i] / self.factors["time_open"]
 
         # Calculate responses from simulation data.
-        responses = {"total_departed": total_departed,
-                     "percent_departed": total_departed / total_visitors,
-                     "average_number_in_system": time_average / self.factors["time_open"],
-                     "attraction_utilization_percentages": cumulative_util
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in
-                     responses}
+        responses = {
+            "total_departed": total_departed,
+            "percent_departed": total_departed / total_visitors,
+            "average_number_in_system": time_average / self.factors["time_open"],
+            "attraction_utilization_percentages": cumulative_util,
+        }
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -374,7 +424,10 @@ class AmusementParkMinDepart(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="AMUSEMENTPARK-1", fixed_factors=None, model_fixed_factors=None):
+
+    def __init__(
+        self, name="AMUSEMENTPARK-1", fixed_factors=None, model_fixed_factors=None
+    ):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -395,24 +448,29 @@ class AmusementParkMinDepart(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (344, 1, 1, 1, 1, 1, 1)
+                "default": (344, 1, 1, 1, 1, 1, 1),
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
-            }
+                "default": 100,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = AmusementPark(self.model_fixed_factors)
         self.dim = self.model.factors["number_attractions"]
-        self.lower_bounds = tuple(0 for _ in range(self.model.factors["number_attractions"]))
-        self.upper_bounds = tuple(self.model.factors["park_capacity"] for _ in range(self.model.factors["number_attractions"]))
+        self.lower_bounds = tuple(
+            0 for _ in range(self.model.factors["number_attractions"])
+        )
+        self.upper_bounds = tuple(
+            self.model.factors["park_capacity"]
+            for _ in range(self.model.factors["number_attractions"])
+        )
 
     def vector_to_factor_dict(self, vector):
         """
@@ -563,7 +621,11 @@ class AmusementParkMinDepart(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.integer_random_vector_from_simplex(n_elements=self.model.factors["number_attractions"],
-                                                                  summation=self.model.factors["park_capacity"],
-                                                                  with_zero=False))
+        x = tuple(
+            rand_sol_rng.integer_random_vector_from_simplex(
+                n_elements=self.model.factors["number_attractions"],
+                summation=self.model.factors["park_capacity"],
+                with_zero=False,
+            )
+        )
         return x

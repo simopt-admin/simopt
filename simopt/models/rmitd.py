@@ -6,6 +6,7 @@ A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/rmitd.html>`_.
 
 """
+
 import numpy as np
 
 from ..base import Model, Problem
@@ -41,6 +42,7 @@ class RMITD(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -51,43 +53,43 @@ class RMITD(Model):
             "time_horizon": {
                 "description": "time horizon",
                 "datatype": int,
-                "default": 3
+                "default": 3,
             },
             "prices": {
                 "description": "prices for each period",
                 "datatype": list,
-                "default": [100, 300, 400]
+                "default": [100, 300, 400],
             },
             "demand_means": {
                 "description": "mean demand for each period",
                 "datatype": list,
-                "default": [50, 20, 30]
+                "default": [50, 20, 30],
             },
             "cost": {
                 "description": "cost per unit of capacity at t = 0",
                 "datatype": float,
-                "default": 80.0
+                "default": 80.0,
             },
             "gamma_shape": {
                 "description": "shape parameter of gamma distribution",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "gamma_scale": {
                 "description": "scale parameter of gamma distribution",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "initial_inventory": {
                 "description": "initial inventory",
                 "datatype": int,
-                "default": 100
+                "default": 100,
             },
             "reservation_qtys": {
                 "description": "inventory to reserve going into periods 2, 3, ..., T",
                 "datatype": list,
-                "default": [50, 30]
-            }
+                "default": [50, 30],
+            },
         }
         self.check_factor_list = {
             "time_horizon": self.check_time_horizon,
@@ -97,7 +99,7 @@ class RMITD(Model):
             "gamma_shape": self.check_gamma_shape,
             "gamma_scale": self.check_gamma_scale,
             "initial_inventory": self.check_initial_inventory,
-            "reservation_qtys": self.check_reservation_qtys
+            "reservation_qtys": self.check_reservation_qtys,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -124,7 +126,9 @@ class RMITD(Model):
         return self.factors["initial_inventory"] > 0
 
     def check_reservation_qtys(self):
-        return all(reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"])
+        return all(
+            reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"]
+        )
 
     def check_simulatable_factors(self):
         # Check for matching number of periods.
@@ -138,10 +142,17 @@ class RMITD(Model):
         elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
             return False
         # Check for non-increasing reservation levels.
-        elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
+        elif any(
+            self.factors["reservation_qtys"][idx]
+            < self.factors["reservation_qtys"][idx + 1]
+            for idx in range(self.factors["time_horizon"] - 2)
+        ):
             return False
         # Check that gamma_shape*gamma_scale = 1.
-        elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
+        elif (
+            np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1)
+            is False
+        ):
             return False
         else:
             return True
@@ -171,7 +182,9 @@ class RMITD(Model):
         # random.gammavariate takes two inputs: alpha and beta.
         #     alpha = k = gamma_shape
         #     beta = 1/theta = 1/gamma_scale
-        X = X_rng.gammavariate(alpha=self.factors["gamma_shape"], beta=1./self.factors["gamma_scale"])
+        X = X_rng.gammavariate(
+            alpha=self.factors["gamma_shape"], beta=1.0 / self.factors["gamma_scale"]
+        )
         Y = [Y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])]
         # Track inventory over time horizon.
         remaining_inventory = self.factors["initial_inventory"]
@@ -181,14 +194,17 @@ class RMITD(Model):
         # Simulate over the time horizon and calculate the realized revenue.
         revenue = 0
         for period in range(self.factors["time_horizon"]):
-            demand = self.factors["demand_means"][period]*X*Y[period]
-            sell = min(max(remaining_inventory-reservations[period], 0), demand)
+            demand = self.factors["demand_means"][period] * X * Y[period]
+            sell = min(max(remaining_inventory - reservations[period], 0), demand)
             remaining_inventory = remaining_inventory - sell
-            revenue += sell*self.factors["prices"][period]
-        revenue -= self.factors["cost"]*self.factors["initial_inventory"]
+            revenue += sell * self.factors["prices"][period]
+        revenue -= self.factors["cost"] * self.factors["initial_inventory"]
         # Compose responses and gradients.
         responses = {"revenue": revenue}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -265,6 +281,7 @@ class RMITDMaxRevenue(Problem):
     --------
     base.Problem
     """
+
     def __init__(self, name="RMITD-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -289,17 +306,17 @@ class RMITDMaxRevenue(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (100, 50, 30)
+                "default": (100, 50, 30),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
-            }
+                "default": 10000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -321,7 +338,7 @@ class RMITDMaxRevenue(Problem):
         """
         factor_dict = {
             "initial_inventory": vector[0],
-            "reservation_qtys": list(vector[0:])
+            "reservation_qtys": list(vector[0:]),
         }
         return factor_dict
 
@@ -340,7 +357,9 @@ class RMITDMaxRevenue(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["initial_inventory"],) + tuple(factor_dict["reservation_qtys"])
+        vector = (factor_dict["initial_inventory"],) + tuple(
+            factor_dict["reservation_qtys"]
+        )
         return vector
 
     def response_dict_to_objectives(self, response_dict):
@@ -393,7 +412,7 @@ class RMITDMaxRevenue(Problem):
         """
         # Generate random solution using acceptable/rejection.
         while True:
-            x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
+            x = tuple([200 * rand_sol_rng.random() for _ in range(self.dim)])
             if self.check_deterministic_constraints(x):
                 break
         return x

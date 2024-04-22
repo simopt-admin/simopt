@@ -5,6 +5,7 @@ Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`_.
 """
+
 import numpy as np
 from scipy import special
 
@@ -41,6 +42,7 @@ class ChessMatchmaking(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -51,35 +53,35 @@ class ChessMatchmaking(Model):
             "elo_mean": {
                 "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200.0
+                "default": 1200.0,
             },
             "elo_sd": {
                 "description": "standard deviation of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50)),
             },
             "poisson_rate": {
                 "description": "rate of Poisson process for player arrivals",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "num_players": {
                 "description": "number of players",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "allowable_diff": {
                 "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
-                "default": 150.0
-            }
+                "default": 150.0,
+            },
         }
         self.check_factor_list = {
             "elo_mean": self.check_elo_mean,
             "elo_sd": self.check_elo_sd,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
-            "allowable_diff": self.check_allowable_diff
+            "allowable_diff": self.check_allowable_diff,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -131,13 +133,20 @@ class ChessMatchmaking(Model):
             # Generate interarrival time of the player.
             time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
             # Generate rating of the player via acceptance/rejection (not truncation).
-            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            player_rating = elo_rng.normalvariate(
+                self.factors["elo_mean"], self.factors["elo_sd"]
+            )
             while player_rating < 0 or player_rating > 2400:
-                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+                player_rating = elo_rng.normalvariate(
+                    self.factors["elo_mean"], self.factors["elo_sd"]
+                )
             # Attempt to match the incoming player with waiting players in FIFO manner.
             old_total = total_diff
             for p in range(len(waiting_players)):
-                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                if (
+                    abs(player_rating - waiting_players[p])
+                    <= self.factors["allowable_diff"]
+                ):
                     total_diff += abs(player_rating - waiting_players[p])
                     elo_diffs.append(abs(player_rating - waiting_players[p]))
                     del waiting_players[p]
@@ -148,10 +157,14 @@ class ChessMatchmaking(Model):
             if old_total == total_diff:
                 waiting_players.append(player_rating)
         # Compose responses and gradients.
-        responses = {"avg_diff": np.mean(elo_diffs),
-                     "avg_wait_time": np.mean(wait_times)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "avg_diff": np.mean(elo_diffs),
+            "avg_wait_time": np.mean(wait_times),
+        }
+        gradients = {
+            response_key: {factor_key: np.nan for factor_key in self.specifications}
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -230,6 +243,7 @@ class ChessAvgDifference(Problem):
     --------
     base.Problem
     """
+
     def __init__(self, name="CHESS-1", fixed_factors=None, model_fixed_factors=None):
         if fixed_factors is None:
             fixed_factors = {}
@@ -254,18 +268,18 @@ class ChessAvgDifference(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (150,)
+                "default": (150,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "upper_time": {
                 "description": "upper bound on wait time",
                 "datatype": float,
-                "default": 5.0
-            }
+                "default": 5.0,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -293,9 +307,7 @@ class ChessAvgDifference(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "allowable_diff": vector[0]
-        }
+        factor_dict = {"allowable_diff": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
