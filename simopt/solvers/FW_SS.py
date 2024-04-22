@@ -907,6 +907,15 @@ class FrankWolfeSS(Solver):
                 #grad, budget_spent = self.get_FD_grad(cur_x, problem, self.factors["h"], self.factors["r"])
                 grad, budget_spent = self.finite_diff(new_solution, problem, r, A, b, stepsize=self.factors["h"])
                 expended_budget += budget_spent
+                while np.all((grad == 0)):
+                    #print("recompute gradient")
+                    if expended_budget > problem.factors["budget"]:
+                        break
+                    grad, budget_spent  = self.finite_diff(new_solution, problem, r, A, b)
+                    expended_budget += budget_spent
+                    # Update r after each iteration.
+                    #r = int(self.factors["lambda"] * r)
+                    r = int(2 * r)
                    
             #print("grad: ", grad)
             #print("active set: ")
