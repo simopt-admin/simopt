@@ -1448,11 +1448,11 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
-                    handle = experiment.progress_curves[0].plot()
+                    handle = experiment.progress_curves[0].plot(color_str=color_str)
                     for curve in experiment.progress_curves[1:]:
                         curve.plot(color_str=color_str)
                 else:
-                    handle = experiment.objective_curves[0].plot()
+                    handle = experiment.objective_curves[0].plot(color_str=color_str)
                     for curve in experiment.objective_curves[1:]:
                         curve.plot(color_str=color_str)
             elif plot_type == "mean":
@@ -1461,7 +1461,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                     estimator = mean_of_curves(experiment.progress_curves)
                 else:
                     estimator = mean_of_curves(experiment.objective_curves)
-                handle = estimator.plot()
+                handle = estimator.plot(color_str=color_str)
             elif plot_type == "quantile":
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
