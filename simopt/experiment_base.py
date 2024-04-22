@@ -19,8 +19,7 @@ import os
 import csv
 import itertools
 from mrg32k3a.mrg32k3a import MRG32k3a
-import multiprocessing
-from multiprocessing import Process
+from multiprocessing import Pool
 
 
 from .base import Solution
@@ -459,14 +458,12 @@ class ProblemSolver(object):
             Number of macroreplications of the solver to run on the problem.
         """
         print("Running Solver", self.solver.name, "on Problem", self.problem.name + ".")
-
+        
+        # Initialize variables
         self.n_macroreps = n_macroreps
-        # Create variables for recommended solutions and intermediate budgets
-        # so we can append to them in parallel.
-        multiprocessing_manager = multiprocessing.Manager()
-        self.all_recommended_xs = multiprocessing_manager.dict()
-        self.all_intermediate_budgets = multiprocessing_manager.dict()
-        self.timings = multiprocessing_manager.dict()
+        self.all_recommended_xs = [None] * n_macroreps
+        self.all_intermediate_budgets = [None] * n_macroreps
+        self.timings = [None] * n_macroreps
 
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
@@ -486,41 +483,19 @@ class ProblemSolver(object):
         # Start a timer
         self.function_start = time.time()
 
-        # If we're only doing one macroreplication or we have fewer than 4 cores, run macroreps in serial.
-        # It just isn't worth the overhead to run in parallel.
-        if n_macroreps == 1 or self.active_thread_limit < 2:
-            print("Starting macroreplications in series")
+        print("Starting macroreplications in parallel")
+        with Pool() as process_pool:
+            # Start the macroreplications in parallel (async)
+            result = process_pool.map_async(self.run_multithread, range(n_macroreps))
+            # Wait for the results to be returned (or 1 second)
+            while (not result.ready()):
+                # Update status bar here
+                result.wait(1)
+
+            # Grab all the data out of the result
             for mrep in range(n_macroreps):
-                self.run_multithread(mrep)
-        else:
-            print("Starting macroreplications in parallel")
-            # Run n_macroreps of the solver on the problem.
-            # Report recommended solutions and corresponding intermediate budgets.
-            # Create an array of Process objects, one for each macroreplication.
-            Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
-            # Start each process.
-            for mrep in range(self.n_macroreps):
-                # Only allow for so many processes to be running at once
-                while (mrep - len(self.timings.keys())) >= self.active_thread_limit:
-                    # Sleep for 10ms
-                    time.sleep(0.01)
-                # Start the process
-                Processes[mrep].start()
-            # Wait for each process to finish.
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].join()
-            # Stop the threads.
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].terminate()
-
-        # Print the total runtime.
-        current_time = round(time.time() - self.function_start, 3)
-        print("Finished running {} macroreplications in {} seconds.".format(n_macroreps, current_time))
-
-        # Convert shared memory dictionaries into lists
-        self.timings = [self.timings[i] for i in range(len(self.timings.keys()))]
-        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(len(self.all_recommended_xs.keys()))]
-        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(len(self.all_intermediate_budgets.keys()))]
+                self.all_recommended_xs[mrep], self.all_intermediate_budgets[mrep], self.timings[mrep] = result.get()[mrep]
+        print("Finished running {} macroreplications in {} seconds.".format(n_macroreps, round(time.time() - self.function_start, 3)))
 
         # Delete stuff we don't need to save
         del self.function_start
@@ -546,16 +521,12 @@ class ProblemSolver(object):
         recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
         toc = time.perf_counter()
         runtime = toc - tic
+        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds.")
 
-        # Record the run time of the macroreplication.
-        self.timings[mrep] = runtime
-        # Trim solutions recommended after final budget.
+        # Trim the recommended solutions and intermediate budgets
         recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
-        # Extract decision-variable vectors (x) from recommended solutions.
-        # Record recommended solutions and intermediate budgets.
-        self.all_recommended_xs[mrep] = [solution.x for solution in recommended_solns]
-        self.all_intermediate_budgets[mrep] = intermediate_budgets
-        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {toc - tic:0.4f} seconds.")
+        # Return tuple (rec_solns, int_budgets, runtime)
+        return ([solution.x for solution in recommended_solns], intermediate_budgets, runtime)
 
     def check_run(self):
         """Check if the experiment has been run.
@@ -590,66 +561,37 @@ class ProblemSolver(object):
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
         self.crn_across_macroreps = crn_across_macroreps
-        # Create variables for anything that changes/updates while being run so
-        # that concurrent access is possible
-        # All of these are dictionaries so that the key (mrep) can be used to
-        # store data in order, and then the data can be later accessed in order
-        multiprocessing_manager = multiprocessing.Manager()
-        self.all_post_replicates = multiprocessing_manager.dict()
+        # Initialize variables
+        self.all_post_replicates = [None] * self.n_macroreps
         for mrep in range(self.n_macroreps):
-            self.all_post_replicates[mrep] = multiprocessing_manager.dict()
-            for budget_index in range(len(self.all_intermediate_budgets[mrep])):
-                self.all_post_replicates[mrep][budget_index] = multiprocessing_manager.list()
-        self.timings = multiprocessing_manager.dict()
+            self.all_post_replicates[mrep] = [] * len(self.all_intermediate_budgets[mrep])
+        self.timings = [None] * self.n_macroreps
 
         self.function_start = time.time()
 
-                # If only one macroreplication is being carried out OR if there aren't
-        # enough cores to run more than one macroreplication at a time, run
-        # them in series
-        if self.n_macroreps == 1 or self.active_thread_limit < 2:
-            print("Starting postreplications in series")
+        print("Starting postreplications in parallel")
+        with Pool() as process_pool:
+            # Start the macroreplications in parallel (async)
+            result = process_pool.map_async(self.post_replicate_multithread, range(self.n_macroreps))
+            # Wait for the results to be returned (or 1 second)
+            while (not result.ready()):
+                # Update status bar here
+                result.wait(1)
 
+            # Grab all the data out of the result
             for mrep in range(self.n_macroreps):
-                self.post_replicate_multithread(mrep)
-        else:
-            print ("Starting postreplications in parallel")
+                self.all_post_replicates[mrep], self.timings[mrep] = result.get()[mrep]
 
-            # Run n_macroreps of the post-replication process
-            Processes = [Process(target=self.post_replicate_multithread, args=(mrep, )) for mrep in range(self.n_macroreps)]
+            # # The all post replicates is tricky because it is a dictionary of lists of lists
+            # # We need to convert it to a list of lists of lists
+            # self.all_post_replicates = [self.all_post_replicates[i] for i in range(len(self.all_post_replicates.keys()))]
+            # Store estimated objective for each macrorep for each budget.
+            self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        print("Finished running {} postreplications in {} seconds.".format(self.n_macroreps, round(time.time() - self.function_start, 3)))
 
-            # Start each process
-            for mrep in range(self.n_macroreps):
-                # Only allow for so many processes to be running at once
-                while (mrep - len(self.timings.keys())) >= self.active_thread_limit:
-                    # Sleep for 10ms
-                    time.sleep(0.01)
-                # Start the process
-                Processes[mrep].start()
-
-            # Wait for each process to finish.
-            while (len(self.timings.keys()) != self.n_macroreps):
-                # Sleep for 10ms
-                time.sleep(0.01)
-
-            # Join the threads
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].join()
-            # Stop the threads
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].terminate()
-
-        # Print the total runtime.
-        current_time = round(time.time() - self.function_start, 3)
-        print("Finished postreplicating {} macroreplications in {} seconds.".format(self.n_macroreps, current_time))
-
-        # Convert shared memory dictionaries into lists
-        self.timings = [self.timings[i] for i in range(len(self.timings.keys()))]
-        # The all post replicates is tricky because it is a dictionary of lists of lists
-        # We need to convert it to a list of lists of lists
-        self.all_post_replicates = [self.all_post_replicates[i] for i in range(len(self.all_post_replicates.keys()))]
-        # Store estimated objective for each macrorep for each budget.
-        self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        # Delete stuff we don't need to save
+        del self.function_start
+        
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
@@ -663,6 +605,9 @@ class ProblemSolver(object):
             baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs * (mrep + 1) + rng_index, 0]) for rng_index in range(self.problem.model.n_rngs)]
 
         tic = time.perf_counter()
+
+        # Create an empty list for each budget
+        post_replicates = []
         # Loop over all recommended solutions.
         for budget_index in range(len(self.all_intermediate_budgets[mrep])):
             x = self.all_recommended_xs[mrep][budget_index]
@@ -676,11 +621,14 @@ class ProblemSolver(object):
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
             self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
             # Store results
-            self.all_post_replicates[mrep][budget_index].append(list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0]))  # 0 <- assuming only one objective
+            post_replicates.append(list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0]))  # 0 <- assuming only one objective
         toc = time.perf_counter()
         runtime = toc - tic
-        self.timings[mrep] = runtime
         print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
+
+        # Return tuple (post_replicates, runtime)
+        return (post_replicates, runtime)
+
 
     def check_postreplicate(self):
         """Check if the experiment has been postreplicated.
