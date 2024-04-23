@@ -1348,7 +1348,7 @@ class BoomFrankWolfe1(Solver):
                 direction = d_FW #by default since it has no effect anyway
                 gamma = 0
             
-            elif((-grad.dot(d_FW) >= -grad.dot(d_away)) or (d_away == 0).all() or (not is_bounded)):
+            elif((-grad.dot(d_FW) >= -grad.dot(d_away)) or (d_away == 0).all() or (not is_bounded) or (alphas[tuple(v)] == 1)):
                 #FW step
                 #print("foward")
                 #ind.append('FW')
