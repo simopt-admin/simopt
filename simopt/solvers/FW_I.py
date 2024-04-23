@@ -198,6 +198,8 @@ class BoomFrankWolfe1(Solver):
         ratios = ratio_val[denom > 1e-9]
         if(len(ratios) == 0):
             return np.inf
+        elif(min(ratios) < 0):
+            return 0
         else:
             return min(ratios)
         
