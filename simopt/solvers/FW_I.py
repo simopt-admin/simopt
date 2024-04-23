@@ -195,8 +195,13 @@ class BoomFrankWolfe1(Solver):
         denom = np.array(denom)
         #print("denom: ", denom)
         #print("ratio_val: ", ratio_val)
+        ratios = ratio_val[denom > 1e-9]
+        if(len(ratios) == 0):
+            return np.inf
+        else:
+            return min(ratios)
         
-        return min(ratio_val[denom > 1e-6])
+        #return min(ratio_val[denom > 1e-6])
         #prob = cp.Problem(objective, constraints)
         #prob.solve()
     
@@ -1004,9 +1009,9 @@ class BoomFrankWolfe1(Solver):
 
     #     return np.array(ext)[:,1:] 
     
-    def get_random_vertex(self,Ci,di,lower,upper):
-        
-        num_var = Ci.shape[1]
+    def get_random_vertex(self,Ci,di,lower,upper):        
+        #num_var = Ci.shape[1]
+        num_var = len(lower)
         x = cp.Variable(num_var)
         #objective = cp.Minimize(cp.norm(Ci@x - di,1))
         objective = cp.Maximize(cp.sum(x))
