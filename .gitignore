@@ -18,4 +18,6 @@ docs/_build/**
 # Pickle files
 *.pickle
 
-rand_exp.sbatch
+*.sbatch
+
+experiments/logs

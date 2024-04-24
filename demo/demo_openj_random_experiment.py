@@ -64,17 +64,11 @@ def main():
     solver_names = ["PGD-B", "PGD-I", "PGD-Z", "PGD-SS", "AS-B", "AS-I", "AS-Z", "AS-SS", "FW-B", "FW-I", "FW-Z", "FW-SS"]
 
     #Create a list for each problem
-    # problem_names = ["OPENJ-1", "SAN-2", "SMF-1", "SMFCVX-1", "CC-1"]
-    # num_random_instances = [5, 5, 5, 5, 5] # Number of random instances
-    # all_problem_fixed_factors = [{}, {}, {}, {}, {}] # Fixed problem factors
-    # all_model_fixed_factors = [{}, {}, {}, {}, {}] # Fixed model factors
-    # problem_renames = ["OPENJ", "SAN", "SMF", "SMFCVX", "Cascade"] # Prefix of random problem names
-
-    problem_names = ["SAN-2", "SMF-1", "SMFCVX-1", "CC-1"]
-    num_random_instances = [5, 5, 5, 5] # Number of random instances
-    all_problem_fixed_factors = [{}, {}, {}, {}] # Fixed problem factors
-    all_model_fixed_factors = [{}, {}, {}, {}] # Fixed model factors
-    problem_renames = ["SAN", "SMF", "SMFCVX", "Cascade"] # Prefix of random problem names
+    problem_names = ["OPENJ-1"]
+    num_random_instances = [5] # Number of random instances
+    all_problem_fixed_factors = [{}] # Fixed problem factors
+    all_model_fixed_factors = [{}] # Fixed model factors
+    problem_renames = ["OPENJ"] # Prefix of random problem names
 
     rand_problems = []
     # Generate random problems
@@ -127,8 +121,8 @@ def main():
     print("Post-processing results.")
     # Run a fixed number of postreplications at all recommended solutions.
     mymetaexperiment.post_replicate(n_postreps=args.n_postreps)
-    # Find an optimal solution x* for normalization.
-    mymetaexperiment.post_normalize(n_postreps_init_opt=args.n_postreps)
+    # # Find an optimal solution x* for normalization.
+    # mymetaexperiment.post_normalize(n_postreps_init_opt=args.n_postreps)
 
     print("Plotting results.")
     # color_palette = [
@@ -149,8 +143,8 @@ def main():
     # Generate 20 distinct colors from the colormap
     color_palette = [cmap(i) for i in range(cmap.N)]
 
-    # Produce basic plots of the solvers on the problems.
-    plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", color_palette = color_palette)
+    # # Produce basic plots of the solvers on the problems.
+    # plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", color_palette = color_palette)
 
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])

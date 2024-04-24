@@ -2,96 +2,6 @@
 ----------------------------------------------------------------------------------------------
 Problems:
 
-OPENJ-R1
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.9883167873323067, 0.49061470546078273, 0.8830271446533621, 0.6123602511590303, 0.2891020560229019]
-		routing_matrix: [[0.6823369997806877, 0.0627184114176056, 0.0, 0.10036258057479318, 0.0], [0.0, 0.5107100026078615, 0.09187499982117854, 0.024539737828998223, 0.0023507091719434793], [0.0, 0.06600149118351287, 0.02764070359912972, 0.0, 0.5300416655227955], [0.0, 0.0, 0.41053419718618805, 0.0, 0.0], [0.178949911119995, 0.0, 0.0, 0.715235472703062, 0.045121708432757084]]
-		t_end: 100
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 16.410656836133427
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ-R2
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.5309806390563913, 0.44915624183856423, 1.3762314329884107, 0.06401613048337036, 0.23516401812107388]
-		routing_matrix: [[0.0, 0.1842328797431147, 0.0, 0.0, 0.0], [0.0, 0.0, 0.19971774723138944, 0.23742394654108134, 0.0], [0.0, 0.0, 0.2273998863318419, 0.0, 0.5519896687043548], [0.2779916711120781, 0.0, 0.0, 0.0, 0.058046068849379136], [0.06618468265357906, 0.0, 0.11665084681749428, 0.0, 0.3045237889229224]]
-		t_end: 100
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 6.276185602629773
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ-R3
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [1.1162464117786188, 0.003193992679841741, 0.6117918019780898, 1.4803318826195941, 0.3003458082664799]
-		routing_matrix: [[0.1896037582118544, 0.0, 0.0, 0.0, 0.0], [0.0, 0.1339496814322316, 0.0, 0.06993995595656287, 0.0], [0.31641699000050977, 0.0, 0.3878437548283107, 0.0, 0.0], [0.0, 0.051143569916946977, 0.0, 0.4243939753239803, 0.0], [0.14761590948624806, 0.17141610300958163, 0.18157176146225365, 0.23345803601572246, 0.0]]
-		t_end: 100
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 15.573040404147019
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ-R4
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [1.3830372332864909, 1.3470126427154006, 1.604127602374785, 1.2384844038235467, 1.7173321407702669]
-		routing_matrix: [[0.0, 0.19747240906108648, 0.0, 0.5061712413136293, 0.08222815416866072], [0.0, 0.0014856770466897345, 0.47426210306168404, 0.23711622946380184, 0.0], [0.0704465812296881, 0.3756838894555676, 0.0, 0.0, 0.0], [0.23549057793524694, 0.0, 0.5111085703056774, 0.01682524353093863, 0.0], [0.001986511458135456, 0.0, 0.0, 0.32921448571051704, 0.12562467039738884]]
-		t_end: 100
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 30.841207952092766
-		gamma_mean: 0.5
-		gamma_scale: 5
-
-OPENJ-R5
-	Model Factors:
-		number_queues: 5
-		arrival_alphas: [0.40974458111855444, 0.7684200377187101, 1.3904679929771009, 1.0276757403994314, 0.4520804776643507]
-		routing_matrix: [[0.21674248795404966, 0.0, 0.0, 0.14617797602159982, 0.0], [0.0, 0.09344509013964417, 0.0, 0.0, 0.0], [0.4418793830825889, 0.009024208864089807, 0.05344391568024887, 0.0, 0.2085242180380396], [0.0, 0.28244559495123917, 0.24521418889262586, 0.0, 0.0], [0.3525685248643881, 0.1393446431100421, 0.18135107753590113, 0.0, 0.03975810838685235]]
-		t_end: 100
-		warm_up: 0
-		steady_state_initialization: False
-		density_p: 0.5
-		random_arrival_parameter: 1
-
-	Problem Factors:
-		initial_solution: (11, 11, 11, 11, 11)
-		budget: 10000
-		service_rates_budget: 15.20186774224037
-		gamma_mean: 0.5
-		gamma_scale: 5
-
 SAN-R1
 	Model Factors:
 		num_nodes: 9
@@ -381,7 +291,7 @@ PGD-B
 		LSmethod: backtracking
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD.default_step_f of <simopt.solvers.PGD_B.BoomProxGD object at 0x2aabf7136bd0>>
+		step_f: <bound method BoomProxGD.default_step_f of <simopt.solvers.PGD_B.BoomProxGD object at 0x2aab220c9ca0>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -400,7 +310,7 @@ PGD-I
 		LSmethod: interpolation
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD1.default_step_f of <simopt.solvers.PGD_I.BoomProxGD1 object at 0x2aabf71373e0>>
+		step_f: <bound method BoomProxGD1.default_step_f of <simopt.solvers.PGD_I.BoomProxGD1 object at 0x2aab220dc950>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -419,7 +329,7 @@ PGD-Z
 		LSmethod: zoom
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD2.default_step_f of <simopt.solvers.PGD_Z.BoomProxGD2 object at 0x2aabf71052e0>>
+		step_f: <bound method BoomProxGD2.default_step_f of <simopt.solvers.PGD_Z.BoomProxGD2 object at 0x2aab21eb5640>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -438,7 +348,7 @@ PGD-SS
 		LSmethod: zoom
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomProxGD3.default_step_f of <simopt.solvers.PGD_SS.BoomProxGD3 object at 0x2aabf7168b30>>
+		step_f: <bound method BoomProxGD3.default_step_f of <simopt.solvers.PGD_SS.BoomProxGD3 object at 0x2aab24ff1010>>
 		max_step_size: 10
 		max_iters: 1000
 		theta: 0.1
@@ -527,7 +437,7 @@ FW-B
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe.default_step_f of <simopt.solvers.FW_B.BoomFrankWolfe object at 0x2aabf7211730>>
+		step_f: <bound method BoomFrankWolfe.default_step_f of <simopt.solvers.FW_B.BoomFrankWolfe object at 0x2aab28c552b0>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: backtracking
@@ -546,7 +456,7 @@ FW-I
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe1.default_step_f of <simopt.solvers.FW_I.BoomFrankWolfe1 object at 0x2aabf7212510>>
+		step_f: <bound method BoomFrankWolfe1.default_step_f of <simopt.solvers.FW_I.BoomFrankWolfe1 object at 0x2aab280562d0>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: interpolation
@@ -565,7 +475,7 @@ FW-Z
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method BoomFrankWolfe2.default_step_f of <simopt.solvers.FW_Z.BoomFrankWolfe2 object at 0x2aabf7213200>>
+		step_f: <bound method BoomFrankWolfe2.default_step_f of <simopt.solvers.FW_Z.BoomFrankWolfe2 object at 0x2aab2972c5c0>>
 		theta: 0.1
 		max_iters: 1000
 		LSmethod: zoom
@@ -584,7 +494,7 @@ FW-SS
 		crn_across_solns: True
 		r: 30
 		h: 0.1
-		step_f: <bound method FrankWolfeSS.default_step_f of <simopt.solvers.FW_SS.FrankWolfeSS object at 0x2aabeef6b4a0>>
+		step_f: <bound method FrankWolfeSS.default_step_f of <simopt.solvers.FW_SS.FrankWolfeSS object at 0x2aab2a680200>>
 		theta: 0.1
 		max_iters: 1000
 		gamma: 0.8
@@ -605,11 +515,6 @@ FW-SS
 
 ----------------------------------------------------------------------------------------------
 The .pickle files for the associated Problem-Solver pairs are:
-PGD-B_on_OPENJ-R1.pickle
-PGD-B_on_OPENJ-R2.pickle
-PGD-B_on_OPENJ-R3.pickle
-PGD-B_on_OPENJ-R4.pickle
-PGD-B_on_OPENJ-R5.pickle
 PGD-B_on_SAN-R1.pickle
 PGD-B_on_SAN-R2.pickle
 PGD-B_on_SAN-R3.pickle
@@ -630,11 +535,6 @@ PGD-B_on_Cascade-R2.pickle
 PGD-B_on_Cascade-R3.pickle
 PGD-B_on_Cascade-R4.pickle
 PGD-B_on_Cascade-R5.pickle
-PGD-I_on_OPENJ-R1.pickle
-PGD-I_on_OPENJ-R2.pickle
-PGD-I_on_OPENJ-R3.pickle
-PGD-I_on_OPENJ-R4.pickle
-PGD-I_on_OPENJ-R5.pickle
 PGD-I_on_SAN-R1.pickle
 PGD-I_on_SAN-R2.pickle
 PGD-I_on_SAN-R3.pickle
@@ -655,11 +555,6 @@ PGD-I_on_Cascade-R2.pickle
 PGD-I_on_Cascade-R3.pickle
 PGD-I_on_Cascade-R4.pickle
 PGD-I_on_Cascade-R5.pickle
-PGD-Z_on_OPENJ-R1.pickle
-PGD-Z_on_OPENJ-R2.pickle
-PGD-Z_on_OPENJ-R3.pickle
-PGD-Z_on_OPENJ-R4.pickle
-PGD-Z_on_OPENJ-R5.pickle
 PGD-Z_on_SAN-R1.pickle
 PGD-Z_on_SAN-R2.pickle
 PGD-Z_on_SAN-R3.pickle
@@ -680,11 +575,6 @@ PGD-Z_on_Cascade-R2.pickle
 PGD-Z_on_Cascade-R3.pickle
 PGD-Z_on_Cascade-R4.pickle
 PGD-Z_on_Cascade-R5.pickle
-PGD-SS_on_OPENJ-R1.pickle
-PGD-SS_on_OPENJ-R2.pickle
-PGD-SS_on_OPENJ-R3.pickle
-PGD-SS_on_OPENJ-R4.pickle
-PGD-SS_on_OPENJ-R5.pickle
 PGD-SS_on_SAN-R1.pickle
 PGD-SS_on_SAN-R2.pickle
 PGD-SS_on_SAN-R3.pickle
@@ -705,11 +595,6 @@ PGD-SS_on_Cascade-R2.pickle
 PGD-SS_on_Cascade-R3.pickle
 PGD-SS_on_Cascade-R4.pickle
 PGD-SS_on_Cascade-R5.pickle
-AS-B_on_OPENJ-R1.pickle
-AS-B_on_OPENJ-R2.pickle
-AS-B_on_OPENJ-R3.pickle
-AS-B_on_OPENJ-R4.pickle
-AS-B_on_OPENJ-R5.pickle
 AS-B_on_SAN-R1.pickle
 AS-B_on_SAN-R2.pickle
 AS-B_on_SAN-R3.pickle
@@ -730,11 +615,6 @@ AS-B_on_Cascade-R2.pickle
 AS-B_on_Cascade-R3.pickle
 AS-B_on_Cascade-R4.pickle
 AS-B_on_Cascade-R5.pickle
-AS-I_on_OPENJ-R1.pickle
-AS-I_on_OPENJ-R2.pickle
-AS-I_on_OPENJ-R3.pickle
-AS-I_on_OPENJ-R4.pickle
-AS-I_on_OPENJ-R5.pickle
 AS-I_on_SAN-R1.pickle
 AS-I_on_SAN-R2.pickle
 AS-I_on_SAN-R3.pickle
@@ -755,11 +635,6 @@ AS-I_on_Cascade-R2.pickle
 AS-I_on_Cascade-R3.pickle
 AS-I_on_Cascade-R4.pickle
 AS-I_on_Cascade-R5.pickle
-AS-Z_on_OPENJ-R1.pickle
-AS-Z_on_OPENJ-R2.pickle
-AS-Z_on_OPENJ-R3.pickle
-AS-Z_on_OPENJ-R4.pickle
-AS-Z_on_OPENJ-R5.pickle
 AS-Z_on_SAN-R1.pickle
 AS-Z_on_SAN-R2.pickle
 AS-Z_on_SAN-R3.pickle
@@ -780,11 +655,6 @@ AS-Z_on_Cascade-R2.pickle
 AS-Z_on_Cascade-R3.pickle
 AS-Z_on_Cascade-R4.pickle
 AS-Z_on_Cascade-R5.pickle
-AS-SS_on_OPENJ-R1.pickle
-AS-SS_on_OPENJ-R2.pickle
-AS-SS_on_OPENJ-R3.pickle
-AS-SS_on_OPENJ-R4.pickle
-AS-SS_on_OPENJ-R5.pickle
 AS-SS_on_SAN-R1.pickle
 AS-SS_on_SAN-R2.pickle
 AS-SS_on_SAN-R3.pickle
@@ -805,11 +675,6 @@ AS-SS_on_Cascade-R2.pickle
 AS-SS_on_Cascade-R3.pickle
 AS-SS_on_Cascade-R4.pickle
 AS-SS_on_Cascade-R5.pickle
-FW-B_on_OPENJ-R1.pickle
-FW-B_on_OPENJ-R2.pickle
-FW-B_on_OPENJ-R3.pickle
-FW-B_on_OPENJ-R4.pickle
-FW-B_on_OPENJ-R5.pickle
 FW-B_on_SAN-R1.pickle
 FW-B_on_SAN-R2.pickle
 FW-B_on_SAN-R3.pickle
@@ -830,11 +695,6 @@ FW-B_on_Cascade-R2.pickle
 FW-B_on_Cascade-R3.pickle
 FW-B_on_Cascade-R4.pickle
 FW-B_on_Cascade-R5.pickle
-FW-I_on_OPENJ-R1.pickle
-FW-I_on_OPENJ-R2.pickle
-FW-I_on_OPENJ-R3.pickle
-FW-I_on_OPENJ-R4.pickle
-FW-I_on_OPENJ-R5.pickle
 FW-I_on_SAN-R1.pickle
 FW-I_on_SAN-R2.pickle
 FW-I_on_SAN-R3.pickle
@@ -855,11 +715,6 @@ FW-I_on_Cascade-R2.pickle
 FW-I_on_Cascade-R3.pickle
 FW-I_on_Cascade-R4.pickle
 FW-I_on_Cascade-R5.pickle
-FW-Z_on_OPENJ-R1.pickle
-FW-Z_on_OPENJ-R2.pickle
-FW-Z_on_OPENJ-R3.pickle
-FW-Z_on_OPENJ-R4.pickle
-FW-Z_on_OPENJ-R5.pickle
 FW-Z_on_SAN-R1.pickle
 FW-Z_on_SAN-R2.pickle
 FW-Z_on_SAN-R3.pickle
@@ -880,11 +735,6 @@ FW-Z_on_Cascade-R2.pickle
 FW-Z_on_Cascade-R3.pickle
 FW-Z_on_Cascade-R4.pickle
 FW-Z_on_Cascade-R5.pickle
-FW-SS_on_OPENJ-R1.pickle
-FW-SS_on_OPENJ-R2.pickle
-FW-SS_on_OPENJ-R3.pickle
-FW-SS_on_OPENJ-R4.pickle
-FW-SS_on_OPENJ-R5.pickle
 FW-SS_on_SAN-R1.pickle
 FW-SS_on_SAN-R2.pickle
 FW-SS_on_SAN-R3.pickle
