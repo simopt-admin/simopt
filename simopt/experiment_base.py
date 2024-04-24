@@ -370,10 +370,6 @@ class ProblemSolver(object):
     file_name_path : str, optional
         Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
     """
-    # Set the minimum number of CPU cores for multiprocessing to be enabled
-    CPU_COUNT_LIMIT = 2
-    # Set the maximum number of active threads to be running at once
-    ACTIVE_THREAD_LIMIT_DEFAULT = 4
 
     def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
         """There are two ways to create a ProblemSolver object:
@@ -406,15 +402,6 @@ class ProblemSolver(object):
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
             self.file_name_path = file_name_path
-
-        # Set the maximum number of active threads to be running at once
-        # Set to either 4 (if CPU can't be determined) or the number of cores * 2 (accounting for threads)
-        if (os.cpu_count is None or (os.cpu_count() is not None and os.cpu_count() < self.CPU_COUNT_LIMIT)): # type:ignore
-            self.active_thread_limit = self.ACTIVE_THREAD_LIMIT_DEFAULT
-        # If we can determine CPU Count, set the thread limit to the number of virtual cores
-        else:
-            self.active_thread_limit = os.cpu_count() * 2
-
 
     def check_compatibility(self):
         """Check whether the experiment's solver and problem are compatible.
