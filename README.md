@@ -1,10 +1,7 @@
 This branch is dedicated to the experiments conducted for the 2024 Winter Simulation Conference paper.
 
 ## Paper TODO
-1. Rename problem names
-2. Incorporate parallel computing features from main branch
-3. Maybe give a more informative name for demo_user?
-4. Update .rst files.
+1. Update .rst files.
 
 ## Replicate the experiments
 To replicate the experiments conducted in the paper, run the command ```python demo/demo_random_experiment.py ```
