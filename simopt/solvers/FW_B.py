@@ -1346,6 +1346,7 @@ class BoomFrankWolfe(Solver):
             if((d_FW == 0).all() and (d_away == 0).all()):
                 direction = d_FW #by default since it has no effect anyway
                 gamma = 0
+                return recommended_solns, intermediate_budgets 
             
             elif((-grad.dot(d_FW) >= -grad.dot(d_away)) or (d_away == 0).all() or (not is_bounded) or (alphas[tuple(v)] == 1)):
                 #FW step
