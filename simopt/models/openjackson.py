@@ -604,7 +604,7 @@ class OpenJacksonMinQueue(Problem):
 
         lambdas = self.model.calc_lambdas()
         r = self.factors["service_rates_budget"]/sum(lambdas)
-        # self.factors['initial_solution'] = tuple([r*lambda_i for lambda_i in lambdas])
+        self.factors['initial_solution'] = tuple([r*lambda_i for lambda_i in lambdas])
         
         return
     
