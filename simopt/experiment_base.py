@@ -445,7 +445,7 @@ class ProblemSolver(object):
             Number of macroreplications of the solver to run on the problem.
         """
         print("Running Solver", self.solver.name, "on Problem", self.problem.name + ".")
-        
+
         # Initialize variables
         self.n_macroreps = n_macroreps
         self.all_recommended_xs = [None] * n_macroreps
@@ -464,7 +464,7 @@ class ProblemSolver(object):
         #     Streams 3, 4, ..., n_macroreps + 2: reserved for
         #                                         macroreplications
         rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # Currently unused.
-        rng_list = [MRG32k3a(s_ss_sss_index=[2, i+1, 0]) for i in range(3)]
+        rng_list = [MRG32k3a(s_ss_sss_index=[2, i + 1, 0]) for i in range(3)]
         self.solver.attach_rngs(rng_list)
 
         # Start a timer
@@ -578,12 +578,12 @@ class ProblemSolver(object):
 
         # Delete stuff we don't need to save
         del self.function_start
-        
+
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
     def post_replicate_multithread(self, mrep):
-        print(f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}.")    
+        print(f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}.")
         # Create RNG list for the macroreplication.
         if self.crn_across_macroreps:
             # Use the same RNGs for all macroreps.
@@ -615,7 +615,6 @@ class ProblemSolver(object):
 
         # Return tuple (post_replicates, runtime)
         return (post_replicates, runtime)
-
 
     def check_postreplicate(self):
         """Check if the experiment has been postreplicated.
@@ -2906,6 +2905,7 @@ def read_group_experiment_results(file_name_path):
         groupexperiment = pickle.load(file)
     return groupexperiment
 
+
 def find_unique_solvers_problems(experiments):
     """Identify the unique problems and solvers in a collection
     of experiments.
@@ -2932,6 +2932,7 @@ def find_unique_solvers_problems(experiments):
         if experiment.problem not in unique_problems:
             unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
+
 
 def find_missing_experiments(experiments):
     """Identify problem-solver pairs that are not part of a list
