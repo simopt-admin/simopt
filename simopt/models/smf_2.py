@@ -227,11 +227,16 @@ class SMF(Model):
         #         idx = uni_rng.sample(range(0, len(remain)), remain_num)
         #         remove_set = set([remove[i] for i in idx])
         #         arcs = arcs - remove_set
-
-        else:
-            return list(arcs)
         
-        return list(arcs)
+        else:
+            arcs = list(arcs)
+            arcs_e = [i for i in arcs if i != (source, end)]
+            return arcs_e
+        
+        arcs = list(arcs)
+        arcs_e = [i for i in arcs if i != (source, end)]
+        
+        return arcs_e
     
     def get_covariance(self, num_arcs, cov_rng):
         # Generate random covariance matrix
@@ -251,7 +256,7 @@ class SMF(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        # print('arcs: ', arcs_set)
+        print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         
         self.factors["mean_noise"] = [0 for i in range(len(self.factors["arcs"]))]
@@ -514,7 +519,7 @@ class SMF_Max(Problem):
         # For random version, randomize problem factors
         if self.random:
             self.factors["budget"] = self.random_budget(random_rng[0])
-            # print('budget: ', self.factors["budget"])
+            print('budget: ', self.factors["budget"])
         
         return random_rng
 

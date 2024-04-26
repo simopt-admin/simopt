@@ -222,7 +222,7 @@ class SAN(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        # print('arcs: ', arcs_set)
+        print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         self.factors["arc_means"] = (1,) * len(self.factors["arcs"])
 
@@ -523,8 +523,8 @@ class SANLongestPath(Problem):
             self.factors["budget"] = self.random_budget(random_rng[0])
             self.factors["c"] = self.get_coefficient(random_rng[1])
             
-        # print('budget: ', self.factors['budget'])
-        # print('c: ', self.factors["c"])
+        print('budget: ', self.factors['budget'])
+        print('c: ', self.factors["c"])
         
         return random_rng
 
@@ -727,7 +727,7 @@ class SANLongestPathConstr(Problem):
         self.model_decision_factors = {"arc_means"}
         self.factors = fixed_factors
         self.random = random
-        self.random_const = False
+        self.random_const = True
         if self.random_const:
             self.num_con = 3
         else:
@@ -779,13 +779,15 @@ class SANLongestPathConstr(Problem):
         if random==True and random_rng != None:
             self.model.attach_rng(random_rng)
         self.dim = len(self.model.factors["arcs"])
-        self.factors["initial_solution"] = (15,) * self.dim
-        self.factors["arc_costs"] = (1,) * self.dim 
+        # self.factors["initial_solution"] = (15,) * self.dim
+        # self.factors["arc_costs"] = (1,) * self.dim 
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (100000,) * self.dim #np.inf
         self.Ci = -1 * np.ones(13)
+        # self.Ci = None
         self.Ce = None
         self.di = -1 * np.array([self.factors["sum_lb"]])
+        # self.di = None
         self.de = None
     
     def check_arc_costs(self):
@@ -846,6 +848,7 @@ class SANLongestPathConstr(Problem):
     def get_coefficient(self, exp_rng):
         if self.random == True:
             c = []
+            print('******')
             for i in range(len(self.factors["arc_costs"])):
                 ci = exp_rng.expovariate(1)
                 c.append(ci)
@@ -882,28 +885,44 @@ class SANLongestPathConstr(Problem):
         
         if self.random:
             self.factors["budget"] = self.random_budget(random_rng[0])
-            
             self.factors["arc_costs"] = self.get_coefficient(random_rng[1])
-            # print('c: ', self.factors["arc_costs"])
+            print('*!!c: ', self.factors["arc_costs"])
         
             # Random constraint
             if self.random_const:
                 self.factors["r_const"], self.factors['lbs'] = self.get_const(self.num_con, random_rng[2])
                 self.factors["lbs"].append(self.factors["sum_lb"])  # Combine the sum_lb with the partial_lb
                 self.factors["r_const"].append([i for i in range(self.dim)])  # Combine the index related to sum_lb with the r_const
-                # print('r_const: ', self.factors["r_const"])
-                # print('partial_lb: ', self.factors['partial_lb'])
+                print('****r_const: ', self.factors["r_const"])
+                print('****partial_lb: ', self.factors['lbs'])
             else:
                 self.factors["r_const"], self.factors['sum_lb'] = self.get_const(self.num_con, random_rng[2])
                 self.factors["lbs"] = [self.factors["sum_lb"]]
         else:
             self.factors["r_const"] = [[i for i in range(self.dim)]]
             self.factors["lbs"] = [self.factors["sum_lb"]]
-        
+
         self.factors["lbs"] += [0 for i in range(self.dim)]  # Require each arc means larger or equal to 0
         self.factors["r_const"] += [[i] for i in range(self.dim)]
-        # print('r_const: ', self.factors["r_const"])
-        # print('lbs: ', self.factors['lbs'])
+        print('r_const: ', self.factors["r_const"])
+        print('lbs: ', self.factors['lbs'])
+        
+        lm = np.zeros((len(self.factors['r_const']), self.dim))
+        for i in range(len(self.factors['r_const'])):
+            for j in range(self.dim):
+                if j in self.factors['r_const'][i]:
+                    lm[i][j] = 1
+        
+        self.Ci = -1 * lm
+        self.di = -1 * np.array(self.factors['lbs'])
+        
+        if not self.check_feasible(self.factors["initial_solution"]) or len(self.factors['initial_solution']) != self.dim:
+            self.factors["initial_solution"] = self.find_feasible()
+            print('new initial')
+        print('initial solution: ', self.factors['initial_solution'])
+        print('check: ', self.Ci @ self.factors['initial_solution'])
+        print('checl: ', self.di)
+        print(self.Ci @ self.factors['initial_solution'] <= self.di)
         
         return random_rng
 

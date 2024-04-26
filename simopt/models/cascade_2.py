@@ -46,7 +46,7 @@ class Cascade(Model):
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
-        self.G = nx.read_graphml('simopt/models/DAG.graphml')
+        self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
         self.num_nodes = len(self.G)
         self.random = random
         self.n_random = 1
@@ -372,8 +372,15 @@ class CascadeMax(Problem):
             self.factors["B"] = self.get_cost(random_rng[1])
             self.di = np.array([self.factors["B"]])
             
-        # print("Budget: ", self.factors['budget'])
-        # print("B: ", self.factors["B"])
+            if not self.check_deterministic_constraints(self.factors['initial_solution']) or len(self.factors['initial_solution']) != self.dim: 
+                self.factors['initial_solution'] = self.find_feasible_initial(None, self.Ci, None, self.di)
+                print('new initial')
+
+        print("Budget: ", self.factors['budget'])
+        print("B: ", self.factors["B"])
+        print('Ci: ', self.Ci)
+        print('init_sol: ', self.factors['initial_solution'])
+        print('feasibility: ', np.sum(self.Ci) * 0.001)
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """
@@ -548,7 +555,6 @@ class CascadeMax(Problem):
         x= tuple(x)
         return x
 
-    
     def get_multiple_random_solution(self, rand_sol_rng, n_samples):
         """
         Generate a random solution for starting or restarting solvers.
@@ -593,7 +599,7 @@ class CascadeMax(Problem):
         else:
           C = np.empty([1, self.dim])
           d = np.empty([1, 1])
-        
+
         if len(ub_inf_idx) > 0:
             C = np.vstack((C, np.identity(upper_bound.shape[0])))
             d = np.vstack((d, upper_bound[np.newaxis].T))
@@ -646,7 +652,6 @@ class CascadeMax(Problem):
             xs.append(tuple(x))
 
         return xs[: -n_samples]
-    
 
     def find_feasible_initial(self, Ae, Ai, be, bi):
         '''
