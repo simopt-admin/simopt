@@ -222,7 +222,7 @@ class SAN(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        print('arcs: ', arcs_set)
+        #print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         self.factors["arc_means"] = (1,) * len(self.factors["arcs"])
 
@@ -523,8 +523,8 @@ class SANLongestPath(Problem):
             self.factors["budget"] = self.random_budget(random_rng[0])
             self.factors["c"] = self.get_coefficient(random_rng[1])
             
-        print('budget: ', self.factors['budget'])
-        print('c: ', self.factors["c"])
+        # print('budget: ', self.factors['budget'])
+        # print('c: ', self.factors["c"])
         
         return random_rng
 
@@ -848,7 +848,7 @@ class SANLongestPathConstr(Problem):
     def get_coefficient(self, exp_rng):
         if self.random == True:
             c = []
-            print('******')
+            #print('******')
             for i in range(len(self.factors["arc_costs"])):
                 ci = exp_rng.expovariate(1)
                 c.append(ci)
@@ -875,7 +875,6 @@ class SANLongestPathConstr(Problem):
                 lb = int(self.dim/4) * uni_rng.uniform(1, int(self.factors["sum_lb"]/self.dim))
                 C.append(const)
                 L.append(lb)
-                self.factors['sum_lb'] = uni_rng.expovariate(1/100)
             else:
                 return [[i for i in range(self.dim)]], self.factors['sum_lb']
         return C, L
@@ -887,7 +886,7 @@ class SANLongestPathConstr(Problem):
         if self.random:
             self.factors["budget"] = self.random_budget(random_rng[0])
             self.factors["arc_costs"] = self.get_coefficient(random_rng[1])
-            print('*!!c: ', self.factors["arc_costs"])
+            self.factors['sum_lb'] = random_rng[2].expovariate(1/100)
         
             # Random constraint
             if self.random_const:
