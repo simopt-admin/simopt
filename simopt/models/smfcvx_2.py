@@ -294,8 +294,8 @@ class SMFCVX(Model):
             set0 = get_in(arcs, num_nodes, source)  # Get all nodes that can be reached by source
             if i not in set0:
                 set1 = list(get_in(arcs, num_nodes, i, False))  # Get all nodes can reach i
-                print(set1)
-                print(uni_rng.randint(0, len(set1)))
+                # print(set1)
+                # print(uni_rng.randint(0, len(set1)))
                 n2 = set1[uni_rng.randint(0, len(set1)-1)]  # Randomly select one bridge
                 # set2 = [i for i in set0 if i < n2]  # All nodes that source can reach
                 set2 = [i for i in set0 if i != n2]
@@ -319,7 +319,7 @@ class SMFCVX(Model):
             remain_num = num_arcs - len(arcs)
             remain = list(set(set_arcs) - set(arcs))
             idx = uni_rng.sample(range(0, len(remain)), remain_num)  ###
-            print(idx)
+            # print(idx)
             aa = set([remain[i] for i in idx])
             arcs = {*arcs, *aa}     
 
@@ -337,7 +337,7 @@ class SMFCVX(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        print('arcs: ', arcs_set)
+        # print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         self.factors["assigned_capacities"] = [5 for i in range(self.factors["num_arcs"])]
         
@@ -603,7 +603,7 @@ class SMFCVX_Max(Problem):
         # For random version, randomize problem factors
         if self.random:
             self.factors["budget"] = self.random_budget(random_rng[0])
-            print('budget: ', self.factors["budget"])
+            # print('budget: ', self.factors["budget"])
         
         return random_rng
 

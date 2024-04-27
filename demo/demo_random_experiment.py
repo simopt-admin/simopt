@@ -20,7 +20,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 # Import the ProblemsSolvers class and other useful functions
 from simopt.directory import problem_directory
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves
+from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves, plot_terminal_progress, plot_terminal_scatterplots, plot_area_scatterplots, plot_progress_curves, plot_solvability_profiles
 from mrg32k3a.mrg32k3a import MRG32k3a
 import warnings
 warnings.filterwarnings("ignore")
@@ -62,19 +62,20 @@ def main():
 
     # Create a list named "solver_names"
     solver_names = ["PGD-B", "PGD-I", "PGD-Z", "PGD-SS", "AS-B", "AS-I", "AS-Z", "AS-SS", "FW-B", "FW-I", "FW-Z", "FW-SS"]
+    # solver_names = ["PGD-B", "AS-B", "AS-I", "AS-SS", "FW-I"]
 
-    #Create a list for each problem
-    # problem_names = ["OPENJ-1", "SAN-2", "SMF-1", "SMFCVX-1", "CC-1"]
-    # num_random_instances = [5, 5, 5, 5, 5] # Number of random instances
-    # all_problem_fixed_factors = [{}, {}, {}, {}, {}] # Fixed problem factors
-    # all_model_fixed_factors = [{}, {}, {}, {}, {}] # Fixed model factors
-    # problem_renames = ["OPENJ", "SAN", "SMF", "SMFCVX", "Cascade"] # Prefix of random problem names
-
+    # Create a list for each problem
     problem_names = ["SAN-2", "SMF-1", "SMFCVX-1", "CC-1"]
     num_random_instances = [5, 5, 5, 5] # Number of random instances
     all_problem_fixed_factors = [{}, {}, {}, {}] # Fixed problem factors
     all_model_fixed_factors = [{}, {}, {}, {}] # Fixed model factors
     problem_renames = ["SAN", "SMF", "SMFCVX", "Cascade"] # Prefix of random problem names
+
+    # problem_names = ["SAN-2", "SMF-1", "SMFCVX-1"]
+    # num_random_instances = [2, 2, 2] # Number of random instances
+    # all_problem_fixed_factors = [{}, {}, {}, {}] # Fixed problem factors
+    # all_model_fixed_factors = [{}, {}, {}, {}] # Fixed model factors
+    # problem_renames = ["SAN", "SMF", "SMFCVX"] # Prefix of random problem names
 
     rand_problems = []
     # Generate random problems
@@ -115,7 +116,7 @@ def main():
 
 
     # Initialize an instance of the experiment class.
-    experiment_name = 'RAND_EXP1'
+    experiment_name = 'rnd_exp'
     mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = rand_problems, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
     # Write to log file.
@@ -126,11 +127,12 @@ def main():
 
     print("Post-processing results.")
     # Run a fixed number of postreplications at all recommended solutions.
-    mymetaexperiment.post_replicate(n_postreps=args.n_postreps)
+    mymetaexperiment.post_replicate(n_postreps=args.n_postreps, crn_across_macroreps=True)
     # Find an optimal solution x* for normalization.
     mymetaexperiment.post_normalize(n_postreps_init_opt=args.n_postreps)
 
     print("Plotting results.")
+
     # color_palette = [
     #     "#00429d",
     #     "#2558ac",
@@ -145,23 +147,32 @@ def main():
     #     "#fdffbc",
     #     "#f5c25c"
     # ]
+
     cmap = plt.get_cmap('tab20')
     # Generate 20 distinct colors from the colormap
     color_palette = [cmap(i) for i in range(cmap.N)]
 
     # Produce basic plots of the solvers on the problems.
-    plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", color_palette = color_palette)
+    plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", print_max_hw=True, solve_tol=0.2, color_palette = color_palette)
+
+    plot_terminal_scatterplots(mymetaexperiment.experiments)
+
+    plot_area_scatterplots(mymetaexperiment.experiments, plot_CIs=False, print_max_hw=True)
 
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])
-    CI_param = True
 
-    #TODO: plot scatter plots here as well.
     for i in range(n_problems):
+        plot_terminal_progress([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="box", normalize=False)
+        plot_terminal_progress([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="box", normalize=True)
+        plot_terminal_progress([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=False)
+        plot_terminal_progress([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True)
+
         plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = False, all_in_one = True, 
-                             plot_CIs = CI_param, print_max_hw = True, color_palette=color_palette)
-        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'quantile', beta = 0.9, normalize = False, all_in_one = True, 
-                             plot_CIs = CI_param, print_max_hw = True, color_palette=color_palette)
+                             plot_CIs = True, print_max_hw = True, color_palette=color_palette)
+
+        plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = True, all_in_one = True, 
+                                plot_CIs = True, print_max_hw = True, color_palette=color_palette)
 
 
     # Plots will be saved in the folder experiments/plots.
