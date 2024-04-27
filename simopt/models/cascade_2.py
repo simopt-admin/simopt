@@ -46,7 +46,7 @@ class Cascade(Model):
         self.n_rngs = 2
         self.n_responses = 1
         self.factors = fixed_factors
-        self.G = nx.read_graphml('/Users/liulitong/Desktop/simopt-1/DAG.graphml')
+        self.G = nx.read_graphml('simopt/models/DAG.graphml')
         self.num_nodes = len(self.G)
         self.random = random
         self.n_random = 1
@@ -374,13 +374,13 @@ class CascadeMax(Problem):
             
             if not self.check_deterministic_constraints(self.factors['initial_solution']) or len(self.factors['initial_solution']) != self.dim: 
                 self.factors['initial_solution'] = self.find_feasible_initial(None, self.Ci, None, self.di)
-                print('new initial')
+                # print('new initial')
 
-        print("Budget: ", self.factors['budget'])
-        print("B: ", self.factors["B"])
-        print('Ci: ', self.Ci)
-        print('init_sol: ', self.factors['initial_solution'])
-        print('feasibility: ', np.sum(self.Ci) * 0.001)
+        # print("Budget: ", self.factors['budget'])
+        # print("B: ", self.factors["B"])
+        # print('Ci: ', self.Ci)
+        # print('init_sol: ', self.factors['initial_solution'])
+        # print('feasibility: ', np.sum(self.Ci) * 0.001)
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """

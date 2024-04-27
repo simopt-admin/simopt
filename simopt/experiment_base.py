@@ -19,8 +19,7 @@ import os
 import csv
 import itertools
 from mrg32k3a.mrg32k3a import MRG32k3a
-import multiprocessing
-from multiprocessing import Process
+from multiprocessing import Pool
 
 
 from .base import Solution
@@ -371,6 +370,7 @@ class ProblemSolver(object):
     file_name_path : str, optional
         Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
     """
+
     def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
         """There are two ways to create a ProblemSolver object:
             1. Provide the names of the solver and problem to look up in ``directory.py``.
@@ -446,12 +446,11 @@ class ProblemSolver(object):
         """
         print("Running Solver", self.solver.name, "on Problem", self.problem.name + ".")
 
+        # Initialize variables
         self.n_macroreps = n_macroreps
-        self.timings = []
-        # Create variables for recommended solutions and intermediate budgets
-        # so we can append to them in parallel.
-        self.all_recommended_xs = multiprocessing.Manager().dict()
-        self.all_intermediate_budgets = multiprocessing.Manager().dict()
+        self.all_recommended_xs = [None] * n_macroreps
+        self.all_intermediate_budgets = [None] * n_macroreps
+        self.timings = [None] * n_macroreps
 
         # Create, initialize, and attach random number generators
         #     Stream 0: reserved for taking post-replications
@@ -465,42 +464,28 @@ class ProblemSolver(object):
         #     Streams 3, 4, ..., n_macroreps + 2: reserved for
         #                                         macroreplications
         rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # Currently unused.
-        rng1 = MRG32k3a(s_ss_sss_index=[2, 1, 0])
-        rng2 = MRG32k3a(s_ss_sss_index=[2, 2, 0])
-        rng3 = MRG32k3a(s_ss_sss_index=[2, 3, 0])
-        self.solver.attach_rngs([rng1, rng2, rng3])
+        rng_list = [MRG32k3a(s_ss_sss_index=[2, i + 1, 0]) for i in range(3)]
+        self.solver.attach_rngs(rng_list)
 
         # Start a timer
-        tic = time.perf_counter()
+        self.function_start = time.time()
 
-        # If we're only doing one macroreplication or we have fewer than 4 cores, run macroreps in serial.
-        # It just isn't worth the overhead to run in parallel.
-        if n_macroreps == 1 or os.cpu_count() < 4:
+        print("Starting macroreplications in parallel")
+        with Pool() as process_pool:
+            # Start the macroreplications in parallel (async)
+            result = process_pool.map_async(self.run_multithread, range(n_macroreps))
+            # Wait for the results to be returned (or 1 second)
+            while (not result.ready()):
+                # Update status bar here
+                result.wait(1)
+
+            # Grab all the data out of the result
             for mrep in range(n_macroreps):
-                self.run_multithread(mrep)
-        else:
-            # Run n_macroreps of the solver on the problem.
-            # Report recommended solutions and corresponding intermediate budgets.
-            # Create an array of Process objects, one for each macroreplication.
-            Processes = [Process(target=self.run_multithread, args=(mrep,)) for mrep in range(self.n_macroreps)]
-            # Start each process.
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].start()
-            # Wait for each process to finish.
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].join()
-            # Stop the threads.
-            for mrep in range(self.n_macroreps):
-                Processes[mrep].terminate()
+                self.all_recommended_xs[mrep], self.all_intermediate_budgets[mrep], self.timings[mrep] = result.get()[mrep]
+        print("Finished running {} macroreplications in {} seconds.".format(n_macroreps, round(time.time() - self.function_start, 3)))
 
-        # Stop the timer.
-        toc = time.perf_counter()
-        # Print the total runtime.
-        print(f"Total runtime: {toc - tic:0.4f} seconds ({(toc - tic) / self.n_macroreps:0.4f} seconds per macroreplication)\r\n")
-
-        # Convert the budgets and solutions into lists.
-        self.all_recommended_xs = [self.all_recommended_xs[i] for i in range(len(self.all_recommended_xs.keys()))]
-        self.all_intermediate_budgets = [self.all_intermediate_budgets[i] for i in range(len(self.all_intermediate_budgets.keys()))]
+        # Delete stuff we don't need to save
+        del self.function_start
 
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
@@ -522,16 +507,13 @@ class ProblemSolver(object):
         tic = time.perf_counter()
         recommended_solns, intermediate_budgets = self.solver.solve(problem=self.problem)
         toc = time.perf_counter()
+        runtime = toc - tic
+        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds.")
 
-        # Record the run time of the macroreplication.
-        self.timings.append(toc - tic)
-        # Trim solutions recommended after final budget.
+        # Trim the recommended solutions and intermediate budgets
         recommended_solns, intermediate_budgets = trim_solver_results(problem=self.problem, recommended_solns=recommended_solns, intermediate_budgets=intermediate_budgets)
-        # Extract decision-variable vectors (x) from recommended solutions.
-        # Record recommended solutions and intermediate budgets.
-        self.all_recommended_xs[mrep] = [solution.x for solution in recommended_solns]
-        self.all_intermediate_budgets[mrep] = intermediate_budgets
-        print(f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {toc - tic:0.4f} seconds.")
+        # Return tuple (rec_solns, int_budgets, runtime)
+        return ([solution.x for solution in recommended_solns], intermediate_budgets, runtime)
 
     def check_run(self):
         """Check if the experiment has been run.
@@ -561,46 +543,78 @@ class ProblemSolver(object):
             True if CRN used for post-replications at solutions recommended on different
             macroreplications, otherwise False.
         """
+        print("Setting up {} postreplications for {} macroreplications of {} on {}.".format(n_postreps, self.n_macroreps, self.solver.name, self.problem.name))
+
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
         self.crn_across_macroreps = crn_across_macroreps
-        # Create, initialize, and attach RNGs for model.
-        # Stream 0: reserved for post-replications.
-        # Skip over first set of substreams dedicated for sampling x0 and x*.
-        baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs + rng_index, 0]) for rng_index in range(self.problem.model.n_rngs)]
-        # Initialize matrix containing
-        #     all postreplicates of objective,
-        #     for each macroreplication,
-        #     for each budget.
-        self.all_post_replicates = [[[] for _ in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
-        # Simulate intermediate recommended solutions.
+        # Initialize variables
+        self.all_post_replicates = [None] * self.n_macroreps
         for mrep in range(self.n_macroreps):
-            print(f"Postreplicating macroreplication {mrep + 1} of {self.n_macroreps} of Solver {self.solver.name} on Problem {self.problem.name}.")
-            for budget_index in range(len(self.all_intermediate_budgets[mrep])):
-                x = self.all_recommended_xs[mrep][budget_index]
-                fresh_soln = Solution(x, self.problem)
-                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-                self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
-                # Store results
-                self.all_post_replicates[mrep][budget_index] = list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0])  # 0 <- assuming only one objective
-                if crn_across_budget:
-                    # Reset each rng to start of its current substream.
-                    for rng in baseline_rngs:
-                        rng.reset_substream()
-            if crn_across_macroreps:
-                # Reset each rng to start of its current substream.
-                for rng in baseline_rngs:
-                    rng.reset_substream()
-            else:
-                # Advance each rng to start of
-                #     substream = current substream + # of model RNGs.
-                for rng in baseline_rngs:
-                    for _ in range(self.problem.model.n_rngs):
-                        rng.advance_substream()
-        # Store estimated objective for each macrorep for each budget.
-        self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+            self.all_post_replicates[mrep] = [] * len(self.all_intermediate_budgets[mrep])
+        self.timings = [None] * self.n_macroreps
+
+        self.function_start = time.time()
+
+        print("Starting postreplications in parallel")
+        with Pool() as process_pool:
+            # Start the macroreplications in parallel (async)
+            result = process_pool.map_async(self.post_replicate_multithread, range(self.n_macroreps))
+            # Wait for the results to be returned (or 1 second)
+            while (not result.ready()):
+                # Update status bar here
+                result.wait(1)
+
+            # Grab all the data out of the result
+            for mrep in range(self.n_macroreps):
+                self.all_post_replicates[mrep], self.timings[mrep] = result.get()[mrep]
+
+            # # The all post replicates is tricky because it is a dictionary of lists of lists
+            # # We need to convert it to a list of lists of lists
+            # self.all_post_replicates = [self.all_post_replicates[i] for i in range(len(self.all_post_replicates.keys()))]
+            # Store estimated objective for each macrorep for each budget.
+            self.all_est_objectives = [[np.mean(self.all_post_replicates[mrep][budget_index]) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
+        print("Finished running {} postreplications in {} seconds.".format(self.n_macroreps, round(time.time() - self.function_start, 3)))
+
+        # Delete stuff we don't need to save
+        del self.function_start
+
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
+
+    def post_replicate_multithread(self, mrep):
+        print(f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}.")
+        # Create RNG list for the macroreplication.
+        if self.crn_across_macroreps:
+            # Use the same RNGs for all macroreps.
+            baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs + rng_index, 0]) for rng_index in range(self.problem.model.n_rngs)]
+        else:
+            baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs * (mrep + 1) + rng_index, 0]) for rng_index in range(self.problem.model.n_rngs)]
+
+        tic = time.perf_counter()
+
+        # Create an empty list for each budget
+        post_replicates = []
+        # Loop over all recommended solutions.
+        for budget_index in range(len(self.all_intermediate_budgets[mrep])):
+            x = self.all_recommended_xs[mrep][budget_index]
+            fresh_soln = Solution(x, self.problem)
+            # Attach RNGs for postreplications.
+            # If CRN is used across budgets, then we should use a copy rather
+            # than passing in the original RNGs.
+            if (self.crn_across_budget):
+                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=True)
+            else:
+                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
+            self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
+            # Store results
+            post_replicates.append(list(fresh_soln.objectives[:fresh_soln.n_reps][:, 0]))  # 0 <- assuming only one objective
+        toc = time.perf_counter()
+        runtime = toc - tic
+        print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
+
+        # Return tuple (post_replicates, runtime)
+        return (post_replicates, runtime)
 
     def check_postreplicate(self):
         """Check if the experiment has been postreplicated.
@@ -954,7 +968,8 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
-    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
+    # baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
+    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, experiment.problem.model.n_rngs + rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
         x0_postreps = [proxy_init_val] * n_postreps_init_opt
@@ -2669,13 +2684,13 @@ class ProblemsSolvers(object):
                         # If no file exists, create new ProblemSolver object.
                         print(f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment.")
                         next_experiment = ProblemSolver(solver_name=solver_names[solver_idx],
-                                                            problem_name=problem_names[problem_idx],
-                                                            solver_rename=self.solver_names[solver_idx],
-                                                            problem_rename=self.problem_names[problem_idx],
-                                                            solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
-                                                            problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
-                                                            model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]]
-                                                            )
+                                                        problem_name=problem_names[problem_idx],
+                                                        solver_rename=self.solver_names[solver_idx],
+                                                        problem_rename=self.problem_names[problem_idx],
+                                                        solver_fixed_factors=self.all_solver_fixed_factors[self.solver_names[solver_idx]],
+                                                        problem_fixed_factors=self.all_problem_fixed_factors[self.problem_names[problem_idx]],
+                                                        model_fixed_factors=self.all_model_fixed_factors[self.problem_names[problem_idx]]
+                                                        )
                     solver_experiments.append(next_experiment)
                 self.experiments.append(solver_experiments)
                 self.solvers = [self.experiments[idx][0].solver for idx in range(len(self.experiments))]
@@ -2934,6 +2949,7 @@ def read_group_experiment_results(file_name_path):
         groupexperiment = pickle.load(file)
     return groupexperiment
 
+
 def find_unique_solvers_problems(experiments):
     """Identify the unique problems and solvers in a collection
     of experiments.
@@ -2960,6 +2976,7 @@ def find_unique_solvers_problems(experiments):
         if experiment.problem not in unique_problems:
             unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
+
 
 def find_missing_experiments(experiments):
     """Identify problem-solver pairs that are not part of a list

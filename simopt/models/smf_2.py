@@ -256,7 +256,7 @@ class SMF(Model):
         arcs_set.sort(key=lambda a: a[1])
         arcs_set.sort(key=lambda a: a[0])  
         self.factors["arcs"] = arcs_set
-        print('arcs: ', arcs_set)
+        #print('arcs: ', arcs_set)
         self.factors["num_arcs"] = len(self.factors["arcs"])
         
         self.factors["mean_noise"] = [0 for i in range(len(self.factors["arcs"]))]
@@ -508,7 +508,7 @@ class SMF_Max(Problem):
     
     def random_budget(self, uni_rng):
         # Choose a random budget
-        l = [300, 400, 500, 600, 700, 800, 900, 1000]
+        l = [500, 600, 700, 800]
         budget = uni_rng.choice(l) * self.dim
         return budget
     
@@ -519,7 +519,7 @@ class SMF_Max(Problem):
         # For random version, randomize problem factors
         if self.random:
             self.factors["budget"] = self.random_budget(random_rng[0])
-            print('budget: ', self.factors["budget"])
+            #print('budget: ', self.factors["budget"])
         
         return random_rng
 
