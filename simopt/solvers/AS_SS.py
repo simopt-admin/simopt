@@ -321,7 +321,7 @@ class ACTIVESET3(Solver):
                 if unconstr_flag or np.all(C[idx,:] @ dir <= 0):
                     # Line search to determine a step_size.
                     # print('line search 1')
-                    new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, dir, s_star)
+                    new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, dir, max_step)
                     # print('budget: ', expended_budget)
                     # Update maximum step size for the next iteration.
                     # max_step = step_size #max_step
@@ -353,7 +353,7 @@ class ACTIVESET3(Solver):
                         # print('no blocking c')
                         # Line search to determine a step_size.
                         # print('line search 2')
-                        new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, dir, s_star)
+                        new_solution, step_size, expended_budget, _ = self.line_search(problem, expended_budget, r, grad, new_solution, dir, max_step)
                         # print('budget: ', expended_budget)
                     # If there is a blocking constraint (i.e., s_star < 1)
                     else:
