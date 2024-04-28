@@ -990,7 +990,7 @@ class BoomFrankWolfe(Solver):
         if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
             raise ValueError("Could not find feasible x0")
         x0 = x.value
-        if not self.is_feasible(x0, problem, tol):
+        if(not self.is_feasible(x0, Ci,di,Ce,de,lower,upper)):
             raise ValueError("Could not find feasible x0")
 
         return x0

@@ -8,6 +8,7 @@ A detailed description of the model/problem can be found
 """
 import numpy as np
 from scipy.optimize import linprog
+import cvxpy as cp
 
 from ..base import Model, Problem
 
@@ -727,12 +728,12 @@ class SANLongestPathConstr(Problem):
         self.model_decision_factors = {"arc_means"}
         self.factors = fixed_factors
         self.random = random
-        self.random_const = True
+        self.random_const = False
         if self.random_const:
             self.num_con = 3
         else:
             self.num_con = 1
-        self.n_rngs = 3  # Number of rngs used for the random instance
+        self.n_rngs = 4  # Number of rngs used for the random instance
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
@@ -902,8 +903,6 @@ class SANLongestPathConstr(Problem):
             self.factors["r_const"] = [[i for i in range(self.dim)]]
             self.factors["lbs"] = [self.factors["sum_lb"]]
 
-        self.factors["lbs"] += [0 for i in range(self.dim)]  # Require each arc means larger or equal to 0
-        self.factors["r_const"] += [[i] for i in range(self.dim)]
         # print('r_const: ', self.factors["r_const"])
         # print('lbs: ', self.factors['lbs'])
         
@@ -917,7 +916,11 @@ class SANLongestPathConstr(Problem):
         self.di = -1 * np.array(self.factors['lbs'])
         
         if not self.check_feasible(self.factors["initial_solution"]) or len(self.factors['initial_solution']) != self.dim:
-            self.factors["initial_solution"] = self.find_feasible()
+            print('new initial')
+            self.factors["initial_solution"] = self.find_feasible_initial(self.Ce, self.Ci, self.de, self.di)
+        else:
+            self.factors["initial_solution"] = (15,) * self.dim
+
         #     print('new initial')
         # print('initial solution: ', self.factors['initial_solution'])
         # print('check: ', self.Ci @ self.factors['initial_solution'])
@@ -1020,15 +1023,19 @@ class SANLongestPathConstr(Problem):
 
         return np.all(np.array(x) >= 0)
     
-    def find_feasible(self):
-        """
+    def find_feasible_initial(self, Ae, Ai, be, bi):
+        '''
         Find an initial feasible solution (if not user-provided)
-        by interior point method.
+        by solving phase one simplex.
 
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
+        C: ndarray
+            constraint coefficient matrix
+        d: ndarray
+            constraint coefficient vector
 
         Returns
         -------
@@ -1036,20 +1043,46 @@ class SANLongestPathConstr(Problem):
             an initial feasible solution
         tol: float
             Floating point comparison tolerance
-        """
-        c = [0 for i in range(self.dim)]
-        l1 = [-1 for i in range(self.dim)]
-        A = [l1]
-        b = [-self.factors["sum_lb"]]
-        if self.random_const:
-            b.extend([-plb for plb in self.factors["lbs"]])
-            for idx in self.factors["r_const"]:
-                l2 = [-1 if i in idx else 0 for i in range(self.dim)]
-                A.append(l2)
+        '''
+        upper_bound = np.array(self.upper_bounds)
+        lower_bound = np.array(self.lower_bounds)
 
-        res = linprog(c, A_ub=A, b_ub=b, bounds=(0, None), method='interior-point')
+        # Define decision variables.
+        x = cp.Variable(self.dim)
+
+        # Define constraints.
+        constraints = []
+
+        if (Ae is not None) and (be is not None):
+            constraints.append(Ae @ x == be.ravel())
+        if (Ai is not None) and (bi is not None):
+            constraints.append(Ai @ x <= bi.ravel())
+
+        # Removing redundant bound constraints.
+        ub_inf_idx = np.where(~np.isinf(upper_bound))[0]
+        if len(ub_inf_idx) > 0:
+            for i in ub_inf_idx:
+                constraints.append(x[i] <= upper_bound[i])
+        lb_inf_idx = np.where(~np.isinf(lower_bound))
+        if len(lb_inf_idx) > 0:
+            for i in lb_inf_idx:
+                constraints.append(x[i] >= lower_bound[i])
+
+        # Define objective function.
+        obj = cp.Minimize(0)
         
-        return res.x
+        # Create problem.
+        model = cp.Problem(obj, constraints)
+
+        # Solve problem.
+        model.solve(solver = cp.SCIPY)
+
+        # Check for optimality.
+        if model.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE] :
+            raise ValueError("Could not find feasible x0")
+        x0 = x.value
+
+        return tuple(x0)
 
     
     def hit_and_run_single(self, x, rand_sol_rng, partial_lb = None, indices = None):

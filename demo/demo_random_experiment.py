@@ -15,7 +15,7 @@ import os
 import re
 import argparse
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemsSolvers class and other useful functions
@@ -116,7 +116,7 @@ def main():
 
 
     # Initialize an instance of the experiment class.
-    experiment_name = 'rnd_exp'
+    experiment_name = 'RAND_EXP_4P_12S'
     mymetaexperiment = ProblemsSolvers(solver_names=solver_names, problems = rand_problems, file_name_path = f"./experiments/outputs/group_{experiment_name}.pickle")
 
     # Write to log file.
@@ -133,31 +133,39 @@ def main():
 
     print("Plotting results.")
 
-    # color_palette = [
-    #     "#00429d",
-    #     "#2558ac",
-    #     "#3f71b3",
-    #     "#568aba",
-    #     "#6ba2c1",
-    #     "#80bac8",
-    #     "#97d2cf",
-    #     "#afead6",
-    #     "#c9e2dd",
-    #     "#e3fbe4",
-    #     "#fdffbc",
-    #     "#f5c25c"
-    # ]
+    color_palette = [
+        "#ff0000",  # Red
+        "#00ff00",  # Green
+        "#0000ff",  # Blue
+        "#FFD700",  # Gold
+        "#ff00ff",  # Magenta
+        "#00ffff",  # Cyan
+        "#000000",  # Black
+        "#808080",  # Gray (Mid Gray)
+        "#880000",  # Dark Red
+        "#008800",  # Dark Green
+        "#000088",  # Dark Blue
+        "#888800"   # Olive
+    ]
 
-    cmap = plt.get_cmap('tab20')
-    # Generate 20 distinct colors from the colormap
-    color_palette = [cmap(i) for i in range(cmap.N)]
+    # tab20b_r_palette = sns.color_palette("tab20b_r", n_colors=12)
+
+    # # Convert the RGB colors to Hex format
+    # tab20b_r_hex_colors = tab20b_r_palette.as_hex()
+
+
+    # # cmap = plt.get_cmap('tab20')
+    # # Generate 20 distinct colors from the colormap
+    # color_palette = [c for c in tab20b_r_hex_colors]
 
     # Produce basic plots of the solvers on the problems.
     plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", print_max_hw=True, solve_tol=0.2, color_palette = color_palette)
 
-    plot_terminal_scatterplots(mymetaexperiment.experiments)
+    plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", print_max_hw=True, solve_tol=0.1, color_palette = color_palette)
 
-    plot_area_scatterplots(mymetaexperiment.experiments, plot_CIs=False, print_max_hw=True)
+    # plot_terminal_scatterplots(mymetaexperiment.experiments)
+
+    # plot_area_scatterplots(mymetaexperiment.experiments, plot_CIs=False, print_max_hw=True)
 
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])
