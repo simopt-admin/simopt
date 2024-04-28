@@ -2,6 +2,7 @@ This branch is dedicated to the experiments conducted for the 2024 Winter Simula
 
 ## Paper TODO
 1. Update .rst files.
+2. Remove unnecessary files from this branch.
 
 ## Replicate the experiments
 To replicate the experiments conducted in the paper, run the command ```python demo/demo_random_experiment.py ```
