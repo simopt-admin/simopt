@@ -128,15 +128,15 @@ class SMFCVX(Model):
             capacities.append(1000*self.factors["assigned_capacities"][i]*sum([rng.expovariate(lamb) for j in range(k)]))
         return capacities
         
-    def pos_part_capacity(self):
-        #generate capacity of the form [x - noise]^{+}
-        for i in range(self.num_arcs):
-            noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
-        capacities = []
-        for i in range(self.num_arcs):
-            capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
+    # def pos_part_capacity(self):
+    #     #generate capacity of the form [x - noise]^{+}
+    #     for i in range(self.num_arcs):
+    #         noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
+    #     capacities = []
+    #     for i in range(self.num_arcs):
+    #         capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
         
-        return capacities
+    #     return capacities
         
 
     def dfs(self, graph, start, visited=None):
@@ -324,14 +324,9 @@ class SMFCVX(Model):
             arcs = {*arcs, *aa}     
 
         else:
-            arcs = list(arcs)
-            arcs_e = [i for i in arcs if i != (source, end)]
-            return arcs_e
+            return list(arcs)
         
-        arcs = list(arcs)
-        arcs_e = [i for i in arcs if i != (source, end)]
-        
-        return arcs_e
+        return list(arcs)
     
     def attach_rng(self, random_rng):
         self.random_rng = random_rng
@@ -597,7 +592,7 @@ class SMFCVX_Max(Problem):
     
     def random_budget(self, uni_rng):
         # Choose a random budget
-        l = [300, 400, 500, 600] #, 700, 800, 900, 1000]
+        l = [500, 600, 700, 800]
         budget = uni_rng.choice(l) * self.dim
         return budget
     
