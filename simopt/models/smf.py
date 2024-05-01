@@ -40,12 +40,13 @@ class SMF(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None, random = False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "SMF"
         self.n_rngs = 1
-        self.n_random = 1
+        self.n_random = 3
+        self.random = random
         self.n_responses = 1
         cov_fac = np.zeros((20, 20))
         np.fill_diagonal(cov_fac, 4)
@@ -71,10 +72,16 @@ class SMF(Model):
                 "datatype": list,
                 "default": [(0, 1), (0, 2), (0, 3), (1, 2), (1, 4), (2, 4), (4, 2), (3, 2), (2, 5), (4, 5), (3, 6), (3, 7), (6, 2), (6, 5), (6, 7), (5, 8), (6, 8), (6, 9), (7, 9), (8, 9)]
             },
+            "num_arcs": {
+                "description": "number of arcs to be generated",
+                "datatype": int,
+                "default": 20
+            },
             "assigned_capacities": {
                 "description": "Assigned capacity of each arc",
                 "datatype": list,
                 "default": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+                # "default": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
             },
             "mean_noise": {
                 "description": "The mean noise in reduction of arc capacities",
@@ -95,7 +102,8 @@ class SMF(Model):
             "mean_noise": self.check_mean,
             "cov_noise": self.check_cov,
             "source_index": self.check_s,
-            "sink_index": self.check_t
+            "sink_index": self.check_t,
+            "num_arcs": self.check_num_arcs,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -140,6 +148,124 @@ class SMF(Model):
 
     def check_t(self):
         return self.factors["sink_index"] >= 0 and self.factors["sink_index"] <= self.factors["num_nodes"]
+    
+    def check_num_arcs(self):
+        return self.factors["num_arcs"] > 0
+    
+    
+    def get_arcs(self, num_nodes, num_arcs, source, end, uni_rng):
+        # Generate a random graph
+        self.rand_fuc = True
+        
+        set_arcs = []
+        for n1 in range(0, num_nodes - 1):
+            for n2 in range(n1 + 1, num_nodes):
+                set_arcs.append((n1, n2))
+                
+        arcs = [(source, source + 1), (end - 1, end)]
+        remove = []    
+        def get_in(arcs, num_nodes, ind, in_ind=True):
+            global remove
+            if len(arcs) <= 0:
+                return False            
+            graph = {node: set() for node in range(0, num_nodes)}
+            for a in arcs:
+                if in_ind == True:
+                    graph[a[0]].add(a[1])
+                else:
+                    graph[a[1]].add(a[0])
+            set0 = graph[ind]
+            for i in graph[ind]:
+                set0 = {*set0, *graph[i]}
+                for j in graph[i]:
+                    set0 = {*set0, *graph[j]}
+            
+            if in_ind == True:      
+                for j in set0 - graph[ind]:
+                    if j in graph[ind]:
+                        remove.append((ind, j))
+            
+            set0 = {*set0, ind}
+            return set0
+        
+        set0 = get_in(arcs, num_nodes, source)
+        for i in range(source + 1, end):
+            set0 = get_in(arcs, num_nodes, source)
+            if i not in set0:
+                set1 = list(get_in(arcs, num_nodes, i, False))
+                n2 = set1[uni_rng.randint(0, len(set1)-1)]
+                set2 = [i for i in set0 if i < n2]
+                n1 = list(set2)[uni_rng.randint(0, len(set2)-1)]
+                
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        for i in range(1, num_nodes - 1):
+            set9 = get_in(arcs, num_nodes, i)
+            if end not in set9:
+                set_out = list(get_in(arcs, num_nodes, end, False))
+                n1 = list(set9)[uni_rng.randint(0, len(set9)-1)]
+                set2 = [i for i in set_out if i > n1]
+                n2 = set2[uni_rng.randint(0, len(set2)-1)]
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        if len(arcs) < num_arcs:
+            remain_num = num_arcs - len(arcs)
+            remain = list(set(set_arcs) - set(arcs))
+            idx = uni_rng.sample(range(0, len(remain)), remain_num)
+            aa = set([remain[i] for i in idx])
+            arcs = {*arcs, *aa}     
+                        
+        # elif len(arcs) > num_arcs:
+        #     remain_num = len(arcs) - num_arcs
+        #     # print('remove: ',remove)
+        #     if len(remove) < remain_num:
+        #         print('invalid')
+        #         return False
+        #     else:
+        #         idx = uni_rng.sample(range(0, len(remain)), remain_num)
+        #         remove_set = set([remove[i] for i in idx])
+        #         arcs = arcs - remove_set
+        
+        else:
+            arcs = list(arcs)
+            arcs_e = [i for i in arcs if i != (source, end)]
+            return arcs_e
+        
+        arcs = list(arcs)
+        arcs_e = [i for i in arcs if i != (source, end)]
+        
+        return arcs_e
+    
+    def get_covariance(self, num_arcs, cov_rng):
+        # Generate random covariance matrix
+        self.rand_fuc = True
+        random_values = [cov_rng.uniform(0, 1) for i in range(num_arcs*num_arcs)]
+        random_values = np.array(random_values).reshape((num_arcs, num_arcs))
+        covariance_matrix = np.cov(random_values, rowvar=False) + 1 * np.eye(num_arcs)
+
+        return covariance_matrix.tolist()
+    
+    def attach_rng(self, random_rng):
+        self.random_rng = random_rng
+        self.rand_fuc = False
+        
+        self.factors["sink_index"] = self.factors["num_nodes"] - 1
+        arcs_set = self.get_arcs(self.factors["num_nodes"], self.factors["num_arcs"], self.factors["source_index"], self.factors["sink_index"], random_rng[0])
+        arcs_set.sort(key=lambda a: a[1])
+        arcs_set.sort(key=lambda a: a[0])  
+        self.factors["arcs"] = arcs_set
+        #print('arcs: ', arcs_set)
+        self.factors["num_arcs"] = len(self.factors["arcs"])
+        
+        self.factors["mean_noise"] = [0 for i in range(len(self.factors["arcs"]))]
+        
+        # self.factors["cov_noise"] = self.get_covariance(self.factors["num_arcs"], random_rng[1])
+        cov_fac = np.zeros((len(self.factors["arcs"]), len(self.factors["arcs"])))
+        np.fill_diagonal(cov_fac, 4)
+        self.factors['cov_noise'] = cov_fac.tolist()
+        
 
     def replicate(self, rng_list):
         """
@@ -161,6 +287,7 @@ class SMF(Model):
         # Designate separate random number generators.
         solver = max_flow.SimpleMaxFlow()
         exp_rng = rng_list[0]
+        
         # From input graph generate start end end nodes.
         start_nodes = []
         end_nodes = []
@@ -280,7 +407,7 @@ class SMF_Max(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SMF-1", fixed_factors=None, model_fixed_factors=None, random=False):
+    def __init__(self, name="SMF-1", fixed_factors=None, model_fixed_factors=None, random=False, random_rng=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -294,10 +421,11 @@ class SMF_Max(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
-        self.random = random
         self.model_default_factors = {}
         self.model_decision_factors = {"assigned_capacities"}
         self.factors = fixed_factors
+        self.random = random
+        self.n_rngs = 1
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
@@ -321,24 +449,25 @@ class SMF_Max(Problem):
             "cap": self.check_cap
         }
         super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = SMF(self.model_fixed_factors)
-        self.dim = len(self.model.factors["arcs"])
+        # Instantiate model with fixed factors and over-riden defaults and the random status.
+        self.model = SMF(self.model_fixed_factors, random)
+        if random and random_rng != None:
+            self.model.attach_rng(random_rng)
+            if self.model.rand_fuc == False:
+                print("Error: No random generator exists.")
+                return False
+        # self.dim = len(self.model.factors["arcs"])
+        self.dim = self.model.factors["num_arcs"]
         self.lower_bounds = (0, ) * self.dim
-        # self.upper_bounds = (np.inf, ) * self.dim
-        self.upper_bounds = (self.factors["cap"], ) * self.dim
-        self.Ci = np.ones(20)
+        self.upper_bounds = (np.inf, ) * self.dim
+        self.factors["initial_solution"] = (1,) * self.dim
+        self.Ci = np.ones(self.dim)
         self.Ce = None
         self.di = np.array([self.factors["cap"]])
         self.de = None
 
     def check_cap(self):
         return self.factors["cap"] >= 0
-    
-    def attach_rngs(self, random_rng):
-        self.random_rng = random_rng
-        self.model.attach_rng(random_rng)
-        return random_rng
 
     def vector_to_factor_dict(self, vector):
         """
@@ -376,6 +505,23 @@ class SMF_Max(Problem):
         """
         vector = tuple(factor_dict["assigned_capacities"])
         return vector
+    
+    def random_budget(self, uni_rng):
+        # Choose a random budget
+        l = [500, 600, 700, 800]
+        budget = uni_rng.choice(l) * self.dim
+        return budget
+    
+    def attach_rngs(self, random_rng):
+        # Attach rng for problem class and generate random problem factors for random instances
+        self.random_rng = random_rng
+        
+        # For random version, randomize problem factors
+        if self.random:
+            self.factors["budget"] = self.random_budget(random_rng[0])
+            #print('budget: ', self.factors["budget"])
+        
+        return random_rng
 
     def response_dict_to_objectives(self, response_dict):
         """

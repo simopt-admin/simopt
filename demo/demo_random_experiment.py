@@ -11,26 +11,15 @@ generate, and some overriding factors).
 
 import sys
 import os.path as o
-import os
-import re
 import argparse
-import matplotlib.pyplot as plt
-import seaborn as sns
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 # Import the ProblemsSolvers class and other useful functions
 from simopt.directory import problem_directory
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves, plot_terminal_progress, plot_terminal_scatterplots, plot_area_scatterplots, plot_progress_curves, plot_solvability_profiles
+from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles, plot_progress_curves, plot_terminal_progress, plot_progress_curves, plot_solvability_profiles
 from mrg32k3a.mrg32k3a import MRG32k3a
 import warnings
 warnings.filterwarnings("ignore")
-# !! When testing a new solver/problem, first import problems from the random code file,
-# Then create a test_input.txt file in your computer.
-# There you should add the import statement and an entry in the file
-# You need to specify name of solvers and problems you want to test in the file by 'solver_name'
-# And specify the problem related informations by problem = [...]
-# All lines start with '#' will be counted as commend and will not be implemented
-# See the following example for more details.
 
 
 def rebase(random_rngs, n):
@@ -49,7 +38,7 @@ def rebase(random_rngs, n):
 
 def main():
     # Create the parser
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='')
 
     # Add arguments with default values
     parser.add_argument('--n_macroreps', type=int, default=30, help='Number of macrorepetitions')
@@ -60,9 +49,8 @@ def main():
 
     print(f'n_macroreps: {args.n_macroreps}, n_postreps: {args.n_postreps}')
 
-    # Create a list named "solver_names"
+    # Create a list for each solver
     solver_names = ["PGD-B", "PGD-I", "PGD-Z", "PGD-SS", "AS-B", "AS-I", "AS-Z", "AS-SS", "FW-B", "FW-I", "FW-Z", "FW-SS"]
-    # solver_names = ["PGD-B", "AS-B", "AS-I", "AS-SS", "FW-I"]
 
     # Create a list for each problem
     problem_names = ["SAN-2", "SMF-1", "SMFCVX-1", "CC-1"]
@@ -70,12 +58,6 @@ def main():
     all_problem_fixed_factors = [{}, {}, {}, {}] # Fixed problem factors
     all_model_fixed_factors = [{}, {}, {}, {}] # Fixed model factors
     problem_renames = ["SAN", "SMF", "SMFCVX", "Cascade"] # Prefix of random problem names
-
-    # problem_names = ["SAN-2", "SMF-1", "SMFCVX-1"]
-    # num_random_instances = [2, 2, 2] # Number of random instances
-    # all_problem_fixed_factors = [{}, {}, {}, {}] # Fixed problem factors
-    # all_model_fixed_factors = [{}, {}, {}, {}] # Fixed model factors
-    # problem_renames = ["SAN", "SMF", "SMFCVX"] # Prefix of random problem names
 
     rand_problems = []
     # Generate random problems
@@ -110,10 +92,7 @@ def main():
             rand_problem = problem_directory[problem_names[problem_idx]](name = problem_renames[problem_idx]+ f'-R{rand_inst_idx+1}',
                                                                          fixed_factors = fixed_factors, 
                                                                          model_fixed_factors = model_fixed_factors)
-
             rand_problems.append(rand_problem)
-
-
 
     # Initialize an instance of the experiment class.
     experiment_name = 'RAND_EXP_4P_12S'
@@ -148,24 +127,10 @@ def main():
         "#888800"   # Olive
     ]
 
-    # tab20b_r_palette = sns.color_palette("tab20b_r", n_colors=12)
-
-    # # Convert the RGB colors to Hex format
-    # tab20b_r_hex_colors = tab20b_r_palette.as_hex()
-
-
-    # # cmap = plt.get_cmap('tab20')
-    # # Generate 20 distinct colors from the colormap
-    # color_palette = [c for c in tab20b_r_hex_colors]
-
     # Produce basic plots of the solvers on the problems.
     plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", print_max_hw=True, solve_tol=0.2, color_palette = color_palette)
 
     plot_solvability_profiles(mymetaexperiment.experiments, plot_type="cdf_solvability", print_max_hw=True, solve_tol=0.1, color_palette = color_palette)
-
-    # plot_terminal_scatterplots(mymetaexperiment.experiments)
-
-    # plot_area_scatterplots(mymetaexperiment.experiments, plot_CIs=False, print_max_hw=True)
 
     n_solvers = len(mymetaexperiment.experiments)
     n_problems = len(mymetaexperiment.experiments[0])
@@ -181,7 +146,6 @@ def main():
 
         plot_progress_curves([mymetaexperiment.experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type = 'mean', normalize = True, all_in_one = True, 
                                 plot_CIs = True, print_max_hw = True, color_palette=color_palette)
-
 
     # Plots will be saved in the folder experiments/plots.
     print("Finished. Plots can be found in experiments/plots folder.")

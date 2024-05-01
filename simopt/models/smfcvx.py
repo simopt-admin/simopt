@@ -11,7 +11,7 @@ from ortools.graph.python import max_flow
 from ..base import Model, Problem
 
 
-class SMFCVX0(Model):
+class SMFCVX(Model):
     """
     A model that simulates a stochastic Max-Flow problem with
     capacities deducted with multivariate distributed noise distributed durations
@@ -40,12 +40,14 @@ class SMFCVX0(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None, random=False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "SMFCVX"
         self.n_rngs = 1
         self.n_responses = 1
+        self.n_random = 1
+        self.random = random
         cov_fac = np.zeros((20, 20))
         np.fill_diagonal(cov_fac, 4)
         cov_fac = cov_fac.tolist()
@@ -69,6 +71,11 @@ class SMFCVX0(Model):
                 "description": "list of arcs",
                 "datatype": list,
                 "default": [(0, 1), (0, 2), (0, 3), (1, 2), (1, 4), (2, 4), (4, 2), (3, 2), (2, 5), (4, 5), (3, 6), (3, 7), (6, 2), (6, 5), (6, 7), (5, 8), (6, 8), (6, 9), (7, 9), (8, 9)]
+            },
+            "num_arcs": {
+                "description": "number of arcs to be generated",
+                "datatype": int,
+                "default": 20
             },
             "assigned_capacities": {
                 "description": "Assigned capacity of each arc",
@@ -99,14 +106,18 @@ class SMFCVX0(Model):
             "mean_noise": self.check_mean,
             "cov_noise": self.check_cov,
             "source_index": self.check_s,
-            "sink_index": self.check_t
+            "sink_index": self.check_t,
+            "num_arcs": self.check_num_arcs,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
-        self.num_arcs = len(self.factors["arcs"])
+        self.num_arcs = self.factors["num_arcs"]#len(self.factors["arcs"])
 
     def check_num_nodes(self):
         return self.factors["num_nodes"] > 0
+    
+    def check_num_arcs(self):
+        return self.factors["num_arcs"] > 0
     
     def default_upper_fn(self,rng,k = 5,lamb = 1):
         #return the upper bound of the capacities for a single edge x
@@ -117,15 +128,15 @@ class SMFCVX0(Model):
             capacities.append(1000*self.factors["assigned_capacities"][i]*sum([rng.expovariate(lamb) for j in range(k)]))
         return capacities
         
-    def pos_part_capacity(self):
-        #generate capacity of the form [x - noise]^{+}
-        for i in range(self.num_arcs):
-            noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
-        capacities = []
-        for i in range(self.num_arcs):
-            capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
+    # def pos_part_capacity(self):
+    #     #generate capacity of the form [x - noise]^{+}
+    #     for i in range(self.num_arcs):
+    #         noise = exp_rng.mvnormalvariate(self.factors["mean_noise"], np.array(self.factors["cov_noise"]))
+    #     capacities = []
+    #     for i in range(self.num_arcs):
+    #         capacities.append(max(1000 * (self.factors["assigned_capacities"][i] - noise[i]), 0))
         
-        return capacities
+    #     return capacities
         
 
     def dfs(self, graph, start, visited=None):
@@ -165,6 +176,178 @@ class SMFCVX0(Model):
 
     def check_t(self):
         return self.factors["sink_index"] >= 0 and self.factors["sink_index"] <= self.factors["num_nodes"]
+    
+    def get_arcs0(self, num_nodes, num_arcs, source, end, uni_rng):
+        # Generate a random graph
+        self.rand_fuc = True
+        
+        set_arcs = []
+        for n1 in range(0, num_nodes - 1):
+            for n2 in range(n1 + 1, num_nodes):
+                set_arcs.append((n1, n2))
+                
+        arcs = [(source, source + 1), (end - 1, end)]
+        remove = []    
+        def get_in(arcs, num_nodes, ind, in_ind=True):
+            global remove
+            if len(arcs) <= 0:
+                return False            
+            graph = {node: set() for node in range(0, num_nodes)}
+            for a in arcs:
+                if in_ind == True:
+                    graph[a[0]].add(a[1])
+                else:
+                    graph[a[1]].add(a[0])
+            set0 = graph[ind]
+            for i in graph[ind]:
+                set0 = {*set0, *graph[i]}
+                for j in graph[i]:
+                    set0 = {*set0, *graph[j]}
+            
+            if in_ind == True:      
+                for j in set0 - graph[ind]:
+                    if j in graph[ind]:
+                        remove.append((ind, j))
+            
+            set0 = {*set0, ind}
+            return set0
+        
+        set0 = get_in(arcs, num_nodes, source)
+        for i in range(source + 1, end):
+            set0 = get_in(arcs, num_nodes, source)
+            if i not in set0:
+                set1 = list(get_in(arcs, num_nodes, i, False))
+                n2 = set1[uni_rng.randint(0, len(set1)-1)]
+                set2 = [i for i in set0 if i < n2]
+                n1 = list(set2)[uni_rng.randint(0, len(set2)-1)]
+                
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        for i in range(1, num_nodes - 1):
+            set9 = get_in(arcs, num_nodes, i)
+            if end not in set9:
+                set_out = list(get_in(arcs, num_nodes, end, False))
+                n1 = list(set9)[uni_rng.randint(0, len(set9)-1)]
+                set2 = [i for i in set_out if i > n1]
+                n2 = set2[uni_rng.randint(0, len(set2)-1)]
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        if len(arcs) < num_arcs:
+            remain_num = num_arcs - len(arcs)
+            remain = list(set(set_arcs) - set(arcs))
+            idx = uni_rng.sample(range(0, len(remain)), remain_num)
+            aa = set([remain[i] for i in idx])
+            arcs = {*arcs, *aa}     
+
+        else:
+            arcs = list(arcs)
+            arcs_e = [i for i in arcs if i != (source, end)]
+            return arcs_e
+        
+        arcs = list(arcs)
+        arcs_e = [i for i in arcs if i != (source, end)]
+        
+        return arcs_e
+    
+    def get_arcs(self, num_nodes, num_arcs, source, end, uni_rng):
+        # Generate a random graph
+        self.rand_fuc = True
+        # Get all possible arcs
+        set_arcs = []
+        # Allow cyclic graph
+        for n1 in range(0, num_nodes - 1):
+            for n2 in range(0, num_nodes):
+                if n2 == n1:
+                    continue
+                set_arcs.append((n1, n2))
+        # Get initial necessary arcs  
+        arcs = [(source, source + 1), (end - 1, end)]
+        remove = []    
+        def get_in(arcs, num_nodes, ind, in_ind=True):
+            global remove
+            if len(arcs) <= 0:
+                return False            
+            graph = {node: set() for node in range(0, num_nodes)}
+            for a in arcs:
+                if in_ind == True:
+                    graph[a[0]].add(a[1])  # All I can reach
+                else:
+                    graph[a[1]].add(a[0])  # All can reach me
+            set0 = graph[ind]
+            for i in graph[ind]:
+                set0 = {*set0, *graph[i]}
+                for j in graph[i]:
+                    set0 = {*set0, *graph[j]}
+            
+            if in_ind == True:      
+                for j in set0 - graph[ind]:
+                    if j in graph[ind]:
+                        remove.append((ind, j))
+            
+            set0 = {*set0, ind}
+            return set0
+        
+        set0 = get_in(arcs, num_nodes, source)
+        for i in range(source + 1, end):
+            set0 = get_in(arcs, num_nodes, source)  # Get all nodes that can be reached by source
+            if i not in set0:
+                set1 = list(get_in(arcs, num_nodes, i, False))  # Get all nodes can reach i
+                # print(set1)
+                # print(uni_rng.randint(0, len(set1)))
+                n2 = set1[uni_rng.randint(0, len(set1)-1)]  # Randomly select one bridge
+                # set2 = [i for i in set0 if i < n2]  # All nodes that source can reach
+                set2 = [i for i in set0 if i != n2]
+                n1 = list(set2)[uni_rng.randint(0, len(set2)-1)]  # Randomly select one bridge
+                
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        for i in range(1, num_nodes - 1):
+            set9 = get_in(arcs, num_nodes, i)  # Get all nodes that i can reach
+            if end not in set9:
+                set_out = list(get_in(arcs, num_nodes, end, False))  # Get all that can reach sink
+                n1 = list(set9)[uni_rng.randint(0, len(set9)-1)]  # Select one bridge
+                # set2 = [i for i in set_out if i > n1]  # All nodes that can reach
+                set2 = [i for i in set_out if i != n1]
+                n2 = set2[uni_rng.randint(0, len(set2)-1)]
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        if len(arcs) < num_arcs:
+            remain_num = num_arcs - len(arcs)
+            remain = list(set(set_arcs) - set(arcs))
+            idx = uni_rng.sample(range(0, len(remain)), remain_num)  ###
+            # print(idx)
+            aa = set([remain[i] for i in idx])
+            arcs = {*arcs, *aa}     
+
+        else:
+            return list(arcs)
+        
+        return list(arcs)
+    
+    def attach_rng(self, random_rng):
+        self.random_rng = random_rng
+        self.rand_fuc = False
+        
+        self.factors["sink_index"] = self.factors["num_nodes"] - 1
+        arcs_set = self.get_arcs(self.factors["num_nodes"], self.factors["num_arcs"], self.factors["source_index"], self.factors["sink_index"], random_rng[0])
+        arcs_set.sort(key=lambda a: a[1])
+        arcs_set.sort(key=lambda a: a[0])  
+        self.factors["arcs"] = arcs_set
+        # print('arcs: ', arcs_set)
+        self.factors["num_arcs"] = len(self.factors["arcs"])
+        self.factors["assigned_capacities"] = [5 for i in range(self.factors["num_arcs"])]
+        
+        self.factors["mean_noise"] = [0 for i in range(len(self.factors["arcs"]))]
+        
+        cov_fac = np.zeros((len(self.factors["arcs"]), len(self.factors["arcs"])))
+        np.fill_diagonal(cov_fac, 4)
+        self.factors['cov_noise'] = cov_fac.tolist()
+        
+        # self.factors["cov_noise"] = self.get_covariance(self.factors["num_arcs"], random_rng[1])
 
     def replicate(self, rng_list):
         """
@@ -236,7 +419,7 @@ Maximize the expected max flow from the source node s to the sink node t.
 """
 
 
-class SMFCVX_Max0(Problem):
+class SMFCVX_Max(Problem):
     """
     Base class to implement simulation-optimization problems.
 
@@ -309,7 +492,7 @@ class SMFCVX_Max0(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SMFCVX-1", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="SMFCVX-1", fixed_factors=None, model_fixed_factors=None, random=False, random_rng=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -326,6 +509,8 @@ class SMFCVX_Max0(Problem):
         self.model_default_factors = {}
         self.model_decision_factors = {"assigned_capacities"}
         self.factors = fixed_factors
+        self.random = random
+        self.n_rngs = 1
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
@@ -335,7 +520,7 @@ class SMFCVX_Max0(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 30000
+                "default": 100000
             },
             "cap": {
                 "description": "total set-capacity to be allocated to arcs.",
@@ -350,11 +535,17 @@ class SMFCVX_Max0(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
-        self.model = SMFCVX0(self.model_fixed_factors)
+        self.model = SMFCVX(self.model_fixed_factors)
+        if random and random_rng != None:
+            self.model.attach_rng(random_rng)
+            if self.model.rand_fuc == False:
+                print("Error: No random generator exists.")
+                return False
         self.dim = len(self.model.factors["arcs"])
         self.lower_bounds = (0, ) * self.dim
         self.upper_bounds = (1000000, ) * self.dim  #np.inf
-        self.Ci = np.array([20*[1]])#np.ones(20)
+        self.Ci = np.array([self.dim*[1]])
+        # self.Ci = np.array([20*[1]])#np.ones(20)
         self.Ce = None
         self.di = np.array([self.factors["cap"]])
         self.de = None
@@ -398,6 +589,23 @@ class SMFCVX_Max0(Problem):
         """
         vector = tuple(factor_dict["assigned_capacities"])
         return vector
+    
+    def random_budget(self, uni_rng):
+        # Choose a random budget
+        l = [500, 600, 700, 800]
+        budget = uni_rng.choice(l) * self.dim
+        return budget
+    
+    def attach_rngs(self, random_rng):
+        # Attach rng for problem class and generate random problem factors for random instances
+        self.random_rng = random_rng
+        
+        # For random version, randomize problem factors
+        if self.random:
+            self.factors["budget"] = self.random_budget(random_rng[0])
+            # print('budget: ', self.factors["budget"])
+        
+        return random_rng
 
     def response_dict_to_objectives(self, response_dict):
         """

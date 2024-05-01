@@ -11,7 +11,6 @@ import cvxpy as cp
 
 from ..base import Model, Problem
 
-
 class Cascade(Model):
     """
     Simulate a progressive cascade process in an infinite time horizon.
@@ -40,7 +39,7 @@ class Cascade(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None, random=False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "CASCADE"
@@ -49,6 +48,8 @@ class Cascade(Model):
         self.factors = fixed_factors
         self.G = nx.read_graphml('simopt/models/DAG.graphml')
         self.num_nodes = len(self.G)
+        self.random = random
+        self.n_random = 1
         self.specifications = {
             "num_subgraph": {
                 "description": "number of subgraphs to generate",
@@ -59,12 +60,24 @@ class Cascade(Model):
                 "description": "probability of initiating the nodes",
                 "datatype": np.ndarray,
                 "default": 0.1 * np.ones(self.num_nodes)
+            },
+            "num_nodes":{
+                "description": "number of nodes in each graph",
+                "datatype": int,
+                "default": 30
+            },
+            "num_edges": {
+                "description": "number of edges in each graph",
+                "datatype": int,
+                "default": 100
             }
         }
 
         self.check_factor_list = {
             "num_subgraph": self.check_num_subgraph,
             "init_prob": self.check_init_prob,
+            "num_nodes": self.check_num_nodes,
+            "num_edges": self.check_num_edges
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -75,9 +88,37 @@ class Cascade(Model):
     
     def check_init_prob(self):
         return np.all(self.factors["init_prob"] >= 0)
+    
+    def check_num_nodes(self):
+        return self.factors["num_nodes"] > 0
+    
+    def check_num_edges(self):
+        return self.factors["num_edges"] > 0
 
     def check_simulatable_factors(self):
         return True
+    
+    def generate_random_graph(self, uni_rng):
+        num_nodes = self.factors["num_nodes"]
+
+        # Create a directed graph, add nodes with costs, and add edges
+        G = nx.DiGraph()
+        G.add_nodes_from(range(num_nodes))
+        for node in G.nodes:
+            G.nodes[node]['cost'] = round(uni_rng.uniform(1, 80), 4)
+        
+        for i in range(num_nodes):
+            for j in range(i + 1, num_nodes):
+                if uni_rng.uniform(0, 1) < 0.4:
+                    weight = round(uni_rng.uniform(0, 1), 4)
+                    G.add_edge(i, j, weight = weight)
+                    
+        return G
+    
+    def attach_rng(self, random_rng):
+        self.random_rng = random_rng
+        self.G = self.generate_random_graph(random_rng[0])
+        self.factors['num_edges'] = self.G.number_of_edges()
 
     def replicate(self, rng_list):
         """
@@ -118,6 +159,7 @@ class Cascade(Model):
                     for w in self.G.successors(v):
                         if w not in activated:
                             u = activate_rng.uniform(0, 1)
+                            # print(self.G[v][w])
                             if u < self.G[v][w]["weight"]:
                                 temp_activated.add(w)
                 # Add newly activated nodes to the activated set.
@@ -203,7 +245,7 @@ class CascadeMax(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CASCADE-1", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="CASCADE-1", fixed_factors=None, model_fixed_factors=None, random=False, random_rng=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
@@ -217,15 +259,16 @@ class CascadeMax(Problem):
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
-        self.G = nx.read_graphml('simopt/models/DAG.graphml')
         self.model_default_factors = {}
         self.model_decision_factors = {"init_prob"}
         self.factors = fixed_factors
+        self.random = random
+        self.n_rngs = 2  # Number of rngs used for random instance
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(0.001 * np.ones(len(self.G)))
+                "default": tuple(0.001 * np.ones(30))  #len(self.G)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -244,7 +287,10 @@ class CascadeMax(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
-        self.model = Cascade(self.model_fixed_factors)
+        self.model = Cascade(self.model_fixed_factors, random)
+        if random == True and random_rng != None:
+            self.model.attach_rng(random_rng)
+        self.G = self.model.G
         self.dim = len(self.model.G)
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (1,) * self.dim
@@ -307,6 +353,34 @@ class CascadeMax(Problem):
         """
         objectives = (response_dict["mean_num_activated"],)
         return objectives
+    
+    def random_budget(self, uni_rng):
+        # l = [100, 200, 300, 400, 500]
+        l = [500, 600, 700, 800]
+        budget = uni_rng.choice(l) * self.dim
+        return budget
+    
+    def get_cost(self, exp_rng):
+        B = max(exp_rng.expovariate(1/self.factors["B"]), self.factors["B"]/5)
+        return B
+    
+    def attach_rngs(self, random_rng):
+        self.random_rng = random_rng
+        
+        if self.random == True:
+            self.factors["budget"] = self.random_budget(random_rng[0])
+            self.factors["B"] = self.get_cost(random_rng[1])
+            self.di = np.array([self.factors["B"]])
+            
+            if not self.check_deterministic_constraints(self.factors['initial_solution']) or len(self.factors['initial_solution']) != self.dim: 
+                self.factors['initial_solution'] = self.find_feasible_initial(None, self.Ci, None, self.di)
+                # print('new initial')
+
+        # print("Budget: ", self.factors['budget'])
+        # print("B: ", self.factors["B"])
+        # print('Ci: ', self.Ci)
+        # print('init_sol: ', self.factors['initial_solution'])
+        # print('feasibility: ', np.sum(self.Ci) * 0.001)
 
     def response_dict_to_stoch_constraints(self, response_dict):
         """
@@ -473,7 +547,7 @@ class CascadeMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
+            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
 
             # Compute the new point.
             x += lam * direction
@@ -481,23 +555,19 @@ class CascadeMax(Problem):
         x= tuple(x)
         return x
 
-    
     def get_multiple_random_solution(self, rand_sol_rng, n_samples):
         """
-        Generate multiple random solutions for starting or restarting solvers.
+        Generate a random solution for starting or restarting solvers.
 
         Arguments
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        n_samples: int
-            number of random solutions to generate
-
         Returns
         -------
-        xs : list[tuple]
-            list of vectors of decision variables
+        x : tuple
+            vector of decision variables
         """
 
         # Upper bound and lower bound.
@@ -529,7 +599,7 @@ class CascadeMax(Problem):
         else:
           C = np.empty([1, self.dim])
           d = np.empty([1, 1])
-        
+
         if len(ub_inf_idx) > 0:
             C = np.vstack((C, np.identity(upper_bound.shape[0])))
             d = np.vstack((d, upper_bound[np.newaxis].T))
@@ -574,7 +644,7 @@ class CascadeMax(Problem):
                         s_star2 = s
 
             # Generate random point between lambdas.
-            lam = rand_sol_rng.uniform(-1 * min(1, s_star2), min(1, s_star))
+            lam = rand_sol_rng.uniform(-1 * s_star2, s_star)
 
             # Compute the new point.
             x += lam * direction
@@ -582,7 +652,6 @@ class CascadeMax(Problem):
             xs.append(tuple(x))
 
         return xs[: -n_samples]
-    
 
     def find_feasible_initial(self, Ae, Ai, be, bi):
         '''

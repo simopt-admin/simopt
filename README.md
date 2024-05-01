@@ -2,10 +2,18 @@ This branch is dedicated to the experiments conducted for the 2024 Winter Simula
 
 ## Paper TODO
 1. Update .rst files.
-2. Remove unnecessary files from this branch.
+2. Add explanations for SAN-R1 and SMF-R5.
+
+## Paper Results
+All plots created in the experiments can be found in `experiments/plots`.
 
 ## Replicate the experiments
-To replicate the experiments conducted in the paper, run the command ```python demo/demo_random_experiment.py ```
+Before running the scripts, you'll need to install the required Python libraries and dependencies: 
+```pip install -r requirements.txt```.
+
+To replicate the experiments conducted in the paper, run the command ```python demo/demo_random_experiment.py ```.
+
+To generate plots for the selected top 5 solvers, run the command (after the previous one) ```python demo/demo_random_top_plots.py ```
 
 ## Description
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.

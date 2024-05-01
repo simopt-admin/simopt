@@ -18,12 +18,12 @@ from .solvers.AS_I import ACTIVESET1
 from .solvers.AS_Z import ACTIVESET2
 from .solvers.AS_SS import ACTIVESET3
 # import models and problems
-from .models.san_2 import SAN, SANLongestPathConstr
+from .models.san import SAN, SANLongestPathConstr
 from .models.network import Network, NetworkMinTotalCost
-from .models.smf_2 import SMF, SMF_Max
+from .models.smf import SMF, SMF_Max
 from .models.openjackson import OpenJackson, OpenJacksonMinQueue   #6
-from .models.cascade_2 import Cascade, CascadeMax
-from .models.smfcvx_2 import SMFCVX, SMFCVX_Max
+from .models.cascade import Cascade, CascadeMax
+from .models.smfcvx import SMFCVX, SMFCVX_Max
 
 
 # directory dictionaries

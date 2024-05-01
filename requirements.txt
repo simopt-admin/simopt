@@ -1,0 +1,11 @@
+autograd==1.6.2
+cvxpy==1.4.2
+matplotlib==3.8.0
+mrg32k3a==1.0.0
+networkx==3.2.1
+numpy==1.26.4
+ortools==9.9.3963
+pandas==2.2.2
+Pillow==10.3.0
+scipy==1.13.0
+seaborn==0.13.2
