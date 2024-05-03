@@ -7,6 +7,12 @@ This branch is dedicated to the experiments conducted for the 2024 Winter Simula
 ## Paper Results
 All plots created in the experiments can be found in `experiments/plots`.
 
+Explanation on SAN-R1:
+The initial solution of the problem is already large and close to the upper bound. Because Frank-Wolfe has the capacity to quickly move between vertices, it's able to make a lot more progress than other solvers. The other solvers also make progress on this problem, but since it's significantly less than Frank-Wolfe, their progress curves seem flat.
+
+Explanation on SMFCVX-R5:
+For this random instance, an edge directly from source node to sink node is generated, so most solvers are able to find solutions immediately. 
+
 ## Replicate the experiments
 Before running the scripts, you'll need to install the required Python libraries and dependencies: 
 ```pip install -r requirements.txt```.
