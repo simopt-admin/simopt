@@ -369,13 +369,16 @@ class ProblemSolver(object):
         Dictionary of user-specified model factors.
     file_name_path : str, optional
         Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
+    create_pickle : bool, optional
+        True if creating pickle file to store ProblemSolver object, False otherwise. 
     """
     # Set the minimum number of CPU cores for multiprocessing to be enabled
     CPU_COUNT_LIMIT = 2
     # Set the maximum number of active threads to be running at once
     ACTIVE_THREAD_LIMIT_DEFAULT = 4
 
-    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
+    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, 
+                 solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None, create_pickle = True):
         """There are two ways to create a ProblemSolver object:
             1. Provide the names of the solver and problem to look up in ``directory.py``.
             2. Provide the solver and problem objects to pair.
@@ -387,24 +390,33 @@ class ProblemSolver(object):
             problem_fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
+        self.create_pickle = create_pickle
         # Initialize solver.
         if solver is not None:  # Method 2
             self.solver = solver
+            if not hasattr(self.solver, 'original_name'):
+                self.solver.original_name = str(solver.name)
             if solver_rename is not None:
                 self.solver.name = solver_rename
         elif solver_rename is None:  # Method #1
             self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
+            self.solver.original_name = str(solver_name)
         else:  # Method #1
             self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+            self.solver.original_name = str(solver_name)
         # Initialize problem.
         if problem is not None:  # Method #2
             self.problem = problem
+            if not hasattr(self.problem, 'original_name'):
+                self.problem.original_name = str(problem.name)
             if problem_rename is not None:
                 self.problem.name = problem_rename
         elif problem_rename is None:  # Method #1
             self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
+            self.problem.original_name = str(problem_name)
         else:  # Method #1
             self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
+            self.problem.original_name = str(problem_name)
         # Initialize file path.
         if file_name_path is None:
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
@@ -418,6 +430,7 @@ class ProblemSolver(object):
         # If we can determine CPU Count, set the thread limit to the number of virtual cores
         else:
             self.active_thread_limit = os.cpu_count() * 2
+
 
 
     def check_compatibility(self):
@@ -504,8 +517,9 @@ class ProblemSolver(object):
         # Delete stuff we don't need to save
         del self.function_start
 
-        # Save ProblemSolver object to .pickle file.
-        self.record_experiment_results()
+        # Save ProblemSolver object to .pickle file if specified.
+        if self.create_pickle:
+            self.record_experiment_results()
 
     def run_multithread(self, mrep):
         print(f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}.")
@@ -596,8 +610,9 @@ class ProblemSolver(object):
         # Delete stuff we don't need to save
         del self.function_start
         
-        # Save ProblemSolver object to .pickle file.
-        self.record_experiment_results()
+        # Save ProblemSolver object to .pickle file if specified.
+        if self.create_pickle:
+            self.record_experiment_results()
 
     def post_replicate_multithread(self, mrep):
         print(f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}.")    
@@ -947,7 +962,7 @@ def read_experiment_results(file_name_path):
     return experiment
 
 
-def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None):
+def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None, create_pair_pickles = False):
     """Construct objective curves and (normalized) progress curves
     for a collection of experiments on a given problem.
 
@@ -965,6 +980,8 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         Proxy for or bound on optimal objective function value.
     proxy_opt_x : tuple, optional
         Proxy for optimal solution.
+    create_pair_pickles : bool, optional
+        True if creating pickle files for each problem-solver pair, False otherwise.
     """
     # Check that all experiments have the same problem and same
     # post-experimental setup.
@@ -986,7 +1003,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
-    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
+    baseline_rngs = [MRG32k3a(s_ss_sss_index=[0, experiment.problem.model.n_rngs + rng_index, 0]) for rng_index in range(experiment.problem.model.n_rngs)]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
         x0_postreps = [proxy_init_val] * n_postreps_init_opt
@@ -1093,8 +1110,9 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
             norm_est_objectives = [(est_objective - opt_obj_val) / initial_opt_gap for est_objective in est_objectives]
             frac_intermediate_budgets = [budget / experiment.problem.factors["budget"] for budget in experiment.all_intermediate_budgets[mrep]]
             experiment.progress_curves.append(Curve(x_vals=frac_intermediate_budgets, y_vals=norm_est_objectives))
-        # Save ProblemSolver object to .pickle file.
-        experiment.record_experiment_results()
+        # Save ProblemSolver object to .pickle file if specified.
+        if create_pair_pickles:
+            experiment.record_experiment_results()
 
 
 def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
@@ -2532,9 +2550,12 @@ class ProblemsSolvers(object):
         All problem-solver pairs.
     file_name_path : str
         Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
+    create_pair_pickles : bool, optional
+        True if creating pickle files for each problem-solver pair, False otherwise. 
     """
     def __init__(self, solver_factors=None, problem_factors=None, solver_names=None, problem_names=None,
-                 solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
+                 solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, 
+                 problems=None, experiments=None, file_name_path=None, create_pair_pickles = False):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2545,6 +2566,8 @@ class ProblemsSolvers(object):
         TO DO: If loading some ProblemSolver objects from file,
         check that their factors match those in the overall ProblemsSolvers.
         """
+        self.create_pair_pickles = create_pair_pickles
+        
         if experiments is not None:  # Method #3
             self.experiments = experiments
             self.solvers = [experiments[idx][0].solver for idx in range(len(experiments))]
@@ -2599,8 +2622,8 @@ class ProblemsSolvers(object):
             self.experiments = [[ProblemSolver(solver=solver,
                                                problem=problem,
                                                solver_rename = self.solver_renames[sol_indx],
-                                               problem_rename = self.problem_renames[prob_indx])
-                                               #file_name_path=f'./experiments/outputs/{self.solver_renames[sol_indx]}_{sol_indx}_on_{self.problem_renames[prob_indx]}_{prob_indx}.pickle')
+                                               problem_rename = self.problem_renames[prob_indx],
+                                               create_pickle = self.create_pair_pickles)
                                  for prob_indx, problem in enumerate(problems)]
                                 for sol_indx, solver in enumerate(solvers)]
             self.solvers = solvers
@@ -2851,14 +2874,13 @@ class ProblemsSolvers(object):
 
         for sublist in self.experiments:
             for obj in sublist:
-                solver = obj.solver.name
-                problem = obj.problem.name
+                solver = obj.solver.original_name
+                problem = obj.problem.original_name
                 key = (solver, problem)
                 if key not in pair_dict:
                     pair_dict[key] = [obj]
                 else:
                     pair_dict[key].append(obj)
-
         for (solver, problem), pair_list in pair_dict.items():
             csv_filename = f'{solver}_on_{problem}_results'
             self.report_statistics(pair_list=pair_list, solve_tols=solve_tols, csv_filename=csv_filename)
