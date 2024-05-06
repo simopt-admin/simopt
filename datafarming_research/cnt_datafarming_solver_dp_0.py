@@ -15,34 +15,34 @@ def main():
     
     # turn design txt file into dataframe
     design_filename = "ASTRODF_design.txt" # location of design file
-    df = pd.read_csv(design_filename, sep='\t', encoding="utf-8", header=None) # may need to change sep depending on type of file uploaded
-    print('solver df', df)
+    df = pd.read_csv(design_filename, sep='\t', encoding="utf-8") # may need to change sep depending on type of file uploaded
+    
         
     n_dp = len(df) # number of design points(
     solver_factors = [] # list to hold dictionary of problem factors for each dp of problem (don't change)
     solver_names = [] # list to hold problem names (don't change)
     
     # add default version of ASTRODF to factor list
-    solver_factors.append({})
+    solver_factors.append({"eta_1": 0.225, "eta_2": 0.9, "gamma_1": 2.625, "gamma_2": 0.65})
     solver_names.append(solver_name)
     
     solver_renames = []
-    solver_renames.append("ASTRODF_default")
+    solver_renames.append("ASTRODF_0")
     # concatinate tables back into arrays for each design point
-    for row in range(n_dp):
-        print(row)
-        dp_factors = {}
-        dp_factors["eta_1"] = float(df.iloc[row, 0])
-        dp_factors["eta_2"] = float(df.iloc[row, 1])
-        dp_factors["gamma_1"] = float(df.iloc[row, 2])
-        dp_factors["gamma_2"] = float(df.iloc[row, 3])
+    # for row in range(n_dp):
+    #     print(row)
+    #     dp_factors = {}
+    #     dp_factors["eta_1"] = float(df.iloc[row, 0])
+    #     dp_factors["eta_2"] = float(df.iloc[row, 1])
+    #     dp_factors["gamma_1"] = float(df.iloc[row, 2])
+    #     dp_factors["gamma_2"] = float(df.iloc[row, 3])
     
-        solver_factors.append(dp_factors)
-        solver_names.append(solver_name)
-        solver_renames.append(f"{solver_name}_{row}")
-        print(solver_factors)
-    print(solver_renames)
-    print('factors', solver_factors)
+    #     solver_factors.append(dp_factors)
+    #     solver_names.append(solver_name)
+    #     solver_renames.append(f"{solver_name}_{row}")
+    #     print(solver_factors)
+    # print(solver_renames)
+    # print('factors', solver_factors)
     # solver information
     problem_name = "CNTNEWS-1" # name of solver
 
@@ -60,7 +60,7 @@ def main():
     
     # problem factors (can change these as desired, comment out to use problem defaults)
     init_sol = [20, 20, 20, 20]
-    budget = 500
+    budget = 1000
      
     # turn design txt file into dataframe
     design_filename = "cnt_design.xlsx" # location of design file
@@ -132,8 +132,8 @@ def main():
     
     # run experiment (can change any of these values as desired)
     n_macro = 10 # number of macro replications at each design point
-    n_post = 50 # number of post replications of each macro rep
-    n_postnormal = 50 # number of post replications at x0 and x*
+    n_post = 200 # number of post replications of each macro rep
+    n_postnormal = 200 # number of post replications at x0 and x*
     
     experiment.run(n_macroreps = n_macro)
     experiment.post_replicate( n_postreps = n_post, crn_across_macroreps =True)

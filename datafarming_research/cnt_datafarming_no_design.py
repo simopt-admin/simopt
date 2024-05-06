@@ -14,17 +14,21 @@ def main():
     problem_name = 'CNTNEWS-1'
     
     
-    #fixed factors
+    #fixed factors (uncomment any of these if you want to change from problem default)
     n_p = 3 # number of products
     n_m = 4 # number of materials
-    #mat_to_prod = [[1,2,3], [1,2,3],[1,2,3]] # maps materials to products (currently every product uses all materials)
-    # process_cost = [0.1, 0.1, 0.1] # processing cost per product unit
-    # order_cost = 20 # one time ordering cost
-    # purchase_yeild = [.9,.9,.9] # yeild rates for initially purchased materials
-    # total_budget = 5000 # budget for all purchases
-    # sales_price = [20,20,20,20] # sales price per product unit
-    # order_quantity = [20,20,20] # intial order quantity per material
-    # mean = [15,15,15] # mean parameter for poisson demand distribution
+    mat_to_prod = [[1, 1, 1, 0], [1, 2, 2, 0],[0, 0, 3, 3]] # maps materials to products (currently every product uses all materials)
+    # process_cost = [0.1, 0.1, 0.1,0.1] # processing cost per product unit
+    order_cost = 0 # one time ordering cost
+    purchase_yeild = [1,1,1,1] # yeild rates for initially purchased materials
+    total_budget = 1200 # budget for all purchases
+    sales_price = [6,12,20] # sales price per product unit
+    # order_quantity = [20,20,20,20] # intial order quantity per material
+    mean = [20,25,15] # mean parameter for poisson demand distribution
+    
+    # problem factors (can change these as desired, comment out to use problem defaults)
+    init_sol = [20, 20, 20, 20]
+    budget = 500
     m_cost = [1,1,1.1,1.21]
     r_cost = [2,2,2.2,42]
     s_price = [.5,.5,.55,.605]
@@ -66,11 +70,11 @@ def main():
     crn = True
     #sample_size = 10
     
-    solver_factors = [{'crn_across_solns': crn, 'sample_size': 5}, {'crn_across_solns': crn, 'sample_size': 10}, {'crn_across_solns': crn, 'sample_size': 50} ]
+    solver_factors = [{'crn_across_solns': crn, 'sample_size': 5}]
     
-    solver_names = [solver_name, solver_name, solver_name]
+    solver_names = [solver_name]
     
-    solver_factors = [{}]
+    #solver_factors = [{}]
     
     
     # call problemssolvers

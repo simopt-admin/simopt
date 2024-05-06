@@ -53,7 +53,7 @@ def main():
     # process_cost = [0.1, 0.1, 0.1,0.1] # processing cost per product unit
     order_cost = 0 # one time ordering cost
     purchase_yeild = [1,1,1,1] # yeild rates for initially purchased materials
-    #total_budget = 5000 # budget for all purchases
+    total_budget = 10000 # budget for all purchases
     sales_price = [6,12,20] # sales price per product unit
     # order_quantity = [20,20,20,20] # intial order quantity per material
     mean = [20,25,15] # mean parameter for poisson demand distribution
@@ -108,7 +108,7 @@ def main():
         # dp_factors["process_cost"] = process_cost 
         dp_factors["order_cost"] = order_cost
         dp_factors["purchase_yield"] = purchase_yeild
-        # dp_factors["total_budget"] = total_budget
+        dp_factors["total_budget"] = total_budget
         dp_factors["sales_price"] = sales_price
         # dp_factors["order quantity"] = order_quantity
         dp_factors["poi_mean"] = mean    
