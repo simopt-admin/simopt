@@ -2397,10 +2397,11 @@ class New_Experiment_Window(tk.Toplevel):
         self.macro_reps = {} # dict that contains user specified macroreps for each experiment
         self.post_reps = {} # dict that contains user specified postrep numbers for each experiment
         self.init_post_reps = {} # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
-        self.crn_budgets = {} # contains bool val for wheither crn is used across budget for each experiment
-        self.crn_macros = {} # contains bool val for wheither crn is used across macroreps for each experiment
-        self.crn_inits = {} # contains bool val for wheither crn is used across initial and optimal solution for each experiment
+        self.crn_budgets = {} # contains bool val for if crn is used across budget for each experiment
+        self.crn_macros = {} # contains bool val for if crn is used across macroreps for each experiment
+        self.crn_inits = {} # contains bool val for if crn is used across initial and optimal solution for each experiment
         self.solve_tols = {} # solver tolerance gaps for each experiment (inserted as list)
+        self.pickle_checkstates = {} # contains bool val for if pickles should be created for each individual problem-solver pair
         
         # widget lists for enable/delete functions
         self.solver_list_labels = {} # holds widgets for solver name labels in solver list display
@@ -2576,6 +2577,13 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment_name_entry.grid(row = 0, column = 1)
         self.run_experiment_button = tk.Button(master = self.experiment_button_frame, text = 'Create experiment with listed solvers & problems', command = self.create_experiment)
         self.run_experiment_button.grid(row = 2, column = 0)
+        
+        # ind pair pickle checkbox
+        self.pickle_label  = tk.Label(master =  self.experiment_button_frame, text = 'Create pickles for each problem-solver pair?', font = 'Calibri 11')
+        self.pickle_label.grid(row = 1, column = 0)
+        self.pickle_checkstate = tk.BooleanVar() 
+        self.pickle_checkbox = tk.Checkbutton(master = self.experiment_button_frame, variable = self.pickle_checkstate, width = 5)
+        self.pickle_checkbox.grid(row = 1, column = 1)
         
         ''' Display experiment list and run options'''
         self.experiment_list_display_frame = tk.Frame(master = self.master)
@@ -3107,40 +3115,7 @@ class New_Experiment_Window(tk.Toplevel):
                             widget.delete(0, tk.END)
                             widget.configure(state = 'disabled')
 
-        # elif class_type == Model:
-        #     for factor in self.model_checkstates:
-        #         checkstate = self.model_checkstates[factor].get()
-        #         if factor in self.model_datafarm_widgets:
-        #             widget_list = self.model_datafarm_widgets[factor]
-        #             if checkstate:
-        #                 for widget in widget_list:
-        #                     widget.configure(state='normal')
-        #             else:
-        #                 for widget in widget_list:
-        #                     widget.delete(0, tk.END)
-        #                     widget.configure(state = 'disabled')
-                            
-        # # enable or disable problem and model design options depending on which factors are selected                    
-        # if class_type == Problem:
-        #     all_false_problem = all([var.get() == False for var in self.problem_checkstates.values()])
-        #     all_false_model = all([var.get() == False for var in self.model_checkstates.values()])    
-        #     if all_false_problem:
-        #         self.problem_stack_entry.delete(0, tk.END)
-        #         self.problem_stack_entry.configure(state = 'disabled')
-        #         self.problem_design_type_menu.configure(state = 'disabled')
-                
-        #     else:
-        #         self.problem_stack_entry.configure(state = 'normal')
-        #         self.problem_design_type_menu.configure(state = 'normal')
-                
-        #     if all_false_model:
-        #         self.model_stack_entry.delete(0, tk.END)
-        #         self.model_stack_entry.configure(state = 'disabled')
-        #         self.model_design_type_menu.configure(state = 'disabled')
-                
-        #     else:
-        #         self.model_stack_entry.configure(state = 'normal')
-        #         self.model_design_type_menu.configure(state = 'normal')
+
                 
                 
                 
@@ -3212,12 +3187,7 @@ class New_Experiment_Window(tk.Toplevel):
         # Get unique solver design name
         self.problem_design_name = self.get_unique_name(self.master_problem_dict, self.problem_design_name_var.get())
         
-        # # determine if no problem/model factors were selected
-        # all_false_problem = all([var.get() == False for var in self.problem_checkstates.values()])
-        # all_false_model = all([var.get() == False for var in self.model_checkstates.values()])
-        
-        # # create design over problem factors
-        # if not all_false_problem:    
+ 
             
         # get n stacks and design type from user input
         n_stacks = self.problem_stack_var.get()
@@ -3467,62 +3437,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         self.add_problem_design_to_list()
         
-    # def add_model_design_to_experiment(self):
-        
-    #     #convert fixed factors to proper data type
-    #     problem_fixed_factors = self.convert_proper_datatype(self.problem_datafarm_defaults, self.problem_datafarm_object)
-        
-    #     # # add fixed model factors to design list
-    #     # for dp in self.model_design_list:
-    #     #     for problem_factor in problem_fixed_factors:
-    #     #         dp[problem_factor] = problem_fixed_factors[problem_factor]
-
-    #     problem_design_name = self.problem_design_name
-        
-    #     problem_holder_list = [] # holds all problem lists within design name
-    #     for index, dp in enumerate(self.model_design_list):
-    #         dp_list = [] # holds dictionary of factors for current dp
-    #         dp_list.append(problem_fixed_factors) # append problem factors
-    #         dp_list.append(dp) # append model factors
-    #         dp_list.append(self.problem_datafarm_object.name) #append name of problem
-    #         problem_holder_list.append(dp_list) # add current dp information to holder list
-           
-    #     self.master_problem_dict[problem_design_name] = problem_holder_list
-    #     print('master problem', self.master_problem_dict)
-        
-    #     self.add_problem_design_to_list()
-    
-    # def add_problem_and_model_design_to_experiment(self):
-        
-    #     # # comdine dps from problem and model designs
-    #     # both_design_list = [] # will hold dictionaries for all dps for both problem and model
-    #     # for problem_dp in self.problem_design_list:
-    #     #     for model_dp in self.model_design_list:
-                
-                
-    #     #         dp = {}
-    #     #         for problem_factor in problem_dp:
-    #     #             dp[problem_factor] = problem_dp[problem_factor]
-    #     #         for model_factor in model_dp:
-    #     #             dp[model_factor] = model_dp[model_factor]
-    #     #         both_design_list.append(dp)
-        
-
-    #     problem_design_name = self.problem_design_name
-        
-    #     problem_holder_list = [] # holds all problem lists within design name
-    #     for index, dp in enumerate(self.problem_design_list):
-    #         dp_list = [] # holds dictionary of factors for current dp
-    #         dp_list.append(dp) # append problem factors
-    #         dp_list.append(self.model_design_list[index]) # append model factors
-    #         dp_list.append(self.problem_datafarm_object.name) #append name of problem
-    #         problem_holder_list.append(dp_list) # add current dp information to holder list
-
-            
-    #     self.master_problem_dict[problem_design_name] = problem_holder_list
-    #     print('master problem', self.master_problem_dict)
-        
-    #     self.add_problem_design_to_list()    
+   
     
     def add_problem_design_to_list(self):
         
@@ -3694,6 +3609,9 @@ class New_Experiment_Window(tk.Toplevel):
         
         # get unique experiment name
         experiment_name = self.get_unique_name(self.master_experiment_dict, self.experiment_name_var.get())
+        
+        #get pickle checkstate
+        pickle_checkstate = self.pickle_checkstate.get()
 
         
         # Extract solver and problem information from master dictionaries
@@ -3725,7 +3643,7 @@ class New_Experiment_Window(tk.Toplevel):
                                           problem_factors = self.master_problem_factor_list,
                                           solver_names = self.master_solver_name_list,
                                           problem_names = self.master_problem_name_list,
-                                          #file_name_path 
+                                          create_pair_pickles = pickle_checkstate 
                                           
             )
         
@@ -3749,14 +3667,7 @@ class New_Experiment_Window(tk.Toplevel):
         # reset default experiment name for next experiment
         self.experiment_name_var.set(self.get_unique_name(self.master_experiment_dict, 'experiment'))
         
-        # set experiment options as default
-        self.macro_reps[experiment_name] = self.macro_default
-        self.post_reps[experiment_name] = self.post_default
-        self.init_post_reps[experiment_name] = self.init_default
-        self.crn_budgets[experiment_name] = self.crn_budget_default
-        self.crn_macros[experiment_name] = self.crn_macro_default
-        self.crn_inits[experiment_name] = self.crn_init_default
-        self.solve_tols[experiment_name] = self.solve_tols_default
+
         
         
         ''' Display experiment in list '''
@@ -3776,6 +3687,8 @@ class New_Experiment_Window(tk.Toplevel):
         self.macro_reps_entry = tk.Entry(master = self.current_experiment_frame, textvariable = self.macro_reps_var, width = 5, justify = 'right' )
         self.macro_reps_entry.grid(row = 0, column = 2)
         self.macro_entries[experiment_name] = self.macro_reps_entry # add macro rep entry box to widget dict
+        
+        
         # run button
         self.run_experiment_button = tk.Button(master = self.current_experiment_frame, text = "Run", command = lambda:self.run_experiment(experiment_name = experiment_name))
         self.run_experiment_button.grid(row = 0, column = 3)
