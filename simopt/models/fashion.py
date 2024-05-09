@@ -297,7 +297,7 @@ class Fashion(Model):
 
         }
 
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}  # ooo
         return responses, gradients
 
 
