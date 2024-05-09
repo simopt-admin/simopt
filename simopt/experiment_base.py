@@ -2551,11 +2551,13 @@ class ProblemsSolvers(object):
     file_name_path : str
         Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
     create_pair_pickles : bool, optional
-        True if creating pickle files for each problem-solver pair, False otherwise. 
+        True if creating pickle files for each problem-solver pair, False otherwise.
+    experiment_name: str, optional
+        Name of experiment to be appended to the beginning of output files. 
     """
     def __init__(self, solver_factors=None, problem_factors=None, solver_names=None, problem_names=None,
                  solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, 
-                 problems=None, experiments=None, file_name_path=None, create_pair_pickles = False):
+                 problems=None, experiments=None, file_name_path=None, create_pair_pickles = False, experiment_name = None):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2566,7 +2568,13 @@ class ProblemsSolvers(object):
         TO DO: If loading some ProblemSolver objects from file,
         check that their factors match those in the overall ProblemsSolvers.
         """
+        # set attributes for pickle create and experiment file names
         self.create_pair_pickles = create_pair_pickles
+        if experiment_name is not None:
+            self.file_header = f'{experiment_name}_'
+        else:
+            self.file_header = ''
+        
         
         if experiments is not None:  # Method #3
             self.experiments = experiments
@@ -2623,7 +2631,8 @@ class ProblemsSolvers(object):
                                                problem=problem,
                                                solver_rename = self.solver_renames[sol_indx],
                                                problem_rename = self.problem_renames[prob_indx],
-                                               create_pickle = self.create_pair_pickles)
+                                               create_pickle = self.create_pair_pickles,
+                                               file_name_path= f'./experiments/outputs/{self.file_header}{self.solver_renames[sol_indx]}_on_{self.problem_renames[prob_indx]}')
                                  for prob_indx, problem in enumerate(problems)]
                                 for sol_indx, solver in enumerate(solvers)]
             self.solvers = solvers
@@ -2706,7 +2715,7 @@ class ProblemsSolvers(object):
         if file_name_path is None:
             solver_names_string = "_".join(self.solver_set)
             problem_names_string = "_".join(self.problem_set)
-            self.file_name_path = f"./experiments/outputs/group_{solver_names_string}_on_{problem_names_string}.pickle"
+            self.file_name_path = f"./experiments/outputs/{self.file_header}group_{solver_names_string}_on_{problem_names_string}.pickle"
         else:
             self.file_name_path = file_name_path
 
@@ -2834,7 +2843,7 @@ class ProblemsSolvers(object):
             file.write("----------------------------------------------------------------------------------------------")
             file.write("\nProblems:\n\n")
             for i in range(self.n_problems):
-                file.write(f"{self.problem_names[i]}\n\t")
+                file.write(f"{self.problem_renames[i]}\n\t")
                 # Write model factors for each problem.
                 file.write("Model Factors:\n")
                 for key, value in self.problems[i].model.factors.items():
@@ -2851,18 +2860,19 @@ class ProblemsSolvers(object):
             file.write("\nSolvers:\n\n")
             # Write solver factors for each solver.
             for j in range(self.n_solvers):
-                file.write(f"{self.solver_names[j]}\n\t")
+                file.write(f"{self.solver_renames[j]}\n\t")
                 file.write("Solver Factors:\n")
                 for key, value in self.solvers[j].factors.items():  # changed from i to j
                     file.write(f"\t\t{key}: {value}\n")
                 file.write("\n")
             file.write("----------------------------------------------------------------------------------------------")
-            # Write the name of pickle files for each Problem-Solver pair.
-            file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
-            for solver_group in self.experiments:
-                for experiment in solver_group:
-                    directory, file_name = os.path.split(experiment.file_name_path)
-                    file.write(f'{file_name}\n')
+            # Write the name of pickle files for each Problem-Solver pair if created.
+            if self.create_pair_pickles:
+                file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
+                for solver_group in self.experiments:
+                    for experiment in solver_group:
+                        directory, file_name = os.path.split(experiment.file_name_path)
+                        file.write(f'{file_name}\n')
             # for p in self.problem_names:
             #     for s in self.solver_names:
             #         file.write(f"\t{s}_on_{p}.pickle\n")
@@ -2882,7 +2892,7 @@ class ProblemsSolvers(object):
                 else:
                     pair_dict[key].append(obj)
         for (solver, problem), pair_list in pair_dict.items():
-            csv_filename = f'{solver}_on_{problem}_results'
+            csv_filename = f'{self.file_header}{solver}_on_{problem}_results'
             self.report_statistics(pair_list=pair_list, solve_tols=solve_tols, csv_filename=csv_filename)
 
     def report_statistics(self, pair_list, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
@@ -2913,7 +2923,9 @@ class ProblemsSolvers(object):
             solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
             # Print headers.
             csv_writer.writerow(["DesignPt#"] +
+                                ["SolverName"] +
                                 solver_factor_names +
+                                ["ProblemName"] +
                                 problem_factor_names +
                                 model_factor_names +
                                 ["MacroRep#"] +
@@ -2927,6 +2939,8 @@ class ProblemsSolvers(object):
             # Compute performance metrics.
             for designpt_index in range(len(pair_list)):
                 experiment = pair_list[designpt_index]
+                solver_name = experiment.solver.name
+                problem_name = experiment.problem.name
                 # Parse lists of factors.
                 solver_factor_list = [experiment.solver.factors[solver_factor_name] for solver_factor_name in solver_factor_names]
                 problem_factor_list = [experiment.problem.factors[problem_factor_name] for problem_factor_name in problem_factor_names]
@@ -2943,7 +2957,7 @@ class ProblemsSolvers(object):
                     opt_sol = tuple([round(x, 4) for x in experiment.all_recommended_xs[mrep][-1]])
                     opt_obj = experiment.all_est_objectives[mrep][-1]
                     solution_list = [init_sol, int_obj, opt_sol, opt_obj]
-                    print_list = [designpt_index] + solver_factor_list + problem_factor_list + model_factor_list + [mrep] + statistics_list + solution_list
+                    print_list = [designpt_index] + [solver_name] + solver_factor_list + [problem_name] + problem_factor_list + model_factor_list + [mrep] + statistics_list + solution_list
                     csv_writer.writerow(print_list)
 
 

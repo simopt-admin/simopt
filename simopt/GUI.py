@@ -3051,7 +3051,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.selected_datafarm_solver = self.solver_datafarm_var.get()
         self.solver_datafarm_object = self.solver_list[self.selected_datafarm_solver]()
         # show problem factors and store default widgets to this dict
-        self.solver_datafarm_defaults = self.show_factor_defaults(self.solver_datafarm_object, self.factor_display_canvas)
+        self.solver_datafarm_defaults, new_last_row = self.show_factor_defaults(self.solver_datafarm_object, self.factor_display_canvas)
         self.solver_checkstates, self.solver_min_vals, self.solver_max_vals, self.solver_dec_vals, self.solver_datafarm_widgets, last_row = self.show_datafarming_options(self.solver_datafarm_object, self.factor_display_canvas)
         
             
@@ -3248,7 +3248,7 @@ class New_Experiment_Window(tk.Toplevel):
                                                 cross_design_factors = self.problem_cross_design_factors,
                                                 n_stacks = n_stacks,
                                                 design_type = design_type,
-                                                IsProblem = True
+                                                #IsProblem = True
                                                 )
         
         # display design tree for problem, model, or both depending on design options
@@ -3615,34 +3615,48 @@ class New_Experiment_Window(tk.Toplevel):
 
         
         # Extract solver and problem information from master dictionaries
-        self.master_solver_factor_list = [] # holds dict of factors for each dp
-        self.master_solver_name_list = [] # holds name of each solver for each dp
-        self.master_problem_factor_list = [] # holds dict of factors for each dp
-        self.master_problem_name_list = [] # holds name of each solver for each dp
+        master_solver_factor_list = [] # holds dict of factors for each dp
+        master_solver_name_list = [] # holds name of each solver for each dp
+        master_problem_factor_list = [] # holds dict of factors for each dp
+        master_problem_name_list = [] # holds name of each solver for each dp
+        solver_renames = [] # holds rename for each solver
+        problem_renames = [] # holds rename for each problem
         
-        for solver_group in self.master_solver_dict:
-            for dp in self.master_solver_dict[solver_group]:
+        for solver_group_name in self.master_solver_dict:
+            solver_group = self.master_solver_dict[solver_group_name]
+            for index,dp in enumerate(solver_group):
                 factors = dp[0]
                 solver_name = dp[1]
-                self.master_solver_factor_list.append(factors)
-                self.master_solver_name_list.append(solver_name)
+                if len(solver_group) > 1:
+                    solver_rename = f'{solver_group_name}_dp_{index}'
+                else:
+                    solver_rename = f'{solver_group_name}'
+                    
+                master_solver_factor_list.append(factors)
+                master_solver_name_list.append(solver_name)
+                solver_renames.append(solver_rename)
             
-        for problem_group in self.master_problem_dict:
-            for dp in self.master_problem_dict[problem_group]:
+        for problem_group_name in self.master_problem_dict:
+            problem_group = self.master_problem_dict[problem_group_name]
+            for index, dp in enumerate(problem_group):
                 factors = dp[0]
                 problem_name = dp[1]
-                self.master_problem_factor_list.append(factors)
-                self.master_problem_name_list.append(problem_name)
+                if len(problem_group) > 1:
+                    problem_rename = f'{problem_group_name}_dp_{index}'
+                else:
+                    problem_rename = f'{problem_group_name}'
+                master_problem_factor_list.append(factors)
+                master_problem_name_list.append(problem_name)
+                problem_renames.append(problem_rename)
 
-        print('experiment solver factors', self.master_solver_factor_list )
-        print('experiment solver names', self.master_solver_name_list )
-        print('experiment problem factors', self.master_problem_factor_list )
-        print('experiment problem names', self.master_problem_name_list )
         # use ProblemsSolvers to initialize exp 
-        self.experiment = ProblemsSolvers(solver_factors = self.master_solver_factor_list,
-                                          problem_factors = self.master_problem_factor_list,
-                                          solver_names = self.master_solver_name_list,
-                                          problem_names = self.master_problem_name_list,
+        self.experiment = ProblemsSolvers(solver_factors = master_solver_factor_list,
+                                          problem_factors = master_problem_factor_list,
+                                          solver_names = master_solver_name_list,
+                                          problem_names = master_problem_name_list,
+                                          solver_renames = solver_renames,
+                                          problem_renames = problem_renames,
+                                          experiment_name = experiment_name,
                                           create_pair_pickles = pickle_checkstate 
                                           
             )
