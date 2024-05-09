@@ -30,8 +30,27 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 # Working example for MM1 model.
 # -----------------------------------------------
 from simopt.models.fashion  import Fashion
-fixed_factors = {"demand_mean": 4.0}
+
+
+
+
+
+
+fixed_factors = {}
 mymodel = Fashion(fixed_factors)
+
+
+####################
+
+
+
+
+
+########################
+
+
+
+
 # -----------------------------------------------
 
 # The rest of this script requires no changes.
@@ -48,13 +67,17 @@ print(f"Is the specified model simulatable? {bool(mymodel.check_simulatable_fact
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
 # Run a single replication of the model.
-responses, gradients = mymodel.replicate(rng_list)
+responses, gradients = mymodel.replicate(rng_list) 
 print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():
     print(f"\t {key} is {value}.")
+
+'''
 print("\n Gradients:")
 for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+
+'''
