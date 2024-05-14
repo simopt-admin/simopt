@@ -72,7 +72,8 @@ def main():
     n_dp = len(df) # number of design points(
     problem_factors = [] # list to hold dictionary of problem factors for each dp of problem (don't change)
     problem_names = [] # list to hold problem names (don't change)
-    
+
+
     # concatinate tables back into arrays for each design point
     problem_renames = []
     for index, row in df.iterrows():
