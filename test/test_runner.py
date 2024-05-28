@@ -6,21 +6,22 @@
 # all files to be retested
 # Otherwise, only files that have changed will be retested
 
-import unittest
-import os
-import sys
-import inspect
-import pickle
-import types
 import hashlib
-
-from simopt.experiment_base import ProblemSolver, post_normalize
-from simopt.directory import solver_directory, problem_directory
+import inspect
+import os
+import pickle
+import sys
+import types
+import unittest
 from test import run_template
 
-# Check compatability of a solver with a problem
+from simopt.directory import problem_directory, solver_directory
+from simopt.experiment_base import ProblemSolver, post_normalize
+
+
+# Check compatibility of a solver with a problem
 # Based off the similar function in simopt/experiment_base.py
-def is_compatable(problem_name, solver_name):
+def is_compatible(problem_name, solver_name):
     # Get the problem and solver
     problem = problem_directory[problem_name]()
     solver = solver_directory[solver_name]()
@@ -32,7 +33,9 @@ def is_compatable(problem_name, solver_name):
         return False
     # Check constraint types.
     constraint_types = ["unconstrained", "box", "deterministic", "stochastic"]
-    if constraint_types.index(solver.constraint_type) < constraint_types.index(problem.constraint_type):
+    if constraint_types.index(solver.constraint_type) < constraint_types.index(
+        problem.constraint_type
+    ):
         return False
     # Check variable types.
     if solver.variable_type == "discrete" and problem.variable_type != "discrete":
@@ -43,6 +46,7 @@ def is_compatable(problem_name, solver_name):
     if solver.gradient_needed and not problem.gradient_available:
         return False
     return True
+
 
 # Create a test case for a problem and solver
 def create_test(filename, problem_name, solver_name):
@@ -73,6 +77,7 @@ def create_test(filename, problem_name, solver_name):
     with open(filename, "xb") as f:
         pickle.dump(results, f, protocol=3)
 
+
 # Create a test suite
 # The suite will contain all of the tests for the problems and solvers
 # Missing tests are automatically created
@@ -89,10 +94,10 @@ def suite():
     # Loop through all of the cases
     for problem_name in problem_directory:
         # Strip non-alphanumeric characters for the filename
-        problem_filename = ''.join(e for e in problem_name if e.isalnum())
+        problem_filename = "".join(e for e in problem_name if e.isalnum())
         for solver_name in solver_directory:
             # If they aren't compatible, skip
-            if not is_compatable(problem_name, solver_name):
+            if not is_compatible(problem_name, solver_name):
                 num_incompatible += 1
                 continue
 
@@ -102,16 +107,25 @@ def suite():
             solver_class = solver_directory[solver_name]
             solver_class_name = solver_class.__name__
             # Check to see if the problem and solver are in the unchanged files
-            if problem_class_name in unchanged_files and solver_class_name in unchanged_files:
+            if (
+                problem_class_name in unchanged_files
+                and solver_class_name in unchanged_files
+            ):
                 num_unchanged += 1
                 continue
 
             # Strip non-alphanumeric characters for the filename
-            solver_filename = ''.join(e for e in solver_name if e.isalnum())
+            solver_filename = "".join(e for e in solver_name if e.isalnum())
             # Get current working directory
             cwd = os.getcwd()
             # Check to see if the test exists in the tests directory
-            filename = cwd + r"\test\expected_data\results_" + problem_filename + "_" + solver_filename
+            filename = (
+                cwd
+                + r"\test\expected_data\results_"
+                + problem_filename
+                + "_"
+                + solver_filename
+            )
 
             # If the test doesn't exist, create it
             if not os.path.isfile(filename):
@@ -127,6 +141,7 @@ def suite():
     print("Number of skipped (unchanged) combos: ", num_unchanged)
     print("Number of tests: ", suite.countTestCases())
     return suite
+
 
 def getHashes():
     # Get the current working directory
@@ -145,7 +160,11 @@ def getHashes():
     # Loop through the files
     for file in files:
         # If it's a folder, not a .py file, or the __init__ file, skip
-        if os.path.isdir(cwd + r"\simopt\models\\" + file) or not file.endswith(".py") or file == "__init__.py":
+        if (
+            os.path.isdir(cwd + r"\simopt\models\\" + file)
+            or not file.endswith(".py")
+            or file == "__init__.py"
+        ):
             continue
         # Get the hash of the file
         with open(cwd + r"\simopt\models\\" + file, "rb") as f:
@@ -155,13 +174,18 @@ def getHashes():
     # Loop through the files
     for file in files:
         # If it's a folder, not a .py file, or the __init__ file, skip
-        if os.path.isdir(cwd + r"\simopt\solvers\\" + file) or not file.endswith(".py") or file == "__init__.py":
+        if (
+            os.path.isdir(cwd + r"\simopt\solvers\\" + file)
+            or not file.endswith(".py")
+            or file == "__init__.py"
+        ):
             continue
         # Get the hash of the file
         with open(cwd + r"\simopt\solvers\\" + file, "rb") as f:
             hash_dict["solvers/" + file] = hashlib.sha512(f.read()).hexdigest()
     # Return the hash list
     return hash_dict
+
 
 def getUnchangedClasses():
     # Get the current working directory
@@ -173,33 +197,33 @@ def getUnchangedClasses():
     # Load the hash list
     with open(cwd + r"\test\hash_dict", "rb") as f:
         expected_hashes = pickle.load(f)
-    
+
     # Get the current hash list
     hash_dict = getHashes()
-    
+
     # If any of the base files have changed, return an empty hash dict
     # This means everything needs retested
-    if (hash_dict["base.py"] != expected_hashes["base.py"]):
+    if hash_dict["base.py"] != expected_hashes["base.py"]:
         print("base.py updated, retesting all files")
         hash_dict = {}
         return hash_dict
     del hash_dict["base.py"]
     del expected_hashes["base.py"]
 
-    if (hash_dict["directory.py"] != expected_hashes["directory.py"]):
+    if hash_dict["directory.py"] != expected_hashes["directory.py"]:
         print("directory.py updated, retesting all files")
         hash_dict = {}
         return hash_dict
     del hash_dict["directory.py"]
     del expected_hashes["directory.py"]
 
-    if (hash_dict["experiment_base.py"] != expected_hashes["experiment_base.py"]):
+    if hash_dict["experiment_base.py"] != expected_hashes["experiment_base.py"]:
         print("experiment_base.py updated, retesting all files")
         hash_dict = {}
         return hash_dict
     del hash_dict["experiment_base.py"]
     del expected_hashes["experiment_base.py"]
-    
+
     # Loop through what's on the system
     for file in hash_dict:
         # If the file isn't in the expected hashes, skip
@@ -227,29 +251,34 @@ def getUnchangedClasses():
         # Get the class name
         class_name = file.split("/")[-1].split(".")[0]
         # Get the class
-        try :
-            for name, cls in inspect.getmembers(sys.modules["simopt.models." + class_name], inspect.isclass):
+        try:
+            for name, cls in inspect.getmembers(
+                sys.modules["simopt.models." + class_name], inspect.isclass
+            ):
                 unchanged_files.append(cls.__name__)
-        except:
-            for name, cls in inspect.getmembers(sys.modules["simopt.solvers." + class_name], inspect.isclass):
+        except KeyError:
+            for name, cls in inspect.getmembers(
+                sys.modules["simopt.solvers." + class_name], inspect.isclass
+            ):
                 unchanged_files.append(cls.__name__)
 
     return unchanged_files
-    
+
+
 def setUnchangedFiles():
     # Get the current working directory
     cwd = os.getcwd()
     # Delete the hash list if it exists
-    if (os.path.isfile(cwd + r"\test\hash_dict")):
+    if os.path.isfile(cwd + r"\test\hash_dict"):
         os.remove(cwd + r"\test\hash_dict")
-    
+
     # Dump to the hash list
     hash_dict = getHashes()
     pickle.dump(hash_dict, open(cwd + r"\test\hash_dict", "wb"), protocol=3)
 
+
 if __name__ == "__main__":
     # Run the test suite
     runner = unittest.TextTestRunner()
-    if (runner.run(suite()).wasSuccessful()):
+    if runner.run(suite()).wasSuccessful():
         setUnchangedFiles()
-    
