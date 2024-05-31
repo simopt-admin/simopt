@@ -73,6 +73,10 @@ def create_test(filename, problem_name, solver_name):
     results.objective_curves = myexperiment.objective_curves
     results.progress_curves = myexperiment.progress_curves
 
+    # Check if the file exists
+    if os.path.isfile(filename):
+        os.remove(filename)
+
     # Write the results to the file via pickle
     with open(filename, "xb") as f:
         pickle.dump(results, f, protocol=3)
@@ -81,7 +85,7 @@ def create_test(filename, problem_name, solver_name):
 # Create a test suite
 # The suite will contain all of the tests for the problems and solvers
 # Missing tests are automatically created
-def suite():
+def suite(run_all=False):
     # Create the sample test suite
     suite = unittest.TestSuite()
 
@@ -106,14 +110,6 @@ def suite():
             problem_class_name = problem_class.__name__
             solver_class = solver_directory[solver_name]
             solver_class_name = solver_class.__name__
-            # Check to see if the problem and solver are in the unchanged files
-            if (
-                problem_class_name in unchanged_files
-                and solver_class_name in unchanged_files
-            ):
-                num_unchanged += 1
-                continue
-
             # Strip non-alphanumeric characters for the filename
             solver_filename = "".join(e for e in solver_name if e.isalnum())
             # Get current working directory
@@ -131,6 +127,15 @@ def suite():
             if not os.path.isfile(filename):
                 print("Creating test for " + problem_name + " and " + solver_name)
                 create_test(filename, problem_name, solver_name)
+
+            # Check to see if the problem and solver are in the unchanged files
+            if (
+                run_all is False
+                and problem_class_name in unchanged_files
+                and solver_class_name in unchanged_files
+            ):
+                num_unchanged += 1
+                continue
 
             # Use the run_template to create the test
             test = run_template.run_template(solver_name, problem_name)
@@ -265,7 +270,7 @@ def getUnchangedClasses():
     return unchanged_files
 
 
-def setUnchangedFiles():
+def saveHashes():
     # Get the current working directory
     cwd = os.getcwd()
     # Delete the hash list if it exists
@@ -278,7 +283,47 @@ def setUnchangedFiles():
 
 
 if __name__ == "__main__":
+    # Check to see if the user put in a help command
+    if (
+        len(sys.argv) > 1
+        and sys.argv[1] == "help"
+        or len(sys.argv) > 1
+        and sys.argv[1] == "-h"
+        or len(sys.argv) > 1
+        and sys.argv[1] == "--help"
+    ):
+        print("To reset the expected values, run:")
+        print("\tpython -m test.test_runner reset_expected")
+        print("")
+        print("To run all tests, run:")
+        print("\tpython -m test.test_runner run_all")
+        print("")
+        print("To only run tests that have changed, run:")
+        print("\tpython -m test.test_runner")
+        print("")
+        sys.exit()
+
+    # Check if the user wants to recreate the tests
+    # This resets the expected values
+    if len(sys.argv) > 1 and sys.argv[1] == "reset_expected":
+        # Delete everything in the expected_data directory
+        cwd = os.getcwd()
+        files = os.listdir(cwd + r"\test\expected_data")
+        for file in files:
+            os.remove(cwd + r"\test\expected_data\\" + file)
+
+        test_suite = suite(run_all=True)
+    # Check if the user wants to run all the tests
+    # This does not change the expected values
+    elif len(sys.argv) > 1 and sys.argv[1] == "run_all":
+        test_suite = suite(run_all=True)
+    elif len(sys.argv) > 1:
+        print("Invalid command")
+        sys.exit()
+    else:
+        test_suite = suite()
+
     # Run the test suite
     runner = unittest.TextTestRunner()
-    if runner.run(suite()).wasSuccessful():
-        setUnchangedFiles()
+    if runner.run(test_suite).wasSuccessful():
+        saveHashes()
