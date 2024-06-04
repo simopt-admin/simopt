@@ -1436,7 +1436,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title = None, legend_loc = "best"):
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1466,6 +1466,10 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
 
     Returns
     -------
@@ -1484,7 +1488,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                    problem_name=ref_experiment.problem.name,
                    normalize=normalize,
                    budget=ref_experiment.problem.factors["budget"],
-                   beta=beta
+                   beta=beta,
+                   plot_title = plot_title
                    )
         solver_curve_handles = []
         if print_max_hw:
@@ -1533,14 +1538,15 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc=legend_loc)
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
                                    normalize=normalize,
-                                   extra=beta
+                                   extra=beta,
+                                   plot_title=plot_title
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1598,7 +1604,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     return file_list
 
 
-def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best"):
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -1617,6 +1623,11 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
+
 
     Returns
     -------
@@ -1633,7 +1644,8 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
         setup_plot(plot_type="solve_time_cdf",
                    solver_name="SOLVER SET",
                    problem_name=ref_experiment.problem.name,
-                   solve_tol=solve_tol
+                   solve_tol=solve_tol,
+                   plot_title=plot_title
                    )
         solver_curve_handles = []
         if print_max_hw:
@@ -1659,14 +1671,15 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc=legend_loc)
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name=ref_experiment.problem.name,
                                    plot_type="solve_time_cdf",
                                    normalize=True,
-                                   extra=solve_tol
+                                   extra=solve_tol,
+                                   plot_title=plot_title
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1700,7 +1713,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best"):
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
 
@@ -1723,6 +1736,10 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
 
     Returns
     -------
@@ -1737,7 +1754,8 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="area",
                    solver_name="SOLVER SET",
-                   problem_name="PROBLEM SET"
+                   problem_name="PROBLEM SET",
+                   plot_title=plot_title
                    )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
@@ -1784,11 +1802,12 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="area",
-                                   normalize=True
+                                   normalize=True,
+                                   plot_title=plot_title
                                    ))
     else:
         for solver_idx in range(n_solvers):
@@ -1843,7 +1862,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, plot_title = None, legend_loc="best"):
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -1875,6 +1894,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
         Quantile to compute, e.g., beta quantile; in (0, 1).
     ref_solver : str, optional
         Name of solver used as benchmark for difference profiles.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
 
     Returns
     -------
@@ -1890,27 +1913,31 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
             setup_plot(plot_type=plot_type,
                        solver_name="SOLVER SET",
                        problem_name="PROBLEM SET",
-                       solve_tol=solve_tol
+                       solve_tol=solve_tol,
+                       plot_title=plot_title
                        )
         elif plot_type == "quantile_solvability":
             setup_plot(plot_type=plot_type,
                        solver_name="SOLVER SET",
                        problem_name="PROBLEM SET",
                        beta=beta,
-                       solve_tol=solve_tol
+                       solve_tol=solve_tol,
+                       plot_title=plot_title
                        )
         elif plot_type == "diff_cdf_solvability":
             setup_plot(plot_type=plot_type,
                        solver_name="SOLVER SET",
                        problem_name="PROBLEM SET",
-                       solve_tol=solve_tol
+                       solve_tol=solve_tol,
+                       plot_title=plot_title
                        )
         elif plot_type == "diff_quantile_solvability":
             setup_plot(plot_type=plot_type,
                        solver_name="SOLVER SET",
                        problem_name="PROBLEM SET",
                        beta=beta,
-                       solve_tol=solve_tol
+                       solve_tol=solve_tol,
+                       plot_title=plot_title
                        )
         if print_max_hw:
             curve_pairs = []
@@ -1952,24 +1979,26 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     if print_max_hw:
                         curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
                                        normalize=True,
-                                       extra=solve_tol
+                                       extra=solve_tol,
+                                       plot_title=plot_title
                                        ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
                                        problem_name="PROBLEM SET",
                                        plot_type=plot_type,
                                        normalize=True,
-                                       extra=[solve_tol, beta]
+                                       extra=[solve_tol, beta],
+                                       plot_title=plot_title
                                        ))
         elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
@@ -1996,7 +2025,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                         if print_max_hw:
                             curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc=legend_loc)
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level, difference=True)
             if plot_type == "diff_cdf_solvability":
@@ -2004,14 +2033,16 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                            problem_name="PROBLEM SET",
                                            plot_type=plot_type,
                                            normalize=True,
-                                           extra=solve_tol
+                                           extra=solve_tol,
+                                           plot_title=plot_title
                                            ))
             elif plot_type == "diff_quantile_solvability":
                 file_list.append(save_plot(solver_name="SOLVER SET",
                                            problem_name="PROBLEM SET",
                                            plot_type=plot_type,
                                            normalize=True,
-                                           extra=[solve_tol, beta]
+                                           extra=[solve_tol, beta],
+                                           plot_title=plot_title
                                            ))
     else:
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
@@ -2127,7 +2158,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True):
+def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True, plot_title=None):
     """Plot individual or aggregate terminal progress for one or more solvers
     on a single problem.
 
@@ -2146,6 +2177,10 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         otherwise False.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+
+        
 
     Returns
     -------
@@ -2163,7 +2198,8 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
                    solver_name="SOLVER SET",
                    problem_name=ref_experiment.problem.name,
                    normalize=normalize,
-                   budget=ref_experiment.problem.factors["budget"]
+                   budget=ref_experiment.problem.factors["budget"],
+                   plot_title=plot_title
                    )
         # solver_curve_handles = []
         if normalize:
@@ -2187,7 +2223,8 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
-                                   normalize=normalize
+                                   normalize=normalize,
+                                   plot_title=plot_title
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -2221,7 +2258,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
     return file_list
 
 
-def plot_terminal_scatterplots(experiments, all_in_one=True):
+def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, legend_loc="best"):
     """Plot a scatter plot of mean and standard deviation of terminal progress.
     Either one plot for each solver or one plot for all solvers.
 
@@ -2231,6 +2268,10 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
         ProblemSolver pairs used to produce plots.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
 
     Returns
     -------
@@ -2245,7 +2286,8 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="terminal_scatter",
                    solver_name="SOLVER SET",
-                   problem_name="PROBLEM SET"
+                   problem_name="PROBLEM SET",
+                   plot_title=plot_title
                    )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
@@ -2260,7 +2302,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
                 std_dev_estimator = np.std(terminals, ddof=1)
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="terminal_scatter",
@@ -2288,7 +2330,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
     return file_list
 
 
-def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
+def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None, plot_title = None):
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -2402,10 +2444,13 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
+    # if title argument provided, overide prevous title assignment
+    if plot_title is not None:
+        title = plot_title
     plt.title(title, size=14)
 
 
-def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
+def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_title=None):
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -2473,7 +2518,10 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
         plot_name = "terminal_scatter"
     if not normalize:
         plot_name = plot_name + "_unnorm"
-    path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
+    if plot_title is None:
+        path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
+    else:
+        path_name = f"experiments/plots/{plot_title}.png"
     # Reformat path_name to be suitable as a string literal.
     path_name = path_name.replace("\\", "")
     path_name = path_name.replace("$", "")
@@ -2808,6 +2856,23 @@ class ProblemsSolvers(object):
                            crn_across_init_opt=crn_across_init_opt)
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
+        
+    def check_postnormalize(self):
+        """
+        Check to see if all experiments have been postnormalized.
+        
+        Returns True if all experiments have been postnormalized, false otherwise. 
+
+        """
+        check_list = []
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                experiment = self.experiments[solver_idx][problem_idx] 
+                check = experiment.check_postnormalize()
+                check_list.append(check)    
+        return all(check_list)
+        
+                
 
     def record_group_experiment_results(self):
         """Save ``experiment_base.ProblemsSolvers`` object to .pickle file.
@@ -2815,16 +2880,9 @@ class ProblemsSolvers(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-    def log_group_experiment_results(self, solve_tols_single_pair=[0.05, 0.10, 0.20, 0.50], csv_filename_single_pair="df_solver_results"):
+    def log_group_experiment_results(self):
         """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
-        Parameters
-        ----------
-        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
-            Relative optimality gap(s) definining when a problem is solved; in (0,1].
-        csv_filename : str, default="df_solver_results"
-            Name of .csv file to print output to
 
-            both parameters only used if only one solver and problem are included in experiment and will be fed into report_statistics_single_problem_solver_pair
         """
         # Create a new text file in experiments/logs folder with correct name.
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
@@ -3068,7 +3126,7 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
     return metaexperiment
 
 
-def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None):
+def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None, IsProblem = False,):
     """
     Parameters
     ----------
@@ -3086,6 +3144,8 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
         dict of lists of values of factors to include in cross design. The default is None.
+    IsProblem : bool, optional
+        False if creating design over solver factors, True if creating design over problem/model factors  
 
     Returns
     -------
@@ -3093,21 +3153,17 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         list that contains a dict of factor values for every design point.
     """
     # Search directories to create object based on name provided.
-    try:
+    if IsProblem == False:
         design_object = solver_directory[name]()
+    else:
+        design_object = problem_directory[name]()
 
-    except:
-        try:
-            design_object = problem_directory[name]()
-        except:
-            design_object = model_directory[name]()
 
     if cross_design_factors is None:
         cross_design_factors = {}
 
     print('design object', design_object)
     # Create solver factor design from .txt file of factor settings.
-    # Hard-coded for a single-stack NOLHS.
     command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
     os.system(command)
     # Append design to base filename.
@@ -3121,9 +3177,16 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     csv_filename = f"./data_farming_experiments/{design_filename}.csv"
 
     design_table.columns = factor_headers  # Add factor headers names to dt.
+    
+    # Combine model and problem specifications for problems
+    if IsProblem == True:
+        specifications = {**design_object.specifications, **design_object.model.specifications}
+    else:
+        specifications = design_object.specifications
 
-    for factor in design_object.specifications:  # Add default values to str dict for unspecified factors.
-        default = design_object.specifications[factor].get("default")
+
+    for factor in specifications:  # Add default values to str dict for unspecified factors.
+        default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
             print('fixed factors', fixed_factors)
@@ -3159,7 +3222,7 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     for dp in range(len(design_table)):
         dp_factors = {}
         for factor in dp_dict:
-            factor_datatype = design_object.specifications[factor].get("datatype")
+            factor_datatype = specifications[factor].get("datatype")
             factor_str = dp_dict[factor][dp]  # Get factor value for each factor within current design point.
             # Set factor values to corret type.
             if factor_datatype == int or float:
