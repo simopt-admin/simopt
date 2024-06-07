@@ -1436,7 +1436,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title = None, legend_loc = "best"):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title = None, legend_loc = "best", ext='.png', save_as_pickle=False):
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1470,6 +1470,10 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
 
     Returns
     -------
@@ -1546,7 +1550,9 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                    plot_type=plot_type,
                                    normalize=normalize,
                                    extra=beta,
-                                   plot_title=plot_title
+                                   plot_title=plot_title,
+                                   ext=ext,
+                                   save_as_pickle=save_as_pickle
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1599,12 +1605,14 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                                        problem_name=experiment.problem.name,
                                        plot_type=plot_type,
                                        normalize=normalize,
-                                       extra=beta
+                                       extra=beta,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
     return file_list
 
 
-def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best"):
+def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -1627,6 +1635,10 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
 
 
     Returns
@@ -1679,7 +1691,9 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                                    plot_type="solve_time_cdf",
                                    normalize=True,
                                    extra=solve_tol,
-                                   plot_title=plot_title
+                                   plot_title=plot_title,
+                                   ext=ext,
+                                   save_as_pickle=save_as_pickle
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -1708,12 +1722,14 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                                        problem_name=experiment.problem.name,
                                        plot_type="solve_time_cdf",
                                        normalize=True,
-                                       extra=solve_tol
+                                       extra=solve_tol,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
     return file_list
 
 
-def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best"):
+def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
 
@@ -1740,6 +1756,10 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
 
     Returns
     -------
@@ -1807,7 +1827,9 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                                    problem_name="PROBLEM SET",
                                    plot_type="area",
                                    normalize=True,
-                                   plot_title=plot_title
+                                   plot_title=plot_title,
+                                   ext=ext,
+                                   save_as_pickle=save_as_pickle
                                    ))
     else:
         for solver_idx in range(n_solvers):
@@ -1857,12 +1879,14 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
             file_list.append(save_plot(solver_name=experiment.solver.name,
                                        problem_name="PROBLEM SET",
                                        plot_type="area",
-                                       normalize=True
+                                       normalize=True,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, plot_title = None, legend_loc="best"):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, plot_title = None, legend_loc="best", ext='.png', save_as_pickle=False):
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -1898,6 +1922,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
+     ext: str, default = '.png'
+         Extension to add to image file path to change file type
+     save_as_pickle: bool, default = False
+         True if plot should be saved to pickle file, False otherwise.
 
     Returns
     -------
@@ -1987,7 +2015,9 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                        plot_type=plot_type,
                                        normalize=True,
                                        extra=solve_tol,
-                                       plot_title=plot_title
+                                       plot_title=plot_title,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
         elif plot_type == "quantile_solvability":
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
@@ -1998,7 +2028,9 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                        plot_type=plot_type,
                                        normalize=True,
                                        extra=[solve_tol, beta],
-                                       plot_title=plot_title
+                                       plot_title=plot_title,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
         elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
@@ -2034,7 +2066,9 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                            plot_type=plot_type,
                                            normalize=True,
                                            extra=solve_tol,
-                                           plot_title=plot_title
+                                           plot_title=plot_title,
+                                           ext=ext,
+                                           save_as_pickle=save_as_pickle
                                            ))
             elif plot_type == "diff_quantile_solvability":
                 file_list.append(save_plot(solver_name="SOLVER SET",
@@ -2042,7 +2076,9 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                            plot_type=plot_type,
                                            normalize=True,
                                            extra=[solve_tol, beta],
-                                           plot_title=plot_title
+                                           plot_title=plot_title,
+                                           ext=ext,
+                                           save_as_pickle=save_as_pickle
                                            ))
     else:
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
@@ -2097,14 +2133,18 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                problem_name="PROBLEM SET",
                                                plot_type=plot_type,
                                                normalize=True,
-                                               extra=solve_tol
+                                               extra=solve_tol,
+                                               ext=ext,
+                                               save_as_pickle=save_as_pickle
                                                ))
                 elif plot_type == "quantile_solvability":
                     file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                                problem_name="PROBLEM SET",
                                                plot_type=plot_type,
                                                normalize=True,
-                                               extra=[solve_tol, beta]
+                                               extra=[solve_tol, beta],
+                                               ext=ext,
+                                               save_as_pickle=save_as_pickle
                                                ))
         if plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
             non_ref_solvers = [solver_name for solver_name in solver_names if solver_name != ref_solver]
@@ -2146,19 +2186,23 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                    problem_name="PROBLEM SET",
                                                    plot_type=plot_type,
                                                    normalize=True,
-                                                   extra=solve_tol
+                                                   extra=solve_tol,
+                                                   ext=ext,
+                                                   save_as_pickle=save_as_pickle
                                                    ))
                     elif plot_type == "diff_quantile_solvability":
                         file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
                                                    problem_name="PROBLEM SET",
                                                    plot_type=plot_type,
                                                    normalize=True,
-                                                   extra=[solve_tol, beta]
+                                                   extra=[solve_tol, beta],
+                                                   ext=ext,
+                                                   save_as_pickle=save_as_pickle
                                                    ))
     return file_list
 
 
-def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True, plot_title=None):
+def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True, plot_title=None, ext='.png', save_as_pickle=False):
     """Plot individual or aggregate terminal progress for one or more solvers
     on a single problem.
 
@@ -2179,6 +2223,10 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
         True if curves are to be plotted together, otherwise False.
     plot_title : str, opt
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+     ext: str, default = '.png'
+         Extension to add to image file path to change file type
+     save_as_pickle: bool, default = False
+         True if plot should be saved to pickle file, False otherwise.
 
         
 
@@ -2224,7 +2272,9 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
                                    normalize=normalize,
-                                   plot_title=plot_title
+                                   plot_title=plot_title,
+                                   ext=ext,
+                                   save_as_pickle=save_as_pickle
                                    ))
     else:  # Plot separately.
         for experiment in experiments:
@@ -2253,12 +2303,14 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
             file_list.append(save_plot(solver_name=experiment.solver.name,
                                        problem_name=experiment.problem.name,
                                        plot_type=plot_type,
-                                       normalize=normalize
+                                       normalize=normalize,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
     return file_list
 
 
-def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, legend_loc="best"):
+def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
     """Plot a scatter plot of mean and standard deviation of terminal progress.
     Either one plot for each solver or one plot for all solvers.
 
@@ -2272,6 +2324,10 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
         Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
 
     Returns
     -------
@@ -2306,8 +2362,10 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
         file_list.append(save_plot(solver_name="SOLVER SET",
                                    problem_name="PROBLEM SET",
                                    plot_type="terminal_scatter",
-                                   normalize=True
-                                   ))
+                                   normalize=True,
+                                   plot_title=plot_title,
+                                   ext=ext,
+                                   save_as_pickle=save_as_pickle))
     else:
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
@@ -2325,7 +2383,9 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
             file_list.append(save_plot(solver_name=experiment.solver.name,
                                        problem_name="PROBLEM SET",
                                        plot_type="terminal_scatter",
-                                       normalize=True
+                                       normalize=True,
+                                       ext=ext,
+                                       save_as_pickle=save_as_pickle
                                        ))
     return file_list
 
@@ -2450,7 +2510,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     plt.title(title, size=14)
 
 
-def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_title=None):
+def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_title=None, ext= '.png', save_as_pickle=False):
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -2485,6 +2545,12 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_
         otherwise False.
     extra : float or list [float], optional
         Extra number(s) specifying quantile (e.g., beta) and/or solve tolerance.
+    plot_title: str, opt
+        Will change name of save file if generic title is overwritten.
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
 
     Returns
     -------
@@ -2519,20 +2585,29 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_
     if not normalize:
         plot_name = plot_name + "_unnorm"
     if plot_title is None:
-        path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}.png"
+        path_name = f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}"
     else:
-        path_name = f"experiments/plots/{plot_title}.png"
+        path_name = f"experiments/plots/{plot_title}"
     # Reformat path_name to be suitable as a string literal.
     path_name = path_name.replace("\\", "")
     path_name = path_name.replace("$", "")
     path_name = path_name.replace(" ", "_")
+    # add extension to path name
+    extended_path_name = f'{path_name}{ext}'
     # Create directories if they do no exist.
     if not os.path.exists("./experiments/plots"):
         os.makedirs("./experiments", exist_ok=True)
         os.makedirs("./experiments/plots")
-    plt.savefig(path_name, bbox_inches="tight")
+    plt.savefig(extended_path_name, bbox_inches="tight")
+    
+    # save plot as pickle
+    if save_as_pickle:
+        fig = plt.gcf()
+        pickle_path = f'{path_name}.pkl' 
+        with open(pickle_path, 'wb') as f:
+           pickle.dump(fig,f) 
     # Return path_name for use in GUI.
-    return path_name
+    return extended_path_name
 
 
 class ProblemsSolvers(object):
