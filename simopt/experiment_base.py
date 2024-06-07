@@ -20,7 +20,15 @@ import csv
 import itertools
 from mrg32k3a.mrg32k3a import MRG32k3a
 from multiprocessing import Pool
-
+plt.rcParams.update({
+    'font.size': 18,  # Set the default font size
+    'font.family': 'serif',  # Set the default font family to serif
+    'font.serif': ['Times New Roman'],  # Use Times New Roman as the serif font
+    'figure.dpi': 150,
+    'xtick.labelsize': 14,  # Font size of the tick labels
+    'ytick.labelsize': 14,  # Font size of the tick labels
+    'legend.fontsize': 14,  # Font size of the legend
+})
 
 from .base import Solution
 from .directory import solver_directory, problem_directory, model_directory
@@ -1380,7 +1388,7 @@ def report_max_halfwidth(curve_pairs, normalize, conf_level, difference=False,):
         xloc = 0.05 * curve_pairs[0][0].x_vals[-1]
         yloc = min_lower_bound - 0.25 * (max_upper_bound - min_lower_bound)
     txt = f"The max halfwidth of the bootstrap {round(conf_level * 100)}% CIs is {round(max_halfwidth, 2)}."
-    plt.text(x=xloc, y=yloc, s=txt)
+    plt.text(x=xloc, y=yloc, s=txt, fontsize=18, family=plt.rcParams['font.family'])
 
 
 def check_common_problem_and_reference(experiments):
@@ -1501,7 +1509,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], bbox_to_anchor=(1.01, 1), loc="upper left")
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1627,7 +1635,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
                     plot_bootstrap_CIs(bs_CI_lb_curve, bs_CI_ub_curve, color_str=color_str)
                 if print_max_hw:
                     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
-        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc="upper left")
+        plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], bbox_to_anchor=(1.01, 1), loc="upper left")
         if print_max_hw:
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
         file_list.append(save_plot(solver_name="SOLVER SET",
@@ -1758,7 +1766,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names, bbox_to_anchor=(1.01, 1), loc="upper left")
         if solver_name is None:
             file_list.append(save_plot(solver_name="SOLVER SET",
                                     problem_name="PROBLEM SET",
@@ -1952,7 +1960,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     if print_max_hw:
                         curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
         if plot_type == "cdf_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names, bbox_to_anchor=(1.01, 1), loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             if solver_name is None:
@@ -1970,7 +1978,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                             extra=solve_tol
                                             ))
         elif plot_type == "quantile_solvability":
-            plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=solver_names,bbox_to_anchor=(1.01, 1), loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
             file_list.append(save_plot(solver_name="SOLVER SET",
@@ -2004,7 +2012,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                         if print_max_hw:
                             curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
             offset_labels = [f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers]
-            plt.legend(handles=solver_curve_handles, labels=offset_labels, loc="upper left")
+            plt.legend(handles=solver_curve_handles, labels=offset_labels, bbox_to_anchor=(1.01, 1), loc="upper left")
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level, difference=True)
             if plot_type == "diff_cdf_solvability":
@@ -2180,7 +2188,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
             terminal_data = [[experiment.objective_curves[mrep].y_vals[-1] for mrep in range(experiment.n_macroreps)] for experiment in experiments]
         if plot_type == "box":
             plt.boxplot(terminal_data)
-            plt.xticks(range(1, n_experiments + 1), labels=[experiment.solver.name for experiment in experiments])
+            plt.xticks(range(1, n_experiments + 1), labels=[experiment.solver.name for experiment in experiments], rotation = 45)
         if plot_type == "violin":
             solver_names = [experiments[exp_idx].solver.name for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
             terminal_values = [td for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]]
@@ -2188,6 +2196,8 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
             terminal_data_df = pd.DataFrame(terminal_data_dict)
             # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
             sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, cut=0.1)
+            # Rotate x-axis tick labels by 45 degrees
+            plt.xticks(rotation=45)
             if normalize:
                 plt.ylabel("Terminal Progress")
             else:
@@ -2274,7 +2284,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, solver_name = None)
                 std_dev_estimator = np.std(terminals, ddof=1)
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
-        plt.legend(handles=solver_curve_handles, labels=solver_names, loc="upper right")
+        plt.legend(handles=solver_curve_handles, labels=solver_names, bbox_to_anchor=(1.01, 1), loc="upper left")
         if solver_name is None:
             file_list.append(save_plot(solver_name="SOLVER SET",
                                     problem_name="PROBLEM SET",
@@ -2359,18 +2369,18 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         plt.figure()
     # Set up axes and axis labels.
     if normalize:
-        plt.ylabel("Fraction of Initial Optimality Gap", size=14)
+        plt.ylabel("Fraction of Initial Optimality Gap", size=18)
         if plot_type != "box" and plot_type != "violin":
-            plt.xlabel("Fraction of Budget", size=14)
+            plt.xlabel("Fraction of Budget", size=18)
             plt.xlim((0, 1))
             plt.ylim((-0.1, 1.1))
-            plt.tick_params(axis="both", which="major", labelsize=12)
+            plt.tick_params(axis="both", which="major", labelsize=14)
     else:
-        plt.ylabel("Objective Function Value", size=14)
+        plt.ylabel("Objective Function Value", size=18)
         if plot_type != "box" and plot_type != "violin":
-            plt.xlabel("Budget", size=14)
+            plt.xlabel("Budget", size=18)
             plt.xlim((0, budget))
-            plt.tick_params(axis="both", which="major", labelsize=12)
+            plt.tick_params(axis="both", which="major", labelsize=14)
     # Specify title (plus alternative y-axis label and alternative axes).
     if plot_type == "all":
         if normalize:
@@ -2388,26 +2398,26 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
         else:
             title = f"{solver_name} on {problem_name}\n{round(beta, 2)}-Quantile Objective Curve"
     elif plot_type == "solve_time_cdf":
-        plt.ylabel("Fraction of Macroreplications Solved", size=14)
+        plt.ylabel("Fraction of Macroreplications Solved", size=18)
         title = f"{solver_name} on {problem_name}\nCDF of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "cdf_solvability":
-        plt.ylabel("Problem Averaged Solve Fraction", size=14)
+        plt.ylabel("Problem Averaged Solve Fraction", size=18)
         title = f"CDF-Solvability Profile for {solver_name}\nProfile of CDFs of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "quantile_solvability":
-        plt.ylabel("Fraction of Problems Solved", size=14)
+        plt.ylabel("Fraction of Problems Solved", size=18)
         title = f"Quantile Solvability Profile for {solver_name}\nProfile of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
     elif plot_type == "diff_cdf_solvability":
-        plt.ylabel("Difference in Problem Averaged Solve Fraction", size=14)
+        plt.ylabel("Difference in Problem Averaged Solve Fraction", size=18)
         title = f"Difference of CDF-Solvability Profile for {solver_name}\nDifference of Profiles of CDFs of {round(solve_tol, 2)}-Solve Times"
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
     elif plot_type == "diff_quantile_solvability":
-        plt.ylabel("Difference in Fraction of Problems Solved", size=14)
+        plt.ylabel("Difference in Fraction of Problems Solved", size=18)
         title = f"Difference of Quantile Solvability Profile for {solver_name}\nDifference of Profiles of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
     elif plot_type == "area":
-        plt.xlabel("Mean Area", size=14)
+        plt.xlabel("Mean Area", size=18)
         plt.ylabel("Std Dev of Area")
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
@@ -2421,12 +2431,12 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
             plt.ylabel("Terminal Objective")
             title = f"{solver_name} on {problem_name}"
     elif plot_type == "terminal_scatter":
-        plt.xlabel("Mean Terminal Progress", size=14)
+        plt.xlabel("Mean Terminal Progress", size=18)
         plt.ylabel("Std Dev of Terminal Progress")
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
-    plt.title(title, size=14)
+    plt.title(title, size=18)
 
 
 def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
@@ -2655,7 +2665,7 @@ class ProblemsSolvers(object):
             self.solver_set = self.solver_names
             self.problem_set = self.problem_names
 
-        elif problems is not None: # Given solver_names and problems
+        elif problems is not None and solver_names is not None: # Given solver_names and problems
             self.problems = problems
             self.problem_names = [problem.name for problem in self.problems]
             self.n_problems = len(self.problems)
@@ -2674,6 +2684,7 @@ class ProblemsSolvers(object):
             for solver_idx in range(self.n_solvers):
                 solver_experiments = []
                 for problem_idx in range(self.n_problems):
+                    # If a file exists, read in ProblemSolver object.
                     try:
                         # If a file exists, read in ProblemSolver object.
                         with open(f"./experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle", "rb") as file:
