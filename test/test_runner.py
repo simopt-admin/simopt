@@ -18,11 +18,11 @@ from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
 file_list = [
-    "base.py",
-    "directory.py",
-    "experiment_base.py",
-    "test/test_runner.py",
-    "test/run_template.py",
+    "/simopt/base.py",
+    "/simopt/directory.py",
+    "/simopt/experiment_base.py",
+    "/test/test_runner.py",
+    "/test/run_template.py",
 ]
 
 # Check compatibility of a solver with a problem
@@ -163,9 +163,12 @@ def getHashes():
     hash_dict = {}
     # Get the hashes for any files in the file list
     for file in file_list:
-        if not os.path.isfile(cwd + r"\simopt\\" + file):
+        # Check to see if the file exists
+        if not os.path.isfile(cwd + file):
+            print("Missing file: ", file)
             continue
-        with open(cwd + r"\simopt\\" + file, "rb") as f:
+        # If it does, get the hash
+        with open(cwd + file, "rb") as f:
             hash_dict[file] = hashlib.sha512(f.read()).hexdigest()
     # Get the list of files in the simopt/models directory
     files = os.listdir(cwd + r"\simopt\models")
@@ -221,9 +224,14 @@ def getUnchangedClasses() -> list:
         if file not in hash_dict:
             print("Missing hash for file: ", file)
             return_empty = True
+        elif file not in expected_hashes:
+            print("Added file: ", file)
+            return_empty = True
         elif hash_dict[file] != expected_hashes[file]:
             print(file, " updated, retesting all files")
             return_empty = True
+        # Remove the file from the hash_dict and expected_hashes
+        # This prevents the program from trying to convert the file to a class
         if file in hash_dict:
             del hash_dict[file]
         if file in expected_hashes:
