@@ -11,17 +11,23 @@ import inspect
 import os
 import pickle
 import sys
-import types
 import unittest
 from test import run_template
 
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
+file_list = [
+    "base.py",
+    "directory.py",
+    "experiment_base.py",
+    "test/test_runner.py",
+    "test/run_template.py",
+]
 
 # Check compatibility of a solver with a problem
 # Based off the similar function in simopt/experiment_base.py
-def is_compatible(problem_name, solver_name):
+def is_compatible(problem_name: str, solver_name: str) -> bool:
     # Get the problem and solver
     problem = problem_directory[problem_name]()
     solver = solver_directory[solver_name]()
@@ -49,48 +55,50 @@ def is_compatible(problem_name, solver_name):
 
 
 # Create a test case for a problem and solver
-def create_test(filename, problem_name, solver_name):
-    # Create a results object
-    results = types.SimpleNamespace()
-    # Set the problem and solver name
-    results.solver_name = solver_name
-    results.problem_name = problem_name
-
+def create_test(filename: str, problem_name: str, solver_name: str) -> None:
     # Run the experiment to get the expected results
     myexperiment = ProblemSolver(solver_name, problem_name)
     myexperiment.run(n_macroreps=10)
-
-    # Set the solutions and budgets
-    results.all_recommended_xs = myexperiment.all_recommended_xs
-    results.all_intermediate_budgets = myexperiment.all_intermediate_budgets
-
-    # Check actual post-replication results against expected
     myexperiment.post_replicate(n_postreps=200)
-    results.all_est_objectives = myexperiment.all_est_objectives
-
-    # Check actual post-normalization results against expected
     post_normalize([myexperiment], n_postreps_init_opt=200)
-    results.objective_curves = myexperiment.objective_curves
-    results.progress_curves = myexperiment.progress_curves
 
     # Check if the file exists
     if os.path.isfile(filename):
         os.remove(filename)
 
+    # Loop through each curve object and convert it into a tuple
+    # This is done to avoid pickling issues
+    for i in range(len(myexperiment.objective_curves)):
+        myexperiment.objective_curves[i] = (myexperiment.objective_curves[i].x_vals, myexperiment.objective_curves[i].y_vals)
+    for i in range(len(myexperiment.progress_curves)):
+        myexperiment.progress_curves[i] = (myexperiment.progress_curves[i].x_vals, myexperiment.progress_curves[i].y_vals)
+
+    # Put everything we want to write into a dictionary
+    results: dict[str, ] = {"problem_name": problem_name,
+        "solver_name": solver_name,
+        "all_recommended_xs": myexperiment.all_recommended_xs,
+        "all_intermediate_budgets": myexperiment.all_intermediate_budgets,
+        "all_est_objectives": myexperiment.all_est_objectives,
+        "objective_curves": myexperiment.objective_curves,
+        "progress_curves": myexperiment.progress_curves
+        }
+
     # Write the results to the file via pickle
     with open(filename, "xb") as f:
-        pickle.dump(results, f, protocol=3)
+        pickle.dump(results, f, protocol=4)
 
 
 # Create a test suite
 # The suite will contain all of the tests for the problems and solvers
 # Missing tests are automatically created
-def suite(run_all=False):
+def suite(run_all: bool = False) -> unittest.TestSuite:
     # Create the sample test suite
     suite = unittest.TestSuite()
 
     # Get the list of problems and solvers to skip
     unchanged_files = getUnchangedClasses()
+    if (len(unchanged_files) == 0):
+        print("Retesting all files...")
 
     num_incompatible = 0
     num_unchanged = 0
@@ -148,18 +156,17 @@ def suite(run_all=False):
     return suite
 
 
-def getHashes():
+def getHashes() -> dict[str, str]:
     # Get the current working directory
     cwd = os.getcwd()
     # Create a new hash dictionary
     hash_dict = {}
-    # Get the hashes for the base, directory, and experiment_base files
-    with open(cwd + r"\simopt\base.py", "rb") as f:
-        hash_dict["base.py"] = hashlib.sha512(f.read()).hexdigest()
-    with open(cwd + r"\simopt\directory.py", "rb") as f:
-        hash_dict["directory.py"] = hashlib.sha512(f.read()).hexdigest()
-    with open(cwd + r"\simopt\experiment_base.py", "rb") as f:
-        hash_dict["experiment_base.py"] = hashlib.sha512(f.read()).hexdigest()
+    # Get the hashes for any files in the file list
+    for file in file_list:
+        if not os.path.isfile(cwd + r"\simopt\\" + file):
+            continue
+        with open(cwd + r"\simopt\\" + file, "rb") as f:
+            hash_dict[file] = hashlib.sha512(f.read()).hexdigest()
     # Get the list of files in the simopt/models directory
     files = os.listdir(cwd + r"\simopt\models")
     # Loop through the files
@@ -192,7 +199,7 @@ def getHashes():
     return hash_dict
 
 
-def getUnchangedClasses():
+def getUnchangedClasses() -> list:
     # Get the current working directory
     cwd = os.getcwd()
     # If the hash dict doesn't exist, return an empty hash dict
@@ -204,30 +211,23 @@ def getUnchangedClasses():
         expected_hashes = pickle.load(f)
 
     # Get the current hash list
-    hash_dict = getHashes()
+    hash_dict: dict[str, str] = getHashes()
+
+    return_empty: bool = False
 
     # If any of the base files have changed, return an empty hash dict
     # This means everything needs retested
-    if hash_dict["base.py"] != expected_hashes["base.py"]:
-        print("base.py updated, retesting all files")
-        hash_dict = {}
-        return hash_dict
-    del hash_dict["base.py"]
-    del expected_hashes["base.py"]
-
-    if hash_dict["directory.py"] != expected_hashes["directory.py"]:
-        print("directory.py updated, retesting all files")
-        hash_dict = {}
-        return hash_dict
-    del hash_dict["directory.py"]
-    del expected_hashes["directory.py"]
-
-    if hash_dict["experiment_base.py"] != expected_hashes["experiment_base.py"]:
-        print("experiment_base.py updated, retesting all files")
-        hash_dict = {}
-        return hash_dict
-    del hash_dict["experiment_base.py"]
-    del expected_hashes["experiment_base.py"]
+    for file in file_list:
+        if file not in hash_dict:
+            print("Missing hash for file: ", file)
+            return_empty = True
+        elif hash_dict[file] != expected_hashes[file]:
+            print(file, " updated, retesting all files")
+            return_empty = True
+        if file in hash_dict:
+            del hash_dict[file]
+        if file in expected_hashes:
+            del expected_hashes[file]
 
     # Loop through what's on the system
     for file in hash_dict:
@@ -250,8 +250,11 @@ def getUnchangedClasses():
     # At this point, the only files left are ones that were in the expected
     # hashes as well as the system hashes and have the same hash
 
+    if (return_empty):
+        return []
+
     # Convert each to classes
-    unchanged_files = []
+    unchanged_files: list = []
     for file in expected_hashes:
         # Get the class name
         class_name = file.split("/")[-1].split(".")[0]
@@ -270,7 +273,7 @@ def getUnchangedClasses():
     return unchanged_files
 
 
-def saveHashes():
+def saveHashes() -> None:
     # Get the current working directory
     cwd = os.getcwd()
     # Delete the hash list if it exists
@@ -279,11 +282,11 @@ def saveHashes():
 
     # Dump to the hash list
     hash_dict = getHashes()
-    pickle.dump(hash_dict, open(cwd + r"\test\hash_dict", "wb"), protocol=3)
+    pickle.dump(hash_dict, open(cwd + r"\test\hash_dict", "wb"), protocol=4)
 
 
-if __name__ == "__main__":
-    # Check to see if the user put in a help command
+def inputCheck() -> unittest.TestSuite:
+    # Check if the user wants help
     if (
         len(sys.argv) > 1
         and sys.argv[1] == "help"
@@ -312,16 +315,21 @@ if __name__ == "__main__":
         for file in files:
             os.remove(cwd + r"\test\expected_data\\" + file)
 
-        test_suite = suite(run_all=True)
+        return suite(run_all=True)
     # Check if the user wants to run all the tests
     # This does not change the expected values
     elif len(sys.argv) > 1 and sys.argv[1] == "run_all":
-        test_suite = suite(run_all=True)
+        return suite(run_all=True)
     elif len(sys.argv) > 1:
         print("Invalid command")
         sys.exit()
     else:
-        test_suite = suite()
+        return suite()
+
+
+if __name__ == "__main__":
+    # Check to see if the user put in a help command
+    test_suite = inputCheck()
 
     # Run the test suite
     runner = unittest.TextTestRunner()
