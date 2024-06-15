@@ -156,7 +156,7 @@ def suite(run_all: bool = False) -> unittest.TestSuite:
     return suite
 
 
-def getHashes() -> dict[str, str]:
+def getHashes():
     # Get the current working directory
     cwd = os.getcwd()
     # Create a new hash dictionary
