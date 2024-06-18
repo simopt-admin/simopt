@@ -81,12 +81,12 @@ class run_template(unittest.TestCase):
         for mrep in range(self.num_macroreps):
             # Check to make sure the same number of objective curves are present
             # This should probably always be 2 (x and y)
-            self.assertEquals(len(self.myexperiment.objective_curves[mrep]), len(pickled_data["objective_curves"][mrep]), "Number of objective curves for problem " + self.problem_name + " and solver " + self.solver_name + " does not match.")
+            self.assertEqual(len(self.myexperiment.objective_curves[mrep]), len(pickled_data["objective_curves"][mrep]), "Number of objective curves for problem " + self.problem_name + " and solver " + self.solver_name + " does not match.")
             # Make sure that curves are only checked if they exist
             if (len(self.myexperiment.objective_curves[mrep]) > 0):
                 # Make sure the lengths of the X and Y values are the same
-                self.assertEquals(len(self.myexperiment.objective_curves[mrep][0]), len(pickled_data["objective_curves"][mrep][0]), "Length of X values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
-                self.assertEquals(len(self.myexperiment.objective_curves[mrep][1]), len(pickled_data["objective_curves"][mrep][1]), "Length of Y values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
+                self.assertEqual(len(self.myexperiment.objective_curves[mrep][0]), len(pickled_data["objective_curves"][mrep][0]), "Length of X values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
+                self.assertEqual(len(self.myexperiment.objective_curves[mrep][1]), len(pickled_data["objective_curves"][mrep][1]), "Length of Y values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
                 # Check X (0) and Y (1) values
                 for x_index in range(len(self.myexperiment.objective_curves[mrep][0])):
                     # If the value is NaN, make sure we're expecting NaN
@@ -105,12 +105,12 @@ class run_template(unittest.TestCase):
             
             # Check to make sure the same number of progress curves are present
             # This should probably always be 2 (x and y)
-            self.assertEquals(len(self.myexperiment.progress_curves[mrep]), len(pickled_data["progress_curves"][mrep]), "Number of progress curves for problem " + self.problem_name + " and solver " + self.solver_name + " does not match.")
+            self.assertEqual(len(self.myexperiment.progress_curves[mrep]), len(pickled_data["progress_curves"][mrep]), "Number of progress curves for problem " + self.problem_name + " and solver " + self.solver_name + " does not match.")
             # Make sure that curves are only checked if they exist
             if (len(self.myexperiment.progress_curves[mrep]) > 0):
                 # Make sure the lengths of the X and Y values are the same
-                self.assertEquals(len(self.myexperiment.progress_curves[mrep][0]), len(pickled_data["progress_curves"][mrep][0]), "Length of X values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
-                self.assertEquals(len(self.myexperiment.progress_curves[mrep][1]), len(pickled_data["progress_curves"][mrep][1]), "Length of Y values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
+                self.assertEqual(len(self.myexperiment.progress_curves[mrep][0]), len(pickled_data["progress_curves"][mrep][0]), "Length of X values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
+                self.assertEqual(len(self.myexperiment.progress_curves[mrep][1]), len(pickled_data["progress_curves"][mrep][1]), "Length of Y values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match.")
                 # Check X (0) and Y (1) values
                 for x_index in range(len(self.myexperiment.progress_curves[mrep][0])):
                     # If the value is NaN, make sure we're expecting NaN
