@@ -1436,7 +1436,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title = None, legend_loc = "best", ext='.png', save_as_pickle=False):
+def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title = None, legend_loc = "best", ext='.png', save_as_pickle=False, solver_set_name="SOVER_SET"):
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1474,6 +1474,8 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
         True if plot should be saved to pickle file, False otherwise.
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles. 
 
     Returns
     -------
@@ -1488,7 +1490,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     if all_in_one:
         ref_experiment = experiments[0]
         setup_plot(plot_type=plot_type,
-                   solver_name="SOLVER SET",
+                   solver_name=solver_set_name,
                    problem_name=ref_experiment.problem.name,
                    normalize=normalize,
                    budget=ref_experiment.problem.factors["budget"],
@@ -1545,7 +1547,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
         plt.legend(handles=solver_curve_handles, labels=[experiment.solver.name for experiment in experiments], loc=legend_loc)
         if print_max_hw and plot_type != "all":
             report_max_halfwidth(curve_pairs=curve_pairs, normalize=normalize, conf_level=conf_level)
-        file_list.append(save_plot(solver_name="SOLVER SET",
+        file_list.append(save_plot(solver_name=solver_set_name,
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
                                    normalize=normalize,
@@ -1612,7 +1614,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     return file_list
 
 
-def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
+def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False, solver_set_name="SOLVER_SET"):
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -1639,7 +1641,8 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
         Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
         True if plot should be saved to pickle file, False otherwise.
-
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles.
 
     Returns
     -------
@@ -1654,7 +1657,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
     if all_in_one:
         ref_experiment = experiments[0]
         setup_plot(plot_type="solve_time_cdf",
-                   solver_name="SOLVER SET",
+                   solver_name=solver_set_name,
                    problem_name=ref_experiment.problem.name,
                    solve_tol=solve_tol,
                    plot_title=plot_title
@@ -1729,7 +1732,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
+def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False, solver_set_name="SOLVER_SET", problem_set_name="PROBLEM_SET"):
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
 
@@ -1760,6 +1763,10 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
         Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
         True if plot should be saved to pickle file, False otherwise.
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles.
+    problem_set_name: str, default = "PROBLEM_SET"
+        USe to change name of problem groups for plot titles.
 
     Returns
     -------
@@ -1773,8 +1780,8 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
     if all_in_one:
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="area",
-                   solver_name="SOLVER SET",
-                   problem_name="PROBLEM SET",
+                   solver_name=solver_set_name,
+                   problem_name=problem_set_name,
                    plot_title=plot_title
                    )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
@@ -1823,8 +1830,8 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
-        file_list.append(save_plot(solver_name="SOLVER SET",
-                                   problem_name="PROBLEM SET",
+        file_list.append(save_plot(solver_name=solver_set_name,
+                                   problem_name=problem_set_name,
                                    plot_type="area",
                                    normalize=True,
                                    plot_title=plot_title,
@@ -1836,7 +1843,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
             ref_experiment = experiments[solver_idx][0]
             setup_plot(plot_type="area",
                        solver_name=ref_experiment.solver.name,
-                       problem_name="PROBLEM SET"
+                       problem_name=problem_set_name
                        )
             if print_max_hw:
                 curve_pairs = []
@@ -1877,7 +1884,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                 else:
                     handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
             file_list.append(save_plot(solver_name=experiment.solver.name,
-                                       problem_name="PROBLEM SET",
+                                       problem_name=problem_set_name,
                                        plot_type="area",
                                        normalize=True,
                                        ext=ext,
@@ -1886,7 +1893,8 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, plot_title = None, legend_loc="best", ext='.png', save_as_pickle=False):
+def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None, 
+                              plot_title = None, legend_loc="best", ext='.png', save_as_pickle=False, solver_set_name="SOLVER_SET", problem_set_name="PROBLEM_SET"):
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -1926,6 +1934,10 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
          Extension to add to image file path to change file type
      save_as_pickle: bool, default = False
          True if plot should be saved to pickle file, False otherwise.
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles.
+    problem_set_name: str, default = "PROBLEM_SET"
+        USe to change name of problem groups for plot titles.
 
     Returns
     -------
@@ -1939,30 +1951,30 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
     if all_in_one:
         if plot_type == "cdf_solvability":
             setup_plot(plot_type=plot_type,
-                       solver_name="SOLVER SET",
-                       problem_name="PROBLEM SET",
+                       solver_name=solver_set_name,
+                       problem_name=problem_set_name,
                        solve_tol=solve_tol,
                        plot_title=plot_title
                        )
         elif plot_type == "quantile_solvability":
             setup_plot(plot_type=plot_type,
-                       solver_name="SOLVER SET",
-                       problem_name="PROBLEM SET",
+                       solver_name=solver_set_name,
+                       problem_name=problem_set_name,
                        beta=beta,
                        solve_tol=solve_tol,
                        plot_title=plot_title
                        )
         elif plot_type == "diff_cdf_solvability":
             setup_plot(plot_type=plot_type,
-                       solver_name="SOLVER SET",
-                       problem_name="PROBLEM SET",
+                       solver_name=solver_set_name,
+                       problem_name=problem_set_name,
                        solve_tol=solve_tol,
                        plot_title=plot_title
                        )
         elif plot_type == "diff_quantile_solvability":
             setup_plot(plot_type=plot_type,
-                       solver_name="SOLVER SET",
-                       problem_name="PROBLEM SET",
+                       solver_name=solver_set_name,
+                       problem_name=problem_set_name,
                        beta=beta,
                        solve_tol=solve_tol,
                        plot_title=plot_title
@@ -2010,8 +2022,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
-            file_list.append(save_plot(solver_name="SOLVER SET",
-                                       problem_name="PROBLEM SET",
+            file_list.append(save_plot(solver_name=solver_set_name,
+                                       problem_name=problem_set_name,
                                        plot_type=plot_type,
                                        normalize=True,
                                        extra=solve_tol,
@@ -2023,8 +2035,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
             plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
-            file_list.append(save_plot(solver_name="SOLVER SET",
-                                       problem_name="PROBLEM SET",
+            file_list.append(save_plot(solver_name=solver_set_name,
+                                       problem_name=problem_set_name,
                                        plot_type=plot_type,
                                        normalize=True,
                                        extra=[solve_tol, beta],
@@ -2061,8 +2073,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
             if print_max_hw:
                 report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level, difference=True)
             if plot_type == "diff_cdf_solvability":
-                file_list.append(save_plot(solver_name="SOLVER SET",
-                                           problem_name="PROBLEM SET",
+                file_list.append(save_plot(solver_name=solver_set_name,
+                                           problem_name=problem_set_name,
                                            plot_type=plot_type,
                                            normalize=True,
                                            extra=solve_tol,
@@ -2071,8 +2083,8 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                            save_as_pickle=save_as_pickle
                                            ))
             elif plot_type == "diff_quantile_solvability":
-                file_list.append(save_plot(solver_name="SOLVER SET",
-                                           problem_name="PROBLEM SET",
+                file_list.append(save_plot(solver_name=solver_set_name,
+                                           problem_name=problem_set_name,
                                            plot_type=plot_type,
                                            normalize=True,
                                            extra=[solve_tol, beta],
@@ -2102,13 +2114,13 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                 if plot_type == "cdf_solvability":
                     file_list.append(setup_plot(plot_type=plot_type,
                                                 solver_name=experiments[solver_idx][0].solver.name,
-                                                problem_name="PROBLEM SET",
+                                                problem_name=problem_set_name,
                                                 solve_tol=solve_tol
                                                 ))
                 elif plot_type == "quantile_solvability":
                     file_list.append(setup_plot(plot_type=plot_type,
                                                 solver_name=experiments[solver_idx][0].solver.name,
-                                                problem_name="PROBLEM SET",
+                                                problem_name=problem_set_name,
                                                 beta=beta,
                                                 solve_tol=solve_tol
                                                 ))
@@ -2130,7 +2142,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                         report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True, conf_level=conf_level)
                 if plot_type == "cdf_solvability":
                     file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
-                                               problem_name="PROBLEM SET",
+                                               problem_name=problem_set_name,
                                                plot_type=plot_type,
                                                normalize=True,
                                                extra=solve_tol,
@@ -2139,7 +2151,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                ))
                 elif plot_type == "quantile_solvability":
                     file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
-                                               problem_name="PROBLEM SET",
+                                               problem_name=problem_set_name,
                                                plot_type=plot_type,
                                                normalize=True,
                                                extra=[solve_tol, beta],
@@ -2154,13 +2166,13 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                     if plot_type == "diff_cdf_solvability":
                         file_list.append(setup_plot(plot_type=plot_type,
                                                     solver_name=experiments[solver_idx][0].solver.name,
-                                                    problem_name="PROBLEM SET",
+                                                    problem_name=problem_set_name,
                                                     solve_tol=solve_tol
                                                     ))
                     elif plot_type == "diff_quantile_solvability":
                         file_list.append(setup_plot(plot_type=plot_type,
                                                     solver_name=experiments[solver_idx][0].solver.name,
-                                                    problem_name="PROBLEM SET",
+                                                    problem_name=problem_set_name,
                                                     beta=beta,
                                                     solve_tol=solve_tol
                                                     ))
@@ -2183,7 +2195,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                             report_max_halfwidth(curve_pairs=[[bs_CI_lb_curve, bs_CI_ub_curve]], normalize=True, conf_level=conf_level, difference=True)
                     if plot_type == "diff_cdf_solvability":
                         file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
-                                                   problem_name="PROBLEM SET",
+                                                   problem_name=problem_set_name,
                                                    plot_type=plot_type,
                                                    normalize=True,
                                                    extra=solve_tol,
@@ -2192,7 +2204,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
                                                    ))
                     elif plot_type == "diff_quantile_solvability":
                         file_list.append(save_plot(solver_name=experiments[solver_idx][0].solver.name,
-                                                   problem_name="PROBLEM SET",
+                                                   problem_name=problem_set_name,
                                                    plot_type=plot_type,
                                                    normalize=True,
                                                    extra=[solve_tol, beta],
@@ -2202,7 +2214,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True, plot_title=None, ext='.png', save_as_pickle=False):
+def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True, plot_title=None, ext='.png', save_as_pickle=False, solver_set_name="SOLVER_SET"):
     """Plot individual or aggregate terminal progress for one or more solvers
     on a single problem.
 
@@ -2227,6 +2239,8 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
          Extension to add to image file path to change file type
      save_as_pickle: bool, default = False
          True if plot should be saved to pickle file, False otherwise.
+     solver_set_name: str, default = "SOLVER_SET"
+         Use to change name of solver groups for plot titles.
 
         
 
@@ -2243,7 +2257,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
     if all_in_one:
         ref_experiment = experiments[0]
         setup_plot(plot_type=plot_type,
-                   solver_name="SOLVER SET",
+                   solver_name=solver_set_name,
                    problem_name=ref_experiment.problem.name,
                    normalize=normalize,
                    budget=ref_experiment.problem.factors["budget"],
@@ -2268,7 +2282,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
                 plt.ylabel("Terminal Progress")
             else:
                 plt.ylabel("Terminal Objective")
-        file_list.append(save_plot(solver_name="SOLVER SET",
+        file_list.append(save_plot(solver_name=solver_set_name,
                                    problem_name=ref_experiment.problem.name,
                                    plot_type=plot_type,
                                    normalize=normalize,
@@ -2310,7 +2324,7 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
     return file_list
 
 
-def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False):
+def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, legend_loc="best", ext='.png', save_as_pickle=False, solver_set_name="SOLVER_SET", problem_set_name="PROBLEM_SET"):
     """Plot a scatter plot of mean and standard deviation of terminal progress.
     Either one plot for each solver or one plot for all solvers.
 
@@ -2328,6 +2342,10 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
         Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
         True if plot should be saved to pickle file, False otherwise.
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles.
+    problem_set_name: str, default = "PROBLEM_SET"
+        USe to change name of problem groups for plot titles.
 
     Returns
     -------
@@ -2341,8 +2359,8 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
     if all_in_one:
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(plot_type="terminal_scatter",
-                   solver_name="SOLVER SET",
-                   problem_name="PROBLEM SET",
+                   solver_name=solver_set_name,
+                   problem_name=problem_set_name,
                    plot_title=plot_title
                    )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
@@ -2359,8 +2377,8 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color=color_str, marker=marker_str)
             solver_curve_handles.append(handle)
         plt.legend(handles=solver_curve_handles, labels=solver_names, loc=legend_loc)
-        file_list.append(save_plot(solver_name="SOLVER SET",
-                                   problem_name="PROBLEM SET",
+        file_list.append(save_plot(solver_name=solver_set_name,
+                                   problem_name=problem_set_name,
                                    plot_type="terminal_scatter",
                                    normalize=True,
                                    plot_title=plot_title,
@@ -2371,7 +2389,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
             ref_experiment = experiments[solver_idx][0]
             setup_plot(plot_type="terminal_scatter",
                        solver_name=ref_experiment.solver.name,
-                       problem_name="PROBLEM SET"
+                       problem_name=problem_set_name
                        )
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
@@ -2381,7 +2399,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True, plot_title=None, le
                 std_dev_estimator = np.std(terminals, ddof=1)
                 handle = plt.scatter(x=mean_estimator, y=std_dev_estimator, color="C0", marker="o")
             file_list.append(save_plot(solver_name=experiment.solver.name,
-                                       problem_name="PROBLEM SET",
+                                       problem_name=problem_set_name,
                                        plot_type="terminal_scatter",
                                        normalize=True,
                                        ext=ext,
