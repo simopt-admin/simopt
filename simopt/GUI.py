@@ -2604,6 +2604,47 @@ class New_Experiment_Window(tk.Toplevel):
         self.plot_window_button = tk.Button(master = self.experiment_list_display_frame, text = 'Open Plotting Window', command = self.open_plotting_window )
         self.plot_window_button.grid(row = 0, column = 2, padx = 10)
         
+        # load experiment button
+        self.load_exp_button = tk.Button(master = self.experiment_list_display_frame, text = 'Load Experiment', command = self.load_experiment)
+        self.load_exp_button.grid(row=0, column=3, padx=10)
+        
+    def load_experiment(self):
+        
+        #ask user for pickle file location
+        file_path = filedialog.askopenfilename()
+        
+        #ask user to provide name for experiment
+        exp_name = simpledialog.askstring("Input", "Please provide a name for the experiment.")
+        
+        
+        #make sure name is unique
+        self.experiment_name = self.get_unique_name(self.master_experiment_dict, exp_name)
+        
+        #load pickle
+        load_message = tk.messagebox.showinfo("Loading", "Loading pickle file. This may take a few minutes.")
+        with open(file_path, 'rb') as f:
+            exp = pickle.load(f)
+        tk.messagebox.showinfo("Finished", "Pickle file has finished loading.")
+        
+        #add exp to master dict and display in row
+        self.master_experiment_dict[self.experiment_name] = exp
+        self.add_exp_row()
+        
+        # determine if exp has been post processed and post normalized and set display
+        self.run_buttons[self.experiment_name].configure(state='disabled')
+        self.all_buttons[self.experiment_name].configure(state='disabled')
+        post_rep = exp.check_postreplicate()
+        post_norm = exp.check_postnormalize()
+        if post_rep:
+            self.post_process_buttons[self.experiment_name].configure(state='disabled')
+        if post_norm:
+            self.post_norm_buttons[self.experiment_name].configure(state='disabled')
+            
+            
+        
+        
+        
+        
     def clear_frame(self, frame):
 
         for widget in frame.winfo_children():
@@ -3597,7 +3638,7 @@ class New_Experiment_Window(tk.Toplevel):
     def create_experiment(self):
         
         # get unique experiment name
-        experiment_name = self.get_unique_name(self.master_experiment_dict, self.experiment_name_var.get())
+        self.experiment_name = self.get_unique_name(self.master_experiment_dict, self.experiment_name_var.get())
         
         #get pickle checkstate
         pickle_checkstate = self.pickle_checkstate.get()
@@ -3645,7 +3686,7 @@ class New_Experiment_Window(tk.Toplevel):
                                           problem_names = master_problem_name_list,
                                           solver_renames = solver_renames,
                                           problem_renames = problem_renames,
-                                          experiment_name = experiment_name,
+                                          experiment_name = self.experiment_name,
                                           create_pair_pickles = pickle_checkstate 
                                           
             )
@@ -3655,7 +3696,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment.check_compatibility()
         
         #add to master experiment list
-        self.master_experiment_dict[experiment_name] = self.experiment
+        self.master_experiment_dict[self.experiment_name] = self.experiment
         
         # clear solver and problem lists
         self.master_solver_factor_list = []
@@ -3670,43 +3711,46 @@ class New_Experiment_Window(tk.Toplevel):
         # reset default experiment name for next experiment
         self.experiment_name_var.set(self.get_unique_name(self.master_experiment_dict, 'experiment'))
         
-
+        #add exp to row
+        self.add_exp_row()
         
+
+    def add_exp_row(self):
         
         ''' Display experiment in list '''
         experiment_row = len(self.master_experiment_dict) - 1
         self.current_experiment_frame = tk.Frame(master = self.experiment_display_canvas)
         self.current_experiment_frame.grid(row = experiment_row, column = 0)
-        self.experiment_list_label = tk.Label(master = self.current_experiment_frame, text = experiment_name, font = 'Calibir 13')
+        self.experiment_list_label = tk.Label(master = self.current_experiment_frame, text = self.experiment_name, font = 'Calibir 13')
         self.experiment_list_label.grid(row = 0, column = 0)
       
         # run button
-        self.run_experiment_button = tk.Button(master = self.current_experiment_frame, text = "Run", command = lambda:self.run_experiment(experiment_name = experiment_name))
+        self.run_experiment_button = tk.Button(master = self.current_experiment_frame, text = "Run", command = lambda:self.run_experiment(experiment_name = self.experiment_name))
         self.run_experiment_button.grid(row = 0, column = 2)
-        self.run_buttons[experiment_name] = self.run_experiment_button # add run button to widget dict
+        self.run_buttons[self.experiment_name] = self.run_experiment_button # add run button to widget dict
         # experiment options button
-        self.post_process_opt_button = tk.Button(master = self.current_experiment_frame, text = 'Experiment Options', font = 'Calibri 11', command = lambda:self.open_post_processing_window(experiment_name))
+        self.post_process_opt_button = tk.Button(master = self.current_experiment_frame, text = 'Experiment Options', font = 'Calibri 11', command = lambda:self.open_post_processing_window(self.experiment_name))
         self.post_process_opt_button.grid(row = 0, column = 1)
-        self.post_process_opt_buttons[experiment_name] = self.post_process_opt_button # add option button to widget dict
+        self.post_process_opt_buttons[self.experiment_name] = self.post_process_opt_button # add option button to widget dict
         # post replication button
-        self.post_process_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Replicate', font = 'Calibri 11', command = lambda:self.post_process(experiment_name))
+        self.post_process_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Replicate', font = 'Calibri 11', command = lambda:self.post_process(self.experiment_name))
         self.post_process_button.grid(row = 0, column = 3)
         self.post_process_button.configure(state ='disabled')
-        self.post_process_buttons[experiment_name] = self.post_process_button # add post process button to widget dict
+        self.post_process_buttons[self.experiment_name] = self.post_process_button # add post process button to widget dict
         # post normalize button
-        self.post_norm_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Normalize', font = 'Calibri 11', command = lambda:self.post_normalize(experiment_name))
+        self.post_norm_button = tk.Button(master = self.current_experiment_frame, text = 'Post-Normalize', font = 'Calibri 11', command = lambda:self.post_normalize(self.experiment_name))
         self.post_norm_button.grid(row = 0, column = 4)
         self.post_norm_button.configure(state ='disabled')
-        self.post_norm_buttons[experiment_name] = self.post_norm_button # add post process button to widget dict
+        self.post_norm_buttons[self.experiment_name] = self.post_norm_button # add post process button to widget dict
         # log results button
-        self.log_button = tk.Button(master = self.current_experiment_frame, text = 'Log Results', font = 'Calibri 11', command = lambda:self.log_results(experiment_name))
+        self.log_button = tk.Button(master = self.current_experiment_frame, text = 'Log Results', font = 'Calibri 11', command = lambda:self.log_results(self.experiment_name))
         self.log_button.grid(row = 0, column = 5)
         self.log_button.configure(state ='disabled')
-        self.log_buttons[experiment_name] = self.log_button # add post process button to widget dict
+        self.log_buttons[self.experiment_name] = self.log_button # add post process button to widget dict
         # all in one
-        self.all_button = tk.Button(master = self.current_experiment_frame, text = 'All', font = 'Calibri 11', command = lambda:self.do_all_steps(experiment_name))
+        self.all_button = tk.Button(master = self.current_experiment_frame, text = 'All', font = 'Calibri 11', command = lambda:self.do_all_steps(self.experiment_name))
         self.all_button.grid(row = 0, column = 6)
-        self.all_buttons[experiment_name] = self.all_button # add post process button to widget dict
+        self.all_buttons[self.experiment_name] = self.all_button # add post process button to widget dict
         
         
         
@@ -3874,10 +3918,32 @@ class New_Experiment_Window(tk.Toplevel):
         # update macro entry widgets
         for var in self.macro_vars:
             var.set(self.macro_default)
+            
+    def find_option_setting( self, exp_name, search_dict, default_val):
+        if exp_name in search_dict:
+            value = search_dict[exp_name].get()
+        else:
+            value = default_val
+        return value
 
 
 
     def open_post_processing_window(self, experiment_name):
+      
+        # check if options have already been set
+        n_macroreps = self.find_option_setting(experiment_name, self.macro_reps, self.macro_default)
+        n_postreps = self.find_option_setting(experiment_name, self.post_reps, self.post_default)
+        crn_budget = self.find_option_setting(experiment_name, self.crn_budgets, self.crn_budget_default)
+        crn_macro = self.find_option_setting(experiment_name, self.crn_macros, self.crn_macro_default)
+        n_initreps = self.find_option_setting(experiment_name, self.init_post_reps, self.init_default)
+        crn_init = self.find_option_setting(experiment_name, self.crn_inits, self.crn_init_default)
+        if experiment_name in self.solve_tols:
+            solve_tols = []
+            for tol in self.solve_tols[experiment_name]:
+                solve_tols.append(tol.get())
+        else:
+            solve_tols = self.solve_tols_default
+                
         
         # create new winow
         self.post_processing_window = tk.Toplevel(self.master)
@@ -3895,7 +3961,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.macro_rep_label = tk.Label(master = self.main_frame, text = 'Number of macro-replications of the solver run on the problem', font = 'Calibri 13')
         self.macro_rep_label.grid(row =1, column =0)
         self.macro_rep_var = tk.IntVar()
-        self.macro_rep_var.set(self.macro_default)
+        self.macro_rep_var.set(n_macroreps)
         self.macro_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.macro_rep_var, width = 10, justify = 'right')
         self.macro_rep_entry.grid(row = 1, column =1)
         
@@ -3903,7 +3969,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications', font = 'Calibri 13')
         self.post_rep_label.grid(row =2, column =0)
         self.post_rep_var = tk.IntVar()
-        self.post_rep_var.set(self.post_default)
+        self.post_rep_var.set(n_postreps)
         self.post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.post_rep_var, width = 10, justify = 'right')
         self.post_rep_entry.grid(row = 2, column =1)
         
@@ -3911,7 +3977,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
         self.crn_budget_label.grid(row = 3, column =0)
         self.crn_budget_var = tk.StringVar()
-        if self.crn_budget_default == True:
+        if crn_budget == True:
             budget_display = 'yes'
         else:
             budget_display = 'no'
@@ -3922,7 +3988,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
         self.crn_macro_label.grid(row = 4, column =0)
         self.crn_macro_var = tk.StringVar()
-        if self.crn_macro_default == True:
+        if crn_macro == True:
             macro_display = 'yes'
         else:
             macro_display = 'no'
@@ -3933,7 +3999,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.init_post_rep_label = tk.Label(master = self.main_frame, text = 'Number of post-replications at initial and optimal solutions', font = 'Calibri 13')
         self.init_post_rep_label.grid(row =5, column =0)
         self.init_post_rep_var = tk.IntVar()
-        self.init_post_rep_var.set(self.init_default)
+        self.init_post_rep_var.set(n_initreps)
         self.init_post_rep_entry = tk.Entry(master = self.main_frame, textvariable = self.init_post_rep_var, width = 10, justify = 'right')
         self.init_post_rep_entry.grid(row = 5, column =1)
         
@@ -3941,7 +4007,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
         self.crn_init_label.grid(row = 6, column =0)
         self.crn_init_var = tk.StringVar()
-        if self.crn_init_default == True:
+        if crn_init == True:
             init_display = 'yes'
         else:
             init_display = 'no'
@@ -3957,10 +4023,10 @@ class New_Experiment_Window(tk.Toplevel):
         self.solve_tol_2_var = tk.StringVar()
         self.solve_tol_3_var = tk.StringVar()
         self.solve_tol_4_var = tk.StringVar()
-        self.solve_tol_1_var.set(self.solve_tols_default[0])
-        self.solve_tol_2_var.set(self.solve_tols_default[1])
-        self.solve_tol_3_var.set(self.solve_tols_default[2])
-        self.solve_tol_4_var.set(self.solve_tols_default[3])
+        self.solve_tol_1_var.set(solve_tols[0])
+        self.solve_tol_2_var.set(solve_tols[1])
+        self.solve_tol_3_var.set(solve_tols[2])
+        self.solve_tol_4_var.set(solve_tols[3])
         self.solve_tol_1_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_1_var, width = 5, justify = 'right')
         self.solve_tol_2_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_2_var, width = 5, justify = 'right')
         self.solve_tol_3_entry = tk.Entry(master = self.solve_tols_frame, textvariable = self.solve_tol_3_var, width = 5, justify = 'right')
@@ -3984,28 +4050,13 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budgets[experiment_name] = self.crn_budget_var
         
         self.macro_reps[experiment_name] = self.macro_rep_var
-        # if crn_budget_str == 'yes':
-        #     self.crn_budgets[experiment_name] = True
-        # else:
-        #     self.crn_budgets[experiment_name] = False
+
             
         self.crn_macros[experiment_name]= self.crn_macro_var
-        # if crn_macro_str == 'yes':
-        #     self.crn_macros[experiment_name] = True
-        # else:
-        #     self.crn_macros[experiment_name] = False
+
             
         self.crn_inits[experiment_name] = self.crn_init_var
-        # if crn_init_str == 'yes':
-        #     self.crn_inits[experiment_name] = True
-        # else:
-        #     self.crn_inits[experiment_name] = False
-            
-        # solve_tol_1 = self.solve_tol_1_var
-        # solve_tol_2 = self.solve_tol_2_var    
-        # solve_tol_3 = float(self.solve_tol_3_var.get())
-        # solve_tol_4 = float(self.solve_tol_4_var.get())
-        # solve_tol_list = [solve_tol_1, solve_tol_2, solve_tol_3, solve_tol_4]
+
         self.solve_tols[experiment_name] = [self.solve_tol_1_var, self.solve_tol_2_var, self.solve_tol_3_var, self.solve_tol_4_var ]
 
     
@@ -4587,13 +4638,18 @@ class New_Experiment_Window(tk.Toplevel):
             #reference solver 
             self.ref_solver_label = tk.Label(master= self.more_options_frame, text = 'Solver to use for difference benchmark', font = 'Calibri 13')
             self.ref_solver_label.grid(row=9, column=0)
-            # get selected solvers
-            solver_options = []
-            for solver in self.selected_solvers:
-                solver_options.append(solver.name)
+
+            # set none if no solvers selected yet
             self.ref_solver_var = tk.StringVar()
-            self.ref_solver_var.set(solver_options[0])
-            self.ref_solver_menu = ttk.OptionMenu(self.more_options_frame, self.ref_solver_var, solver_options[0], *solver_options)
+            solver_options = []
+            if len(self.selected_solvers) == 0:
+                solver_display = 'No solvers selected'
+            else:
+                for solver in self.selected_solvers:
+                    solver_display = solver_options[0]
+                    solver_options.append(solver.name)
+                    self.ref_solver_var.set(solver_options[0])
+            self.ref_solver_menu = ttk.OptionMenu(self.more_options_frame, self.ref_solver_var, solver_display, *solver_options)
             self.ref_solver_menu.grid(row=9,column=1)
             self.ref_solver_menu.configure(state='disabled')
             

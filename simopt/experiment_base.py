@@ -2950,6 +2950,22 @@ class ProblemsSolvers(object):
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
         
+    def check_postreplicate(self):
+        """
+        Check to see if all experiments have been postreplicated
+        
+        Returns True if all experiments have been postreplicated, false otherwise. 
+
+        """
+        check_list = []
+        for solver_idx in range(self.n_solvers):
+            for problem_idx in range(self.n_problems):
+                experiment = self.experiments[solver_idx][problem_idx] 
+                check = experiment.check_postreplicate()
+                check_list.append(check)    
+        return all(check_list)
+        
+        
     def check_postnormalize(self):
         """
         Check to see if all experiments have been postnormalized.
