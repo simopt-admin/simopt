@@ -2431,33 +2431,49 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_default = True
         self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
         
+        # create master canvas
+        self.master_canvas = tk.Canvas(self.master)
+        self.master_canvas.grid(row=0,column=0, sticky='nsew')
+        
+        #create master frame
+        self.main_frame = tk.Frame(self.master_canvas)
+        self.main_frame.grid(row=0,column=0)
+        self.main_frame.bind("<Configure>", self.update_main_window_scroll) #bind main frame to scroll bar
+        
+        #create window scrollbars
+        vert_scroll =  ttk.Scrollbar(self.master, orient=tk.VERTICAL, command=self.master_canvas.yview)
+        vert_scroll.grid(row=0,column=1,sticky='ns')
+        horiz_scroll = ttk.Scrollbar(self.master, orient=tk.HORIZONTAL, command=self.master_canvas.xview)
+        horiz_scroll.grid(row=1,column=0, sticky='ew')
+        self.master_canvas.create_window((0, 0), window=self.main_frame, anchor="nw") #add main frame as window to canvas
+        self.master_canvas.configure(yscrollcommand=vert_scroll.set, xscrollcommand=horiz_scroll.set)
         
         # empty frames so clear frames fn can execute
-        self.solver_selection_frame = tk.Frame(master = self.master)
-        self.problem_selection_frame = tk.Frame(master = self.master)
-        self.prob_mod_frame = tk.Frame(master = self.master)
-        self.solver_frame = tk.Frame(master = self.master)
-        self.problem_frame = tk.Frame(master = self.master)
-        self.model_frame = tk.Frame(master = self.master)
-        self.solver_datafarm_frame = tk.Frame(master = self.master)
-        self.problem_datafarm_frame = tk.Frame(master = self.master)
-        self.model_datafarm_frame = tk.Frame(master = self.master)
-        self.design_display_frame = tk.Frame(master = self.master)
+        self.solver_selection_frame = tk.Frame(master = self.main_frame)
+        self.problem_selection_frame = tk.Frame(master = self.main_frame)
+        self.prob_mod_frame = tk.Frame(master = self.main_frame)
+        self.solver_frame = tk.Frame(master = self.main_frame)
+        self.problem_frame = tk.Frame(master = self.main_frame)
+        self.model_frame = tk.Frame(master = self.main_frame)
+        self.solver_datafarm_frame = tk.Frame(master = self.main_frame)
+        self.problem_datafarm_frame = tk.Frame(master = self.main_frame)
+        self.model_datafarm_frame = tk.Frame(master = self.main_frame)
+        self.design_display_frame = tk.Frame(master = self.main_frame)
         
 
 
         
         '''Title'''
         
-        self.title_label = tk.Label(master = self.master, text = "New Experiment Page", font = 'Calibri 15 bold')
+        self.title_label = tk.Label(master = self.main_frame, text = "New Experiment Page", font = 'Calibri 15 bold')
         self.title_label.grid(row = 0, column= 0)
         
-        # self.add_buttons_frame = tk.Frame(master = self.master)
+        # self.add_buttons_frame = tk.Frame(master = self.main_frame)
         # self.add_buttons_frame.grid(row = self.add_buttons_row, column = 0)
         
         '''Solver/Problem Notebook & Selection Menus'''
         
-        self.sol_prob_book = ttk.Notebook(master = self.master)
+        self.sol_prob_book = ttk.Notebook(master = self.main_frame)
         self.sol_prob_book.grid(row = self.notebook_row, column = 0)
         
         self.solver_notebook_frame = ttk.Frame(master = self.sol_prob_book)
@@ -2549,7 +2565,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         '''Display solver & problem lists'''
         
-        self.display_sol_prob_list_frame = tk.Frame(master = self.master)
+        self.display_sol_prob_list_frame = tk.Frame(master = self.main_frame)
         self.display_sol_prob_list_frame.grid(row = self.sol_prob_list_display_row, column = 0)
         self.display_solver_list_frame = tk.Frame(master = self.display_sol_prob_list_frame)
         self.display_solver_list_frame.grid(row = 0, column = 0)
@@ -2571,7 +2587,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.problem_list_title.grid(row = 0, column = 1)
         
         # set experiment name and create experiment
-        self.experiment_button_frame = tk.Frame(master = self.master)
+        self.experiment_button_frame = tk.Frame(master = self.main_frame)
         self.experiment_button_frame.grid(row = self.experiment_button_row, column = 0)
         self.experiment_name_label = tk.Label(master = self.experiment_button_frame, text = 'Experiment Name', font = 'Calibri 13')
         self.experiment_name_label.grid(row = 0, column = 0)
@@ -2590,7 +2606,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.pickle_checkbox.grid(row = 1, column = 1)
         
         ''' Display experiment list and run options'''
-        self.experiment_list_display_frame = tk.Frame(master = self.master)
+        self.experiment_list_display_frame = tk.Frame(master = self.main_frame)
         self.experiment_list_display_frame.grid(row = self.experiment_list_display_row , column = 0)
         self.experiment_display_canvas = tk.Canvas(master = self.experiment_list_display_frame)
         self.experiment_display_canvas.grid(row = 1, column = 0)
@@ -2607,6 +2623,11 @@ class New_Experiment_Window(tk.Toplevel):
         # load experiment button
         self.load_exp_button = tk.Button(master = self.experiment_list_display_frame, text = 'Load Experiment', command = self.load_experiment)
         self.load_exp_button.grid(row=0, column=3, padx=10)
+        
+    def update_main_window_scroll(self, event=None):
+        self.master_canvas.configure(scrollregion=self.master_canvas.bbox("all"))
+        
+        
         
     def load_experiment(self):
         
@@ -4162,20 +4183,45 @@ class New_Experiment_Window(tk.Toplevel):
         
         
     def open_plotting_window(self):
-        
+
         # create new window
         self.plotting_window = tk.Toplevel(self.master)
         self.plotting_window.title("Simopt Graphical User Interface - Experiment Plots")
-        self.plotting_window.geometry("400x300")
+        self.plotting_window.geometry("800x600")
+    
+        # Configure the grid layout to expand properly
+        self.plotting_window.grid_rowconfigure(0, weight=1)
+        self.plotting_window.grid_columnconfigure(0, weight=1)
+    
+        # create master canvas
+        self.plotting_canvas = tk.Canvas(self.plotting_window)
+        self.plotting_canvas.grid(row=0, column=0, sticky='nsew')
+    
+        # Create vertical scrollbar
+        vert_scroll = ttk.Scrollbar(self.plotting_window, orient=tk.VERTICAL, command=self.plotting_canvas.yview)
+        vert_scroll.grid(row=0, column=1, sticky='ns')
+    
+        # Create horizontal scrollbar
+        horiz_scroll = ttk.Scrollbar(self.plotting_window, orient=tk.HORIZONTAL, command=self.plotting_canvas.xview)
+        horiz_scroll.grid(row=1, column=0, sticky='ew')
+    
+        # Configure canvas to use the scrollbars
+        self.plotting_canvas.configure(yscrollcommand=vert_scroll.set, xscrollcommand=horiz_scroll.set)
+    
+        # create master frame inside the canvas
+        self.plot_main_frame = tk.Frame(self.plotting_canvas)
+        self.plotting_canvas.create_window((0, 0), window=self.plot_main_frame, anchor="nw")
+    
+        # Bind the configure event to update the scroll region
+        self.plot_main_frame.bind("<Configure>", self.update_plot_window_scroll)
         
         # create frames so clear frames function can execute
-        self.main_frame = tk.Frame(master = self.plotting_window)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=1)
-        self.main_frame.grid(row=0, column =0) 
-        self.plot_options_frame = tk.Frame(master = self.main_frame)
+        self.plot_main_frame.grid_columnconfigure(0, weight=1)
+        self.plot_main_frame.grid_columnconfigure(1, weight=1)
+        #self.plot_main_frame.grid(row=0, column =0) 
+        self.plot_options_frame = tk.Frame(master = self.plot_main_frame)
         self.more_options_frame = tk.Frame(self.plot_options_frame)
-        self.plotting_workspace_frame = tk.Frame(self.main_frame)
+        self.plotting_workspace_frame = tk.Frame(self.plot_main_frame)
         
         
         # dictonaries/variables to store plotting information
@@ -4185,7 +4231,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.ref_menu_created = False # tracks if there if a ref solver menu currently existing
 
         # page title
-        self.title_frame = tk.Frame(master = self.main_frame)
+        self.title_frame = tk.Frame(master = self.plot_main_frame)
         self.title_frame.grid(row=0, column =0)
         self.title_label = tk.Label(master = self.title_frame, text = "Welcome to the Plotting Page of SimOpt.", font = 'Calibri 15 bold')
         self.title_label.grid(row = 0, column =0)
@@ -4194,7 +4240,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.subtitle_label.grid(row = 1, column = 0, columnspan=2)    
         
         # experiment selection
-        self.plot_selection_frame = tk.Frame(master = self.main_frame,  width = 10)
+        self.plot_selection_frame = tk.Frame(master = self.plot_main_frame,  width = 10)
         self.plot_selection_frame.grid_columnconfigure(0, weight=0)
         self.plot_selection_frame.grid_columnconfigure(1, weight=0)
         self.plot_selection_frame.grid(row=1, column=0)
@@ -4281,6 +4327,9 @@ class New_Experiment_Window(tk.Toplevel):
         self.plot_notebook = ttk.Notebook(self.plotting_workspace_frame)
         self.plot_notebook.grid(row=1,column=0)
         
+        
+    def update_plot_window_scroll(self, event=None):
+        self.plotting_canvas.configure(scrollregion=self.plotting_canvas.bbox("all"))
         
     def update_plot_menu(self, experiment_name):
         
