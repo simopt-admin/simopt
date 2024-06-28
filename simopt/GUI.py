@@ -2486,7 +2486,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # Option menu to select solver
         self.solver_select_label = tk.Label( master = self.solver_selection_frame, text = 'Select Solver:', width = 20,
-                                    font = 'Calibir 13')
+                                    font = 'Calibri 13')
         self.solver_select_label.grid( row = 0, column = 0)
         
         # Variable to store selected solver
@@ -2505,7 +2505,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # Option menu to select problem
         self.problem_select_label = tk.Label( master = self.problem_selection_frame, text = 'Select Problem', width = 20,
-                                    font = 'Calibir 13')
+                                    font = 'Calibri 13')
         self.problem_select_label.grid( row = 0, column = 0)
         
         # Variable to store selected problem
@@ -2523,7 +2523,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # Option menu to select solver
         self.solver_select_label = tk.Label( master = self.solver_datafarm_selection_frame, text = 'Select Solver:', width = 20,
-                                    font = 'Calibir 13')
+                                    font = 'Calibri 13')
         self.solver_select_label.grid( row = 0, column = 0)
         
         # Variable to store selected solver
@@ -2541,7 +2541,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # Option menu to select problem
         self.problem_select_label = tk.Label( master = self.problem_datafarm_selection_frame, text = 'Select Problem', width = 20,
-                                    font = 'Calibir 13')
+                                    font = 'Calibri 13')
         self.problem_select_label.grid( row = 0, column = 0)
         
         # Variable to store selected problem
@@ -3407,15 +3407,15 @@ class New_Experiment_Window(tk.Toplevel):
         
         # add solver name to solver index
         solver_row = len(self.master_solver_dict) - 1 
-        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_name, font = 'Calibir 13')
+        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_name, font = 'Calibri 13')
         self.solver_list_label.grid(row = solver_row, column = 1)
         self.solver_list_labels[solver_name] = self.solver_list_label
         
         # add delete and view/edit buttons
-        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibir 11', command = lambda:self.edit_solver(solver_name))
+        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibri 11', command = lambda:self.edit_solver(solver_name))
         self.solver_edit_button.grid(row = solver_row, column =2)
         self.solver_edit_buttons[solver_name] = self.solver_edit_button
-        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_solver(solver_name))
+        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibri 11', command = lambda: self.delete_solver(solver_name))
         self.solver_del_button.grid(row = solver_row, column =3)
         self.solver_del_buttons[solver_name] = self.solver_del_button
         
@@ -3447,15 +3447,15 @@ class New_Experiment_Window(tk.Toplevel):
         
         # add problem name to problem index
         problem_row = len(self.master_problem_dict) - 1
-        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_name, font = 'Calibir 13')
+        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_name, font = 'Calibri 13')
         self.problem_list_label.grid(row = problem_row, column = 1)
         self.problem_list_labels[problem_name] = self.problem_list_label
         
         # add delete and view/edit buttons
-        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibri 11')
         self.problem_edit_button.grid(row = problem_row, column =2)
         self.problem_edit_buttons[problem_name] = self.problem_edit_button
-        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_problem(problem_name))
+        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibri 11', command = lambda: self.delete_problem(problem_name))
         self.problem_del_button.grid(row = problem_row, column =3)
         self.problem_del_buttons[problem_name] = self.problem_del_button
         
@@ -3489,15 +3489,15 @@ class New_Experiment_Window(tk.Toplevel):
         
         # add solver name to solver index
         problem_row = len(self.master_problem_dict) - 1 
-        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_design_name, font = 'Calibir 13')
+        self.problem_list_label = tk.Label(master = self.problem_list_canvas, text = problem_design_name, font = 'Calibri 13')
         self.problem_list_label.grid(row = problem_row, column = 1)
         self.problem_list_labels[problem_design_name] = self.problem_list_label
         
         # add delete and view/edit buttons
-        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.problem_edit_button = tk.Button(master = self.problem_list_canvas, text = 'View/Edit', font = 'Calibri 11')
         self.problem_edit_button.grid(row = problem_row, column =2)
         self.problem_edit_buttons[problem_design_name] = self.problem_edit_button
-        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_problem(problem_design_name))
+        self.problem_del_button = tk.Button(master = self.problem_list_canvas, text = 'Delete', font = 'Calibri 11', command = lambda: self.delete_problem(problem_design_name))
         self.problem_del_button.grid(row = problem_row, column =3)
         self.problem_del_buttons[problem_design_name] = self.problem_del_button
         
@@ -3521,15 +3521,15 @@ class New_Experiment_Window(tk.Toplevel):
         
         # add solver name to solver index
         solver_row = len(self.master_solver_dict) - 1 
-        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_design_name, font = 'Calibir 13')
+        self.solver_list_label = tk.Label(master = self.solver_list_canvas, text = solver_design_name, font = 'Calibri 13')
         self.solver_list_label.grid(row = solver_row, column = 1)
         self.solver_list_labels[solver_design_name] = self.solver_list_label
         
         # add delete and view/edit buttons
-        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibir 11')
+        self.solver_edit_button = tk.Button(master = self.solver_list_canvas, text = 'View/Edit', font = 'Calibri 11')
         self.solver_edit_button.grid(row = solver_row, column =2)
         self.solver_edit_buttons[solver_design_name] = self.solver_edit_button
-        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibir 11', command = lambda: self.delete_solver(solver_design_name))
+        self.solver_del_button = tk.Button(master = self.solver_list_canvas, text = 'Delete', font = 'Calibri 11', command = lambda: self.delete_solver(solver_design_name))
         self.solver_del_button.grid(row = solver_row, column =3)
         self.solver_del_buttons[solver_design_name] = self.solver_del_button
         
@@ -3735,7 +3735,7 @@ class New_Experiment_Window(tk.Toplevel):
         experiment_row = len(self.master_experiment_dict) - 1
         self.current_experiment_frame = tk.Frame(master = self.experiment_display_canvas)
         self.current_experiment_frame.grid(row = experiment_row, column = 0)
-        self.experiment_list_label = tk.Label(master = self.current_experiment_frame, text = self.experiment_name, font = 'Calibir 13')
+        self.experiment_list_label = tk.Label(master = self.current_experiment_frame, text = self.experiment_name, font = 'Calibri 13')
         self.experiment_list_label.grid(row = 0, column = 0)
       
         # run button
@@ -4270,7 +4270,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # plot all solvers checkbox
         self.all_solvers_var = tk.BooleanVar()
-        self.all_solvers_check = tk.Checkbutton(master=self.plot_selection_frame, variable = self.all_solvers_var, text='Plot all solvers from this experiment', font='Calibir 11', command=self.get_selected_solvers)
+        self.all_solvers_check = tk.Checkbutton(master=self.plot_selection_frame, variable = self.all_solvers_var, text='Plot all solvers from this experiment', font='Calibri 11', command=self.get_selected_solvers)
         self.all_solvers_check.grid(row=4, column=0, columnspan=2)
  
 
@@ -4295,7 +4295,7 @@ class New_Experiment_Window(tk.Toplevel):
         
         # plot all problems checkbox
         self.all_problems_var = tk.BooleanVar()
-        self.all_problems_check = tk.Checkbutton(master=self.plot_selection_frame, variable = self.all_problems_var, text='Plot all problems from this experiment', font='Calibir 11', command=self.get_selected_problems)
+        self.all_problems_check = tk.Checkbutton(master=self.plot_selection_frame, variable = self.all_problems_var, text='Plot all problems from this experiment', font='Calibri 11', command=self.get_selected_problems)
         self.all_problems_check.grid(row=8, column=0, columnspan=2)
         
         
@@ -5254,7 +5254,7 @@ class New_Experiment_Window(tk.Toplevel):
             problem_label.grid(row=row, column=1)
             type_label = tk.Label(master=tab_frame, text=self.plot_type, font='Calibri 13')
             type_label.grid(row=row,column=2)
-            view_button = tk.Button(master=tab_frame, text='View/Edit', font='Calibir 13',  command = lambda: self.view_plot(file_path))
+            view_button = tk.Button(master=tab_frame, text='View/Edit', font='Calibri 13',  command = lambda: self.view_plot(file_path))
             view_button.grid(row=row, column=3)
             
         
