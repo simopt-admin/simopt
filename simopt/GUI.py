@@ -1,29 +1,22 @@
-from email.policy import default
-from os import path
-from random import expovariate
 import tkinter as tk
-from tkinter import NONE, Place, ttk, Scrollbar, filedialog, simpledialog, Listbox
-from timeit import timeit
+from tkinter import ttk, Scrollbar, filedialog, simpledialog, Listbox
 from functools import partial
-from tkinter.constants import FALSE, MULTIPLE, S
+from tkinter.constants import MULTIPLE
 import time
-from xml.dom.minidom import parseString
 from PIL import ImageTk, Image
-import traceback
 import pickle
 import ast
 import os
 import sys
-import csv
 import os.path as o
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
 
 import pandas as pd
 import re
-from simopt.base import Problem, Solver, Model
-from simopt.data_farming_base import DataFarmingExperiment, DesignPoint, DataFarmingMetaExperiment
+from simopt.base import Problem, Solver
+from simopt.data_farming_base import DataFarmingExperiment
 
-from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory, model_problem_class_directory
+from .directory import problem_directory, problem_unabbreviated_directory, solver_directory, solver_unabbreviated_directory, model_directory, model_unabbreviated_directory, model_problem_unabbreviated_directory
 from .experiment_base import ProblemSolver, ProblemsSolvers, post_normalize, find_missing_experiments, make_full_metaexperiment, plot_progress_curves, plot_solvability_cdfs, plot_area_scatterplots, plot_solvability_profiles, plot_terminal_progress, plot_terminal_scatterplots, create_design
 
 
@@ -444,7 +437,7 @@ class Experiment_Window(tk.Toplevel):
         
         count_factors_problem = 1
         
-        if args and len(args) == 2 and args[0] == True:
+        if args and len(args) == 2 and args[0]:
             oldname = args[1][3][1]
             
         else:
@@ -477,7 +470,7 @@ class Experiment_Window(tk.Toplevel):
             description = self.problem_object().specifications[factor_type].get("description")
             default = self.problem_object().specifications[factor_type].get("default")
 
-            if datatype != bool:
+            if not isinstance(datatype, bool):
 
 
                 self.int_float_description_problem = tk.Label(master=self.factor_tab_one_problem,
@@ -487,9 +480,9 @@ class Experiment_Window(tk.Toplevel):
 
                 self.int_float_var_problem = tk.StringVar(self.factor_tab_one_problem)
                 self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width=15)
-                if args and len(args) == 2 and args[0] == True:
+                if args and len(args) == 2 and args[0]:
                     self.int_float_entry_problem.insert(index=tk.END, string=str(args[1][3][0][factor_type]))
-                elif datatype == tuple and len(default) == 1:
+                elif isinstance(datatype, tuple) and len(default) == 1:
                     #(factor_type, len(self.problem_object().specifications[factor_type]['default']) )
                     # self.int_float_entry_problem.insert(index=tk.END, string=str(self.problem_object().specifications[factor_type].get("default")))
                     self.int_float_entry_problem.insert(index=tk.END, string=str(default[0]))
@@ -500,7 +493,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_entry_problem.grid(row=count_factors_problem, column=1, sticky='nsew')
 
                 self.problem_factors_list.append(self.int_float_var_problem)
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.problem_factors_types.append(datatype)
                 else:
                     self.problem_factors_types.append(str)
@@ -508,7 +501,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_problem += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
 
                 self.boolean_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(description),
@@ -585,7 +578,7 @@ class Experiment_Window(tk.Toplevel):
             description = self.oracle_object().specifications[factor_type].get("description") 
             default = self.oracle_object().specifications[factor_type].get("default") 
 
-            if datatype!= bool:
+            if not isinstance(datatype, bool):
 
                 #("yes?")
                 self.int_float_description_oracle = tk.Label(master=self.factor_tab_one_oracle,
@@ -596,7 +589,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_var_oracle = tk.StringVar(self.factor_tab_one_oracle)
                 self.int_float_entry_oracle = ttk.Entry(master=self.factor_tab_one_oracle, textvariable = self.int_float_var_oracle, justify = tk.LEFT, width = 15)
 
-                if args and len(args) == 2 and args[0] == True:
+                if args and len(args) == 2 and args[0]:
                     self.int_float_entry_oracle.insert(index=tk.END, string=str(args[1][4][0][factor_type]))
                 else:
                     self.int_float_entry_oracle.insert(index=tk.END, string=str(default))
@@ -605,7 +598,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_entry_oracle.grid(row=count_factors_oracle, column=1, sticky='nsew')
 
                 self.oracle_factors_list.append(self.int_float_var_oracle)
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.oracle_factors_types.append(datatype)
                 else:
                     self.oracle_factors_types.append(str)
@@ -613,7 +606,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_oracle += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
                 self.boolean_description_oracle = tk.Label(master=self.factor_tab_one_oracle,
                                                     text = str(description),
                                                     font = "Calibri 13",
@@ -633,7 +626,7 @@ class Experiment_Window(tk.Toplevel):
 
     def show_solver_factors(self, *args):
         
-        if args and len(args) == 3 and args[2] == False:
+        if args and len(args) == 3 and not args[2]:
             pass
         else:
             self.update_problem_list_compatability()
@@ -684,7 +677,7 @@ class Experiment_Window(tk.Toplevel):
                                             font = "Calibri 13")
 
                                   
-        if args and len(args) == 3 and args[0] == True:
+        if args and len(args) == 3 and args[0]:
             oldname = args[1][5][1]
             
         else:
@@ -718,7 +711,7 @@ class Experiment_Window(tk.Toplevel):
             datatype = self.solver_object().specifications[factor_type].get("datatype")
             description = self.solver_object().specifications[factor_type].get("description")
             default = self.solver_object().specifications[factor_type].get("default")
-            if datatype != bool:
+            if not isinstance(datatype, bool):
 
                 self.int_float_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
@@ -728,7 +721,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
                 self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=15)
                 
-                if args and len(args) == 3 and args[0] == True:
+                if args and len(args) == 3 and args[0]:
                     self.int_float_entry.insert(index=tk.END, string=str(args[1][5][0][factor_type]))
                 else:
                     self.int_float_entry.insert(index=tk.END, string=str(default))
@@ -739,7 +732,7 @@ class Experiment_Window(tk.Toplevel):
 
                 
                 
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.solver_factors_types.append(datatype)
                 else:
                     self.solver_factors_types.append(str)
@@ -747,7 +740,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_solver += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
 
                 self.boolean_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
@@ -940,7 +933,7 @@ class Experiment_Window(tk.Toplevel):
     def viewEdit_function(self, integer):
         row_index = integer
 
-        current_experiment = self.experiment_object_list[row_index-1]
+        self.experiment_object_list[row_index-1]
         #(current_experiment)
         current_experiment_arguments = self.experiment_master_list[row_index-1]
 
@@ -982,7 +975,7 @@ class Experiment_Window(tk.Toplevel):
         else:
             place = len(self.experiment_object_list)
 
-        if (self.problem_var.get() in problem_unabbreviated_directory and self.solver_var.get() in solver_unabbreviated_directory and self.macro_entry.get().isnumeric() != False):
+        if (self.problem_var.get() in problem_unabbreviated_directory and self.solver_var.get() in solver_unabbreviated_directory and self.macro_entry.get().isnumeric()):
             # creates blank list to store selections
             self.selected = []
             # grabs problem_var (whatever is selected our of OptionMenu)
@@ -1153,7 +1146,7 @@ class Experiment_Window(tk.Toplevel):
             tk.messagebox.showerror(title="Error Window", message=message)
 
         # macro_entry not numeric or negative
-        elif self.macro_entry.get().isnumeric() == False:
+        elif not self.macro_entry.get().isnumeric():
             # reset macro_entry to "10"
             self.macro_entry.delete(0, len(self.macro_entry.get()))
             # resets macro_entry textbox
@@ -1206,7 +1199,7 @@ class Experiment_Window(tk.Toplevel):
                 # if the data type is tuple update data
                 #self.problem_factors_dictionary[keys[index]] = datatype(nextVal)
                 #(ast.literal_eval(problem_factor.get()) , keys[index])
-                if keys[index-1] == 'initial_solution' and type(ast.literal_eval(problem_factor.get())) == int:
+                if keys[index-1] == 'initial_solution' and isinstance(type(ast.literal_eval(problem_factor.get())), int):
                     t = (ast.literal_eval(problem_factor.get()),)
                     #(t)
                     self.problem_factors_dictionary[keys[index-1]] = t
@@ -1409,7 +1402,7 @@ class Experiment_Window(tk.Toplevel):
                     self.check_box_list_var.append(self.checkbox_select_var)
     
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
-                    if self.my_experiment.check_run() == True:
+                    if self.my_experiment.check_run():
                         run_button = row_of_widgets[3]
                         run_button["state"] = "disabled"
                         run_button["text"] = "Run Complete"
@@ -1526,12 +1519,12 @@ class Experiment_Window(tk.Toplevel):
     # My code ends here
 
     def add_meta_exp_to_frame(self, n_macroreps=None, input_meta_experiment=None):
-        if n_macroreps == None and input_meta_experiment != None:
+        if n_macroreps is None and input_meta_experiment is not None:
             self.cross_app = Cross_Design_Window(master = None, main_widow = None, forced_creation = True)
             self.cross_app.crossdesign_MetaExperiment = input_meta_experiment
             self.meta_experiment_macro_reps.append("mixed")
             text_macros_added = "mixed"
-        elif n_macroreps != None and input_meta_experiment == None:
+        elif n_macroreps is not None and input_meta_experiment is None:
             self.meta_experiment_macro_reps.append(int(n_macroreps.get()))
             text_macros_added = n_macroreps.get()
 
@@ -1729,9 +1722,9 @@ class Experiment_Window(tk.Toplevel):
         message2 = "There are experiments missing, would you like to add them?"
         response = tk.messagebox.askyesno(title = "Make ProblemsSolvers Experiemnts",message = message2)
 
-        if response == True:
+        if response:
             for index, checkbox in enumerate(self.check_box_list_var):
-                if checkbox.get() == True:
+                if checkbox.get():
                     index = self.check_box_list_var.index(checkbox)
                     experiment_checked = self.experiment_object_list[index] ## Is this right?
                     self.list_checked_experiments.append(experiment_checked)
@@ -1962,7 +1955,7 @@ class Experiment_Window(tk.Toplevel):
             description = self.default_solver_object.specifications[factor_type].get("description")
             default = self.default_solver_object.specifications[factor_type].get("default")
 
-            if datatype != bool:
+            if not isinstance(datatype, bool):
 
                 self.int_float_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
@@ -1977,14 +1970,14 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_entry.grid(row=count_factors_solver, column=1, sticky='nsew')
                 self.solver_factors_list.append(self.int_float_var)
 
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.solver_factors_types.append(datatype)
                 else:
                     self.solver_factors_types.append(str)
 
                 count_factors_solver += 1
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
                 self.boolean_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
                                                     font = "Calibri 13",
@@ -2080,7 +2073,7 @@ class Experiment_Window(tk.Toplevel):
             description= self.default_problem_object.specifications[factor_type].get("description")
             default = self.default_problem_object.specifications[factor_type]['default']
             
-            if datatype != bool:
+            if not isinstance(datatype, bool):
 
 
                 self.int_float_description_problem = tk.Label(master=self.factor_tab_one_problem,
@@ -2090,7 +2083,7 @@ class Experiment_Window(tk.Toplevel):
 
                 self.int_float_var_problem = tk.StringVar(self.factor_tab_one_problem)
                 self.int_float_entry_problem = ttk.Entry(master=self.factor_tab_one_problem, textvariable = self.int_float_var_problem, justify = tk.LEFT, width = 15)
-                if datatype == tuple and len(default) == 1:
+                if isinstance(datatype, tuple) and len(default) == 1:
                     self.int_float_entry_problem.insert(index=tk.END, string=str(self.custom_problem_object.factors[factor_type][0]))
                 else:
                     self.int_float_entry_problem.insert(index=tk.END, string=str(self.custom_problem_object.factors[factor_type]))
@@ -2102,7 +2095,7 @@ class Experiment_Window(tk.Toplevel):
                 self.problem_factors_list.append(self.int_float_var_problem)
                 datatype = self.default_problem_object.specifications[factor_type].get("datatype")
                 
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.problem_factors_types.append(datatype)
                 else:
                     self.problem_factors_types.append(str)
@@ -2110,7 +2103,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_problem += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
 
                 self.boolean_description_problem = tk.Label(master=self.factor_tab_one_problem,
                                                     text = str(description),
@@ -2178,7 +2171,7 @@ class Experiment_Window(tk.Toplevel):
             description = self.default_oracle_object.specifications[factor_type].get("description")
             default = self.default_oracle_object.specifications[factor_type].get("default")
 
-            if datatype != bool:
+            if isinstance(datatype, bool):
 
                 #("yes?")
                 self.int_float_description_oracle = tk.Label(master=self.factor_tab_one_oracle,
@@ -2194,7 +2187,7 @@ class Experiment_Window(tk.Toplevel):
 
                 self.oracle_factors_list.append(self.int_float_var_oracle)
 
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.oracle_factors_types.append(datatype)
                 else:
                     self.oracle_factors_types.append(str)
@@ -2202,7 +2195,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_oracle += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
 
                 #("yes!")
                 self.boolean_description_oracle = tk.Label(master=self.factor_tab_one_oracle,
@@ -2225,7 +2218,7 @@ class Experiment_Window(tk.Toplevel):
 
     def show_solver_factors(self, *args):
         
-        if args and len(args) == 3 and args[2] == False:
+        if args and len(args) == 3 and not args[2]:
             pass
         else:
             self.update_problem_list_compatability()
@@ -2278,7 +2271,7 @@ class Experiment_Window(tk.Toplevel):
                                             font = "Calibri 13")
 
                                   
-        if args and len(args) == 3 and args[0] == True:
+        if args and len(args) == 3 and args[0]:
             oldname = args[1][5][1]
             
         else:
@@ -2313,7 +2306,7 @@ class Experiment_Window(tk.Toplevel):
             description = self.solver_object().specifications[factor_type].get("description")
             default = self.solver_object().specifications[factor_type].get("default")
 
-            if datatype != bool:
+            if not isinstance(datatype, bool):
 
                 self.int_float_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
@@ -2323,7 +2316,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_var = tk.StringVar(self.factor_tab_one_solver)
                 self.int_float_entry = ttk.Entry(master=self.factor_tab_one_solver, textvariable = self.int_float_var, justify = tk.LEFT, width=15)
                 
-                if args and len(args) == 3 and args[0] == True:
+                if args and len(args) == 3 and args[0]:
                     self.int_float_entry.insert(index=tk.END, string=str(args[1][5][0][factor_type]))
                 else:
                     self.int_float_entry.insert(index=tk.END, string=str(default))
@@ -2332,7 +2325,7 @@ class Experiment_Window(tk.Toplevel):
                 self.int_float_entry.grid(row=count_factors_solver, column=1, sticky='nsew')
                 self.solver_factors_list.append(self.int_float_var)
 
-                if datatype != tuple:
+                if not isinstance(datatype, tuple):
                     self.solver_factors_types.append(datatype)
                 else:
                     self.solver_factors_types.append(str)
@@ -2340,7 +2333,7 @@ class Experiment_Window(tk.Toplevel):
                 count_factors_solver += 1
 
 
-            if datatype == bool:
+            if isinstance(datatype, bool):
 
                 self.boolean_description = tk.Label(master=self.factor_tab_one_solver,
                                                     text = str(description),
@@ -2642,7 +2635,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment_name = self.get_unique_name(self.master_experiment_dict, exp_name)
         
         #load pickle
-        load_message = tk.messagebox.showinfo("Loading", "Loading pickle file. This may take a few minutes.")
+        tk.messagebox.showinfo("Loading", "Loading pickle file. This may take a few minutes.")
         with open(file_path, 'rb') as f:
             exp = pickle.load(f)
         tk.messagebox.showinfo("Finished", "Pickle file has finished loading.")
@@ -2675,15 +2668,15 @@ class New_Experiment_Window(tk.Toplevel):
 
         
     def get_datatype_str(self,datatype):
-        if datatype == float:
+        if isinstance(datatype, float.__name__):
             str_type = 'float'
-        if datatype == int:
+        if isinstance(datatype, int):
             str_type = 'int'
-        if datatype == bool:
+        if isinstance(datatype, bool):
             str_type = 'bool'
-        if datatype == list:
+        if isinstance(datatype, list):
             str_type = 'list'
-        if datatype == tuple:
+        if isinstance(datatype, tuple):
             str_type = 'tuple'
             
         return str_type
@@ -2695,7 +2688,7 @@ class New_Experiment_Window(tk.Toplevel):
         #self.factor_que_length = 0
         entry_width = 10
         #append_list
-        if IsModel == True:
+        if IsModel:
             base_object = base_object.model
         
             
@@ -2733,7 +2726,7 @@ class New_Experiment_Window(tk.Toplevel):
                 bool_menu = ttk.OptionMenu(frame, default_value, 'TRUE', 'TRUE', 'FALSE')
                 bool_menu.grid( row = que_length, column = 2, sticky = tk.N + tk.W)
                 
-            if factor_datatype == list or factor_datatype == tuple:
+            if isinstance(factor_datatype, list) or isinstance(factor_datatype, tuple):
                 
                 # Add entry box for default value
                 default_len = len(str(factor_default))
@@ -2748,7 +2741,7 @@ class New_Experiment_Window(tk.Toplevel):
                 default_entry.insert(0, str(factor_default))
                 
             # Add entry box for default value
-            if factor_datatype == int or factor_datatype == float:
+            if isinstance(factor_datatype, int) or isinstance(factor_datatype, float):
                 default_value= tk.StringVar()
                 default_entry = tk.Entry( master = frame, width = entry_width, textvariable = default_value, justify = 'right')
                 default_entry.grid( row =que_length, column =2, sticky = tk.N + tk.W)
@@ -2770,7 +2763,7 @@ class New_Experiment_Window(tk.Toplevel):
         dec_vals = {} # holds variable for each float factor's # decimals
         widgets = {} # holds a list of each widget for min, max, and dec entry for each factor
         
-        if IsModel == True:
+        if IsModel:
             specifications = base_object.model.specifications
         else:
             specifications = base_object.specifications
@@ -2811,7 +2804,7 @@ class New_Experiment_Window(tk.Toplevel):
                     widget_list.append(max_entry)
                     
                     # Add entry box for dec val for float factors
-                    if factor_datatype == float:          
+                    if isinstance(factor_datatype, float):          
                         dec_label = tk.Label(master = frame, text = '# Decimals', font = 'Calibri 11')
                         dec_label.grid(row = que_length, column = 8, sticky = tk.N + tk.W)
                         dec_val = tk.StringVar()
@@ -3188,7 +3181,7 @@ class New_Experiment_Window(tk.Toplevel):
             if checkstate:
                 if factor_datatype in (int,float):
                         self.solver_design_factors.append(factor)
-                elif factor_datatype == bool:
+                elif isinstance(factor_datatype, bool):
                     self.solver_cross_design_factors[factor] = ['TRUE', 'FALSE']
                 
                 
@@ -3209,7 +3202,7 @@ class New_Experiment_Window(tk.Toplevel):
             factor_datatype = self.solver_datafarm_object.specifications[factor].get('datatype')
             min_val = self.solver_min_vals[factor].get()
             max_val = self.solver_max_vals[factor].get()
-            if factor_datatype == float:
+            if isinstance(factor_datatype, float):
                 dec_val = self.solver_dec_vals[factor].get()
             else:
                 dec_val = '0'
@@ -3259,7 +3252,7 @@ class New_Experiment_Window(tk.Toplevel):
             if checkstate:
                 if factor_datatype in (int,float):
                         self.problem_design_factors.append(factor)
-                elif factor_datatype == bool:
+                elif isinstance(factor_datatype, bool):
                     self.problem_cross_design_factors[factor] = ['TRUE', 'FALSE']
                 
         # if no cross design factors, set dict to None
@@ -3283,7 +3276,7 @@ class New_Experiment_Window(tk.Toplevel):
             factor_datatype = specifications[factor].get('datatype')
             min_val = self.problem_min_vals[factor].get()
             max_val = self.problem_max_vals[factor].get()
-            if factor_datatype == float:
+            if isinstance(factor_datatype, float):
                 dec_val = self.problem_dec_vals[factor].get()
             else:
                 dec_val = '0'
@@ -3371,11 +3364,11 @@ class New_Experiment_Window(tk.Toplevel):
             else:
                 datatype = base_object.model.specifications[factor].get("datatype")  
 
-            if datatype == int or float:
+            if isinstance(datatype, (int, float)):
                 converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype == list:
+            if isinstance(datatype, list):
                 converted_fixed_factors[factor] = ast.literal_eval(fixed_val) 
-            if datatype == tuple:
+            if isinstance(datatype, tuple):
                 last_val = fixed_val[-2]
                 tuple_str = fixed_val[1:-1].split(",")
                 # determine if last tuple value is empty
@@ -3385,7 +3378,7 @@ class New_Experiment_Window(tk.Toplevel):
                     tuple_exclude_last = tuple_str[:-1]
                     float_tuple = [float(s) for s in tuple_exclude_last]
                     converted_fixed_factors[factor] = tuple(float_tuple)     
-            if datatype == bool:
+            if isinstance(datatype, bool):
                 if fixed_val == 'TRUE':
                     converted_fixed_factors[factor] = True
                 else:
@@ -3834,7 +3827,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
         self.crn_budget_label.grid(row = 3, column =0)
         self.crn_budget_var = tk.StringVar()
-        if self.crn_budget_default == True:
+        if self.crn_budget_default:
             budget_display = 'yes'
         else:
             budget_display = 'no'
@@ -3845,7 +3838,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
         self.crn_macro_label.grid(row = 4, column =0)
         self.crn_macro_var = tk.StringVar()
-        if self.crn_macro_default == True:
+        if self.crn_macro_default:
             macro_display = 'yes'
         else:
             macro_display = 'no'
@@ -3864,7 +3857,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
         self.crn_init_label.grid(row = 6, column =0)
         self.crn_init_var = tk.StringVar()
-        if self.crn_init_default == True:
+        if self.crn_init_default:
             init_display = 'yes'
         else:
             init_display = 'no'
@@ -3998,7 +3991,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
         self.crn_budget_label.grid(row = 3, column =0)
         self.crn_budget_var = tk.StringVar()
-        if crn_budget == True:
+        if crn_budget:
             budget_display = 'yes'
         else:
             budget_display = 'no'
@@ -4009,7 +4002,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
         self.crn_macro_label.grid(row = 4, column =0)
         self.crn_macro_var = tk.StringVar()
-        if crn_macro == True:
+        if crn_macro:
             macro_display = 'yes'
         else:
             macro_display = 'no'
@@ -4028,7 +4021,7 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
         self.crn_init_label.grid(row = 6, column =0)
         self.crn_init_var = tk.StringVar()
-        if crn_init == True:
+        if crn_init:
             init_display = 'yes'
         else:
             init_display = 'no'
@@ -5480,7 +5473,7 @@ class Data_Farming_Window():
         # get default values for fixed factors
         self.default_factors = {} #contains only factors not in design, factor default vals input as str
         for factor in self.factor_status:
-            if self.factor_status[factor] == False:
+            if not self.factor_status[factor]:
                 self.default_factors[factor] = self.design_table.at[1, factor]
             else:
                 self.factor_names.append(factor)
@@ -5494,7 +5487,7 @@ class Data_Farming_Window():
             self.factor_datatype = self.model_object.specifications[factor].get("datatype")
             self.factor_description = self.model_object.specifications[factor].get("description")
             
-            if self.factor_status[factor] == False:
+            if not self.factor_status[factor]:
                 
                 self.factor_default = self.default_factors[factor]
                 
@@ -5504,13 +5497,13 @@ class Data_Farming_Window():
             
             self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
             
-            if self.factor_datatype == int:
+            if isinstance(self.factor_datatype, int):
                 self.str_type = 'int'
-            elif self.factor_datatype == float:
+            elif isinstance(self.factor_datatype, float):
                 self.str_type = 'float'
-            elif self.factor_datatype == list:
+            elif isinstance(self.factor_datatype, list):
                 self.str_type = 'list'
-            elif self.factor_datatype == tuple:
+            elif isinstance(self.factor_datatype, tuple):
                 self.str_type = 'tuple'
           
            
@@ -5536,7 +5529,7 @@ class Data_Farming_Window():
             #self.default_entry.insert(0, str(self.factor_default))
             #self.default_values_list.append(self.default_value)
             
-            if self.factor_status[factor] == True:
+            if self.factor_status[factor]:
                 self.default_entry.configure(state = 'disabled')
             else:
                 self.default_values_list.append(self.default_value)
@@ -5562,7 +5555,7 @@ class Data_Farming_Window():
         self.design_frame.grid(row = 5, column = 0)
         
         # Input options from loaded designs
-        if self.loaded_design == True:
+        if self.loaded_design:
             stack_display = self.n_stacks # same num of stacks as original loaded design
             design_display = self.design_type
         else:
@@ -5587,7 +5580,7 @@ class Data_Farming_Window():
         self.stack_menu.grid( row = 1, column = 1)
         
         #Disable selections for loaded designs
-        if self.loaded_design == True:
+        if self.loaded_design:
             self.design_type_menu.configure(state = 'disabled')
             self.stack_menu.configure(state = 'disabled')
             
@@ -5600,13 +5593,12 @@ class Data_Farming_Window():
         self.design_filename_entry.grid( row = 0, column = 3)
         
         # Create design button 
-        if self.loaded_design == False:
+        if not self.loaded_design:
             self.create_design_button = tk.Button(master = self.design_frame, text = 'Create Design', font = "Calibri 13", command = self.create_design , width = 20)
             self.create_design_button.grid( row = 0, column = 4)
             
         # Modify and continue design button for loaded designs
-        if self.loaded_design == True:
-            
+        if self.loaded_design:
             self.mod_design_button = tk.Button(master = self.design_frame, text = 'Modify Design', font = "Calibri 13", command = self.mod_design , width = 20)
             self.mod_design_button.grid( row = 0, column = 4)
             self.con_design_button = tk.Button(master = self.design_frame, text = 'Continue w/o Modifications', font = "Calibri 13", command = self.con_design , width = 25)
@@ -5676,11 +5668,11 @@ class Data_Farming_Window():
             fixed_val = fixed_factors[factor]
             datatype = self.model_object.specifications[factor].get("datatype")
 
-            if datatype == int or float:
+            if isinstance(datatype, (int, float)):
                 converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype == list:
+            if isinstance(datatype, list):
                 converted_fixed_factors[factor] = ast.literal_eval(fixed_val) 
-            if datatype == tuple:
+            if isinstance(datatype, tuple):
                 last_val = fixed_val[-2]
                 tuple_str = fixed_val[1:-1].split(",")
                 # determine if last tuple value is empty
@@ -5690,7 +5682,7 @@ class Data_Farming_Window():
                     tuple_exclude_last = tuple_str[:-1]
                     float_tuple = [float(s) for s in tuple_exclude_last]
                     converted_fixed_factors[factor] = tuple(float_tuple)     
-            if datatype == bool:
+            if isinstance(datatype, bool):
                 if fixed_val == 'TRUE':
                     converted_fixed_factors[factor] = True
                 else:
@@ -5823,7 +5815,7 @@ class Data_Farming_Window():
         
             
             
-            if self.factor_datatype == float:
+            if isinstance(self.factor_datatype, float):
             
                 self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
                 
@@ -5906,7 +5898,7 @@ class Data_Farming_Window():
                 
                 self.factor_que_length += 1
             
-            elif self.factor_datatype == int:
+            elif isinstance(self.factor_datatype, int):
             
                 self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
                 
@@ -5970,7 +5962,7 @@ class Data_Farming_Window():
                 
                 self.factor_que_length += 1
             
-            elif self.factor_datatype == list:
+            elif isinstance(self.factor_datatype, list):
                 
                 self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
                 
@@ -6005,7 +5997,7 @@ class Data_Farming_Window():
             
                 self.factor_que_length += 1
                 
-            elif self.factor_datatype == tuple:
+            elif isinstance(self.factor_datatype, tuple):
                 
                 self.factors_frame.grid_rowconfigure(self.factor_que_length, weight =1)
                 
@@ -6164,20 +6156,20 @@ class Data_Farming_Window():
             
             # get user inputs for design factors
             
-            if factor_include == True:
+            if factor_include:
                 
                 self.factor_names.append(factor)
             
-                if factor_datatype == float or factor_datatype == int:
+                if isinstance(factor_datatype, (float, int)):
                     factor_min = str(min_values[maxmin_index])
                     factor_max = str(max_values[maxmin_index])
                     maxmin_index += 1
                     
-                    if factor_datatype == float:
+                    if isinstance(factor_datatype, float):
                         factor_dec = str(dec_values[dec_index])
                         dec_index += 1
                         
-                    elif factor_datatype == int:
+                    elif isinstance(factor_datatype, int):
                         factor_dec = '0'
                         
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
@@ -6186,12 +6178,12 @@ class Data_Farming_Window():
                     self.model_design_factors.write(data_insert)    
             
             # add fixed factors to dictionary and increase index values
-            if factor_include == False:
+            else:
                 def_factor_str[factor]= default_values[factor_index]
-                if factor_datatype == float:
+                if isinstance(factor_datatype, float):
                     dec_index += 1
                     maxmin_index += 1                   
-                elif factor_datatype == int:
+                elif isinstance(factor_datatype, int):
                     maxmin_index += 1
                          
         # convert fixed factors to proper data type
@@ -6263,16 +6255,16 @@ class Data_Farming_Window():
             self.factor_default = self.model_object.specifications[factor].get("default")
             
             # Disable / enable experiment option widgets depending on factor type
-            if self.factor_datatype == float or self.factor_datatype == int:
+            if isinstance(self.factor_datatype, (float, int)):
                 self.current_min_entry = self.min_widgets[factor]
                 self.current_max_entry = self.max_widgets[factor]               
                 
                              
-                if self.current_checkstate == True:
+                if self.current_checkstate:
                     self.current_min_entry.configure(state = 'normal')
                     self.current_max_entry.configure(state = 'normal')
                     
-                elif self.current_checkstate == False:
+                else:
                     #Empty current entries
                     self.current_min_entry.delete(0, tk.END)
                     self.current_max_entry.delete(0, tk.END)
@@ -6281,13 +6273,13 @@ class Data_Farming_Window():
                     self.current_min_entry.configure(state = 'disabled')
                     self.current_max_entry.configure(state = 'disabled')
                                       
-            if self.factor_datatype == float:              
+            if isinstance(self.factor_datatype, float):              
                 self.current_dec_entry = self.dec_widgets[factor]
                 
-                if self.current_checkstate == True:
+                if self.current_checkstate:
                     self.current_dec_entry.configure(state = 'normal')
                     
-                elif self.current_checkstate == False:
+                else:
                     self.current_dec_entry.delete(0, tk.END)
                     self.current_dec_entry.configure(state = 'disabled')
                     
@@ -6426,13 +6418,13 @@ class Cross_Design_Window():
         solver_list = []
 
         for checkbox in self.crossdesign_checkbox_solver_list:
-            if checkbox.get() == True:
+            if checkbox.get():
                 #(self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)] + " was selected (solver)")
                 #solver_list.append(solver_directory[self.crossdesign_checkbox_solver_names[self.crossdesign_checkbox_solver_list.index(checkbox)]])
                 solver_list.append(solver_names_list[self.crossdesign_checkbox_solver_list.index(checkbox)])
                 
         for checkbox in self.crossdesign_checkbox_problem_list:
-            if checkbox.get() == True:
+            if checkbox.get():
                 #(self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)] + " was selected (problem)")
                 #problem_list.append(problem_directory[self.crossdesign_checkbox_problem_names[self.crossdesign_checkbox_problem_list.index(checkbox)]])
                 problem_list.append(problem_names_list[self.crossdesign_checkbox_problem_list.index(checkbox)])
@@ -6633,7 +6625,7 @@ class Post_Processing_Window():
         # self.experiment_list = [self.selected[3], self.selected[4], self.selected[2]]
 
         # if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
-        if self.n_postreps_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list and (self.meta == True and self.n_norm_postreps_entry.get().isnumeric() or self.meta == False):
+        if self.n_postreps_entry.get().isnumeric() and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list and (self.meta and self.n_norm_postreps_entry.get().isnumeric() or not self.meta):
             self.experiment_list.append(int(self.n_postreps_entry.get()))
             # self.experiment_list.append(int(self.n_postreps_init_opt_entry.get()))
 
@@ -6688,7 +6680,7 @@ class Post_Processing_Window():
 
             return self.experiment_list
 
-        elif self.n_postreps_entry.get().isnumeric() == False:
+        elif not self.n_postreps_entry.get().isnumeric():
             message = "Please enter a valid value for the number of postreplications at each recommended solution."
             tk.messagebox.showerror(title="Error Window", message=message)
 
@@ -6762,7 +6754,7 @@ class Post_Normal_Window():
             minmax = "min"
 
         opt = "unknown"
-        if self.post_norm_exp_list[0].problem.optimal_solution != None:
+        if self.post_norm_exp_list[0].problem.optimal_solution is not None:
             if len(self.post_norm_exp_list[0].problem.optimal_solution) == 1:
                 opt = str(self.post_norm_exp_list[0].problem.optimal_solution[0])
             else:
@@ -6871,7 +6863,7 @@ class Post_Normal_Window():
         self.experiment_list = []
 
         # if self.n_postreps_entry.get().isnumeric() != False and self.n_postreps_init_opt_entry.get().isnumeric() != False and self.crn_across_budget_var.get() in self.crn_across_budget_list and self.crn_across_macroreps_var.get() in self.crn_across_macroreps_list:
-        if self.n_postreps_init_opt_entry.get().isnumeric() != False :
+        if self.n_postreps_init_opt_entry.get().isnumeric():
             n_postreps_init_opt = int(self.n_postreps_init_opt_entry.get())
             crn = self.check_var.get()
             proxy_val = None
@@ -6892,7 +6884,7 @@ class Post_Normal_Window():
 
             return
 
-        elif self.n_postreps_init_opt_entry.get().isnumeric() == False:
+        else:
             message = "Please enter a valid value for the number of postreplications at each recommended solution."
             tk.messagebox.showerror(title="Error Window", message=message)
 
@@ -6952,9 +6944,9 @@ class Plot_Window():
 
 
             #("solvers:",self.all_solvers)
-            if self.metaList != None:
+            if self.metaList is not None:
                 i = 0
-            # Getting the names for the solvers from the metalist and add it to the solver menu 
+                # Getting the names for the solvers from the metalist and add it to the solver menu 
                 for name in self.metaList.solver_names:
                     self.solver_menu.insert(i,name)
                     i += 1
@@ -7124,7 +7116,7 @@ class Plot_Window():
                 solverList = solverList + self.solver_menu.get(i) + " "
                 for  j in self.problem_menu.curselection():
                     problemList = ""
-                    if self.metaList != None: 
+                    if self.metaList is not None: 
                         for metaexp in self.metaList.experiments:
                             for exp in metaexp:
                                 if exp.solver.name == self.solver_menu.get(i) and exp.problem.name == self.problem_menu.get(j):
@@ -7141,7 +7133,7 @@ class Plot_Window():
                 self.bad_label = tk.Label(master=self.master,text=txt,font = "Calibri 12",justify="center")
                 self.bad_label.place(relx=.45, rely=.5)
                 return
-            elif self.bad_label != None:
+            elif self.bad_label is not None:
                 self.bad_label.destroy()
                 self.bad_label = None
             
@@ -7150,9 +7142,9 @@ class Plot_Window():
             param_value_list = []
             for t in self.params:
                 new_value = ""
-                if t.get() == True:
+                if t.get() is True:
                     new_value = True
-                elif t.get() == False:
+                elif t.get() is False:
                     new_value = False
                 elif t.get() != "":
                     try:
@@ -7163,7 +7155,7 @@ class Plot_Window():
             
 
             exp_list = self.plot_exp_list
-            if self.metaList != None: 
+            if self.metaList is not None: 
                 list_exp_list = self.metaList.experiments
             else:
                 list_exp_list = [[exp] for exp in exp_list]
@@ -7546,7 +7538,7 @@ def main():
     root.pack_propagate(False)
 
     #app = Experiment_Window(root)
-    app = Main_Menu_Window(root)
+    Main_Menu_Window(root)
     root.mainloop()
 
 if __name__ == '__main__':
