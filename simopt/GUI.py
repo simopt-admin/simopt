@@ -2423,12 +2423,12 @@ class New_Experiment_Window(tk.Toplevel):
         self.macro_vars = [] # list used for updated macro entries when default is changed
         
         # Default experiment options (can be changed in GUI)
-        self.macro_default = 5 
-        self.post_default = 5 
-        self.init_default = 200
-        self.crn_budget_default = True
-        self.crn_macro_default = False
-        self.crn_init_default = True
+        self.macro_default = 10 
+        self.post_default = 100
+        self.init_default = 100
+        self.crn_budget_default = 'yes'
+        self.crn_macro_default = 'yes'
+        self.crn_init_default = 'yes'
         self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
         
         # create master canvas
@@ -2642,10 +2642,10 @@ class New_Experiment_Window(tk.Toplevel):
         self.experiment_name = self.get_unique_name(self.master_experiment_dict, exp_name)
         
         #load pickle
-        load_message = tk.messagebox.showinfo("Loading", "Loading pickle file. This may take a few minutes.")
+        tk.messagebox.showinfo("Loading", "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.")
         with open(file_path, 'rb') as f:
             exp = pickle.load(f)
-        tk.messagebox.showinfo("Finished", "Pickle file has finished loading.")
+
         
         #add exp to master dict and display in row
         self.master_experiment_dict[self.experiment_name] = exp
@@ -3834,22 +3834,22 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
         self.crn_budget_label.grid(row = 3, column =0)
         self.crn_budget_var = tk.StringVar()
-        if self.crn_budget_default == True:
-            budget_display = 'yes'
-        else:
-            budget_display = 'no'
-        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, budget_display, 'yes','no')
+        # if self.crn_budget_default == True:
+        #     budget_display = 'yes'
+        # else:
+        #     budget_display = 'no'
+        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, self.crn_budget_default, 'yes','no')
         self.crn_budget_opt.grid(row=3, column = 1)
         
         # CRN across macroreps
         self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
         self.crn_macro_label.grid(row = 4, column =0)
         self.crn_macro_var = tk.StringVar()
-        if self.crn_macro_default == True:
-            macro_display = 'yes'
-        else:
-            macro_display = 'no'
-        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, macro_display, 'yes','no')
+        # if self.crn_macro_default == True:
+        #     macro_display = 'yes'
+        # else:
+        #     macro_display = 'no'
+        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, self.crn_macro_default, 'yes','no')
         self.crn_macro_opt.grid(row=4, column = 1)
  
         # Post reps at inital & optimal solution input
@@ -3864,11 +3864,11 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
         self.crn_init_label.grid(row = 6, column =0)
         self.crn_init_var = tk.StringVar()
-        if self.crn_init_default == True:
-            init_display = 'yes'
-        else:
-            init_display = 'no'
-        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, init_display, 'yes','no')
+        # if self.crn_init_default == True:
+        #     init_display = 'yes'
+        # else:
+        #     init_display = 'no'
+        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, self.crn_init_default, 'yes','no')
         self.crn_init_opt.grid(row=6, column = 1)
         
         # solve tols
@@ -3905,21 +3905,21 @@ class New_Experiment_Window(tk.Toplevel):
         self.post_default = self.post_rep_var.get()
         self.init_default = self.init_post_rep_var.get()
         
-        crn_budget_str = self.crn_budget_var.get()
-        if crn_budget_str == 'yes':
-            self.crn_budget_default = True
-        else:
-            self.crn_budget_default = False     
-        crn_macro_str = self.crn_macro_var.get()
-        if crn_macro_str == 'yes':
-            self.crn_macro_default = True
-        else:
-            self.crn_macro_default = False
-        crn_init_str = self.crn_init_var.get()
-        if crn_init_str == 'yes':
-            self.crn_init_default = True
-        else:
-            self.crn_init_default = False
+        self.crn_budget_default = self.crn_budget_var.get()
+        # if crn_budget_str == 'yes':
+        #     self.crn_budget_default = True
+        # else:
+        #     self.crn_budget_default = False     
+        self.crn_macro_default  = self.crn_macro_var.get()
+        # if crn_macro_str == 'yes':
+        #     self.crn_macro_default = True
+        # else:
+        #     self.crn_macro_default = False
+        self.crn_init_default = self.crn_init_var.get()
+        # if crn_init_str == 'yes':
+        #     self.crn_init_default = True
+        # else:
+        #     self.crn_init_default = False
             
         solve_tol_1 = float(self.solve_tol_1_var.get())
         solve_tol_2 = float(self.solve_tol_2_var.get())    
@@ -3958,6 +3958,8 @@ class New_Experiment_Window(tk.Toplevel):
         crn_macro = self.find_option_setting(experiment_name, self.crn_macros, self.crn_macro_default)
         n_initreps = self.find_option_setting(experiment_name, self.init_post_reps, self.init_default)
         crn_init = self.find_option_setting(experiment_name, self.crn_inits, self.crn_init_default)
+        
+        print('crn macro', crn_macro)
         if experiment_name in self.solve_tols:
             solve_tols = []
             for tol in self.solve_tols[experiment_name]:
@@ -3998,22 +4000,22 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_budget_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended at different times?')
         self.crn_budget_label.grid(row = 3, column =0)
         self.crn_budget_var = tk.StringVar()
-        if crn_budget == True:
-            budget_display = 'yes'
-        else:
-            budget_display = 'no'
-        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, budget_display, 'yes','no')
+        # if crn_budget == True:
+        #     budget_display = 'yes'
+        # else:
+        #     budget_display = 'no'
+        self.crn_budget_opt = ttk.OptionMenu(self.main_frame, self.crn_budget_var, crn_budget, 'yes','no')
         self.crn_budget_opt.grid(row=3, column = 1)
         
         # CRN across macroreps
         self.crn_macro_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for solutions recommended on different macro-replications?')
         self.crn_macro_label.grid(row = 4, column =0)
         self.crn_macro_var = tk.StringVar()
-        if crn_macro == True:
-            macro_display = 'yes'
-        else:
-            macro_display = 'no'
-        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, macro_display, 'yes','no')
+        # if crn_macro == True:
+        #     macro_display = 'yes'
+        # else:
+        #     macro_display = 'no'
+        self.crn_macro_opt = ttk.OptionMenu(self.main_frame, self.crn_macro_var, crn_macro, 'yes','no')
         self.crn_macro_opt.grid(row=4, column = 1)
  
         # Post reps at inital & optimal solution input
@@ -4028,11 +4030,11 @@ class New_Experiment_Window(tk.Toplevel):
         self.crn_init_label = tk.Label(master = self.main_frame, text = 'Use CRN on post-replications for initial and optimal solution?')
         self.crn_init_label.grid(row = 6, column =0)
         self.crn_init_var = tk.StringVar()
-        if crn_init == True:
-            init_display = 'yes'
-        else:
-            init_display = 'no'
-        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, init_display, 'yes','no')
+        # if crn_init == True:
+        #     init_display = 'yes'
+        # else:
+        #     init_display = 'no'
+        self.crn_init_opt = ttk.OptionMenu(self.main_frame, self.crn_init_var, crn_init, 'yes','no')
         self.crn_init_opt.grid(row=6, column = 1)
         
         # solve tols
@@ -4093,23 +4095,22 @@ class New_Experiment_Window(tk.Toplevel):
             post_reps = self.post_default
         if experiment_name in self.crn_budgets:
             crn_budget_str = self.crn_budgets[experiment_name].get()
-            if crn_budget_str == 'yes':
-                crn_budget = True
-            else:
-                crn_budget = False
         else:
-            crn_budget = self.crn_budget_default
+            crn_budget_str = self.crn_budget_default
+        if crn_budget_str == 'yes':
+            crn_budget = True
+        else:
+            crn_budget = False
+
         if experiment_name in self.crn_macros:
             crn_macro_str = self.crn_macros[experiment_name].get()
-            if crn_macro_str == 'yes':
-                crn_macro = True
-            else:
-                crn_macro = False
         else:
-            crn_macro = self.crn_macro_default
-            
-        
-        
+            crn_macro_str = self.crn_macro_default
+        if crn_macro_str == 'yes':
+            crn_macro = True
+        else:
+            crn_macro = False
+
         # run post processing with parameters from dictionaries
         experiment.post_replicate(n_postreps = post_reps, crn_across_budget = crn_budget, crn_across_macroreps = crn_macro)
         # experiment.post_normalize(n_postreps_init_opt = self.init_post_reps[experiment_name])
@@ -4134,12 +4135,13 @@ class New_Experiment_Window(tk.Toplevel):
             reps = self.init_default
         if experiment_name in self.crn_inits:
             crn_str = self.crn_inits[experiment_name].get()
-            if crn_str == 'yes':
-                crn = True
-            else:
-                crn = False
         else:
-            crn = self.crn_init_default
+            crn_str = self.crn_init_default
+        if crn_str == 'yes':
+            crn = True
+        else:
+            crn = False
+
         
         #run post normalization
         experiment.post_normalize(n_postreps_init_opt = reps, crn_across_init_opt = crn)
@@ -4259,46 +4261,50 @@ class New_Experiment_Window(tk.Toplevel):
 
         
         # solver selection (treeview)
+        self.solver_tree_frame = tk.Frame(master=self.plot_selection_frame, width = 500, height=250) # frame just to hold solver tree
+        self.solver_tree_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+        self.solver_tree_frame.grid_rowconfigure(0, weight=1)
+        self.solver_tree_frame.grid_columnconfigure(0, weight=1)
+        self.solver_tree_frame.grid_propagate(False)
         self.select_plot_solvers_label = tk.Label(master = self.plot_selection_frame, text = 'Select Solver(s)', font = 'Calibri 13')
         self.select_plot_solvers_label.grid(row=1, column=0)
-        self.solver_tree = ttk.Treeview(master=self.plot_selection_frame)
-        self.solver_tree.grid(row=2, column=0, columnspan=2, sticky = 'nsew', padx = 10)
+        self.solver_tree = ttk.Treeview(master=self.solver_tree_frame)
+        self.solver_tree.grid(row=0, column=0, sticky = 'nsew')
         self.style = ttk.Style()
-        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
-        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.style.configure("Treeview.Heading", font=('Calibri', 11, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 11))
         self.solver_tree.bind("<<TreeviewSelect>>", self.get_selected_solvers)
         
         # Create a horizontal scrollbar
-        xscrollbar = ttk.Scrollbar(master = self.plot_selection_frame, orient="horizontal", command= self.solver_tree.xview)
-        xscrollbar.grid(row = 3, column = 0, columnspan=2, sticky = 'nsew')
-        
-        # Configure the Treeview to use the horizontal scrollbar
-        self.solver_tree.configure(xscrollcommand=xscrollbar.set)
+        solver_xscrollbar = ttk.Scrollbar(master = self.solver_tree_frame, orient="horizontal", command= self.solver_tree.xview)
+        self.solver_tree.configure(xscrollcommand=solver_xscrollbar.set)
+        solver_xscrollbar.grid(row=1, column=0, sticky='ew')
         
         # plot all solvers checkbox
         self.all_solvers_var = tk.BooleanVar()
         self.all_solvers_check = tk.Checkbutton(master=self.plot_selection_frame, variable = self.all_solvers_var, text='Plot all solvers from this experiment', font='Calibir 11', command=self.get_selected_solvers)
         self.all_solvers_check.grid(row=4, column=0, columnspan=2)
- 
 
-        
-        
         # problem selection (treeview)
+        self.problem_tree_frame = tk.Frame(master = self.plot_selection_frame, width=500, height=250)
+        self.problem_tree_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
+        self.problem_tree_frame.grid_rowconfigure(0, weight=1)
+        self.problem_tree_frame.grid_columnconfigure(0, weight=1)
+        self.problem_tree_frame.grid_propagate(False)
         self.select_plot_problems_label = tk.Label(master = self.plot_selection_frame, text = 'Select Problem(s)', font = 'Calibri 13')
         self.select_plot_problems_label.grid(row=5, column=0)
-        self.problem_tree = ttk.Treeview(master=self.plot_selection_frame)
-        self.problem_tree.grid(row=6, column=0, columnspan=2, sticky = 'nsew', padx = 10)
+        self.problem_tree = ttk.Treeview(master=self.problem_tree_frame)
+        self.problem_tree.grid(row=0, column=0,  sticky = 'nsew')
         self.style = ttk.Style()
-        self.style.configure("Treeview.Heading", font=('Calibri', 13, 'bold'))
-        self.style.configure("Treeview", foreground="black", font = ('Calibri', 13))
+        self.style.configure("Treeview.Heading", font=('Calibri', 11, 'bold'))
+        self.style.configure("Treeview", foreground="black", font = ('Calibri', 11))
         self.problem_tree.bind("<<TreeviewSelect>>", self.get_selected_problems)
         
         # Create a horizontal scrollbar
-        xscrollbar = ttk.Scrollbar(master = self.plot_selection_frame, orient="horizontal", command= self.problem_tree.xview)
-        xscrollbar.grid(row = 7, column = 0, columnspan=2, sticky = 'nsew')
-        
-        # Configure the Treeview to use the horizontal scrollbar
-        self.problem_tree.configure(xscrollcommand=xscrollbar.set)
+        problem_xscrollbar = ttk.Scrollbar(master = self.problem_tree_frame, orient="horizontal", command= self.problem_tree.xview)
+        self.problem_tree.configure(xscrollcommand=problem_xscrollbar.set)
+        problem_xscrollbar.grid(row = 1, column = 0, sticky = 'ew')
+
         
         # plot all problems checkbox
         self.all_problems_var = tk.BooleanVar()
@@ -4374,6 +4380,7 @@ class New_Experiment_Window(tk.Toplevel):
          
         # create first column of solver tree view
         self.solver_tree.heading('#0' , text='Solver #')
+        self.solver_tree.column('#0', width = 75)
         
         if self.all_same_solver: 
             columns = ['Solver Name'] + list(self.plot_experiment.solvers[0].factors.keys()) 
@@ -4399,6 +4406,7 @@ class New_Experiment_Window(tk.Toplevel):
          
         # create first column of problem tree view
         self.problem_tree.heading('#0' , text='Problem #')
+        self.problem_tree.column('#0', width=75)
         
         if self.all_same_problem: 
             factors = list(self.plot_experiment.problems[0].factors.keys()) +  list(self.plot_experiment.problems[0].model.factors.keys())
@@ -4695,9 +4703,9 @@ class New_Experiment_Window(tk.Toplevel):
                 solver_display = 'No solvers selected'
             else:
                 for solver in self.selected_solvers:
-                    solver_display = solver_options[0]
                     solver_options.append(solver.name)
-                    self.ref_solver_var.set(solver_options[0])
+                    solver_display = solver_options[0]
+                    self.ref_solver_var.set(solver_display)
             self.ref_solver_menu = ttk.OptionMenu(self.more_options_frame, self.ref_solver_var, solver_display, *solver_options)
             self.ref_solver_menu.grid(row=9,column=1)
             self.ref_solver_menu.configure(state='disabled')
@@ -4954,6 +4962,13 @@ class New_Experiment_Window(tk.Toplevel):
                     plot_hw = True
                 else:
                     plot_hw = False
+                parameters = {} # holds relevant parameter info for display
+                parameters["Plot Type"] = subplot_type
+                parameters["Normalize Optimality Gaps"] = normalize_str
+                if subplot_type == 'quantile':
+                    parameters["Quantile Probability"] = beta
+                parameters["Number Bootstrap Samples"] = n_boot
+                parameters["Confidence Level"] = con_level
                 # create new plot for each problem
                 for i in range(n_problems):
                     prob_list=[]
@@ -4987,7 +5002,8 @@ class New_Experiment_Window(tk.Toplevel):
                         
                     self.add_plot(file_paths = file_path,
                                   solver_names = solver_names,
-                                  problem_names = problem_names)
+                                  problem_names = problem_names,
+                                  parameters=parameters)
                     
                     
     
@@ -5006,7 +5022,11 @@ class New_Experiment_Window(tk.Toplevel):
                     plot_hw = True
                 else:
                     plot_hw = False
-                 
+                    
+                parameters = {} # holds relevant parameter info for display
+                parameters["Solve Tolerance"] = solve_tol
+                parameters["Number Bootstrap Samples"] = n_boot
+                parameters["Confidence Level"] = con_level 
                 #create a new plot for each problem
                 for i in range(n_problems):
                     prob_list=[]
@@ -5038,51 +5058,61 @@ class New_Experiment_Window(tk.Toplevel):
                         
                     self.add_plot(file_paths = file_path,
                                   solver_names = solver_names,
-                                  problem_names = problem_names)
+                                  problem_names = problem_names,
+                                  parameters=parameters)
     
                 
             if self.plot_type == 'Area Scatter Plot':
-                # get user input
-                n_boot = int(self.boot_var.get())
-                con_level = float(self.con_level_var.get())
-                plot_CI_str = self.plot_CI_var.get()
-                if plot_CI_str == 'Yes':
-                    plot_CI = True
-                else:
-                    plot_CI = False
-                plot_hw_str = self.plot_hw_var.get()
-                if plot_hw_str == 'Yes':
-                    plot_hw = True
-                else:
-                    plot_hw = False
-                # create plots
-                returned_path = plot_area_scatterplots(experiments = exp_sublist,
-                                                   all_in_one = all_in,
-                                                   n_bootstraps = n_boot,
-                                                   conf_level = con_level,
-                                                   plot_CIs = plot_CI,
-                                                   print_max_hw = plot_hw,
-                                                   save_as_pickle=True,
-                                                   ext=ext,
-                                                   solver_set_name=solver_set_name,
-                                                   problem_set_name=problem_set_name)
-                # get plot info and call add plot
-                file_path = [item for item in returned_path if item is not None] # remove None items from list
-                n_plots = len(file_path)
-                if all_in:
-                    solver_names=[solver_set_name]
-                    problem_names=[problem_set_name]
-                else:
-                    solver_names = []
-                    problem_names = []
-                    for i in range(n_plots):
-                        solver_names.append(exp_sublist[i][0].solver.name) #get name of first solver since should all be the same
-                        problem_names.append(problem_set_name)
                 
-                self.add_plot(file_paths = file_path,
-                              solver_names = solver_names,
-                              problem_names = problem_names)           
-            
+                if len(self.selected_solvers) > 7 and all_in: # check if too many solvers selected
+                    tk.messagebox.showerror('Exceeds Solver Limit', "Area scatter plot can plot at most 7 solvers at one time. Please select fewer solvers and plot again.")
+                else:
+                
+                    # get user input
+                    n_boot = int(self.boot_var.get())
+                    con_level = float(self.con_level_var.get())
+                    plot_CI_str = self.plot_CI_var.get()
+                    if plot_CI_str == 'Yes':
+                        plot_CI = True
+                    else:
+                        plot_CI = False
+                    plot_hw_str = self.plot_hw_var.get()
+                    if plot_hw_str == 'Yes':
+                        plot_hw = True
+                    else:
+                        plot_hw = False   
+                    parameters = {} # holds relevant parameter info for display
+                    parameters["Number Bootstrap Samples"] = n_boot
+                    parameters["Confidence Level"] = con_level
+                    # create plots
+                    returned_path = plot_area_scatterplots(experiments = exp_sublist,
+                                                       all_in_one = all_in,
+                                                       n_bootstraps = n_boot,
+                                                       conf_level = con_level,
+                                                       plot_CIs = plot_CI,
+                                                       print_max_hw = plot_hw,
+                                                       save_as_pickle=True,
+                                                       ext=ext,
+                                                       solver_set_name=solver_set_name,
+                                                       problem_set_name=problem_set_name)
+                    # get plot info and call add plot
+                    file_path = [item for item in returned_path if item is not None] # remove None items from list
+                    n_plots = len(file_path)
+                    if all_in:
+                        solver_names=[solver_set_name]
+                        problem_names=[problem_set_name]
+                    else:
+                        solver_names = []
+                        problem_names = []
+                        for i in range(n_plots):
+                            solver_names.append(exp_sublist[i][0].solver.name) #get name of first solver since should all be the same
+                            problem_names.append(problem_set_name)
+                    
+                    self.add_plot(file_paths = file_path,
+                                  solver_names = solver_names,
+                                  problem_names = problem_names,
+                                  parameters=parameters)           
+                
             if self.plot_type == 'Terminal Progress':
                 # get user input
                 subplot_type = self.subplot_type_var.get()
@@ -5091,34 +5121,39 @@ class New_Experiment_Window(tk.Toplevel):
                     norm = True
                 else:
                     norm = False
+                parameters = {} # holds relevant parameter info for display
+                parameters["Plot Type"] = subplot_type
+                parameters["Normalize Optimality Gaps"] = normalize_str
                 #create a new plot for each problem
                 for i in range(n_problems):
                     prob_list=[]
                     for solver_group in exp_sublist:
                         prob_list.append(solver_group[i])
-                        returned_path = plot_terminal_progress(experiments=prob_list,
-                                                           plot_type=subplot_type,
-                                                           all_in_one=all_in,
-                                                           normalize=norm,
-                                                           save_as_pickle=True,
-                                                           ext=ext,
-                                                           solver_set_name=solver_set_name)
-                        # get plot info and call add plot
-                        file_path = [item for item in returned_path if item is not None] # remove None items from list
-                        n_plots = len(file_path)
-                        if all_in:
-                            solver_names = [solver_set_name]
-                        else:
-                            solver_names = []
-                            for i in range(n_plots):
-                                solver_names.append(prob_list[i].solver.name)
-                        problem_names = []
+                    returned_path = plot_terminal_progress(experiments=prob_list,
+                                                       plot_type=subplot_type,
+                                                       all_in_one=all_in,
+                                                       normalize=norm,
+                                                       save_as_pickle=True,
+                                                       ext=ext,
+                                                       solver_set_name=solver_set_name)
+                    # get plot info and call add plot
+                    file_path = [item for item in returned_path if item is not None] # remove None items from list
+                    n_plots = len(file_path)
+                    if all_in:
+                        solver_names = [solver_set_name]
+                    else:
+                        solver_names = []
                         for i in range(n_plots):
-                            problem_names.append(prob_list[i].problem.name) #should all be the same
-                            
-                        self.add_plot(file_paths = file_path,
-                                      solver_names = solver_names,
-                                      problem_names = problem_names)
+                            solver_names.append(prob_list[i].solver.name)
+                    problem_names = []
+                    for i in range(n_plots):
+                        problem_names.append(prob_list[i].problem.name) #should all be the same
+                        
+                    self.add_plot(file_paths = file_path,
+                                  solver_names = solver_names,
+                                  problem_names = problem_names,
+                                  parameters=parameters)
+
                 
             if self.plot_type == 'Terminal Scatter Plot':
                 returned_path = plot_terminal_scatterplots(experiments=exp_sublist,
@@ -5143,7 +5178,8 @@ class New_Experiment_Window(tk.Toplevel):
                 
                 self.add_plot(file_paths = file_path,
                               solver_names = solver_names,
-                              problem_names = problem_names)
+                              problem_names = problem_names,
+                              parameters=parameters)
                 
                 
             if self.plot_type == 'Solvability Profile':
@@ -5172,6 +5208,14 @@ class New_Experiment_Window(tk.Toplevel):
                 else:
                     plot_hw = False
                 solve_tol = float(self.solve_tol_var.get())
+                parameters = {} # holds relevant parameter info for display
+                parameters["Plot Type"] = subplot_type
+                parameters["Solve Tolerance"] = solve_tol
+                parameters["Number Bootstrap Samples"] = n_boot
+                parameters["Confidence Level"] = con_level 
+                parameters["Solve Tolerance"] = solve_tol
+                if subplot_type in ['Quantile Solvability', 'Difference of Quantile Solvability']:
+                    parameters["Quantile Probability"] = beta
                 
                 if subplot_type in ['CDF Solvability', 'Quantile Solvability']:
                     returned_path = plot_solvability_profiles(experiments=exp_sublist,
@@ -5191,8 +5235,9 @@ class New_Experiment_Window(tk.Toplevel):
                     
                 else: #performing a difference solvability profile
                     ref_solver = self.ref_solver_var.get()
+                    parameters["Reference Solver"] = ref_solver
                     returned_path = plot_solvability_profiles(experiments=exp_sublist,
-                                                          plot_type=subplot_type,
+                                                          plot_type=plot_input,
                                                           all_in_one = all_in,
                                                           n_bootstraps = n_boot,
                                                           conf_level = con_level,
@@ -5221,12 +5266,13 @@ class New_Experiment_Window(tk.Toplevel):
                 
                 self.add_plot(file_paths = file_path,
                               solver_names = solver_names,
-                              problem_names = problem_names)
+                              problem_names = problem_names,
+                              parameters=parameters)
             
 
                 
         
-    def add_plot(self, file_paths, solver_names, problem_names):
+    def add_plot(self, file_paths, solver_names, problem_names, parameters=None):
         # print('paths', file_paths)
         # print('solvers', solver_names)
         # print('problems', problem_names)
@@ -5247,22 +5293,37 @@ class New_Experiment_Window(tk.Toplevel):
             type_header.grid(row=0, column=2)
             view_header = tk.Label(master=tab_frame, text='View/Edit', font='Calibri 15 bold')
             view_header.grid(row=0,column=3)
+            file_path_header = tk.Label(master=tab_frame, text='File Location', font='Calibri 15 bold')
+            file_path_header.grid(row=0, column=4)
+            parameters_header = tk.Label(master=tab_frame, text='Plot Parameters', font='Calibri 15 bold')
+            parameters_header.grid(row=0, column=5)
   
         else: # add more plots if tab has already been created
             tab_frame = self.experiment_tabs[exp_name] # access previously created experiment tab
             row = tab_frame.grid_size()[1]
+            
+        if parameters is not None:
+            display_str = []
+            for parameter in parameters:
+                text = f'{parameter} = {parameters[parameter]}'
+                display_str.append(text)
+        para_display = " , ".join(display_str)
         
         #add plots to display
         for index, file_path in enumerate(file_paths):
             row = tab_frame.grid_size()[1]
             solver_label = tk.Label(master=tab_frame, text=solver_names[index], font='Calibri 13')
-            solver_label.grid(row=row, column=0)
+            solver_label.grid(row=row, column=0, padx=5)
             problem_label = tk.Label(master=tab_frame, text=problem_names[index], font='Calibri 13')
-            problem_label.grid(row=row, column=1)
+            problem_label.grid(row=row, column=1, padx=5)
             type_label = tk.Label(master=tab_frame, text=self.plot_type, font='Calibri 13')
-            type_label.grid(row=row,column=2)
+            type_label.grid(row=row,column=2, padx=5)
             view_button = tk.Button(master=tab_frame, text='View/Edit', font='Calibir 13',  command = lambda: self.view_plot(file_path))
-            view_button.grid(row=row, column=3)
+            view_button.grid(row=row, column=3, padx=5)
+            path_label = tk.Label(master=tab_frame, text=file_path, font='Calibri 11')
+            path_label.grid(row=row, column=4, padx=5)
+            para_label = tk.Label(master=tab_frame, text=para_display, font='Calibri 11')
+            para_label.grid(row=row, column=5, padx=5)
             
         
     def view_plot(self, file_path):
