@@ -112,22 +112,20 @@ class FacilitySize(Model):
         """
         Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
+                rngs for model to use when simulating a replication
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-            "stockout_flag" = a binary variable
-                 0 : all facilities satisfy the demand
-                 1 : at least one of the facilities did not satisfy the demand
-            "n_fac_stockout" = the number of facilities which cannot satisfy the demand
-            "n_cut" = the number of toal demand which cannot be satisfied
-        gradients : dict of dicts
-            gradient estimates for each response
+        Returns:
+            A tuple containing both a dictionary of responses and a dictionary
+            of gradient estimates for each response.
+            The responses dictionary contains the following keys:
+            stockout_flag : boolean
+            false - all facilities satisfy the demand, true - at least one of the facilities did not satisfy the demand
+            n_fac_stockout : integer
+            the number of facilities which cannot satisfy the demand
+            n_cut : integer
+            the number of toal demand which cannot be satisfied
         """
         # Designate RNG for demands.
         demand_rng = rng_list[0]

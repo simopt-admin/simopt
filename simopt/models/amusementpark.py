@@ -179,19 +179,15 @@ class AmusementPark(Model):
         """
         Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
+                rngs for model to use when simulating a replication
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-            "total_departed_tourists": The total number of tourists to leave the park due
-                to full queues
-            "percent_departed_tourists": The percentage of tourists to leave the park due
-                to full queues
+        Returns:
+            responses : dict
+                performance measures of interest
+                "total_departed_tourists": The total number of tourists to leave the park due to full queues
+                "percent_departed_tourists": The percentage of tourists to leave the park due to full queues
         """
         # Designate random number generators.
         arrival_rng = rng_list[0]
