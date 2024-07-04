@@ -3,11 +3,10 @@ Summary
 -------
 Simulate contamination rates.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/contam.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/contam.html>`__.
 """
 import numpy as np
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class Contamination(Model):

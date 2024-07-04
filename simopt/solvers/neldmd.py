@@ -5,13 +5,11 @@ Nelder-Mead: An algorithm that maintains a simplex of points that moves around t
 region according to certain geometric operations: reflection, expansion,
 contraction, and shrinking.
 A detailed description of the solver can be found 
-`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`__.
 """
 import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
+from simopt.base import Solution, Solver
 
-from ..base import Solution, Solver
 
 class NelderMead(Solver):
     """The Nelder-Mead algorithm, which maintains a simplex of points that moves around the feasible

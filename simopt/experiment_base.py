@@ -22,8 +22,8 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from multiprocessing import Pool
 
 
-from .base import Solution
-from .directory import solver_directory, problem_directory, model_directory
+from simopt.base import Solution
+from simopt.directory import solver_directory, problem_directory, model_directory
 
 
 class Curve(object):

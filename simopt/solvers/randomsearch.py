@@ -3,9 +3,9 @@ Summary
 -------
 Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
 """
-from ..base import Solver
+from simopt.base import Solver
 
 
 class RandomSearch(Solver):

@@ -7,8 +7,8 @@ import pandas as pd
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 
-from .directory import model_directory, solver_directory
-from .experiment_base import ProblemSolver, post_normalize
+from simopt.directory import model_directory, solver_directory
+from simopt.experiment_base import ProblemSolver, post_normalize
 
 
 class DesignPoint(object):

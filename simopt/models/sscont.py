@@ -4,12 +4,11 @@ Summary
 Simulate multiple periods worth of sales for a (s,S) inventory problem
 with continuous inventory.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/sscont.html>`__.
 """
 import numpy as np
-from math import exp, log, sqrt
-
-from ..base import Model, Problem
+from math import sqrt
+from simopt.base import Model, Problem
 
 
 class SSCont(Model):

@@ -2,11 +2,10 @@
 Summary
 -------
 Simulate a day's worth of sales for a newsvendor.
-A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`_.
+A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`__.
 """
 import numpy as np
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class CntNV(Model):

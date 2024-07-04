@@ -4,15 +4,12 @@ Summary
 STRONG: A trust-region-based algorithm that fits first- or second-order models through function evaluations taken within
 a neighborhood of the incumbent solution.
 A detailed description of the solver can be found 
-`here <https://simopt.readthedocs.io/en/latest/strong.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/strong.html>`__.
 """
 from numpy.linalg import norm
 import numpy as np
 import math
-import warnings
-warnings.filterwarnings("ignore")
-
-from ..base import Solver
+from simopt.base import Solver
 
 
 class STRONG(Solver):

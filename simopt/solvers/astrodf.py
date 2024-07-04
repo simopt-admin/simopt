@@ -2,7 +2,7 @@
 Summary
 -------
 The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`__.
 
 This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is therefore not needed and removed from this version as well.
 - Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution(). 
@@ -14,13 +14,10 @@ This version does not require a delta_max, instead it estimates the maximum step
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
-from math import log, ceil, sqrt
-import warnings
+from math import log, ceil
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
-warnings.filterwarnings("ignore")
-
-from ..base import Solver
+from simopt.base import Solver
 
 
 class ASTRODF(Solver):

@@ -3,7 +3,7 @@ Summary
 -------
 Simulate multiple periods of production and sales for an iron ore inventory problem.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/ironore.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/ironore.html>`__.
 
 Changed get_random_solution quantiles 
     from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
@@ -11,8 +11,7 @@ Changed get_random_solution quantiles
 """
 import numpy as np
 from math import sqrt, copysign
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class IronOre(Model):
