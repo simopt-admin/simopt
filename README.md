@@ -20,6 +20,8 @@ Several papers have discussed the development of SimOpt and experiments run on t
 ## Documentation
 Full documentation for the source code can be found **[here](https://simopt.readthedocs.io/en/latest/index.html)**.
 
+[![Documentation Status](https://readthedocs.org/projects/simopt/badge/?version=latest)](https://simopt.readthedocs.io/en/latest/?badge=latest)
+
 ## Getting Started
 The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
 
