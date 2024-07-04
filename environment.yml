@@ -2,12 +2,13 @@ name: simopt
 channels:
   - conda-forge
 dependencies:
-  - "python >=3.8,<3.12"
-  - "numpy"
-  - "scipy"
-  - "matplotlib"
-  - "pandas"
-  - "seaborn"
+  - python>=3.8,<3.12
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - seaborn
+  - sphinx
   - pip
   - pip:
-    - "mrg32k3a"
+    - mrg32k3a
