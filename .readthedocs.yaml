@@ -6,7 +6,7 @@ sphinx:
   fail_on_warning: true
 
 build:
-  os: latest
+  os: ubuntu-lts-latest
   tools:
     python: miniconda-latest
 
