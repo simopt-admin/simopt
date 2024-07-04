@@ -4,8 +4,7 @@ Summary
 Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for optimizing systems with multiple unknown parameters.
 """
 import numpy as np
-
-from ..base import Solver
+from simopt.base import Solver
 
 
 class SPSA(Solver):

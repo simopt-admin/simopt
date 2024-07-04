@@ -3,12 +3,11 @@ Summary
 -------
 Simulate MLE estimation for the parameters of a two-dimensional gamma distribution.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`__.
 """
 import numpy as np
 import math
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class ParameterEstimation(Model):

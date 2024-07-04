@@ -3,12 +3,11 @@ Summary
 -------
 Simulate a multi-stage revenue management system with inter-temporal dependence.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/rmitd.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/rmitd.html>`__.
 
 """
 import numpy as np
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class RMITD(Model):

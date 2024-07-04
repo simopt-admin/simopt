@@ -3,12 +3,11 @@ Summary
 -------
 Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/chessmm.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
 """
 import numpy as np
 from scipy import special
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class ChessMatchmaking(Model):

@@ -3,11 +3,10 @@ Summary
 -------
 Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`__.
 """
 import numpy as np
-
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class DualSourcing(Model):

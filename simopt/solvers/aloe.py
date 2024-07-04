@@ -5,14 +5,11 @@ ALOE
 The solver is a stochastic line search algorithm  with the gradient estimate recomputed in each iteration,
 whether or not a step is accepted. The algorithm includes the relaxation of the Armijo condition by
 an additive constant.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`__.
 """
 from numpy.linalg import norm
 import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
-
-from ..base import Solver
+from simopt.base import Solver
 
 
 class ALOE(Solver):
