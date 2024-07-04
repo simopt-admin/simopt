@@ -52,6 +52,14 @@ simopt.models.dynamnews module
    :undoc-members:
    :show-inheritance:
 
+simopt.models.example module
+----------------------------
+
+.. automodule:: simopt.models.example
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 simopt.models.facilitysizing module
 -----------------------------------
 

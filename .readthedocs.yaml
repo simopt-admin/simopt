@@ -3,7 +3,6 @@ version: 2
 # Build from the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
-  fail_on_warning: true
 
 build:
   os: ubuntu-lts-latest

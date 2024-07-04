@@ -2756,15 +2756,16 @@ class ProblemsSolvers(object):
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def log_group_experiment_results(self, solve_tols_single_pair=[0.05, 0.10, 0.20, 0.50], csv_filename_single_pair="df_solver_results"):
-        """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object.
-        Parameters
-        ----------
-        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
-            Relative optimality gap(s) definining when a problem is solved; in (0,1].
-        csv_filename : str, default="df_solver_results"
-            Name of .csv file to print output to
+        """Create readable .txt file describing the solvers and problems that
+        make up the ProblemSolvers object. Both parameters only used if only
+        one solver and problem are included in experiment and will be fed
+        into report_statistics_single_problem_solver_pair.
 
-            both parameters only used if only one solver and problem are included in experiment and will be fed into report_statistics_single_problem_solver_pair
+        Args:
+            solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
+                Relative optimality gap(s) definining when a problem is solved; in (0,1].
+            csv_filename : str, default="df_solver_results"
+                Name of .csv file to print output to
         """
         # Create a new text file in experiments/logs folder with correct name.
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.

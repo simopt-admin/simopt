@@ -13,10 +13,10 @@ class MM1Queue(Model):
     """
     A model that simulates an M/M/1 queue with an Exponential(lambda)
     interarrival time distribution and an Exponential(x) service time
-    distribution. Returns
-        - the average sojourn time
-        - the average waiting time
-        - the fraction of customers who wait
+    distribution. Returns:
+    - the average sojourn time
+    - the average waiting time
+    - the fraction of customers who wait
     for customers after a warmup period.
 
     Attributes
