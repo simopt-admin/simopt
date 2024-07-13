@@ -9,6 +9,8 @@ Changed get_random_solution quantiles
     from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
     to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
 """
+from __future__ import annotations
+
 import numpy as np
 from math import sqrt, copysign
 from simopt.base import Model, Problem

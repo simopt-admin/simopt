@@ -4,6 +4,7 @@ Summary
 -------
 Provide dictionary directories listing solvers, problems, and models.
 """
+from __future__ import annotations
 
 # import solvers
 from simopt.solvers.astrodf import ASTRODF

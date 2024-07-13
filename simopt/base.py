@@ -4,6 +4,7 @@ Summary
 -------
 Provide base classes for solvers, problems, and models.
 """
+from __future__ import annotations
 
 import numpy as np
 from copy import deepcopy

@@ -6,6 +6,8 @@ a neighborhood of the incumbent solution.
 A detailed description of the solver can be found 
 `here <https://simopt.readthedocs.io/en/latest/strong.html>`__.
 """
+from __future__ import annotations
+
 from numpy.linalg import norm
 import numpy as np
 import math

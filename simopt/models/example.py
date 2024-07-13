@@ -4,6 +4,8 @@ Summary
 Simulate a synthetic problem with a deterministic objective function
 evaluated with noise.
 """
+from __future__ import annotations
+
 import numpy as np
 from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a

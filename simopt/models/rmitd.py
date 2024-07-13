@@ -6,6 +6,8 @@ A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/rmitd.html>`__.
 
 """
+from __future__ import annotations
+
 import numpy as np
 from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a

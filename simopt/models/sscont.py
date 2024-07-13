@@ -6,6 +6,8 @@ with continuous inventory.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/sscont.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from math import sqrt
 from simopt.base import Model, Problem

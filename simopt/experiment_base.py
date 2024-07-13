@@ -5,6 +5,7 @@ Summary
 Provide base classes for problem-solver pairs and helper functions
 for reading/writing data and plotting.
 """
+from __future__ import annotations
 
 import numpy as np
 import matplotlib.pyplot as plt

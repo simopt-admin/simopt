@@ -5,6 +5,8 @@ Simulate a single day of operation for an amusement park queuing problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/amusementpark.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 import math as math
 from simopt.base import Model, Problem

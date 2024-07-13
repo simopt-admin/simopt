@@ -11,6 +11,8 @@ This version does not require a delta_max, instead it estimates the maximum step
 - It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
 - Added sufficient reduction for the pattern search
 """
+from __future__ import annotations
+
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np

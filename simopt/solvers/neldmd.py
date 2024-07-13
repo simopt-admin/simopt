@@ -7,6 +7,8 @@ contraction, and shrinking.
 A detailed description of the solver can be found 
 `here <https://simopt.readthedocs.io/en/latest/neldmd.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from simopt.base import Solver, Problem, Solution
 

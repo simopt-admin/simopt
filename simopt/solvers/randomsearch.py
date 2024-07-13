@@ -5,6 +5,8 @@ Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
 """
+from __future__ import annotations
+
 from simopt.base import Solver, Problem, Solution
 
 

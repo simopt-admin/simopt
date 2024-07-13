@@ -5,6 +5,8 @@ Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from scipy import special
 from simopt.base import Model, Problem

@@ -7,6 +7,8 @@ whether or not a step is accepted. The algorithm includes the relaxation of the 
 an additive constant.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`__.
 """
+from __future__ import annotations
+
 from numpy.linalg import norm
 import numpy as np
 from simopt.base import Solver, Problem, Solution
