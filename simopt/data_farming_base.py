@@ -220,15 +220,15 @@ class DataFarmingMetaExperiment(object):
         Type of design to use.
     solver_factor_headers : list [str]
         Ordered list of solver factor names appearing in factor settings/design file.
-    solver_factor_settings_filename : str, default = ""
+    solver_factor_settings_filename : str, default=None
         Name of .txt file containing solver factor ranges and # of digits.
-    design_filename : str, default = ""
+    design_filename : str, default=None
         Name of .txt file containing design matrix.
-    csv_filename : str, default = ""
+    csv_filename : str, default=None
         Name of .csv file to print output to.
-    solver_fixed_factors : dict, default = {}
+    solver_fixed_factors : dict, default=None
         Dictionary of user-specified solver factors that will not be varied.
-    cross_design_factors : dict, default = {}
+    cross_design_factors : dict, default=None
         Dictionary of user-specified cross-design factors that will be varied.
     """
     def __init__(self, solver_name = None, solver_factor_headers = None, n_stacks = 1, design_type = 'nolhs', solver_factor_settings_filename=None, design_filename=None, csv_filename = None, solver_fixed_factors=None, cross_design_factors = None):
