@@ -12,7 +12,7 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 #       with assertEqual as these should not change between runs.
 
 class run_template(unittest.TestCase):
-    def __init__(self, solver_name, problem_name):
+    def __init__(self, solver_name: str, problem_name: str):
         super().__init__()
         self.problem_name = problem_name
         self.solver_name = solver_name
