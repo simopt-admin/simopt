@@ -9,7 +9,7 @@ A detailed description of the solver can be found
 from numpy.linalg import norm
 import numpy as np
 import math
-from simopt.base import Solver
+from simopt.base import Solver, Problem, Solution
 
 
 class STRONG(Solver):
@@ -49,9 +49,7 @@ class STRONG(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="STRONG", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "STRONG", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -160,7 +158,7 @@ class STRONG(Solver):
     def check_lambda(self):
         return self.factors["lambda"] > 1
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -386,8 +384,10 @@ class STRONG(Solver):
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         return recommended_solns, intermediate_budgets
 
-    # Finding the Cauchy Point.
     def cauchy_point(self, grad, Hessian, new_x, problem):
+        """
+        Find the Cauchy point based on the gradient and Hessian matrix.
+        """
         delta_T = self.factors['delta_T']
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
@@ -400,8 +400,10 @@ class STRONG(Solver):
         Cauchy_x = self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
         return Cauchy_x
 
-    # Check the feasibility of the Cauchy point and update the point accordingly.
     def check_cons(self, candidate_x, new_x, lower_bound, upper_bound):
+        """
+        Check the feasibility of the Cauchy point and update the point accordingly.
+        """
         # The current step.
         stepV = np.subtract(candidate_x, new_x)
         # Form a matrix to determine the possible stepsize.
@@ -417,8 +419,10 @@ class STRONG(Solver):
         modified_x = new_x + t2 * stepV
         return modified_x
 
-    # Finite difference for calculating gradients and BFGS for calculating Hessian matrix.
     def finite_diff(self, new_solution, BdsCheck, stage, problem, n_r):
+        """
+        Finite difference for calculating gradients and BFGS for calculating Hessian matrix
+        """
         delta_T = self.factors['delta_T']
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds

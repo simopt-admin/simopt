@@ -7,7 +7,7 @@ stochastic objective functions, based on adaptive estimates of lower-order momen
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
 import numpy as np
-from simopt.base import Solver
+from simopt.base import Solver, Problem, Solution
 
 
 class ADAM(Solver):
@@ -48,9 +48,7 @@ class ADAM(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ADAM", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "ADAM", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -122,7 +120,7 @@ class ADAM(Solver):
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 

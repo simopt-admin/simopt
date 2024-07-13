@@ -7,6 +7,7 @@ A detailed description of the model/problem can be found
 """
 import numpy as np
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class TableAllocation(Model):
@@ -54,9 +55,7 @@ class TableAllocation(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "TABLEALLOCATION"
         self.n_rngs = 3
         self.n_responses = 2
@@ -144,7 +143,7 @@ class TableAllocation(Model):
         else:
             return True
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -279,11 +278,7 @@ class TableAllocationMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="TABLEALLOCATION-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "TABLEALLOCATION-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.dim = 4
         self.n_objectives = 1

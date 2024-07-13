@@ -5,8 +5,9 @@ from copy import deepcopy
 import itertools
 import pandas as pd
 from mrg32k3a.mrg32k3a import MRG32k3a
+from typing import Union
 
-
+from simopt.base import Model
 from simopt.directory import model_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
@@ -34,7 +35,7 @@ class DesignPoint(object):
     model : ``base.Model``
         Model with factors model_factors.
     """
-    def __init__(self, model):
+    def __init__(self, model: "Model"):
         super().__init__()
         # Create separate copy of Model object for use at this design point.
         self.model = deepcopy(model)
@@ -43,7 +44,7 @@ class DesignPoint(object):
         self.responses = {}
         self.gradients = {}
 
-    def attach_rngs(self, rng_list, copy=True):
+    def attach_rngs(self, rng_list: "MRG32k3a", copy: bool = True):
         """Attach a list of random-number generators to the design point.
 
         Parameters
@@ -56,7 +57,7 @@ class DesignPoint(object):
         else:
             self.rng_list = rng_list
 
-    def simulate(self, m=1):
+    def simulate(self, m: int = 1):
         """Simulate m replications for the current model factors and 
         append results to the responses and gradients dictionaries.
 
@@ -110,7 +111,7 @@ class DataFarmingExperiment(object):
     model_fixed_factors : dict
         Non-default values of model factors that will not be varied.
     """
-    def __init__(self, model_name, factor_settings_filename, factor_headers, design_filename=None, model_fixed_factors={}):
+    def __init__(self, model_name: str, factor_settings_filename: str, factor_headers: list[str], design_filename: Union[str, None] = None, model_fixed_factors: dict = {}):
         
         # Initialize model object with fixed factors.
         self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
@@ -138,7 +139,7 @@ class DataFarmingExperiment(object):
             # Create new design point and add to design.
             self.design.append(DesignPoint(self.model))
 
-    def run(self, n_reps=10, crn_across_design_pts=True):
+    def run(self, n_reps: int = 10, crn_across_design_pts: bool = True):
         """Run a fixed number of macroreplications at each design point.
 
         Parameters
@@ -169,7 +170,7 @@ class DataFarmingExperiment(object):
                     for _ in range(len(main_rng_list)):
                         rng.advance_substream()
 
-    def print_to_csv(self, csv_filename="raw_results"):
+    def print_to_csv(self, csv_filename: str = "raw_results"):
         """Extract observed responses from simulated design points and
         publish to .csv output file.
 
@@ -213,20 +214,22 @@ class DataFarmingMetaExperiment(object):
     ----------
     solver_name : str
         Name of solver.
-    problem_name : str
-        Name of problem.
+    n_stacks : int, default = 1
+        Number of stacks in the design.
+    design_type : str, default = "nolhs"
+        Type of design to use.
     solver_factor_headers : list [str]
         Ordered list of solver factor names appearing in factor settings/design file.
-    solver_factor_settings_filename : str, default=None
+    solver_factor_settings_filename : str, default = ""
         Name of .txt file containing solver factor ranges and # of digits.
-    design_filename : str, default=None
+    design_filename : str, default = ""
         Name of .txt file containing design matrix.
-    solver_fixed_factors : dict, default=None
+    csv_filename : str, default = ""
+        Name of .csv file to print output to.
+    solver_fixed_factors : dict, default = {}
         Dictionary of user-specified solver factors that will not be varied.
-    problem_fixed_factors : dict, default=None
-        Dictionary of user-specified problem factors that will not be varied.
-    model_fixed_factors : dict, default=None
-        Dictionary of user-specified model factors that will not be varied.
+    cross_design_factors : dict, default = {}
+        Dictionary of user-specified cross-design factors that will be varied.
     """
     def __init__(self, solver_name = None, solver_factor_headers = None, n_stacks = 1, design_type = 'nolhs', solver_factor_settings_filename=None, design_filename=None, csv_filename = None, solver_fixed_factors=None, cross_design_factors = None):
         
@@ -313,19 +316,9 @@ class DataFarmingMetaExperiment(object):
              design_table['Solver Name'] = solver_name
              design_table['Design Type'] = design_type 
              design_table['Number Stacks'] = str(n_stacks) 
-                          
-               
-                 
-             design_table.to_csv(csv_filename, mode = 'w', header = True, index = False)
-       
-       
-        self.csv_filename = csv_filename     
-       
-        
 
-                        
-                        
-                   
+             design_table.to_csv(csv_filename, mode = 'w', header = True, index = False)       
+        self.csv_filename = csv_filename     
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
     def run(self, problem_name, problem_fixed_factors = None, model_fixed_factors = None, n_macroreps=10):
@@ -333,7 +326,13 @@ class DataFarmingMetaExperiment(object):
 
         Parameters
         ----------
-        n_macroreps : int
+        problem_name : str
+            Name of problem to be solved.
+        problem_fixed_factors : dict, default = {}
+            Dictionary of user-specified problem factors that will not be varied.
+        model_fixed_factors : dict, default = {}
+            Dictionary of user-specified model factors that will not be varied.
+        n_macroreps : int, default = 10
             Number of macroreplications for each design point.
         """
         if problem_fixed_factors is None:
@@ -423,7 +422,7 @@ class DataFarmingMetaExperiment(object):
                 experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps: int, crn_across_budget: bool = True, crn_across_macroreps: bool = False):
         """For each design point, run postreplications at solutions
         recommended by the solver on each macroreplication.
 
@@ -450,7 +449,7 @@ class DataFarmingMetaExperiment(object):
                 experiment.post_replicate(n_postreps, crn_across_budget=crn_across_budget, crn_across_macroreps=crn_across_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
-    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+    def post_normalize(self, n_postreps_init_opt: int, crn_across_init_opt: bool = True):
         """Post-normalize problem-solver pairs.
         
         Parameters
@@ -465,7 +464,7 @@ class DataFarmingMetaExperiment(object):
                        crn_across_init_opt=crn_across_init_opt
                        )
 
-    def report_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+    def report_statistics(self, solve_tols: list[float] = [0.05, 0.10, 0.20, 0.50], csv_filename: str = "df_solver_results"):
         """For each design point, calculate statistics from each macoreplication and print to csv.
 
         Parameters

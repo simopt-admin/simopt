@@ -9,7 +9,7 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 """
 from numpy.linalg import norm
 import numpy as np
-from simopt.base import Solver
+from simopt.base import Solver, Problem, Solution
 
 
 class ALOE(Solver):
@@ -49,9 +49,7 @@ class ALOE(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ALOE", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "ALOE", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -141,7 +139,7 @@ class ALOE(Solver):
     def check_lambda(self):
         return self.factors["lambda"] > 0
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -149,8 +147,6 @@ class ALOE(Solver):
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------

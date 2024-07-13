@@ -126,6 +126,9 @@ class run_template(unittest.TestCase):
                     # Otherwise, check the value normally
                     else:
                         self.assertAlmostEqual(self.myexperiment.progress_curves[mrep][1][y_index], pickled_data["progress_curves"][mrep][1][y_index], 5, "Y values for problem " + self.problem_name + " and solver " + self.solver_name + " do not match at mrep " + str(mrep) + " and index " + str(y_index) + ".")
+        
+        print("\n\nPassed test for problem " + self.problem_name + " and solver " + self.solver_name + ".\n\n")
+        
         return True
     
     def tearDown(self):
