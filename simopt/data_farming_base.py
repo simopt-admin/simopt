@@ -231,7 +231,7 @@ class DataFarmingMetaExperiment(object):
     cross_design_factors : dict, default=None
         Dictionary of user-specified cross-design factors that will be varied.
     """
-    def __init__(self, solver_name = None, solver_factor_headers = None, n_stacks = 1, design_type = 'nolhs', solver_factor_settings_filename=None, design_filename=None, csv_filename = None, solver_fixed_factors=None, cross_design_factors = None):
+    def __init__(self, solver_name: Union[str, None] = None, n_stacks: int = 1, design_type: str = 'nolhs', solver_factor_headers: Union[int, None] = None, solver_factor_settings_filename: Union[str, None] = None, design_filename: Union[str, None] = None, csv_filename: Union[str, None] = None, solver_fixed_factors: Union[dict, None] = None, cross_design_factors: Union[dict, None] = None):
         
         if solver_fixed_factors is None:
             solver_fixed_factors={}
