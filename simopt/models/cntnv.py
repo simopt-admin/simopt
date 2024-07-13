@@ -4,8 +4,11 @@ Summary
 Simulate a day's worth of sales for a newsvendor.
 A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class CntNV(Model):
@@ -38,9 +41,7 @@ class CntNV(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "CNTNEWS"
         self.n_rngs = 1
         self.n_responses = 1
@@ -111,7 +112,7 @@ class CntNV(Model):
                 < self.factors["purchase_price"]
                 < self.factors["sales_price"])
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -237,11 +238,7 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CNTNEWS-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "CNTNEWS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -283,7 +280,7 @@ class CntNVMaxProfit(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = CntNV(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -302,7 +299,7 @@ class CntNVMaxProfit(Problem):
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -320,7 +317,7 @@ class CntNVMaxProfit(Problem):
         vector = (factor_dict["order_quantity"],)
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -338,7 +335,7 @@ class CntNVMaxProfit(Problem):
         objectives = (response_dict["profit"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -356,7 +353,7 @@ class CntNVMaxProfit(Problem):
         stoch_constraints = None
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -376,7 +373,7 @@ class CntNVMaxProfit(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -398,7 +395,7 @@ class CntNVMaxProfit(Problem):
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -415,7 +412,7 @@ class CntNVMaxProfit(Problem):
         """
         return x[0] > 0
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

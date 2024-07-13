@@ -5,10 +5,12 @@ Simulate a single day of operation for an amusement park queuing problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/amusementpark.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 import math as math
 from simopt.base import Model, Problem
-
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 class AmusementPark(Model):
     """
@@ -43,9 +45,7 @@ class AmusementPark(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "AMUSEMENTPARK"
         self.n_rngs = 3
         self.n_responses = 4
@@ -151,8 +151,10 @@ class AmusementPark(Model):
         else:
             return all([gamma >= 0 for gamma in self.factors["arrival_gammas"]])
 
-    # Check if transition matrix has same number of rows and columns and that each row + depart probability sums to 1.
     def check_transition_probabilities(self):
+        """
+        Check if transition matrix has same number of rows and columns and that each row + depart probability sums to 1.
+        """
         transition_sums = list(map(sum, self.factors["transition_probabilities"]))
         if all([len(row) == len(self.factors["transition_probabilities"]) for row in self.factors["transition_probabilities"]]) & \
                 all(transition_sums[i] + self.factors["depart_probabilities"][i] == 1 for i in range(self.factors["number_attractions"])):
@@ -175,7 +177,7 @@ class AmusementPark(Model):
     def check_simulatable_factors(self):
         return sum(self.factors["queue_capacities"]) <= self.factors["park_capacity"]
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -369,11 +371,7 @@ class AmusementParkMinDepart(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="AMUSEMENTPARK-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "AMUSEMENTPARK-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -409,7 +407,7 @@ class AmusementParkMinDepart(Problem):
         self.lower_bounds = tuple(0 for _ in range(self.model.factors["number_attractions"]))
         self.upper_bounds = tuple(self.model.factors["park_capacity"] for _ in range(self.model.factors["number_attractions"]))
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -428,7 +426,7 @@ class AmusementParkMinDepart(Problem):
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -446,7 +444,7 @@ class AmusementParkMinDepart(Problem):
         vector = tuple(factor_dict["queue_capacities"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -464,7 +462,7 @@ class AmusementParkMinDepart(Problem):
         objectives = (response_dict["total_departed"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -482,7 +480,7 @@ class AmusementParkMinDepart(Problem):
         stoch_constraints = None
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -502,7 +500,7 @@ class AmusementParkMinDepart(Problem):
         det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -524,7 +522,7 @@ class AmusementParkMinDepart(Problem):
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -544,7 +542,7 @@ class AmusementParkMinDepart(Problem):
         capacity_feasible = sum(x) == self.model.factors["park_capacity"]
         return box_feasible * capacity_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: "MRG32k3a") -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -558,7 +556,6 @@ class AmusementParkMinDepart(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple(rand_sol_rng.integer_random_vector_from_simplex(n_elements=self.model.factors["number_attractions"],
+        return tuple(rand_sol_rng.integer_random_vector_from_simplex(n_elements=self.model.factors["number_attractions"],
                                                                   summation=self.model.factors["park_capacity"],
                                                                   with_zero=False))
-        return x

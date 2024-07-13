@@ -5,9 +5,12 @@ Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from scipy import special
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class ChessMatchmaking(Model):
@@ -40,9 +43,7 @@ class ChessMatchmaking(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "CHESS"
         self.n_rngs = 2
         self.n_responses = 2
@@ -98,7 +99,7 @@ class ChessMatchmaking(Model):
     def check_allowable_diff(self):
         return self.factors["allowable_diff"] > 0
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -229,11 +230,7 @@ class ChessAvgDifference(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="CHESS-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "CHESS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -278,7 +275,7 @@ class ChessAvgDifference(Problem):
     def check_upper_time(self):
         return self.factors["upper_time"] > 0
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -297,7 +294,7 @@ class ChessAvgDifference(Problem):
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -315,7 +312,7 @@ class ChessAvgDifference(Problem):
         vector = (factor_dict["allowable_diff"],)
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -333,7 +330,7 @@ class ChessAvgDifference(Problem):
         objectives = (response_dict["avg_diff"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -351,7 +348,7 @@ class ChessAvgDifference(Problem):
         stoch_constraints = (response_dict["avg_wait_time"],)
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -371,7 +368,7 @@ class ChessAvgDifference(Problem):
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -391,7 +388,7 @@ class ChessAvgDifference(Problem):
         det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -407,7 +404,7 @@ class ChessAvgDifference(Problem):
         """
         return x >= 0
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

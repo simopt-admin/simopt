@@ -4,6 +4,7 @@ Summary
 -------
 Provide base classes for solvers, problems, and models.
 """
+from __future__ import annotations
 
 import numpy as np
 from copy import deepcopy
@@ -39,7 +40,7 @@ class Solver(object):
     fixed_factors : dict
         Dictionary of user-specified solver factors.
     """
-    def __init__(self, fixed_factors):
+    def __init__(self, fixed_factors: dict):
         # Set factors of the solver.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -47,7 +48,7 @@ class Solver(object):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Solver") -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
@@ -70,7 +71,7 @@ class Solver(object):
             # print("Solver types do not match.")
             return False
 
-    def attach_rngs(self, rng_list):
+    def attach_rngs(self, rng_list: list["MRG32k3a"]):
         """Attach a list of random-number generators to the solver.
 
         Parameters
@@ -80,7 +81,7 @@ class Solver(object):
         """
         self.rng_list = rng_list
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """Run a single macroreplication of a solver on a problem.
 
         Notes
@@ -110,7 +111,7 @@ class Solver(object):
         """
         return True
 
-    def check_solver_factor(self, factor_name):
+    def check_solver_factor(self, factor_name: str) -> bool:
         """Determine if the setting of a solver factor is permissible.
 
         Parameters
@@ -129,7 +130,7 @@ class Solver(object):
         return is_permissible
         # raise NotImplementedError
 
-    def check_solver_factors(self):
+    def check_solver_factors(self) -> bool:
         """Determine if the joint settings of solver factors are permissible.
 
         Notes
@@ -144,7 +145,7 @@ class Solver(object):
         return True
         # raise NotImplementedError
 
-    def check_factor_datatype(self, factor_name):
+    def check_factor_datatype(self, factor_name: str) -> bool:
         """Determine if a factor's data type matches its specification.
 
         Parameters
@@ -160,7 +161,7 @@ class Solver(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def create_new_solution(self, x, problem):
+    def create_new_solution(self, x: tuple, problem: "Problem") -> "Solution":
         """Create a new solution object with attached RNGs primed
         to simulate replications.
 
@@ -187,7 +188,7 @@ class Solver(object):
                     rng.advance_substream()
         return new_solution
 
-    def rebase(self, n_reps):
+    def rebase(self, n_reps: int):
         """Rebase the progenitor rngs to start at a later subsubstream index.
 
         Parameters
@@ -259,7 +260,7 @@ class Problem(object):
     model_fixed_factors : dict
         Subset of user-specified non-decision factors to pass through to the model.
     """
-    def __init__(self, fixed_factors, model_fixed_factors):
+    def __init__(self, fixed_factors: dict, model_fixed_factors: dict):
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -274,7 +275,7 @@ class Problem(object):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Problem") -> bool:
         """Check if two problems are equivalent.
 
         Parameters
@@ -328,7 +329,7 @@ class Problem(object):
         """
         return self.factors["budget"] > 0
 
-    def check_problem_factor(self, factor_name):
+    def check_problem_factor(self, factor_name: str) -> bool:
         """Determine if the setting of a problem factor is permissible.
 
         Parameters
@@ -347,7 +348,7 @@ class Problem(object):
         return is_permissible
         # raise NotImplementedError
 
-    def check_problem_factors(self):
+    def check_problem_factors(self) -> bool:
         """Determine if the joint settings of problem factors are permissible.
 
         Notes
@@ -362,7 +363,7 @@ class Problem(object):
         return True
         # raise NotImplementedError
 
-    def check_factor_datatype(self, factor_name):
+    def check_factor_datatype(self, factor_name: str) -> bool:
         """Determine if a factor's data type matches its specification.
 
         Parameters
@@ -378,7 +379,7 @@ class Problem(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def attach_rngs(self, rng_list):
+    def attach_rngs(self, rng_list: list["MRG32k3a"]):
         """Attach a list of random-number generators to the problem.
 
         Parameters
@@ -389,7 +390,7 @@ class Problem(object):
         """
         self.rng_list = rng_list
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys.
 
@@ -409,7 +410,7 @@ class Problem(object):
         """
         raise NotImplementedError
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """Convert a dictionary with factor keys to a vector
         of variables.
 
@@ -429,7 +430,7 @@ class Problem(object):
         """
         raise NotImplementedError
 
-    def factor_dict_to_vector_gradients(self, factor_dict):
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
         """Convert a dictionary with factor keys to a gradient vector.
 
         Notes
@@ -450,7 +451,7 @@ class Problem(object):
         """
         return self.factor_dict_to_vector(factor_dict)
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """Convert a dictionary with response keys to a vector
         of objectives.
 
@@ -470,7 +471,7 @@ class Problem(object):
         """
         raise NotImplementedError
 
-    def response_dict_to_objectives_gradients(self, response_dict):
+    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
         """Convert a dictionary with response keys to a vector
         of gradients.
 
@@ -492,7 +493,7 @@ class Problem(object):
         """
         return self.response_dict_to_objectives(response_dict)
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0.
 
@@ -513,7 +514,7 @@ class Problem(object):
         stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Parameters
@@ -532,7 +533,7 @@ class Problem(object):
         det_objectives_gradients = tuple([(0,) * self.dim for _ in range(self.n_objectives)])
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of stochastic constraints
         for a solution `x`.
 
@@ -554,7 +555,7 @@ class Problem(object):
         det_stoch_constraints_gradients = tuple([(0,) * self.dim for _ in range(self.n_stochastic_constraints)])
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic
         constraints.
 
@@ -572,7 +573,7 @@ class Problem(object):
         # Check box constraints.
         return bool(np.prod([self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx] for idx in range(len(x))]))
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: "MRG32k3a") -> tuple:
         """Generate a random solution for starting or restarting solvers.
 
         Parameters
@@ -587,7 +588,7 @@ class Problem(object):
         """
         pass
 
-    def simulate(self, solution, m=1):
+    def simulate(self, solution: "Solution", m: int = 1):
         """Simulate `m` i.i.d. replications at solution `x`.
 
         Notes
@@ -599,7 +600,7 @@ class Problem(object):
         ----------
         solution : ``base.Solution``
             Solution to evalaute.
-        m : int
+        m : int, default=1
             Number of replications to simulate at `x`.
         """
         if m < 1:
@@ -639,7 +640,7 @@ class Problem(object):
             # Update summary statistics.
             solution.recompute_summary_statistics()
 
-    def simulate_up_to(self, solutions, n_reps):
+    def simulate_up_to(self, solutions: "Solution", n_reps: int):
         """Simulate a set of solutions up to a given number of replications.
 
         Parameters
@@ -680,7 +681,7 @@ class Model(object):
     fixed_factors : dict
         Dictionary of user-specified model factors.
     """
-    def __init__(self, fixed_factors):
+    def __init__(self, fixed_factors: dict):
         # Set factors of the simulation model.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -688,7 +689,7 @@ class Model(object):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Model") -> bool:
         """Check if two models are equivalent.
 
         Parameters
@@ -711,7 +712,7 @@ class Model(object):
             # print("Model types do not match.")
             return False
 
-    def check_simulatable_factor(self, factor_name):
+    def check_simulatable_factor(self, factor_name: str) -> bool:
         """Determine if a simulation replication can be run with the given factor.
 
         Parameters
@@ -730,7 +731,7 @@ class Model(object):
         return is_simulatable
         # raise NotImplementedError
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         """Determine if a simulation replication can be run with the given factors.
 
         Notes
@@ -745,7 +746,7 @@ class Model(object):
         return True
         # raise NotImplementedError
 
-    def check_factor_datatype(self, factor_name):
+    def check_factor_datatype(self, factor_name) -> bool:
         """Determine if a factor's data type matches its specification.
 
         Returns
@@ -756,7 +757,7 @@ class Model(object):
         is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
         return is_right_type
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Parameters
@@ -823,7 +824,7 @@ class Solution(object):
     problem : ``base.Problem``
         Problem to which `x` is a solution.
     """
-    def __init__(self, x, problem):
+    def __init__(self, x: tuple, problem: "Problem"):
         super().__init__()
         self.x = x
         self.dim = len(x)
@@ -860,7 +861,7 @@ class Solution(object):
         # self.stoch_constraints_gradients_stderr = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_cov = np.full((problem.n_stochastic_constraints, problem.dim, problem.dim), np.nan)
 
-    def attach_rngs(self, rng_list, copy=True):
+    def attach_rngs(self, rng_list: list["MRG32k3a"], copy: bool = True):
         """Attach a list of random-number generators to the solution.
 
         Parameters
@@ -875,7 +876,7 @@ class Solution(object):
         else:
             self.rng_list = rng_list
 
-    def pad_storage(self, m):
+    def pad_storage(self, m: int):
         """Append zeros to numpy arrays for summary statistics.
 
         Parameters

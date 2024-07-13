@@ -5,8 +5,11 @@ Simulate a day's worth of sales for a newsvendor under dynamic consumer substitu
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/dynamnews.html>`__.
 """
+from __future__ import annotations
+
 import numpy as np
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class DynamNews(Model):
@@ -39,9 +42,7 @@ class DynamNews(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "DYNAMNEWS"
         self.n_rngs = 1
         self.n_responses = 4
@@ -119,7 +120,7 @@ class DynamNews(Model):
     def check_simulatable_factors(self):
         return all(np.subtract(self.factors["price"], self.factors["cost"]) >= 0)
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -259,11 +260,7 @@ class DynamNewsMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DYNAMNEWS-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "DYNAMNEWS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -300,7 +297,7 @@ class DynamNewsMaxProfit(Problem):
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -319,7 +316,7 @@ class DynamNewsMaxProfit(Problem):
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.

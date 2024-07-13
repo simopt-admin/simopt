@@ -5,6 +5,7 @@ Summary
 Provide base classes for problem-solver pairs and helper functions
 for reading/writing data and plotting.
 """
+from __future__ import annotations
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,11 +19,12 @@ import time
 import os
 import csv
 import itertools
+from typing import Union
 from mrg32k3a.mrg32k3a import MRG32k3a
 from multiprocessing import Pool
 
 
-from simopt.base import Solution
+from simopt.base import Solution, Solver, Problem
 from simopt.directory import solver_directory, problem_directory, model_directory
 
 
@@ -45,14 +47,14 @@ class Curve(object):
     y_vals : list [float]
         Values of vertical components.
     """
-    def __init__(self, x_vals, y_vals):
+    def __init__(self, x_vals: list[float], y_vals: list[float]):
         if len(x_vals) != len(y_vals):
             print("Vectors of x- and y- values must be of same length.")
         self.x_vals = x_vals
         self.y_vals = y_vals
         self.n_points = len(x_vals)
 
-    def lookup(self, x):
+    def lookup(self, x: float) -> float:
         """Lookup the y-value of the curve at an intermediate x-value.
 
         Parameters
@@ -72,7 +74,7 @@ class Curve(object):
             y = self.y_vals[idx]
         return y
 
-    def compute_crossing_time(self, threshold):
+    def compute_crossing_time(self, threshold: float) -> float:
         """Compute the first time at which a curve drops below a given threshold.
 
         Parameters
@@ -95,7 +97,7 @@ class Curve(object):
                 break
         return crossing_time
 
-    def compute_area_under_curve(self):
+    def compute_area_under_curve(self) -> float:
         """Compute the area under a curve.
 
         Returns
@@ -106,7 +108,7 @@ class Curve(object):
         area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
         return area
 
-    def curve_to_mesh(self, mesh):
+    def curve_to_mesh(self, mesh: list[float]) -> "Curve":
         """Create a curve defined at equally spaced x values.
 
         Parameters
@@ -122,7 +124,7 @@ class Curve(object):
         mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
         return mesh_curve
 
-    def curve_to_full_curve(self):
+    def curve_to_full_curve(self) -> "Curve":
         """Create a curve with duplicate x- and y-values to indicate steps.
 
         Returns
@@ -135,7 +137,7 @@ class Curve(object):
         full_curve = Curve(x_vals=duplicate_x_vals[1:], y_vals=duplicate_y_vals[:-1])
         return full_curve
 
-    def plot(self, color_str="C0", curve_type="regular"):
+    def plot(self, color_str: str = "C0", curve_type: str = "regular") -> list["plt.Line2D"]:
         """Plot a curve.
 
         Parameters
@@ -166,7 +168,7 @@ class Curve(object):
         return handle
 
 
-def mean_of_curves(curves):
+def mean_of_curves(curves: list["Curve"]) -> "Curve":
     """Compute pointwise (w.r.t. x-values) mean of curves.
     Starting and ending x-values must coincide for all curves.
 
@@ -186,7 +188,7 @@ def mean_of_curves(curves):
     return mean_curve
 
 
-def quantile_of_curves(curves, beta):
+def quantile_of_curves(curves: "Curve", beta: float) -> "Curve":
     """Compute pointwise (w.r.t. x values) quantile of curves.
     Starting and ending x values must coincide for all curves.
 
@@ -208,7 +210,7 @@ def quantile_of_curves(curves, beta):
     return quantile_curve
 
 
-def cdf_of_curves_crossing_times(curves, threshold):
+def cdf_of_curves_crossing_times(curves: list["Curve"], threshold: float) -> "Curve":
     """Compute the cdf of crossing times of curves.
 
     Parameters
@@ -231,7 +233,7 @@ def cdf_of_curves_crossing_times(curves, threshold):
     return cdf_curve
 
 
-def quantile_cross_jump(curves, threshold, beta):
+def quantile_cross_jump(curves: list["Curve"], threshold: float, beta: float) -> "Curve":
     """Compute a simple curve with a jump at the quantile of the crossing times.
 
     Parameters
@@ -260,7 +262,7 @@ def quantile_cross_jump(curves, threshold, beta):
     return jump_curve
 
 
-def difference_of_curves(curve1, curve2):
+def difference_of_curves(curve1: "Curve", curve2: "Curve") -> "Curve":
     """Compute the difference of two curves (Curve 1 - Curve 2).
 
     Parameters
@@ -279,7 +281,7 @@ def difference_of_curves(curve1, curve2):
     return difference_curve
 
 
-def max_difference_of_curves(curve1, curve2):
+def max_difference_of_curves(curve1: "Curve", curve2: "Curve") -> float:
     """Compute the maximum difference of two curves (Curve 1 - Curve 2).
 
     Parameters
@@ -371,7 +373,7 @@ class ProblemSolver(object):
         Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
     """
 
-    def __init__(self, solver_name=None, problem_name=None, solver_rename=None, problem_rename=None, solver=None, problem=None, solver_fixed_factors=None, problem_fixed_factors=None, model_fixed_factors=None, file_name_path=None):
+    def __init__(self, solver_name: Union[str, None] = None, problem_name: Union[str, None] = None, solver_rename: Union[str, None] = None, problem_rename: Union[str, None] = None, solver: Union["Solver", None] = None, problem: Union["Problem", None] = None, solver_fixed_factors: Union[dict, None] = None, problem_fixed_factors: Union[dict, None] = None, model_fixed_factors: Union[dict, None] = None, file_name_path: Union[str, None] = None):
         """There are two ways to create a ProblemSolver object:
             1. Provide the names of the solver and problem to look up in ``directory.py``.
             2. Provide the solver and problem objects to pair.
@@ -390,6 +392,7 @@ class ProblemSolver(object):
             self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
         else:  # Method #1
             self.solver = solver_directory[solver_name](name=solver_rename, fixed_factors=solver_fixed_factors)
+
         # Initialize problem.
         if problem is not None:  # Method #2
             self.problem = problem
@@ -397,13 +400,14 @@ class ProblemSolver(object):
             self.problem = problem_directory[problem_name](fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
         else:  # Method #1
             self.problem = problem_directory[problem_name](name=problem_rename, fixed_factors=problem_fixed_factors, model_fixed_factors=model_fixed_factors)
+
         # Initialize file path.
         if file_name_path is None:
             self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
         else:
             self.file_name_path = file_name_path
 
-    def check_compatibility(self):
+    def check_compatibility(self) -> str:
         """Check whether the experiment's solver and problem are compatible.
 
         Returns
@@ -431,7 +435,7 @@ class ProblemSolver(object):
             error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
         return error_str
 
-    def run(self, n_macroreps):
+    def run(self, n_macroreps: int):
         """Run n_macroreps of the solver on the problem.
 
         Notes
@@ -490,7 +494,7 @@ class ProblemSolver(object):
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
-    def run_multithread(self, mrep):
+    def run_multithread(self, mrep: int) -> tuple:
         print(f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}.")
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0]) for ss in range(self.problem.model.n_rngs)]
@@ -515,7 +519,7 @@ class ProblemSolver(object):
         # Return tuple (rec_solns, int_budgets, runtime)
         return ([solution.x for solution in recommended_solns], intermediate_budgets, runtime)
 
-    def check_run(self):
+    def check_run(self) -> bool:
         """Check if the experiment has been run.
 
         Returns
@@ -529,7 +533,7 @@ class ProblemSolver(object):
             ran = True
         return ran
 
-    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps: int, crn_across_budget: bool = True, crn_across_macroreps: bool = False):
         """Run postreplications at solutions recommended by the solver.
 
         Parameters
@@ -582,7 +586,7 @@ class ProblemSolver(object):
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
-    def post_replicate_multithread(self, mrep):
+    def post_replicate_multithread(self, mrep: int) -> tuple:
         print(f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}.")
         # Create RNG list for the macroreplication.
         if self.crn_across_macroreps:
@@ -616,7 +620,7 @@ class ProblemSolver(object):
         # Return tuple (post_replicates, runtime)
         return (post_replicates, runtime)
 
-    def check_postreplicate(self):
+    def check_postreplicate(self) -> bool:
         """Check if the experiment has been postreplicated.
 
         Returns
@@ -630,7 +634,7 @@ class ProblemSolver(object):
             postreplicated = True
         return postreplicated
 
-    def check_postnormalize(self):
+    def check_postnormalize(self) -> bool:
         """Check if the experiment has been postnormalized.
 
         Returns
@@ -644,7 +648,7 @@ class ProblemSolver(object):
             postnormalized = True
         return postnormalized
 
-    def bootstrap_sample(self, bootstrap_rng, normalize=True):
+    def bootstrap_sample(self, bootstrap_rng: "MRG32k3a", normalize: bool = True) -> list["Curve"]:
         """Generate a bootstrap sample of estimated objective curves
         or estimated progress curves.
 
@@ -818,8 +822,13 @@ class ProblemSolver(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-    def log_experiment_results(self, print_solutions=True):
-        """Create readable .txt file from a problem-solver pair's .pickle file.
+    def log_experiment_results(self, print_solutions: bool = True):
+        """Create readable .txt file from a problem-solver pair's .pickle file.\
+        
+        Parameters
+        ----------
+        print_solutions : bool, default=True
+            True if recommended solutions are to be printed in the .txt file, otherwise False.
         """
         # Create a new text file in experiments/logs folder with correct name.
         new_path = self.file_name_path.replace("outputs", "logs")  # Adjust file_path_name to correct folder.
@@ -885,7 +894,7 @@ class ProblemSolver(object):
         file.close()
 
 
-def trim_solver_results(problem, recommended_solns, intermediate_budgets):
+def trim_solver_results(problem: "Problem", recommended_solns: list["Solution"], intermediate_budgets: list[int]) -> tuple[list["Solution"], list[int]]:
     """Trim solutions recommended by solver after problem's max budget.
 
     Parameters
@@ -896,6 +905,13 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
         Solutions recommended by the solver.
     intermediate_budgets : list [int]
         Intermediate budgets at which solver recommended different solutions.
+
+    Returns
+    -------
+    recommended_solns : list [``base.Solution``]
+        Solutions recommended by the solver after trimming.
+    intermediate_budgets : list [int]
+        Intermediate budgets at which solver recommended different solutions after trimming.
     """
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
     invalid_idxs = [idx for idx, element in enumerate(intermediate_budgets) if element > problem.factors["budget"]]
@@ -911,7 +927,7 @@ def trim_solver_results(problem, recommended_solns, intermediate_budgets):
     return recommended_solns, intermediate_budgets
 
 
-def read_experiment_results(file_name_path):
+def read_experiment_results(file_name_path: str) -> "ProblemSolver":
     """Read in ``experiment_base.ProblemSolver`` object from .pickle file.
 
     Parameters
@@ -929,7 +945,7 @@ def read_experiment_results(file_name_path):
     return experiment
 
 
-def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, proxy_init_val=None, proxy_opt_val=None, proxy_opt_x=None):
+def post_normalize(experiments: list["ProblemSolver"], n_postreps_init_opt: int, crn_across_init_opt: bool = True, proxy_init_val: Union[float, None] = None, proxy_opt_val: Union[float, None] = None, proxy_opt_x: Union[tuple,  None] = None):
     """Construct objective curves and (normalized) progress curves
     for a collection of experiments on a given problem.
 
@@ -1022,7 +1038,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
     # found by any solver on any macroreplication.
     else:
         print("\t...using best postreplicated solution as proxy for x*.")
-        # TO DO: Simplify this block of code.
+        # TODO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
             experiment = experiments[experiment_idx]
@@ -1079,7 +1095,7 @@ def post_normalize(experiments, n_postreps_init_opt, crn_across_init_opt=True, p
         experiment.record_experiment_results()
 
 
-def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
+def bootstrap_sample_all(experiments: list[list["ProblemSolver"]], bootstrap_rng: "MRG32k3a", normalize: bool = True) -> list[list[list["Curve"]]]:
     """Generate bootstrap samples of estimated progress curves (normalized
     and unnormalized) from a set of experiments.
 
@@ -1114,7 +1130,7 @@ def bootstrap_sample_all(experiments, bootstrap_rng, normalize=True):
     return bootstrap_curves
 
 
-def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=None, solve_tol=None, estimator=None, normalize=True):
+def bootstrap_procedure(experiments: list[list["ProblemSolver"]], n_bootstraps: int, conf_level: float, plot_type: str, beta: Union[float, None] = None, solve_tol: Union[float, None] = None, estimator: Union[float, "Curve", None] = None, normalize: bool = True) -> tuple[Union[float, "Curve"], Union[float, "Curve"]]:
     """Obtain bootstrap sample and compute confidence intervals.
 
     Parameters
@@ -1199,7 +1215,7 @@ def bootstrap_procedure(experiments, n_bootstraps, conf_level, plot_type, beta=N
     return bs_CI_lower_bounds, bs_CI_upper_bounds
 
 
-def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
+def functional_of_curves(bootstrap_curves: list[list[list["Curve"]]], plot_type: str, beta: float = 0.5, solve_tol: float = 0.1) -> Union[float, "Curve"]:
     """Compute a functional of the bootstrapped objective/progress curves.
 
     Parameters
@@ -1235,7 +1251,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
 
     Returns
     -------
-    functional : list
+    functional : "Curve" | float
         Functional of bootstrapped curves, e.g, mean progress curves,
         mean area under progress curve, quantile of crossing time, etc.
     """
@@ -1278,7 +1294,7 @@ def functional_of_curves(bootstrap_curves, plot_type, beta=0.5, solve_tol=0.1):
     return functional
 
 
-def compute_bootstrap_CI(observations, conf_level, bias_correction=True, overall_estimator=None):
+def compute_bootstrap_CI(observations: list, conf_level: float, bias_correction: bool = True, overall_estimator: Union[float, None] = None) -> tuple[float, float]:
     """Construct a bootstrap confidence interval for an estimator.
 
     Parameters
@@ -1320,7 +1336,7 @@ def compute_bootstrap_CI(observations, conf_level, bias_correction=True, overall
     return bs_CI_lower_bound, bs_CI_upper_bound
 
 
-def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
+def plot_bootstrap_CIs(bs_CI_lower_bounds: "Curve", bs_CI_upper_bounds: "Curve", color_str: str = "C0"):
     """Plot bootstrap confidence intervals.
 
     Parameters
@@ -1342,7 +1358,7 @@ def plot_bootstrap_CIs(bs_CI_lower_bounds, bs_CI_upper_bounds, color_str="C0"):
                      )
 
 
-def report_max_halfwidth(curve_pairs, normalize, conf_level, difference=False,):
+def report_max_halfwidth(curve_pairs: list[list["Curve"]], normalize: bool, conf_level: float, difference: bool = False):
     """Compute and print caption for max halfwidth of one or more bootstrap CI curves.
 
     Parameters
@@ -1382,7 +1398,7 @@ def report_max_halfwidth(curve_pairs, normalize, conf_level, difference=False,):
     plt.text(x=xloc, y=yloc, s=txt)
 
 
-def check_common_problem_and_reference(experiments):
+def check_common_problem_and_reference(experiments: list["ProblemSolver"]):
     """Check if a collection of experiments have the same problem, x0, and x*.
 
     Parameters
@@ -1400,7 +1416,7 @@ def check_common_problem_and_reference(experiments):
             print("At least two experiments have different optimal solutions.")
 
 
-def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_progress_curves(experiments: list["ProblemSolver"], plot_type: str, beta: float = 0.50, normalize: bool = True, all_in_one: bool = True, n_bootstraps: int = 100, conf_level: float = 0.95, plot_CIs: bool = True, print_max_hw: bool = True) -> list[str]:
     """Plot individual or aggregate progress curves for one or more solvers
     on a single problem.
 
@@ -1562,7 +1578,7 @@ def plot_progress_curves(experiments, plot_type, beta=0.50, normalize=True, all_
     return file_list
 
 
-def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_solvability_cdfs(experiments: list["ProblemSolver"], solve_tol: float = 0.1, all_in_one: bool = True, n_bootstraps: int = 100, conf_level: float = 0.95, plot_CIs: bool = True, print_max_hw: bool = True) -> list[str]:
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -1575,7 +1591,7 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
         True if curves are to be plotted together, otherwise False.
     n_bootstraps : int, default=100
         Number of bootstrap samples.
-    conf_level : float
+    conf_level : float, default=0.95
         Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
     plot_CIs : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
@@ -1664,13 +1680,13 @@ def plot_solvability_cdfs(experiments, solve_tol=0.1, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True):
+def plot_area_scatterplots(experiments: list[list[ProblemSolver]], all_in_one: bool = True, n_bootstraps: int = 100, conf_level: float = 0.95, plot_CIs: bool = True, print_max_hw: bool = True):
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
     Either one plot for each solver or one plot for all solvers.
 
     Notes
     -----
-    TO DO: Add the capability to compute and print the max halfwidth of
+    TODO: Add the capability to compute and print the max halfwidth of
     the bootstrapped CI intervals.
 
     Parameters
@@ -1705,7 +1721,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
                    )
         solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
-        # TO DO: Build up capability to print max half-width.
+        # TODO: Build up capability to print max half-width.
         if print_max_hw:
             curve_pairs = []
         for solver_idx in range(n_solvers):
@@ -1807,7 +1823,7 @@ def plot_area_scatterplots(experiments, all_in_one=True, n_bootstraps=100, conf_
     return file_list
 
 
-def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstraps=100, conf_level=0.95, plot_CIs=True, print_max_hw=True, solve_tol=0.1, beta=0.5, ref_solver=None):
+def plot_solvability_profiles(experiments: list[list["ProblemSolver"]], plot_type: str, all_in_one: bool = True, n_bootstraps: int = 100, conf_level: float = 0.95, plot_CIs: bool = True, print_max_hw: bool = True, solve_tol: float = 0.1, beta: float = 0.5, ref_solver: str = None) -> list[str]:
     """Plot the (difference of) solvability profiles for each solver on a set of problems.
 
     Parameters
@@ -2091,7 +2107,7 @@ def plot_solvability_profiles(experiments, plot_type, all_in_one=True, n_bootstr
     return file_list
 
 
-def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_in_one=True):
+def plot_terminal_progress(experiments: list["ProblemSolver"], plot_type: str = "violin", normalize: bool = True, all_in_one: bool = True):
     """Plot individual or aggregate terminal progress for one or more solvers
     on a single problem.
 
@@ -2185,13 +2201,13 @@ def plot_terminal_progress(experiments, plot_type="violin", normalize=True, all_
     return file_list
 
 
-def plot_terminal_scatterplots(experiments, all_in_one=True):
+def plot_terminal_scatterplots(experiments: list[list["ProblemSolver"]], all_in_one: bool = True) -> list[str]:
     """Plot a scatter plot of mean and standard deviation of terminal progress.
     Either one plot for each solver or one plot for all solvers.
 
     Parameters
     ----------
-    experiments : list [list [``experiment_base.Experiment``]]
+    experiments : list [list [``experiment_base.ProblemSolver``]]
         ProblemSolver pairs used to produce plots.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
@@ -2252,7 +2268,7 @@ def plot_terminal_scatterplots(experiments, all_in_one=True):
     return file_list
 
 
-def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", normalize=True, budget=None, beta=None, solve_tol=None):
+def setup_plot(plot_type: str, solver_name: str = "SOLVER SET", problem_name: str = "PROBLEM SET", normalize: bool = True, budget: Union[int, None] = None, beta: Union[float, None] = None, solve_tol: Union[float, None] = None):
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -2369,7 +2385,7 @@ def setup_plot(plot_type, solver_name="SOLVER SET", problem_name="PROBLEM SET", 
     plt.title(title, size=14)
 
 
-def save_plot(solver_name, problem_name, plot_type, normalize, extra=None):
+def save_plot(solver_name: str, problem_name: str, plot_type: str, normalize: bool, extra: Union[float, list[float], None] = None) -> str:
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -2515,8 +2531,8 @@ class ProblemsSolvers(object):
     file_name_path : str
         Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
     """
-    def __init__(self, solver_factors=None, problem_factors=None, solver_names=None, problem_names=None,
-                 solver_renames=None, problem_renames=None, fixed_factors_filename=None, solvers=None, problems=None, experiments=None, file_name_path=None):
+    def __init__(self, solver_factors: Union[list[dict], None] = None, problem_factors: Union[list[dict], None] = None, solver_names: Union[list[str], None] = None, problem_names: Union[list[str], None] = None,
+                 solver_renames: Union[list[str], None] = None, problem_renames: Union[list[str], None] = None, fixed_factors_filename: Union[str, None] = None, solvers: Union[list["Solver"], None] = None, problems: Union[list["Problem"], None] = None, experiments: Union[list[list["ProblemSolver"]], None] = None, file_name_path: Union[str, None] = None):
         """There are three ways to create a ProblemsSolvers object:
             1. Provide the names of the solvers and problems to look up in directory.py.
             2. Provide the lists of unique solver and problem objects to pair.
@@ -2524,7 +2540,7 @@ class ProblemsSolvers(object):
 
         Notes
         -----
-        TO DO: If loading some ProblemSolver objects from file,
+        TODO: If loading some ProblemSolver objects from file,
         check that their factors match those in the overall ProblemsSolvers.
         """
         if experiments is not None:  # Method #3
@@ -2662,7 +2678,7 @@ class ProblemsSolvers(object):
             self.solver_set = self.solver_names
             self.problem_set = self.problem_names
 
-    def check_compatibility(self):
+    def check_compatibility(self) -> str:
         """Check whether all experiments' solvers and problems are compatible.
 
         Returns
@@ -2678,7 +2694,7 @@ class ProblemsSolvers(object):
                     error_str += f"For solver {self.solver_names[solver_idx]} and problem {self.problem_names[problem_idx]}... {new_error_str}"
         return error_str
 
-    def run(self, n_macroreps):
+    def run(self, n_macroreps: int):
         """Run `n_macroreps` of each solver on each problem.
 
         Parameters
@@ -2698,7 +2714,7 @@ class ProblemsSolvers(object):
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
 
-    def post_replicate(self, n_postreps, crn_across_budget=True, crn_across_macroreps=False):
+    def post_replicate(self, n_postreps: int, crn_across_budget: bool = True, crn_across_macroreps: bool = False):
         """For each problem-solver pair, run postreplications at solutions
         recommended by the solver on each macroreplication.
 
@@ -2727,14 +2743,12 @@ class ProblemsSolvers(object):
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
 
-    def post_normalize(self, n_postreps_init_opt, crn_across_init_opt=True):
+    def post_normalize(self, n_postreps_init_opt: int, crn_across_init_opt: int=True):
         """Construct objective curves and (normalized) progress curves
         for all collections of experiments on all given problem.
 
         Parameters
         ----------
-        experiments : list [``experiment_base.ProblemSolver``]
-            Problem-solver pairs of different solvers on a common problem.
         n_postreps_init_opt : int
             Number of postreplications to take at initial x0 and optimal x*.
         crn_across_init_opt : bool, default=True
@@ -2755,7 +2769,7 @@ class ProblemsSolvers(object):
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
-    def log_group_experiment_results(self, solve_tols_single_pair=[0.05, 0.10, 0.20, 0.50], csv_filename_single_pair="df_solver_results"):
+    def log_group_experiment_results(self, solve_tols_single_pair: list[float] = [0.05, 0.10, 0.20, 0.50], csv_filename_single_pair: str = "df_solver_results"):
         """Create readable .txt file describing the solvers and problems that
         make up the ProblemSolvers object. Both parameters only used if only
         one solver and problem are included in experiment and will be fed
@@ -2818,7 +2832,7 @@ class ProblemsSolvers(object):
             #         file.write(f"\t{s}_on_{p}.pickle\n")
         file.close()
 
-    def report_group_statistics(self, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+    def report_group_statistics(self, solve_tols: list[float] = [0.05, 0.10, 0.20, 0.50], csv_filename: str = "df_solver_results"):
         # create dictionary of common solvers and problems
         pair_dict = {}  # used to hold pairs of
 
@@ -2836,11 +2850,13 @@ class ProblemsSolvers(object):
             csv_filename = f'{solver}_on_{problem}_results'
             self.report_statistics(pair_list=pair_list, solve_tols=solve_tols, csv_filename=csv_filename)
 
-    def report_statistics(self, pair_list, solve_tols=[0.05, 0.10, 0.20, 0.50], csv_filename="df_solver_results"):
+    def report_statistics(self, pair_list: list["ProblemSolver"], solve_tols: list[float] = [0.05, 0.10, 0.20, 0.50], csv_filename: str = "df_solver_results"):
         """For each design point, calculate statistics from each macoreplication and print to csv.
 
         Parameters
         ----------
+        pair_list : list [``experiment_base.ProblemSolver``]
+            List of ProblemSolver objects.
         solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
             Relative optimality gap(s) definining when a problem is solved; in (0,1].
         csv_filename : str, default="df_solver_results"
@@ -2889,7 +2905,7 @@ class ProblemsSolvers(object):
                     csv_writer.writerow(print_list)
 
 
-def read_group_experiment_results(file_name_path):
+def read_group_experiment_results(file_name_path: str) -> "ProblemsSolvers":
     """Read in ``experiment_base.ProblemsSolvers`` object from .pickle file.
 
     Parameters
@@ -2907,7 +2923,7 @@ def read_group_experiment_results(file_name_path):
     return groupexperiment
 
 
-def find_unique_solvers_problems(experiments):
+def find_unique_solvers_problems(experiments: list["ProblemSolver"]) -> tuple[list["Solver"], list["Problem"]]:
     """Identify the unique problems and solvers in a collection
     of experiments.
 
@@ -2935,7 +2951,7 @@ def find_unique_solvers_problems(experiments):
     return unique_solvers, unique_problems
 
 
-def find_missing_experiments(experiments):
+def find_missing_experiments(experiments: list["ProblemSolver"]) -> tuple[list["Solver"], list["Problem"], list[tuple["Solver", "Problem"]] ]:
     """Identify problem-solver pairs that are not part of a list
     of experiments.
 
@@ -2963,7 +2979,7 @@ def find_missing_experiments(experiments):
     return unique_solvers, unique_problems, missing
 
 
-def make_full_metaexperiment(existing_experiments, unique_solvers, unique_problems, missing_experiments):
+def make_full_metaexperiment(existing_experiments: list["ProblemSolver"], unique_solvers: list["Solver"], unique_problems: list["Problem"], missing_experiments: list[tuple["Solver", "Problem"]]) -> "ProblemsSolvers":
     """Create experiment objects for missing problem-solver pairs
     and run them.
 
@@ -2998,24 +3014,24 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
     return metaexperiment
 
 
-def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None):
+def create_design(name: str, factor_headers: list[str], factor_settings_filename: str, fixed_factors: dict, n_stacks: int = 1, design_type: str = 'nolhs', cross_design_factors: Union[dict, None] = None):
     """
     Parameters
     ----------
     name : str
         Name of solver, problem, or model.
-    factor_headers : lst
+    factor_headers : list[str]
         List of factor names that are changing in the design.
     factor_settings_filename : str
         name of factor settings file within data_farming_experiments folder.
     fixed_factors : dict
         dict of fixed factor values that are different that defaults.
-    n_stacks : int, optional
-        number of stacks for ruby calculation. The default is '1'.
-    design_type : str, optional
-        design type for ruby calculation. The default is 'nolhs'.
-    cross_design_factors : dict, optional
-        dict of lists of values of factors to include in cross design. The default is None.
+    n_stacks : int, default = 1
+        number of stacks for ruby calculation.
+    design_type : str, default = 'nolhs'
+        design type for ruby calculation.
+    cross_design_factors : dict, default = None
+        dict of lists of values of factors to include in cross design.
 
     Returns
     -------
@@ -3025,7 +3041,6 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     # Search directories to create object based on name provided.
     try:
         design_object = solver_directory[name]()
-
     except:
         try:
             design_object = problem_directory[name]()

@@ -5,7 +5,9 @@ Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
 """
-from simopt.base import Solver
+from __future__ import annotations
+
+from simopt.base import Solver, Problem, Solution
 
 
 class RandomSearch(Solver):
@@ -46,9 +48,7 @@ class RandomSearch(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="RNDSRCH", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "RNDSRCH", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "stochastic"
@@ -75,7 +75,7 @@ class RandomSearch(Solver):
     def check_sample_size(self):
         return self.factors["sample_size"] > 0
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
