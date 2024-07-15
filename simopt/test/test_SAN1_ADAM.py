@@ -72,7 +72,7 @@ class test_SAN1_ADAM(unittest.TestCase):
 
     def test_run(self):
         # Check actual run results against expected
-        self.myexperiment.run(n_macroreps=self.num_macroreps)
+        self.myexperiment.run(n_macroreps=self.num_macroreps, print_output=False)
         self.assertEqual(
             self.myexperiment.n_macroreps,
             self.num_macroreps,
@@ -172,7 +172,7 @@ class test_SAN1_ADAM(unittest.TestCase):
         )
 
         # Check actual post-replication results against expected
-        self.myexperiment.post_replicate(n_postreps=self.num_postreps)
+        self.myexperiment.post_replicate(n_postreps=self.num_postreps, print_output=False)
         self.assertEqual(
             self.myexperiment.n_postreps,
             self.num_postreps,

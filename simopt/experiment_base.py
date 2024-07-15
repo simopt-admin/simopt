@@ -565,7 +565,7 @@ class ProblemSolver:
             error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
         return error_str
 
-    def run(self, n_macroreps: int) -> None:
+    def run(self, n_macroreps: int, print_output:bool = True) -> None:
         """Run n_macroreps of the solver on the problem.
 
         Notes
@@ -577,14 +577,17 @@ class ProblemSolver:
         ----------
         n_macroreps : int
             Number of macroreplications of the solver to run on the problem.
+        print_output : bool, default=True
+            True if output should be printed, otherwise False.
 
         """
-        print(
-            "Running Solver",
-            self.solver.name,
-            "on Problem",
-            self.problem.name + ".",
-        )
+        if print_output:
+            print(
+                "Running Solver",
+                self.solver.name,
+                "on Problem",
+                self.problem.name + ".",
+            )
 
         # Initialize variables
         self.n_macroreps = n_macroreps
@@ -610,11 +613,12 @@ class ProblemSolver:
         # Start a timer
         self.function_start = time.time()
 
-        print("Starting macroreplications in parallel")
+        if print_output:
+            print("Starting macroreplications in parallel")
         with Pool() as process_pool:
             # Start the macroreplications in parallel (async)
-            result = process_pool.map_async(
-                self.run_multithread, range(n_macroreps)
+            result = process_pool.starmap_async(
+                self.run_multithread, zip(range(n_macroreps), itertools.repeat(print_output))
             )
             # Wait for the results to be returned (or 1 second)
             while not result.ready():
@@ -628,9 +632,10 @@ class ProblemSolver:
                     self.all_intermediate_budgets[mrep],
                     self.timings[mrep],
                 ) = result.get()[mrep]
-        print(
-            f"Finished running {n_macroreps} macroreplications in {round(time.time() - self.function_start, 3)} seconds."
-        )
+        if print_output:
+            print(
+                f"Finished running {n_macroreps} macroreplications in {round(time.time() - self.function_start, 3)} seconds."
+            )
 
         # Delete stuff we don't need to save
         del self.function_start
@@ -638,11 +643,12 @@ class ProblemSolver:
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
-    def run_multithread(self, mrep: int) -> tuple:
+    def run_multithread(self, mrep: int, print_output: bool) -> tuple:
         """Run a single macroreplication of the solver on the problem."""
-        print(
-            f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}."
-        )
+        if print_output:
+            print(
+                f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}."
+            )
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [
             MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0])
@@ -673,9 +679,10 @@ class ProblemSolver:
         )
         toc = time.perf_counter()
         runtime = toc - tic
-        print(
-            f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds."
-        )
+        if print_output:
+            print(
+                f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds."
+            )
 
         # Trim the recommended solutions and intermediate budgets
         recommended_solns, intermediate_budgets = trim_solver_results(
@@ -710,6 +717,7 @@ class ProblemSolver:
         n_postreps: int,
         crn_across_budget: bool = True,
         crn_across_macroreps: bool = False,
+        print_output: bool = True,
     ) -> None:
         """Run postreplications at solutions recommended by the solver.
 
@@ -723,11 +731,14 @@ class ProblemSolver:
         crn_across_macroreps : bool, default=False
             True if CRN used for post-replications at solutions recommended on different
             macroreplications, otherwise False.
+        print_output : bool, default=True
+            True if output should be printed, otherwise False.
 
         """
-        print(
-            f"Setting up {n_postreps} postreplications for {self.n_macroreps} macroreplications of {self.solver.name} on {self.problem.name}."
-        )
+        if print_output:
+            print(
+                f"Setting up {n_postreps} postreplications for {self.n_macroreps} macroreplications of {self.solver.name} on {self.problem.name}."
+            )
 
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
@@ -742,11 +753,12 @@ class ProblemSolver:
 
         self.function_start = time.time()
 
-        print("Starting postreplications in parallel")
+        if print_output:
+            print("Starting postreplications in parallel")
         with Pool() as process_pool:
             # Start the macroreplications in parallel (async)
-            result = process_pool.map_async(
-                self.post_replicate_multithread, range(self.n_macroreps)
+            result = process_pool.starmap_async(
+                self.post_replicate_multithread, zip(range(self.n_macroreps), itertools.repeat(print_output))
             )
             # Wait for the results to be returned (or 1 second)
             while not result.ready():
@@ -772,9 +784,10 @@ class ProblemSolver:
                 ]
                 for mrep in range(self.n_macroreps)
             ]
-        print(
-            f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
-        )
+        if print_output:
+            print(
+                f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
+            )
 
         # Delete stuff we don't need to save
         del self.function_start
@@ -782,11 +795,12 @@ class ProblemSolver:
         # Save ProblemSolver object to .pickle file.
         self.record_experiment_results()
 
-    def post_replicate_multithread(self, mrep: int) -> tuple:
+    def post_replicate_multithread(self, mrep: int, print_output: bool) -> tuple:
         """Run postreplications at solutions recommended by the solver."""
-        print(
-            f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
-        )
+        if print_output:
+            print(
+                f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
+            )
         # Create RNG list for the macroreplication.
         if self.crn_across_macroreps:
             # Use the same RNGs for all macroreps.
@@ -830,7 +844,8 @@ class ProblemSolver:
             )  # 0 <- assuming only one objective
         toc = time.perf_counter()
         runtime = toc - tic
-        print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
+        if print_output:
+            print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
         # Return tuple (post_replicates, runtime)
         return (post_replicates, runtime)
