@@ -1,21 +1,19 @@
-"""
-Summary
--------
+"""Random search solver for simulation-optimization problems.
+
 Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
 """
+
 from __future__ import annotations
 
 from simopt.base import Solver, Problem, Solution
 
 
 class RandomSearch(Solver):
-    """
-    A solver that randomly samples solutions from the feasible region.
-    Take a fixed number of replications at each solution.
+    """A solver that randomly samples solutions from the feasible region. Take a fixed number of replications at each solution.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of solver
@@ -37,18 +35,26 @@ class RandomSearch(Solver):
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
+
     """
-    def __init__(self, name: str = "RNDSRCH", fixed_factors: dict = {}):
+
+    def __init__(
+        self, name: str = "RNDSRCH", fixed_factors: dict | None = None
+    ) -> None:
+        """Initialize RandomSearch solver with default values for factors."""
+        if fixed_factors is None:
+            fixed_factors = {}
+
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "stochastic"
@@ -58,40 +64,41 @@ class RandomSearch(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "sample_size": {
                 "description": "sample size per solution",
                 "datatype": int,
-                "default": 10
-            }
+                "default": 10,
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_sample_size
+            "sample_size": self.check_sample_size,
         }
         super().__init__(fixed_factors)
 
-    def check_sample_size(self):
+    def check_sample_size(self) -> bool:
+        """Check if sample size is a positive integer."""
         return self.factors["sample_size"] > 0
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+        """Run a single macroreplication of a solver on a problem.
 
-        Arguments
+        Arguments:
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
 
-        Returns
+        Returns:
         -------
         recommended_solns : list of Solution objects
             list of solutions recommended throughout the budget
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
+
         """
         recommended_solns = []
         intermediate_budgets = []
@@ -116,9 +123,14 @@ class RandomSearch(Solver):
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
-            if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] <= 0 for idx in range(problem.n_stochastic_constraints))):
+            if (
+                problem.minmax * new_solution.objectives_mean
+                > problem.minmax * best_solution.objectives_mean
+                and all(
+                    new_solution.stoch_constraints_mean[idx] <= 0
+                    for idx in range(problem.n_stochastic_constraints)
+                )
+            ):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
                 recommended_solns.append(new_solution)

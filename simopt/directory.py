@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""
-Summary
--------
-Provide dictionary directories listing solvers, problems, and models.
-"""
+"""Provide dictionary directories listing solvers, problems, and models."""
 from __future__ import annotations
 
 # import solvers
@@ -47,7 +43,7 @@ from simopt.models.amusementpark import AmusementPark, AmusementParkMinDepart
 from simopt.base import Model, Problem, Solver
 
 # directory dictionaries
-solver_directory: dict[str, "Solver"] = {
+solver_directory: dict[str, Solver] = {
     "ASTRODF": ASTRODF,
     "RNDSRCH": RandomSearch,
     "NELDMD": NelderMead,
@@ -57,7 +53,7 @@ solver_directory: dict[str, "Solver"] = {
     "ALOE": ALOE,
 }
 
-solver_unabbreviated_directory: dict[str, "Solver"] = {
+solver_unabbreviated_directory: dict[str, Solver] = {
     "ASTRO-DF (SBCN)": ASTRODF,
     "Random Search (SSMN)": RandomSearch,
     "Nelder-Mead (SBCN)": NelderMead,
@@ -67,7 +63,7 @@ solver_unabbreviated_directory: dict[str, "Solver"] = {
     "ALOE (SBCN)": ALOE,
 }
 
-problem_directory: dict[str, "Problem"] = {
+problem_directory: dict[str, Problem] = {
     "EXAMPLE-1": ExampleProblem,
     "CNTNEWS-1": CntNVMaxProfit,
     "MM1-1": MM1MinMeanSojournTime,
@@ -91,7 +87,7 @@ problem_directory: dict[str, "Problem"] = {
     "AMUSEMENTPARK-1": AmusementParkMinDepart,
 }
 
-problem_unabbreviated_directory: dict[str, "Problem"] = {
+problem_unabbreviated_directory: dict[str, Problem] = {
     "Min Deterministic Function + Noise (SUCG)": ExampleProblem,
     "Max Profit for Continuous Newsvendor (SBCG)": CntNVMaxProfit,
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": MM1MinMeanSojournTime,
@@ -114,7 +110,7 @@ problem_unabbreviated_directory: dict[str, "Problem"] = {
     "Min Total Cost for Communication Networks System (SDCN)": NetworkMinTotalCost,
     "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementParkMinDepart,
 }
-model_directory: dict[str, "Model"] = {
+model_directory: dict[str, Model] = {
     "EXAMPLE": ExampleModel,
     "CNTNEWS": CntNV,
     "MM1": MM1Queue,
@@ -134,7 +130,7 @@ model_directory: dict[str, "Model"] = {
     "NETWORK": Network,
     "AMUSEMENTPARK": AmusementPark,
 }
-model_unabbreviated_directory: dict[str, "Model"] = {
+model_unabbreviated_directory: dict[str, Model] = {
     "Deterministic Function + Noise": ExampleModel,
     "Continuous Newsvendor": CntNV,
     "MM1 Queue": MM1Queue,
@@ -177,7 +173,7 @@ model_problem_unabbreviated_directory: dict[str, str] = {
     "Min Total Cost for Communication Networks System (SDCN)": "NETWORK",
     "Min Total Departed Visitors for Amusement Park (SDDN)": "AMUSEMENTPARK",
 }
-model_problem_class_directory: dict[str, "Model"] = {
+model_problem_class_directory: dict[str, Model] = {
     "Min Deterministic Function + Noise (SUCG)": ExampleModel,
     "Max Profit for Continuous Newsvendor (SBCG)": CntNV,
     "Min Mean Sojourn Time for MM1 Queue (SBCG)": MM1Queue,

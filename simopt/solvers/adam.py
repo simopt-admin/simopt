@@ -1,11 +1,10 @@
-"""
-Summary
--------
-ADAM
+"""ADAM solver for simulation-optimization problems.
+
 An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,11 +12,9 @@ from simopt.base import Solver, Problem, Solution
 
 
 class ADAM(Solver):
-    """
-    An algorithm for first-order gradient-based optimization of
-    stochastic objective functions, based on adaptive estimates of lower-order moments.
+    """An algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of solver
@@ -39,18 +36,26 @@ class ADAM(Solver):
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
+
     """
-    def __init__(self, name: str = "ADAM", fixed_factors: dict = {}):
+
+    def __init__(
+        self, name: str = "ADAM", fixed_factors: dict | None = None
+    ) -> None:
+        """Initialize the ADAM solver."""
+        if fixed_factors is None:
+            fixed_factors = {}
+
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -60,38 +65,38 @@ class ADAM(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 30,
             },
             "beta_1": {
                 "description": "exponential decay of the rate for the first moment estimates",
                 "datatype": float,
-                "default": 0.9
+                "default": 0.9,
             },
             "beta_2": {
                 "description": "exponential decay rate for the second-moment estimates",
                 "datatype": float,
-                "default": 0.999
+                "default": 0.999,
             },
             "alpha": {
                 "description": "step size",
                 "datatype": float,
-                "default": 0.5  # Changing the step size matters a lot.
+                "default": 0.5,  # Changing the step size matters a lot.
             },
             "epsilon": {
                 "description": "a small value to prevent zero-division",
                 "datatype": float,
-                "default": 10**(-8)
+                "default": 10 ** (-8),
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds",
                 "datatype": float,
-                "default": 10**(-7)
-            }
+                "default": 10 ** (-7),
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -100,45 +105,51 @@ class ADAM(Solver):
             "beta_2": self.check_beta_2,
             "alpha": self.check_alpha,
             "epsilon": self.check_epsilon,
-            "sensitivity": self.check_sensitivity
+            "sensitivity": self.check_sensitivity,
         }
         super().__init__(fixed_factors)
 
-    def check_r(self):
+    def check_r(self) -> bool:
+        """Check if the number of replications is positive."""
         return self.factors["r"] > 0
 
-    def check_beta_1(self):
+    def check_beta_1(self) -> bool:
+        """Check if the exponential decay rate for the first moment estimates is between 0 and 1."""
         return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
 
-    def check_beta_2(self):
+    def check_beta_2(self) -> bool:
+        """Check if the exponential decay rate for the second-moment estimates is between 0 and 1."""
         return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
 
-    def check_alpha(self):
+    def check_alpha(self) -> bool:
+        """Check if the step size is positive."""
         return self.factors["alpha"] > 0
 
-    def check_epsilon(self):
+    def check_epsilon(self) -> bool:
+        """Check if the small value to prevent zero-division is positive."""
         return self.factors["epsilon"] > 0
 
-    def check_sensitivity(self):
+    def check_sensitivity(self) -> bool:
+        """Check if the shrinking scale for variable bounds is positive."""
         return self.factors["sensitivity"] > 0
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+        """Run a single macroreplication of a solver on a problem.
 
-        Arguments
+        Arguments:
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
 
-        Returns
+        Returns:
         -------
         recommended_solns : list of Solution objects
             list of solutions recommended throughout the budget
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
+
         """
         recommended_solns = []
         intermediate_budgets = []
@@ -156,7 +167,9 @@ class ADAM(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_solution = self.create_new_solution(
+            problem.factors["initial_solution"], problem
+        )
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         problem.simulate(new_solution, r)
@@ -173,17 +186,25 @@ class ADAM(Solver):
             t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = self.factors["sensitivity"]).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = self.factors["sensitivity"]).astype(int)
+            forward = np.isclose(
+                new_x, lower_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
+            backward = np.isclose(
+                new_x, upper_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            BdsCheck = np.subtract(forward, backward)
+            bds_check = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = (
+                    -1
+                    * problem.minmax[0]
+                    * new_solution.objectives_gradients_mean[0]
+                )
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem)
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                grad = self._finite_diff(new_solution, bds_check, problem)
+                expended_budget += (2 * problem.dim - np.sum(bds_check != 0)) * r
 
             # Convert new_x from tuple to list.
             new_x = list(new_x)
@@ -192,35 +213,44 @@ class ADAM(Solver):
                 # Update biased first moment estimate.
                 m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
                 # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
+                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i] ** 2
                 # Compute bias-corrected first moment estimate.
                 mhat = m[i] / (1 - beta_1**t)
                 # Compute bias-corrected second raw moment estimate.
                 vhat = v[i] / (1 - beta_2**t)
                 # Update new_x and adjust it for box constraints.
-                new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
+                new_x[i] = min(
+                    max(
+                        new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon),
+                        lower_bound[i],
+                    ),
+                    upper_bound[i],
+                )
 
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+            if (
+                problem.minmax[0] * new_solution.objectives_mean
+                > problem.minmax[0] * best_solution.objectives_mean
+            ):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(self, new_solution, BdsCheck, problem):
-        r = self.factors['r']
-        alpha = self.factors['alpha']
+    def _finite_diff(self, new_solution: Solution, bds_check: np.ndarray, problem: Problem) -> np.ndarray:
+        r = self.factors["r"]
+        alpha = self.factors["alpha"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
-        FnPlusMinus = np.zeros((problem.dim, 3))
+        fn_plus_minus = np.zeros((problem.dim, 3))
         grad = np.zeros(problem.dim)
 
         for i in range(problem.dim):
@@ -240,37 +270,37 @@ class ADAM(Solver):
 
             # Decide stepsize.
             # Central diff.
-            if BdsCheck[i] == 0:
-                FnPlusMinus[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+            if bds_check[i] == 0:
+                fn_plus_minus[i, 2] = min(steph1, steph2)
+                x1[i] = x1[i] + fn_plus_minus[i, 2]
+                x2[i] = x2[i] - fn_plus_minus[i, 2]
             # Forward diff.
-            elif BdsCheck[i] == 1:
-                FnPlusMinus[i, 2] = steph1
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
+            elif bds_check[i] == 1:
+                fn_plus_minus[i, 2] = steph1
+                x1[i] = x1[i] + fn_plus_minus[i, 2]
             # Backward diff.
             else:
-                FnPlusMinus[i, 2] = steph2
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+                fn_plus_minus[i, 2] = steph2
+                x2[i] = x2[i] - fn_plus_minus[i, 2]
             x1_solution = self.create_new_solution(tuple(x1), problem)
-            if BdsCheck[i] != -1:
+            if bds_check[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 # First column is f(x+h,y).
-                FnPlusMinus[i, 0] = fn1
+                fn_plus_minus[i, 0] = fn1
             x2_solution = self.create_new_solution(tuple(x2), problem)
-            if BdsCheck[i] != 1:
+            if bds_check[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
-                FnPlusMinus[i, 1] = fn2
+                fn_plus_minus[i, 1] = fn2
 
             # Calculate gradient.
-            if BdsCheck[i] == 0:
-                grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
-            elif BdsCheck[i] == 1:
-                grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
-            elif BdsCheck[i] == -1:
-                grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
+            if bds_check[i] == 0:
+                grad[i] = (fn1 - fn2) / (2 * fn_plus_minus[i, 2])
+            elif bds_check[i] == 1:
+                grad[i] = (fn1 - fn) / fn_plus_minus[i, 2]
+            elif bds_check[i] == -1:
+                grad[i] = (fn - fn2) / fn_plus_minus[i, 2]
 
         return grad

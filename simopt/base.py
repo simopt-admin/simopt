@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-"""
-Summary
--------
-Provide base classes for solvers, problems, and models.
-"""
+"""Provide base classes for solvers, problems, and models."""
+
 from __future__ import annotations
 
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 
-class Solver(object):
+class Solver:
     """Base class to implement simulation-optimization solvers.
 
     Attributes
@@ -39,8 +37,11 @@ class Solver(object):
     ----------
     fixed_factors : dict
         Dictionary of user-specified solver factors.
+
     """
-    def __init__(self, fixed_factors: dict):
+
+    def __init__(self, fixed_factors: dict) -> None:
+        """Initialize a solver object."""
         # Set factors of the solver.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -48,7 +49,7 @@ class Solver(object):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: "Solver") -> bool:
+    def __eq__(self, other: Solver) -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
@@ -60,6 +61,7 @@ class Solver(object):
         -------
         bool
             True if the two solvers are equivalent, otherwise False.
+
         """
         if type(self) == type(other):
             if self.factors == other.factors:
@@ -71,17 +73,18 @@ class Solver(object):
             # print("Solver types do not match.")
             return False
 
-    def attach_rngs(self, rng_list: list["MRG32k3a"]):
+    def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the solver.
 
         Parameters
         ----------
         rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
             List of random-number generators used for the solver's internal purposes.
+
         """
         self.rng_list = rng_list
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """Run a single macroreplication of a solver on a problem.
 
         Notes
@@ -99,15 +102,17 @@ class Solver(object):
             List of solutions recommended throughout the budget.
         intermediate_budgets : list [int]
             List of intermediate budgets when recommended solutions changes.
+
         """
         raise NotImplementedError
 
-    def check_crn_across_solns(self):
+    def check_crn_across_solns(self) -> bool:
         """Check solver factor crn_across_solns.
 
         Notes
         -----
         Currently implemented to always return True. This factor must be a bool.
+
         """
         return True
 
@@ -123,6 +128,7 @@ class Solver(object):
         -------
         is_permissible : bool
             True if the solver factor is permissible, otherwise False.
+
         """
         is_permissible = True
         is_permissible *= self.check_factor_datatype(factor_name)
@@ -141,6 +147,7 @@ class Solver(object):
         -------
         is_simulatable : bool
             True if the solver factors are permissible, otherwise False.
+
         """
         return True
         # raise NotImplementedError
@@ -157,13 +164,16 @@ class Solver(object):
         -------
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
+
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name],
+            self.specifications[factor_name]["datatype"],
+        )
         return is_right_type
 
-    def create_new_solution(self, x: tuple, problem: "Problem") -> "Solution":
-        """Create a new solution object with attached RNGs primed
-        to simulate replications.
+    def create_new_solution(self, x: tuple, problem: Problem) -> Solution:
+        """Create a new solution object with attached RNGs primed to simulate replications.
 
         Parameters
         ----------
@@ -176,10 +186,13 @@ class Solver(object):
         -------
         new_solution : ``base.Solution``
             New solution.
+
         """
         # Create new solution with attached rngs.
         new_solution = Solution(x, problem)
-        new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+        new_solution.attach_rngs(
+            rng_list=self.solution_progenitor_rngs, copy=True
+        )
         # Manipulate progenitor rngs to prepare for next new solution.
         if not self.factors["crn_across_solns"]:  # If CRN are not used ...
             # ...advance each rng to start of the substream = current substream + # of model RNGs.
@@ -188,23 +201,26 @@ class Solver(object):
                     rng.advance_substream()
         return new_solution
 
-    def rebase(self, n_reps: int):
+    def rebase(self, n_reps: int) -> None:
         """Rebase the progenitor rngs to start at a later subsubstream index.
 
         Parameters
         ----------
         n_reps : int
             Substream index to skip to.
+
         """
         new_rngs = []
         for rng in self.solution_progenitor_rngs:
             stream_index = rng.s_ss_sss_index[0]
             substream_index = rng.s_ss_sss_index[1]
-            new_rngs.append(MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps]))
+            new_rngs.append(
+                MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps])
+            )
         self.solution_progenitor_rngs = new_rngs
 
 
-class Problem(object):
+class Problem:
     """Base class to implement simulation-optimization problems.
 
     Attributes
@@ -259,8 +275,11 @@ class Problem(object):
         Dictionary of user-specified problem factors.
     model_fixed_factors : dict
         Subset of user-specified non-decision factors to pass through to the model.
+
     """
-    def __init__(self, fixed_factors: dict, model_fixed_factors: dict):
+
+    def __init__(self, fixed_factors: dict, model_fixed_factors: dict) -> None:
+        """Initialize a problem object."""
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -275,7 +294,7 @@ class Problem(object):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
-    def __eq__(self, other: "Problem") -> bool:
+    def __eq__(self, other: Problem) -> bool:
         """Check if two problems are equivalent.
 
         Parameters
@@ -287,13 +306,19 @@ class Problem(object):
         -------
         bool
             True if the two problems are equivalent, otherwise False.
+
         """
         if type(self) == type(other):
             if self.factors == other.factors:
                 # Check if non-decision-variable factors of models are the same.
-                non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
+                non_decision_factors = (
+                    set(self.model.factors.keys()) - self.model_decision_factors
+                )
                 for factor in non_decision_factors:
-                    if self.model.factors[factor] != other.model.factors[factor]:
+                    if (
+                        self.model.factors[factor]
+                        != other.model.factors[factor]
+                    ):
                         # print("Model factors do not match")
                         return False
                 return True
@@ -304,28 +329,32 @@ class Problem(object):
             # print("Problem types do not match.")
             return False
 
-    def check_initial_solution(self):
+    def check_initial_solution(self) -> bool:
         """Check if initial solution is feasible and of correct dimension.
 
         Returns
         -------
         bool
             True if initial solution is feasible and of correct dimension, otherwise False.
+
         """
         if len(self.factors["initial_solution"]) != self.dim:
             return False
-        elif not self.check_deterministic_constraints(x=self.factors["initial_solution"]):
+        elif not self.check_deterministic_constraints(
+            x=self.factors["initial_solution"]
+        ):
             return False
         else:
             return True
 
-    def check_budget(self):
+    def check_budget(self) -> bool:
         """Check if budget is strictly positive.
 
         Returns
         -------
         bool
             True if budget is strictly positive, otherwise False.
+
         """
         return self.factors["budget"] > 0
 
@@ -341,6 +370,7 @@ class Problem(object):
         -------
         is_permissible : bool
             True if problem factor is permissible, otherwise False.
+
         """
         is_permissible = True
         is_permissible *= self.check_factor_datatype(factor_name)
@@ -359,6 +389,7 @@ class Problem(object):
         -------
         is_simulatable : bool
             True if problem factors are permissible, otherwise False.
+
         """
         return True
         # raise NotImplementedError
@@ -375,11 +406,15 @@ class Problem(object):
         -------
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
+
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name],
+            self.specifications[factor_name]["datatype"],
+        )
         return is_right_type
 
-    def attach_rngs(self, rng_list: list["MRG32k3a"]):
+    def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the problem.
 
         Parameters
@@ -387,12 +422,12 @@ class Problem(object):
         rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
             List of random-number generators used to generate a random initial solution
             or a random problem instance.
+
         """
         self.rng_list = rng_list
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys.
+        """Convert a vector of variables to a dictionary with factor keys.
 
         Notes
         -----
@@ -407,12 +442,12 @@ class Problem(object):
         -------
         factor_dict : dict
             Dictionary with factor keys and associated values.
+
         """
         raise NotImplementedError
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
         Notes
         -----
@@ -427,6 +462,7 @@ class Problem(object):
         -------
         vector : tuple
             Vector of values associated with decision variables.
+
         """
         raise NotImplementedError
 
@@ -448,12 +484,12 @@ class Problem(object):
         -------
         vector : tuple
             Vector of partial derivatives associated with decision variables.
+
         """
         return self.factor_dict_to_vector(factor_dict)
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
         Notes
         -----
@@ -468,12 +504,14 @@ class Problem(object):
         -------
         objectives : tuple
             Vector of objectives.
+
         """
         raise NotImplementedError
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector
-        of gradients.
+    def response_dict_to_objectives_gradients(
+        self, response_dict: dict
+    ) -> tuple:
+        """Convert a dictionary with response keys to a vector of gradients.
 
         Notes
         -----
@@ -490,12 +528,12 @@ class Problem(object):
         -------
         vector : tuple
             Vector of gradients.
+
         """
         return self.response_dict_to_objectives(response_dict)
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0.
+        """Convert a dictionary with response keys to a vector of left-hand sides of stochastic constraints: E[Y] <= 0.
 
         Notes
         -----
@@ -510,11 +548,14 @@ class Problem(object):
         -------
         stoch_constraints : tuple
             Vector of LHSs of stochastic constraints.
+
         """
         stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Parameters
@@ -528,14 +569,18 @@ class Problem(object):
             Vector of deterministic components of objectives.
         det_objectives_gradients : tuple
             Vector of gradients of deterministic components of objectives.
+
         """
         det_objectives = (0,) * self.n_objectives
-        det_objectives_gradients = tuple([(0,) * self.dim for _ in range(self.n_objectives)])
+        det_objectives_gradients = tuple(
+            [(0,) * self.dim for _ in range(self.n_objectives)]
+        )
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints
-        for a solution `x`.
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints for a solution `x`.
 
         Parameters
         ----------
@@ -550,14 +595,16 @@ class Problem(object):
         det_stoch_constraints_gradients : tuple
             Vector of gradients of deterministic components of
             stochastic constraints.
+
         """
         det_stoch_constraints = (0,) * self.n_stochastic_constraints
-        det_stoch_constraints_gradients = tuple([(0,) * self.dim for _ in range(self.n_stochastic_constraints)])
+        det_stoch_constraints_gradients = tuple(
+            [(0,) * self.dim for _ in range(self.n_stochastic_constraints)]
+        )
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Parameters
         ----------
@@ -569,11 +616,19 @@ class Problem(object):
         satisfies : bool
             True if solution `x` satisfies the deterministic constraints,
             otherwise False.
+
         """
         # Check box constraints.
-        return bool(np.prod([self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx] for idx in range(len(x))]))
+        return bool(
+            np.prod(
+                [
+                    self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx]
+                    for idx in range(len(x))
+                ]
+            )
+        )
 
-    def get_random_solution(self, rand_sol_rng: "MRG32k3a") -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """Generate a random solution for starting or restarting solvers.
 
         Parameters
@@ -585,10 +640,11 @@ class Problem(object):
         -------
         x : tuple
             vector of decision variables
+
         """
         pass
 
-    def simulate(self, solution: "Solution", m: int = 1):
+    def simulate(self, solution: Solution, m: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.
 
         Notes
@@ -602,10 +658,11 @@ class Problem(object):
             Solution to evalaute.
         m : int, default=1
             Number of replications to simulate at `x`.
+
         """
         if m < 1:
-            print('--* Error: Number of replications must be at least 1. ')
-            print('--* Aborting. ')
+            print("--* Error: Number of replications must be at least 1. ")
+            print("--* Aborting. ")
         else:
             # Pad numpy arrays if necessary.
             if solution.n_reps + m > solution.storage_size:
@@ -617,20 +674,45 @@ class Problem(object):
                 responses, gradients = self.model.replicate(solution.rng_list)
                 # Convert gradient subdictionaries to vectors mapping to decision variables.
                 if self.gradient_available:
-                    vector_gradients = {keys: self.factor_dict_to_vector_gradients(gradient_dict) for (keys, gradient_dict) in gradients.items()}
+                    vector_gradients = {
+                        keys: self.factor_dict_to_vector_gradients(
+                            gradient_dict
+                        )
+                        for (keys, gradient_dict) in gradients.items()
+                    }
                     # vector_gradients = {keys: self.factor_dict_to_vector(gradient_dict) for (keys, gradient_dict) in gradients.items()}
                 # Convert responses and gradients to objectives and gradients and add
                 # to those of deterministic components of objectives.
-                solution.objectives[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_objectives(responses), solution.det_objectives)]
+                solution.objectives[solution.n_reps] = [
+                    sum(pairs)
+                    for pairs in zip(
+                        self.response_dict_to_objectives(responses),
+                        solution.det_objectives, strict=False,
+                    )
+                ]
                 if self.gradient_available:
                     # print(self.response_dict_to_objectives_gradients(vector_gradients))
                     # print(solution.det_objectives_gradients)
-                    solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives_gradients(vector_gradients), solution.det_objectives_gradients)]
+                    solution.objectives_gradients[solution.n_reps] = [
+                        [sum(pairs) for pairs in zip(stoch_obj, det_obj, strict=False)]
+                        for stoch_obj, det_obj in zip(
+                            self.response_dict_to_objectives_gradients(
+                                vector_gradients
+                            ),
+                            solution.det_objectives_gradients, strict=False,
+                        )
+                    ]
                     # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
                 if self.n_stochastic_constraints > 0:
                     # Convert responses and gradients to stochastic constraints and gradients and add
                     # to those of deterministic components of stochastic constraints.
-                    solution.stoch_constraints[solution.n_reps] = [sum(pairs) for pairs in zip(self.response_dict_to_stoch_constraints(responses), solution.det_stoch_constraints)]
+                    solution.stoch_constraints[solution.n_reps] = [
+                        sum(pairs)
+                        for pairs in zip(
+                            self.response_dict_to_stoch_constraints(responses),
+                            solution.det_stoch_constraints, strict=False,
+                        )
+                    ]
                     # solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
                 # Increment counter.
                 solution.n_reps += 1
@@ -640,7 +722,7 @@ class Problem(object):
             # Update summary statistics.
             solution.recompute_summary_statistics()
 
-    def simulate_up_to(self, solutions: "Solution", n_reps: int):
+    def simulate_up_to(self, solutions: Solution, n_reps: int) -> None:
         """Simulate a set of solutions up to a given number of replications.
 
         Parameters
@@ -649,6 +731,7 @@ class Problem(object):
             A set of ``base.Solution`` objects.
         n_reps : int
             Common number of replications to simulate each solution up to.
+
         """
         for solution in solutions:
             # If more replications needed, take them.
@@ -657,9 +740,8 @@ class Problem(object):
                 self.simulate(solution=solution, m=n_reps_to_take)
 
 
-class Model(object):
-    """Base class to implement simulation models (models) featured in
-    simulation-optimization problems.
+class Model:
+    """Base class to implement simulation models (models) featured in simulation-optimization problems.
 
     Attributes
     ----------
@@ -680,8 +762,11 @@ class Model(object):
     ----------
     fixed_factors : dict
         Dictionary of user-specified model factors.
+
     """
-    def __init__(self, fixed_factors: dict):
+
+    def __init__(self, fixed_factors: dict) -> None:
+        """Initialize a model object."""
         # Set factors of the simulation model.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -689,7 +774,7 @@ class Model(object):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: "Model") -> bool:
+    def __eq__(self, other: Model) -> bool:
         """Check if two models are equivalent.
 
         Parameters
@@ -701,6 +786,7 @@ class Model(object):
         -------
         bool
             True if the two models are equivalent, otherwise False.
+
         """
         if type(self) == type(other):
             if self.factors == other.factors:
@@ -724,6 +810,7 @@ class Model(object):
         -------
         is_simulatable : bool
             True if model specified by factors is simulatable, otherwise False.
+
         """
         is_simulatable = True
         is_simulatable *= self.check_factor_datatype(factor_name)
@@ -742,22 +829,27 @@ class Model(object):
         -------
         is_simulatable : bool
             True if model specified by factors is simulatable, otherwise False.
+
         """
         return True
         # raise NotImplementedError
 
-    def check_factor_datatype(self, factor_name) -> bool:
+    def check_factor_datatype(self, factor_name: str) -> bool:
         """Determine if a factor's data type matches its specification.
 
         Returns
         -------
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
+
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        is_right_type = isinstance(
+            self.factors[factor_name],
+            self.specifications[factor_name]["datatype"],
+        )
         return is_right_type
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Parameters
@@ -771,13 +863,13 @@ class Model(object):
             Performance measures of interest.
         gradients : dict [dict]
             Gradient estimate for each response.
+
         """
         raise NotImplementedError
 
 
-class Solution(object):
-    """Base class for solutions represented as vectors of decision variables
-    and dictionaries of decision factors.
+class Solution:
+    """Base class for solutions represented as vectors of decision variables and dictionaries of decision factors.
 
     Attributes
     ----------
@@ -823,23 +915,38 @@ class Solution(object):
         Vector of decision variables.
     problem : ``base.Problem``
         Problem to which `x` is a solution.
+
     """
-    def __init__(self, x: tuple, problem: "Problem"):
+
+    def __init__(self, x: tuple, problem: Problem) -> None:
+        """Initialize a solution object."""
         super().__init__()
         self.x = x
         self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
-        self.det_objectives, self.det_objectives_gradients = problem.deterministic_objectives_and_gradients(self.x)
-        self.det_stoch_constraints, self.det_stoch_constraints_gradients = problem.deterministic_stochastic_constraints_and_gradients(self.x)
-        init_size = 100  # Initialize numpy arrays to store up to 100 replications.
+        self.det_objectives, self.det_objectives_gradients = (
+            problem.deterministic_objectives_and_gradients(self.x)
+        )
+        self.det_stoch_constraints, self.det_stoch_constraints_gradients = (
+            problem.deterministic_stochastic_constraints_and_gradients(self.x)
+        )
+        init_size = (
+            100  # Initialize numpy arrays to store up to 100 replications.
+        )
         self.storage_size = init_size
         # Raw data.
         self.objectives = np.zeros((init_size, problem.n_objectives))
-        self.objectives_gradients = np.zeros((init_size, problem.n_objectives, problem.dim))
+        self.objectives_gradients = np.zeros(
+            (init_size, problem.n_objectives, problem.dim)
+        )
         if problem.n_stochastic_constraints > 0:
-            self.stoch_constraints = np.zeros((init_size, problem.n_stochastic_constraints))
-            self.stoch_constraints_gradients = np.zeros((init_size, problem.n_stochastic_constraints, problem.dim))
+            self.stoch_constraints = np.zeros(
+                (init_size, problem.n_stochastic_constraints)
+            )
+            self.stoch_constraints_gradients = np.zeros(
+                (init_size, problem.n_stochastic_constraints, problem.dim)
+            )
         else:
             self.stoch_constraints = None
             self.stoch_constraints_gradients = None
@@ -861,7 +968,7 @@ class Solution(object):
         # self.stoch_constraints_gradients_stderr = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_cov = np.full((problem.n_stochastic_constraints, problem.dim, problem.dim), np.nan)
 
-    def attach_rngs(self, rng_list: list["MRG32k3a"], copy: bool = True):
+    def attach_rngs(self, rng_list: list[MRG32k3a], copy: bool = True) -> None:
         """Attach a list of random-number generators to the solution.
 
         Parameters
@@ -870,19 +977,21 @@ class Solution(object):
             List of random-number generators used to run simulation replications.
         copy : bool, default=True
             True if we want to copy the ``mrg32k3a.mrg32k3a.MRG32k3a`` objects, otherwise False.
+
         """
         if copy:
             self.rng_list = [deepcopy(rng) for rng in rng_list]
         else:
             self.rng_list = rng_list
 
-    def pad_storage(self, m: int):
+    def pad_storage(self, m: int) -> None:
         """Append zeros to numpy arrays for summary statistics.
 
         Parameters
         ----------
         m : int
             Number of replications to simulate.
+
         """
         # Size of data storage.
         n_objectives = len(self.det_objectives)
@@ -891,36 +1000,83 @@ class Solution(object):
         # If more space needed, append in multiples of 100.
         pad_size = int(np.ceil(m / base_pad_size)) * base_pad_size
         self.storage_size += pad_size
-        self.objectives = np.concatenate((self.objectives, np.zeros((pad_size, n_objectives))))
-        self.objectives_gradients = np.concatenate((self.objectives_gradients, np.zeros((pad_size, n_objectives, self.dim))))
+        self.objectives = np.concatenate(
+            (self.objectives, np.zeros((pad_size, n_objectives)))
+        )
+        self.objectives_gradients = np.concatenate(
+            (
+                self.objectives_gradients,
+                np.zeros((pad_size, n_objectives, self.dim)),
+            )
+        )
         if self.stoch_constraints is not None:
             n_stochastic_constraints = len(self.det_stoch_constraints)
-            self.stoch_constraints = np.concatenate((self.stoch_constraints, np.zeros((pad_size, n_stochastic_constraints))))
-            self.stoch_constraints_gradients = np.concatenate((self.stoch_constraints_gradients, np.zeros((pad_size, n_stochastic_constraints, self.dim))))
+            self.stoch_constraints = np.concatenate(
+                (
+                    self.stoch_constraints,
+                    np.zeros((pad_size, n_stochastic_constraints)),
+                )
+            )
+            self.stoch_constraints_gradients = np.concatenate(
+                (
+                    self.stoch_constraints_gradients,
+                    np.zeros((pad_size, n_stochastic_constraints, self.dim)),
+                )
+            )
 
-    def recompute_summary_statistics(self):
+    def recompute_summary_statistics(self) -> None:
         """Recompute summary statistics of the solution.
 
         Notes
         -----
         Statistics for gradients of objectives and stochastic constraint LHSs
         are temporarily commented out. Under development.
+
         """
-        self.objectives_mean = np.mean(self.objectives[:self.n_reps], axis=0)
+        self.objectives_mean = np.mean(self.objectives[: self.n_reps], axis=0)
         if self.n_reps > 1:
-            self.objectives_var = np.var(self.objectives[:self.n_reps], axis=0, ddof=1)
-            self.objectives_stderr = np.std(self.objectives[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.objectives_cov = np.cov(self.objectives[:self.n_reps], rowvar=False, ddof=1)
-        self.objectives_gradients_mean = np.mean(self.objectives_gradients[:self.n_reps], axis=0)
+            self.objectives_var = np.var(
+                self.objectives[: self.n_reps], axis=0, ddof=1
+            )
+            self.objectives_stderr = np.std(
+                self.objectives[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.objectives_cov = np.cov(
+                self.objectives[: self.n_reps], rowvar=False, ddof=1
+            )
+        self.objectives_gradients_mean = np.mean(
+            self.objectives_gradients[: self.n_reps], axis=0
+        )
         if self.n_reps > 1:
-            self.objectives_gradients_var = np.var(self.objectives_gradients[:self.n_reps], axis=0, ddof=1)
-            self.objectives_gradients_stderr = np.std(self.objectives_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.objectives_gradients_cov = np.array([np.cov(self.objectives_gradients[:self.n_reps, obj], rowvar=False, ddof=1) for obj in range(len(self.det_objectives))])
+            self.objectives_gradients_var = np.var(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            )
+            self.objectives_gradients_stderr = np.std(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.objectives_gradients_cov = np.array(
+                [
+                    np.cov(
+                        self.objectives_gradients[: self.n_reps, obj],
+                        rowvar=False,
+                        ddof=1,
+                    )
+                    for obj in range(len(self.det_objectives))
+                ]
+            )
         if self.stoch_constraints is not None:
-            self.stoch_constraints_mean = np.mean(self.stoch_constraints[:self.n_reps], axis=0)
-            self.stoch_constraints_var = np.var(self.stoch_constraints[:self.n_reps], axis=0, ddof=1)
-            self.stoch_constraints_stderr = np.std(self.stoch_constraints[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            self.stoch_constraints_cov = np.cov(self.stoch_constraints[:self.n_reps], rowvar=False, ddof=1)
+            self.stoch_constraints_mean = np.mean(
+                self.stoch_constraints[: self.n_reps], axis=0
+            )
+            self.stoch_constraints_var = np.var(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            )
+            self.stoch_constraints_stderr = np.std(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            self.stoch_constraints_cov = np.cov(
+                self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
+            )
             # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
             # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
             # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
