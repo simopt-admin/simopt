@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate MLE estimation for the parameters of a two-dimensional gamma distribution.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/paramesti.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -14,11 +14,10 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class ParameterEstimation(Model):
-    """
-    A model that simulates MLE estimation for the parameters of
+    """A model that simulates MLE estimation for the parameters of
     a two-dimensional gamma distribution.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -33,15 +32,17 @@ class ParameterEstimation(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "PARAMESTI"
         self.n_rngs = 2
@@ -50,18 +51,15 @@ class ParameterEstimation(Model):
             "xstar": {
                 "description": "x^*, the unknown parameter that maximizes g(x)",
                 "datatype": list,
-                "default": [2, 5]
+                "default": [2, 5],
             },
             "x": {
                 "description": "x, variable in pdf",
                 "datatype": list,
-                "default": [1, 1]
-            }
+                "default": [1, 1],
+            },
         }
-        self.check_factor_list = {
-            "xstar": self.check_xstar,
-            "x": self.check_x
-        }
+        self.check_factor_list = {"xstar": self.check_xstar, "x": self.check_x}
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
@@ -80,35 +78,47 @@ class ParameterEstimation(Model):
         else:
             return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
             "loglik" = the corresponding loglikelihood
         gradients : dict of dicts
             gradient estimates for each response
+
         """
         # Designate separate random number generators.
         # Outputs will be coupled when generating Y_j's.
         y2_rng = rng_list[0]
         y1_rng = rng_list[1]
         # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
-        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
+        y2 = y2_rng.gammavariate(self.factors["xstar"][1], 1)
+        y1 = y1_rng.gammavariate(self.factors["xstar"][0] * y2, 1)
         # Compute Log Likelihood
-        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
+        loglik = (
+            -y1
+            - y2
+            + (self.factors["x"][0] * y2 - 1) * np.log(y1)
+            + (self.factors["x"][1] - 1) * np.log(y2)
+            - np.log(math.gamma(self.factors["x"][0] * y2))
+            - np.log(math.gamma(self.factors["x"][1]))
+        )
         # Compose responses and gradients.
-        responses = {'loglik': loglik}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {"loglik": loglik}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -120,10 +130,9 @@ Minimize the log likelihood of 2-D gamma random variable.
 
 
 class ParamEstiMaxLogLik(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -173,7 +182,7 @@ class ParamEstiMaxLogLik(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -182,11 +191,18 @@ class ParamEstiMaxLogLik(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "PARAMESTI-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "PARAMESTI-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.dim = 2
         self.n_objectives = 1
@@ -204,17 +220,17 @@ class ParamEstiMaxLogLik(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": list,
-                "default": (1, 1)
+                "default": (1, 1),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -223,109 +239,114 @@ class ParamEstiMaxLogLik(Problem):
         self.optimal_value = None
 
     def vector_to_factor_dict(self, vector):
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "x": vector[:]
-        }
+        factor_dict = {"x": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = tuple(factor_dict["x"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (response_dict["loglik"],)
         return objectives
 
     def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         return True
 
     def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
-        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.uniform(
+                    self.lower_bounds[idx], self.upper_bounds[idx]
+                )
+                for idx in range(self.dim)
+            ]
+        )
         return x

@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate contamination rates.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/contam.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,13 +13,12 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class Contamination(Model):
-    """
-    A model that simulates a contamination problem with a
+    """A model that simulates a contamination problem with a
     beta distribution.
     Returns the probability of violating contamination upper limit
     in each level of supply chain.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -34,15 +33,17 @@ class Contamination(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "CONTAM"
         self.n_rngs = 2
@@ -51,43 +52,43 @@ class Contamination(Model):
             "contam_rate_alpha": {
                 "description": "alpha parameter of beta distribution for growth rate of contamination at each stage",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "contam_rate_beta": {
                 "description": "beta parameter of beta distribution for growth rate of contamination at each stage",
                 "datatype": float,
-                "default": 17 / 3
+                "default": 17 / 3,
             },
             "restore_rate_alpha": {
                 "description": "alpha parameter of beta distribution for rate that contamination decreases by after prevention effort",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "restore_rate_beta": {
                 "description": "beta parameter of beta distribution for rate that contamination decreases by after prevention effort",
                 "datatype": float,
-                "default": 3 / 7
+                "default": 3 / 7,
             },
             "initial_rate_alpha": {
                 "description": "alpha parameter of beta distribution for initial contamination fraction",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "initial_rate_beta": {
                 "description": "beta parameter of beta distribution for initial contamination fraction",
                 "datatype": float,
-                "default": 30.0
+                "default": 30.0,
             },
             "stages": {
                 "description": "stage of food supply chain",
                 "datatype": int,
-                "default": 5
+                "default": 5,
             },
             "prev_decision": {
                 "description": "prevention decision",
                 "datatype": tuple,
-                "default": (0, 0, 0, 0, 0)
-            }
+                "default": (0, 0, 0, 0, 0),
+            },
         }
         self.check_factor_list = {
             "contam_rate_alpha": self.check_contam_rate_alpha,
@@ -97,7 +98,7 @@ class Contamination(Model):
             "initial_rate_alpha": self.check_initial_rate_alpha,
             "initial_rate_beta": self.check_initial_rate_beta,
             "stages": self.check_stages,
-            "prev_decision": self.check_prev_decision
+            "prev_decision": self.check_prev_decision,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -133,22 +134,22 @@ class Contamination(Model):
         # Check for matching number of stages.
         return len(self.factors["prev_decision"]) == self.factors["stages"]
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
             "level" = a list of contamination levels over time
         gradients : dict of dicts
             gradient estimates for each response
+
         """
         # Designate separate random number generators.
         # Outputs will be coupled when generating demand.
@@ -156,15 +157,29 @@ class Contamination(Model):
         restore_rng = rng_list[1]
         # Generate rates with beta distribution.
         X = np.zeros(self.factors["stages"])
-        X[0] = restore_rng.betavariate(alpha=self.factors["initial_rate_alpha"], beta=self.factors["initial_rate_beta"])
+        X[0] = restore_rng.betavariate(
+            alpha=self.factors["initial_rate_alpha"],
+            beta=self.factors["initial_rate_beta"],
+        )
         u = self.factors["prev_decision"]
         for i in range(1, self.factors["stages"]):
-            c = contam_rng.betavariate(alpha=self.factors["contam_rate_alpha"], beta=self.factors["contam_rate_beta"])
-            r = restore_rng.betavariate(alpha=self.factors["restore_rate_alpha"], beta=self.factors["restore_rate_beta"])
+            c = contam_rng.betavariate(
+                alpha=self.factors["contam_rate_alpha"],
+                beta=self.factors["contam_rate_beta"],
+            )
+            r = restore_rng.betavariate(
+                alpha=self.factors["restore_rate_alpha"],
+                beta=self.factors["restore_rate_beta"],
+            )
             X[i] = c * (1 - u[i]) * (1 - X[i - 1]) + (1 - r * u[i]) * X[i - 1]
         # Compose responses and gradients.
-        responses = {'level': X}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {"level": X}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -176,10 +191,9 @@ Minimize the (deterministic) total cost of prevention efforts.
 
 
 class ContaminationTotalCostDisc(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -229,7 +243,7 @@ class ContaminationTotalCostDisc(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -238,11 +252,18 @@ class ContaminationTotalCostDisc(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "CONTAM-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "CONTAM-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.n_objectives = 1
         self.minmax = (-1,)
@@ -258,28 +279,28 @@ class ContaminationTotalCostDisc(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1)
+                "default": (1, 1, 1, 1, 1),
             },
             "budget": {
                 "description": "max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "prev_cost": {
                 "description": "cost of prevention in each stage",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1]
+                "default": [1, 1, 1, 1, 1],
             },
             "error_prob": {
                 "description": "allowable error probability in each stage",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2]
+                "default": [0.2, 0.2, 0.2, 0.2, 0.2],
             },
             "upper_thres": {
                 "description": "upper limit of amount of contamination in each stage",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1]
-            }
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1],
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -316,38 +337,36 @@ class ContaminationTotalCostDisc(Problem):
         return len(self.factors["upper_thres"]) == self.dim
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "prev_decision": vector[:]
-        }
+        factor_dict = {"prev_decision": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = tuple(factor_dict["prev_decision"])
         return vector
@@ -370,29 +389,32 @@ class ContaminationTotalCostDisc(Problem):
         -------
         vector : tuple
             Vector of partial derivatives associated with decision variables.
+
         """
         vector = (np.nan * len(self.model.factors["prev_decision"]),)
         return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (0,)
         return objectives
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(
+        self, response_dict: dict
+    ) -> tuple:
         """Convert a dictionary with response keys to a vector
         of gradients.
 
@@ -411,106 +433,112 @@ class ContaminationTotalCostDisc(Problem):
         -------
         tuple
             Vector of gradients.
+
         """
         return ((0,) * len(self.model.factors["prev_decision"]),)
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         under_control = response_dict["level"] <= self.factors["upper_thres"]
         stoch_constraints = tuple([-1 * z for z in under_control])
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
+
         """
-        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
+        det_stoch_constraints = tuple(
+            np.ones(self.dim) - self.factors["error_prob"]
+        )
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (np.dot(self.factors["prev_cost"], x),)
         det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         return np.all(x >= 0) & np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         return tuple([rand_sol_rng.randint(0, 1) for _ in range(self.dim)])
 
 
 class ContaminationTotalCostCont(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -560,7 +588,7 @@ class ContaminationTotalCostCont(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -569,11 +597,18 @@ class ContaminationTotalCostCont(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "CONTAM-2", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "CONTAM-2",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.n_objectives = 1
         self.minmax = (-1,)
@@ -589,28 +624,28 @@ class ContaminationTotalCostCont(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1)
+                "default": (1, 1, 1, 1, 1),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "prev_cost": {
                 "description": "cost of prevention",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1]
+                "default": [1, 1, 1, 1, 1],
             },
             "error_prob": {
                 "description": "error probability",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2]
+                "default": [0.2, 0.2, 0.2, 0.2, 0.2],
             },
             "upper_thres": {
                 "description": "upper limit of amount of contamination",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1]
-            }
+                "default": [0.1, 0.1, 0.1, 0.1, 0.1],
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -666,38 +701,36 @@ class ContaminationTotalCostCont(Problem):
             return True
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "prev_decision": vector[:]
-        }
+        factor_dict = {"prev_decision": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = tuple(factor_dict["prev_decision"])
         return vector
@@ -720,29 +753,32 @@ class ContaminationTotalCostCont(Problem):
         -------
         vector : tuple
             Vector of partial derivatives associated with decision variables.
+
         """
         vector = (np.nan * len(self.model.factors["prev_decision"]),)
         return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (0,)
         return objectives
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(
+        self, response_dict: dict
+    ) -> tuple:
         """Convert a dictionary with response keys to a vector
         of gradients.
 
@@ -761,96 +797,105 @@ class ContaminationTotalCostCont(Problem):
         -------
         tuple
             Vector of gradients.
+
         """
         return ((0,) * len(self.model.factors["prev_decision"]),)
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         under_control = response_dict["level"] <= self.factors["upper_thres"]
         stoch_constraints = tuple([-1 * z for z in under_control])
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
+
         """
-        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
-        det_stoch_constraints_gradients = ((0,),)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints = tuple(
+            np.ones(self.dim) - self.factors["error_prob"]
+        )
+        det_stoch_constraints_gradients = (
+            (0,),
+        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (np.dot(self.factors["prev_cost"], x),)
         det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         return np.all(x >= 0) & np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         return tuple([rand_sol_rng.random() for _ in range(self.dim)])

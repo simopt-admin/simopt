@@ -52,6 +52,26 @@ class STRONG(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "box"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "continuous"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "STRONG", fixed_factors: dict | None = None
     ) -> None:
@@ -60,10 +80,6 @@ class STRONG(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -557,7 +573,13 @@ class STRONG(Solver):
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         return recommended_solns, intermediate_budgets
 
-    def cauchy_point(self, grad: np.array, hessian: np.array, new_x: np.array, problem: Problem) -> np.array:
+    def cauchy_point(
+        self,
+        grad: np.array,
+        hessian: np.array,
+        new_x: np.array,
+        problem: Problem,
+    ) -> np.array:
         """Find the Cauchy point based on the gradient and Hessian matrix.
 
         Arguments:
@@ -593,7 +615,13 @@ class STRONG(Solver):
         cauchy_x = self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
         return cauchy_x
 
-    def check_cons(self, candidate_x: np.array, new_x: np.array, lower_bound: np.array, upper_bound: np.array) -> np.array:
+    def check_cons(
+        self,
+        candidate_x: np.array,
+        new_x: np.array,
+        lower_bound: np.array,
+        upper_bound: np.array,
+    ) -> np.array:
         """Check the feasibility of the Cauchy point and update the point accordingly.
 
         Arguments:
@@ -628,7 +656,14 @@ class STRONG(Solver):
         modified_x = new_x + t2 * step_v
         return modified_x
 
-    def finite_diff(self, new_solution: Solution, bds_check: np.array, stage: int, problem: Problem, n_r: int) -> tuple[np.array, np.array]:
+    def finite_diff(
+        self,
+        new_solution: Solution,
+        bds_check: np.array,
+        stage: int,
+        problem: Problem,
+        n_r: int,
+    ) -> tuple[np.array, np.array]:
         """Finite difference for calculating gradients and BFGS for calculating Hessian matrix.
 
         Arguments:
@@ -811,7 +846,10 @@ class STRONG(Solver):
                         )
                         # Compute second order gradient.
                         hessian[i, j] = (
-                            fn5 - fn_plus_minus[j, 0] - fn6 + fn_plus_minus[j, 1]
+                            fn5
+                            - fn_plus_minus[j, 0]
+                            - fn6
+                            + fn_plus_minus[j, 1]
                         ) / (
                             2
                             * fn_plus_minus[i, 2]
@@ -847,7 +885,10 @@ class STRONG(Solver):
                         )
                         # Compute second order gradient.
                         hessian[i, j] = (
-                            fn5 - fn_plus_minus[i, 0] - fn6 + fn_plus_minus[i, 1]
+                            fn5
+                            - fn_plus_minus[i, 0]
+                            - fn6
+                            + fn_plus_minus[i, 1]
                         ) / (
                             2
                             * fn_plus_minus[i, 2]
@@ -873,7 +914,10 @@ class STRONG(Solver):
                             )
                             # Compute second order gradient.
                             hessian[i, j] = (
-                                fn5 - fn_plus_minus[i, 0] - fn_plus_minus[j, 0] + fn
+                                fn5
+                                - fn_plus_minus[i, 0]
+                                - fn_plus_minus[j, 0]
+                                + fn
                             ) / (fn_plus_minus[i, 2] * fn_plus_minus[j, 2])
                             hessian[j, i] = hessian[i, j]
                         else:
@@ -893,7 +937,10 @@ class STRONG(Solver):
                             )
                             # Compute second order gradient.
                             hessian[i, j] = (
-                                fn_plus_minus[i, 0] - fn5 - fn + fn_plus_minus[j, 1]
+                                fn_plus_minus[i, 0]
+                                - fn5
+                                - fn
+                                + fn_plus_minus[j, 1]
                             ) / (fn_plus_minus[i, 2] * fn_plus_minus[j, 2])
                             hessian[j, i] = hessian[i, j]
                     elif bds_check[i] == -1:
@@ -914,7 +961,10 @@ class STRONG(Solver):
                             )
                             # Compute second order gradient.
                             hessian[i, j] = (
-                                fn_plus_minus[j, 0] - fn - fn5 + fn_plus_minus[i, 1]
+                                fn_plus_minus[j, 0]
+                                - fn
+                                - fn5
+                                + fn_plus_minus[i, 1]
                             ) / (fn_plus_minus[i, 2] * fn_plus_minus[j, 2])
                             hessian[j, i] = hessian[i, j]
                         else:
@@ -934,7 +984,10 @@ class STRONG(Solver):
                             )
                             # Compute second order gradient.
                             hessian[i, j] = (
-                                fn - fn_plus_minus[j, 1] - fn_plus_minus[i, 1] + fn5
+                                fn
+                                - fn_plus_minus[j, 1]
+                                - fn_plus_minus[i, 1]
+                                + fn5
                             ) / (fn_plus_minus[i, 2] * fn_plus_minus[j, 2])
                             hessian[j, i] = hessian[i, j]
         return grad, hessian

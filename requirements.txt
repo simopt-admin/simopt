@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+pandas
+seaborn
+setuptools
+sphinx
+mrg32k3a

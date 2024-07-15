@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate multiple periods of arrival and seating at a restaurant.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/tableallocation.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,8 +13,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class TableAllocation(Model):
-    """
-    A model that simulates a table capacity allocation problem at a restaurant
+    """A model that simulates a table capacity allocation problem at a restaurant
     with a homogenous Poisson arrvial process and exponential service times.
     Returns expected maximum revenue.
 
@@ -53,10 +52,12 @@ class TableAllocation(Model):
         ``num_tables``
             Number of tables of each capacity (`int`)
 
-    See also
+    See Also
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "TABLEALLOCATION"
         self.n_rngs = 3
@@ -66,38 +67,38 @@ class TableAllocation(Model):
             "n_hours": {
                 "description": "number of hours to simulate",
                 "datatype": float,
-                "default": 5.0
+                "default": 5.0,
             },
             "capacity": {
                 "description": "maximum capacity of restaurant",
                 "datatype": int,
-                "default": 80
+                "default": 80,
             },
             "table_cap": {
                 "description": "seating capacity of each type of table",
                 "datatype": list,
-                "default": [2, 4, 6, 8]
+                "default": [2, 4, 6, 8],
             },
             "lambda": {
                 "description": "average number of arrivals per hour",
                 "datatype": list,
-                "default": [3, 6, 3, 3, 2, 4 / 3, 6 / 5, 1]
+                "default": [3, 6, 3, 3, 2, 4 / 3, 6 / 5, 1],
             },
             "service_time_means": {
                 "description": "mean service time (in minutes)",
                 "datatype": list,
-                "default": [20, 25, 30, 35, 40, 45, 50, 60]
+                "default": [20, 25, 30, 35, 40, 45, 50, 60],
             },
             "table_revenue": {
                 "description": "revenue earned for each group size",
                 "datatype": list,
-                "default": [15, 30, 45, 60, 75, 90, 105, 120]
+                "default": [15, 30, 45, 60, 75, 90, 105, 120],
             },
             "num_tables": {
                 "description": "number of tables of each capacity",
                 "datatype": list,
-                "default": [10, 5, 4, 2]
-            }
+                "default": [10, 5, 4, 2],
+            },
         }
         self.check_factor_list = {
             "n_hours": self.check_n_hours,
@@ -106,7 +107,7 @@ class TableAllocation(Model):
             "lambda": self.check_lambda,
             "service_time_means": self.check_service_time_means,
             "table_revenue": self.check_table_revenue,
-            "num_tables": self.check_num_tables
+            "num_tables": self.check_num_tables,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -125,10 +126,14 @@ class TableAllocation(Model):
         return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
     def check_service_time_means(self):
-        return self.factors["service_time_means"] > [0] * max(self.factors["table_cap"])
+        return self.factors["service_time_means"] > [0] * max(
+            self.factors["table_cap"]
+        )
 
     def check_table_revenue(self):
-        return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
+        return self.factors["table_revenue"] >= [0] * max(
+            self.factors["table_cap"]
+        )
 
     def check_num_tables(self):
         return self.factors["num_tables"] >= [0, 0, 0, 0]
@@ -138,23 +143,26 @@ class TableAllocation(Model):
             return False
         elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
             return False
-        elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]):
+        elif len(self.factors["lambda"]) != len(
+            self.factors["service_time_means"]
+        ):
             return False
-        elif len(self.factors["service_time_means"]) != len(self.factors["table_revenue"]):
+        elif len(self.factors["service_time_means"]) != len(
+            self.factors["table_revenue"]
+        ):
             return False
         else:
             return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -175,15 +183,25 @@ class TableAllocation(Model):
         # (i,j) is the time that jth table of size i becomes available.
         table_avail = np.zeros((4, max(self.factors["num_tables"])))
         # Generate total number of arrivals in the period
-        n_arrivals = arrival_rng.poissonvariate(round(self.factors["n_hours"] * sum(self.factors["lambda"])))
+        n_arrivals = arrival_rng.poissonvariate(
+            round(self.factors["n_hours"] * sum(self.factors["lambda"]))
+        )
         # Generate arrival times in minutes
-        arrival_times = 60 * np.sort([arrival_rng.uniform(0, self.factors["n_hours"]) for _ in range(n_arrivals)])
+        arrival_times = 60 * np.sort(
+            [
+                arrival_rng.uniform(0, self.factors["n_hours"])
+                for _ in range(n_arrivals)
+            ]
+        )
         # Track seating rate
         found = np.zeros(n_arrivals)
         # Pass through all arrivals of groups to the restaurants.
         for n in range(n_arrivals):
             # Determine group size.
-            group_size = group_size_rng.choices(population=range(1, max(self.factors["table_cap"]) + 1), weights=self.factors["lambda"])[0]
+            group_size = group_size_rng.choices(
+                population=range(1, max(self.factors["table_cap"]) + 1),
+                weights=self.factors["lambda"],
+            )[0]
             # Find smallest table size to start search.
             table_size_idx = 0
             while self.factors["table_cap"][table_size_idx] < group_size:
@@ -199,16 +217,26 @@ class TableAllocation(Model):
                     break
             if found[n] == 1:
                 # Sample service time.
-                service_time = service_rng.expovariate(lambd=1 / self.factors["service_time_means"][group_size - 1])
+                service_time = service_rng.expovariate(
+                    lambd=1 / self.factors["service_time_means"][group_size - 1]
+                )
                 # Update table availability.
                 table_avail[k, j] = table_avail[k, j] + service_time
                 # Update revenue.
-                total_rev = total_rev + self.factors["table_revenue"][group_size - 1]
+                total_rev = (
+                    total_rev + self.factors["table_revenue"][group_size - 1]
+                )
         # Calculate responses from simulation data.
-        responses = {"total_revenue": total_rev,
-                     "service_rate": sum(found) / len(found)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "total_revenue": total_rev,
+            "service_rate": sum(found) / len(found),
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -220,10 +248,9 @@ Maximize the total expected revenue for a restaurant operation.
 
 
 class TableAllocationMaxRev(Problem):
-    """
-    Class to make table allocation simulation-optimization problems.
+    """Class to make table allocation simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -267,7 +294,7 @@ class TableAllocationMaxRev(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -276,11 +303,18 @@ class TableAllocationMaxRev(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "TABLEALLOCATION-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "TABLEALLOCATION-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -288,8 +322,8 @@ class TableAllocationMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lower_bounds = ([0, 0, 0, 0])
-        self.upper_bounds = ([np.inf, np.inf, np.inf, np.inf])
+        self.lower_bounds = [0, 0, 0, 0]
+        self.upper_bounds = [np.inf, np.inf, np.inf, np.inf]
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -300,167 +334,168 @@ class TableAllocationMaxRev(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (10, 5, 4, 2)
+                "default": (10, 5, 4, 2),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = TableAllocation(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "num_tables": vector[:]
-        }
+        factor_dict = {"num_tables": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = (factor_dict["num_tables"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (response_dict["total_revenue"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         stoch_constraints = None
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (0,)
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints
+        """Compute deterministic components of stochastic constraints
         for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of
             stochastic constraints
+
         """
         det_stoch_constraints = None
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic
+        """Check if a solution `x` satisfies the problem's deterministic
         constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
-        return (np.sum(np.multiply(self.model_fixed_factors["table_cap"], x)) <= self.model_fixed_factors["capacity"])
+        return (
+            np.sum(np.multiply(self.model_fixed_factors["table_cap"], x))
+            <= self.model_fixed_factors["capacity"]
+        )
 
     def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         # Add new tables of random size to the restaurant until the capacity is reached.
         # TO DO: Replace this with call to integer_random_vector_from_simplex().
@@ -468,10 +503,18 @@ class TableAllocationMaxRev(Problem):
         allocated = 0
         num_tables = [0, 0, 0, 0]
         while allocated < self.model_fixed_factors["capacity"]:
-            table = rand_sol_rng.randint(0, len(self.model_fixed_factors["table_cap"]) - 1)
-            if self.model_fixed_factors["table_cap"][table] <= (self.model_fixed_factors["capacity"] - allocated):
+            table = rand_sol_rng.randint(
+                0, len(self.model_fixed_factors["table_cap"]) - 1
+            )
+            if self.model_fixed_factors["table_cap"][table] <= (
+                self.model_fixed_factors["capacity"] - allocated
+            ):
                 num_tables[table] = num_tables[table] + 1
-                allocated = allocated + self.model_fixed_factors["table_cap"][table]
-            elif self.model_fixed_factors["table_cap"][0] > (self.model_fixed_factors["capacity"] - allocated):
+                allocated = (
+                    allocated + self.model_fixed_factors["table_cap"][table]
+                )
+            elif self.model_fixed_factors["table_cap"][0] > (
+                self.model_fixed_factors["capacity"] - allocated
+            ):
                 break
         return tuple(num_tables)

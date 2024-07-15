@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -14,12 +14,11 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class ChessMatchmaking(Model):
-    """
-    A model that simulates a matchmaking problem with a
+    """A model that simulates a matchmaking problem with a
     Elo (truncated normal) distribution of players and Poisson arrivals.
     Returns the average difference between matched players.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -34,15 +33,17 @@ class ChessMatchmaking(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "CHESS"
         self.n_rngs = 2
@@ -51,35 +52,35 @@ class ChessMatchmaking(Model):
             "elo_mean": {
                 "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200.0
+                "default": 1200.0,
             },
             "elo_sd": {
                 "description": "standard deviation of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50)),
             },
             "poisson_rate": {
                 "description": "rate of Poisson process for player arrivals",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "num_players": {
                 "description": "number of players",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "allowable_diff": {
                 "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
-                "default": 150.0
-            }
+                "default": 150.0,
+            },
         }
         self.check_factor_list = {
             "elo_mean": self.check_elo_mean,
             "elo_sd": self.check_elo_sd,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
-            "allowable_diff": self.check_allowable_diff
+            "allowable_diff": self.check_allowable_diff,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -99,16 +100,15 @@ class ChessMatchmaking(Model):
     def check_allowable_diff(self):
         return self.factors["allowable_diff"] > 0
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -116,6 +116,7 @@ class ChessMatchmaking(Model):
             "avg_wait_time" = the average waiting time
         gradients : dict of dicts
             gradient estimates for each response
+
         """
         # Designate separate random number generators.
         elo_rng = rng_list[0]
@@ -131,13 +132,20 @@ class ChessMatchmaking(Model):
             # Generate interarrival time of the player.
             time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
             # Generate rating of the player via acceptance/rejection (not truncation).
-            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            player_rating = elo_rng.normalvariate(
+                self.factors["elo_mean"], self.factors["elo_sd"]
+            )
             while player_rating < 0 or player_rating > 2400:
-                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+                player_rating = elo_rng.normalvariate(
+                    self.factors["elo_mean"], self.factors["elo_sd"]
+                )
             # Attempt to match the incoming player with waiting players in FIFO manner.
             old_total = total_diff
             for p in range(len(waiting_players)):
-                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                if (
+                    abs(player_rating - waiting_players[p])
+                    <= self.factors["allowable_diff"]
+                ):
                     total_diff += abs(player_rating - waiting_players[p])
                     elo_diffs.append(abs(player_rating - waiting_players[p]))
                     del waiting_players[p]
@@ -148,10 +156,16 @@ class ChessMatchmaking(Model):
             if old_total == total_diff:
                 waiting_players.append(player_rating)
         # Compose responses and gradients.
-        responses = {"avg_diff": np.mean(elo_diffs),
-                     "avg_wait_time": np.mean(wait_times)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "avg_diff": np.mean(elo_diffs),
+            "avg_wait_time": np.mean(wait_times),
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -164,10 +178,9 @@ players subject to the expected waiting time being sufficiently small.
 
 
 class ChessAvgDifference(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -217,7 +230,7 @@ class ChessAvgDifference(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -226,11 +239,18 @@ class ChessAvgDifference(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "CHESS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "CHESS-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -250,18 +270,18 @@ class ChessAvgDifference(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (150,)
+                "default": (150,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "upper_time": {
                 "description": "upper bound on wait time",
                 "datatype": float,
-                "default": 5.0
-            }
+                "default": 5.0,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -276,147 +296,149 @@ class ChessAvgDifference(Problem):
         return self.factors["upper_time"] > 0
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "allowable_diff": vector[0]
-        }
+        factor_dict = {"allowable_diff": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = (factor_dict["allowable_diff"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (response_dict["avg_diff"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         stoch_constraints = (response_dict["avg_wait_time"],)
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
+
         """
         det_stoch_constraints = (-1 * self.factors["upper_time"],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (0,)
         det_objectives_gradients = None
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         return x >= 0
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         x = (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)
         return x

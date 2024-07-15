@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from abc import ABC, abstractmethod
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 
-class Solver:
+class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
 
     Attributes
@@ -40,6 +41,81 @@ class Solver:
 
     """
 
+    @property
+    def name(self) -> str:
+        """The name of the solver."""
+        return self.__name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        # Check if typing is correct.
+        if not isinstance(name, str):
+            raise TypeError("Solver name must be a string.")
+        self.__name = name
+
+    @property
+    @abstractmethod
+    def objective_type(self) -> str:
+        """The type of objective function."""
+        pass
+
+    @property
+    @abstractmethod
+    def constraint_type(self) -> str:
+        """The type of constraints."""
+        pass
+
+    @property
+    @abstractmethod
+    def variable_type(self) -> str:
+        """The type of variables."""
+        pass
+
+    @property
+    @abstractmethod
+    def gradient_needed(self) -> bool:
+        """True if the gradient of the objective function is needed."""
+        pass
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors of the solver."""
+        return self.__factors
+
+    @factors.setter
+    def factors(self, factors: dict) -> None:
+        # Check if all factors are permissible
+        self.__factors = factors
+
+    @property
+    def specifications(self) -> dict:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return self.__specifications
+
+    @specifications.setter
+    def specifications(self, specifications: dict) -> None:
+        self.__specifications = specifications
+
+    @property
+    def rng_list(self) -> list[MRG32k3a]:
+        """List of RNGs used for the solver's internal purposes."""
+        return self.__rng_list
+
+    @rng_list.setter
+    def rng_list(self, rng_list: list[MRG32k3a]) -> None:
+        self.__rng_list = rng_list
+
+    @property
+    def solution_progenitor_rngs(self) -> list[MRG32k3a]:
+        """List of RNGs used as a baseline for simulating solutions."""
+        return self.__solution_progenitor_rngs
+
+    @solution_progenitor_rngs.setter
+    def solution_progenitor_rngs(
+        self, solution_progenitor_rngs: list[MRG32k3a]
+    ) -> None:
+        self.__solution_progenitor_rngs = solution_progenitor_rngs
+
     def __init__(self, fixed_factors: dict) -> None:
         """Initialize a solver object."""
         # Set factors of the solver.
@@ -63,15 +139,7 @@ class Solver:
             True if the two solvers are equivalent, otherwise False.
 
         """
-        if type(self) == type(other):
-            if self.factors == other.factors:
-                return True
-            else:
-                # print("Solver factors do not match.")
-                return False
-        else:
-            # print("Solver types do not match.")
-            return False
+        return type(self) == type(other) and self.factors == other.factors
 
     def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the solver.
@@ -84,6 +152,7 @@ class Solver:
         """
         self.rng_list = rng_list
 
+    @abstractmethod
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """Run a single macroreplication of a solver on a problem.
 
@@ -687,19 +756,24 @@ class Problem:
                     sum(pairs)
                     for pairs in zip(
                         self.response_dict_to_objectives(responses),
-                        solution.det_objectives, strict=False,
+                        solution.det_objectives,
+                        strict=False,
                     )
                 ]
                 if self.gradient_available:
                     # print(self.response_dict_to_objectives_gradients(vector_gradients))
                     # print(solution.det_objectives_gradients)
                     solution.objectives_gradients[solution.n_reps] = [
-                        [sum(pairs) for pairs in zip(stoch_obj, det_obj, strict=False)]
+                        [
+                            sum(pairs)
+                            for pairs in zip(stoch_obj, det_obj, strict=False)
+                        ]
                         for stoch_obj, det_obj in zip(
                             self.response_dict_to_objectives_gradients(
                                 vector_gradients
                             ),
-                            solution.det_objectives_gradients, strict=False,
+                            solution.det_objectives_gradients,
+                            strict=False,
                         )
                     ]
                     # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
@@ -710,7 +784,8 @@ class Problem:
                         sum(pairs)
                         for pairs in zip(
                             self.response_dict_to_stoch_constraints(responses),
-                            solution.det_stoch_constraints, strict=False,
+                            solution.det_stoch_constraints,
+                            strict=False,
                         )
                     ]
                     # solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]

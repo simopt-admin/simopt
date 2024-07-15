@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate duration of a stochastic activity network (SAN).
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/san.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,12 +13,11 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class FixedSAN(Model):
-    """
-    A model that simulates a stochastic activity network problem with tasks
+    """A model that simulates a stochastic activity network problem with tasks
     that have exponentially distributed durations, and the selected means
     come with a cost.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -33,15 +32,17 @@ class FixedSAN(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "FIXEDSAN"
         self.n_rngs = 1
@@ -50,23 +51,23 @@ class FixedSAN(Model):
             "num_arcs": {
                 "description": "number of arcs",
                 "datatype": int,
-                "default": 13
+                "default": 13,
             },
             "num_nodes": {
                 "description": "number of nodes",
                 "datatype": int,
-                "default": 9
+                "default": 9,
             },
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1,) * 13
-            }
+                "default": (1,) * 13,
+            },
         }
         self.check_factor_list = {
             "num_arcs": self.check_num_arcs,
             "num_nodes": self.check_num_nodes,
-            "arc_means": self.check_arc_means
+            "arc_means": self.check_arc_means,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -81,24 +82,26 @@ class FixedSAN(Model):
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & x > 0
-        return (len(self.factors["arc_means"]) != self.factors["num_arcs"]) & positive
+        return (
+            len(self.factors["arc_means"]) != self.factors["num_arcs"]
+        ) & positive
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
             "longest_path_length" = length/duration of longest path
         gradients : dict of dicts
             gradient estimates for each response
+
         """
         # Designate separate random number generators.
         exp_rng = rng_list[0]
@@ -172,7 +175,12 @@ class FixedSAN(Model):
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         gradients["longest_path_length"]["arc_means"] = longest_path_gradient
 
         return responses, gradients
@@ -186,10 +194,9 @@ Minimize the duration of the longest path from a to i plus cost.
 
 
 class FixedSANLongestPath(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -237,7 +244,7 @@ class FixedSANLongestPath(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -246,11 +253,18 @@ class FixedSANLongestPath(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "FIXEDSAN-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "FIXEDSAN-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -267,23 +281,23 @@ class FixedSANLongestPath(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (10,) * 13
+                "default": (10,) * 13,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "arc_costs": {
                 "description": "cost associated to each arc",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-            }
+                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "arc_costs": self.check_arc_costs
+            "arc_costs": self.check_arc_costs,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -296,150 +310,161 @@ class FixedSANLongestPath(Problem):
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+        return (
+            len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
+        ) & positive
 
     def vector_to_factor_dict(self, vector):
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "arc_means": vector[:]
-        }
+        factor_dict = {"arc_means": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = tuple(factor_dict["arc_means"])
         return vector
 
     def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (response_dict["longest_path_length"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         stoch_constraints = None
         return stoch_constraints
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
+        """Compute deterministic components of stochastic constraints for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
+
         """
         det_stoch_constraints = None
-        det_stoch_constraints_gradients = ((0,) * self.dim,)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints_gradients = (
+            (0,) * self.dim,
+        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
+        det_objectives = (
+            np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+        )
+        det_objectives_gradients = (
+            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
+        )
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         return np.all(np.array(x) >= 0)
 
     def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
-        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+                for _ in range(self.dim)
+            ]
+        )
         return x

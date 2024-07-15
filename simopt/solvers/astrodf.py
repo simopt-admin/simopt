@@ -60,6 +60,26 @@ class ASTRODF(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "box"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "continuous"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "ASTRODF", fixed_factors: dict | None = None
     ) -> None:
@@ -68,10 +88,6 @@ class ASTRODF(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions",
@@ -160,16 +176,18 @@ class ASTRODF(Solver):
         arr[v_no] = 1.0
         return arr
 
-    def _get_rotated_basis(self, first_basis: np.ndarray, rotate_index: np.ndarray) -> np.ndarray:
+    def _get_rotated_basis(
+        self, first_basis: np.ndarray, rotate_index: np.ndarray
+    ) -> np.ndarray:
         """Generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis).
-        
+
         Arguments:
         ---------
         first_basis : np.ndarray
             the first basis vector
         rotate_index : np.ndarray
             the index of the dimensions to rotate
-        
+
         Returns:
         -------
         rotate_matrix : np.ndarray
@@ -197,7 +215,7 @@ class ASTRODF(Solver):
 
     def evaluate_model(self, x_k: np.ndarray, q: np.ndarray) -> float:
         """Compute the local model value with a linear interpolation with a diagonal Hessian.
-        
+
         Arguments:
         ---------
         x_k : np.ndarray
@@ -209,14 +227,16 @@ class ASTRODF(Solver):
         -------
         float
             the model value at x_k
-        
+
         """
         x = [1]
         x = np.append(x, np.array(x_k))
         x = np.append(x, np.array(x_k) ** 2)
         return np.matmul(x, q)
 
-    def get_stopping_time(self, k: int, sig2: float, delta: float, kappa: float, dim: int) -> int:
+    def get_stopping_time(
+        self, k: int, sig2: float, delta: float, kappa: float, dim: int
+    ) -> int:
         """Compute the sample size based on adaptive sampling stopping rule using the optimality gap.
 
         Arguments:
@@ -231,12 +251,12 @@ class ASTRODF(Solver):
             optimality gap
         dim : int
             number of decision variables
-        
+
         Returns:
         -------
         int
             the sample size for the current iteration
-        
+
         """
         if kappa == 0:
             kappa = 1
@@ -258,9 +278,19 @@ class ASTRODF(Solver):
         kappa: float,
         new_solution: Solution,
         visited_pts_list: list[Solution],
-    ) -> tuple[list[float], list[list[np.ndarray]], np.ndarray, np.ndarray, np.ndarray, float, int, list[Solution], list[Solution]]:
+    ) -> tuple[
+        list[float],
+        list[list[np.ndarray]],
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        float,
+        int,
+        list[Solution],
+        list[Solution],
+    ]:
         """Construct the local model for the current iteration k using the interpolation set and solve the subproblem.
-        
+
         Construct the "qualified" local model for each iteration k with the center point x_k
         reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
         the criticality condition keeps the model gradient norm and the trust-region size in lock-step
@@ -326,7 +356,9 @@ class ASTRODF(Solver):
                 ) / norm(np.array(visited_pts_list[f_index].x) - np.array(x_k))
                 # if first_basis has some non-zero components, use rotated basis for those dimensions
                 rotate_list = np.nonzero(first_basis)[0]
-                rotate_matrix = self._get_rotated_basis(first_basis, rotate_list)
+                rotate_matrix = self._get_rotated_basis(
+                    first_basis, rotate_list
+                )
 
                 # if first_basis has some zero components, use coordinate basis for those dimensions
                 for i in range(problem.dim):
@@ -481,7 +513,9 @@ class ASTRODF(Solver):
             visited_pts_list,
         )
 
-    def get_model_coefficients(self, y: list, fval: list, problem: Problem) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_model_coefficients(
+        self, y: list, fval: list, problem: Problem
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Compute the model coefficients using (2d+1) design points and their function estimates.
 
         Arguments:
@@ -492,7 +526,7 @@ class ASTRODF(Solver):
             the function estimates at the interpolation points
         problem : Problem object
             the simulation-optimization problem
-        
+
         Returns:
         -------
         q : np.ndarray
@@ -501,7 +535,7 @@ class ASTRODF(Solver):
             the gradient of the model
         Hessian : np.ndarray
             the Hessian of the model
-        
+
         """
         m = []
         for i in range(0, 2 * problem.dim + 1):
@@ -518,7 +552,9 @@ class ASTRODF(Solver):
         hessian = np.reshape(hessian, problem.dim)
         return q, grad, hessian
 
-    def get_coordinate_basis_interpolation_points(self, x_k: np.ndarray, delta: float, problem: Problem) -> list[list[np.ndarray]]:
+    def get_coordinate_basis_interpolation_points(
+        self, x_k: np.ndarray, delta: float, problem: Problem
+    ) -> list[list[np.ndarray]]:
         """Compute the interpolation points (2d+1) using the coordinate basis.
 
         Arguments:
@@ -529,12 +565,12 @@ class ASTRODF(Solver):
             trust-region radius
         problem : Problem object
             the simulation-optimization problem
-        
+
         Returns:
         -------
         Y : list[list[np.ndarray]]
             the interpolation points
-        
+
         """
         y = [[x_k]]
         epsilon = 0.01
@@ -554,7 +590,12 @@ class ASTRODF(Solver):
         return y
 
     def get_rotated_basis_interpolation_points(
-        self, x_k: np.ndarray, delta: float, problem: Problem, rotate_matrix: np.ndarray, reused_x: np.ndarray
+        self,
+        x_k: np.ndarray,
+        delta: float,
+        problem: Problem,
+        rotate_matrix: np.ndarray,
+        reused_x: np.ndarray,
     ) -> list[list[np.ndarray]]:
         """Compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point).
 
@@ -575,7 +616,7 @@ class ASTRODF(Solver):
         -------
         Y : list[list[np.ndarray]]
             the interpolation points
-        
+
         """
         y = [[x_k]]
         epsilon = 0.01
@@ -616,7 +657,17 @@ class ASTRODF(Solver):
         intermediate_budgets: list[int],
         kappa: float,
         new_solution: Solution,
-    ) -> tuple[float, float, list[Solution], list[int], int, np.ndarray, float, Solution, list[Solution]]:
+    ) -> tuple[
+        float,
+        float,
+        list[Solution],
+        list[int],
+        int,
+        np.ndarray,
+        float,
+        Solution,
+        list[Solution],
+    ]:
         """Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data.
 
         Arguments:
@@ -645,7 +696,7 @@ class ASTRODF(Solver):
             the optimality gap
         new_solution : Solution
             the current incumbent solution
-        
+
         Returns:
         -------
         final_ob : float
@@ -666,7 +717,7 @@ class ASTRODF(Solver):
             the updated incumbent solution
         visited_pts_list : list[Solution]
             the updated list of visited design points
-        
+
         """
         # default values
         eta_1 = self.factors["eta_1"]
@@ -759,6 +810,7 @@ class ASTRODF(Solver):
 
             def con_f(s: any) -> float:
                 return norm(s)
+
             nlc = NonlinearConstraint(con_f, 0, delta_k)
             solve_subproblem = minimize(
                 subproblem,

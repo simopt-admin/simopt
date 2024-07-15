@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate a M/M/1 queue.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/mm1queue.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,8 +13,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class MM1Queue(Model):
-    """
-    A model that simulates an M/M/1 queue with an Exponential(lambda)
+    """A model that simulates an M/M/1 queue with an Exponential(lambda)
     interarrival time distribution and an Exponential(x) service time
     distribution. Returns:
     - the average sojourn time
@@ -22,7 +21,7 @@ class MM1Queue(Model):
     - the fraction of customers who wait
     for customers after a warmup period.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -37,15 +36,17 @@ class MM1Queue(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "MM1"
         self.n_rngs = 2
@@ -54,29 +55,29 @@ class MM1Queue(Model):
             "lambda": {
                 "description": "rate parameter of interarrival time distribution",
                 "datatype": float,
-                "default": 1.5
+                "default": 1.5,
             },
             "mu": {
                 "description": "rate parameter of service time distribution",
                 "datatype": float,
-                "default": 3.0
+                "default": 3.0,
             },
             "warmup": {
                 "description": "number of people as warmup before collecting statistics",
                 "datatype": int,
-                "default": 20
+                "default": 20,
             },
             "people": {
                 "description": "number of people from which to calculate the average sojourn time",
                 "datatype": int,
-                "default": 50
-            }
+                "default": 50,
+            },
         }
         self.check_factor_list = {
             "lambda": self.check_lambda,
             "mu": self.check_mu,
             "warmup": self.check_warmup,
-            "people": self.check_people
+            "people": self.check_people,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -98,16 +99,15 @@ class MM1Queue(Model):
         # return self.factors["mu"] > self.factors["lambda"]
         return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -116,6 +116,7 @@ class MM1Queue(Model):
             "frac_cust_wait" = fraction of customers who wait
         gradients : dict of dicts
             gradient estimates for each response
+
         """
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
@@ -123,10 +124,13 @@ class MM1Queue(Model):
         arrival_rng = rng_list[0]
         service_rng = rng_list[1]
         # Generate all interarrival and service times up front.
-        arrival_times = ([arrival_rng.expovariate(self.factors["lambda"])
-                         for _ in range(total)])
-        service_times = ([service_rng.expovariate(self.factors["mu"])
-                         for _ in range(total)])
+        arrival_times = [
+            arrival_rng.expovariate(self.factors["lambda"])
+            for _ in range(total)
+        ]
+        service_times = [
+            service_rng.expovariate(self.factors["mu"]) for _ in range(total)
+        ]
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
         #     column 1 : service time;
@@ -152,38 +156,55 @@ class MM1Queue(Model):
         cust_mat[0, 9] = 0
         # Fill in entries for remaining customers' experiences.
         for i in range(1, total):
-            cust_mat[i, 2] = (max(cust_mat[i, 0], cust_mat[i - 1, 2])
-                              + cust_mat[i, 1])
+            cust_mat[i, 2] = (
+                max(cust_mat[i, 0], cust_mat[i - 1, 2]) + cust_mat[i, 1]
+            )
             cust_mat[i, 3] = cust_mat[i, 2] - cust_mat[i, 0]
             cust_mat[i, 4] = cust_mat[i, 3] - cust_mat[i, 1]
-            cust_mat[i, 5] = (sum(cust_mat[i - int(cust_mat[i - 1, 5]) - 1:i, 2]
-                                  > cust_mat[i, 0]))
-            cust_mat[i, 6] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i + 1, 1])
-                              / self.factors["mu"])
-            cust_mat[i, 7] = (-sum(cust_mat[i - int(cust_mat[i, 5]):i, 1])
-                              / self.factors["mu"])
+            cust_mat[i, 5] = sum(
+                cust_mat[i - int(cust_mat[i - 1, 5]) - 1 : i, 2]
+                > cust_mat[i, 0]
+            )
+            cust_mat[i, 6] = (
+                -sum(cust_mat[i - int(cust_mat[i, 5]) : i + 1, 1])
+                / self.factors["mu"]
+            )
+            cust_mat[i, 7] = (
+                -sum(cust_mat[i - int(cust_mat[i, 5]) : i, 1])
+                / self.factors["mu"]
+            )
             cust_mat[i, 8] = np.nan  # ... to be derived
             cust_mat[i, 9] = np.nan  # ... to be derived
         # Compute average sojourn time and its gradient.
-        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"]:, 3])
-        grad_mean_sojourn_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 6])
-        grad_mean_sojourn_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 8])
+        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"] :, 3])
+        grad_mean_sojourn_time_mu = np.mean(
+            cust_mat[self.factors["warmup"] :, 6]
+        )
+        grad_mean_sojourn_time_lambda = np.mean(
+            cust_mat[self.factors["warmup"] :, 8]
+        )
         # Compute average waiting time and its gradient.
-        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"]:, 4])
-        grad_mean_waiting_time_mu = np.mean(cust_mat[self.factors["warmup"]:, 7])
-        grad_mean_waiting_time_lambda = np.mean(cust_mat[self.factors["warmup"]:, 9])
+        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"] :, 4])
+        grad_mean_waiting_time_mu = np.mean(
+            cust_mat[self.factors["warmup"] :, 7]
+        )
+        grad_mean_waiting_time_lambda = np.mean(
+            cust_mat[self.factors["warmup"] :, 9]
+        )
         # Compute fraction of customers who wait.
-        fraction_wait = np.mean(cust_mat[self.factors["warmup"]:, 5] > 0)
+        fraction_wait = np.mean(cust_mat[self.factors["warmup"] :, 5] > 0)
         # Compose responses and gradients.
         responses = {
             "avg_sojourn_time": mean_sojourn_time,
             "avg_waiting_time": mean_waiting_time,
-            "frac_cust_wait": fraction_wait
+            "frac_cust_wait": fraction_wait,
         }
-        gradients = {response_key:
-                     {factor_key: np.nan for factor_key in self.specifications}
-                     for response_key in responses
-                     }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         gradients["avg_sojourn_time"]["mu"] = grad_mean_sojourn_time_mu
         gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
         gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
@@ -199,10 +220,9 @@ Minimize the mean sojourn time of an M/M/1 queue plus a cost term.
 
 
 class MM1MinMeanSojournTime(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -246,7 +266,7 @@ class MM1MinMeanSojournTime(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -255,11 +275,18 @@ class MM1MinMeanSojournTime(Problem):
     model_fixed_factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "MM1-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "MM1-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -272,141 +299,135 @@ class MM1MinMeanSojournTime(Problem):
         self.gradient_available = True
         self.optimal_value = None
         self.optimal_solution = None
-        self.model_default_factors = {
-            "warmup": 50,
-            "people": 200
-        }
+        self.model_default_factors = {"warmup": 50, "people": 200}
         self.model_decision_factors = {"mu"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution from which solvers start",
                 "datatype": tuple,
-                "default": (5,)
+                "default": (5,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "cost": {
                 "description": "cost for increasing service rate",
                 "datatype": float,
-                "default": 0.1
-            }
+                "default": 0.1,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = MM1Queue(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector):
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
+
         """
-        factor_dict = {
-            "mu": vector[0]
-        }
+        factor_dict = {"mu": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
         vector = (factor_dict["mu"],)
         return vector
 
     def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
         objectives = (response_dict["avg_sojourn_time"],)
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         stoch_constraints = None
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
-        det_objectives = (self.factors["cost"] * (x[0]**2),)
+        det_objectives = (self.factors["cost"] * (x[0] ** 2),)
         det_objectives_gradients = ((2 * self.factors["cost"] * x[0],),)
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints
+        """Compute deterministic components of stochastic constraints
         for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic
@@ -414,43 +435,44 @@ class MM1MinMeanSojournTime(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of
             stochastic constraints
+
         """
         det_stoch_constraints = None
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic
+        """Check if a solution `x` satisfies the problem's deterministic
         constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
         # Check box constraints.
         box_feasible = super().check_deterministic_constraints(x)
         return box_feasible
 
     def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         # Generate an Exponential(rate = 1/3) r.v.
         x = (rand_sol_rng.expovariate(1 / 3),)

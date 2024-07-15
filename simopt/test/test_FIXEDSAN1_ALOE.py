@@ -9,6 +9,7 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 #       Some attributes, such as the lengths of lists, are still checked
 #       with assertEqual as these should not change between runs.
 
+
 class test_FIXEDSAN1_ALOE(unittest.TestCase):
     def setUp(self):
         # Expected values
@@ -21,125 +22,443 @@ class test_FIXEDSAN1_ALOE(unittest.TestCase):
         self.expected_progress_curves = "[([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.063, 0.066, 0.069, 0.072, 0.075, 0.078, 0.081, 0.084, 0.087, 0.09, 0.093, 0.096, 0.099, 0.117, 0.12, 0.129, 0.138, 0.156, 0.159, 0.204, 0.207, 0.21, 0.213, 0.216, 0.219, 0.222, 0.225, 0.228, 0.234, 0.258, 0.261, 0.264, 0.267, 0.273, 0.285, 0.3, 0.339, 0.342, 0.345, 0.348, 0.351, 0.354, 0.357, 0.399, 0.402, 0.405, 0.408, 0.411, 0.459, 0.462, 0.507, 0.51, 0.519, 0.618, 0.621, 0.624, 0.627, 0.63, 0.636, 0.639, 0.735, 0.738, 0.741, 0.744, 0.747, 0.75, 0.753, 0.756, 0.789, 0.837, 0.879, 0.882, 0.888, 0.918, 0.969, 0.972, 0.975, 0.984, 0.99, 1.0], [1.0, 0.8823378578531352, 0.805908372744582, 0.7101971579454941, 0.5977815592221252, 0.5310082022911067, 0.4938425237683942, 0.4872225593218662, 0.4796694886362898, 0.4712928899774118, 0.4615214058298769, 0.4500598542911113, 0.436160332541106, 0.41924123308504135, 0.39897307744066685, 0.37562341233421354, 0.3514024465023203, 0.3275586836042873, 0.3122235794945992, 0.29178241108364317, 0.2892609815921315, 0.2657487101416405, 0.2163572049736361, 0.20399097333748623, 0.1958690439318858, 0.18371700218785583, 0.18064944910282416, 0.17769942255813315, 0.1752638106976706, 0.17356806762922022, 0.17129326750426402, 0.16966192816381423, 0.16691932649332591, 0.1640539666497805, 0.15896963949742748, 0.1471724106442809, 0.1428301574664609, 0.13982190252456378, 0.13652985226825512, 0.12466499588246242, 0.12015788295444206, 0.10990657111532677, 0.10797626417273934, 0.107013585750165, 0.10642057499682137, 0.10537837075301984, 0.10380047919187886, 0.10273224142617006, 0.10236785335271137, 0.0978032949406602, 0.09665675259023843, 0.09597429126263042, 0.09557457248258323, 0.09523283361829266, 0.09351939036956432, 0.09343862439359152, 0.09263119133740412, 0.09245594576369875, 0.09284324593775718, 0.0901537640485892, 0.08935416598972014, 0.08876239329648797, 0.08810374260668119, 0.08706655292258648, 0.08541262957651762, 0.08402437820960737, 0.08226924821816553, 0.08174880586422048, 0.08143093591269968, 0.08056458356539835, 0.08012910233012434, 0.07895978751427615, 0.07840078103657132, 0.0770128550754468, 0.07479596083789805, 0.07063041359361089, 0.06871489110382607, 0.06888062640660854, 0.06874480253283943, 0.06812946118312267, 0.06482912275070964, 0.06468699431010459, 0.06473162298829503, 0.06390341619536209, 0.06297342867779715, 0.06297342867779715]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.024, 0.045, 0.048, 0.051, 0.054, 0.057, 0.06, 0.072, 0.102, 0.105, 0.108, 0.111, 0.156, 0.159, 0.162, 0.165, 0.168, 0.171, 0.174, 0.177, 0.18, 0.183, 0.186, 0.189, 0.21, 0.216, 0.243, 0.246, 0.249, 0.252, 0.267, 0.312, 0.315, 0.318, 0.321, 0.324, 0.327, 0.33, 0.333, 0.36, 0.363, 0.375, 0.402, 0.417, 0.462, 0.465, 0.468, 0.474, 0.519, 0.522, 0.525, 0.528, 0.579, 0.582, 0.585, 0.615, 0.663, 0.666, 0.669, 0.672, 0.741, 0.744, 0.747, 0.795, 0.798, 0.852, 0.855, 0.858, 0.864, 0.948, 0.951, 0.957, 1.0], [1.0, 0.9087382804386411, 0.8220188319282888, 0.7171986808456108, 0.5988502321651766, 0.46555556945422116, 0.3853988093479939, 0.3761102299341062, 0.3396399149173093, 0.30725439759118817, 0.29065659232553903, 0.28503867196988075, 0.2603871851256614, 0.23446617815814227, 0.229247499211664, 0.21995114875696334, 0.21800464086557303, 0.21323360169377803, 0.19967126578462285, 0.1961387676606793, 0.19228273368532958, 0.1882974730850808, 0.1844363900184376, 0.18068231962044587, 0.17653001686302455, 0.17158246312097897, 0.16582208836026863, 0.15917162025010756, 0.15162266797887974, 0.1428853106588689, 0.12588452065121836, 0.12102122228425147, 0.1180702813611307, 0.11227902744685539, 0.10491960503728674, 0.10191400919420421, 0.1008864611849343, 0.10013404604387867, 0.09474589294658897, 0.0910053229822314, 0.08935225267871155, 0.08899555474075908, 0.08722425850745345, 0.0860083360837768, 0.08368198368354016, 0.0816108313202061, 0.07687245392423415, 0.07200453300053505, 0.06820184073317674, 0.06144780839298332, 0.06075841272896187, 0.05738523703151796, 0.05574058695731112, 0.05394138581083511, 0.05207837695014023, 0.049965152154134794, 0.04750474631809278, 0.04458808658173983, 0.04436549674625811, 0.03985887906669193, 0.038343248224062675, 0.03500986486504088, 0.03299554772793235, 0.031320348668538035, 0.026885141900967267, 0.025040070151573893, 0.022315440023833392, 0.01968049607760323, 0.019069885164764787, 0.0166085605924336, 0.015326099483331494, 0.015150684108663739, 0.01458897224361201, 0.014133119317114785, 0.014014370939858713, 0.012537260906003487, 0.011824875244704916, 0.012005001324626244, 0.012005001324626244]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.06, 0.063, 0.066, 0.069, 0.072, 0.075, 0.078, 0.081, 0.084, 0.087, 0.126, 0.129, 0.132, 0.141, 0.171, 0.174, 0.177, 0.18, 0.189, 0.216, 0.219, 0.222, 0.303, 0.306, 0.309, 0.312, 0.315, 0.318, 0.321, 0.324, 0.327, 0.33, 0.333, 0.336, 0.339, 0.342, 0.348, 0.351, 0.354, 0.396, 0.399, 0.402, 0.405, 0.408, 0.411, 0.414, 0.417, 0.42, 0.465, 0.468, 0.471, 0.477, 0.483, 0.522, 0.525, 0.603, 0.606, 0.609, 0.612, 0.615, 0.669, 0.672, 0.675, 0.678, 0.681, 0.741, 0.744, 0.747, 0.75, 0.753, 0.756, 0.759, 0.762, 0.765, 0.768, 0.789, 0.816, 0.837, 0.864, 0.867, 0.9, 0.903, 0.954, 0.957, 0.96, 0.963, 0.966, 0.969, 0.972, 1.0], [1.0, 0.8851545759500821, 0.8002307523158179, 0.6964649897935472, 0.5686786218756024, 0.4395414395924176, 0.3768382846554319, 0.3423788216256054, 0.33305467256825827, 0.3231171574887628, 0.31297169184107915, 0.3024968529180242, 0.29066674249446245, 0.27837819704122596, 0.2663941813959784, 0.2552616320256997, 0.25257591119913797, 0.25192324872371524, 0.2505056205508904, 0.24917750117625068, 0.24982836774664857, 0.2369744420938566, 0.23315072080504626, 0.23080825724932252, 0.2310144207695501, 0.23208002237339123, 0.23115369567438343, 0.2311128110941927, 0.2230968733671311, 0.18335948036874314, 0.18195679314535945, 0.18086274688771, 0.17998779672119378, 0.17927479046247083, 0.17871048923024038, 0.17823478624270586, 0.17782306972660838, 0.17748201514819326, 0.17714844241260952, 0.17687771568603972, 0.17672985210225028, 0.17670853592934138, 0.17697557218418478, 0.1744336488680732, 0.1724198594838162, 0.16624200202749634, 0.16296140831106082, 0.15963466449733346, 0.15643347159432405, 0.15464708198798272, 0.15294409372992782, 0.1505036310285882, 0.14621900989229558, 0.14250285087463962, 0.13589799218572757, 0.12177543828564351, 0.11989943082621268, 0.11796388665154237, 0.11333252621181587, 0.10581189398328406, 0.09489550105814945, 0.0883206205714717, 0.0685116987576084, 0.06712172019477725, 0.0669809836204904, 0.06543354253589202, 0.06432398549105377, 0.05275891093702859, 0.05145298396813119, 0.05035719104262186, 0.04838049434529086, 0.0476974118630894, 0.04377568717673946, 0.04306996078594994, 0.042505022390182286, 0.04213189704949451, 0.04191253852949981, 0.041478686314180044, 0.04095436048779063, 0.04055972818164516, 0.03962709585276756, 0.03896621477951769, 0.03420550230364645, 0.03010438281859611, 0.02579413324710315, 0.018827295480059212, 0.01935916956254829, 0.01384720513440358, 0.014445628704533609, 0.010420140287475725, 0.01014938478870398, 0.009876136954591193, 0.00933746008178977, 0.008802746693636102, 0.008030387509098872, 0.007479974197924422, 0.007479974197924422]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.033, 0.036, 0.042, 0.051, 0.072, 0.075, 0.099, 0.102, 0.156, 0.162, 0.225, 0.228, 0.234, 0.258, 0.273, 0.336, 0.339, 0.342, 0.348, 0.354, 0.402, 0.405, 0.435, 0.441, 0.468, 0.477, 0.498, 0.582, 0.585, 0.588, 0.591, 0.594, 0.597, 0.6, 0.651, 0.684, 0.687, 0.723, 0.726, 0.732, 0.774, 0.777, 0.78, 0.786, 0.825, 0.855, 0.9, 0.984, 0.987, 1.0], [1.0, 0.8527126941227953, 0.7647672348028312, 0.6609362877112224, 0.549285455287407, 0.41661865458861813, 0.30351355962830395, 0.3046183475873676, 0.23788215507877286, 0.21625655303066715, 0.14412964283305982, 0.14055430006020436, 0.13571523196895102, 0.13707898874812105, 0.12095054820863314, 0.12148014785044887, 0.12183357589220288, 0.12361254509970648, 0.11935319168648857, 0.11926725351739553, 0.10840279990047855, 0.10159827128555833, 0.1017806209857129, 0.09601435779345863, 0.09523767094488077, 0.0937753512578716, 0.09105083854970768, 0.09088956957603174, 0.09001732804533698, 0.08563989098682685, 0.08451971381575255, 0.08410277892369768, 0.09091423583459458, 0.07720105224197113, 0.06149089091041896, 0.0608666949857954, 0.06024061660810963, 0.05961975538817768, 0.05906350088423378, 0.05856591476491949, 0.058243333628795885, 0.05244442157925991, 0.05186538932625168, 0.04898861683527185, 0.044873259105765034, 0.043175720786055215, 0.04188070171831005, 0.04166025361890498, 0.03790481918474977, 0.037226949869181826, 0.03652501642381953, 0.03457687356165824, 0.029693092214763444, 0.029029279726163346, 0.025062990885857953, 0.023620703250615296, 0.023620703250615296]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.024, 0.045, 0.057, 0.06, 0.081, 0.084, 0.087, 0.09, 0.138, 0.141, 0.144, 0.147, 0.15, 0.153, 0.156, 0.159, 0.162, 0.165, 0.168, 0.171, 0.21, 0.213, 0.216, 0.219, 0.345, 0.348, 0.351, 0.378, 0.381, 0.384, 0.426, 0.429, 0.432, 0.435, 0.438, 0.441, 0.444, 0.492, 0.495, 0.498, 0.501, 0.504, 0.507, 0.543, 0.546, 0.549, 0.591, 0.594, 0.618, 0.621, 0.684, 0.687, 0.69, 0.693, 0.696, 0.699, 0.702, 1.0], [1.0, 0.8590362335526135, 0.7803564812407576, 0.6869391586149086, 0.5757361832548, 0.4538640280424765, 0.3382957997065198, 0.2908131765591622, 0.2913091057551982, 0.25231561468805175, 0.24829438014622598, 0.2300576223423128, 0.21576311321045658, 0.20726240471691715, 0.20025542143795375, 0.182440162629025, 0.17932988418714632, 0.1758545657717092, 0.17210986815827573, 0.16944565285638832, 0.16666054568902106, 0.16409360114659388, 0.16028976871005196, 0.15721904525621636, 0.15031883528168472, 0.14774213168537106, 0.14082272830217865, 0.13612228071814175, 0.1323521976046384, 0.12961971142260614, 0.12833037263016678, 0.10536172725164922, 0.10107748991534136, 0.09457331060853136, 0.08749897402903832, 0.08282523044495807, 0.080077387629362, 0.07393653212777909, 0.06794547798177675, 0.06729839452040667, 0.06507093727735803, 0.06306863695042926, 0.061867989767248145, 0.05325397279448946, 0.04555890629602876, 0.03760865832141053, 0.036941820839291886, 0.03612706077949029, 0.034676312939547434, 0.03362237178591266, 0.028798541603687076, 0.02726991647030305, 0.025664318190527332, 0.017118071701102588, 0.015790447963503932, 0.009679103193800586, 0.005988919112426541, 0.002380398235896668, 0.0015012599876171359, 0.0009229875079654416, 0.0005853517832686968, 0.00019033568731580274, -0.0002991529714726388, -0.000820101229136352, -0.000820101229136352]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.024, 0.027, 0.036, 0.063, 0.066, 0.072, 0.078, 0.093, 0.12, 0.123, 0.129, 0.147, 0.198, 0.201, 0.204, 0.243, 0.246, 0.249, 0.294, 0.297, 0.3, 0.303, 0.348, 0.351, 0.354, 0.372, 0.417, 0.42, 0.423, 0.447, 0.453, 0.456, 0.489, 0.492, 0.495, 0.498, 0.528, 0.531, 0.534, 0.537, 0.54, 0.579, 0.582, 0.585, 0.588, 0.591, 0.594, 1.0], [1.0, 0.9015571555348904, 0.8352143040920779, 0.7545338698890404, 0.6593843160318796, 0.5470930855723795, 0.41479106369862717, 0.28471498432161624, 0.22159542790089848, 0.17342666897554784, 0.17687808444047978, 0.17150526157461643, 0.1662840544048755, 0.14962965280043608, 0.1430101660655711, 0.1374681705635416, 0.12050863275544926, 0.11770090969625827, 0.11452604432445482, 0.11428597119606544, 0.11517911249538677, 0.11228445357863008, 0.114379810105462, 0.11072357720689588, 0.11007464461788066, 0.1094958708130667, 0.10792496420058864, 0.10959094148511742, 0.10681473118045764, 0.10718365545780426, 0.10615895337921263, 0.10531509883859654, 0.11328718933024212, 0.09461449129500911, 0.09476471794220069, 0.09761890519286377, 0.09827795242065873, 0.09134361396143195, 0.07645623705095342, 0.07345853265033998, 0.06975082767328616, 0.06637531334718508, 0.06437039536570534, 0.056335417767322545, 0.0507957981563689, 0.046444588808131175, 0.04280073470988771, 0.03595620996581556, 0.03815119980826139, 0.026166588076046056, 0.017537023358300145, 0.014373257227834809, 0.010865114021877929, 0.008711008260647309, 0.008711008260647309]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.024, 0.03, 0.033, 0.042, 0.093, 0.096, 0.099, 0.102, 0.105, 0.108, 0.111, 0.114, 0.117, 0.12, 0.123, 0.126, 0.129, 0.132, 0.168, 0.171, 0.174, 0.177, 0.18, 0.183, 0.186, 0.189, 0.192, 0.195, 0.204, 0.27, 0.609, 0.783, 0.786, 1.0], [1.0, 0.9162199643920643, 0.8455086265768785, 0.758441779710748, 0.6564609356674981, 0.5407452873759587, 0.41999470363761165, 0.3260090423493133, 0.32648604355987737, 0.29925103007339066, 0.2786797391182573, 0.2389951640724041, 0.23511284699446405, 0.2306948243505101, 0.22570897346191976, 0.22018998250032426, 0.21432214044248374, 0.2079220967346822, 0.2016255475547982, 0.195721232421747, 0.1909677231249677, 0.18416752037315687, 0.17708446718671164, 0.17464849705021754, 0.1628271974057889, 0.16010261252599317, 0.15250707311155248, 0.14380531519775483, 0.13575965634374665, 0.1292202107825359, 0.1229213846356821, 0.11569075448164176, 0.10659921854160634, 0.09988219437325586, 0.0900288485160093, 0.07714532248873734, 0.07892356286532615, 0.07843495004798154, 0.07537177593487536, 0.07291614238261754, 0.07291614238261754]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.03, 0.033, 0.042, 0.084, 0.087, 0.09, 0.093, 0.096, 0.099, 0.102, 0.105, 0.108, 0.111, 0.114, 0.117, 0.12, 0.132, 0.135, 0.177, 0.18, 0.186, 0.228, 0.24, 0.291, 0.294, 0.297, 0.3, 0.303, 0.348, 0.354, 0.378, 0.438, 0.441, 0.444, 0.447, 0.456, 0.462, 0.468, 0.537, 0.54, 0.543, 0.546, 0.564, 0.621, 0.624, 0.627, 0.675, 0.717, 0.777, 0.78, 0.813, 0.816, 0.915, 0.918, 0.921, 0.924, 0.93, 0.939, 1.0], [1.0, 0.8677152168226125, 0.782090424610447, 0.6795987053435274, 0.5586678733305731, 0.43793746171351294, 0.3460690035205118, 0.3439566001904183, 0.2893137946108783, 0.282020288890997, 0.25096376107542084, 0.24705564592605173, 0.24290035637723723, 0.23858137563873355, 0.23446049345697811, 0.23017392125283995, 0.22521289556120522, 0.21901615567181182, 0.21163140181425538, 0.20288290890548924, 0.1925543117793348, 0.18181692589799595, 0.17316050054223198, 0.15455945288951844, 0.1418409111964459, 0.1356988638257641, 0.12691723174141653, 0.12065607880680615, 0.11927381434112906, 0.11673608149782079, 0.11536592562940175, 0.11020913312660653, 0.10544005482637955, 0.10498538478641337, 0.10005923357756222, 0.09732913534543364, 0.09304993030372657, 0.09264397062473287, 0.09097895716871833, 0.08985193402370407, 0.08907796700812676, 0.08872793619935543, 0.08873863431539177, 0.08804409172548695, 0.08553075888309994, 0.0852390880312298, 0.08395192297063325, 0.08338566294792343, 0.08310690885070297, 0.08157187699396751, 0.07986638570504384, 0.07842908827359606, 0.07839803650080422, 0.07669243685551072, 0.07390251212123432, 0.0740379507962674, 0.07288648793654216, 0.07051487911794642, 0.07098862715969505, 0.06975815371351606, 0.06901339855302807, 0.06863723683942285, 0.06832203202898074, 0.06645700444777605, 0.06663504205632274, 0.06663504205632274]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.027, 0.078, 0.081, 0.084, 0.087, 0.09, 0.093, 0.096, 0.099, 0.102, 0.105, 0.108, 0.111, 0.114, 0.117, 0.12, 0.123, 0.138, 0.141, 0.147, 0.189, 0.192, 0.195, 0.198, 0.201, 0.204, 0.207, 0.21, 0.213, 0.216, 0.219, 0.222, 0.24, 0.294, 0.363, 0.366, 0.369, 0.372, 0.423, 0.426, 0.429, 0.432, 0.438, 0.444, 0.489, 0.492, 0.531, 0.582, 0.585, 0.588, 0.594, 0.63, 0.633, 0.636, 0.639, 0.681, 0.684, 0.69, 0.714, 0.717, 0.723, 0.741, 0.744, 0.789, 0.792, 0.798, 0.822, 0.825, 0.849, 0.864, 0.912, 0.933, 0.951, 0.996, 0.999, 1.0], [1.0, 0.9344643757640057, 0.8646229229218007, 0.7801056542611424, 0.6819929885214598, 0.5704109464533431, 0.5606986082288513, 0.5072627591157151, 0.5045920520752784, 0.5013304907239845, 0.49736692047311465, 0.49252762775443476, 0.4866440598819325, 0.47989826979572514, 0.47156221217586547, 0.4611997663206856, 0.44870514519985405, 0.4339425692527938, 0.4170248549153837, 0.39938053087209335, 0.38074506524005186, 0.3591465924956638, 0.344341486148537, 0.30952162842873504, 0.29075685411314517, 0.2898748807655832, 0.2578432806067889, 0.2546815031203915, 0.2515038423027247, 0.24753282387896028, 0.24327216806640825, 0.23886304207084857, 0.23562530751789093, 0.22989505906828755, 0.22611393772597405, 0.2210526435918106, 0.21650414900222767, 0.21903683105712698, 0.206350970805135, 0.20106332703246246, 0.19593310316173723, 0.19182389192048152, 0.18746535361359742, 0.18551662806907737, 0.18127648638851016, 0.17933503355093386, 0.17912419117506048, 0.17798423472937225, 0.17708979063027455, 0.17309947492163014, 0.16641540461734233, 0.16526195550858863, 0.1592649858899413, 0.1518388639073618, 0.15111021942686761, 0.151268718049511, 0.14910601064394766, 0.14241182906094343, 0.14168220446653818, 0.1408445544504055, 0.14074254996527139, 0.13495362443771267, 0.134279941655139, 0.13416637988925692, 0.13107949806466113, 0.13231201374781862, 0.1329011557341111, 0.12562491369179626, 0.12553041121960856, 0.12160606908130307, 0.12112444069744972, 0.1213013076986293, 0.11874737502136817, 0.12058249855923082, 0.11432861279323106, 0.11188506814964526, 0.10983090439306349, 0.11013379828895101, 0.1037274393015349, 0.09906006381876238, 0.09958724126776591, 0.09958724126776591]), ([0.0, 0.006, 0.009, 0.012, 0.015, 0.018, 0.021, 0.024, 0.042, 0.045, 0.048, 0.051, 0.06, 0.084, 0.087, 0.09, 0.093, 0.096, 0.114, 0.132, 0.135, 0.177, 0.18, 0.186, 0.24, 0.243, 0.246, 0.249, 0.261, 0.267, 0.273, 0.333, 0.336, 0.339, 0.366, 0.369, 0.387, 0.39, 0.396, 0.417, 0.42, 0.465, 0.468, 0.471, 0.474, 0.477, 0.48, 0.483, 0.489, 0.516, 0.561, 0.564, 1.0], [1.0, 0.8559030313300868, 0.7793776959404528, 0.6856971015771534, 0.57674605483123, 0.4554459852788215, 0.3361197409484182, 0.30581599277234944, 0.28426544757258126, 0.2366242930462741, 0.20522852253321594, 0.17899957460619487, 0.1783474779447471, 0.16594950025236696, 0.15511605318429528, 0.1474235460417652, 0.14536560796181947, 0.13053854365345363, 0.1019324774966104, 0.10020948238765698, 0.08887677234649127, 0.08545356725650917, 0.08308482986638246, 0.0789170546311089, 0.07506122480357623, 0.07394892693787006, 0.07369499748704145, 0.07381546640262326, 0.0739294936269977, 0.07188655391652013, 0.06254876786943589, 0.05951954705728855, 0.05717231156075827, 0.053913906864907914, 0.05329439326654153, 0.04751919132928278, 0.04152243401305429, 0.03414946699669607, 0.02918920111109779, 0.025770776055688137, 0.01884190484077949, 0.016605215701188395, 0.012265019511914966, 0.010361055536461442, 0.008870738273121348, 0.006837528578350918, 0.00632606293771512, 0.002851570036843661, 0.002381684034062121, 0.0016411971097854564, 0.0015677241408040606, 0.0, 0.0])]"
 
         # Convert the expected values from string to their actual types
-        self.expected_all_recommended_xs = eval(self.expected_all_recommended_xs, {'nan': float('nan'), 'inf': float('inf')})
-        self.expected_all_intermediate_budgets = eval(self.expected_all_intermediate_budgets, {'nan': float('nan'), 'inf': float('inf')})
-        self.expected_all_est_objectives = eval(self.expected_all_est_objectives, {'nan': float('nan'), 'inf': float('inf')})
-        self.expected_objective_curves = eval(self.expected_objective_curves, {'nan': float('nan'), 'inf': float('inf')})
-        self.expected_progress_curves = eval(self.expected_progress_curves, {'nan': float('nan'), 'inf': float('inf')})
-        
+        self.expected_all_recommended_xs = eval(
+            self.expected_all_recommended_xs,
+            {"nan": float("nan"), "inf": float("inf")},
+        )
+        self.expected_all_intermediate_budgets = eval(
+            self.expected_all_intermediate_budgets,
+            {"nan": float("nan"), "inf": float("inf")},
+        )
+        self.expected_all_est_objectives = eval(
+            self.expected_all_est_objectives,
+            {"nan": float("nan"), "inf": float("inf")},
+        )
+        self.expected_objective_curves = eval(
+            self.expected_objective_curves,
+            {"nan": float("nan"), "inf": float("inf")},
+        )
+        self.expected_progress_curves = eval(
+            self.expected_progress_curves,
+            {"nan": float("nan"), "inf": float("inf")},
+        )
+
         # Number of macro-replications and post-replications
         self.num_macroreps = 10
         self.num_postreps = 200
 
         # Setup the solver and experiment
-        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
-        self.assertEqual(self.myexperiment.solver.name, self.expected_solver_name, "Solver name does not match (expected: " + self.expected_solver_name + ", actual: " + self.myexperiment.solver.name + ")")
-        self.assertEqual(self.myexperiment.problem.name, self.expected_problem_name, "Problem name does not match (expected: " + self.expected_problem_name + ", actual: " + self.myexperiment.problem.name + ")")
+        self.myexperiment = ProblemSolver(
+            self.expected_solver_name, self.expected_problem_name
+        )
+        self.assertEqual(
+            self.myexperiment.solver.name,
+            self.expected_solver_name,
+            "Solver name does not match (expected: "
+            + self.expected_solver_name
+            + ", actual: "
+            + self.myexperiment.solver.name
+            + ")",
+        )
+        self.assertEqual(
+            self.myexperiment.problem.name,
+            self.expected_problem_name,
+            "Problem name does not match (expected: "
+            + self.expected_problem_name
+            + ", actual: "
+            + self.myexperiment.problem.name
+            + ")",
+        )
 
     def test_run(self):
         # Check actual run results against expected
         self.myexperiment.run(n_macroreps=self.num_macroreps)
-        self.assertEqual(self.myexperiment.n_macroreps, self.num_macroreps, "Number of macro-replications for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " does not match.")
+        self.assertEqual(
+            self.myexperiment.n_macroreps,
+            self.num_macroreps,
+            "Number of macro-replications for problem "
+            + self.expected_problem_name
+            + " and solver "
+            + self.expected_solver_name
+            + " does not match.",
+        )
         # For each macroreplication
         for mrep in range(self.num_macroreps):
             # Check to make sure the list lengths are the same
-            self.assertEqual(len(self.myexperiment.all_recommended_xs[mrep]), len(self.expected_all_recommended_xs[mrep]), "Length of recommended solutions for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
+            self.assertEqual(
+                len(self.myexperiment.all_recommended_xs[mrep]),
+                len(self.expected_all_recommended_xs[mrep]),
+                "Length of recommended solutions for problem "
+                + self.expected_problem_name
+                + " and solver "
+                + self.expected_solver_name
+                + " do not match.",
+            )
             # For each list of recommended solutions
             for list in range(len(self.myexperiment.all_recommended_xs[mrep])):
                 # Check to make sure the tuples are the same length
-                self.assertEqual(len(self.myexperiment.all_recommended_xs[mrep][list]), len(self.expected_all_recommended_xs[mrep][list]), "Recommended solutions for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(list) + ".")
+                self.assertEqual(
+                    len(self.myexperiment.all_recommended_xs[mrep][list]),
+                    len(self.expected_all_recommended_xs[mrep][list]),
+                    "Recommended solutions for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match at mrep "
+                    + str(mrep)
+                    + " and index "
+                    + str(list)
+                    + ".",
+                )
                 # For each tuple of recommended solutions
-                for tuple in range(len(self.myexperiment.all_recommended_xs[mrep][list])):
-                    self.assertAlmostEqual(self.myexperiment.all_recommended_xs[mrep][list][tuple], self.expected_all_recommended_xs[mrep][list][tuple], 5, "Recommended solutions for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(list) + " and tuple " + str(tuple) + ".")
+                for tuple in range(
+                    len(self.myexperiment.all_recommended_xs[mrep][list])
+                ):
+                    self.assertAlmostEqual(
+                        self.myexperiment.all_recommended_xs[mrep][list][tuple],
+                        self.expected_all_recommended_xs[mrep][list][tuple],
+                        5,
+                        "Recommended solutions for problem "
+                        + self.expected_problem_name
+                        + " and solver "
+                        + self.expected_solver_name
+                        + " do not match at mrep "
+                        + str(mrep)
+                        + " and index "
+                        + str(list)
+                        + " and tuple "
+                        + str(tuple)
+                        + ".",
+                    )
             # Check to make sure the list lengths are the same
-            self.assertEqual(len(self.myexperiment.all_intermediate_budgets[mrep]), len(self.expected_all_intermediate_budgets[mrep]), "Length of intermediate budgets for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
+            self.assertEqual(
+                len(self.myexperiment.all_intermediate_budgets[mrep]),
+                len(self.expected_all_intermediate_budgets[mrep]),
+                "Length of intermediate budgets for problem "
+                + self.expected_problem_name
+                + " and solver "
+                + self.expected_solver_name
+                + " do not match.",
+            )
             # For each list of intermediate budgets
-            for list in range(len(self.myexperiment.all_intermediate_budgets[mrep])):
+            for list in range(
+                len(self.myexperiment.all_intermediate_budgets[mrep])
+            ):
                 # Check the values in the list
-                self.assertAlmostEqual(self.myexperiment.all_intermediate_budgets[mrep][list], self.expected_all_intermediate_budgets[mrep][list], 5, "Intermediate budgets for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(list) + ".")
-            
+                self.assertAlmostEqual(
+                    self.myexperiment.all_intermediate_budgets[mrep][list],
+                    self.expected_all_intermediate_budgets[mrep][list],
+                    5,
+                    "Intermediate budgets for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match at mrep "
+                    + str(mrep)
+                    + " and index "
+                    + str(list)
+                    + ".",
+                )
+
     def test_post_replicate(self):
         # Simulate results from the run method
-        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
+        self.myexperiment = ProblemSolver(
+            self.expected_solver_name, self.expected_problem_name
+        )
         self.myexperiment.n_macroreps = self.num_macroreps
         self.myexperiment.all_recommended_xs = self.expected_all_recommended_xs
-        self.myexperiment.all_intermediate_budgets = self.expected_all_intermediate_budgets
+        self.myexperiment.all_intermediate_budgets = (
+            self.expected_all_intermediate_budgets
+        )
 
         # Check actual post-replication results against expected
         self.myexperiment.post_replicate(n_postreps=self.num_postreps)
-        self.assertEqual(self.myexperiment.n_postreps, self.num_postreps, "Number of post-replications for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " does not match.")
+        self.assertEqual(
+            self.myexperiment.n_postreps,
+            self.num_postreps,
+            "Number of post-replications for problem "
+            + self.expected_problem_name
+            + " and solver "
+            + self.expected_solver_name
+            + " does not match.",
+        )
         # For each macroreplication
         for mrep in range(self.num_macroreps):
             # Check to make sure the list lengths are the same
-            self.assertEqual(len(self.myexperiment.all_est_objectives[mrep]), len(self.expected_all_est_objectives[mrep]), "Estimated objectives for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
+            self.assertEqual(
+                len(self.myexperiment.all_est_objectives[mrep]),
+                len(self.expected_all_est_objectives[mrep]),
+                "Estimated objectives for problem "
+                + self.expected_problem_name
+                + " and solver "
+                + self.expected_solver_name
+                + " do not match.",
+            )
             # For each list in the estimated objectives
             for list in range(len(self.myexperiment.all_est_objectives[mrep])):
                 # Check the values in the list
-                self.assertAlmostEqual(self.myexperiment.all_est_objectives[mrep][list], self.expected_all_est_objectives[mrep][list], 5, "Estimated objectives for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(list) + ".")
+                self.assertAlmostEqual(
+                    self.myexperiment.all_est_objectives[mrep][list],
+                    self.expected_all_est_objectives[mrep][list],
+                    5,
+                    "Estimated objectives for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match at mrep "
+                    + str(mrep)
+                    + " and index "
+                    + str(list)
+                    + ".",
+                )
 
     def test_post_normalize(self):
         # Simulate results from the post_replicate method
-        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
+        self.myexperiment = ProblemSolver(
+            self.expected_solver_name, self.expected_problem_name
+        )
         self.myexperiment.n_macroreps = self.num_macroreps
         self.myexperiment.n_postreps = self.num_postreps
         self.myexperiment.all_recommended_xs = self.expected_all_recommended_xs
-        self.myexperiment.all_intermediate_budgets = self.expected_all_intermediate_budgets
+        self.myexperiment.all_intermediate_budgets = (
+            self.expected_all_intermediate_budgets
+        )
         self.myexperiment.all_est_objectives = self.expected_all_est_objectives
 
         # Check actual post-normalization results against expected
-        post_normalize([self.myexperiment], n_postreps_init_opt=self.num_postreps)
+        post_normalize(
+            [self.myexperiment], n_postreps_init_opt=self.num_postreps
+        )
 
         # Loop through each curve object and convert it into a tuple
         for i in range(len(self.myexperiment.objective_curves)):
-            self.myexperiment.objective_curves[i] = (self.myexperiment.objective_curves[i].x_vals, self.myexperiment.objective_curves[i].y_vals)
+            self.myexperiment.objective_curves[i] = (
+                self.myexperiment.objective_curves[i].x_vals,
+                self.myexperiment.objective_curves[i].y_vals,
+            )
         for i in range(len(self.myexperiment.progress_curves)):
-            self.myexperiment.progress_curves[i] = (self.myexperiment.progress_curves[i].x_vals, self.myexperiment.progress_curves[i].y_vals)
+            self.myexperiment.progress_curves[i] = (
+                self.myexperiment.progress_curves[i].x_vals,
+                self.myexperiment.progress_curves[i].y_vals,
+            )
 
         for mrep in range(self.num_macroreps):
             # Check to make sure the same number of objective curves are present
             # This should probably always be 2 (x and y)
-            self.assertEqual(len(self.myexperiment.objective_curves[mrep]), len(self.expected_objective_curves[mrep]), "Number of objective curves for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " does not match.")
+            self.assertEqual(
+                len(self.myexperiment.objective_curves[mrep]),
+                len(self.expected_objective_curves[mrep]),
+                "Number of objective curves for problem "
+                + self.expected_problem_name
+                + " and solver "
+                + self.expected_solver_name
+                + " does not match.",
+            )
             # Make sure that curves are only checked if they exist
-            if (len(self.myexperiment.objective_curves[mrep]) > 0):
+            if len(self.myexperiment.objective_curves[mrep]) > 0:
                 # Make sure the lengths of the X and Y values are the same
-                self.assertEqual(len(self.myexperiment.objective_curves[mrep][0]), len(self.expected_objective_curves[mrep][0]), "Length of X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
-                self.assertEqual(len(self.myexperiment.objective_curves[mrep][1]), len(self.expected_objective_curves[mrep][1]), "Length of Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
+                self.assertEqual(
+                    len(self.myexperiment.objective_curves[mrep][0]),
+                    len(self.expected_objective_curves[mrep][0]),
+                    "Length of X values for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match.",
+                )
+                self.assertEqual(
+                    len(self.myexperiment.objective_curves[mrep][1]),
+                    len(self.expected_objective_curves[mrep][1]),
+                    "Length of Y values for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match.",
+                )
                 # Check X (0) and Y (1) values
-                for x_index in range(len(self.myexperiment.objective_curves[mrep][0])):
+                for x_index in range(
+                    len(self.myexperiment.objective_curves[mrep][0])
+                ):
                     # If the value is NaN, make sure we're expecting NaN
-                    if (math.isnan(self.myexperiment.objective_curves[mrep][0][x_index])):
-                        self.assertTrue(math.isnan(self.expected_objective_curves[mrep][0][x_index]), "X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(x_index) + ".")
+                    if math.isnan(
+                        self.myexperiment.objective_curves[mrep][0][x_index]
+                    ):
+                        self.assertTrue(
+                            math.isnan(
+                                self.expected_objective_curves[mrep][0][x_index]
+                            ),
+                            "X values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(x_index)
+                            + ".",
+                        )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(self.myexperiment.objective_curves[mrep][0][x_index], self.expected_objective_curves[mrep][0][x_index], 5, "X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(x_index) + ".")
-                for y_index in range(len(self.myexperiment.objective_curves[mrep][1])):
+                        self.assertAlmostEqual(
+                            self.myexperiment.objective_curves[mrep][0][
+                                x_index
+                            ],
+                            self.expected_objective_curves[mrep][0][x_index],
+                            5,
+                            "X values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(x_index)
+                            + ".",
+                        )
+                for y_index in range(
+                    len(self.myexperiment.objective_curves[mrep][1])
+                ):
                     # If the value is NaN, make sure we're expecting NaN
-                    if (math.isnan(self.myexperiment.objective_curves[mrep][1][y_index])):
-                        self.assertTrue(math.isnan(self.expected_objective_curves[mrep][1][y_index]), "Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(y_index) + ".")
+                    if math.isnan(
+                        self.myexperiment.objective_curves[mrep][1][y_index]
+                    ):
+                        self.assertTrue(
+                            math.isnan(
+                                self.expected_objective_curves[mrep][1][y_index]
+                            ),
+                            "Y values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(y_index)
+                            + ".",
+                        )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(self.myexperiment.objective_curves[mrep][1][y_index], self.expected_objective_curves[mrep][1][y_index], 5, "Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(y_index) + ".")
-            
+                        self.assertAlmostEqual(
+                            self.myexperiment.objective_curves[mrep][1][
+                                y_index
+                            ],
+                            self.expected_objective_curves[mrep][1][y_index],
+                            5,
+                            "Y values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(y_index)
+                            + ".",
+                        )
+
             # Check to make sure the same number of progress curves are present
             # This should probably always be 2 (x and y)
-            self.assertEqual(len(self.myexperiment.progress_curves[mrep]), len(self.expected_progress_curves[mrep]), "Number of progress curves for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " does not match.")
+            self.assertEqual(
+                len(self.myexperiment.progress_curves[mrep]),
+                len(self.expected_progress_curves[mrep]),
+                "Number of progress curves for problem "
+                + self.expected_problem_name
+                + " and solver "
+                + self.expected_solver_name
+                + " does not match.",
+            )
             # Make sure that curves are only checked if they exist
-            if (len(self.myexperiment.progress_curves[mrep]) > 0):
+            if len(self.myexperiment.progress_curves[mrep]) > 0:
                 # Make sure the lengths of the X and Y values are the same
-                self.assertEqual(len(self.myexperiment.progress_curves[mrep][0]), len(self.expected_progress_curves[mrep][0]), "Length of X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
-                self.assertEqual(len(self.myexperiment.progress_curves[mrep][1]), len(self.expected_progress_curves[mrep][1]), "Length of Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match.")
+                self.assertEqual(
+                    len(self.myexperiment.progress_curves[mrep][0]),
+                    len(self.expected_progress_curves[mrep][0]),
+                    "Length of X values for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match.",
+                )
+                self.assertEqual(
+                    len(self.myexperiment.progress_curves[mrep][1]),
+                    len(self.expected_progress_curves[mrep][1]),
+                    "Length of Y values for problem "
+                    + self.expected_problem_name
+                    + " and solver "
+                    + self.expected_solver_name
+                    + " do not match.",
+                )
                 # Check X (0) and Y (1) values
-                for x_index in range(len(self.myexperiment.progress_curves[mrep][0])):
+                for x_index in range(
+                    len(self.myexperiment.progress_curves[mrep][0])
+                ):
                     # If the value is NaN, make sure we're expecting NaN
-                    if (math.isnan(self.myexperiment.progress_curves[mrep][0][x_index])):
-                        self.assertTrue(math.isnan(self.expected_progress_curves[mrep][0][x_index]), "X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(x_index) + ".")
+                    if math.isnan(
+                        self.myexperiment.progress_curves[mrep][0][x_index]
+                    ):
+                        self.assertTrue(
+                            math.isnan(
+                                self.expected_progress_curves[mrep][0][x_index]
+                            ),
+                            "X values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(x_index)
+                            + ".",
+                        )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(self.myexperiment.progress_curves[mrep][0][x_index], self.expected_progress_curves[mrep][0][x_index], 5, "X values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(x_index) + ".")
-                for y_index in range(len(self.myexperiment.progress_curves[mrep][1])):
+                        self.assertAlmostEqual(
+                            self.myexperiment.progress_curves[mrep][0][x_index],
+                            self.expected_progress_curves[mrep][0][x_index],
+                            5,
+                            "X values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(x_index)
+                            + ".",
+                        )
+                for y_index in range(
+                    len(self.myexperiment.progress_curves[mrep][1])
+                ):
                     # If the value is NaN, make sure we're expecting NaN
-                    if (math.isnan(self.myexperiment.progress_curves[mrep][1][y_index])):
-                        self.assertTrue(math.isnan(self.expected_progress_curves[mrep][1][y_index]), "Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(y_index) + ".")
+                    if math.isnan(
+                        self.myexperiment.progress_curves[mrep][1][y_index]
+                    ):
+                        self.assertTrue(
+                            math.isnan(
+                                self.expected_progress_curves[mrep][1][y_index]
+                            ),
+                            "Y values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(y_index)
+                            + ".",
+                        )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(self.myexperiment.progress_curves[mrep][1][y_index], self.expected_progress_curves[mrep][1][y_index], 5, "Y values for problem " + self.expected_problem_name + " and solver " + self.expected_solver_name + " do not match at mrep " + str(mrep) + " and index " + str(y_index) + ".")      
+                        self.assertAlmostEqual(
+                            self.myexperiment.progress_curves[mrep][1][y_index],
+                            self.expected_progress_curves[mrep][1][y_index],
+                            5,
+                            "Y values for problem "
+                            + self.expected_problem_name
+                            + " and solver "
+                            + self.expected_solver_name
+                            + " do not match at mrep "
+                            + str(mrep)
+                            + " and index "
+                            + str(y_index)
+                            + ".",
+                        )

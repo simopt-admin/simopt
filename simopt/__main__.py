@@ -1,7 +1,12 @@
+"""Main module for the simopt package."""
+
 from simopt import GUI
 
-def main():
+
+def main() -> None:
+    """Launch the GUI."""
     GUI.start_gui()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

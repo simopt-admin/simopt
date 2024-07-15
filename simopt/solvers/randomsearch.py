@@ -48,6 +48,26 @@ class RandomSearch(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "stochastic"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "mixed"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "RNDSRCH", fixed_factors: dict | None = None
     ) -> None:
@@ -56,10 +76,6 @@ class RandomSearch(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "stochastic"
-        self.variable_type = "mixed"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",

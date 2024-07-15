@@ -47,6 +47,26 @@ class SPSA(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "box"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "continuous"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "SPSA", fixed_factors: dict | None = None
     ) -> None:
@@ -55,10 +75,6 @@ class SPSA(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -323,7 +339,12 @@ class SPSA(Solver):
         return recommended_solns, intermediate_budgets
 
 
-def check_cons(candidate_x: np.array, new_x: np.array, lower_bound: np.array, upper_bound: np.array) -> tuple[np.array, float]:
+def check_cons(
+    candidate_x: np.array,
+    new_x: np.array,
+    lower_bound: np.array,
+    upper_bound: np.array,
+) -> tuple[np.array, float]:
     """Evaluate the distance from the new vector (candiate_x) compared to the current vector (new_x) respecting the vector's boundaries of feasibility.
 
     Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.

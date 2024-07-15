@@ -49,6 +49,26 @@ class ADAM(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "box"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "continuous"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "ADAM", fixed_factors: dict | None = None
     ) -> None:
@@ -57,10 +77,6 @@ class ADAM(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -204,7 +220,9 @@ class ADAM(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self._finite_diff(new_solution, bds_check, problem)
-                expended_budget += (2 * problem.dim - np.sum(bds_check != 0)) * r
+                expended_budget += (
+                    2 * problem.dim - np.sum(bds_check != 0)
+                ) * r
 
             # Convert new_x from tuple to list.
             new_x = list(new_x)
@@ -242,7 +260,9 @@ class ADAM(Solver):
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def _finite_diff(self, new_solution: Solution, bds_check: np.ndarray, problem: Problem) -> np.ndarray:
+    def _finite_diff(
+        self, new_solution: Solution, bds_check: np.ndarray, problem: Problem
+    ) -> np.ndarray:
         r = self.factors["r"]
         alpha = self.factors["alpha"]
         lower_bound = problem.lower_bounds

@@ -1,16 +1,23 @@
-"""
-This script is intended to help with debugging problems and solvers.
+"""This script is intended to help with debugging problems and solvers.
 It create a problem-solver pairing (using the directory) and runs multiple
 macroreplications of the solver on the problem.
 """
 
 import sys
 import os.path as o
-import os
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
+
+sys.path.append(
+    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
+)  # type:ignore
 
 # Import the ProblemSolver class and other useful functions
-from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
+from simopt.experiment_base import (
+    ProblemSolver,
+    post_normalize,
+    plot_progress_curves,
+    plot_solvability_cdfs,
+)
+
 
 def main():
     # !! When testing a new solver/problem, first go to directory.py.
@@ -32,7 +39,9 @@ def main():
     print(f"Testing solver {solver_name} on problem {problem_name}.")
 
     # Specify file path name for storing experiment outputs in .pickle file.
-    file_name_path = "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
+    file_name_path = (
+        "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
+    )
     print(f"Results will be stored as {file_name_path}.")
 
     # Initialize an instance of the experiment class.
@@ -57,13 +66,23 @@ def main():
 
     print("Plotting results.")
     # Produce basic plots of the solver on the problem.
-    plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
-    plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
-    plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
+    plot_progress_curves(
+        experiments=[myexperiment], plot_type="all", normalize=False
+    )
+    plot_progress_curves(
+        experiments=[myexperiment], plot_type="mean", normalize=False
+    )
+    plot_progress_curves(
+        experiments=[myexperiment],
+        plot_type="quantile",
+        beta=0.90,
+        normalize=False,
+    )
     plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
 
     # Plots will be saved in the folder experiments/plots.
     print("Finished. Plots can be found in experiments/plots folder.")
+
 
 if __name__ == "__main__":
     main()

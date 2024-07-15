@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Provide dictionary directories listing solvers, problems, and models."""
+
 from __future__ import annotations
 
 # import solvers

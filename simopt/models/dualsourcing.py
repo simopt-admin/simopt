@@ -1,10 +1,10 @@
-"""
-Summary
+"""Summary
 -------
 Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -13,8 +13,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class DualSourcing(Model):
-    """
-    A model that simulates multiple periods of ordering and sales for a single-staged,
+    """A model that simulates multiple periods of ordering and sales for a single-staged,
     dual sourcing inventory problem with stochastic demand. Returns average holding cost,
     average penalty cost, and average ordering cost per period.
 
@@ -64,10 +63,12 @@ class DualSourcing(Model):
             Order-up-to level for expedited orders (`int`)
 
 
-    See also
+    See Also
     --------
     base.Model
+
     """
+
     def __init__(self, fixed_factors: dict = {}):
         self.name = "DUALSOURCING"
         self.n_rngs = 1
@@ -77,63 +78,63 @@ class DualSourcing(Model):
             "n_days": {
                 "description": "number of days to simulate",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "initial_inv": {
                 "description": "initial inventory",
                 "datatype": int,
-                "default": 40
+                "default": 40,
             },
             "cost_reg": {
                 "description": "regular ordering cost per unit",
                 "datatype": float,
-                "default": 100.00
+                "default": 100.00,
             },
             "cost_exp": {
                 "description": "expedited ordering cost per unit",
                 "datatype": float,
-                "default": 110.00
+                "default": 110.00,
             },
             "lead_reg": {
                 "description": "lead time for regular orders in days",
                 "datatype": int,
-                "default": 2
+                "default": 2,
             },
             "lead_exp": {
                 "description": "lead time for expedited orders in days",
                 "datatype": int,
-                "default": 0
+                "default": 0,
             },
             "holding_cost": {
                 "description": "holding cost per unit per period",
                 "datatype": float,
-                "default": 5.00
+                "default": 5.00,
             },
             "penalty_cost": {
                 "description": "penalty cost per unit per period for backlogging",
                 "datatype": float,
-                "default": 495.00
+                "default": 495.00,
             },
             "st_dev": {
                 "description": "standard deviation of demand distribution",
                 "datatype": float,
-                "default": 10.0
+                "default": 10.0,
             },
             "mu": {
                 "description": "mean of demand distribution",
                 "datatype": float,
-                "default": 30.0
+                "default": 30.0,
             },
             "order_level_reg": {
                 "description": "order-up-to level for regular orders",
                 "datatype": int,
-                "default": 80
+                "default": 80,
             },
             "order_level_exp": {
                 "description": "order-up-to level for expedited orders",
                 "datatype": int,
-                "default": 50
-            }
+                "default": 50,
+            },
         }
         self.check_factor_list = {
             "n_days": self.check_n_days,
@@ -147,7 +148,7 @@ class DualSourcing(Model):
             "st_dev": self.check_st_dev,
             "mu": self.check_mu,
             "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp
+            "order_level_exp": self.check_order_level_exp,
         }
         # Set factors of the simulation model
         super().__init__(fixed_factors)
@@ -190,18 +191,19 @@ class DualSourcing(Model):
         return self.factors["order_level_exp"] >= 0
 
     def check_simulatable_factors(self):
-        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (self.factors["cost_exp"] > self.factors["cost_reg"])
+        return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (
+            self.factors["cost_exp"] > self.factors["cost_reg"]
+        )
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -212,6 +214,7 @@ class DualSourcing(Model):
                 The average penalty cost over the time period
             ``average_ordering_cost``
                 The average ordering cost over the time period
+
         """
         # Designate random number generators.
         demand_rng = rng_list[0]
@@ -221,7 +224,17 @@ class DualSourcing(Model):
         orders_exp = np.zeros(self.factors["lead_exp"])
 
         # Generate demand.
-        demand = [round(max(0, demand_rng.normalvariate(mu=self.factors["mu"], sigma=self.factors["st_dev"]))) for _ in range(self.factors["n_days"])]
+        demand = [
+            round(
+                max(
+                    0,
+                    demand_rng.normalvariate(
+                        mu=self.factors["mu"], sigma=self.factors["st_dev"]
+                    ),
+                )
+            )
+            for _ in range(self.factors["n_days"])
+        ]
 
         # Track total expenses.
         total_holding_cost = np.zeros(self.factors["n_days"])
@@ -232,13 +245,40 @@ class DualSourcing(Model):
         # Run simulation over time horizon.
         for day in range(self.factors["n_days"]):
             # Calculate inventory positions.
-            inv_position_exp = round(inv + np.sum(orders_exp) + np.sum(orders_reg[:self.factors["lead_exp"]]))
-            inv_position_reg = round(inv + np.sum(orders_exp) + np.sum(orders_reg))
+            inv_position_exp = round(
+                inv
+                + np.sum(orders_exp)
+                + np.sum(orders_reg[: self.factors["lead_exp"]])
+            )
+            inv_position_reg = round(
+                inv + np.sum(orders_exp) + np.sum(orders_reg)
+            )
             # Place orders if needed.
-            orders_exp = np.append(orders_exp, max(0, round(self.factors["order_level_exp"] - inv_position_exp - orders_reg[self.factors["lead_exp"]])))
-            orders_reg = np.append(orders_reg, (self.factors["order_level_reg"] - inv_position_reg - orders_exp[self.factors["lead_exp"]]))
+            orders_exp = np.append(
+                orders_exp,
+                max(
+                    0,
+                    round(
+                        self.factors["order_level_exp"]
+                        - inv_position_exp
+                        - orders_reg[self.factors["lead_exp"]]
+                    ),
+                ),
+            )
+            orders_reg = np.append(
+                orders_reg,
+                (
+                    self.factors["order_level_reg"]
+                    - inv_position_reg
+                    - orders_exp[self.factors["lead_exp"]]
+                ),
+            )
             # Charge ordering cost.
-            total_ordering_cost[day] = self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]] + self.factors["cost_reg"] * orders_reg[self.factors["lead_reg"]]
+            total_ordering_cost[day] = (
+                self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]]
+                + self.factors["cost_reg"]
+                * orders_reg[self.factors["lead_reg"]]
+            )
             # Orders arrive, update on-hand inventory.
             inv = inv + orders_exp[0] + orders_reg[0]
             orders_exp = np.delete(orders_exp, 0)
@@ -247,16 +287,24 @@ class DualSourcing(Model):
             # dn = max(0, demand[day]) THIS IS DONE TWICE
             # inv = inv - dn
             inv = inv - demand[day]
-            total_penalty_cost[day] = -1 * self.factors["penalty_cost"] * min(0, inv)
+            total_penalty_cost[day] = (
+                -1 * self.factors["penalty_cost"] * min(0, inv)
+            )
             # Charge holding cost.
             total_holding_cost[day] = self.factors["holding_cost"] * max(0, inv)
 
         # Calculate responses from simulation data.
-        responses = {"average_ordering_cost": np.mean(total_ordering_cost),
-                     "average_penalty_cost": np.mean(total_penalty_cost),
-                     "average_holding_cost": np.mean(total_holding_cost)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "average_ordering_cost": np.mean(total_ordering_cost),
+            "average_penalty_cost": np.mean(total_penalty_cost),
+            "average_holding_cost": np.mean(total_holding_cost),
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -268,10 +316,9 @@ Minimize the expected total cost for dual-sourcing inventory system.
 
 
 class DualSourcingMinCost(Problem):
-    """
-    Class to make dual-sourcing inventory simulation-optimization problems.
+    """Class to make dual-sourcing inventory simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -315,7 +362,7 @@ class DualSourcingMinCost(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -324,11 +371,18 @@ class DualSourcingMinCost(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
+
     """
-    def __init__(self, name: str = "DUALSOURCING-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "DUALSOURCING-1",
+        fixed_factors: dict = {},
+        model_fixed_factors: dict = {},
+    ):
         self.name = name
         self.dim = 2
         self.n_objectives = 1
@@ -348,168 +402,179 @@ class DualSourcingMinCost(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (50, 80)
+                "default": (50, 80),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = DualSourcing(self.model_fixed_factors)
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys.
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
+
         """
         factor_dict = {
             "order_level_exp": vector[0],
-            "order_level_reg": vector[1]
+            "order_level_reg": vector[1],
         }
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
+        """Convert a dictionary with factor keys to a vector
         of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
+
         """
-        vector = (factor_dict["order_level_exp"], factor_dict["order_level_reg"])
+        vector = (
+            factor_dict["order_level_exp"],
+            factor_dict["order_level_reg"],
+        )
         return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
+
         """
-        objectives = (response_dict["average_ordering_cost"] + response_dict["average_penalty_cost"] + response_dict["average_holding_cost"],)
+        objectives = (
+            response_dict["average_ordering_cost"]
+            + response_dict["average_penalty_cost"]
+            + response_dict["average_holding_cost"],
+        )
         return objectives
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
+        """Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
+
         """
         stoch_constraints = None
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
+
         """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints
         for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_stoch_constraints : tuple
             vector of deterministic components of stochastic constraints
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of
             stochastic constraints
+
         """
         det_stoch_constraints = None
         det_stoch_constraints_gradients = None
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
+        """Check if a solution `x` satisfies the problem's deterministic
         constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
+
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return x[0] >= 0 and x[1] >= 0
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
+
         """
         x = (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
         return x

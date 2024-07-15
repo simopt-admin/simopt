@@ -51,6 +51,26 @@ class NelderMead(Solver):
 
     """
 
+    @property
+    def objective_type(self) -> str:
+        """The description of objective types."""
+        return "single"
+
+    @property
+    def constraint_type(self) -> str:
+        """The description of constraints types."""
+        return "box"
+
+    @property
+    def variable_type(self) -> str:
+        """The description of variable types."""
+        return "continuous"
+
+    @property
+    def gradient_needed(self) -> bool:
+        """If gradient of objective function is needed."""
+        return False
+
     def __init__(
         self, name: str = "NELDMD", fixed_factors: dict | None = None
     ) -> None:
@@ -59,10 +79,6 @@ class NelderMead(Solver):
             fixed_factors = {}
 
         self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
         self.specifications = {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -494,7 +510,9 @@ class NelderMead(Solver):
 
     # HELPER FUNCTIONS
 
-    def sort_and_end_update(self, problem: Problem, sol: list[Solution]) -> list[Solution]:
+    def sort_and_end_update(
+        self, problem: Problem, sol: list[Solution]
+    ) -> list[Solution]:
         """Sort solutions and end update of solutions.
 
         Arguments:
@@ -503,7 +521,7 @@ class NelderMead(Solver):
             simulation-optimization problem to solve
         sol : list of Solution objects
             list of solutions to sort
-        
+
         Returns:
         -------
         sort_sol : list of Solution objects
