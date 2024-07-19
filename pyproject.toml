@@ -34,3 +34,9 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
 "Documentation" = "https://simopt.readthedocs.io/en/latest/"
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "N", "D", "UP", "ANN0", "ANN2", "ANN4", "ASYNC", "S", "A", "RUF", "NPY201"]
