@@ -24,7 +24,7 @@ import pandas as pd
 from simopt.base import Problem, Solver
 from simopt.data_farming_base import DataFarmingExperiment
 
-from .directory import (
+from simopt.directory import (
     model_directory,
     model_problem_unabbreviated_directory,
     model_unabbreviated_directory,
@@ -33,7 +33,8 @@ from .directory import (
     solver_directory,
     solver_unabbreviated_directory,
 )
-from .experiment_base import (
+from simopt.experiment_base import (
+    EXPERIMENT_DIR,
     ProblemSolver,
     ProblemsSolvers,
     create_design,
@@ -46,7 +47,6 @@ from .experiment_base import (
     plot_terminal_progress,
     plot_terminal_scatterplots,
     post_normalize,
-    EXPERIMENT_DIR,
 )
 
 TEXT_FAMILY = "TkDefaultFont"
@@ -89,7 +89,7 @@ class MainMenuWindow(tk.Tk):
         ----------
         root : tk.Tk
             The main window of the GUI
-        
+
         """
         self.master = root
 
@@ -177,14 +177,16 @@ class MainMenuWindow(tk.Tk):
         # style.configure("Vertical.TScrollbar", font=(f"{TEXT_FAMILY}", 13))
         # style.configure("Horizontal.TScrollbar", font=(f"{TEXT_FAMILY}", 13))
 
-    def open_experiment_window(self):
+    def open_experiment_window(self) -> None:
+        """Open the experiment window."""
         self.create_experiment_window = tk.Toplevel(self.master)
         self.create_experiment_window.title(
             "SimOpt Library Graphical User Interface - Problem-Solver Experiment"
         )
-        self.experiment_app = Experiment_Window(self.create_experiment_window)
+        self.experiment_app = ExperimentWindow(self.create_experiment_window)
 
-    def open_model_datafarming(self):
+    def open_model_datafarming(self) -> None:
+        """Open the model data farming window."""
         self.datafarming_window = tk.Toplevel(self.master)
         self.datafarming_window.title(
             "SimOpt Library Graphical User Interface - Model Data Farming"
@@ -193,7 +195,8 @@ class MainMenuWindow(tk.Tk):
             self.datafarming_window, self
         )
 
-    def open_prob_sol_datafarming(self):
+    def open_prob_sol_datafarming(self) -> None:
+        """Open the solver & problem data farming window."""
         self.solver_datafarm_window = tk.Toplevel(self.master)
         self.solver_datafarm_window.title(
             "SimOpt Library Graphical User Interface - Solver Data Farming"
@@ -202,7 +205,8 @@ class MainMenuWindow(tk.Tk):
             self.solver_datafarm_window
         )
 
-    def open_new_experiment(self):
+    def open_new_experiment(self) -> None:
+        """Open the new experiment window."""
         self.new_experiment_window = tk.Toplevel(self.master)
         self.new_experiment_window.title(
             "SimOpt Library Graphical User Interface - New Experiment Window"
@@ -212,8 +216,8 @@ class MainMenuWindow(tk.Tk):
         )
 
 
-class Experiment_Window(tk.Toplevel):
-    """Main window of the GUI
+class ExperimentWindow(tk.Toplevel):
+    """Main window of the GUI.
 
     Attributes
     ----------
@@ -226,40 +230,11 @@ class Experiment_Window(tk.Toplevel):
     self.solver_var : Variable that contains selected solver (use .get() method to obtain value for)
     self.maco_var : Variable that contains inputted number of macroreplications (use .get() method to obtain value for)
 
-    Functions
-    ---------
-    show_problem_factors(self, *args) : displays additional information on problem and oracle factors
-            connected to : self.problem_menu <- ttk.OptionMenu
-    show_solver_factors(self, *args) : displays additional information on solver factors
-            connected to : self.solver_menu <- ttk.OptionMenu
-    run_single_function(self, *args) : completes single-object experiment and invokes Post_Processing_Window class
-            connected to : self.run_button <- ttk.Button
-    crossdesign_function(self) : invokes Cross_Design_Window class
-            connected to : self.crossdesign_button <- ttk.Button
-    clearRow_function(self) : ~not functional~ meant to clear a single row of the experiment queue
-            connected to : self.clear_button_added <- ttk.Button, within self.add_experiment
-    clear_queue(self) : clears entire experiment queue and resets all lists containing experiment data
-            connected to : self.clear_queue_button <- ttk.Button
-    add_experiment(self) : adds experiment to experiment queue
-            connected to : self.add_button <- ttk.Button
-    confirm_problem_factors(self) : used within run_single_function, stores all problem factors in a dictionary
-            return : problem_factors_return | type = list | contains = [problem factor dictionary, None or problem rename]
-    confirm_oracle_factors(self) : used within run_single_function, stores all oracle factors in a dictionary
-            return : oracle_factors_return | type = list | contains = [oracle factor dictionary]
-    confirm_solver_factors(self) : used within run_single_function, stores all solver factors in a dictionary
-            return : solver_factors_return | type = list | contains = [solver factor dictionary, None or solver rename]
-    onFrameConfigure_queue(self, event) : creates scrollbar for the queue notebook
-    onFrameConfigure_factor_problem(self, event) : creates scrollbar for the problem factors notebook
-    onFrameConfigure_factor_solver(self, event) : creates scrollbar for the solver factors notebook
-    onFrameConfigure_factor_oracle(self, event) : creates scrollbar for the oracle factor notebook
-    test_function(self, *args) : placeholder function to make sure buttons, OptionMenus, etc are connected properly
-
     """
 
-    def __init__(self, master):
-        # problem.model_decision_factors
-
-        self.master = master
+    def __init__(self, root: tk.Tk) -> None:
+        """Initialize the main window of the GUI."""
+        self.master = root
 
         self.frame = tk.Frame(self.master)
         self.count_meta_experiment_queue = 0
@@ -471,7 +446,7 @@ class Experiment_Window(tk.Toplevel):
             tags="self.queue_frame",
         )
 
-        self.queue_frame.bind("<Configure>", self.onFrameConfigure_queue)
+        self.queue_frame.bind("<Configure>", self.on_frame_configure_queue)
 
         self.notebook = ttk.Notebook(master=self.queue_frame)
         self.notebook.pack(fill="both")
@@ -553,7 +528,15 @@ class Experiment_Window(tk.Toplevel):
                 row=0, column=self.heading_list.index(heading), padx=10, pady=3
             )
 
-        def on_tab_change(event):
+        def on_tab_change(event: tk.Event) -> None:
+            """Handle tab change event.
+
+            Parameters
+            ----------
+            event : tk.Event
+                The event object
+
+            """
             tab = event.widget.tab("current")["text"]
             if tab == "Post-Normalize by Problem":
                 self.post_norm_setup()
@@ -623,7 +606,15 @@ class Experiment_Window(tk.Toplevel):
     # def on_leave(self, enter):
     # self.macro_definition.configure(text="")
 
-    def show_problem_factors(self, *args):
+    def show_problem_factors(self, *args: tuple) -> None:
+        """Show the problem factors.
+
+        Parameters
+        ----------
+        *args : tuple
+            The arguments
+
+        """
         # if args and len(args) == 2:
         #     print("ARGS: ", args[1])
         # ("arg length:", len(args))
@@ -667,7 +658,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_problem.bind(
-            "<Configure>", self.onFrameConfigure_factor_problem
+            "<Configure>", self.on_frame_configure_factor_problem
         )
 
         self.factor_notebook_problem = ttk.Notebook(
@@ -747,7 +738,7 @@ class Experiment_Window(tk.Toplevel):
 
         count_factors_problem += 1
 
-        for num, factor_type in enumerate(
+        for _, factor_type in enumerate(
             self.problem_object().specifications, start=0
         ):
             # (factor_type, len(self.problem_object().specifications[factor_type]['default']) )
@@ -901,7 +892,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_oracle.bind(
-            "<Configure>", self.onFrameConfigure_factor_oracle
+            "<Configure>", self.on_frame_configure_factor_oracle
         )
 
         self.factor_notebook_oracle = ttk.Notebook(
@@ -1030,7 +1021,15 @@ class Experiment_Window(tk.Toplevel):
         if str(self.solver_var.get()) != "Solver":
             self.add_button.place(x=10, rely=0.48, width=200, height=30)
 
-    def show_solver_factors(self, *args):
+    def show_solver_factors(self, *args: tuple) -> None:
+        """Show the solver factors.
+
+        Parameters
+        ----------
+        *args : tuple
+            The arguments
+
+        """
         if args and len(args) == 3 and not args[2]:
             pass
         else:
@@ -1075,7 +1074,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_solver.bind(
-            "<Configure>", self.onFrameConfigure_factor_solver
+            "<Configure>", self.on_frame_configure_factor_solver
         )
 
         self.factor_notebook_solver = ttk.Notebook(
@@ -1253,7 +1252,8 @@ class Experiment_Window(tk.Toplevel):
 
     # Creates a function that checks the compatibility of the solver picked with the list of problems and adds
     # the compatible problems to a new list
-    def update_problem_list_compatability(self):
+    def update_problem_list_compatability(self) -> None:
+        """Update the problem list compatibility."""
         if self.solver_var.get() != "Solver":
             self.problem_menu.destroy()
             temp_problem_list = []
@@ -1293,18 +1293,26 @@ class Experiment_Window(tk.Toplevel):
             )
             self.problem_menu.place(relx=0.4, rely=0.1)
 
-    def clearRow_function(self, integer):
-        for widget in self.widget_list[integer - 1]:
+    def clear_row_function(self, row_index: int) -> None:
+        """Clear the row.
+
+        Parameters
+        ----------
+        row_index : int
+            Row to clear
+
+        """
+        for widget in self.widget_list[row_index - 1]:
             widget.grid_remove()
 
-        self.experiment_master_list.pop(integer - 1)
-        self.experiment_object_list.pop(integer - 1)
-        self.widget_list.pop(integer - 1)
+        self.experiment_master_list.pop(row_index - 1)
+        self.experiment_object_list.pop(row_index - 1)
+        self.widget_list.pop(row_index - 1)
 
-        self.check_box_list[integer - 1].grid_remove()
+        self.check_box_list[row_index - 1].grid_remove()
 
-        self.check_box_list.pop(integer - 1)
-        self.check_box_list_var.pop(integer - 1)
+        self.check_box_list.pop(row_index - 1)
+        self.check_box_list_var.pop(row_index - 1)
 
         # if (integer - 1) in self.normalize_list:
         #     self.normalize_list.remove(integer - 1)
@@ -1328,17 +1336,17 @@ class Experiment_Window(tk.Toplevel):
 
             row_of_widgets[3] = run_button_added
 
-            viewEdit_button_added = row_of_widgets[4]
-            text_on_viewEdit = viewEdit_button_added["text"]
-            split_text = text_on_viewEdit.split(" ")
+            view_edit_button_added = row_of_widgets[4]
+            text_on_view_edit = view_edit_button_added["text"]
+            split_text = text_on_view_edit.split(" ")
             split_text[len(split_text) - 1] = str(row_index + 1)
             # new_text = " ".join(split_text)
             # viewEdit_button_added["text"] = new_text
-            viewEdit_button_added["command"] = partial(
-                self.viewEdit_function, row_index + 1
+            view_edit_button_added["command"] = partial(
+                self.view_edit_function, row_index + 1
             )
 
-            row_of_widgets[4] = viewEdit_button_added
+            row_of_widgets[4] = view_edit_button_added
 
             clear_button_added = row_of_widgets[5]
             text_on_clear = clear_button_added["text"]
@@ -1347,7 +1355,7 @@ class Experiment_Window(tk.Toplevel):
             # new_text = " ".join(split_text)
             # clear_button_added["text"] = new_text
             clear_button_added["command"] = partial(
-                self.clearRow_function, row_index + 1
+                self.clear_row_function, row_index + 1
             )
 
             row_of_widgets[5] = clear_button_added
@@ -1363,6 +1371,7 @@ class Experiment_Window(tk.Toplevel):
             current_check_box.grid(
                 row=(row_index + 1), column=0, sticky="nsew", padx=10, pady=3
             )
+            # TODO: figure out why ihdex 7 maps to column 1
             row_of_widgets[7].grid(
                 row=(row_index + 1), column=1, sticky="nsew", padx=10, pady=3
             )
@@ -1390,13 +1399,21 @@ class Experiment_Window(tk.Toplevel):
 
         self.count_experiment_queue = len(self.widget_list) + 1
 
-    def clear_meta_function(self, integer):
-        for widget in self.widget_meta_list[integer - 1]:
+    def clear_meta_function(self, row_index: int) -> None:
+        """Clear the meta function.
+
+        Parameters
+        ----------
+        row_index : int
+            The integer
+
+        """
+        for widget in self.widget_meta_list[row_index - 1]:
             widget.grid_remove()
 
-        self.meta_experiment_master_list.pop(integer - 1)
+        self.meta_experiment_master_list.pop(row_index - 1)
 
-        self.widget_meta_list.pop(integer - 1)
+        self.widget_meta_list.pop(row_index - 1)
 
         for row_of_widgets in self.widget_meta_list:
             row_index = self.widget_meta_list.index(row_of_widgets)
@@ -1474,9 +1491,15 @@ class Experiment_Window(tk.Toplevel):
         # resets solver_var to default value
         self.solver_var.set("Solver")
 
-    def viewEdit_function(self, integer):
-        row_index = integer
+    def view_edit_function(self, row_index: int) -> None:
+        """View the edit function.
 
+        Parameters
+        ----------
+        row_index : int
+            The integer
+
+        """
         self.experiment_object_list[row_index - 1]
         # (current_experiment)
         current_experiment_arguments = self.experiment_master_list[
@@ -1495,27 +1518,37 @@ class Experiment_Window(tk.Toplevel):
         # self.my_experiment[1][3][1]
         self.show_solver_factors(True, current_experiment_arguments, False)
         # print("self.show_solver_factors", self. show_solver_factors(True, current_experiment_arguments))
-        viewEdit_button_added = self.widget_list[row_index - 1][5]
-        viewEdit_button_added["text"] = "Save Changes"
-        viewEdit_button_added["command"] = partial(
+        view_edit_button_added = self.widget_list[row_index - 1][5]
+        view_edit_button_added["text"] = "Save Changes"
+        view_edit_button_added["command"] = partial(
             self.save_edit_function, row_index
         )
-        viewEdit_button_added.grid(
+        view_edit_button_added.grid(
             row=(row_index), column=5, sticky="nsew", padx=10, pady=3
         )
 
-    def clear_queue(self):
+    def clear_queue(self) -> None:
+        """Clear the queue."""
         # for row in self.widget_list:
         #     for widget in row:
         #         widget.grid_remove()
         for row in range(len(self.widget_list), 0, -1):
-            self.clearRow_function(row)
+            self.clear_row_function(row)
 
         self.experiment_master_list.clear()
         self.experiment_object_list.clear()
         self.widget_list.clear()
 
-    def add_experiment(self, *args):
+    # TODO: change away from *args
+    def add_experiment(self, *args: tuple) -> None:
+        """Add an experiment.
+
+        Parameters
+        ----------
+        *args : tuple
+            Arguments D:
+
+        """
         if len(args) == 1 and args[0] is int:
             place = args[0] - 1
         else:
@@ -1715,7 +1748,7 @@ class Experiment_Window(tk.Toplevel):
                         master=self.tab_one,
                         text="View / Edit",
                         command=partial(
-                            self.viewEdit_function, self.count_experiment_queue
+                            self.view_edit_function, self.count_experiment_queue
                         ),
                     )
                     self.viewEdit_button_added.grid(
@@ -1730,7 +1763,7 @@ class Experiment_Window(tk.Toplevel):
                         master=self.tab_one,
                         text="Remove",
                         command=partial(
-                            self.clearRow_function, self.count_experiment_queue
+                            self.clear_row_function, self.count_experiment_queue
                         ),
                     )
                     self.clear_button_added.grid(
@@ -1840,7 +1873,15 @@ class Experiment_Window(tk.Toplevel):
             message = "You have not selected all required fields, check for '*' near input boxes."
             tk.messagebox.showerror(title="Error Window", message=message)
 
-    def confirm_problem_factors(self):
+    def confirm_problem_factors(self) -> list:
+        """Confirm the problem factors.
+
+        Returns
+        -------
+        list
+            The problem factors
+
+        """
         self.problem_factors_return = []
         self.problem_factors_dictionary = dict()
 
@@ -1884,7 +1925,15 @@ class Experiment_Window(tk.Toplevel):
         self.problem_factors_return.insert(0, self.problem_factors_dictionary)
         return self.problem_factors_return
 
-    def confirm_oracle_factors(self):
+    def confirm_oracle_factors(self) -> list:
+        """Confirm the oracle factors.
+
+        Returns
+        -------
+        list
+            The oracle factors
+
+        """
         self.oracle_factors_return = []
         self.oracle_factors_dictionary = dict()
 
@@ -1901,9 +1950,9 @@ class Experiment_Window(tk.Toplevel):
 
             datatype = self.oracle_factors_types[index]
             if str(datatype) == "<class 'list'>":
-                newList = ast.literal_eval(oracle_factor.get())
+                new_list = ast.literal_eval(oracle_factor.get())
 
-                self.oracle_factors_dictionary[keys[index]] = newList
+                self.oracle_factors_dictionary[keys[index]] = new_list
             else:
                 self.oracle_factors_dictionary[keys[index]] = datatype(
                     oracle_factor.get()
@@ -1914,7 +1963,15 @@ class Experiment_Window(tk.Toplevel):
         self.oracle_factors_return.append(self.oracle_factors_dictionary)
         return self.oracle_factors_return
 
-    def confirm_solver_factors(self):
+    def confirm_solver_factors(self) -> list:
+        """Confirm the solver factors.
+
+        Returns
+        -------
+        list
+            The solver factors
+
+        """
         self.solver_factors_return = []
         self.solver_factors_dictionary = dict()
 
@@ -1943,33 +2000,72 @@ class Experiment_Window(tk.Toplevel):
         self.solver_factors_return.insert(0, self.solver_factors_dictionary)
         return self.solver_factors_return
 
-    def onFrameConfigure_queue(self, event):
+    def on_frame_configure_queue(self, event: tk.Event) -> None:
+        """Configure the queue.
+
+        Parameters
+        ----------
+        event : tk.Event
+            Event triggering the function
+
+        """
         self.queue_canvas.configure(scrollregion=self.queue_canvas.bbox("all"))
 
-    def onFrameConfigure_factor_problem(self, event):
+    def on_frame_configure_factor_problem(self, event: tk.Event) -> None:
+        """Configure the problem factors.
+
+        Parameters
+        ----------
+        event : tk.Event
+            Event triggering the function
+
+        """
         self.factor_canvas_problem.configure(
             scrollregion=self.factor_canvas_problem.bbox("all")
         )
 
-    def onFrameConfigure_factor_solver(self, event):
+    def on_frame_configure_factor_solver(self, event: tk.Event) -> None:
+        """Configure the solver factors.
+
+        Parameters
+        ----------
+        event : tk.Event
+            Event triggering the function
+
+        """
         self.factor_canvas_solver.configure(
             scrollregion=self.factor_canvas_solver.bbox("all")
         )
 
-    def onFrameConfigure_factor_oracle(self, event):
+    def on_frame_configure_factor_oracle(self, event: tk.Event) -> None:
+        """Configure the oracle factors.
+
+        Parameters
+        ----------
+        event : tk.Event
+            Event triggering the function
+
+        """
         self.factor_canvas_oracle.configure(
             scrollregion=self.factor_canvas_oracle.bbox("all")
         )
 
-    def save_edit_function(self, integer):
-        row_index = integer
+    def save_edit_function(self, row_index: int) -> None:
+        """Save the edit function.
+
+        Parameters
+        ----------
+        row_index : int
+            Index of the row
+
+        """
         self.experiment_master_list[row_index - 1]
         self.experiment_master_list[row_index - 1][5][0]["crn_across_solns"] = (
             self.boolean_var.get()
         )
 
         if self.add_experiment(row_index):
-            self.clearRow_function(row_index + 1)
+            self.clear_row_function(row_index + 1)
 
             # resets problem_var to default value
             self.problem_var.set("Problem")
@@ -1980,10 +2076,18 @@ class Experiment_Window(tk.Toplevel):
             self.factor_label_frame_oracle.destroy()
             self.factor_label_frame_solver.destroy()
 
-    def select_pickle_file_fuction(self, *args):
+    def select_pickle_file_fuction(self, *args: tuple) -> None:
+        """Load a pickle file.
+
+        Parameters
+        ----------
+        *args : tuple
+            Arguments
+
+        """
         filename = filedialog.askopenfilename(
             parent=self.master,
-            initialdir="EXPERIMENT_DIR",
+            initialdir=EXPERIMENT_DIR,
             title="Select Pickle File",
             # filetypes = (("Pickle files", "*.pickle;*.pck;*.pcl;*.pkl;*.db")
             #              ,("Python files", "*.py"),("All files", "*.*") )
@@ -1998,7 +2102,8 @@ class Experiment_Window(tk.Toplevel):
         #     message = "You attempted to select a file but failed, please try again if necessary"
         #     tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
 
-    def load_pickle_file_function(self):
+    def load_pickle_file_function(self) -> None:
+        """Load data from a pickle file."""
         self.select_pickle_file_fuction()
 
         filename = self.pickle_file_pathname_show["text"]
@@ -2012,7 +2117,7 @@ class Experiment_Window(tk.Toplevel):
 
                 pickle_file = experiment_pathname
                 infile = open(pickle_file, "rb")
-                new_dict = pickle.load(infile)
+                new_dict = pickle.load(infile)  # noqa: S301
                 infile.close()
 
                 self.my_experiment = new_dict
@@ -2123,7 +2228,7 @@ class Experiment_Window(tk.Toplevel):
                         master=self.tab_one,
                         text="View / Edit",
                         command=partial(
-                            self.viewEdit_function, self.count_experiment_queue
+                            self.view_edit_function, self.count_experiment_queue
                         ),
                     )
                     self.viewEdit_button_added.grid(
@@ -2138,7 +2243,7 @@ class Experiment_Window(tk.Toplevel):
                         master=self.tab_one,
                         text="Remove  ",
                         command=partial(
-                            self.clearRow_function, self.count_experiment_queue
+                            self.clear_row_function, self.count_experiment_queue
                         ),
                     )
                     self.clear_button_added.grid(
@@ -2216,9 +2321,17 @@ class Experiment_Window(tk.Toplevel):
         #     message = "You are attempting to load a file, but haven't selected one yet.\nPlease select a file first."
         #     tk.messagebox.showwarning(master=self.master, title=" Warning", message=message)
 
-    def run_row_function(self, integer):
+    def run_row_function(self, row_to_run: int) -> None:
+        """Run the specified row.
+
+        Parameters
+        ----------
+        row_to_run : int
+            The row to run
+
+        """
         # stringtuple[1:-1].split(separator=",")
-        row_index = integer - 1
+        row_index = row_to_run - 1
 
         # run_button = row_of_widgets[3]
         self.widget_list[row_index][3]["state"] = "disabled"
@@ -2254,7 +2367,15 @@ class Experiment_Window(tk.Toplevel):
             self.postrep_window, self.my_experiment, self.selected, self
         )
 
-    def post_process_disable_button(self, meta=False):
+    def post_process_disable_button(self, meta: bool = False) -> None:
+        """Disable the post process button in the GUI.
+
+        Parameters
+        ----------
+        meta : bool, optional
+            The boolean, by default False
+
+        """
         if meta:
             row_index = self.post_rep_function_row_index - 1
             self.widget_meta_list[row_index][5]["text"] = (
@@ -2847,7 +2968,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_solver.bind(
-            "<Configure>", self.onFrameConfigure_factor_solver
+            "<Configure>", self.on_frame_configure_factor_solver
         )
 
         self.factor_notebook_solver = ttk.Notebook(
@@ -3055,7 +3176,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_problem.bind(
-            "<Configure>", self.onFrameConfigure_factor_problem
+            "<Configure>", self.on_frame_configure_factor_problem
         )
 
         self.factor_notebook_problem = ttk.Notebook(
@@ -3271,7 +3392,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_oracle.bind(
-            "<Configure>", self.onFrameConfigure_factor_oracle
+            "<Configure>", self.on_frame_configure_factor_oracle
         )
 
         self.factor_notebook_oracle = ttk.Notebook(
@@ -3397,7 +3518,15 @@ class Experiment_Window(tk.Toplevel):
         if str(self.solver_var.get()) != "Solver":
             self.add_button.place(x=10, rely=0.48, width=200, height=30)
 
-    def show_solver_factors(self, *args):
+    def show_solver_factors(self, *args: tuple) -> None:
+        """Show the solver factors in the GUI.
+
+        Parameters
+        ----------
+        args : tuple
+            The arguments passed to the function.
+
+        """
         if args and len(args) == 3 and not args[2]:
             pass
         else:
@@ -3442,7 +3571,7 @@ class Experiment_Window(tk.Toplevel):
         )
 
         self.factor_frame_solver.bind(
-            "<Configure>", self.onFrameConfigure_factor_solver
+            "<Configure>", self.on_frame_configure_factor_solver
         )
 
         self.factor_notebook_solver = ttk.Notebook(
@@ -4043,7 +4172,7 @@ class NewExperimentWindow(tk.Toplevel):
             "Loading", "Loading pickle file. This may take a few minutes."
         )
         with open(file_path, "rb") as f:
-            exp = pickle.load(f)      # noqa: S301
+            exp = pickle.load(f)  # noqa: S301
         tk.messagebox.showinfo("Finished", "Pickle file has finished loading.")
 
         # add exp to master dict and display in row
@@ -4075,12 +4204,12 @@ class NewExperimentWindow(tk.Toplevel):
         frame: tk.Frame,
         factor_dict: dict | None = None,
         is_model: bool = False,
-        first_row: int = 0,
+        first_row: int = 1,
     ) -> tuple[dict, int]:
         """Show default factors for a solver or problem.
 
-        Arguments:
-        ---------
+        Parameters
+        ----------
         base_object : Solver | Problem
             Solver or Problem object.
         frame : tk.Frame
@@ -4092,7 +4221,7 @@ class NewExperimentWindow(tk.Toplevel):
         first_row : int, optional
             First row to display factors.
 
-        Returns:
+        Returns
         -------
         dict
             Dictionary of factors and their default values.
@@ -4130,7 +4259,9 @@ class NewExperimentWindow(tk.Toplevel):
                 text=display_name,
                 font=f"{TEXT_FAMILY} 13",
                 width=80,
-                anchor="w",
+                wraplength=500,
+                justify="left",
+                anchor="nw",
             )
             factorname_label.grid(row=que_length, column=0, sticky=tk.N + tk.W)
 
@@ -4142,7 +4273,7 @@ class NewExperimentWindow(tk.Toplevel):
                 text=fact_type_str,
                 font=f"{TEXT_FAMILY} 13",
                 width=20,
-                anchor="w",
+                anchor="nw",
             )
             factortype_label.grid(row=que_length, column=1, sticky=tk.N + tk.W)
 
@@ -4305,8 +4436,6 @@ class NewExperimentWindow(tk.Toplevel):
         self.problem_factor_display_canvas.grid(row=1, column=0)
         self.model_frame = tk.Frame(master=self.problem_notebook_frame)
         self.model_frame.grid(row=2, column=0)
-        self.model_factor_display_canvas = tk.Canvas(master=self.model_frame)
-        self.model_factor_display_canvas.grid(row=1, column=0)
 
         # self.IsSolver = False #used when adding problem to experiment list
 
@@ -4359,7 +4488,19 @@ class NewExperimentWindow(tk.Toplevel):
 
         # show problem factors and store default widgets and values to this dict
         self.problem_defaults, last_row = self.show_factor_defaults(
-            self.problem_object, self.problem_factor_display_canvas
+            self.problem_object, self.problem_frame
+        )
+
+        # Create column for solver factor names
+        self.problem_headername_label = tk.Label(
+            master=self.problem_frame,
+            text="Model Factors",
+            font=f"{TEXT_FAMILY} 13 bold",
+            width=20,
+            anchor="w",
+        )
+        self.problem_headername_label.grid(
+            row=last_row + 1, column=0, sticky=tk.N + tk.W
         )
 
         """ Get model information from dicrectory and display"""
@@ -4368,9 +4509,9 @@ class NewExperimentWindow(tk.Toplevel):
         # # show model factors and store default widgets and default values to these
         self.model_defaults, new_last_row = self.show_factor_defaults(
             base_object=self.problem_object,
-            frame=self.problem_factor_display_canvas,
+            frame=self.problem_frame,
             is_model=True,
-            first_row=last_row + 1,
+            first_row=last_row + 2,
         )
         # combine default dictionaries
         self.problem_defaults.update(self.model_defaults)
@@ -4381,7 +4522,7 @@ class NewExperimentWindow(tk.Toplevel):
             font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.problem_name_label.grid(row=2, column=0)
+        self.problem_name_label.grid(row=new_last_row + 1, column=0)
         self.problem_name_var = tk.StringVar()
         # get unique problem name
         problem_name = self.get_unique_name(
@@ -4393,13 +4534,13 @@ class NewExperimentWindow(tk.Toplevel):
             textvariable=self.problem_name_var,
             width=20,
         )
-        self.problem_name_entry.grid(row=2, column=1)
+        self.problem_name_entry.grid(row=new_last_row + 1, column=1)
         self.add_prob_to_exp_button = tk.Button(
             master=self.model_frame,
             text="Add this problem to experiment",
             command=self.add_problem_to_experiment,
         )
-        self.add_prob_to_exp_button.grid(row=3, column=0)
+        self.add_prob_to_exp_button.grid(row=new_last_row + 2, column=0)
 
     def show_solver_factors(self, event=None):
         # clear previous selections
@@ -4882,15 +5023,15 @@ class NewExperimentWindow(tk.Toplevel):
 
         """ Create factor settings txt file"""
         # Check if folder exists, if not create it
-        if not os.path.exists(os.getcwd() + "/experiments"):
-            os.makedirs(os.getcwd() + "/experiments")
         if not os.path.exists(EXPERIMENT_DIR):
             os.makedirs(EXPERIMENT_DIR)
-        # If file already exists, clear it
-        if os.path.exists(f"{EXPERIMENT_DIR}/{self.solver_design_name}.txt"):
-            os.remove(f"{EXPERIMENT_DIR}/{self.solver_design_name}.txt")
-        # Create a new empty file
-        open(f"{EXPERIMENT_DIR}/{self.solver_design_name}.txt", "x").close()
+        # If file already exists, clear it and make a new, empty file of the same name
+        filepath = os.path.join(
+            EXPERIMENT_DIR, f"{self.solver_design_name}.txt"
+        )
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        open(filepath, "x").close()
 
         for factor in self.solver_design_factors:
             factor_datatype = self.solver_datafarm_object.specifications[
@@ -4904,7 +5045,8 @@ class NewExperimentWindow(tk.Toplevel):
                 dec_val = "0"
             data_insert = f"{min_val} {max_val} {dec_val}\n"
             with open(
-                f"{EXPERIMENT_DIR}/{self.solver_design_name}.txt", "a"
+                os.path.join(EXPERIMENT_DIR, f"{self.solver_design_name}.txt"),
+                "a",
             ) as settings_file:
                 settings_file.write(data_insert)
 
@@ -4924,7 +5066,9 @@ class NewExperimentWindow(tk.Toplevel):
             return
         # display design tree
         self.display_design_tree(
-            f"{EXPERIMENT_DIR}/{self.solver_design_name}_design.csv",
+            os.path.join(
+                EXPERIMENT_DIR, f"{self.solver_design_name}_design.csv"
+            ),
             self.solver_datafarm_frame,
             row=5,
         )
@@ -4991,8 +5135,12 @@ class NewExperimentWindow(tk.Toplevel):
         print("design factors", self.problem_design_factors)
 
         """ Create factor settings txt file"""
+        settings_filename = f"{self.problem_design_name}_problem_factors"
+        settings_filepath = os.path.join(
+            EXPERIMENT_DIR, f"{settings_filename}.txt"
+        )
         with open(
-            f"{EXPERIMENT_DIR}/{self.problem_design_name}_problem_factors.txt",
+            settings_filepath,
             "w",
         ) as settings_file:
             settings_file.write("")
@@ -5006,7 +5154,7 @@ class NewExperimentWindow(tk.Toplevel):
                 dec_val = "0"
             data_insert = f"{min_val} {max_val} {dec_val}\n"
             with open(
-                f"{EXPERIMENT_DIR}/{self.problem_design_name}_problem_factors.txt",
+                settings_filepath,
                 "a",
             ) as settings_file:
                 settings_file.write(data_insert)
@@ -5014,7 +5162,7 @@ class NewExperimentWindow(tk.Toplevel):
         self.problem_design_list = create_design(
             name=self.problem_datafarm_object.name,
             factor_headers=self.problem_design_factors,
-            factor_settings_filename=f"{self.problem_design_name}_problem_factors",
+            factor_settings_filename=settings_filename,
             fixed_factors=self.problem_fixed_factors,
             cross_design_factors=self.problem_cross_design_factors,
             n_stacks=n_stacks,
@@ -5037,7 +5185,10 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.problem_design_tree_label.grid(row=0, column=0)
         self.display_design_tree(
-            f"{EXPERIMENT_DIR}/{self.problem_design_name}_problem_factors_design.csv",
+            os.path.join(
+                EXPERIMENT_DIR,
+                f"{self.problem_design_name}_problem_factors_design.csv",
+            ),
             self.design_display_frame,
             row=1,
         )
@@ -6534,7 +6685,10 @@ class NewExperimentWindow(tk.Toplevel):
         self.solver_tree.heading("#0", text="Solver #")
 
         if self.all_same_solver:
-            columns = ["Solver Name", *list(self.plot_experiment.solvers[0].factors.keys())]
+            columns = [
+                "Solver Name",
+                *list(self.plot_experiment.solvers[0].factors.keys()),
+            ]
             self.solver_tree["columns"] = (
                 columns  # set column names to factor names
             )
@@ -8332,8 +8486,9 @@ class Data_Farming_Window:
             self.design_filename_var.get()
         )  # name of design file specified by user
 
-        self.csv_filename = (
-            f"{EXPERIMENT_DIR}/{self.experiment_name}_design.csv"
+        data_farming_dir = os.path.join(EXPERIMENT_DIR, "data_farming")
+        self.csv_filename = os.path.join(
+            data_farming_dir, f"{self.experiment_name}_design.csv"
         )
 
         self.design_table.to_csv(self.csv_filename, index=False)
@@ -8343,7 +8498,7 @@ class Data_Farming_Window:
 
         tk.messagebox.showinfo(
             "Information",
-            f"Design has been modified. {self.experiment_name}_design.csv has been created in {EXPERIMENT_DIR}. ",
+            f"Design has been modified. {self.experiment_name}_design.csv has been created in {data_farming_dir}. ",
         )
 
         self.display_design_tree()
@@ -8355,7 +8510,11 @@ class Data_Farming_Window:
             self.design_filename_var.get()
         )  # name of design file specified by user
         self.design_table[self.factor_names].to_csv(
-            f"{EXPERIMENT_DIR}/{self.experiment_name}_design.txt",
+            os.path.join(
+                EXPERIMENT_DIR,
+                "data_farming",
+                f"{self.experiment_name}_design.txt",
+            ),
             sep="\t",
             index=False,
             header=False,
@@ -8410,7 +8569,15 @@ class Data_Farming_Window:
         return converted_fixed_factors
 
     # Display Model Factors
-    def show_model_factors(self, *args):
+    def show_model_factors(self, *args: tuple) -> None:
+        """Show model factors in GUI.
+
+        Parameters
+        ----------
+        args : tuple
+            Tuple containing model name selected by user.
+
+        """
         self.factor_canvas.destroy()
 
         # Initialize frame canvas
@@ -9027,7 +9194,15 @@ class Data_Farming_Window:
         )
         self.run_button.grid(row=0, column=2, sticky=tk.E, padx=30)
 
-    def create_design(self, *args):
+    def create_design(self, *args: tuple) -> None:
+        """Create a design txt file and design csv file based on user specified design options.
+
+        Parameters
+        ----------
+        args : tuple
+            Tuple containing the number of stacks and design type.
+
+        """
         self.create_design_frame = tk.Frame(master=self.master)
         self.create_design_frame.grid(row=6, column=0)
         self.create_design_frame.grid_rowconfigure(0, weight=0)
@@ -9055,7 +9230,9 @@ class Data_Farming_Window:
         dec_values = [dec_val.get() for dec_val in self.dec_list]
 
         with open(
-            f"{EXPERIMENT_DIR}/{self.experiment_name}.txt", "w"
+            os.path.join(
+                EXPERIMENT_DIR, "data_farming", f"{self.experiment_name}.txt"
+            ),
         ) as self.model_design_factors:
             self.model_design_factors.write("")
 
@@ -9094,7 +9271,12 @@ class Data_Farming_Window:
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
 
                 with open(
-                    f"{EXPERIMENT_DIR}/{self.experiment_name}.txt", "a"
+                    os.path.join(
+                        EXPERIMENT_DIR,
+                        "data_farming",
+                        f"{self.experiment_name}.txt",
+                    ),
+                    mode="a",
                 ) as self.model_design_factors:
                     self.model_design_factors.write(data_insert)
 
@@ -9120,20 +9302,29 @@ class Data_Farming_Window:
             design_type=design_type,
         )
 
+        data_farming_dir = os.path.join(EXPERIMENT_DIR, "data_farming")
         self.design_filename = f"{self.experiment_name}_design"
-        self.csv_filename = (
-            f"{EXPERIMENT_DIR}/{self.experiment_name}_design.csv"
+        self.csv_filename = os.path.join(
+            data_farming_dir, f"{self.experiment_name}_design.csv"
         )
         # Pop up message that csv design file has been created
         tk.messagebox.showinfo(
             "Information",
-            f"Design file {self.experiment_name}_design.csv has been created in {EXPERIMENT_DIR}. ",
+            f"Design file {self.experiment_name}_design.csv has been created in {data_farming_dir}. ",
         )
 
         # Display Design Values
         self.display_design_tree()
 
-    def run_experiment(self, *args):
+    def run_experiment(self, *args: tuple) -> None:
+        """Run experiment with specified design and experiment options.
+
+        Parameters
+        ----------
+        args : tuple
+            Tuple containing the number of replications and whether to use common random numbers.
+
+        """
         # Specify a common number of replications to run of the model at each
         # design point.
         n_reps = int(self.rep_var.get())
@@ -9145,7 +9336,11 @@ class Data_Farming_Window:
         else:
             crn_across_design_pts = False
 
-        output_filename = f"{EXPERIMENT_DIR}/{self.experiment_name}_raw_results"
+        output_filename = os.path.join(
+            EXPERIMENT_DIR,
+            "data_farming",
+            f"{self.experiment_name}_raw_results",
+        )
 
         # Create DataFarmingExperiment object.
         myexperiment = DataFarmingExperiment(
@@ -9168,7 +9363,15 @@ class Data_Farming_Window:
             f"Experiment Completed. Output file can be found at {output_filename}",
         )
 
-    def include_factor(self, *args):
+    def include_factor(self, *args: tuple) -> None:
+        """Include factor in experiment and enable experiment options.
+
+        Parameters
+        ----------
+        args : tuple
+            Tuple containing the factor name and checkstate value.
+
+        """
         self.check_values = [
             self.checkstate.get() for self.checkstate in self.checkstate_list
         ]
@@ -9458,17 +9661,13 @@ class Cross_Design_Window:
         # if self.count_meta_experiment_queue == 0:
         #     self.create_meta_exp_frame()
         self.master.destroy()
-        Experiment_Window.add_meta_exp_to_frame(
+        ExperimentWindow.add_meta_exp_to_frame(
             self.main_window, self.crossdesign_macro_var
         )
 
         return self.crossdesign_MetaExperiment
 
         # (self.crossdesign_MetaExperiment)
-
-    def test_function(self, *args):
-        # print("test function connected")
-        pass
 
     def get_crossdesign_MetaExperiment(self):
         return self.crossdesign_MetaExperiment
@@ -9746,7 +9945,7 @@ class Post_Processing_Window:
             # (self.experiment_list)
             self.master.destroy()
             self.post_processed_bool = True
-            Experiment_Window.post_process_disable_button(
+            ExperimentWindow.post_process_disable_button(
                 self.main_window, self.meta
             )
 
@@ -9788,9 +9987,6 @@ class Post_Processing_Window:
             self.crn_across_budget_var.set("True")
 
             self.crn_across_macroreps_var.set("False")
-
-    def test_function2(self, *args):
-        print("connection enabled")
 
 
 class Post_Normal_Window:
@@ -10028,9 +10224,6 @@ class Post_Normal_Window:
 
             self.n_postreps_entry.delete(0, len(self.n_postreps_entry.get()))
             self.n_postreps_entry.insert(index=tk.END, string="100")
-
-    def test_function2(self, *args):
-        print("connection enabled")
 
 
 class Plot_Window:
@@ -11091,35 +11284,42 @@ def problem_solver_unabbreviated_to_object(
     problem_or_solver_name: str, unabbreviated_dictionary: dict
 ) -> tuple[Problem | Solver, str]:
     """Convert the unabbreviated name of a problem or solver to the object of the problem or solver.
-    
+
     Arguments:
     ---------
     problem_or_solver_name: str
         The unabbreviated name of the problem or solver.
     unabbreviated_dictionary: dict
         The dictionary that maps the unabbreviated name of the problem or solver to the object of the problem or solver.
-        
+
     Returns:
     -------
     Problem | Solver
         The object of the problem or solver.
     str
         The name of the problem or solver.
-    
+
     Raises:
     ------
         ValueError: If the problem_or_solver_name is not found in the unabbreviated_dictionary.
-    
+
     """
     if problem_or_solver_name in unabbreviated_dictionary.keys():
-        problem_or_solver_object = unabbreviated_dictionary[problem_or_solver_name]
+        problem_or_solver_object = unabbreviated_dictionary[
+            problem_or_solver_name
+        ]
         return problem_or_solver_object, problem_or_solver_object().name
     else:
-        error_msg = f"{problem_or_solver_name} not found in {unabbreviated_dictionary}"
+        error_msg = (
+            f"{problem_or_solver_name} not found in {unabbreviated_dictionary}"
+        )
         raise ValueError(error_msg)
 
+
 def problem_solver_abbreviated_name_to_unabbreviated(
-    problem_or_solver_name: str, abbreviated_dictionary: dict, unabbreviated_dictionary: dict
+    problem_or_solver_name: str,
+    abbreviated_dictionary: dict,
+    unabbreviated_dictionary: dict,
 ) -> str:
     """Convert the abbreviated name of a problem or solver to the unabbreviated name of the problem or solver.
 
@@ -11143,12 +11343,16 @@ def problem_solver_abbreviated_name_to_unabbreviated(
 
     """
     if problem_or_solver_name in abbreviated_dictionary.keys():
-        problem_or_solver_object = abbreviated_dictionary[problem_or_solver_name]
+        problem_or_solver_object = abbreviated_dictionary[
+            problem_or_solver_name
+        ]
         for key, value in unabbreviated_dictionary.items():
             if problem_or_solver_object == value:
                 return key
     else:
-        error_msg = f"{problem_or_solver_name} not found in {abbreviated_dictionary}"
+        error_msg = (
+            f"{problem_or_solver_name} not found in {abbreviated_dictionary}"
+        )
         raise ValueError(error_msg)
 
 

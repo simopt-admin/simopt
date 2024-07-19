@@ -19,8 +19,8 @@ import seaborn as sns
 from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
-from .base import Problem, Solution, Solver
-from .directory import problem_directory, solver_directory
+from simopt.base import Problem, Solution, Solver
+from simopt.directory import problem_directory, solver_directory
 
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
@@ -328,8 +328,8 @@ def cdf_of_curves_crossing_times(
 
 
 def quantile_cross_jump(
-    curves: list["Curve"], threshold: float, beta: float
-) -> "Curve":
+    curves: list[Curve], threshold: float, beta: float
+) -> Curve:
     """Compute a simple curve with a jump at the quantile of the crossing times.
 
     Parameters
@@ -356,10 +356,9 @@ def quantile_cross_jump(
     # crossing times must be non-negative, the quantile should be mapped
     # to positive infinity.
     if solve_time_quantile == np.inf or np.isnan(solve_time_quantile):
-        jump_curve = Curve(x_vals=[0, 1], y_vals=[0, 0])
+        return Curve(x_vals=[0, 1], y_vals=[0, 0])
     else:
-        jump_curve = Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
-    return jump_curve
+        return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
 
 
 def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
@@ -498,8 +497,8 @@ class ProblemSolver:
         problem_name: str | None = None,
         solver_rename: str | None = None,
         problem_rename: str | None = None,
-        solver: "Solver" | None = None,
-        problem: "Problem" | None = None,
+        solver: Solver | None = None,
+        problem: Problem | None = None,
         solver_fixed_factors: dict | None = None,
         problem_fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
@@ -585,7 +584,10 @@ class ProblemSolver:
             self.problem.original_name = str(problem_name)
         # Initialize file path.
         if file_name_path is None:
-            self.file_name_path = f"./experiments/outputs/{self.solver.name}_on_{self.problem.name}.pickle"
+            self.file_name_path = os.path.join(
+                EXPERIMENT_DIR,
+                f"{self.solver.name}_on_{self.problem.name}.pickle",
+            )
         else:
             self.file_name_path = file_name_path
 
@@ -943,7 +945,7 @@ class ProblemSolver:
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=True)
             else:
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-            self.problem.simulate(solution=fresh_soln, m=self.n_postreps)
+            self.problem.simulate(solution=fresh_soln, num_macroreps=self.n_postreps)
             # Store results
             post_replicates.append(
                 list(fresh_soln.objectives[: fresh_soln.n_reps][:, 0])
@@ -1195,19 +1197,9 @@ class ProblemSolver:
 
     def record_experiment_results(self) -> None:
         """Save ``experiment_base.ProblemSolver`` object to .pickle file."""
-        # Create directories if they do no exist.
-        if (
-            "./experiments/outputs" in self.file_name_path
-            and not os.path.exists("./experiments/outputs")
-        ):
-            os.makedirs("./experiments", exist_ok=True)
-            os.makedirs("./experiments/outputs")
-        elif (
-            "./data_farming_experiments/outputs" in self.file_name_path
-            and not os.path.exists("./data_farming_experiments/outputs")
-        ):
-            os.makedirs("./data_farming_experiments", exist_ok=True)
-            os.makedirs("./data_farming_experiments/outputs")
+        # Create experiments folder if it does not exist.
+        if not os.path.exists(EXPERIMENT_DIR):
+            os.makedirs(EXPERIMENT_DIR)
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
@@ -1220,22 +1212,13 @@ class ProblemSolver:
             True if recommended solutions are to be printed in the .txt file, otherwise False.
 
         """
-        # Create a new text file in experiments/logs folder with correct name.
-        new_path = self.file_name_path.replace(
-            "outputs", "logs"
-        )  # Adjust file_path_name to correct folder.
-        new_path2 = new_path.replace(
-            ".pickle", ""
-        )  # Remove .pickle from .txt file name.
+        if not os.path.exists(EXPERIMENT_DIR):
+            os.makedirs(EXPERIMENT_DIR)
+        results_filepath = os.path.join(
+            EXPERIMENT_DIR, "experiment_results.txt"
+        )
 
-        # Create directories if they do not exist.
-        if "./experiments/logs" in new_path2 and not os.path.exists(
-            "./experiments/logs"
-        ):
-            os.makedirs("./experiments", exist_ok=True)
-            os.makedirs("./experiments/logs")
-
-        with open(new_path2 + "_experiment_results.txt", "w") as file:
+        with open(results_filepath, "w") as file:
             # Title txt file with experiment information.
             file.write(self.file_name_path)
             file.write("\n")
@@ -1307,7 +1290,7 @@ class ProblemSolver:
 
 
 def trim_solver_results(
-    problem: "Problem",
+    problem: Problem,
     recommended_solutions: list[Solution],
     intermediate_budgets: list[int],
 ) -> tuple[list[Solution], list[int]]:
@@ -1434,7 +1417,7 @@ def post_normalize(
         initial_soln = Solution(x0, ref_experiment.problem)
         initial_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(
-            solution=initial_soln, m=n_postreps_init_opt
+            solution=initial_soln, num_macroreps=n_postreps_init_opt
         )
         x0_postreps = list(
             initial_soln.objectives[:n_postreps_init_opt][:, 0]
@@ -1465,7 +1448,7 @@ def post_normalize(
         opt_soln = Solution(xstar, ref_experiment.problem)
         opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(
-            solution=opt_soln, m=n_postreps_init_opt
+            solution=opt_soln, num_macroreps=n_postreps_init_opt
         )
         xstar_postreps = list(
             opt_soln.objectives[:n_postreps_init_opt][:, 0]
@@ -1487,7 +1470,7 @@ def post_normalize(
         opt_soln = Solution(xstar, ref_experiment.problem)
         opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(
-            solution=opt_soln, m=n_postreps_init_opt
+            solution=opt_soln, num_macroreps=n_postreps_init_opt
         )
         xstar_postreps = list(
             opt_soln.objectives[:n_postreps_init_opt][:, 0]
@@ -1527,7 +1510,7 @@ def post_normalize(
         opt_soln = Solution(xstar, ref_experiment.problem)
         opt_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
         ref_experiment.problem.simulate(
-            solution=opt_soln, m=n_postreps_init_opt
+            solution=opt_soln, num_macroreps=n_postreps_init_opt
         )
         xstar_postreps = list(
             opt_soln.objectives[:n_postreps_init_opt][:, 0]
@@ -1636,9 +1619,9 @@ def bootstrap_procedure(
     plot_type: str,
     beta: float | None = None,
     solve_tol: float | None = None,
-    estimator: float | "Curve" | None = None,
+    estimator: float | Curve | None = None,
     normalize: bool = True,
-) -> tuple[float | "Curve", float | "Curve"]:
+) -> tuple[float | Curve, float | Curve]:
     """Obtain bootstrap sample and compute confidence intervals.
 
     Parameters
@@ -1733,9 +1716,9 @@ def bootstrap_procedure(
         bs_conf_int_upper_bound_list = []
         for budget in unique_budget_list:
             bootstrap_subreplications = [
-                curve.lookup(x=budget) for curve in bootstrap_replications
+                curve.lookup(budget) for curve in bootstrap_replications
             ]
-            sub_estimator = estimator.lookup(x=budget)
+            sub_estimator = estimator.lookup(budget)
             bs_conf_int_lower_bound, bs_conf_int_upper_bound = (
                 compute_bootstrap_conf_int(
                     bootstrap_subreplications,
@@ -1759,7 +1742,7 @@ def bootstrap_procedure(
 
 
 def functional_of_curves(
-    bootstrap_curves: list[list[list["Curve"]]],
+    bootstrap_curves: list[list[list[Curve]]],
     plot_type: str,
     beta: float = 0.5,
     solve_tol: float = 0.1,
@@ -1961,8 +1944,8 @@ def compute_bootstrap_conf_int(
 
 
 def plot_bootstrap_conf_ints(
-    bs_conf_int_lower_bounds: "Curve",
-    bs_conf_int_upper_bounds: "Curve",
+    bs_conf_int_lower_bounds: Curve,
+    bs_conf_int_upper_bounds: Curve,
     color_str: str = "C0",
 ) -> None:
     """Plot bootstrap confidence intervals.
@@ -1991,7 +1974,7 @@ def plot_bootstrap_conf_ints(
 
 
 def report_max_halfwidth(
-    curve_pairs: list[list["Curve"]],
+    curve_pairs: list[list[Curve]],
     normalize: bool,
     conf_level: float,
     difference: bool = False,
@@ -3221,7 +3204,7 @@ def plot_solvability_profiles(
 
 
 def plot_terminal_progress(
-    experiments: list["ProblemSolver"],
+    experiments: list[ProblemSolver],
     plot_type: str = "violin",
     normalize: bool = True,
     all_in_one: bool = True,
@@ -3761,24 +3744,27 @@ def save_plot(
         error_msg = f"{plot_type} is not a valid plot type."
         raise ValueError(error_msg)
 
+    plot_dir = os.path.join(EXPERIMENT_DIR, "plots")
+    # Create directories if they do no exist.
+    if not os.path.exists(plot_dir):
+        os.makedirs(plot_dir)
+
     if not normalize:
         plot_name = plot_name + "_unnorm"
+
+    # Reformat plot_name to be suitable as a string literal.
+    plot_name = plot_name.replace("\\", "")
+    plot_name = plot_name.replace("$", "")
+    plot_name = plot_name.replace(" ", "_")
+
     if plot_title is None:
-        path_name = (
-            f"experiments/plots/{solver_name}_on_{problem_name}_{plot_name}"
+        path_name = os.path.join(
+            plot_dir, f"{solver_name}_on_{problem_name}_{plot_name}"
         )
     else:
-        path_name = f"experiments/plots/{plot_title}"
-    # Reformat path_name to be suitable as a string literal.
-    path_name = path_name.replace("\\", "")
-    path_name = path_name.replace("$", "")
-    path_name = path_name.replace(" ", "_")
+        path_name = os.path.join(plot_dir, plot_title)
     # add extension to path name
     extended_path_name = f"{path_name}{ext}"
-    # Create directories if they do no exist.
-    if not os.path.exists("./experiments/plots"):
-        os.makedirs("./experiments", exist_ok=True)
-        os.makedirs("./experiments/plots")
     plt.savefig(extended_path_name, bbox_inches="tight")
 
     # save plot as pickle
@@ -3871,9 +3857,9 @@ class ProblemsSolvers:
         solver_renames: list[str] | None = None,
         problem_renames: list[str] | None = None,
         fixed_factors_filename: str | None = None,
-        solvers: list["Solver"] | None = None,
-        problems: list["Problem"] | None = None,
-        experiments: list[list["ProblemSolver"]] | None = None,
+        solvers: list[Solver] | None = None,
+        problems: list[Problem] | None = None,
+        experiments: list[list[ProblemSolver]] | None = None,
         file_name_path: str | None = None,
         create_pair_pickles: bool = False,
         experiment_name: str | None = None,
@@ -3926,6 +3912,10 @@ class ProblemsSolvers:
             self.file_header = f"{experiment_name}_"
         else:
             self.file_header = ""
+
+        output_dir = os.path.join(EXPERIMENT_DIR, "outputs")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         if experiments is not None:  # Method #3
             self.experiments = experiments
@@ -3993,7 +3983,10 @@ class ProblemsSolvers:
                         solver_rename=self.solver_renames[sol_indx],
                         problem_rename=self.problem_renames[prob_indx],
                         create_pickle=self.create_pair_pickles,
-                        file_name_path=f"./experiments/outputs/{self.file_header}{self.solver_renames[sol_indx]}_on_{self.problem_renames[prob_indx]}",
+                        file_name_path=os.path.join(
+                            output_dir,
+                            f"{self.file_header}{self.solver_renames[sol_indx]}_on_{self.problem_renames[prob_indx]}",
+                        ),
                     )
                     for prob_indx, problem in enumerate(problems)
                 ]
@@ -4077,7 +4070,10 @@ class ProblemsSolvers:
                     try:
                         # If a file exists, read in ProblemSolver object.
                         with open(
-                            f"./experiments/outputs/{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle",
+                            os.path.join(
+                                output_dir,
+                                f"{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle",
+                            ),
                             "rb",
                         ) as file:
                             next_experiment = pickle.load(file)  # noqa: S301
@@ -4116,7 +4112,10 @@ class ProblemsSolvers:
         if file_name_path is None:
             solver_names_string = "_".join(self.solver_set)
             problem_names_string = "_".join(self.problem_set)
-            self.file_name_path = f"./experiments/outputs/{self.file_header}group_{solver_names_string}_on_{problem_names_string}.pickle"
+            self.file_name_path = os.path.join(
+                output_dir,
+                f"{self.file_header}group_{solver_names_string}_on_{problem_names_string}.pickle",
+            )
         else:
             self.file_name_path = file_name_path
 
@@ -4270,27 +4269,29 @@ class ProblemsSolvers:
 
     def record_group_experiment_results(self) -> None:
         """Save ``experiment_base.ProblemsSolvers`` object to .pickle file."""
+        output_dir = os.path.join(EXPERIMENT_DIR, "outputs")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def log_group_experiment_results(self) -> None:
         """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object."""
-        # Create a new text file in experiments/logs folder with correct name.
+        # Create a new text file in experiment/{date/time of launch}/logs folder with correct name.
         new_path = self.file_name_path.replace(
             "outputs", "logs"
         )  # Adjust file_path_name to correct folder.
         new_path = new_path.replace(
-            ".pickle", ""
+            ".pickle", "_group_experiment_results.txt"
         )  # Remove .pickle from .txt file name.
 
-        # Create directories if they do no exist.
-        if "./experiments/logs" in new_path and not os.path.exists(
-            "./experiments/logs"
-        ):
-            os.makedirs("./experiments", exist_ok=True)
-            os.makedirs("./experiments/logs")
+        # Create directory if it does no exist.
+        log_dir = os.path.dirname(new_path)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
         # Create text file.
-        with open(new_path + "_group_experiment_results.txt", "w") as file:
+        with open(new_path, "w") as file:
             # Title text file with experiment information.
             file.write(self.file_name_path)
             file.write("\n")
@@ -4385,7 +4386,7 @@ class ProblemsSolvers:
 
     def report_statistics(
         self,
-        pair_list: list["ProblemSolver"],
+        pair_list: list[ProblemSolver],
         solve_tols: list[float] | None = None,
         csv_filename: str = "df_solver_results",
     ) -> None:
@@ -4404,16 +4405,13 @@ class ProblemsSolvers:
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
 
-        # Create directory if they do no exist.
-        if not os.path.exists("./experiments"):
-            os.makedirs("./experiments")
-        # if csv_filename == 'df_solver_results':
-        file_path = "./experiments/logs/"
-        # else:
-        #     file_path = ""
-        with open(
-            file_path + csv_filename + ".csv", mode="w", newline=""
-        ) as output_file:
+        # Create directory if it does no exist.
+        log_dir = os.path.join(EXPERIMENT_DIR, "logs")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        file_path = os.path.join(log_dir, f"{csv_filename}.csv")
+        with open(file_path, mode="w", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
                 delimiter=",",
@@ -4547,8 +4545,8 @@ def read_group_experiment_results(
 
 
 def find_unique_solvers_problems(
-    experiments: list["ProblemSolver"],
-) -> tuple[list["Solver"], list["Problem"]]:
+    experiments: list[ProblemSolver],
+) -> tuple[list[Solver], list[Problem]]:
     """Identify the unique problems and solvers in a collection of experiments.
 
     Parameters
@@ -4580,8 +4578,8 @@ def find_unique_solvers_problems(
 
 
 def find_missing_experiments(
-    experiments: list["ProblemSolver"],
-) -> tuple[list["Solver"], list["Problem"], list[tuple["Solver", "Problem"]]]:
+    experiments: list[ProblemSolver],
+) -> tuple[list[Solver], list[Problem], list[tuple[Solver, Problem]]]:
     """Identify problem-solver pairs that are not part of a list of experiments.
 
     Parameters
@@ -4612,10 +4610,10 @@ def find_missing_experiments(
 
 
 def make_full_metaexperiment(
-    existing_experiments: list["ProblemSolver"],
-    unique_solvers: list["Solver"],
-    unique_problems: list["Problem"],
-    missing_experiments: list[tuple["Solver", "Problem"]],
+    existing_experiments: list[ProblemSolver],
+    unique_solvers: list[Solver],
+    unique_problems: list[Problem],
+    missing_experiments: list[tuple[Solver, Problem]],
 ) -> "ProblemsSolvers":
     """Create experiment objects for missing problem-solver pairs and run them.
 
@@ -4704,16 +4702,23 @@ def create_design(
 
     # Check for typing issues
 
-    # Check if Ruby and the specified design type are installed on the system.
+    # Check if Ruby and the specified design type are installed/on the system path.
     if shutil.which("ruby") is None:
         error_msg = "Ruby is not installed on your system or is not in your system path."
         raise Exception(error_msg)
     if shutil.which(f"stack_{design_type}.rb") is None:
-        error_msg = f"Design type {design_type} is either not valid, not installed, or not in your system path."
-        raise Exception(error_msg)
+        # Isn't on path, but could still be installed
+        results = subprocess.run(  # noqa: S603
+            'gem list -i "^datafarming$"',  # noqa: S607
+            shell=False,
+            capture_output=True,
+        )
+        # Check if the output is true or false
+        if not results.stdout.decode("utf-8").strip() == "true":
+            error_msg = f"Design type {design_type} is either not valid, not installed, or not in your system path."
+            raise Exception(error_msg)
 
     # Search directories to create object based on name provided.
-    # This could probably just check to see if the name is in the directory
     # if is_problem:
     #     design_object = problem_directory[name]()
     # else:
@@ -4730,21 +4735,19 @@ def create_design(
             f"Name {name} not found in problem or solver directories."
         )
 
-    # Check if the experiments folder exists. If not, create it.
-    if not os.path.join(os.getcwd(), "experiments"):
-        os.makedirs("experiments")
-
     # Make directory to store the current design file.
-    if not os.path.exists(EXPERIMENT_DIR):
-        os.makedirs(EXPERIMENT_DIR)
+    data_farming_path = os.path.join(EXPERIMENT_DIR, "data_farming")
+    if not os.path.exists(data_farming_path):
+        os.makedirs(data_farming_path)
 
     source_file = os.path.join(
-        EXPERIMENT_DIR, f"{factor_settings_filename}.txt"
+        data_farming_path, f"{factor_settings_filename}.txt"
     )
     design_file = os.path.join(
-        EXPERIMENT_DIR, f"{factor_settings_filename}_design.txt"
+        data_farming_path, f"{factor_settings_filename}_design.txt"
     )
     # If the dest file already exists, delete it
+    # TODO: investigate if this may cause issues with multiple concurrent designs
     if os.path.exists(design_file):
         os.remove(design_file)
 
@@ -4752,7 +4755,9 @@ def create_design(
     command = (
         f"stack_{design_type}.rb -s {n_stacks} {source_file} > {design_file}"
     )
-    completed_process = subprocess.run(command, capture_output=True, shell=True)  # noqa: S602
+    completed_process = subprocess.run(  # noqa: S603
+        command, capture_output=True, shell=False
+    )
     # If the design file doesn't exist, there was an error in the Ruby script.
     if not os.path.exists(design_file):
         error_msg = completed_process.stderr.decode("utf-8")
