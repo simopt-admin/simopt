@@ -55,6 +55,12 @@ TEXT_FAMILY = "TkDefaultFont"
 def center_window(screen: tk, scale: float) -> str:
     """Centers the window to the main display/monitor.
 
+    Example Usage
+    -------------
+    position = center_window(self.master, 0.8)
+
+    self.master.geometry(position)
+
     Parameters
     ----------
     screen : tk.Tk
@@ -97,7 +103,6 @@ class MainMenuWindow(tk.Tk):
         self.configure_theme()
 
         # Set the screen width and height
-        # Ignore the fact we're overwriting a constant
         # Scaled down slightly so the whole window fits on the screen
         position = center_window(self.master, 0.8)
         self.master.geometry(position)
@@ -235,6 +240,11 @@ class ExperimentWindow(tk.Toplevel):
     def __init__(self, root: tk.Tk) -> None:
         """Initialize the main window of the GUI."""
         self.master = root
+
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.master.geometry(position)
 
         self.frame = tk.Frame(self.master)
         self.count_meta_experiment_queue = 0
@@ -3756,8 +3766,12 @@ class NewExperimentWindow(tk.Toplevel):
         """Initialize New Experiment Window."""
         self.master = master
         self.master.title("New Experiment")
+
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
         position = center_window(self.master, 0.8)
         self.master.geometry(position)
+
         # self.main_window = main_widow
         self.master.grid_rowconfigure(0, weight=1)
         self.master.grid_columnconfigure(0, weight=1)
@@ -6384,7 +6398,10 @@ class NewExperimentWindow(tk.Toplevel):
         self.plotting_window.title(
             "Simopt Graphical User Interface - Experiment Plots"
         )
-        self.plotting_window.geometry("800x600")
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.plotting_window.geometry(position)
 
         # Configure the grid layout to expand properly
         self.plotting_window.grid_rowconfigure(0, weight=1)
@@ -8052,6 +8069,11 @@ class Data_Farming_Window:
     def __init__(self, master, main_widow, forced_creation=False):
         if not forced_creation:
             self.master = master
+            # Set the screen width and height
+            # Scaled down slightly so the whole window fits on the screen
+            position = center_window(self.master, 0.8)
+            self.master.geometry(position)
+
             self.main_window = main_widow
             self.master.grid_rowconfigure(0, weight=0)
             self.master.grid_rowconfigure(1, weight=0)
@@ -9433,6 +9455,10 @@ class Cross_Design_Window:
         if not forced_creation:
             self.master = master
             self.main_window = main_widow
+            # Set the screen width and height
+            # Scaled down slightly so the whole window fits on the screen
+            position = center_window(self.master, 0.8)
+            self.master.geometry(position)
 
             self.crossdesign_title_label = tk.Label(
                 master=self.master,
@@ -9696,6 +9722,11 @@ class Post_Processing_Window:
         self.my_experiment = myexperiment
         # ("my exp post pro ", experiment_list)
         self.selected = experiment_list
+
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.master.geometry(position)
 
         self.frame = tk.Frame(self.master)
 
@@ -10015,6 +10046,11 @@ class Post_Normal_Window:
         self.proxy_var = tk.StringVar(self.master)
         self.proxy_sol = tk.StringVar(self.master)
 
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.master.geometry(position)
+
         self.all_solvers = []
         for solvers in self.post_norm_exp_list:
             if solvers.solver.name not in self.all_solvers:
@@ -10275,6 +10311,11 @@ class Plot_Window:
         self.all_path_names = []
         self.bad_label = None
         self.plot_var = tk.StringVar(master=self.master)
+
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.master.geometry(position)
 
         self.params = [
             tk.StringVar(master=self.master),
