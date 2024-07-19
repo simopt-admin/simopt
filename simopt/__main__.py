@@ -5,7 +5,7 @@ from simopt import gui
 
 def main() -> None:
     """Launch the GUI."""
-    gui.start_gui()
+    gui.main()
 
 
 if __name__ == "__main__":
