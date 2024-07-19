@@ -945,7 +945,9 @@ class ProblemSolver:
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=True)
             else:
                 fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-            self.problem.simulate(solution=fresh_soln, num_macroreps=self.n_postreps)
+            self.problem.simulate(
+                solution=fresh_soln, num_macroreps=self.n_postreps
+            )
             # Store results
             post_replicates.append(
                 list(fresh_soln.objectives[: fresh_soln.n_reps][:, 0])
@@ -1346,7 +1348,7 @@ def read_experiment_results(file_name_path: str | os.PathLike) -> ProblemSolver:
 
     """
     with open(file_name_path, "rb") as file:
-        experiment = pickle.load(file)  # noqa: S301
+        experiment = pickle.load(file)
     return experiment
 
 
@@ -4076,7 +4078,7 @@ class ProblemsSolvers:
                             ),
                             "rb",
                         ) as file:
-                            next_experiment = pickle.load(file)  # noqa: S301
+                            next_experiment = pickle.load(file)
                         # TODO: Check if the solver/problem/model factors in the file match
                         # those for the ProblemsSolvers.
                     except Exception:
@@ -4540,7 +4542,7 @@ def read_group_experiment_results(
 
     """
     with open(file_name_path, "rb") as file:
-        groupexperiment = pickle.load(file)  # noqa: S301
+        groupexperiment = pickle.load(file)
     return groupexperiment
 
 
@@ -4708,8 +4710,8 @@ def create_design(
         raise Exception(error_msg)
     if shutil.which(f"stack_{design_type}.rb") is None:
         # Isn't on path, but could still be installed
-        results = subprocess.run(  # noqa: S603
-            'gem list -i "^datafarming$"',  # noqa: S607
+        results = subprocess.run(
+            'gem list -i "^datafarming$"',
             shell=False,
             capture_output=True,
         )
@@ -4755,9 +4757,7 @@ def create_design(
     command = (
         f"stack_{design_type}.rb -s {n_stacks} {source_file} > {design_file}"
     )
-    completed_process = subprocess.run(  # noqa: S603
-        command, capture_output=True, shell=False
-    )
+    completed_process = subprocess.run(command, capture_output=True, shell=True)
     # If the design file doesn't exist, there was an error in the Ruby script.
     if not os.path.exists(design_file):
         error_msg = completed_process.stderr.decode("utf-8")
@@ -4768,7 +4768,7 @@ def create_design(
     # Read in design matrix from .txt file. Result is a pandas DataFrame.
     try:
         design_table = pd.read_csv(
-            f"{design_file}",
+            design_file,
             header=None,
             delimiter="\t",
             encoding="utf-8",
