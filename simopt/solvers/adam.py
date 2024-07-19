@@ -7,10 +7,8 @@ stochastic objective functions, based on adaptive estimates of lower-order momen
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`_.
 """
 import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
 
-from ..base import Solver
+from simopt.base import Solver
 
 
 class ADAM(Solver):

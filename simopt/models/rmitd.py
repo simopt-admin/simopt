@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 """
 import numpy as np
 
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class RMITD(Model):

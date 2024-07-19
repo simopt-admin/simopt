@@ -6,7 +6,7 @@ evaluated with noise.
 """
 import numpy as np
 
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class ExampleModel(Model):
