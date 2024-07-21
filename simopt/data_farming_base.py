@@ -14,7 +14,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Model
 
 from simopt.directory import model_directory, solver_directory
-from simopt.experiment_base import ProblemSolver, post_normalize
+from simopt.experiment_base import ProblemSolver, post_normalize, EXPERIMENT_DIR
 
 
 class DesignPoint:
@@ -50,7 +50,16 @@ class DesignPoint:
         model : ``base.Model``
             Model with factors model_factors.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(model, Model):
+            error_msg = "Model must be an instance of the Model class."
+            raise TypeError(error_msg)
+
         super().__init__()
         # Create separate copy of Model object for use at this design point.
         self.model = deepcopy(model)
@@ -69,7 +78,21 @@ class DesignPoint:
         copy : bool, default=True
             True if rng_list should be copied, otherwise False.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(rng_list, list) or not all(
+            isinstance(rng, MRG32k3a) for rng in rng_list
+        ):
+            error_msg = "rng_list must be a list of MRG32k3a objects."
+            raise TypeError(error_msg)
+        if not isinstance(copy, bool):
+            error_msg = "copy must be a boolean."
+            raise TypeError(error_msg)
+
         if copy:
             self.rng_list = [deepcopy(rng) for rng in rng_list]
         else:
@@ -83,7 +106,17 @@ class DesignPoint:
         num_macroreps : int, default=1
             Number of macroreplications to run at the design point; > 0.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(num_macroreps, int):
+            error_msg = "num_macroreps must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
         if num_macroreps <= 0:
             error_msg = "Number of macroreplications must be greater than 0."
             raise ValueError(error_msg)
@@ -166,7 +199,43 @@ class DataFarmingExperiment:
         model_fixed_factors : dict, optional
             Non-default values of model factors that will not be varied.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(model_name, str):
+            error_msg = "model_name must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(factor_settings_filename, (str, os.PathLike)):
+            error_msg = (
+                "factor_settings_filename must be a string or path-like object."
+            )
+            raise TypeError(error_msg)
+        if not isinstance(factor_headers, list) or not all(
+            isinstance(header, str) for header in factor_headers
+        ):
+            error_msg = "factor_headers must be a list of strings."
+            raise TypeError(error_msg)
+        if not isinstance(design_filename, (str, os.PathLike, type(None))):
+            error_msg = "design_filename must be a string or path-like object."
+            raise TypeError(error_msg)
+        if not isinstance(model_fixed_factors, (dict, type(None))):
+            error_msg = "model_fixed_factors must be a dictionary."
+            raise TypeError(error_msg)
+        # Value checking
+        if model_name not in model_directory:
+            error_msg = "model_name must be a valid model name."
+            raise ValueError(error_msg)
+        if not os.path.exists(factor_settings_filename):
+            error_msg = f"{factor_settings_filename} is not a valid file path."
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
+        if design_filename is not None and not os.path.exists(design_filename):
+            error_msg = f"{design_filename} is not a valid file path."
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
+
         if model_fixed_factors is None:
             model_fixed_factors = {}
 
@@ -179,7 +248,7 @@ class DataFarmingExperiment:
             # Hard-coded for a single-stack NOLHS.
             # command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
             command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
-            subprocess.run(command)  # noqa: S603
+            subprocess.run(command)
             # Append design to base filename.
             design_filename = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
@@ -215,7 +284,20 @@ class DataFarmingExperiment:
         crn_across_design_pts : bool, default=True
             True if CRN are to be used across design points, otherwise False.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_reps, int):
+            error_msg = "n_reps must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_design_pts, bool):
+            error_msg = "crn_across_design_pts must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
         if n_reps <= 0:
             error_msg = "Number of replications must be greater than 0."
             raise ValueError(error_msg)
@@ -252,7 +334,16 @@ class DataFarmingExperiment:
         csv_filename : str, default="raw_results"
             Name of .csv file to print output to.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(csv_filename, str):
+            error_msg = "csv_filename must be a string."
+            raise TypeError(error_msg)
+
         # Create directory if they do no exist.
         if not os.path.exists("./data_farming_experiments"):
             os.makedirs("./data_farming_experiments")
@@ -325,7 +416,7 @@ class DataFarmingMetaExperiment:
     def __init__(
         self,
         solver_name: str | None = None,
-        solver_factor_headers: dict | None = None,
+        solver_factor_headers: list | None = None,
         n_stacks: int = 1,
         design_type: str = "nolhs",
         solver_factor_settings_filename: str | None = None,
@@ -363,9 +454,60 @@ class DataFarmingMetaExperiment:
             If n_stacks is less than or equal to 0.
 
         """
+        # Type checking
+        if not isinstance(solver_name, (str, type(None))):
+            error_msg = "solver_name must be a string."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(solver_factor_headers, (list, type(None)))
+            or isinstance(solver_factor_headers, list)
+            and not all(
+                isinstance(header, str) for header in solver_factor_headers
+            )
+        ):
+            error_msg = "solver_factor_headers must be a dictionary."
+            raise TypeError(error_msg)
+        if not isinstance(n_stacks, int):
+            error_msg = "n_stacks must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(design_type, str):
+            error_msg = "design_type must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(solver_factor_settings_filename, (str, type(None))):
+            error_msg = "solver_factor_settings_filename must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(design_filename, (str, type(None))):
+            error_msg = "design_filename must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(csv_filename, (str, type(None))):
+            error_msg = "csv_filename must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(solver_fixed_factors, (dict, type(None))):
+            error_msg = "solver_fixed_factors must be a dictionary."
+            raise TypeError(error_msg)
+        if not isinstance(cross_design_factors, (dict, type(None))):
+            error_msg = "cross_design_factors must be a dictionary."
+            raise TypeError(error_msg)
+        # Value checking
+        if solver_name is not None and solver_name not in solver_directory:
+            error_msg = "solver_name must be a valid solver name."
+            raise ValueError(error_msg)
         if n_stacks <= 0:
             error_msg = "Number of stacks must be greater than 0."
             raise ValueError(error_msg)
+        if solver_factor_settings_filename is not None and not os.path.exists(
+            solver_factor_settings_filename
+        ):
+            error_msg = (
+                f"{solver_factor_settings_filename} is not a valid file path."
+            )
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
+        if design_filename is not None and not os.path.exists(design_filename):
+            error_msg = f"{design_filename} is not a valid file path."
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
+        if csv_filename is not None and not os.path.exists(csv_filename):
+            error_msg = f"{csv_filename} is not a valid file path."
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
 
         if solver_fixed_factors is None:
             solver_fixed_factors = {}
@@ -391,7 +533,7 @@ class DataFarmingMetaExperiment:
                 + solver_factor_settings_filename
                 + "_design.txt"
             )
-            subprocess.run(command)  # noqa: S603
+            subprocess.run(command)
             # Append design to base filename.
             design_filename = f"{solver_factor_settings_filename}_design"
         # # Read in design matrix from .txt file. Result is a pandas DataFrame.
@@ -513,6 +655,20 @@ class DataFarmingMetaExperiment:
             If n_macroreps is less than or equal to 0.
 
         """
+        # Type checking
+        if not isinstance(problem_name, str):
+            error_msg = "problem_name must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(problem_fixed_factors, (dict, type(None))):
+            error_msg = "problem_fixed_factors must be a dictionary."
+            raise TypeError(error_msg)
+        if not isinstance(model_fixed_factors, (dict, type(None))):
+            error_msg = "model_fixed_factors must be a dictionary."
+            raise TypeError(error_msg)
+        if not isinstance(n_macroreps, int):
+            error_msg = "n_macroreps must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
         if n_macroreps <= 0:
             error_msg = "Number of macroreplications must be greater than 0."
             raise ValueError(error_msg)
@@ -619,6 +775,17 @@ class DataFarmingMetaExperiment:
             different macroreplications, otherwise False.
 
         """
+        # Type checking
+        if not isinstance(n_postreps, int):
+            error_msg = "n_postreps must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_budget, bool):
+            error_msg = "crn_across_budget must be a boolean."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_macroreps, bool):
+            error_msg = "crn_across_macroreps must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
         if n_postreps <= 0:
             error_msg = "Number of postreplications must be greater than 0."
             raise ValueError(error_msg)
@@ -658,6 +825,18 @@ class DataFarmingMetaExperiment:
             True if CRN are to be used for post-replications at solutions x0 and x*, otherwise False.
 
         """
+        # Type checking
+        if not isinstance(n_postreps_init_opt, int):
+            error_msg = "n_postreps_init_opt must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_init_opt, bool):
+            error_msg = "crn_across_init_opt must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_postreps_init_opt <= 0:
+            error_msg = "Number of postreplications must be greater than 0."
+            raise ValueError(error_msg)
+
         post_normalize(
             experiments=self.design,
             n_postreps_init_opt=n_postreps_init_opt,
@@ -667,7 +846,7 @@ class DataFarmingMetaExperiment:
     def report_statistics(
         self,
         solve_tols: list[float] | None = None,
-        csv_filename: str = "df_solver_results",
+        csv_filename: str | None = None,
     ) -> None:
         """For each design point, calculate statistics from each macoreplication and print to csv.
 
@@ -679,18 +858,40 @@ class DataFarmingMetaExperiment:
             Name of .csv file to print output to.
 
         """
+        # Type checking
+        if (
+            not isinstance(solve_tols, (list, type(None)))
+            or isinstance(solve_tols, list)
+            and not all(isinstance(tol, float) for tol in solve_tols)
+        ):
+            error_msg = "solve_tols must be a list of floats."
+            raise TypeError(error_msg)
+        if not isinstance(csv_filename, (str, type(None))):
+            error_msg = "csv_filename must be a string."
+            raise TypeError(error_msg)
+        # Value checking
+        if not all(0 < tol <= 1 for tol in solve_tols):
+            error_msg = "Relative optimality gap must be in (0,1]."
+            raise ValueError(error_msg)
+        # TODO: Figure out if this is a path or just a name
+        if csv_filename is not None and not os.path.exists(csv_filename):
+            error_msg = f"{csv_filename} is not a valid file path."
+            raise ValueError(error_msg)  # Change to FileNotFoundError?
+
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
-
-        # Create directory if they do no exist.
-        if not os.path.exists("./data_farming_experiments"):
-            os.makedirs("./data_farming_experiments")
-        if csv_filename == "df_solver_results":
-            file_path = "./data_farming_experiments/"
+        if csv_filename is None:
+            file_path = os.path.join(EXPERIMENT_DIR, "data_farming", "df_solver_results.csv")
         else:
-            file_path = ""
+            file_path = csv_filename + ".csv"
+        
+        # Create folder(s) for file if needed
+        dir_path = os.path.dirname(file_path)
+        if not os.path.exists(dir_path):
+            os.path.makedirs(dir_path)
+
         with open(
-            file_path + csv_filename + ".csv", mode="w", newline=""
+            file_path
         ) as output_file:
             csv_writer = csv.writer(
                 output_file,

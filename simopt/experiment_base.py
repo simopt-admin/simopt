@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import time
 from multiprocessing import Pool
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,6 +27,20 @@ from simopt.directory import problem_directory, solver_directory
 EXPERIMENT_DIR = os.path.join(
     os.getcwd(), "experiments", time.strftime("%Y-%m-%d_%H-%M-%S")
 )
+
+PLOT_TYPES_CURVE = Literal[
+    "mean",
+    "quantile",
+    "solve_time_cdf",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_cdf_solvability",
+    "diff_quantile_solvability",
+]
+
+PLOT_TYPES_GRAPHING = Literal["area", "box", "violin", "terminal_scatter"]
+
+PLOT_TYPES_SCALAR = Literal["area_mean", "area_std_dev", "solve_time_quantile"]
 
 
 class Curve:
@@ -86,10 +101,37 @@ class Curve:
         return self._n_points
 
     def __init__(self, x_vals: list[float], y_vals: list[float]) -> None:
-        """Initialize a curve with x- and y-values."""
+        """Initialize a curve with x- and y-values.
+
+        Parameters
+        ----------
+        x_vals : list[float]
+            Values of horizontal components.
+        y_vals : list[float]
+            Values of vertical components.
+
+        Raises
+        ------
+        TypeError
+        ValueError
+
+        """
+        # Type checking
+        if not isinstance(x_vals, list) or not all(
+            [isinstance(x, (int, float)) for x in x_vals]
+        ):
+            error_msg = "x_vals must be a list of floats."
+            raise TypeError(error_msg)
+        if not isinstance(y_vals, list) or not all(
+            [isinstance(y, (int, float)) for y in y_vals]
+        ):
+            error_msg = "y_vals must be a list of floats."
+            raise TypeError(error_msg)
+        # Value checking
         if len(x_vals) != len(y_vals):
             error_msg = f"Length of x- {len(x_vals)} and y-values {len(y_vals)} must be equal."
             raise ValueError(error_msg)
+
         # Each attribute is read-only
         self._x_vals = x_vals
         self._y_vals = y_vals
@@ -108,7 +150,16 @@ class Curve:
         float
             Y-value corresponding to x.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(x_val, (int, float)):
+            error_msg = "x_val must be a float."
+            raise TypeError(error_msg)
+
         if x_val < self.x_vals[0]:
             return np.nan
         else:
@@ -128,7 +179,16 @@ class Curve:
         float
             First time at which a curve drops below threshold.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(threshold, (int, float)):
+            error_msg = "Threshold must be a float."
+            raise TypeError(error_msg)
+
         # Use binary search to find the first x-value below threshold.
         # TODO: Test this
         # index = bisect.bisect_left(self.y_vals, threshold)
@@ -168,7 +228,18 @@ class Curve:
         ``experiment_base.Curve``
             Curve with equally spaced x-values.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(mesh, list) or not all(
+            [isinstance(x, (int, float)) for x in mesh]
+        ):
+            error_msg = "Mesh must be a list of floats."
+            raise TypeError(error_msg)
+
         mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
         return mesh_curve
 
@@ -189,7 +260,9 @@ class Curve:
         return full_curve
 
     def plot(
-        self, color_str: str = "C0", curve_type: str = "regular"
+        self,
+        color_str: str = "C0",
+        curve_type: Literal["regular", "conf_bound"] = "regular",
     ) -> list[plt.Line2D]:
         """Plot a curve.
 
@@ -205,15 +278,30 @@ class Curve:
         list [``matplotlib.lines.Line2D``]
             Curve handle, to use when creating legends.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(color_str, str):
+            error_msg = "Color must be a string."
+            raise TypeError(error_msg)
+        if not isinstance(curve_type, str):
+            error_msg = "Curve type must be a string."
+            raise TypeError(error_msg)
+        # Value checking
+        if curve_type not in ["regular", "conf_bound"]:
+            error_msg = "Invalid curve type."
+            raise ValueError(error_msg)
+
         if curve_type == "regular":
             linestyle = "-"
             linewidth = 2
         elif curve_type == "conf_bound":
             linestyle = "--"
             linewidth = 1
-        else:
-            raise ValueError("Invalid curve type.")
         (handle,) = plt.step(
             self.x_vals,
             self.y_vals,
@@ -240,7 +328,18 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
     ``experiment_base.Curve object``
         Mean curve.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curves, list) or not all(
+        [isinstance(curve, Curve) for curve in curves]
+    ):
+        error_msg = "Curves must be a list of Curve objects."
+        raise TypeError(error_msg)
+
     unique_x_vals = np.unique(
         [x_val for curve in curves for x_val in curve.x_vals]
     )
@@ -269,7 +368,21 @@ def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
     ``experiment_base.Curve``
         Quantile curve.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curves, list) or not all(
+        [isinstance(curve, Curve) for curve in curves]
+    ):
+        error_msg = "Curves must be a list of Curve objects."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float)):
+        error_msg = "Beta must be a float."
+        raise TypeError(error_msg)
+
     unique_x_vals = np.unique(
         [x_val for curve in curves for x_val in curve.x_vals]
     )
@@ -300,7 +413,21 @@ def cdf_of_curves_crossing_times(
     ``experiment_base.Curve``
         CDF of crossing times.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curves, list) or not all(
+        [isinstance(curve, Curve) for curve in curves]
+    ):
+        error_msg = "Curves must be a list of Curve objects."
+        raise TypeError(error_msg)
+    if not isinstance(threshold, (int, float)):
+        error_msg = "Threshold must be a float."
+        raise TypeError(error_msg)
+
     n_curves = len(curves)
     crossing_times = [
         curve.compute_crossing_time(threshold) for curve in curves
@@ -346,7 +473,24 @@ def quantile_cross_jump(
     ``experiment_base.Curve``
         Piecewise-constant curve with a jump at the quantile crossing time (if finite).
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curves, list) or not all(
+        [isinstance(curve, Curve) for curve in curves]
+    ):
+        error_msg = "Curves must be a list of Curve objects."
+        raise TypeError(error_msg)
+    if not isinstance(threshold, (int, float)):
+        error_msg = "Threshold must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float)):
+        error_msg = "Beta must be a float."
+        raise TypeError(error_msg)
+
     solve_time_quantile = np.quantile(
         [curve.compute_crossing_time(threshold=threshold) for curve in curves],
         q=beta,
@@ -376,7 +520,19 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
     ``experiment_base.Curve``
         Difference of curves.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curve_1, Curve):
+        error_msg = "curve_1 must be a Curve object."
+        raise TypeError(error_msg)
+    if not isinstance(curve_2, Curve):
+        error_msg = "curve_2 must be a Curve object."
+        raise TypeError(error_msg)
+
     unique_x_vals = np.unique(curve_1.x_vals + curve_2.x_vals)
     difference_y_vals = [
         (curve_1.lookup(x_val) - curve_2.lookup(x_val))
@@ -403,7 +559,19 @@ def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
     float
         Maximum difference of curves.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(curve_1, Curve):
+        error_msg = "curve_1 must be a Curve object."
+        raise TypeError(error_msg)
+    if not isinstance(curve_2, Curve):
+        error_msg = "curve_2 must be a Curve object."
+        raise TypeError(error_msg)
+
     difference_curve = difference_of_curves(curve_1, curve_2)
     max_diff = max(difference_curve.y_vals)
     return max_diff
@@ -536,7 +704,57 @@ class ProblemSolver:
         create_pickle : bool, optional
             True if creating pickle file to store ProblemSolver object, False otherwise.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(solver_name, (str, type(None))):
+            error_msg = "Solver name must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(problem_name, (str, type(None))):
+            error_msg = "Problem name must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(solver_rename, (str, type(None))):
+            error_msg = "Solver rename must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(problem_rename, (str, type(None))):
+            error_msg = "Problem rename must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(solver, (Solver, type(None))):
+            error_msg = "Solver must be a Solver object or None."
+            raise TypeError(error_msg)
+        if not isinstance(problem, (Problem, type(None))):
+            error_msg = "Problem must be a Problem object or None."
+            raise TypeError(error_msg)
+        if not isinstance(solver_fixed_factors, (dict, type(None))):
+            error_msg = "Solver fixed factors must be a dictionary or None."
+            raise TypeError(error_msg)
+        if not isinstance(problem_fixed_factors, (dict, type(None))):
+            error_msg = "Problem fixed factors must be a dictionary or None."
+            raise TypeError(error_msg)
+        if not isinstance(model_fixed_factors, (dict, type(None))):
+            error_msg = "Model fixed factors must be a dictionary or None."
+            raise TypeError(error_msg)
+        if not isinstance(file_name_path, (str, os.PathLike, type(None))):
+            error_msg = "File name path must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(create_pickle, bool):
+            error_msg = "Create pickle must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
+        if not isinstance(solver_name, str) and solver is None:
+            error_msg = (
+                "Solver name must be provided if solver object is not provided."
+            )
+            raise ValueError(error_msg)
+        if not isinstance(problem_name, str) and problem is None:
+            error_msg = "Problem name must be provided if problem object is not provided."
+            raise ValueError(error_msg)
+        # Add checks for empty dicts?
+
         # Handle unassigned arguments.
         if solver_fixed_factors is None:
             solver_fixed_factors = {}
@@ -678,7 +896,21 @@ class ProblemSolver:
         n_macroreps : int
             Number of macroreplications of the solver to run on the problem.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_macroreps, int):
+            error_msg = "Number of macroreplications must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_macroreps <= 0:
+            error_msg = "Number of macroreplications must be positive."
+            raise ValueError(error_msg)
+
         print(
             "Running Solver",
             self.solver.name,
@@ -752,7 +984,21 @@ class ProblemSolver:
         tuple
             Tuple of recommended solutions, intermediate budgets, and runtime.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(mrep, int):
+            error_msg = "Macroreplication index must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
+        if mrep < 0:
+            error_msg = "Macroreplication index must be non-negative."
+            raise ValueError(error_msg)
+
         print(
             f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}."
         )
@@ -833,7 +1079,27 @@ class ProblemSolver:
             True if CRN used for post-replications at solutions recommended on different
             macroreplications, otherwise False.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_postreps, int):
+            error_msg = "Number of postreplications must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_budget, bool):
+            error_msg = "CRN across budget must be a boolean."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_macroreps, bool):
+            error_msg = "CRN across macroreplications must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_postreps <= 0:
+            error_msg = "Number of postreplications must be positive."
+            raise ValueError(error_msg)
+
         print(
             f"Setting up {n_postreps} postreplications for {self.n_macroreps} macroreplications of {self.solver.name} on {self.problem.name}."
         )
@@ -905,7 +1171,21 @@ class ProblemSolver:
         tuple
             Tuple of post-replicates and runtime.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(mrep, int):
+            error_msg = "Macroreplication index must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
+        if mrep < 0:
+            error_msg = "Macroreplication index must be non-negative."
+            raise ValueError(error_msg)
+
         print(
             f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
         )
@@ -999,7 +1279,19 @@ class ProblemSolver:
         bootstrap_curves : list [``experiment_base.Curve``]
             Bootstrapped estimated objective curves or estimated progress curves of all solutions from all bootstrapped macroreplications.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(bootstrap_rng, MRG32k3a):
+            error_msg = "Bootstrap RNG must be an MRG32k3a object."
+            raise TypeError(error_msg)
+        if not isinstance(normalize, bool):
+            error_msg = "Normalize must be a boolean."
+            raise TypeError(error_msg)
+
         bootstrap_curves = []
         # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
         # Subsubstream 0: reserved for this outer-level bootstrapping.
@@ -1198,10 +1490,17 @@ class ProblemSolver:
                 delattr(self, attribute)
 
     def record_experiment_results(self) -> None:
-        """Save ``experiment_base.ProblemSolver`` object to .pickle file."""
+        """Save ``experiment_base.ProblemSolver`` object to .pickle file.
+        
+        Raises
+        ------
+        FileNotFoundError
+
+        """
         # Create experiments folder if it does not exist.
-        if not os.path.exists(EXPERIMENT_DIR):
-            os.makedirs(EXPERIMENT_DIR)
+        if not os.path.exists(self.file_name_path):
+            error_msg = "File path '{self.file_name_path}' does not exist."
+            raise FileNotFoundError(error_msg)
         with open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
@@ -1213,7 +1512,16 @@ class ProblemSolver:
         print_solutions : bool, optional
             True if recommended solutions are to be printed in the .txt file, otherwise False.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if not isinstance(print_solutions, bool):
+            error_msg = "Print solutions must be a boolean."
+            raise TypeError(error_msg)
+
         if not os.path.exists(EXPERIMENT_DIR):
             os.makedirs(EXPERIMENT_DIR)
         results_filepath = os.path.join(
@@ -1314,7 +1622,26 @@ def trim_solver_results(
     list [int]
         Intermediate budgets at which solver recommended different solutions after trimming.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(problem, Problem):
+        error_msg = "Problem must be a Problem object."
+        raise TypeError(error_msg)
+    if not isinstance(recommended_solutions, list) or not all(
+        isinstance(solution, Solution) for solution in recommended_solutions
+    ):
+        error_msg = "Recommended solutions must be a list of Solution objects."
+        raise TypeError(error_msg)
+    if not isinstance(intermediate_budgets, list) or not all(
+        isinstance(budget, int) for budget in intermediate_budgets
+    ):
+        error_msg = "Intermediate budgets must be a list of integers."
+        raise TypeError(error_msg)
+
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
     invalid_idxs = [
         idx
@@ -1346,7 +1673,16 @@ def read_experiment_results(file_name_path: str | os.PathLike) -> ProblemSolver:
     experiment : ``experiment_base.ProblemSolver``
         Problem-solver pair that has been run or has been post-processed.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(file_name_path, (str, os.PathLike)):
+        error_msg = "File name path must be a string or os.PathLike object."
+        raise TypeError(error_msg)
+
     with open(file_name_path, "rb") as file:
         experiment = pickle.load(file)
     return experiment
@@ -1380,7 +1716,39 @@ def post_normalize(
     create_pair_pickles : bool, default = False
         True if creating pickle files for each problem-solver pair, False otherwise.
 
+    Raises
+    ------
+    TypeError
+    Exception
+
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        isinstance(experiment, ProblemSolver) for experiment in experiments
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+    if not isinstance(n_postreps_init_opt, int):
+        error_msg = (
+            "Number of postreplications at x0 and x* must be an integer."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(crn_across_init_opt, bool):
+        error_msg = "CRN across x0 and x* must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(proxy_init_val, (int, float, type(None))):
+        error_msg = "Proxy initial value must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(proxy_opt_val, (int, float, type(None))):
+        error_msg = "Proxy optimal value must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(proxy_opt_x, (tuple, type(None))):
+        error_msg = "Proxy optimal solution must be a tuple or None."
+        raise TypeError(error_msg)
+    if not isinstance(create_pair_pickles, bool):
+        error_msg = "Create pair pickles must be a boolean."
+        raise TypeError(error_msg)
+
     # Check that all experiments have the same problem and same
     # post-experimental setup.
     ref_experiment = experiments[0]
@@ -1594,7 +1962,36 @@ def bootstrap_sample_all(
         Bootstrapped estimated objective curves or estimated progress curves
         of all solutions from all macroreplications.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if (
+        not isinstance(experiments, list)
+        or not all(
+            isinstance(experiment_list, list) for experiment_list in experiments
+        )
+        or not all(
+            [
+                isinstance(experiment, ProblemSolver)
+                for experiment in experiment_list
+            ]
+            for experiment_list in experiments
+        )
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(bootstrap_rng, MRG32k3a):
+        error_msg = "Bootstrap RNG must be an MRG32k3a object."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     bootstrap_curves = [
@@ -1614,11 +2011,25 @@ def bootstrap_sample_all(
     return bootstrap_curves
 
 
+BOOTSTRAP_PLOT_TYPES = Literal[
+    "mean",
+    "quantile",
+    "area_mean",
+    "area_std_dev",
+    "solve_time_quantile",
+    "solve_time_cdf",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_cdf_solvability",
+    "diff_quantile_solvability",
+]
+
+
 def bootstrap_procedure(
     experiments: list[list[ProblemSolver]],
     n_bootstraps: int,
     conf_level: float,
-    plot_type: str,
+    plot_type: BOOTSTRAP_PLOT_TYPES,
     beta: float | None = None,
     solve_tol: float | None = None,
     estimator: float | Curve | None = None,
@@ -1635,7 +2046,6 @@ def bootstrap_procedure(
     conf_level : float
         Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
     plot_type : str
-        String indicating which type of plot to produce:
             "mean" : estimated mean progress curve;
 
             "quantile" : estimated beta quantile progress curve;
@@ -1666,10 +2076,73 @@ def bootstrap_procedure(
 
     Returns
     -------
-    tuple[float | ``experiment_base.Curve``, float | ``experiment_base.Curve``]
-        Lower and upper bound(s) of bootstrap CI(s), as floats or curves.
+    float | ``experiment_base.Curve``
+        Lower bound of bootstrap CI, as a float or curve.
+    float | ``experiment_base.Curve``]
+        Upper bound of bootstrap CI, as a float or curve.
+
+    Raises
+    ------
+    TypeError
+    ValueError
 
     """
+    # Type checking
+    if (
+        not isinstance(experiments, list)
+        or not all(
+            isinstance(experiment_list, list) for experiment_list in experiments
+        )
+        or not all(
+            [
+                isinstance(experiment, ProblemSolver)
+                for experiment in experiment_list
+            ]
+            for experiment_list in experiments
+        )
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(n_bootstraps, int):
+        error_msg = "Number of bootstraps must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float, type(None))):
+        error_msg = "Beta quantile must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(solve_tol, (int, float, type(None))):
+        error_msg = "Solve tolerance must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(estimator, (int, float, Curve, type(None))):
+        error_msg = "Estimator must be a float, Curve, or None."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    # Value checking
+    if n_bootstraps < 1:
+        error_msg = "Number of bootstraps must be a positive integer."
+        raise ValueError(error_msg)
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+    if plot_type not in BOOTSTRAP_PLOT_TYPES:
+        error_msg = "Plot type must be a valid string."
+        raise ValueError(error_msg)
+    if beta is not None and not 0 < beta < 1:
+        error_msg = "Beta quantile must be in (0, 1)."
+        raise ValueError(error_msg)
+    if solve_tol is not None and not 0 < solve_tol <= 1:
+        error_msg = "Solve tolerance must be in (0, 1]."
+        raise ValueError(error_msg)
+
     # Create random number generator for bootstrap sampling.
     # Stream 1 dedicated for bootstrapping.
     bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
@@ -1695,15 +2168,7 @@ def bootstrap_procedure(
             bias_correction=True,
             overall_estimator=estimator,
         )
-    elif plot_type in [
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ]:
+    else:
         # Functional returns a curve.
         unique_budget_list = list(
             np.unique(
@@ -1738,14 +2203,25 @@ def bootstrap_procedure(
             x_vals=unique_budget_list, y_vals=bs_conf_int_upper_bound_list
         )
         return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
-    else:
-        error_msg = f"`{plot_type}` is not a valid plot type."
-        raise ValueError(error_msg)
+
+
+PLOT_TYPES_FUNCTIONAL_CURVES = Literal[
+    "mean",
+    "quantile",
+    "area_mean",
+    "area_std_dev",
+    "solve_time_quantile",
+    "solve_time_cdf",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_cdf_solvability",
+    "diff_quantile_solvability",
+]
 
 
 def functional_of_curves(
     bootstrap_curves: list[list[list[Curve]]],
-    plot_type: str,
+    plot_type: PLOT_TYPES_FUNCTIONAL_CURVES,
     beta: float = 0.5,
     solve_tol: float = 0.1,
 ) -> list:
@@ -1784,11 +2260,57 @@ def functional_of_curves(
 
     Returns
     -------
-    functional : list
+    list
         Functional of bootstrapped curves, e.g, mean progress curves,
         mean area under progress curve, quantile of crossing time, etc.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if (
+        not isinstance(bootstrap_curves, list)
+        or not all(
+            isinstance(experiment_list_list, list)
+            for experiment_list_list in bootstrap_curves
+        )
+        or not all(
+            [isinstance(curve_list, list) for curve_list in curve_list_list]
+            for curve_list_list in bootstrap_curves
+        )
+        or not all(
+            [
+                [isinstance(curve, Curve) for curve in curve_list]
+                for curve_list in curve_list_list
+            ]
+            for curve_list_list in bootstrap_curves
+        )
+    ):
+        error_msg = "Bootstrap curves must be a list of lists of lists of Curve objects."
+        raise TypeError(error_msg)
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float)):
+        error_msg = "Beta quantile must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(solve_tol, (int, float)):
+        error_msg = "Solve tolerance must be a float."
+        raise TypeError(error_msg)
+    # Value checking
+    if plot_type not in PLOT_TYPES_FUNCTIONAL_CURVES:
+        error_msg = f"Plot type '{plot_type}' is not valid."
+        raise ValueError(error_msg)
+    if not 0 < beta < 1:
+        error_msg = "Beta quantile must be in (0, 1)."
+        raise ValueError(error_msg)
+    if not 0 < solve_tol <= 1:
+        error_msg = "Solve tolerance must be in (0, 1]."
+        raise ValueError(error_msg)
+
     if plot_type == "mean":
         # Single experiment --> returns a curve.
         return mean_of_curves(bootstrap_curves[0][0])
@@ -1889,10 +2411,11 @@ def functional_of_curves(
             solvability_profile_1, solvability_profile_2
         )
     else:
-        error_msg = "Not a valid plot type."
-        raise ValueError(error_msg)
+        error_msg = "'{plot_type}' is not implemented."
+        raise NotImplementedError(error_msg)
 
 
+# TODO: double check observations type and return type
 def compute_bootstrap_conf_int(
     observations: list[any],
     conf_level: float,
@@ -1903,7 +2426,7 @@ def compute_bootstrap_conf_int(
 
     Parameters
     ----------
-    observations : list
+    observations : list[float | int]
         Estimators from all bootstrap instances.
     conf_level : float
         Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
@@ -1916,19 +2439,41 @@ def compute_bootstrap_conf_int(
 
     Returns
     -------
-    float
+    ndarray[float]
         Lower bound of bootstrap CI.
-    float
+    ndarray[float]
         Upper bound of bootstrap CI.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if not isinstance(observations, list):
+        error_msg = "Observations must be a list."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(bias_correction, bool):
+        error_msg = "Bias correction must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(overall_estimator, (int, float, type(None))):
+        error_msg = "Overall estimator must be a float or None."
+        raise TypeError(error_msg)
+    # Value checking
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+    if bias_correction and overall_estimator is None:
+        error_msg = "Overall estimator must be provided for bias correction."
+        raise ValueError(error_msg)
+
     # Compute bootstrapping confidence interval via percentile method.
     # See Efron (1981) "Nonparameteric Standard Errors and Confidence Intervals."
     if bias_correction:
-        if overall_estimator is None:
-            raise ValueError(
-                "Estimator required to compute bias-corrected CIs."
-            )
         # For biased-corrected CIs, see equation (4.4) on page 146.
         z0 = norm.ppf(
             np.mean([obs < overall_estimator for obs in observations])
@@ -1961,7 +2506,22 @@ def plot_bootstrap_conf_ints(
     color_str : str, default="C0"
         String indicating line color, e.g., "C0", "C1", etc.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(bs_conf_int_lower_bounds, Curve):
+        error_msg = "Lower bounds must be a Curve object."
+        raise TypeError(error_msg)
+    if not isinstance(bs_conf_int_upper_bounds, Curve):
+        error_msg = "Upper bounds must be a Curve object."
+        raise TypeError(error_msg)
+    if not isinstance(color_str, str):
+        error_msg = "Color string must be a string."
+        raise TypeError(error_msg)
+
     bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
     bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
     # Shade space between curves.
@@ -1995,7 +2555,37 @@ def report_max_halfwidth(
     difference : bool
         True if the plot is for difference profiles, otherwise False.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if (
+        not isinstance(curve_pairs, list)
+        or not all([isinstance(curve_pair, list) for curve_pair in curve_pairs])
+        or not all(
+            [isinstance(curve, Curve) for curve in curve_pair]
+            for curve_pair in curve_pairs
+        )
+    ):
+        error_msg = "Curve pairs must be a list of lists of Curve objects."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(difference, bool):
+        error_msg = "Difference must be a boolean."
+        raise TypeError(error_msg)
+    # Value checking
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+
     # Compute max halfwidth of bootstrap confidence intervals.
     min_lower_bound = np.inf
     max_upper_bound = -np.inf
@@ -2035,10 +2625,18 @@ def check_common_problem_and_reference(
 
     Raises
     ------
+    TypeError
     ValueError
         If at least two experiments have different problem instances, starting solutions, or optimal solutions.
 
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        [isinstance(experiment, ProblemSolver) for experiment in experiments]
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+
     problem_list = [experiment.problem for experiment in experiments]
     if len(set(problem_list)) != 1:
         raise ValueError(
@@ -2057,9 +2655,12 @@ def check_common_problem_and_reference(
     return
 
 
+PLOT_TYPES_PROGRESS_CURVES = Literal["all", "mean", "quantile"]
+
+
 def plot_progress_curves(
     experiments: list[ProblemSolver],
-    plot_type: str,
+    plot_type: PLOT_TYPES_PROGRESS_CURVES,
     beta: float = 0.50,
     normalize: bool = True,
     all_in_one: bool = True,
@@ -2069,9 +2670,9 @@ def plot_progress_curves(
     print_max_hw: bool = True,
     plot_title: str | None = None,
     legend_loc: str = "best",
-    ext: bool = ".png",
+    ext: str = ".png",
     save_as_pickle: bool = False,
-    solver_set_name: str = "SOVER_SET",
+    solver_set_name: str = "SOLVER_SET",
 ) -> list[str | os.PathLike]:
     """Plot individual or aggregate progress curves for one or more solvers on a single problem.
 
@@ -2115,9 +2716,69 @@ def plot_progress_curves(
     file_list : list [str]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
-    if plot_type not in ("all", "mean", "quantile"):
-        error_msg = f"{plot_type} is not a valid plot type."
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        [isinstance(experiment, ProblemSolver) for experiment in experiments]
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float)):
+        error_msg = "Beta quantile must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(n_bootstraps, int):
+        error_msg = "Number of bootstraps must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(plot_conf_ints, bool):
+        error_msg = "Plot confidence intervals must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(print_max_hw, bool):
+        error_msg = "Print max halfwidth must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    # Value checking
+    if plot_type not in PLOT_TYPES_PROGRESS_CURVES:
+        error_msg = f"Plot type '{plot_type}' is not valid."
+        raise ValueError(error_msg)
+    if not 0 < beta < 1:
+        error_msg = "Beta quantile must be in (0, 1)."
+        raise ValueError(error_msg)
+    if n_bootstraps < 1:
+        error_msg = "Number of bootstraps must be a positive integer."
+        raise ValueError(error_msg)
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
 
     # Check if problems are the same with the same x0 and x*.
@@ -2163,7 +2824,7 @@ def plot_progress_curves(
                 else:
                     estimator = mean_of_curves(experiment.objective_curves)
                 handle = estimator.plot(color_str=color_str)
-            elif plot_type == "quantile":
+            else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
                     estimator = quantile_of_curves(
@@ -2246,7 +2907,7 @@ def plot_progress_curves(
                 else:
                     estimator = mean_of_curves(experiment.objective_curves)
                 estimator.plot()
-            elif plot_type == "quantile":
+            else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
                     estimator = quantile_of_curves(
@@ -2344,7 +3005,62 @@ def plot_solvability_cdfs(
     file_list : list [str | os.PathLike]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        [isinstance(experiment, ProblemSolver) for experiment in experiments]
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+    if not isinstance(solve_tol, (int, float)):
+        error_msg = "Solve tolerance must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(n_bootstraps, int):
+        error_msg = "Number of bootstraps must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(plot_conf_ints, bool):
+        error_msg = "Plot confidence intervals must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(print_max_hw, bool):
+        error_msg = "Print max halfwidth must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    # Value checking
+    if not 0 < solve_tol <= 1:
+        error_msg = "Solve tolerance must be in (0, 1]."
+        raise ValueError(error_msg)
+    if n_bootstraps < 1:
+        error_msg = "Number of bootstraps must be a positive integer."
+        raise ValueError(error_msg)
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
     file_list = []
@@ -2519,7 +3235,61 @@ def plot_area_scatterplots(
     file_list : list [str]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        [isinstance(experiment, list) for experiment in experiments]
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(n_bootstraps, int):
+        error_msg = "Number of bootstraps must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(plot_conf_ints, bool):
+        error_msg = "Plot confidence intervals must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(print_max_hw, bool):
+        error_msg = "Print max halfwidth must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_set_name, str):
+        error_msg = "Problem set name must be a string."
+        raise TypeError(error_msg)
+    # Value checking
+    if n_bootstraps < 1:
+        error_msg = "Number of bootstraps must be a positive integer."
+        raise ValueError(error_msg)
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+
     file_list = []
     # Set up plot.
     n_solvers = len(experiments)
@@ -2701,7 +3471,12 @@ def plot_solvability_profiles(
     experiments: list[
         list[ProblemSolver]
     ],  # TODO: check if this should be list[ProblemSolver]
-    plot_type: str,
+    plot_type: Literal[
+        "cdf_solvability",
+        "quantile_solvability",
+        "diff_cdf_solvability",
+        "diff_quantile_solvability",
+    ],
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -2766,14 +3541,90 @@ def plot_solvability_profiles(
     file_list : list [str]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
-    if plot_type not in [
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ]:
-        error_msg = f"{plot_type} is not a valid plot type."
+    # Type checking
+    if (
+        not isinstance(experiments, list)
+        or not all(
+            [
+                isinstance(experiment_list, list)
+                for experiment_list in experiments
+            ]
+        )
+        or not all(
+            [
+                isinstance(experiment, ProblemSolver)
+                for experiment in experiment_list
+            ]
+            for experiment_list in experiments
+        )
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(n_bootstraps, int):
+        error_msg = "Number of bootstraps must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(conf_level, (int, float)):
+        error_msg = "Confidence level must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(plot_conf_ints, bool):
+        error_msg = "Plot confidence intervals must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(print_max_hw, bool):
+        error_msg = "Print max halfwidth must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solve_tol, (int, float)):
+        error_msg = "Solve tolerance must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (int, float)):
+        error_msg = "Beta quantile must be a float."
+        raise TypeError(error_msg)
+    if not isinstance(ref_solver, (str, type(None))):
+        error_msg = "Reference solver must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_set_name, str):
+        error_msg = "Problem set name must be a string."
+        raise TypeError(error_msg)
+    # Value checking
+    if n_bootstraps < 1:
+        error_msg = "Number of bootstraps must be a positive integer."
+        raise ValueError(error_msg)
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+    if not 0 < solve_tol <= 1:
+        error_msg = "Solve tolerance must be in (0, 1]."
+        raise ValueError(error_msg)
+    if not 0 < beta < 1:
+        error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
 
     file_list = []
@@ -3241,16 +4092,47 @@ def plot_terminal_progress(
     solver_set_name: str, default = "SOLVER_SET"
         Use to change name of solver groups for plot titles.
 
-
-
     Returns
     -------
     file_list : list [str]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        [isinstance(experiment, ProblemSolver) for experiment in experiments]
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    # Value checking
     if plot_type not in ["box", "violin"]:
-        error_msg = f"{plot_type} is not a valid plot type."
+        error_msg = "Plot type must be either 'box' or 'violin'."
         raise ValueError(error_msg)
 
     # Check if problems are the same with the same x0 and x*.
@@ -3291,7 +4173,7 @@ def plot_terminal_progress(
                 range(1, n_experiments + 1),
                 labels=[experiment.solver.name for experiment in experiments],
             )
-        if plot_type == "violin":
+        elif plot_type == "violin":
             solver_names = [
                 experiments[exp_idx].solver.name
                 for exp_idx in range(n_experiments)
@@ -3402,7 +4284,7 @@ def plot_terminal_scatterplots(
 
     Parameters
     ----------
-    experiments : list [list [``experiment_base.Experiment``]]
+    experiments : list [list [``experiment_base.ProblemSolver``]]
         ProblemSolver pairs used to produce plots.
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
@@ -3424,7 +4306,54 @@ def plot_terminal_scatterplots(
     file_list : list [str]
         List compiling path names for plots produced.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if (
+        not isinstance(experiments, list)
+        or not all(
+            [
+                isinstance(experiment_list, list)
+                for experiment_list in experiments
+            ]
+        )
+        or not all(
+            [
+                isinstance(experiment, ProblemSolver)
+                for experiment in experiment_list
+            ]
+            for experiment_list in experiments
+        )
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_set_name, str):
+        error_msg = "Problem set name must be a string."
+        raise TypeError(error_msg)
+
     file_list = []
     # Set up plot.
     n_solvers = len(experiments)
@@ -3511,8 +4440,24 @@ def plot_terminal_scatterplots(
     return file_list
 
 
+SETUP_PLOT_TYPES = Literal[
+    "all",
+    "mean",
+    "quantile",
+    "solve_time_cdf",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_cdf_solvability",
+    "diff_quantile_solvability",
+    "area",
+    "box",
+    "violin",
+    "terminal_scatter",
+]
+
+
 def setup_plot(
-    plot_type: str,
+    plot_type: SETUP_PLOT_TYPES,
     solver_name: str = "SOLVER SET",
     problem_name: str = "PROBLEM SET",
     normalize: bool = True,
@@ -3566,22 +4511,46 @@ def setup_plot(
     plot_title : str, optional
         Optional title to override the one that is autmatically generated.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
-    if plot_type not in [
-        "all",
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-        "area",
-        "box",
-        "violin",
-        "terminal_scatter",
-    ]:
-        error_msg = f"{plot_type} is not a valid plot type."
+    # Type checking
+    if not isinstance(plot_type, str):
+        error_msg = "Plot type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(solver_name, str):
+        error_msg = "Solver name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_name, str):
+        error_msg = "Problem name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(budget, (int, type(None))):
+        error_msg = "Budget must be an integer or None."
+        raise TypeError(error_msg)
+    if not isinstance(beta, (float, type(None))):
+        error_msg = "Beta must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(solve_tol, (float, type(None))):
+        error_msg = "Solve tolerance must be a float or None."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    # Value checking
+    if plot_type not in SETUP_PLOT_TYPES:
+        error_msg = f"Plot type '{plot_type}' is not recognized."
+        raise ValueError(error_msg)
+    if not 0 < beta < 1:
+        error_msg = "Beta must be in (0, 1)."
+        raise ValueError(error_msg)
+    if not 0 < solve_tol <= 1:
+        error_msg = "Solve tolerance must be in (0, 1]."
         raise ValueError(error_msg)
 
     plt.figure()
@@ -3654,16 +4623,35 @@ def setup_plot(
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
+    else:
+        error_msg = f"'{plot_type}' is not implemented."
+        raise NotImplementedError(error_msg)
     # if title argument provided, overide prevous title assignment
     if plot_title is not None:
         title = plot_title
     plt.title(title, size=14)
 
 
+SAVE_PLOT_TYPES = Literal[
+    "all",
+    "mean",
+    "quantile",
+    "solve_time_cdf",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_cdf_solvability",
+    "diff_quantile_solvability",
+    "area",
+    "box",
+    "violin",
+    "terminal_scatter",
+]
+
+
 def save_plot(
     solver_name: str,
     problem_name: str,
-    plot_type: str,
+    plot_type: SAVE_PLOT_TYPES,
     normalize: bool,
     extra: float | list[float] | None = None,
     plot_title: str | None = None,
@@ -3716,7 +4704,41 @@ def save_plot(
     path_name : str
         Path name pointing to location where plot will be saved.
 
+    Raises
+    ------
+    TypeError
+
     """
+    # Type checking
+    if not isinstance(solver_name, str):
+        error_msg = "Solver name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_name, str):
+        error_msg = "Problem name must be a string."
+        raise TypeError(error_msg)
+    if plot_type not in SAVE_PLOT_TYPES:
+        error_msg = f"Plot type '{plot_type}' is not recognized."
+        raise ValueError(error_msg)
+    if not isinstance(normalize, bool):
+        error_msg = "Normalize must be a boolean."
+        raise TypeError(error_msg)
+    if (
+        not isinstance(extra, (float, list, type(None)))
+        or isinstance(extra, list)
+        and not all(isinstance(e, float) for e in extra)
+    ):
+        error_msg = "Extra must be a float, list of floats, or None."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+
     # Form string name for plot filename.
     if plot_type == "all":
         plot_name = "all_prog_curves"
@@ -3743,8 +4765,7 @@ def save_plot(
     elif plot_type == "terminal_scatter":
         plot_name = "terminal_scatter"
     else:
-        error_msg = f"{plot_type} is not a valid plot type."
-        raise ValueError(error_msg)
+        raise NotImplementedError(f"'{plot_type}' is not implemented.")
 
     plot_dir = os.path.join(EXPERIMENT_DIR, "plots")
     # Create directories if they do no exist.
@@ -3907,7 +4928,100 @@ class ProblemsSolvers:
         experiment_name: str, optional
             Name of experiment to be appended to the beginning of output files.
 
+        Raises
+        ------
+        TypeError
+
         """
+        # Type checking
+        if (
+            not isinstance(solver_factors, (list, type(None)))
+            or isinstance(solver_factors, list)
+            and not all(isinstance(dp, dict) for dp in solver_factors)
+        ):
+            error_msg = "Solver factors must be a list of dictionaries or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(problem_factors, (list, type(None)))
+            or isinstance(problem_factors, list)
+            and not all(isinstance(dp, dict) for dp in problem_factors)
+        ):
+            error_msg = (
+                "Problem factors must be a list of dictionaries or None."
+            )
+            raise TypeError(error_msg)
+        if (
+            not isinstance(solver_names, (list, type(None)))
+            or isinstance(solver_names, list)
+            and not all(isinstance(name, str) for name in solver_names)
+        ):
+            error_msg = "Solver names must be a list of strings or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(problem_names, (list, type(None)))
+            or isinstance(problem_names, list)
+            and not all(isinstance(name, str) for name in problem_names)
+        ):
+            error_msg = "Problem names must be a list of strings or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(solver_renames, (list, type(None)))
+            or isinstance(solver_renames, list)
+            and not all(isinstance(name, str) for name in solver_renames)
+        ):
+            error_msg = "Solver renames must be a list of strings or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(problem_renames, (list, type(None)))
+            or isinstance(problem_renames, list)
+            and not all(isinstance(name, str) for name in problem_renames)
+        ):
+            error_msg = "Problem renames must be a list of strings or None."
+            raise TypeError(error_msg)
+        if not isinstance(fixed_factors_filename, (str, type(None))):
+            error_msg = "Fixed factors filename must be a string or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(solvers, (list, type(None)))
+            or isinstance(solvers, list)
+            and not all(isinstance(solver, Solver) for solver in solvers)
+        ):
+            error_msg = "Solvers must be a list of Solver objects or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(problems, (list, type(None)))
+            or isinstance(problems, list)
+            and not all(isinstance(problem, Problem) for problem in problems)
+        ):
+            error_msg = "Problems must be a list of Problem objects or None."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(experiments, (list, type(None)))
+            or isinstance(experiments, list)
+            and not all(
+                isinstance(experiment_list, list)
+                for experiment_list in experiments
+            )
+            and not all(
+                isinstance(experiment, ProblemSolver)
+                for experiment_list in experiments
+                for experiment in experiment_list
+            )
+        ):
+            error_msg = "Experiments must be a list of lists of ProblemSolver objects or None."
+            raise TypeError(error_msg)
+        if not isinstance(file_name_path, (str, type(None))):
+            error_msg = "File name path must be a string or None."
+            raise TypeError(error_msg)
+        if not isinstance(create_pair_pickles, bool):
+            error_msg = "Create pair pickles must be a boolean."
+            raise TypeError(error_msg)
+        if not isinstance(experiment_name, (str, type(None))):
+            error_msg = "Experiment name must be a string or None."
+            raise TypeError(error_msg)
+        # Value checking
+        # TODO: Implement this
+
         # set attributes for pickle create and experiment file names
         self.create_pair_pickles = create_pair_pickles
         if experiment_name is not None:
@@ -4151,7 +5265,21 @@ class ProblemsSolvers:
         n_macroreps : int
             Number of macroreplications of the solver to run on the problem.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_macroreps, int):
+            error_msg = "Number of macroreplications must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_macroreps <= 0:
+            error_msg = "Number of macroreplications must be positive."
+            raise ValueError(error_msg)
+
         for solver_idx in range(self.n_solvers):
             for problem_idx in range(self.n_problems):
                 experiment = self.experiments[solver_idx][problem_idx]
@@ -4185,7 +5313,27 @@ class ProblemsSolvers:
             True if CRN used for post-replications at solutions recommended on different
             macroreplications, otherwise False.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_postreps, int):
+            error_msg = "Number of postreplications must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_budget, bool):
+            error_msg = "CRN across budget must be a boolean."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_macroreps, bool):
+            error_msg = "CRN across macroreplications must be a boolean."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_postreps <= 0:
+            error_msg = "Number of postreplications must be positive."
+            raise ValueError(error_msg)
+
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
@@ -4221,7 +5369,26 @@ class ProblemsSolvers:
             True if CRN used for post-replications at solutions x0 and x*,
             otherwise False.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(n_postreps_init_opt, int):
+            error_msg = "Number of postreplications must be an integer."
+            raise TypeError(error_msg)
+        if not isinstance(crn_across_init_opt, bool):
+            error_msg = (
+                "CRN across initial and optimal solutions must be a boolean."
+            )
+            raise TypeError(error_msg)
+        # Value checking
+        if n_postreps_init_opt <= 0:
+            error_msg = "Number of postreplications must be positive."
+            raise ValueError(error_msg)
+
         for problem_idx in range(self.n_problems):
             experiments_same_problem = [
                 self.experiments[solver_idx][problem_idx]
@@ -4360,9 +5527,31 @@ class ProblemsSolvers:
         solve_tols : list [float], optional
             Relative optimality gap(s) definining when a problem is solved; in (0,1].
         csv_filename : str, optional
-            Name of .csv file to print output to.
+            Name of .csv file to print output to. Do not include '.csv' extension.
+
+        Raises
+        ------
+        TypeError
+        ValueError
 
         """
+        # Type checking
+        if (
+            not isinstance(solve_tols, (list, type(None)))
+            or isinstance(solve_tols, list)
+            and not all(isinstance(tol, float) for tol in solve_tols)
+        ):
+            error_msg = "Solve tols must be a list of floats or None."
+            raise TypeError(error_msg)
+        if not isinstance(csv_filename, str):
+            error_msg = "CSV filename must be a string."
+            raise TypeError(error_msg)
+        # Value checking
+        if not all(0 < tol <= 1 for tol in solve_tols):
+            error_msg = "Solve tols must be in (0,1]."
+            raise ValueError(error_msg)
+        # TODO: figure out if we should also check for increasing order of solve_tols
+
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
 
@@ -4403,7 +5592,34 @@ class ProblemsSolvers:
         csv_filename : str, default="df_solver_results"
             Name of .csv file to print output to.
 
+        Raises
+        ------
+        TypeError
+        ValueError
+
         """
+        # Type checking
+        if not isinstance(pair_list, list) or not all(
+            isinstance(obj, ProblemSolver) for obj in pair_list
+        ):
+            error_msg = "Pair list must be a list of ProblemSolver objects."
+            raise TypeError(error_msg)
+        if (
+            not isinstance(solve_tols, (list, type(None)))
+            or isinstance(solve_tols, list)
+            and not all(isinstance(tol, float) for tol in solve_tols)
+        ):
+            error_msg = "Solve tols must be a list of floats or None."
+            raise TypeError(error_msg)
+        if not isinstance(csv_filename, str):
+            error_msg = "CSV filename must be a string."
+            raise TypeError(error_msg)
+        # Value checking
+        if not all(0 < tol <= 1 for tol in solve_tols):
+            error_msg = "Solve tols must be in (0,1]."
+            raise ValueError(error_msg)
+        # TODO: figure out if we should also check for increasing order of solve_tols
+
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
 
@@ -4540,7 +5756,21 @@ def read_group_experiment_results(
     groupexperiment : ``experiment_base.ProblemsSolvers``
         Problem-solver group that has been run or has been post-processed.
 
+    Raises
+    ------
+    TypeError
+    ValueError
+
     """
+    # Type checking
+    if not isinstance(file_name_path, (str, os.PathLike)):
+        error_msg = "File name path must be a string or os.PathLike object."
+        raise TypeError(error_msg)
+    # Value checking
+    if not os.path.exists(file_name_path):
+        error_msg = "File name path does not exist."
+        raise ValueError(error_msg)
+
     with open(file_name_path, "rb") as file:
         groupexperiment = pickle.load(file)
     return groupexperiment
@@ -4563,19 +5793,27 @@ def find_unique_solvers_problems(
     list [``base.Problem``]
         Unique problems.
 
+    Raises
+    ------
+    TypeError
+
     """
-    # Set comprehensions do not work because Solver and Problem objects are not
-    # hashable.
-    # TODO: Make Solver and Problem objects hashable.
-    # unique_solvers = set([experiment.solver for experiment in experiments])
-    # unique_problems = set([experiment.problem for experiment in experiments])
-    unique_solvers = []
-    unique_problems = []
-    for experiment in experiments:
-        if experiment.solver not in unique_solvers:
-            unique_solvers.append(experiment.solver)
-        if experiment.problem not in unique_problems:
-            unique_problems.append(experiment.problem)
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        isinstance(experiment, ProblemSolver) for experiment in experiments
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+
+    unique_solvers = set([experiment.solver for experiment in experiments])
+    unique_problems = set([experiment.problem for experiment in experiments])
+    # unique_solvers = []
+    # unique_problems = []
+    # for experiment in experiments:
+    #     if experiment.solver not in unique_solvers:
+    #         unique_solvers.append(experiment.solver)
+    #     if experiment.problem not in unique_problems:
+    #         unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
 
 
@@ -4597,8 +5835,19 @@ def find_missing_experiments(
         List of problems present in the list of experiments.
     list [tuple [``base.Solver``, ``base.Problem``]]
         List of names of missing problem-solver pairs.
+    
+    Raises
+    ------
+    TypeError
 
     """
+    # Type checking
+    if not isinstance(experiments, list) or not all(
+        isinstance(experiment, ProblemSolver) for experiment in experiments
+    ):
+        error_msg = "Experiments must be a list of ProblemSolver objects."
+        raise TypeError(error_msg)
+
     pairs = [
         (experiment.solver, experiment.problem) for experiment in experiments
     ]
@@ -4634,8 +5883,43 @@ def make_full_metaexperiment(
     -------
     metaexperiment : ``experiment_base.ProblemsSolvers``
         New ProblemsSolvers object.
+    
+    Raises
+    ------
+    TypeError
 
     """
+    # Type checking
+    if not isinstance(existing_experiments, list) or not all(
+        isinstance(experiment, ProblemSolver)
+        for experiment in existing_experiments
+    ):
+        error_msg = (
+            "Existing experiments must be a list of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(unique_solvers, list) or not all(
+        isinstance(solver, Solver) for solver in unique_solvers
+    ):
+        error_msg = "Unique solvers must be a list of Solver objects."
+        raise TypeError(error_msg)
+    if not isinstance(unique_problems, list) or not all(
+        isinstance(problem, Problem) for problem in unique_problems
+    ):
+        error_msg = "Unique problems must be a list of Problem objects."
+        raise TypeError(error_msg)
+    if (
+        not isinstance(missing_experiments, list)
+        or not all(isinstance(pair, tuple) for pair in missing_experiments)
+        or not all(len(pair) == 2 for pair in missing_experiments)
+        or not all(
+            isinstance(pair[0], Solver) and isinstance(pair[1], Problem)
+            for pair in missing_experiments
+        )
+    ):
+        error_msg = "Missing experiments must be a list of tuples of Solver and Problem objects."
+        raise TypeError(error_msg)
+
     # Ordering of solvers and problems in unique_solvers and unique_problems
     # is used to construct experiments.
     full_experiments = [
@@ -4655,6 +5939,7 @@ def make_full_metaexperiment(
     metaexperiment = ProblemsSolvers(experiments=full_experiments)
     return metaexperiment
 
+DESIGN_TYPES = Literal["nolhs"]
 
 def create_design(
     name: str,
@@ -4662,7 +5947,7 @@ def create_design(
     factor_settings_filename: str,
     fixed_factors: dict,
     n_stacks: int = 1,
-    design_type: str = "nolhs",
+    design_type: DESIGN_TYPES = "nolhs",
     cross_design_factors: dict | None = None,
     is_problem: bool = False,
 ) -> list:
@@ -4696,13 +5981,51 @@ def create_design(
     ------
     Exception
         If ruby is not installed on the system or if the design type is not valid.
+    
+    Raises
+    ------
+    TypeError
+    ValueError
 
     """
+    # Type checking
+    if not isinstance(name, str):
+        error_msg = "Name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(factor_headers, list) or not all(
+        isinstance(header, str) for header in factor_headers
+    ):
+        error_msg = "Factor headers must be a list of strings."
+        raise TypeError(error_msg)
+    if not isinstance(factor_settings_filename, str):
+        error_msg = "Factor settings filename must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(fixed_factors, dict):
+        error_msg = "Fixed factors must be a dictionary."
+        raise TypeError(error_msg)
+    if not isinstance(n_stacks, int):
+        error_msg = "Number of stacks must be an integer."
+        raise TypeError(error_msg)
+    if not isinstance(design_type, str):
+        error_msg = "Design type must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(cross_design_factors, (dict, type(None))):
+        error_msg = "Cross design factors must be a dictionary or None."
+        raise TypeError(error_msg)
+    if not isinstance(is_problem, bool):
+        error_msg = "is_problem must be a boolean."
+        raise TypeError(error_msg)
+    # Value checking
+    if n_stacks <= 0:
+        error_msg = "Number of stacks must be positive."
+        raise ValueError(error_msg)
+    if design_type not in DESIGN_TYPES:
+        error_msg = f"Design type must be one of {DESIGN_TYPES}, was {design_type}."
+        raise ValueError(error_msg)
+
     # Assign default value for unprovided parameters.
     if cross_design_factors is None:
         cross_design_factors = {}
-
-    # Check for typing issues
 
     # Check if Ruby and the specified design type are installed/on the system path.
     if shutil.which("ruby") is None:
@@ -4774,7 +6097,7 @@ def create_design(
             encoding="utf-8",
         )
     except pd.errors.EmptyDataError:
-        error_msg = "Error in Ruby script. No data in design file."
+        error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
         raise Exception(error_msg) from pd.errors.EmptyDataError
 
     design_table.columns = factor_headers  # Add factor headers names to dt.
