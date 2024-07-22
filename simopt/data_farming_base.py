@@ -6,6 +6,7 @@ import itertools
 import os
 import subprocess
 from copy import deepcopy
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,8 @@ from simopt.base import Model
 
 from simopt.directory import model_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize, EXPERIMENT_DIR
+
+DATA_FARMING_DIR = os.path.join(EXPERIMENT_DIR, "data_farming")
 
 
 class DesignPoint:
@@ -181,8 +184,10 @@ class DataFarmingExperiment:
         model_name: str,
         factor_settings_filename: str | os.PathLike,
         factor_headers: list[str],
-        design_filename: str | os.PathLike | None = None,
+        design_filepath: str | os.PathLike | None = None,
         model_fixed_factors: dict | None = None,
+        stacks: int = 1,
+        design_type: Literal["nolhs"] = "nolhs",
     ) -> None:
         """Initialize data-farming experiment with a model object and design of associated factors.
 
@@ -190,14 +195,18 @@ class DataFarmingExperiment:
         ----------
         model_name : str
             Name of model on which the experiment is run.
-        factor_settings_filename : str
+        factor_settings_filename : str | os.PathLike
             Name of .txt file containing factor ranges and # of digits.
         factor_headers : list [str]
             Ordered list of factor names appearing in factor settings/design file.
-        design_filename : str, optional
+        design_filepath : str, optional
             Name of .txt file containing design matrix.
         model_fixed_factors : dict, optional
             Non-default values of model factors that will not be varied.
+        stacks : int, default=1
+            Number of stacks in the design.
+        design_type: Literal["nolhs"], default="nolhs"
+            Type of design to be used.
 
         Raises
         ------
@@ -219,11 +228,14 @@ class DataFarmingExperiment:
         ):
             error_msg = "factor_headers must be a list of strings."
             raise TypeError(error_msg)
-        if not isinstance(design_filename, (str, os.PathLike, type(None))):
+        if not isinstance(design_filepath, (str, os.PathLike, type(None))):
             error_msg = "design_filename must be a string or path-like object."
             raise TypeError(error_msg)
         if not isinstance(model_fixed_factors, (dict, type(None))):
             error_msg = "model_fixed_factors must be a dictionary."
+            raise TypeError(error_msg)
+        if not isinstance(stacks, int):
+            error_msg = "stacks must be an integer."
             raise TypeError(error_msg)
         # Value checking
         if model_name not in model_directory:
@@ -232,9 +244,12 @@ class DataFarmingExperiment:
         if not os.path.exists(factor_settings_filename):
             error_msg = f"{factor_settings_filename} is not a valid file path."
             raise ValueError(error_msg)  # Change to FileNotFoundError?
-        if design_filename is not None and not os.path.exists(design_filename):
-            error_msg = f"{design_filename} is not a valid file path."
+        if design_filepath is not None and not os.path.exists(design_filepath):
+            error_msg = f"{design_filepath} is not a valid file path."
             raise ValueError(error_msg)  # Change to FileNotFoundError?
+        if stacks <= 0:
+            error_msg = "Number of stacks must be greater than 0."
+            raise ValueError(error_msg)
 
         if model_fixed_factors is None:
             model_fixed_factors = {}
@@ -243,17 +258,18 @@ class DataFarmingExperiment:
         self.model = model_directory[model_name](
             fixed_factors=model_fixed_factors
         )
-        if design_filename is None:
+        if design_filepath is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            # command = "stack_nolhs.rb -s 1 model_factor_settings.txt > outputs.txt"
-            command = f"stack_nolhs.rb -s 1 ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
+            filepath_core = os.path.join(DATA_FARMING_DIR, factor_settings_filename)
+            source_filepath = filepath_core + ".txt"
+            design_filepath = filepath_core + "_design.txt"
+            command = f"stack_{design_type}.rb -s {stacks} {source_filepath} > {design_filepath}"
             subprocess.run(command)
             # Append design to base filename.
-            design_filename = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
         design_table = pd.read_csv(
-            f"./data_farming_experiments/{design_filename}.txt",
+            design_filepath,
             header=None,
             delimiter="\t",
             encoding="utf-8",
@@ -326,7 +342,9 @@ class DataFarmingExperiment:
                     for _ in range(len(main_rng_list)):
                         rng.advance_substream()
 
-    def print_to_csv(self, csv_filename: str = "raw_results") -> None:
+    def print_to_csv(
+        self, csv_filename: str | os.PathLike = "raw_results"
+    ) -> None:
         """Extract observed responses from simulated design points and publish to .csv output file.
 
         Parameters
@@ -340,14 +358,24 @@ class DataFarmingExperiment:
 
         """
         # Type checking
-        if not isinstance(csv_filename, str):
-            error_msg = "csv_filename must be a string."
+        if not isinstance(csv_filename, (str | os.PathLike)):
+            error_msg = "csv_filename must be a string or path-like object."
             raise TypeError(error_msg)
 
+        # Add CSV extension if not present.
+        csv_filename = str(csv_filename)
+        if not csv_filename.endswith(".csv"):
+            csv_filename += ".csv"
+        # Check if there's a directory in the file path.
+        if os.path.dirname(csv_filename) == "":
+            # If not, add the default directory.
+            csv_filename = os.path.join(DATA_FARMING_DIR, csv_filename)
         # Create directory if they do no exist.
-        if not os.path.exists("./data_farming_experiments"):
-            os.makedirs("./data_farming_experiments")
-        with open(csv_filename + ".csv", mode="w", newline="") as output_file:
+        if not os.path.exists(DATA_FARMING_DIR):
+            os.makedirs(DATA_FARMING_DIR)
+
+        # Write results to csv file.
+        with open(csv_filename, mode="x", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
                 delimiter=",",
@@ -400,7 +428,7 @@ class DataFarmingMetaExperiment:
         Name of problem.
     solver_factor_headers : list [str]
         Ordered list of solver factor names appearing in factor settings/design file.
-    solver_factor_settings_filename : str, default=None
+    solver_factor_settings_filename : str | None, default=None
         Name of .txt file containing solver factor ranges and # of digits.
     design_filename : str, default=None
         Name of .txt file containing design matrix.
@@ -416,9 +444,9 @@ class DataFarmingMetaExperiment:
     def __init__(
         self,
         solver_name: str | None = None,
-        solver_factor_headers: list | None = None,
+        solver_factor_headers: list[str] | None = None,
         n_stacks: int = 1,
-        design_type: str = "nolhs",
+        design_type: Literal["nolhs"] = "nolhs",
         solver_factor_settings_filename: str | None = None,
         design_filename: str | None = None,
         csv_filename: str | None = None,
@@ -435,7 +463,7 @@ class DataFarmingMetaExperiment:
             Ordered list of solver factor names appearing in factor settings/design file.
         n_stacks : int
             Number of stacks in the design.
-        design_type : str
+        design_type : Litreral["nolhs"], default = "nolhs"
             Type of design to be used.
         solver_factor_settings_filename : str, optional
             Name of .txt file containing solver factor ranges and # of digits.
@@ -495,6 +523,9 @@ class DataFarmingMetaExperiment:
         if n_stacks <= 0:
             error_msg = "Number of stacks must be greater than 0."
             raise ValueError(error_msg)
+        if design_type not in ["nolhs"]:
+            error_msg = "design_type must be a valid design type."
+            raise ValueError(error_msg)
         if solver_factor_settings_filename is not None and not os.path.exists(
             solver_factor_settings_filename
         ):
@@ -524,15 +555,19 @@ class DataFarmingMetaExperiment:
         # TO DO: Extend to allow a design on problem/model factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None and csv_filename is None:
+            if solver_factor_settings_filename is None:
+                error_msg = "solver_factor_settings_filename must be provided."
+                raise ValueError(error_msg)
             # Create solver factor design from .txt file of factor settings.
-            # Hard-coded for a single-stack NOLHS.
-            command = (
-                f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/"
-                + solver_factor_settings_filename
-                + ".txt > ./data_farming_experiments/"
-                + solver_factor_settings_filename
+            input_file = (
+                os.path.join(DATA_FARMING_DIR, solver_factor_settings_filename)
+                + ".txt"
+            )
+            output_file = (
+                os.path.join(DATA_FARMING_DIR, solver_factor_settings_filename)
                 + "_design.txt"
             )
+            command = f"stack_{design_type}.rb -s {n_stacks} {input_file} > {output_file}"
             subprocess.run(command)
             # Append design to base filename.
             design_filename = f"{solver_factor_settings_filename}_design"
@@ -553,10 +588,11 @@ class DataFarmingMetaExperiment:
             csv_filename = f"./data_farming_experiments/{design_filename}.csv"
 
             # self.solver_object = solver_directory[solver_name]() #creates solver object
-
-            design_table.columns = (
-                solver_factor_headers  # add factor headers names to dt
-            )
+            if solver_factor_headers is not None:
+                column_names = zip(
+                    range(len(solver_factor_headers)), solver_factor_headers
+                )
+                design_table.rename(columns=dict(column_names), inplace=True)
 
             solver_fixed_str = {}
             for factor in (
@@ -870,7 +906,9 @@ class DataFarmingMetaExperiment:
             error_msg = "csv_filename must be a string."
             raise TypeError(error_msg)
         # Value checking
-        if not all(0 < tol <= 1 for tol in solve_tols):
+        if solve_tols is not None and not all(
+            0 < tol <= 1 for tol in solve_tols
+        ):
             error_msg = "Relative optimality gap must be in (0,1]."
             raise ValueError(error_msg)
         # TODO: Figure out if this is a path or just a name
@@ -881,18 +919,16 @@ class DataFarmingMetaExperiment:
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
         if csv_filename is None:
-            file_path = os.path.join(EXPERIMENT_DIR, "data_farming", "df_solver_results.csv")
+            file_path = os.path.join(DATA_FARMING_DIR, "df_solver_results.csv")
         else:
             file_path = csv_filename + ".csv"
-        
+
         # Create folder(s) for file if needed
         dir_path = os.path.dirname(file_path)
         if not os.path.exists(dir_path):
-            os.path.makedirs(dir_path)
+            os.makedirs(dir_path)
 
-        with open(
-            file_path
-        ) as output_file:
+        with open(file_path) as output_file:
             csv_writer = csv.writer(
                 output_file,
                 delimiter=",",

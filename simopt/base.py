@@ -39,6 +39,96 @@ class Solver(ABC):
 
     """
 
+    @property
+    def name(self) -> str:
+        """Name of solver."""
+        return self.__name
+    
+    @name.setter
+    def name(self, value: str) -> None:
+        self.__name = value
+
+    @property
+    def objective_type(self) -> str:
+        """Description of objective types: "single" or "multi"."""
+        return self.__objective_type
+    
+    @objective_type.setter
+    def objective_type(self, value: str) -> None:
+        self.__objective_type = value
+
+    @property
+    def constraint_type(self) -> str:
+        """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
+        return self.__constraint_type
+    
+    @constraint_type.setter
+    def constraint_type(self, value: str) -> None:
+        self.__constraint_type = value
+
+    @property
+    def variable_type(self) -> str:
+        """Description of variable types: "discrete", "continuous", "mixed"."""
+        return self.__variable_type
+    
+    @variable_type.setter
+    def variable_type(self, value: str) -> None:
+        self.__variable_type = value
+
+    @property
+    def gradient_needed(self) -> bool:
+        """True if gradient of objective function is needed, otherwise False."""
+        return self.__gradient_needed
+    
+    @gradient_needed.setter
+    def gradient_needed(self, value: bool) -> None:
+        self.__gradient_needed = value
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors (i.e., parameters) of the solver."""
+        return self.__factors
+    
+    @factors.setter
+    def factors(self, value: dict) -> None:
+        self.__factors = value
+
+    @property
+    def specifications(self) -> dict:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return self.__specifications
+    
+    @specifications.setter
+    def specifications(self, value: dict) -> None:
+        self.__specifications = value
+
+    @property
+    def rng_list(self) -> list[MRG32k3a]:
+        """List of RNGs used for the solver's internal purposes."""
+        return self.__rng_list
+    
+    @rng_list.setter
+    def rng_list(self, value: list[MRG32k3a]) -> None:
+        self.__rng_list = value
+
+    @property
+    def solution_progenitor_rngs(self) -> list[MRG32k3a]:
+        """List of RNGs used as a baseline for simulating solutions."""
+        return self.__solution_progenitor_rngs
+    
+    @solution_progenitor_rngs.setter
+    def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
+        self.__solution_progenitor_rngs = value
+
+    @property
+    def check_factor_list(self) -> dict:
+        """Dictionary of functions to check if a factor is permissible."""
+        return self.__check_factor_list
+    
+    @check_factor_list.setter
+    def check_factor_list(self, value: dict) -> None:
+        self.__check_factor_list = value
+
     def __init__(self, fixed_factors: dict) -> None:
         """Initialize a solver object.
 
@@ -70,7 +160,7 @@ class Solver(ABC):
 
         """
         return type(self) == type(other) and self.factors == other.factors
-    
+
     def __hash__(self) -> int:
         """Return the hash value of the solver.
 
@@ -82,7 +172,7 @@ class Solver(ABC):
         """
         return hash((self.name, tuple(self.factors.items())))
 
-    def attach_rngs(self, rng_list: MRG32k3a) -> None:
+    def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the solver.
 
         Parameters
@@ -377,6 +467,187 @@ class Problem(ABC):
 
     """
 
+    @property
+    def name(self) -> str:
+        """Name of the problem."""
+        return self.__name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.__name = value
+
+    @property
+    def dim(self) -> int:
+        """Number of decision variables."""
+        return self.__dim
+    
+    @dim.setter
+    def dim(self, value: int) -> None:
+        self.__dim = value
+
+    @property
+    def n_objectives(self) -> int:
+        """Number of objectives."""
+        return self.__n_objectives
+    
+    @n_objectives.setter
+    def n_objectives(self, value: int) -> None:
+        self.__n_objectives = value
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        """Number of stochastic constraints."""
+        return self.__n_stochastic_constraints
+    
+    @n_stochastic_constraints.setter
+    def n_stochastic_constraints(self, value: int) -> None:
+        self.__n_stochastic_constraints = value
+
+    @property
+    def minmax(self) -> tuple[int]:
+        """Indicators of maximization (+1) or minimization (-1) for each objective."""
+        return self.__minmax
+    
+    @minmax.setter
+    def minmax(self, value: tuple[int]) -> None:
+        self.__minmax = value
+
+    @property
+    def constraint_type(self) -> str:
+        """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
+        return self.__constraint_type
+    
+    @constraint_type.setter
+    def constraint_type(self, value: str) -> None:
+        self.__constraint_type = value
+
+    @property
+    def variable_type(self) -> str:
+        """Description of variable types: "discrete", "continuous", "mixed"."""
+        return self.__variable_type
+    
+    @variable_type.setter
+    def variable_type(self, value: str) -> None:
+        self.__variable_type = value
+
+    @property
+    def lower_bounds(self) -> tuple:
+        """Lower bound for each decision variable."""
+        return self.__lower_bounds
+
+    @lower_bounds.setter
+    def lower_bounds(self, value: tuple) -> None:
+        self.__lower_bounds = value
+
+    @property
+    def upper_bounds(self) -> tuple:
+        """Upper bound for each decision variable."""
+        return self.__upper_bounds
+
+    @upper_bounds.setter
+    def upper_bounds(self, value: tuple) -> None:
+        self.__upper_bounds = value
+
+    @property
+    def gradient_available(self) -> bool:
+        """True if direct gradient of objective function is available, otherwise False."""
+        return self.__gradient_available
+    
+    @gradient_available.setter
+    def gradient_available(self, value: bool) -> None:
+        self.__gradient_available = value
+
+    @property
+    def optimal_value(self) -> float:
+        """Optimal objective function value."""
+        return self.__optimal_value
+
+    @optimal_value.setter
+    def optimal_value(self, value: float) -> None:
+        self.__optimal_value = value
+
+    @property
+    def optimal_solution(self) -> tuple:
+        """Optimal solution."""
+        return self.__optimal_solution
+
+    @optimal_solution.setter
+    def optimal_solution(self, value: tuple) -> None:
+        self.__optimal_solution = value
+
+    @property
+    def model(self) -> "Model":
+        """Associated simulation model that generates replications."""
+        return self.__model
+    
+    @model.setter
+    def model(self, value: "Model") -> None:
+        self.__model = value
+
+    @property
+    def model_default_factors(self) -> dict:
+        """Default values for overriding model-level default factors."""
+        return self.__model_default_factors
+
+    @model_default_factors.setter
+    def model_default_factors(self, value: dict) -> None:
+        self.__model_default_factors = value
+
+    @property
+    def model_fixed_factors(self) -> dict:
+        """Combination of overriden model-level factors and defaults."""
+        return self.__model_fixed_factors
+
+    @model_fixed_factors.setter
+    def model_fixed_factors(self, value: dict) -> None:
+        self.__model_fixed_factors = value
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        """Set of keys for factors that are decision variables."""
+        return self.__model_decision_factors
+
+    @model_decision_factors.setter
+    def model_decision_factors(self, value: set[str]) -> None:
+        self.__model_decision_factors = value
+
+    @property
+    def rng_list(self) -> list[MRG32k3a]:
+        """List of RNGs used to generate a random initial solution or a random problem instance."""
+        return self.__rng_list
+
+    @rng_list.setter
+    def rng_list(self, value: list[MRG32k3a]) -> None:
+        self.__rng_list = value
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors of the problem."""
+        return self.__factors
+
+    @factors.setter
+    def factors(self, value: dict) -> None:
+        self.__factors = value
+
+    @property
+    def specifications(self) -> dict:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return self.__specifications
+
+    @specifications.setter
+    def specifications(self, value: dict) -> None:
+        self.__specifications = value
+
+    @property
+    # @abstractmethod
+    def check_factor_list(self) -> dict:
+        """Dictionary of functions to check if a factor is permissible."""
+        return self.__check_factor_list
+
+    @check_factor_list.setter
+    def check_factor_list(self, value: dict) -> None:
+        self.__check_factor_list = value
+
     def __init__(self, fixed_factors: dict, model_fixed_factors: dict) -> None:
         """Initialize a problem object.
 
@@ -428,7 +699,7 @@ class Problem(ABC):
             return True
         else:
             return False
-        
+
     def __hash__(self) -> int:
         """Return the hash value of the solver.
 
@@ -815,6 +1086,14 @@ class Problem(ABC):
             Number of replications to simulate at `x`.
 
         """
+        # Type checking
+        if not isinstance(solution, Solution):
+            error_msg = "Input solution must be of type Solution."
+            raise TypeError(error_msg)
+        if not isinstance(num_macroreps, int):
+            error_msg = "Number of replications must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
         if num_macroreps <= 0:
             error_msg = "Number of replications must be at least 1."
             raise ValueError(error_msg)
@@ -856,7 +1135,10 @@ class Problem(ABC):
                     )
                 ]
                 # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
-            if self.n_stochastic_constraints > 0:
+            if (
+                self.n_stochastic_constraints > 0
+                and solution.stoch_constraints is not None
+            ):
                 # Convert responses and gradients to stochastic constraints and gradients and add
                 # to those of deterministic components of stochastic constraints.
                 solution.stoch_constraints[solution.n_reps] = [
@@ -886,6 +1168,20 @@ class Problem(ABC):
             Common number of replications to simulate each solution up to.
 
         """
+        # Type checking
+        if not isinstance(solutions, set) or not all(
+            isinstance(solution, Solution) for solution in solutions
+        ):
+            error_msg = "Input solutions must be a set of Solution objects."
+            raise TypeError(error_msg)
+        if not isinstance(n_reps, int):
+            error_msg = "Number of replications must be an integer."
+            raise TypeError(error_msg)
+        # Value checking
+        if n_reps <= 0:
+            error_msg = "Number of replications must be at least 1."
+            raise ValueError(error_msg)
+
         for solution in solutions:
             # If more replications needed, take them.
             if solution.n_reps < n_reps:
@@ -893,7 +1189,7 @@ class Problem(ABC):
                 self.simulate(solution=solution, num_macroreps=n_reps_to_take)
 
 
-class Model:
+class Model(ABC):
     """Base class to implement simulation models (models) featured in simulation-optimization problems.
 
     Attributes
@@ -917,6 +1213,60 @@ class Model:
         Dictionary of user-specified model factors.
 
     """
+
+    @property
+    def name(self) -> str:
+        """Name of model."""
+        return self.__name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.__name = value
+
+    @property
+    def n_rngs(self) -> int:
+        """Number of random-number generators used to run a simulation replication."""
+        return self.__n_rngs
+
+    @n_rngs.setter
+    def n_rngs(self, value: int) -> None:
+        self.__n_rngs = value
+
+    @property
+    def n_responses(self) -> int:
+        """Number of responses (performance measures)."""
+        return self.__n_responses
+
+    @n_responses.setter
+    def n_responses(self, value: int) -> None:
+        self.__n_responses = value
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors of the simulation model."""
+        return self.__factors
+
+    @factors.setter
+    def factors(self, value: dict) -> None:
+        self.__factors = value
+
+    @property
+    def specifications(self) -> dict:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return self.__specifications
+
+    @specifications.setter
+    def specifications(self, value: dict) -> None:
+        self.__specifications = value
+
+    @property
+    def check_factor_list(self) -> dict:
+        """Switch case for checking factor simulatability."""
+        return self.__check_factor_list
+
+    @check_factor_list.setter
+    def check_factor_list(self, value: dict) -> None:
+        self.__check_factor_list = value
 
     def __init__(self, fixed_factors: dict) -> None:
         """Initialize a model object.
@@ -949,7 +1299,7 @@ class Model:
 
         """
         return type(self) == type(other) and self.factors == other.factors
-    
+
     def __hash__(self) -> int:
         """Return the hash value of the model.
 
@@ -1128,6 +1478,132 @@ class Solution:
 
     """
 
+    @property
+    def x(self) -> tuple:
+        """Vector of decision variables."""
+        return self.__x
+
+    @x.setter
+    def x(self, value: tuple) -> None:
+        self.__x = value
+
+    @property
+    def dim(self) -> int:
+        """Number of decision variables describing `x`."""
+        return self.__dim
+
+    @dim.setter
+    def dim(self, value: int) -> None:
+        self.__dim = value
+
+    @property
+    def decision_factors(self) -> dict:
+        """Decision factor names and values."""
+        return self.__decision_factors
+
+    @decision_factors.setter
+    def decision_factors(self, value: dict) -> None:
+        self.__decision_factors = value
+
+    @property
+    def rng_list(self) -> list[MRG32k3a]:
+        """RNGs for model to use when running replications at the solution."""
+        return self.__rng_list
+
+    @rng_list.setter
+    def rng_list(self, value: list[MRG32k3a]) -> None:
+        self.__rng_list = value
+
+    @property
+    def n_reps(self) -> int:
+        """Number of replications run at the solution."""
+        return self.__n_reps
+
+    @n_reps.setter
+    def n_reps(self, value: int) -> None:
+        self.__n_reps = value
+
+    @property
+    def det_objectives(self) -> tuple:
+        """Deterministic components added to objectives."""
+        return self.__det_objectives
+
+    @det_objectives.setter
+    def det_objectives(self, value: tuple) -> None:
+        self.__det_objectives = value
+
+    @property
+    def det_objectives_gradients(self) -> tuple[tuple]:
+        """Gradients of deterministic components added to objectives; # objectives x dimension."""
+        return self.__det_objectives_gradients
+
+    @det_objectives_gradients.setter
+    def det_objectives_gradients(self, value: tuple[tuple]) -> None:
+        self.__det_objectives_gradients = value
+
+    @property
+    def det_stoch_constraints(self) -> tuple:
+        """Deterministic components added to LHS of stochastic constraints."""
+        return self.__det_stoch_constraints
+
+    @det_stoch_constraints.setter
+    def det_stoch_constraints(self, value: tuple) -> None:
+        self.__det_stoch_constraints = value
+
+    @property
+    def det_stoch_constraints_gradients(self) -> tuple[tuple]:
+        """Gradients of deterministic components added to LHS stochastic constraints; # stochastic constraints x dimension."""
+        return self.__det_stoch_constraints_gradients
+
+    @det_stoch_constraints_gradients.setter
+    def det_stoch_constraints_gradients(self, value: tuple[tuple]) -> None:
+        self.__det_stoch_constraints_gradients = value
+
+    @property
+    def storage_size(self) -> int:
+        """Max number of replications that can be recorded in current storage."""
+        return self.__storage_size
+
+    @storage_size.setter
+    def storage_size(self, value: int) -> None:
+        self.__storage_size = value
+
+    @property
+    def objectives(self) -> np.ndarray:
+        """Objective(s) estimates from each replication; # replications x # objectives."""
+        return self.__objectives
+
+    @objectives.setter
+    def objectives(self, value: np.ndarray) -> None:
+        self.__objectives = value
+
+    @property
+    def objectives_gradients(self) -> np.ndarray:
+        """Gradient estimates of objective(s) from each replication; # replications x # objectives x dimension."""
+        return self.__objectives_gradients
+
+    @objectives_gradients.setter
+    def objectives_gradients(self, value: np.ndarray) -> None:
+        self.__objectives_gradients = value
+
+    @property
+    def stochastic_constraints(self) -> np.ndarray:
+        """Stochastic constraint estimates from each replication; # replications x # stochastic constraints."""
+        return self.__stochastic_constraints
+
+    @stochastic_constraints.setter
+    def stochastic_constraints(self, value: np.ndarray) -> None:
+        self.__stochastic_constraints = value
+
+    @property
+    def stochastic_constraints_gradients(self) -> np.ndarray:
+        """Gradient estimates of stochastic constraints from each replication; # replications x # stochastic constraints x dimension."""
+        return self.__stochastic_constraints_gradients
+
+    @stochastic_constraints_gradients.setter
+    def stochastic_constraints_gradients(self, value: np.ndarray) -> None:
+        self.__stochastic_constraints_gradients = value
+
     def __init__(self, x: tuple, problem: "Problem") -> None:
         """Initialize a solution object.
 
@@ -1236,12 +1712,19 @@ class Solution:
                     np.zeros((pad_size, n_stochastic_constraints)),
                 )
             )
-            self.stoch_constraints_gradients = np.concatenate(
-                (
-                    self.stoch_constraints_gradients,
-                    np.zeros((pad_size, n_stochastic_constraints, self.dim)),
+            if self.stoch_constraints_gradients is not None:
+                self.stoch_constraints_gradients = np.concatenate(
+                    (
+                        self.stoch_constraints_gradients,
+                        np.zeros(
+                            (pad_size, n_stochastic_constraints, self.dim)
+                        ),
+                    )
                 )
-            )
+            else:
+                self.stoch_constraints_gradients = np.zeros(
+                    (pad_size, n_stochastic_constraints, self.dim)
+                )
 
     def recompute_summary_statistics(self) -> None:
         """Recompute summary statistics of the solution.

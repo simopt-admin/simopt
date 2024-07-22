@@ -1,8 +1,7 @@
-"""GUI for SimOpt Library."""
+"""GUI for SimOpt Library."""  # noqa: N999
 
 import ast
 import os
-import os.path as o
 import pickle
 import sys
 import time
@@ -14,7 +13,7 @@ from tkinter.constants import MULTIPLE
 from PIL import Image, ImageTk
 
 sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
+    os.path.abspath(os.path.join(os.path.dirname(sys.modules[__name__].__file__), ".."))
 )
 
 import re
@@ -22,7 +21,7 @@ import re
 import pandas as pd
 
 from simopt.base import Problem, Solver
-from simopt.data_farming_base import DataFarmingExperiment
+from simopt.data_farming_base import DataFarmingExperiment, DATA_FARMING_DIR
 
 from simopt.directory import (
     model_directory,
@@ -52,7 +51,7 @@ from simopt.experiment_base import (
 TEXT_FAMILY = "TkDefaultFont"
 
 
-def center_window(screen: tk, scale: float) -> str:
+def center_window(screen: tk.Tk, scale: float) -> str:
     """Centers the window to the main display/monitor.
 
     Example Usage
@@ -2127,7 +2126,7 @@ class ExperimentWindow(tk.Toplevel):
 
                 pickle_file = experiment_pathname
                 infile = open(pickle_file, "rb")
-                new_dict = pickle.load(infile)  # noqa: S301
+                new_dict = pickle.load(infile)
                 infile.close()
 
                 self.my_experiment = new_dict
@@ -2295,7 +2294,7 @@ class ExperimentWindow(tk.Toplevel):
                     self.check_box_list_var.append(self.checkbox_select_var)
 
                     row_of_widgets = self.widget_list[len(self.widget_list) - 1]
-                    if self.my_experiment.check_run():
+                    if self.my_experiment.has_run:
                         run_button = row_of_widgets[3]
                         run_button["state"] = "disabled"
                         run_button["text"] = "Run Complete"
@@ -2371,7 +2370,8 @@ class ExperimentWindow(tk.Toplevel):
         # calls postprocessing window
 
         self.postrep_window = tk.Tk()
-        self.postrep_window.geometry("600x400")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("Post-Processing Page")
         self.app = Post_Processing_Window(
             self.postrep_window, self.my_experiment, self.selected, self
@@ -2423,7 +2423,8 @@ class ExperimentWindow(tk.Toplevel):
     def crossdesign_function(self):
         # self.crossdesign_window = tk.Tk()
         self.crossdesign_window = tk.Toplevel(self.master)
-        self.crossdesign_window.geometry("650x850")
+        position = center_window(self.master, 0.8)
+        self.crossdesign_window.geometry(position)
         self.crossdesign_window.title("Cross-Design Problem-Solver Group")
         self.cross_app = Cross_Design_Window(self.crossdesign_window, self)
 
@@ -2431,7 +2432,8 @@ class ExperimentWindow(tk.Toplevel):
     # Open data farming window
     def datafarming_function(self):
         self.datafarming_window = tk.Toplevel(self.master)
-        self.datafarming_window.geometry("650x850")
+        position = center_window(self.master, 0.8)
+        self.datafarming_window.geometry(position)
         self.datafarming_window.title("Data Farming")
         self.datafarming_app = Data_Farming_Window(
             self.datafarming_window, self
@@ -2564,7 +2566,8 @@ class ExperimentWindow(tk.Toplevel):
                 exps.append(e)
 
         self.postrep_window = tk.Toplevel()
-        self.postrep_window.geometry("1000x800")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("Plotting Page")
         Plot_Window(
             self.postrep_window,
@@ -2602,7 +2605,8 @@ class ExperimentWindow(tk.Toplevel):
         self.post_rep_function_row_index = integer
         # calls postprocessing window
         self.postrep_window = tk.Tk()
-        self.postrep_window.geometry("500x450")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("Post-Processing and Post-Normalization Page")
         self.app = Post_Processing_Window(
             self.postrep_window, self.selected, self.selected, self, True
@@ -2713,7 +2717,8 @@ class ExperimentWindow(tk.Toplevel):
 
     def post_normal_all_function(self):
         self.postrep_window = tk.Toplevel()
-        self.postrep_window.geometry("610x350")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("Post-Normalization Page")
         self.app = Post_Normal_Window(
             self.postrep_window, self.post_norm_exp_list, self
@@ -4272,10 +4277,9 @@ class NewExperimentWindow(tk.Toplevel):
                 master=frame,
                 text=display_name,
                 font=f"{TEXT_FAMILY} 13",
-                width=80,
                 wraplength=500,
                 justify="left",
-                anchor="nw",
+                anchor=tk.N + tk.W,
             )
             factorname_label.grid(row=que_length, column=0, sticky=tk.N + tk.W)
 
@@ -4338,7 +4342,7 @@ class NewExperimentWindow(tk.Toplevel):
         return defaults, que_length
 
     def show_datafarming_options(
-        self, base_object, frame, IsModel=False, first_row=0
+        self, base_object, frame, IsModel=False, first_row=1
     ):
         checkstates = {}  # holds variable for each factor's check state
         min_vals = {}  # holds variable for each factor's min value
@@ -4443,13 +4447,9 @@ class NewExperimentWindow(tk.Toplevel):
         # self.prob_mod_frame.grid(row = self.factors_display_row, column = 0)
 
         self.problem_frame = tk.Frame(master=self.problem_notebook_frame)
-        self.problem_frame.grid(row=1, column=0)
-        self.problem_factor_display_canvas = tk.Canvas(
-            master=self.problem_frame
-        )
-        self.problem_factor_display_canvas.grid(row=1, column=0)
+        self.problem_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
         self.model_frame = tk.Frame(master=self.problem_notebook_frame)
-        self.model_frame.grid(row=2, column=0)
+        self.model_frame.grid(row=2, column=0, sticky=tk.N + tk.W)
 
         # self.IsSolver = False #used when adding problem to experiment list
 
@@ -4482,7 +4482,7 @@ class NewExperimentWindow(tk.Toplevel):
             text="Factor Type",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
-            anchor="w",
+            anchor = tk.N + tk.W
         )
         self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
 
@@ -4492,10 +4492,11 @@ class NewExperimentWindow(tk.Toplevel):
             text="Default Value",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
+            anchor = tk.N + tk.W
         )
         self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
 
-        """ Get problem information from dicrectory and display"""
+        """ Get problem information from directory and display"""
         # Get problem info from directory
         self.selected_problem = self.problem_var.get()
         self.problem_object = self.problem_list[self.selected_problem]()
@@ -4511,7 +4512,7 @@ class NewExperimentWindow(tk.Toplevel):
             text="Model Factors",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
-            anchor="w",
+            anchor=tk.N + tk.W
         )
         self.problem_headername_label.grid(
             row=last_row + 1, column=0, sticky=tk.N + tk.W
@@ -4562,7 +4563,7 @@ class NewExperimentWindow(tk.Toplevel):
 
         """ Initialize frames and headers"""
 
-        self.solver_frame = tk.Frame(master=self.solver_notebook_frame)
+        self.solver_frame = tk.Frame(master=self.solver_notebook_frame, bg="green")
         self.solver_frame.grid(row=1, column=0)
 
         # Create column for solver factor names
@@ -4671,19 +4672,19 @@ class NewExperimentWindow(tk.Toplevel):
         """ Initialize frames, headers, and data farming buttons"""
 
         self.problem_datafarm_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame
+            master=self.problem_datafarm_notebook_frame, bg="Red"
         )
         self.problem_datafarm_frame.grid(row=1, column=0)
         self.problem_factor_display_canvas = tk.Canvas(
-            master=self.problem_datafarm_frame
+            master=self.problem_datafarm_frame, bg="Orange"
         )
         self.problem_factor_display_canvas.grid(row=1, column=0)
         self.model_datafarm_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame
+            master=self.problem_datafarm_notebook_frame, bg="Yellow"
         )
         self.model_datafarm_frame.grid(row=2, column=0)
         self.model_factor_display_canvas = tk.Canvas(
-            master=self.model_datafarm_frame
+            master=self.model_datafarm_frame, bg="Green"
         )
         self.model_factor_display_canvas.grid(row=1, column=0)
 
@@ -4847,11 +4848,11 @@ class NewExperimentWindow(tk.Toplevel):
         """ Initialize frames and headers"""
 
         self.solver_datafarm_frame = tk.Frame(
-            master=self.solver_datafarm_notebook_frame
+            master=self.solver_datafarm_notebook_frame, bg="Red"
         )
         self.solver_datafarm_frame.grid(row=1, column=0)
         self.factor_display_canvas = tk.Canvas(
-            master=self.solver_datafarm_frame
+            master=self.solver_datafarm_frame, bg="Orange"
         )
         self.factor_display_canvas.grid(row=1, column=0)
 
@@ -4892,7 +4893,7 @@ class NewExperimentWindow(tk.Toplevel):
         ]()
         # show problem factors and store default widgets to this dict
         self.solver_datafarm_defaults, new_last_row = self.show_factor_defaults(
-            self.solver_datafarm_object, self.factor_display_canvas
+            self.solver_datafarm_object, self.solver_datafarm_frame
         )
         (
             self.solver_checkstates,
@@ -4902,7 +4903,7 @@ class NewExperimentWindow(tk.Toplevel):
             self.solver_datafarm_widgets,
             last_row,
         ) = self.show_datafarming_options(
-            self.solver_datafarm_object, self.factor_display_canvas
+            self.solver_datafarm_object, self.solver_datafarm_frame
         )
 
         """Options for creaing design"""
@@ -4913,7 +4914,7 @@ class NewExperimentWindow(tk.Toplevel):
             font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.design_type_label.grid(row=2, column=0)
+        self.design_type_label.grid(row=new_last_row + 1, column=0)
 
         self.solver_design_var = tk.StringVar()
         self.solver_design_var.set("nolhs")
@@ -4923,7 +4924,7 @@ class NewExperimentWindow(tk.Toplevel):
             "nolhs",
             *self.design_types_list,
         )
-        self.design_type_menu.grid(row=2, column=1, padx=30)
+        self.design_type_menu.grid(row=new_last_row + 1, column=1, padx=30)
 
         # Stack selection menu
         self.stack_label = tk.Label(
@@ -4932,7 +4933,7 @@ class NewExperimentWindow(tk.Toplevel):
             font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.stack_label.grid(row=3, column=0)
+        self.stack_label.grid(row=new_last_row + 2, column=0)
         self.solver_stack_var = tk.StringVar()
         self.solver_stack_var.set("1")
         self.stack_menu = ttk.Entry(
@@ -4941,7 +4942,7 @@ class NewExperimentWindow(tk.Toplevel):
             textvariable=self.solver_stack_var,
             justify="right",
         )
-        self.stack_menu.grid(row=3, column=1)
+        self.stack_menu.grid(row=new_last_row + 2, column=1)
 
         # design name entry
         self.solver_design_name_label = tk.Label(
@@ -4950,7 +4951,7 @@ class NewExperimentWindow(tk.Toplevel):
             font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.solver_design_name_label.grid(row=4, column=0)
+        self.solver_design_name_label.grid(row=new_last_row + 3, column=0)
         self.solver_design_name_var = tk.StringVar()
         # get unique solver design name
         solver_name = self.get_unique_name(
@@ -4963,14 +4964,14 @@ class NewExperimentWindow(tk.Toplevel):
             textvariable=self.solver_design_name_var,
             width=20,
         )
-        self.solver_design_name_entry.grid(row=4, column=1)
+        self.solver_design_name_entry.grid(row=new_last_row + 3, column=1)
         # create design button
         self.create_solver_design_button = tk.Button(
             master=self.solver_datafarm_frame,
             text="Create Design",
             command=self.create_solver_design,
         )
-        self.create_solver_design_button.grid(row=2, column=2)
+        self.create_solver_design_button.grid(row=new_last_row + 2, column=2)
 
     def enable_datafarm_entry(self, class_type):
         # enable datafarming options for factors selected to be included in design
@@ -5007,7 +5008,7 @@ class NewExperimentWindow(tk.Toplevel):
         )
 
         # get n stacks and design type from user input
-        n_stacks = self.solver_stack_var.get()
+        n_stacks = int(self.solver_stack_var.get())
         design_type = self.solver_design_var.get()
 
         """ Determine factors included in design """
@@ -5037,11 +5038,11 @@ class NewExperimentWindow(tk.Toplevel):
 
         """ Create factor settings txt file"""
         # Check if folder exists, if not create it
-        if not os.path.exists(EXPERIMENT_DIR):
-            os.makedirs(EXPERIMENT_DIR)
+        if not os.path.exists(DATA_FARMING_DIR):
+            os.makedirs(DATA_FARMING_DIR)
         # If file already exists, clear it and make a new, empty file of the same name
         filepath = os.path.join(
-            EXPERIMENT_DIR, f"{self.solver_design_name}.txt"
+            DATA_FARMING_DIR, f"{self.solver_design_name}.txt"
         )
         if os.path.exists(filepath):
             os.remove(filepath)
@@ -5059,7 +5060,7 @@ class NewExperimentWindow(tk.Toplevel):
                 dec_val = "0"
             data_insert = f"{min_val} {max_val} {dec_val}\n"
             with open(
-                os.path.join(EXPERIMENT_DIR, f"{self.solver_design_name}.txt"),
+                filepath,
                 "a",
             ) as settings_file:
                 settings_file.write(data_insert)
@@ -5081,7 +5082,7 @@ class NewExperimentWindow(tk.Toplevel):
         # display design tree
         self.display_design_tree(
             os.path.join(
-                EXPERIMENT_DIR, f"{self.solver_design_name}_design.csv"
+                DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
             ),
             self.solver_datafarm_frame,
             row=5,
@@ -5151,7 +5152,7 @@ class NewExperimentWindow(tk.Toplevel):
         """ Create factor settings txt file"""
         settings_filename = f"{self.problem_design_name}_problem_factors"
         settings_filepath = os.path.join(
-            EXPERIMENT_DIR, f"{settings_filename}.txt"
+            DATA_FARMING_DIR, f"{settings_filename}.txt"
         )
         with open(
             settings_filepath,
@@ -5200,7 +5201,7 @@ class NewExperimentWindow(tk.Toplevel):
         self.problem_design_tree_label.grid(row=0, column=0)
         self.display_design_tree(
             os.path.join(
-                EXPERIMENT_DIR,
+                DATA_FARMING_DIR,
                 f"{self.problem_design_name}_problem_factors_design.csv",
             ),
             self.design_display_frame,
@@ -5858,7 +5859,8 @@ class NewExperimentWindow(tk.Toplevel):
         self.experiment_defaults_window.title(
             "Simopt Graphical User Interface - Experiment Options Defaults"
         )
-        self.experiment_defaults_window.geometry("400x300")
+        position = center_window(self.master, 0.8)
+        self.experiment_defaults_window.geometry(position)
 
         self.main_frame = tk.Frame(master=self.experiment_defaults_window)
         self.main_frame.grid(row=0, column=0)
@@ -6108,7 +6110,8 @@ class NewExperimentWindow(tk.Toplevel):
         self.post_processing_window.title(
             "Simopt Graphical User Interface - Experiment Options"
         )
-        self.post_processing_window.geometry("400x300")
+        position = center_window(self.master, 0.8)
+        self.post_processing_window.geometry(position)
 
         self.main_frame = tk.Frame(master=self.post_processing_window)
         self.main_frame.grid(row=0, column=0)
@@ -8049,7 +8052,8 @@ class NewExperimentWindow(tk.Toplevel):
         # create new window
         self.view_window = tk.Toplevel(self.master)
         self.view_window.title("Simopt Graphical User Interface - View Plot")
-        self.view_window.geometry("800x500")
+        position = center_window(self.view_window, 0.5)
+        self.view_window.geometry(position)
 
         self.view_frame = tk.Frame(self.view_window)
         self.view_frame.grid(row=0, column=0)
@@ -8508,9 +8512,8 @@ class Data_Farming_Window:
             self.design_filename_var.get()
         )  # name of design file specified by user
 
-        data_farming_dir = os.path.join(EXPERIMENT_DIR, "data_farming")
         self.csv_filename = os.path.join(
-            data_farming_dir, f"{self.experiment_name}_design.csv"
+            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
         )
 
         self.design_table.to_csv(self.csv_filename, index=False)
@@ -8520,7 +8523,7 @@ class Data_Farming_Window:
 
         tk.messagebox.showinfo(
             "Information",
-            f"Design has been modified. {self.experiment_name}_design.csv has been created in {data_farming_dir}. ",
+            f"Design has been modified. {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
         )
 
         self.display_design_tree()
@@ -8533,8 +8536,7 @@ class Data_Farming_Window:
         )  # name of design file specified by user
         self.design_table[self.factor_names].to_csv(
             os.path.join(
-                EXPERIMENT_DIR,
-                "data_farming",
+                DATA_FARMING_DIR,
                 f"{self.experiment_name}_design.txt",
             ),
             sep="\t",
@@ -9252,9 +9254,7 @@ class Data_Farming_Window:
         dec_values = [dec_val.get() for dec_val in self.dec_list]
 
         with open(
-            os.path.join(
-                EXPERIMENT_DIR, "data_farming", f"{self.experiment_name}.txt"
-            ),
+            os.path.join(DATA_FARMING_DIR, f"{self.experiment_name}.txt"),
         ) as self.model_design_factors:
             self.model_design_factors.write("")
 
@@ -9294,8 +9294,7 @@ class Data_Farming_Window:
 
                 with open(
                     os.path.join(
-                        EXPERIMENT_DIR,
-                        "data_farming",
+                        DATA_FARMING_DIR,
                         f"{self.experiment_name}.txt",
                     ),
                     mode="a",
@@ -9324,15 +9323,14 @@ class Data_Farming_Window:
             design_type=design_type,
         )
 
-        data_farming_dir = os.path.join(EXPERIMENT_DIR, "data_farming")
         self.design_filename = f"{self.experiment_name}_design"
         self.csv_filename = os.path.join(
-            data_farming_dir, f"{self.experiment_name}_design.csv"
+            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
         )
         # Pop up message that csv design file has been created
         tk.messagebox.showinfo(
             "Information",
-            f"Design file {self.experiment_name}_design.csv has been created in {data_farming_dir}. ",
+            f"Design file {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
         )
 
         # Display Design Values
@@ -9359,8 +9357,7 @@ class Data_Farming_Window:
             crn_across_design_pts = False
 
         output_filename = os.path.join(
-            EXPERIMENT_DIR,
-            "data_farming",
+            DATA_FARMING_DIR,
             f"{self.experiment_name}_raw_results",
         )
 
@@ -9369,7 +9366,7 @@ class Data_Farming_Window:
             model_name=self.model_object.name,
             factor_settings_filename=None,
             factor_headers=self.factor_names,
-            design_filename=self.design_filename,
+            design_filepath=self.design_filename,
             model_fixed_factors=self.fixed_factors,
         )
 
@@ -10243,7 +10240,8 @@ class Post_Normal_Window:
             self.post_processed_bool = True
 
             self.postrep_window = tk.Toplevel()
-            self.postrep_window.geometry("1000x800")
+            position = center_window(self.master, 0.8)
+            self.postrep_window.geometry(position)
             self.postrep_window.title("Plotting Page")
             self.master.destroy()
             Plot_Window(
@@ -11262,7 +11260,8 @@ class Plot_Window:
 
     def plot_button(self):
         self.postrep_window = tk.Toplevel()
-        self.postrep_window.geometry("1000x600")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("Plotting Page")
         # have one plot and have arrow to scroll through each
         # one plot solver per row
@@ -11296,7 +11295,8 @@ class Plot_Window:
 
     def view_one_pot(self, path_name):
         self.postrep_window = tk.Toplevel()
-        self.postrep_window.geometry("400x400")
+        position = center_window(self.master, 0.8)
+        self.postrep_window.geometry(position)
         self.postrep_window.title("View One Plot")
 
         ro = 0
