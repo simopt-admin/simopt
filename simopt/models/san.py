@@ -129,7 +129,7 @@ class SAN(Model):
             graph_in[a[1]].add(a[0])
             graph_out[a[0]].add(a[1])
         indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
-        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
+
         queue = []
         topo_order = []
         for n in range(self.factors["num_nodes"]):
@@ -212,6 +212,14 @@ class SANLongestPath(Problem):
         lower bound for each decision variable
     upper_bounds : tuple
         upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
     gradient_available : bool
         indicates if gradient of objective function is available
     optimal_value : tuple
@@ -273,12 +281,12 @@ class SANLongestPath(Problem):
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 2000
             },
             "arc_costs": {
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
-                "default": (1,) * 13
+                "default": (1, ) * 13
             }
         }
         self.check_factor_list = {
@@ -290,8 +298,12 @@ class SANLongestPath(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = SAN(self.model_fixed_factors)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
+        self.lower_bounds = (1e-2, ) * self.dim
+        self.upper_bounds = (np.inf, ) * self.dim
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_arc_costs(self):
         positive = True
@@ -443,4 +455,296 @@ class SANLongestPath(Problem):
             vector of decision variables
         """
         x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        return x
+
+
+"""
+Summary
+-------
+Minimize the duration of the longest path from a to i subject to a lower bound in sum of arc_means.
+"""
+
+
+class SANLongestPathConstr(Problem):
+    """
+    Base class to implement simulation-optimization problems.
+
+    Attributes
+    ----------
+    name : string
+        name of problem
+    dim : int
+        number of decision variables
+    n_objectives : int
+        number of objectives
+    n_stochastic_constraints : int
+        number of stochastic constraints
+    minmax : tuple of int (+/- 1)
+        indicator of maximization (+1) or minimization (-1) for each objective
+    constraint_type : string
+        description of constraints types:
+            "unconstrained", "box", "deterministic", "stochastic"
+    variable_type : string
+        description of variable types:
+            "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
+    Ci : ndarray (or None)
+        Coefficient matrix for linear inequality constraints of the form Ci@x <= di
+    Ce : ndarray (or None)
+        Coefficient matrix for linear equality constraints of the form Ce@x = de
+    di : ndarray (or None)
+        Constraint vector for linear inequality constraints of the form Ci@x <= di
+    de : ndarray (or None)
+        Constraint vector for linear equality constraints of the form Ce@x = de
+    gradient_available : bool
+        indicates if gradient of objective function is available
+    optimal_value : tuple
+        optimal objective function value
+    optimal_solution : tuple
+        optimal solution
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
+    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
+        list of RNGs used to generate a random initial solution
+        or a random problem instance
+    factors : dict
+        changeable factors of the problem
+            initial_solution : list
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+
+    Arguments
+    ---------
+    name : str
+        user-specified name for problem
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
+
+    See also
+    --------
+    base.Problem
+    """
+    def __init__(self, name="SAN-2", fixed_factors=None, model_fixed_factors=None):
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        self.name = name
+        self.n_objectives = 1
+        self.n_stochastic_constraints = 0
+        self.minmax = (-1,)
+        self.constraint_type = "box"
+        self.variable_type = "continuous"
+        self.gradient_available = True
+        self.optimal_value = None
+        self.optimal_solution = None
+        self.model_default_factors = {}
+        self.model_decision_factors = {"arc_means"}
+        self.factors = fixed_factors
+        self.specifications = {
+            "initial_solution": {
+                "description": "initial solution",
+                "datatype": tuple,
+                "default": (8,) * 13
+            },
+            "budget": {
+                "description": "max # of replications for a solver to take",
+                "datatype": int,
+                "default": 10000
+            },
+            "arc_costs": {
+                "description": "Cost associated to each arc.",
+                "datatype": tuple,
+                "default": (1,) * 13
+            },
+            "sum_lb": {
+                "description": "Lower bound for the sum of arc means",
+                "datatype": float,
+                "default": 30.0
+            }
+        }
+        self.check_factor_list = {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+            "arc_costs": self.check_arc_costs
+        }
+        super().__init__(fixed_factors, model_fixed_factors)
+        # Instantiate model with fixed factors and over-riden defaults.
+        self.model = SAN(self.model_fixed_factors)
+        self.dim = len(self.model.factors["arcs"])
+        self.lower_bounds = (1e-2,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
+        self.Ci = -1 * np.ones(13)
+        self.Ce = None
+        self.di = -1 * np.array([self.factors["sum_lb"]])
+        self.de = None
+
+    def check_arc_costs(self):
+        positive = True
+        for x in list(self.factors["arc_costs"]):
+            positive = positive & x > 0
+        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+
+    def vector_to_factor_dict(self, vector):
+        """
+        Convert a vector of variables to a dictionary with factor keys
+
+        Arguments
+        ---------
+        vector : tuple
+            vector of values associated with decision variables
+
+        Returns
+        -------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+        """
+        factor_dict = {
+            "arc_means": vector[:]
+        }
+        return factor_dict
+
+    def factor_dict_to_vector(self, factor_dict):
+        """
+        Convert a dictionary with factor keys to a vector
+        of variables.
+
+        Arguments
+        ---------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+
+        Returns
+        -------
+        vector : tuple
+            vector of values associated with decision variables
+        """
+        vector = tuple(factor_dict["arc_means"])
+        return vector
+
+    def response_dict_to_objectives(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of objectives.
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        objectives : tuple
+            vector of objectives
+        """
+        objectives = (response_dict["longest_path_length"],)
+        return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] <= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : tuple
+            vector of LHSs of stochastic constraint
+        """
+        stoch_constraints = None
+        return stoch_constraints
+
+    def deterministic_stochastic_constraints_and_gradients(self, x):
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = None
+        det_stoch_constraints_gradients = ((0,) * self.dim,)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        return det_stoch_constraints, det_stoch_constraints_gradients
+
+    def deterministic_objectives_and_gradients(self, x):
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (0,)
+        det_objectives_gradients = ((0,) * self.dim,)
+        return det_objectives, det_objectives_gradients
+
+    def check_deterministic_constraints(self, x):
+        """
+        Check if a solution `x` satisfies the problem's deterministic constraints.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        satisfies : bool
+            indicates if solution `x` satisfies the deterministic constraints.
+        """
+        return np.all(np.array(x) >= 0)
+
+    def get_random_solution(self, rand_sol_rng):
+        """
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+        while True:
+            x = [rand_sol_rng.lognormalvariate(lq = 0.1, uq = 10) for _ in range(self.dim)]
+            if np.sum(x) >= self.factors['sum_lb']:
+                break
+        x= tuple(x)
         return x
