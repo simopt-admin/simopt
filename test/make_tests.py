@@ -38,7 +38,7 @@ def is_compatible(problem_name: str, solver_name: str) -> bool:
 def create_test(problem_name: str, solver_name: str) -> None:
     # Run the experiment to get the expected results
     myexperiment = ProblemSolver(solver_name, problem_name)
-    myexperiment.run(n_macroreps=10)
+    myexperiment.run(n_macroreps=24)
     myexperiment.post_replicate(n_postreps=200)
     post_normalize([myexperiment], n_postreps_init_opt=200)
 

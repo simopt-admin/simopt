@@ -28,7 +28,7 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
         self.expected_progress_curves = eval(self.expected_progress_curves, {'nan': float('nan'), 'inf': float('inf')})
         
         # Number of macro-replications and post-replications
-        self.num_macroreps = 10
+        self.num_macroreps = 24
         self.num_postreps = 200
 
         # Setup the solver and experiment
