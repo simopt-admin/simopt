@@ -8,7 +8,7 @@ import sys
 import time
 import tkinter as tk
 from functools import partial
-from tkinter import Listbox, Scrollbar, filedialog, simpledialog, ttk
+from tkinter import Listbox, Scrollbar, filedialog, simpledialog, ttk, font
 from tkinter.constants import MULTIPLE
 from typing import Literal
 
@@ -53,7 +53,6 @@ from simopt.experiment_base import (
 )
 
 TEXT_FAMILY = "TkDefaultFont"
-
 
 def center_window(screen: tk.Tk, scale: float) -> str:
     """Centers the window to the main display/monitor.
@@ -196,7 +195,6 @@ class DFFactor(ABC):
             self.lbl_name = tk.Label(
                 master=master,
                 text=self.name.get(),
-                font=f"{TEXT_FAMILY} 13",
                 justify=tk.LEFT,
             )
         return self.lbl_name
@@ -219,8 +217,8 @@ class DFFactor(ABC):
             self.lbl_description = tk.Label(
                 master=master,
                 text=self.description.get(),
-                font=f"{TEXT_FAMILY} 13",
                 justify=tk.LEFT,
+                wraplength=300,
             )
         return self.lbl_description
 
@@ -242,7 +240,6 @@ class DFFactor(ABC):
             self.lbl_type = tk.Label(
                 master=master,
                 text=self.type.get(),
-                font=f"{TEXT_FAMILY} 13",
                 justify=tk.LEFT,
             )
         return self.lbl_type
@@ -264,7 +261,6 @@ class DFFactor(ABC):
         if not hasattr(self, "ent_default"):
             self.ent_default = ttk.Entry(
                 master=master,
-                font=f"{TEXT_FAMILY} 13",
                 state=self.include_default_state,
                 textvariable=self.default,
                 justify=tk.RIGHT,
@@ -289,7 +285,7 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "chk_include"):
             self.chk_include = tk.Checkbutton(
-                master=master, font=f"{TEXT_FAMILY} 13", variable=self.include, command=self._toggle_fields
+                master=master, variable=self.include, command=self._toggle_fields
             )
         return self.chk_include
 
@@ -312,7 +308,6 @@ class DFFactor(ABC):
         if not hasattr(self, "ent_minimum"):
             self.ent_minimum = ttk.Entry(
                 master=master,
-                font=f"{TEXT_FAMILY} 13",
                 state=self.include_datafarm_state,
                 textvariable=self.minimum,
                 justify=tk.RIGHT,
@@ -338,7 +333,6 @@ class DFFactor(ABC):
         if not hasattr(self, "ent_maximum"):
             self.ent_maximum = ttk.Entry(
                 master=master,
-                font=f"{TEXT_FAMILY} 13",
                 state=self.include_datafarm_state,
                 textvariable=self.maximum,
                 justify=tk.RIGHT,
@@ -364,7 +358,6 @@ class DFFactor(ABC):
         if not hasattr(self, "ent_num_decimals"):
             self.ent_num_decimals = ttk.Entry(
                 master=master,
-                font=f"{TEXT_FAMILY} 13",
                 state=self.include_datafarm_state,
                 textvariable=self.num_decimals,
                 justify=tk.RIGHT,
@@ -449,7 +442,6 @@ class DFBoolean(DFFactor):
             # Create a dropdown menu for boolean values
             self.ent_default = ttk.Combobox(
                 master=master,
-                font=f"{TEXT_FAMILY} 13",
                 state=self.include_default_state,
                 textvariable=self.default,
                 values=["True", "False"],
@@ -516,7 +508,6 @@ class DFInteger(DFFactor):
         self.__include = tk.BooleanVar(value=False)
         self.__minimum = tk.IntVar(value=default)
         self.__maximum = tk.IntVar(value=default)
-
 
 class DFFloat(DFFactor):
     """Class to store float factors for problems and solvers."""
@@ -604,7 +595,28 @@ class MainMenuWindow(tk.Tk):
         self.master = root
 
         # Configure the theme of the GUI
-        self.configure_theme()
+        self.style = ttk.Style()
+        self.style.theme_use("alt")
+        # Configure the default fonts
+        # https://tkinter-docs.readthedocs.io/en/latest/generic/fonts.html
+        default_font = font.nametofont("TkDefaultFont")
+        default_font.configure(size=10, weight="normal")
+        text_font = font.nametofont("TkTextFont")
+        text_font.configure(size=10, weight="normal")
+        heading_font = font.nametofont("TkHeadingFont")
+        heading_font.configure(size=10, weight="bold")
+        caption_font = font.nametofont("TkCaptionFont")
+        caption_font.configure(size=12, weight="bold")
+        tooltip_font = font.nametofont("TkTooltipFont")
+        tooltip_font.configure(size=9, weight="normal")
+        fixed_font = font.nametofont("TkFixedFont")
+        fixed_font.configure(size=10, weight="normal")
+        icon_font = font.nametofont("TkIconFont")
+        icon_font.configure(size=10, weight="normal")
+        menu_font = font.nametofont("TkMenuFont")
+        menu_font.configure(size=10, weight="normal")
+        small_caption_font = font.nametofont("TkSmallCaptionFont")
+        small_caption_font.configure(size=9, weight="normal")
 
         # Set the screen width and height
         # Scaled down slightly so the whole window fits on the screen
@@ -667,24 +679,6 @@ class MainMenuWindow(tk.Tk):
         # Open the new experiment window and hide the main menu window
         self.open_new_experiment()
         self.master.withdraw()
-
-    def configure_theme(self) -> None:
-        """Configure the theme of the GUI."""
-        style = ttk.Style()
-        style.theme_use("alt")
-        # style.configure("TButton", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TDropdown", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TLabel", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TCheckbutton", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TEntry", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TFrame", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TNotebook", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TNotebook.Tab", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TLabelFrame", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TCombobox", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("TProgressbar", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("Vertical.TScrollbar", font=(f"{TEXT_FAMILY}", 13))
-        # style.configure("Horizontal.TScrollbar", font=(f"{TEXT_FAMILY}", 13))
 
     def open_experiment_window(self) -> None:
         """Open the experiment window."""
@@ -4680,6 +4674,9 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.load_exp_button.grid(row=0, column=3, padx=10)
 
+        self.font_header = font.Font(family=TEXT_FAMILY, size=12, weight="bold")
+        self.font = font.Font(family=TEXT_FAMILY, size=12)
+
     def update_main_window_scroll(self, event=None):
         self.master_canvas.configure(
             scrollregion=self.master_canvas.bbox("all")
@@ -4762,13 +4759,11 @@ class NewExperimentWindow(tk.Toplevel):
             label = tk.Label(
                 master=frame,
                 text=heading,
-                font=f"{TEXT_FAMILY} 14 bold",
+                font=font.BOLD,
             )
             label.grid(
                 row=first_row,
                 column=header_columns.index(heading),
-                padx=10,
-                pady=3,
             )
         # Insert horizontal separator
         ttk.Separator(frame, orient="horizontal").grid(
@@ -5448,13 +5443,13 @@ class NewExperimentWindow(tk.Toplevel):
 
         # Get solver info from dictionary
         selected_solver_name = self.solver_datafarm_var.get()
-        selected_solver_object = self.solver_list[selected_solver_name]()
+        self.solver_datafarm_object = self.solver_list[selected_solver_name]()
 
         # Create a dictionary of factor objects
         # Factor name maps to the factor object
         self.factor_dict: dict[str, DFFactor] = {}
 
-        factors = selected_solver_object.specifications
+        factors = self.solver_datafarm_object.specifications
         for factor in factors:
             # Get the factor's datatype, description, and default value
             f_type = factors[factor].get("datatype")
@@ -5490,128 +5485,118 @@ class NewExperimentWindow(tk.Toplevel):
             factor_obj = self.factor_dict[factor]
             # Get the name label
             name_label = factor_obj.get_name_label(self.solver_datafarm_frame)
-            name_label.grid(row=row_index, column=0, padx=10, pady=3)
+            name_label.grid(row=row_index, column=0, padx=10, pady=3, sticky=tk.W)
             # Get the description label
             desc_label = factor_obj.get_description_label(
                 self.solver_datafarm_frame
             )
-            desc_label.grid(row=row_index, column=1, padx=10, pady=3)
+            desc_label.grid(row=row_index, column=1, padx=10, pady=3, sticky=tk.W)
             # Get the type label
             type_label = factor_obj.get_type_label(self.solver_datafarm_frame)
-            type_label.grid(row=row_index, column=2, padx=10, pady=3)
+            type_label.grid(row=row_index, column=2, padx=10, pady=3, sticky=tk.W)
             # Get the default value entry
             default_entry = factor_obj.get_default_entry(
                 self.solver_datafarm_frame
             )
-            default_entry.grid(row=row_index, column=3, padx=10, pady=3)
+            default_entry.grid(row=row_index, column=3, padx=10, pady=3, sticky=tk.W)
+            # Check if the factor is not a bool/int/float
+            if factor_obj.include is None:
+                continue
             # Get the include in design checkbutton
             include_checkbutton = factor_obj.get_include_checkbutton(
                 self.solver_datafarm_frame
             )
-            if include_checkbutton is None:
-                continue
             include_checkbutton.grid(row=row_index, column=4, padx=10, pady=3)
+            # Check if the factor is not an int/float
+            if factor_obj.minimum is None: # Max entry also works
+                continue
             # Get the min value entry
             min_entry = factor_obj.get_minimum_entry(self.solver_datafarm_frame)
-            if min_entry is None:
-                continue
-            min_entry.grid(row=row_index, column=5, padx=10, pady=3)
+            min_entry.grid(row=row_index, column=5, padx=10, pady=3, sticky=tk.W)
             # Get the max value entry
             max_entry = factor_obj.get_maximum_entry(self.solver_datafarm_frame)
-            max_entry.grid(row=row_index, column=6, padx=10, pady=3)
+            max_entry.grid(row=row_index, column=6, padx=10, pady=3, sticky=tk.W)
+            # Check if the factor is not a float
+            if factor_obj.num_decimals is None:
+                continue
             # Get the decimal value entry
             dec_entry = factor_obj.get_num_decimals_entry(
                 self.solver_datafarm_frame
             )
-            if dec_entry is None:
-                continue
-            dec_entry.grid(row=row_index, column=7, padx=10, pady=3)
+            dec_entry.grid(row=row_index, column=7, padx=10, pady=3, sticky=tk.W)
 
         new_last_row = row_index * 2 + 2
 
         """Options for creaing design"""
+
+        self.design_frame = tk.Frame(master=self.solver_datafarm_frame)
+        self.design_frame.grid(row=new_last_row, column=0, columnspan=8)
+
         # Design type
         self.design_type_label = tk.Label(
-            master=self.solver_datafarm_frame,
-            text="Select Design Type",
-            font=f"{TEXT_FAMILY} 13",
+            master=self.design_frame,
+            text="Design Type",
             width=20,
         )
-
-        self.design_type_label.grid(row=new_last_row + 1, column=0)
+        self.design_type_label.grid(row=0, column=0)
 
         self.solver_design_var = tk.StringVar()
         self.solver_design_var.set("nolhs")
         self.design_type_menu = ttk.OptionMenu(
-            self.solver_datafarm_frame,
+            self.design_frame,
             self.solver_design_var,
             "nolhs",
             *self.design_types_list,
         )
-        self.design_type_menu.grid(row=new_last_row + 1, column=1, padx=30)
+        self.design_type_menu.grid(row=0, column=1, padx=30)
 
         # Stack selection menu
         self.stack_label = tk.Label(
-            master=self.solver_datafarm_frame,
+            self.design_frame,
             text="Number of Stacks",
-            font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.stack_label.grid(row=new_last_row + 2, column=0)
+        self.stack_label.grid(row=1, column=0)
         self.solver_stack_var = tk.StringVar()
         self.solver_stack_var.set("1")
         self.stack_menu = ttk.Entry(
-            master=self.solver_datafarm_frame,
+            master=self.design_frame,
             width=10,
             textvariable=self.solver_stack_var,
             justify="right",
         )
-        self.stack_menu.grid(row=new_last_row + 2, column=1)
+        self.stack_menu.grid(row=1, column=1)
 
         # design name entry
         self.solver_design_name_label = tk.Label(
-            master=self.solver_datafarm_frame,
+            master=self.design_frame,
             text="Name of Design",
-            font=f"{TEXT_FAMILY} 13",
             width=20,
         )
-        self.solver_design_name_label.grid(row=new_last_row + 3, column=0)
+        self.solver_design_name_label.grid(row=2, column=0)
         self.solver_design_name_var = tk.StringVar()
         # get unique solver design name
         solver_name = self.get_unique_name(
             self.master_solver_dict,
-            f"{selected_solver_object.name}_design",
+            f"{self.solver_datafarm_object.name}_design",
         )
         self.solver_design_name_var.set(solver_name)
         self.solver_design_name_entry = tk.Entry(
-            master=self.solver_datafarm_frame,
+            master=self.design_frame,
             textvariable=self.solver_design_name_var,
             width=20,
         )
-        self.solver_design_name_entry.grid(row=new_last_row + 3, column=1)
+        self.solver_design_name_entry.grid(row=2, column=1)
         # create design button
         self.create_solver_design_button = tk.Button(
-            master=self.solver_datafarm_frame,
+            master=self.design_frame,
             text="Create Design",
             command=self.create_solver_design,
         )
-        self.create_solver_design_button.grid(row=new_last_row + 2, column=2)
+        self.create_solver_design_button.grid(row=4, column=0, columnspan=2)
 
-    def enable_datafarm_entry(self, class_type):
+    def enable_datafarm_entry(self, class_type: Problem) -> None:
         # enable datafarming options for factors selected to be included in design
-        if class_type == Solver:
-            for factor in self.solver_checkstates:
-                checkstate = self.solver_checkstates[factor].get()
-                if factor in self.solver_datafarm_widgets:
-                    datafarm_widget_list = self.solver_datafarm_widgets[factor]
-                    if checkstate:
-                        for widget in datafarm_widget_list:
-                            widget.configure(state="normal")
-                    else:
-                        for widget in datafarm_widget_list:
-                            widget.delete(0, tk.END)
-                            widget.configure(state="disabled")
-
         if class_type == Problem:
             for factor in self.problem_checkstates:
                 checkstate = self.problem_checkstates[factor].get()
@@ -5638,27 +5623,24 @@ class NewExperimentWindow(tk.Toplevel):
         """ Determine factors included in design """
         self.solver_design_factors = []  # list of names of factors included in design
         self.solver_cross_design_factors = {}  # dict of cross design factors w/ lists of possible values
-        for factor in self.solver_checkstates:
-            checkstate = self.solver_checkstates[factor].get()
-            factor_datatype = self.solver_datafarm_object.specifications[
-                factor
-            ].get("datatype")
-            if checkstate:
-                if factor_datatype in (int, float):
+        self.solver_fixed_factors = {}  # contains fixed values for factors not in design
+        for factor in self.factor_dict:
+            # If the factor is not included in the design, it's a fixed factor
+            if self.factor_dict[factor].include is None or not self.factor_dict[factor].include.get():
+                fixed_val = self.factor_dict[factor].default.get()
+                self.solver_fixed_factors[factor] = [fixed_val]
+            # If the factor is included in the design, add it to the list of factors
+            else:
+                if self.factor_dict[factor].type.get() in ("int", "float"):
                     self.solver_design_factors.append(factor)
-                elif factor_datatype is bool:
+                elif self.factor_dict[factor].type.get() == "bool":
                     self.solver_cross_design_factors[factor] = ["True", "False"]
 
-        """ Determine values of fixed factors """
-        solver_fixed_factors = {}  # contains fixed values for factors not in design
-        for factor in self.solver_datafarm_defaults:
-            if factor not in self.solver_design_factors:
-                fixed_val = self.solver_datafarm_defaults[factor]
-                solver_fixed_factors[factor] = fixed_val
-        # convert fixed factors to proper datatype
-        self.solver_fixed_factors = self.convert_proper_datatype(
-            solver_fixed_factors, self.solver_datafarm_object
-        )
+        """ Check if there are any factors included in the design """
+        if not self.solver_design_factors and not self.solver_cross_design_factors:
+            error_msg = "No factors included in design\nAdding regular solver to experiment via this button is not yet implemented"
+            tk.messagebox.showerror("Error Creating Design", error_msg)
+            return
 
         """ Create factor settings txt file"""
         # Check if folder exists, if not create it
@@ -5670,23 +5652,22 @@ class NewExperimentWindow(tk.Toplevel):
         )
         if os.path.exists(filepath):
             os.remove(filepath)
-        open(filepath, "x").close()
 
-        for factor in self.solver_design_factors:
-            factor_datatype = self.solver_datafarm_object.specifications[
-                factor
-            ].get("datatype")
-            min_val = self.solver_min_vals[factor].get()
-            max_val = self.solver_max_vals[factor].get()
-            if factor_datatype is float:
-                dec_val = self.solver_dec_vals[factor].get()
-            else:
-                dec_val = "0"
-            data_insert = f"{min_val} {max_val} {dec_val}\n"
-            with open(
-                filepath,
-                "a",
-            ) as settings_file:
+        # Write the factor settings to the file
+        with open(filepath, "x") as settings_file:
+            # For each factor, write the min, max, and decimal values to the file
+            for factor_name in self.solver_design_factors:
+                # Lookup the factor in the dictionary
+                factor = self.factor_dict[factor_name]
+                min_val = factor.minimum.get()
+                max_val = factor.maximum.get()
+                if factor.type.get() == "float":
+                    dec_val = factor.num_decimals.get()
+                else:
+                    dec_val = "0"
+                
+                # Write the values to the file
+                data_insert = f"{min_val} {max_val} {dec_val}\n"
                 settings_file.write(data_insert)
 
         try:
@@ -5709,7 +5690,9 @@ class NewExperimentWindow(tk.Toplevel):
                 DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
             ),
             self.solver_datafarm_frame,
-            row=5,
+            row=999,
+            column=0,
+            columnspan=8,
         )
         # button to add solver design to experiment
         self.add_solver_design_button = tk.Button(
@@ -5717,7 +5700,7 @@ class NewExperimentWindow(tk.Toplevel):
             text="Add this solver to experiment",
             command=self.add_solver_design_to_experiment,
         )
-        self.add_solver_design_button.grid(row=6, column=0)
+        self.add_solver_design_button.grid(row=1000, column=0, columnspan=8)
         # disable design name entry
         self.solver_design_name_entry.configure(state="disabled")
 
@@ -5839,14 +5822,10 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.add_problem_design_button.grid(row=2, column=0)
 
-    def display_design_tree(self, csv_filename, frame, row=0, column=0):
+    def display_design_tree(self, csv_filename:str, frame:tk.Frame, row:int=0, column:int=0, columnspan:int=1) -> None:
         # Initialize design tree
         self.create_design_frame = tk.Frame(master=frame)
-        self.create_design_frame.grid(row=row, column=column)
-        self.create_design_frame.grid_rowconfigure(0, weight=0)
-        self.create_design_frame.grid_rowconfigure(1, weight=1)
-        self.create_design_frame.grid_columnconfigure(0, weight=1)
-        self.create_design_frame.grid_columnconfigure(1, weight=1)
+        self.create_design_frame.grid(row=row, column=column, columnspan=columnspan)
 
         self.design_tree = ttk.Treeview(master=self.create_design_frame)
         self.design_tree.grid(row=1, column=0, sticky="nsew", padx=10)
