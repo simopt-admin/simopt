@@ -54,6 +54,7 @@ from simopt.experiment_base import (
 
 TEXT_FAMILY = "TkDefaultFont"
 
+
 def center_window(screen: tk.Tk, scale: float) -> str:
     """Centers the window to the main display/monitor.
 
@@ -285,7 +286,9 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "chk_include"):
             self.chk_include = tk.Checkbutton(
-                master=master, variable=self.include, command=self._toggle_fields
+                master=master,
+                variable=self.include,
+                command=self._toggle_fields,
             )
         return self.chk_include
 
@@ -363,7 +366,7 @@ class DFFactor(ABC):
                 justify=tk.RIGHT,
             )
         return self.ent_num_decimals
-    
+
     def _toggle_fields(self) -> None:
         """Toggle the states of the datafarm fields."""
         if self.include.get():
@@ -384,6 +387,7 @@ class DFFactor(ABC):
                 self.ent_maximum.configure(state="disabled")
             if self.num_decimals is not None:
                 self.ent_num_decimals.configure(state="disabled")
+
 
 class DFBoolean(DFFactor):
     """Class to store boolean factors for problems and solvers."""
@@ -450,6 +454,7 @@ class DFBoolean(DFFactor):
             self.ent_default.current(0 if self.default.get() else 1)
         return self.ent_default
 
+
 class DFInteger(DFFactor):
     """Class to store integer factors for problems and solvers."""
 
@@ -508,6 +513,7 @@ class DFInteger(DFFactor):
         self.__include = tk.BooleanVar(value=False)
         self.__minimum = tk.IntVar(value=default)
         self.__maximum = tk.IntVar(value=default)
+
 
 class DFFloat(DFFactor):
     """Class to store float factors for problems and solvers."""
@@ -597,26 +603,34 @@ class MainMenuWindow(tk.Tk):
         # Configure the theme of the GUI
         self.style = ttk.Style()
         self.style.theme_use("alt")
-        # Configure the default fonts
+        # Configure the default fonts based on screen size
         # https://tkinter-docs.readthedocs.io/en/latest/generic/fonts.html
+        # Scale by width because it's easy to scroll vertically, but scrolling
+        # horizontally is a pain. This way, the text will always fit on
+        # the screen.
+        width = self.master.winfo_screenwidth()
+        std_size = int(width / 200)
+        larger_size = int(std_size * 1.2)
+        smaller_size = int(std_size * 0.8)
+
         default_font = font.nametofont("TkDefaultFont")
-        default_font.configure(size=10, weight="normal")
+        default_font.configure(size=std_size, weight="normal")
         text_font = font.nametofont("TkTextFont")
-        text_font.configure(size=10, weight="normal")
+        text_font.configure(size=std_size, weight="normal")
         heading_font = font.nametofont("TkHeadingFont")
-        heading_font.configure(size=10, weight="bold")
+        heading_font.configure(size=larger_size, weight="bold")
         caption_font = font.nametofont("TkCaptionFont")
-        caption_font.configure(size=12, weight="bold")
+        caption_font.configure(size=larger_size, weight="bold")
         tooltip_font = font.nametofont("TkTooltipFont")
-        tooltip_font.configure(size=9, weight="normal")
+        tooltip_font.configure(size=smaller_size, weight="normal")
         fixed_font = font.nametofont("TkFixedFont")
-        fixed_font.configure(size=10, weight="normal")
+        fixed_font.configure(size=std_size, weight="normal")
         icon_font = font.nametofont("TkIconFont")
-        icon_font.configure(size=10, weight="normal")
+        icon_font.configure(size=std_size, weight="normal")
         menu_font = font.nametofont("TkMenuFont")
-        menu_font.configure(size=10, weight="normal")
+        menu_font.configure(size=std_size, weight="normal")
         small_caption_font = font.nametofont("TkSmallCaptionFont")
-        small_caption_font.configure(size=9, weight="normal")
+        small_caption_font.configure(size=smaller_size, weight="normal")
 
         # Set the screen width and height
         # Scaled down slightly so the whole window fits on the screen
@@ -4368,6 +4382,7 @@ class NewExperimentWindow(tk.Toplevel):
         self.main_frame.bind(
             "<Configure>", self.update_main_window_scroll
         )  # bind main frame to scroll bar
+        self.main_frame.bind_all("<MouseWheel>", self.on_mousewheel)
 
         # create window scrollbars
         vert_scroll = ttk.Scrollbar(
@@ -4681,6 +4696,9 @@ class NewExperimentWindow(tk.Toplevel):
         self.master_canvas.configure(
             scrollregion=self.master_canvas.bbox("all")
         )
+
+    def on_mousewheel(self, event):
+        self.master_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
 
     def load_experiment(self):
         # ask user for pickle file location
@@ -5421,12 +5439,12 @@ class NewExperimentWindow(tk.Toplevel):
 
     def show_solver_datafarm(self, event: tk.Event) -> None:
         """Show solver data farming options.
-        
+
         Parameters
         ----------
         event : tk.Event, optional
             Event that triggered the function.
-        
+
         """
         # clear previous selections
         self.clear_frame(self.solver_datafarm_frame)
@@ -5438,7 +5456,6 @@ class NewExperimentWindow(tk.Toplevel):
         self.solver_datafarm_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
 
         # Add all the column headers
-
         self.show_factor_headers(self.solver_datafarm_frame)
 
         # Get solver info from dictionary
@@ -5485,20 +5502,28 @@ class NewExperimentWindow(tk.Toplevel):
             factor_obj = self.factor_dict[factor]
             # Get the name label
             name_label = factor_obj.get_name_label(self.solver_datafarm_frame)
-            name_label.grid(row=row_index, column=0, padx=10, pady=3, sticky=tk.W)
+            name_label.grid(
+                row=row_index, column=0, padx=10, pady=3, sticky=tk.W
+            )
             # Get the description label
             desc_label = factor_obj.get_description_label(
                 self.solver_datafarm_frame
             )
-            desc_label.grid(row=row_index, column=1, padx=10, pady=3, sticky=tk.W)
+            desc_label.grid(
+                row=row_index, column=1, padx=10, pady=3, sticky=tk.W
+            )
             # Get the type label
             type_label = factor_obj.get_type_label(self.solver_datafarm_frame)
-            type_label.grid(row=row_index, column=2, padx=10, pady=3, sticky=tk.W)
+            type_label.grid(
+                row=row_index, column=2, padx=10, pady=3, sticky=tk.W
+            )
             # Get the default value entry
             default_entry = factor_obj.get_default_entry(
                 self.solver_datafarm_frame
             )
-            default_entry.grid(row=row_index, column=3, padx=10, pady=3, sticky=tk.W)
+            default_entry.grid(
+                row=row_index, column=3, padx=10, pady=3, sticky=tk.W
+            )
             # Check if the factor is not a bool/int/float
             if factor_obj.include is None:
                 continue
@@ -5508,14 +5533,18 @@ class NewExperimentWindow(tk.Toplevel):
             )
             include_checkbutton.grid(row=row_index, column=4, padx=10, pady=3)
             # Check if the factor is not an int/float
-            if factor_obj.minimum is None: # Max entry also works
+            if factor_obj.minimum is None:  # Max entry also works
                 continue
             # Get the min value entry
             min_entry = factor_obj.get_minimum_entry(self.solver_datafarm_frame)
-            min_entry.grid(row=row_index, column=5, padx=10, pady=3, sticky=tk.W)
+            min_entry.grid(
+                row=row_index, column=5, padx=10, pady=3, sticky=tk.W
+            )
             # Get the max value entry
             max_entry = factor_obj.get_maximum_entry(self.solver_datafarm_frame)
-            max_entry.grid(row=row_index, column=6, padx=10, pady=3, sticky=tk.W)
+            max_entry.grid(
+                row=row_index, column=6, padx=10, pady=3, sticky=tk.W
+            )
             # Check if the factor is not a float
             if factor_obj.num_decimals is None:
                 continue
@@ -5523,7 +5552,9 @@ class NewExperimentWindow(tk.Toplevel):
             dec_entry = factor_obj.get_num_decimals_entry(
                 self.solver_datafarm_frame
             )
-            dec_entry.grid(row=row_index, column=7, padx=10, pady=3, sticky=tk.W)
+            dec_entry.grid(
+                row=row_index, column=7, padx=10, pady=3, sticky=tk.W
+            )
 
         new_last_row = row_index * 2 + 2
 
@@ -5626,7 +5657,10 @@ class NewExperimentWindow(tk.Toplevel):
         self.solver_fixed_factors = {}  # contains fixed values for factors not in design
         for factor in self.factor_dict:
             # If the factor is not included in the design, it's a fixed factor
-            if self.factor_dict[factor].include is None or not self.factor_dict[factor].include.get():
+            if (
+                self.factor_dict[factor].include is None
+                or not self.factor_dict[factor].include.get()
+            ):
                 fixed_val = self.factor_dict[factor].default.get()
                 self.solver_fixed_factors[factor] = [fixed_val]
             # If the factor is included in the design, add it to the list of factors
@@ -5637,7 +5671,10 @@ class NewExperimentWindow(tk.Toplevel):
                     self.solver_cross_design_factors[factor] = ["True", "False"]
 
         """ Check if there are any factors included in the design """
-        if not self.solver_design_factors and not self.solver_cross_design_factors:
+        if (
+            not self.solver_design_factors
+            and not self.solver_cross_design_factors
+        ):
             error_msg = "No factors included in design\nAdding regular solver to experiment via this button is not yet implemented"
             tk.messagebox.showerror("Error Creating Design", error_msg)
             return
@@ -5665,7 +5702,7 @@ class NewExperimentWindow(tk.Toplevel):
                     dec_val = factor.num_decimals.get()
                 else:
                     dec_val = "0"
-                
+
                 # Write the values to the file
                 data_insert = f"{min_val} {max_val} {dec_val}\n"
                 settings_file.write(data_insert)
@@ -5822,10 +5859,19 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.add_problem_design_button.grid(row=2, column=0)
 
-    def display_design_tree(self, csv_filename:str, frame:tk.Frame, row:int=0, column:int=0, columnspan:int=1) -> None:
+    def display_design_tree(
+        self,
+        csv_filename: str,
+        frame: tk.Frame,
+        row: int = 0,
+        column: int = 0,
+        columnspan: int = 1,
+    ) -> None:
         # Initialize design tree
         self.create_design_frame = tk.Frame(master=frame)
-        self.create_design_frame.grid(row=row, column=column, columnspan=columnspan)
+        self.create_design_frame.grid(
+            row=row, column=column, columnspan=columnspan
+        )
 
         self.design_tree = ttk.Treeview(master=self.create_design_frame)
         self.design_tree.grid(row=1, column=0, sticky="nsew", padx=10)
