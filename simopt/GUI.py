@@ -1,5 +1,6 @@
 """GUI for SimOpt Library."""  # noqa: N999
 
+from abc import ABC, abstractmethod
 import ast
 import os
 import pickle
@@ -9,18 +10,21 @@ import tkinter as tk
 from functools import partial
 from tkinter import Listbox, Scrollbar, filedialog, simpledialog, ttk
 from tkinter.constants import MULTIPLE
+from typing import Literal
 
 from PIL import Image, ImageTk
 
 sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(sys.modules[__name__].__file__), ".."))
+    os.path.abspath(
+        os.path.join(os.path.dirname(sys.modules[__name__].__file__), "..")
+    )
 )
 
 import re
 
 import pandas as pd
 
-from simopt.base import Problem, Solver
+from simopt.base import Model, Problem, Solver
 from simopt.data_farming_base import DataFarmingExperiment, DATA_FARMING_DIR
 
 from simopt.directory import (
@@ -82,6 +86,507 @@ def center_window(screen: tk.Tk, scale: float) -> str:
         (screen_height / 2) - (height / 1.9)
     )  # Slight adjustment for taskbar
     return f"{width}x{height}+{x}+{y}"
+
+
+class DFFactor(ABC):
+    """Class to store factors for problems and solvers."""
+
+    @property
+    def name(self) -> tk.StringVar:
+        """The name of the factor."""
+        return self.__name
+
+    @property
+    def description(self) -> tk.StringVar:
+        """The description of the factor."""
+        return self.__description
+
+    @property
+    @abstractmethod
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def default(self) -> tk.BooleanVar | tk.IntVar | tk.DoubleVar:
+        """The default value of the factor."""
+        raise NotImplementedError
+
+    @default.setter
+    @abstractmethod
+    def default(
+        self, default: tk.BooleanVar | tk.IntVar | tk.DoubleVar
+    ) -> None:
+        raise NotImplementedError
+
+    @property
+    def include(self) -> tk.BooleanVar | None:
+        """Whether to include the factor in the experiment."""
+        return None
+
+    @property
+    def include_default_state(self) -> Literal["normal", "disabled", None]:
+        """Whether or not the default field is enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "disabled"
+        return "normal"
+
+    @property
+    def include_datafarm_state(self) -> Literal["normal", "disabled", None]:
+        """Whether or not the datafarm fields are enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "normal"
+        return "disabled"
+
+    @property
+    def minimum(self) -> tk.IntVar | tk.DoubleVar | None:
+        """The minimum value of the factor."""
+        return None
+
+    @property
+    def maximum(self) -> tk.IntVar | tk.DoubleVar | None:
+        """The maximum value of the factor."""
+        return None
+
+    @property
+    def num_decimals(self) -> tk.IntVar | None:
+        """The number of decimals of the factor."""
+        return None
+
+    def __init__(self, name: str, description: str) -> None:
+        """Initialize the factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        include : bool
+            Whether to include the factor in the experiment
+
+        """
+        self.__name = tk.StringVar(value=name)
+        self.__description = tk.StringVar(value=description)
+        self.__include = None
+        self.__minimum = None
+        self.__maximum = None
+        self.__num_decimals = None
+
+    def get_name_label(self, master: tk.Tk) -> tk.Label:
+        """Get the name label of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        tk.Label
+            The name label of the factor
+
+        """
+        if not hasattr(self, "lbl_name"):
+            self.lbl_name = tk.Label(
+                master=master,
+                text=self.name.get(),
+                font=f"{TEXT_FAMILY} 13",
+                justify=tk.LEFT,
+            )
+        return self.lbl_name
+
+    def get_description_label(self, master: tk.Tk) -> tk.Label:
+        """Get the description label of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        tk.Label
+            The description label of the factor
+
+        """
+        if not hasattr(self, "lbl_description"):
+            self.lbl_description = tk.Label(
+                master=master,
+                text=self.description.get(),
+                font=f"{TEXT_FAMILY} 13",
+                justify=tk.LEFT,
+            )
+        return self.lbl_description
+
+    def get_type_label(self, master: tk.Tk) -> tk.Label:
+        """Get the type label of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        tk.Label
+            The type label of the factor
+
+        """
+        if not hasattr(self, "lbl_type"):
+            self.lbl_type = tk.Label(
+                master=master,
+                text=self.type.get(),
+                font=f"{TEXT_FAMILY} 13",
+                justify=tk.LEFT,
+            )
+        return self.lbl_type
+
+    def get_default_entry(self, master: tk.Tk) -> ttk.Entry:
+        """Get the default entry of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        ttk.Entry
+            The default entry of the factor
+
+        """
+        if not hasattr(self, "ent_default"):
+            self.ent_default = ttk.Entry(
+                master=master,
+                font=f"{TEXT_FAMILY} 13",
+                state=self.include_default_state,
+                textvariable=self.default,
+                justify=tk.RIGHT,
+            )
+        return self.ent_default
+
+    def get_include_checkbutton(self, master: tk.Tk) -> tk.Checkbutton | None:
+        """Get the include checkbutton of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        tk.Checkbutton | None
+            The include checkbutton of the factor (if applicable)
+
+        """
+        if self.include is None:
+            return None
+        if not hasattr(self, "chk_include"):
+            self.chk_include = tk.Checkbutton(
+                master=master, font=f"{TEXT_FAMILY} 13", variable=self.include, command=self._toggle_fields
+            )
+        return self.chk_include
+
+    def get_minimum_entry(self, master: tk.Tk) -> ttk.Entry | None:
+        """Get the minimum entry of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        ttk.Entry | None
+            The minimum entry of the factor (if applicable)
+
+        """
+        if self.minimum is None:
+            return None
+        if not hasattr(self, "ent_minimum"):
+            self.ent_minimum = ttk.Entry(
+                master=master,
+                font=f"{TEXT_FAMILY} 13",
+                state=self.include_datafarm_state,
+                textvariable=self.minimum,
+                justify=tk.RIGHT,
+            )
+        return self.ent_minimum
+
+    def get_maximum_entry(self, master: tk.Tk) -> ttk.Entry | None:
+        """Get the maximum entry of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        ttk.Entry | None
+            The maximum entry of the factor (if applicable)
+
+        """
+        if self.maximum is None:
+            return None
+        if not hasattr(self, "ent_maximum"):
+            self.ent_maximum = ttk.Entry(
+                master=master,
+                font=f"{TEXT_FAMILY} 13",
+                state=self.include_datafarm_state,
+                textvariable=self.maximum,
+                justify=tk.RIGHT,
+            )
+        return self.ent_maximum
+
+    def get_num_decimals_entry(self, master: tk.Tk) -> ttk.Entry | None:
+        """Get the number of decimals entry of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        ttk.Entry | None
+            The number of decimals entry of the factor (if applicable)
+
+        """
+        if self.num_decimals is None:
+            return None
+        if not hasattr(self, "ent_num_decimals"):
+            self.ent_num_decimals = ttk.Entry(
+                master=master,
+                font=f"{TEXT_FAMILY} 13",
+                state=self.include_datafarm_state,
+                textvariable=self.num_decimals,
+                justify=tk.RIGHT,
+            )
+        return self.ent_num_decimals
+    
+    def _toggle_fields(self) -> None:
+        """Toggle the states of the datafarm fields."""
+        if self.include.get():
+            # Disable the default field
+            self.ent_default.configure(state="disabled")
+            # Enable the datafarm fields
+            if self.minimum is not None:
+                self.ent_minimum.configure(state="normal")
+                self.ent_maximum.configure(state="normal")
+            if self.num_decimals is not None:
+                self.ent_num_decimals.configure(state="normal")
+        else:
+            # Enable the default field
+            self.ent_default.configure(state="normal")
+            # Disable the datafarm fields
+            if self.minimum is not None:
+                self.ent_minimum.configure(state="disabled")
+                self.ent_maximum.configure(state="disabled")
+            if self.num_decimals is not None:
+                self.ent_num_decimals.configure(state="disabled")
+
+class DFBoolean(DFFactor):
+    """Class to store boolean factors for problems and solvers."""
+
+    @property
+    def include(self) -> tk.BooleanVar:
+        """Whether to include the factor in the experiment."""
+        return self.__include
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="bool")
+
+    @property
+    def default(self) -> tk.BooleanVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.BooleanVar) -> None:
+        self.__default = default
+
+    def __init__(self, name: str, description: str, default: bool) -> None:
+        """Initialize the boolean factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : bool
+            The default value of the factor
+
+        """
+        super().__init__(name, description)
+        self.__default = tk.BooleanVar(value=default)
+        self.__include = tk.BooleanVar(value=False)
+
+    def get_default_entry(self, master: tk.Tk) -> ttk.Entry:
+        """Get the default entry of the factor.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The main window of the GUI
+
+        Returns
+        -------
+        ttk.Entry
+            The default entry of the factor
+
+        """
+        if not hasattr(self, "ent_default"):
+            # Create a dropdown menu for boolean values
+            self.ent_default = ttk.Combobox(
+                master=master,
+                font=f"{TEXT_FAMILY} 13",
+                state=self.include_default_state,
+                textvariable=self.default,
+                values=["True", "False"],
+                justify=tk.LEFT,
+            )
+            self.ent_default.current(0 if self.default.get() else 1)
+        return self.ent_default
+
+class DFInteger(DFFactor):
+    """Class to store integer factors for problems and solvers."""
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="int")
+
+    @property
+    def default(self) -> tk.IntVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.IntVar) -> None:
+        self.__default = default
+
+    @property
+    def include(self) -> tk.BooleanVar:
+        """Whether to include the factor in the experiment."""
+        return self.__include
+
+    @property
+    def minimum(self) -> tk.IntVar:
+        """The minimum value of the factor."""
+        return self.__minimum
+
+    @minimum.setter
+    def minimum(self, minimum: tk.IntVar) -> None:
+        self.__minimum = minimum
+
+    @property
+    def maximum(self) -> tk.IntVar:
+        """The maximum value of the factor."""
+        return self.__maximum
+
+    @maximum.setter
+    def maximum(self, maximum: tk.IntVar) -> None:
+        self.__maximum = maximum
+
+    def __init__(self, name: str, description: str, default: int) -> None:
+        """Initialize the integer factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : int
+            The default value of the factor
+
+        """
+        super().__init__(name, description)
+        self.__default = tk.IntVar(value=default)
+        self.__include = tk.BooleanVar(value=False)
+        self.__minimum = tk.IntVar(value=default)
+        self.__maximum = tk.IntVar(value=default)
+
+
+class DFFloat(DFFactor):
+    """Class to store float factors for problems and solvers."""
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="float")
+
+    @property
+    def default(self) -> tk.DoubleVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.DoubleVar) -> None:
+        self.__default = default
+
+    @property
+    def include(self) -> tk.BooleanVar:
+        """Whether to include the factor in the experiment."""
+        return self.__include
+
+    @property
+    def minimum(self) -> tk.DoubleVar:
+        """The minimum value of the factor."""
+        return self.__minimum
+
+    @minimum.setter
+    def minimum(self, minimum: tk.DoubleVar) -> None:
+        self.__minimum = minimum
+
+    @property
+    def maximum(self) -> tk.DoubleVar:
+        """The maximum value of the factor."""
+        return self.__maximum
+
+    @maximum.setter
+    def maximum(self, maximum: tk.DoubleVar) -> None:
+        self.__maximum = maximum
+
+    @property
+    def num_decimals(self) -> tk.IntVar:
+        """The number of decimals of the factor."""
+        return self.__num_decimals
+
+    @num_decimals.setter
+    def num_decimals(self, num_decimals: tk.IntVar) -> None:
+        self.__num_decimals = num_decimals
+
+    def __init__(self, name: str, description: str, default: float) -> None:
+        """Initialize the float factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : float
+            The default value of the factor
+
+        """
+        super().__init__(name, description)
+        self.__default = tk.DoubleVar(value=default)
+        self.__include = tk.BooleanVar(value=False)
+        self.__minimum = tk.DoubleVar(value=default)
+        self.__maximum = tk.DoubleVar(value=default)
+        num_decimals = str(default)[::-1].find(".")
+        self.__num_decimals = tk.IntVar(value=num_decimals)
 
 
 class MainMenuWindow(tk.Tk):
@@ -2362,11 +2867,19 @@ class ExperimentWindow(tk.Toplevel):
         self.macro_reps = self.selected[2]
         self.my_experiment.run(n_macroreps=self.macro_reps)
 
-    def post_rep_function(self, integer):
-        row_index = integer - 1
+    def post_rep_function(self, selected_row: int) -> None:
+        """Post replicate function.
+
+        Parameters
+        ----------
+        selected_row : int
+            The selected row
+
+        """
+        row_index = selected_row - 1
         self.my_experiment = self.experiment_object_list[row_index]
         self.selected = self.experiment_object_list[row_index]
-        self.post_rep_function_row_index = integer
+        self.post_rep_function_row_index = selected_row
         # calls postprocessing window
 
         self.postrep_window = tk.Tk()
@@ -3940,7 +4453,7 @@ class NewExperimentWindow(tk.Toplevel):
             width=20,
             font=f"{TEXT_FAMILY} 13",
         )
-        self.solver_select_label.grid(row=0, column=0)
+        self.solver_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
 
         # Variable to store selected solver
         self.solver_var = tk.StringVar()
@@ -4000,7 +4513,7 @@ class NewExperimentWindow(tk.Toplevel):
             width=20,
             font=f"{TEXT_FAMILY} 13",
         )
-        self.solver_select_label.grid(row=0, column=0)
+        self.solver_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
 
         # Variable to store selected solver
         self.solver_datafarm_var = tk.StringVar()
@@ -4191,7 +4704,7 @@ class NewExperimentWindow(tk.Toplevel):
             "Loading", "Loading pickle file. This may take a few minutes."
         )
         with open(file_path, "rb") as f:
-            exp = pickle.load(f)  # noqa: S301
+            exp = pickle.load(f)
         tk.messagebox.showinfo("Finished", "Pickle file has finished loading.")
 
         # add exp to master dict and display in row
@@ -4217,6 +4730,51 @@ class NewExperimentWindow(tk.Toplevel):
         for widget in frame.winfo_children():
             widget.destroy()
 
+    def show_factor_headers(
+        self,
+        frame: tk.Frame,
+        first_row: int = 0,
+    ) -> None:
+        """Show factor headers in the GUI.
+
+        Parameters
+        ----------
+        frame : tk.Frame
+            Frame to display factors.
+        factor_heading_list : list[str]
+            List of factor headings.
+        first_row : int, optional
+            First row to display factors.
+
+        """
+        header_columns = [
+            "Factor Name",
+            "Factor Description",
+            "Factor Type",
+            "Default Value",
+            "Include in Design?",
+            "Min Value",
+            "Max Value",
+            "# Decimals",
+        ]
+        for heading in header_columns:
+            frame.grid_columnconfigure(header_columns.index(heading))
+            label = tk.Label(
+                master=frame,
+                text=heading,
+                font=f"{TEXT_FAMILY} 14 bold",
+            )
+            label.grid(
+                row=first_row,
+                column=header_columns.index(heading),
+                padx=10,
+                pady=3,
+            )
+        # Insert horizontal separator
+        ttk.Separator(frame, orient="horizontal").grid(
+            row=first_row + 1, columnspan=len(header_columns), sticky="ew"
+        )
+
     def show_factor_defaults(
         self,
         base_object: Solver | Problem,
@@ -4224,6 +4782,7 @@ class NewExperimentWindow(tk.Toplevel):
         factor_dict: dict | None = None,
         is_model: bool = False,
         first_row: int = 1,
+        empty_rows_between: int = 0,
     ) -> tuple[dict, int]:
         """Show default factors for a solver or problem.
 
@@ -4257,56 +4816,55 @@ class NewExperimentWindow(tk.Toplevel):
         if is_model:
             base_object = base_object.model
 
-        for index, factor in enumerate(base_object.specifications):
-            que_length = index + first_row
-            fact_type = base_object.specifications[factor].get("datatype")
-            fact_type_str = fact_type.__name__
-            fact_descript = base_object.specifications[factor].get(
-                "description"
-            )
+        # Store outside of loop so we can return at end
+        row_index = first_row
+
+        factor_spec = base_object.specifications
+        for index, factor in enumerate(factor_spec):
+            # Update the row index
+            # Skip every other row to allow for the separator
+            row_index = first_row + index * (empty_rows_between + 1)
+
+            # Get the factor's datatype, description, and default value
+            f_type = factor_spec[factor].get("datatype")
+            f_type_str = f_type.__name__
+            f_description = factor_spec[factor].get("description")
             if factor_dict is not None:
-                factor_default = factor_dict[factor]
+                f_default = factor_dict[factor]
             else:
-                factor_default = base_object.specifications[factor].get(
-                    "default"
+                f_default = factor_spec[factor].get("default")
+
+            # Loop through and insert the factor data into the frame
+            column_data = [factor, f_description, f_type_str]
+            for column_index, column in enumerate(column_data):
+                frame.grid_columnconfigure(column_index)
+                label = tk.Label(
+                    master=frame,
+                    text=column,
+                    font=f"{TEXT_FAMILY} 12",
+                    wraplength=250,
+                    justify=tk.LEFT,
                 )
-
-            # Add label for factor names
-            display_name = f"{factor} - {fact_descript}"
-            factorname_label = tk.Label(
-                master=frame,
-                text=display_name,
-                font=f"{TEXT_FAMILY} 13",
-                wraplength=500,
-                justify="left",
-                anchor=tk.N + tk.W,
-            )
-            factorname_label.grid(row=que_length, column=0, sticky=tk.N + tk.W)
-
-            frame.grid_rowconfigure(que_length, weight=1)
-
-            # Add label for factor type
-            factortype_label = tk.Label(
-                master=frame,
-                text=fact_type_str,
-                font=f"{TEXT_FAMILY} 13",
-                width=20,
-                anchor="nw",
-            )
-            factortype_label.grid(row=que_length, column=1, sticky=tk.N + tk.W)
+                label.grid(
+                    row=row_index,
+                    column=column_index,
+                    padx=10,
+                    pady=3,
+                    sticky=tk.W,
+                )
 
             default_value = tk.StringVar()
-            if fact_type is bool:
+            if f_type is bool:
                 # Add option menu for true/false
-                default_value.set("True")  # Set default bool option
+                default_value.set(str(True))  # Set default bool option
                 bool_menu = ttk.OptionMenu(
-                    frame, default_value, "True", "True", "False"
+                    frame, default_value, str(True), str(True), str(False)
                 )
-                bool_menu.grid(row=que_length, column=2, sticky=tk.N + tk.W)
+                bool_menu.grid(row=row_index, column=3, sticky=tk.W + tk.E)
 
-            elif fact_type in (list, tuple):
+            elif f_type in (list, tuple):
                 # Add entry box for default value
-                default_len = len(str(factor_default))
+                default_len = len(str(f_default))
                 if default_len > entry_width:
                     entry_width = default_len
                     if default_len > 150:
@@ -4316,41 +4874,74 @@ class NewExperimentWindow(tk.Toplevel):
                     master=frame,
                     width=entry_width,
                     textvariable=default_value,
-                    justify="right",
+                    justify=tk.LEFT,
                 )
                 default_entry.grid(
-                    row=que_length, column=2, sticky=tk.N + tk.W, columnspan=5
+                    row=row_index, column=3, sticky=tk.W + tk.E, columnspan=5
                 )
                 # Display original default value
-                default_entry.insert(0, str(factor_default))
+                default_entry.insert(0, str(f_default))
 
             # Add entry box for default value
-            elif fact_type in (int, float):
+            elif f_type in (int, float):
                 default_entry = tk.Entry(
                     master=frame,
                     width=entry_width,
                     textvariable=default_value,
-                    justify="right",
+                    justify=tk.RIGHT,
                 )
-                default_entry.grid(row=que_length, column=2, sticky=tk.N + tk.W)
+                default_entry.grid(row=row_index, column=3, sticky=tk.W + tk.E)
                 # Display original default value
-                default_entry.insert(0, factor_default)
+                default_entry.insert(0, f_default)
 
             # add varibles to default list
             defaults[factor] = default_value
 
-        return defaults, que_length
+        return defaults, row_index
 
     def show_datafarming_options(
-        self, base_object, frame, IsModel=False, first_row=1
-    ):
+        self,
+        base_object: Solver | Problem | Model,
+        frame: tk.Frame,
+        first_row: int = 1,
+        empty_rows_between: int = 0,
+    ) -> tuple[dict, dict, dict, dict, dict, int]:
+        """Show data farming options for a solver or problem.
+
+        Parameters
+        ----------
+        base_object : Solver | Problem | Model
+            Solver, Problem, or Model object.
+        frame : tk.Frame
+            Frame to display factors.
+        first_row : int, optional
+            First row to display factors.
+        empty_rows_between : int, optional
+            Number of empty rows between factors.
+
+        Returns
+        -------
+        dict
+            Dictionary of factors and their check states.
+        dict
+            Dictionary of factors and their minimum values.
+        dict
+            Dictionary of factors and their maximum values.
+        dict
+            Dictionary of float factors and their number of decimals.
+        dict
+            Dictionary of factors and their widgets.
+        int
+            Last row to display factors.
+
+        """
         checkstates = {}  # holds variable for each factor's check state
         min_vals = {}  # holds variable for each factor's min value
         max_vals = {}  # holds variable for each factor's max values
         dec_vals = {}  # holds variable for each float factor's # decimals
         widgets = {}  # holds a list of each widget for min, max, and dec entry for each factor
 
-        if IsModel:
+        if isinstance(base_object, Model):
             specifications = base_object.model.specifications
         else:
             specifications = base_object.specifications
@@ -4359,8 +4950,9 @@ class NewExperimentWindow(tk.Toplevel):
             factor_datatype = specifications[factor].get("datatype")
             class_type = type(base_object).__base__
             widget_list = []
-            que_length = index + first_row
+            row_index = first_row + index * (empty_rows_between + 1)
 
+            # If the factor is an int, float, or bool, we can farm it
             if factor_datatype in (int, float, bool):
                 # Add check box to include in design
                 checkstate = tk.BooleanVar()
@@ -4368,17 +4960,17 @@ class NewExperimentWindow(tk.Toplevel):
                     master=frame,
                     variable=checkstate,
                     width=5,
-                    command=lambda: self.enable_datafarm_entry(class_type),
+                    command=lambda class_type=class_type: self.enable_datafarm_entry(
+                        class_type
+                    ),
                 )
-                checkbox.grid(row=que_length, column=3, sticky=tk.N + tk.W)
+                checkbox.grid(
+                    row=row_index, column=4, sticky=tk.W + tk.E, padx=5
+                )
                 checkstates[factor] = checkstate
 
                 if factor_datatype in (int, float):
                     # Add entry box for min val
-                    min_label = tk.Label(
-                        master=frame, text="Min Value", font=f"{TEXT_FAMILY} 11"
-                    )
-                    min_label.grid(row=que_length, column=4, sticky=tk.N + tk.W)
                     min_val = tk.StringVar()
                     min_entry = tk.Entry(
                         master=frame,
@@ -4386,16 +4978,14 @@ class NewExperimentWindow(tk.Toplevel):
                         textvariable=min_val,
                         justify="right",
                     )
-                    min_entry.grid(row=que_length, column=5, sticky=tk.N + tk.W)
+                    min_entry.grid(
+                        row=row_index, column=5, sticky=tk.W + tk.E, padx=5
+                    )
                     min_entry.configure(state="disabled")
                     min_vals[factor] = min_val
                     widget_list.append(min_entry)
 
                     # Add entry box for max val
-                    max_label = tk.Label(
-                        master=frame, text="Max Value", font=f"{TEXT_FAMILY} 11"
-                    )
-                    max_label.grid(row=que_length, column=6, sticky=tk.N + tk.W)
                     max_val = tk.StringVar()
                     max_entry = tk.Entry(
                         master=frame,
@@ -4403,21 +4993,15 @@ class NewExperimentWindow(tk.Toplevel):
                         textvariable=max_val,
                         justify="right",
                     )
-                    max_entry.grid(row=que_length, column=7, sticky=tk.N + tk.W)
+                    max_entry.grid(
+                        row=row_index, column=6, sticky=tk.W + tk.E, padx=5
+                    )
                     max_entry.configure(state="disabled")
                     max_vals[factor] = max_val
                     widget_list.append(max_entry)
 
                     # Add entry box for dec val for float factors
                     if factor_datatype is float:
-                        dec_label = tk.Label(
-                            master=frame,
-                            text="# Decimals",
-                            font=f"{TEXT_FAMILY} 11",
-                        )
-                        dec_label.grid(
-                            row=que_length, column=8, sticky=tk.N + tk.W
-                        )
                         dec_val = tk.StringVar()
                         dec_entry = tk.Entry(
                             master=frame,
@@ -4426,7 +5010,7 @@ class NewExperimentWindow(tk.Toplevel):
                             justify="right",
                         )
                         dec_entry.grid(
-                            row=que_length, column=9, sticky=tk.N + tk.W
+                            row=row_index, column=7, sticky=tk.W + tk.E, padx=5
                         )
                         dec_entry.configure(state="disabled")
                         dec_vals[factor] = dec_val
@@ -4434,7 +5018,7 @@ class NewExperimentWindow(tk.Toplevel):
 
                 widgets[factor] = widget_list
 
-        return checkstates, min_vals, max_vals, dec_vals, widgets, que_length
+        return checkstates, min_vals, max_vals, dec_vals, widgets, row_index
 
     def show_problem_factors(self, event=None):
         # clear previous selections
@@ -4477,24 +5061,24 @@ class NewExperimentWindow(tk.Toplevel):
         # self.model_headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
 
         # Create column for factor type
-        self.headertype_label = tk.Label(
+        self.header_lbl_type = tk.Label(
             master=self.problem_frame,
             text="Factor Type",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
-            anchor = tk.N + tk.W
+            anchor=tk.N + tk.W,
         )
-        self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
+        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
 
         # Create column for factor default values
-        self.headerdefault_label = tk.Label(
+        self.header_lbl_include = tk.Label(
             master=self.problem_frame,
             text="Default Value",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
-            anchor = tk.N + tk.W
+            anchor=tk.N + tk.W,
         )
-        self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
+        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
 
         """ Get problem information from directory and display"""
         # Get problem info from directory
@@ -4512,7 +5096,7 @@ class NewExperimentWindow(tk.Toplevel):
             text="Model Factors",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
-            anchor=tk.N + tk.W
+            anchor=tk.N + tk.W,
         )
         self.problem_headername_label.grid(
             row=last_row + 1, column=0, sticky=tk.N + tk.W
@@ -4563,37 +5147,39 @@ class NewExperimentWindow(tk.Toplevel):
 
         """ Initialize frames and headers"""
 
-        self.solver_frame = tk.Frame(master=self.solver_notebook_frame, bg="green")
+        self.solver_frame = tk.Frame(
+            master=self.solver_notebook_frame, bg="green"
+        )
         self.solver_frame.grid(row=1, column=0)
 
         # Create column for solver factor names
-        self.headername_label = tk.Label(
+        self.header_lbl_name = tk.Label(
             master=self.solver_frame,
             text="Solver Factors",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
             anchor="w",
         )
-        self.headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
+        self.header_lbl_name.grid(row=0, column=0, sticky=tk.N + tk.W)
 
         # Create column for factor type
-        self.headertype_label = tk.Label(
+        self.header_lbl_type = tk.Label(
             master=self.solver_frame,
             text="Factor Type",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
             anchor="w",
         )
-        self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
+        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
 
         # Create column for factor default values
-        self.headerdefault_label = tk.Label(
+        self.header_lbl_include = tk.Label(
             master=self.solver_frame,
             text="Default Value",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
         )
-        self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
+        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
 
         """ Get solver information from dicrectory and display"""
         # Get solver info from dictionary
@@ -4698,27 +5284,24 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.problem_headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
 
-        # self.model_headername_label = tk.Label(master = self.model_datafarm_frame, text = 'Model Factors', font = f"{TEXT_FAMILY} 13 bold", width = 20, anchor = 'w')
-        # self.model_headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
-
         # Create column for factor type
-        self.headertype_label = tk.Label(
+        self.header_lbl_type = tk.Label(
             master=self.problem_datafarm_frame,
             text="Factor Type",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
             anchor="w",
         )
-        self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
+        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
 
         # Create column for factor default values
-        self.headerdefault_label = tk.Label(
+        self.header_lbl_include = tk.Label(
             master=self.problem_datafarm_frame,
             text="Default Value",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
         )
-        self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
+        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
 
         """ Get problem information from dicrectory and display"""
         # Get problem info from directory
@@ -4841,70 +5424,110 @@ class NewExperimentWindow(tk.Toplevel):
         )
         self.create_problem_design_button.grid(row=2, column=2)
 
-    def show_solver_datafarm(self, event=None):
+    def show_solver_datafarm(self, event: tk.Event) -> None:
+        """Show solver data farming options.
+        
+        Parameters
+        ----------
+        event : tk.Event, optional
+            Event that triggered the function.
+        
+        """
         # clear previous selections
         self.clear_frame(self.solver_datafarm_frame)
 
-        """ Initialize frames and headers"""
-
+        # Initialize the frame for the solver data farming factor options
         self.solver_datafarm_frame = tk.Frame(
-            master=self.solver_datafarm_notebook_frame, bg="Red"
+            master=self.solver_datafarm_notebook_frame,
         )
-        self.solver_datafarm_frame.grid(row=1, column=0)
-        self.factor_display_canvas = tk.Canvas(
-            master=self.solver_datafarm_frame, bg="Orange"
-        )
-        self.factor_display_canvas.grid(row=1, column=0)
+        self.solver_datafarm_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
 
-        # Create column for solver factor names
-        self.headername_label = tk.Label(
-            master=self.solver_datafarm_frame,
-            text="Solver Factors",
-            font=f"{TEXT_FAMILY} 13 bold",
-            width=20,
-            anchor="w",
-        )
-        self.headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
+        # Add all the column headers
 
-        # Create column for factor type
-        self.headertype_label = tk.Label(
-            master=self.solver_datafarm_frame,
-            text="Factor Type",
-            font=f"{TEXT_FAMILY} 13 bold",
-            width=20,
-            anchor="w",
-        )
-        self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
+        self.show_factor_headers(self.solver_datafarm_frame)
 
-        # Create column for factor default values
-        self.headerdefault_label = tk.Label(
-            master=self.solver_datafarm_frame,
-            text="Default Value",
-            font=f"{TEXT_FAMILY} 13 bold",
-            width=20,
-        )
-        self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
-
-        """ Get solver information from dicrectory and display"""
         # Get solver info from dictionary
-        self.selected_datafarm_solver = self.solver_datafarm_var.get()
-        self.solver_datafarm_object = self.solver_list[
-            self.selected_datafarm_solver
-        ]()
-        # show problem factors and store default widgets to this dict
-        self.solver_datafarm_defaults, new_last_row = self.show_factor_defaults(
-            self.solver_datafarm_object, self.solver_datafarm_frame
-        )
-        (
-            self.solver_checkstates,
-            self.solver_min_vals,
-            self.solver_max_vals,
-            self.solver_dec_vals,
-            self.solver_datafarm_widgets,
-            last_row,
-        ) = self.show_datafarming_options(
-            self.solver_datafarm_object, self.solver_datafarm_frame
-        )
+        selected_solver_name = self.solver_datafarm_var.get()
+        selected_solver_object = self.solver_list[selected_solver_name]()
+
+        # Create a dictionary of factor objects
+        # Factor name maps to the factor object
+        self.factor_dict: dict[str, DFFactor] = {}
+
+        factors = selected_solver_object.specifications
+        for factor in factors:
+            # Get the factor's datatype, description, and default value
+            f_type = factors[factor].get("datatype")
+            f_description = factors[factor].get("description")
+            f_default = factors[factor].get("default")
+
+            if f_type is bool:
+                self.factor_dict[factor] = DFBoolean(
+                    factor, f_description, f_default
+                )
+            elif f_type is int:
+                self.factor_dict[factor] = DFInteger(
+                    factor, f_description, f_default
+                )
+            elif f_type is float:
+                self.factor_dict[factor] = DFFloat(
+                    factor, f_description, f_default
+                )
+            else:
+                raise NotImplementedError("Factor type not yet implemented.")
+
+        # Loop through and add everything to the frame
+        for index, factor in enumerate(self.factor_dict):
+            # Skip every other row to allow for the separator
+            row_index = index * 2 + 2
+
+            # Add the line separator
+            ttk.Separator(self.solver_datafarm_frame, orient="horizontal").grid(
+                row=row_index + 1, column=0, columnspan=8, sticky=tk.E + tk.W
+            )
+
+            # Get the factor object
+            factor_obj = self.factor_dict[factor]
+            # Get the name label
+            name_label = factor_obj.get_name_label(self.solver_datafarm_frame)
+            name_label.grid(row=row_index, column=0, padx=10, pady=3)
+            # Get the description label
+            desc_label = factor_obj.get_description_label(
+                self.solver_datafarm_frame
+            )
+            desc_label.grid(row=row_index, column=1, padx=10, pady=3)
+            # Get the type label
+            type_label = factor_obj.get_type_label(self.solver_datafarm_frame)
+            type_label.grid(row=row_index, column=2, padx=10, pady=3)
+            # Get the default value entry
+            default_entry = factor_obj.get_default_entry(
+                self.solver_datafarm_frame
+            )
+            default_entry.grid(row=row_index, column=3, padx=10, pady=3)
+            # Get the include in design checkbutton
+            include_checkbutton = factor_obj.get_include_checkbutton(
+                self.solver_datafarm_frame
+            )
+            if include_checkbutton is None:
+                continue
+            include_checkbutton.grid(row=row_index, column=4, padx=10, pady=3)
+            # Get the min value entry
+            min_entry = factor_obj.get_minimum_entry(self.solver_datafarm_frame)
+            if min_entry is None:
+                continue
+            min_entry.grid(row=row_index, column=5, padx=10, pady=3)
+            # Get the max value entry
+            max_entry = factor_obj.get_maximum_entry(self.solver_datafarm_frame)
+            max_entry.grid(row=row_index, column=6, padx=10, pady=3)
+            # Get the decimal value entry
+            dec_entry = factor_obj.get_num_decimals_entry(
+                self.solver_datafarm_frame
+            )
+            if dec_entry is None:
+                continue
+            dec_entry.grid(row=row_index, column=7, padx=10, pady=3)
+
+        new_last_row = row_index * 2 + 2
 
         """Options for creaing design"""
         # Design type
@@ -4914,6 +5537,7 @@ class NewExperimentWindow(tk.Toplevel):
             font=f"{TEXT_FAMILY} 13",
             width=20,
         )
+
         self.design_type_label.grid(row=new_last_row + 1, column=0)
 
         self.solver_design_var = tk.StringVar()
@@ -4956,7 +5580,7 @@ class NewExperimentWindow(tk.Toplevel):
         # get unique solver design name
         solver_name = self.get_unique_name(
             self.master_solver_dict,
-            f"{self.solver_datafarm_object.name}_design",
+            f"{selected_solver_object.name}_design",
         )
         self.solver_design_name_var.set(solver_name)
         self.solver_design_name_entry = tk.Entry(
@@ -4979,12 +5603,12 @@ class NewExperimentWindow(tk.Toplevel):
             for factor in self.solver_checkstates:
                 checkstate = self.solver_checkstates[factor].get()
                 if factor in self.solver_datafarm_widgets:
-                    widget_list = self.solver_datafarm_widgets[factor]
+                    datafarm_widget_list = self.solver_datafarm_widgets[factor]
                     if checkstate:
-                        for widget in widget_list:
+                        for widget in datafarm_widget_list:
                             widget.configure(state="normal")
                     else:
-                        for widget in widget_list:
+                        for widget in datafarm_widget_list:
                             widget.delete(0, tk.END)
                             widget.configure(state="disabled")
 
@@ -4992,12 +5616,12 @@ class NewExperimentWindow(tk.Toplevel):
             for factor in self.problem_checkstates:
                 checkstate = self.problem_checkstates[factor].get()
                 if factor in self.problem_datafarm_widgets:
-                    widget_list = self.problem_datafarm_widgets[factor]
+                    datafarm_widget_list = self.problem_datafarm_widgets[factor]
                     if checkstate:
-                        for widget in widget_list:
+                        for widget in datafarm_widget_list:
                             widget.configure(state="normal")
                     else:
-                        for widget in widget_list:
+                        for widget in datafarm_widget_list:
                             widget.delete(0, tk.END)
                             widget.configure(state="disabled")
 
@@ -5525,24 +6149,24 @@ class NewExperimentWindow(tk.Toplevel):
         self.factor_display_canvas.grid(row=1, column=0)
 
         # Create column for solver factor names
-        self.headername_label = tk.Label(
+        self.header_lbl_name = tk.Label(
             master=self.solver_frame,
             text="Solver Factors",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
             anchor="w",
         )
-        self.headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
+        self.header_lbl_name.grid(row=0, column=0, sticky=tk.N + tk.W)
 
         # Create column for factor type
-        self.headertype_label = tk.Label(
+        self.header_lbl_type = tk.Label(
             master=self.solver_frame,
             text="Factor Type",
             font=f"{TEXT_FAMILY} 13 bold",
             width=20,
             anchor="w",
         )
-        self.headertype_label.grid(row=0, column=1, sticky=tk.N + tk.W)
+        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
 
         # Create column for factor default values
         self.headerdefault_label = tk.Label(
