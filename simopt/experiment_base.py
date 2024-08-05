@@ -2616,12 +2616,21 @@ def save_plot(solver_name, problem_name, plot_type, normalize, extra=None, plot_
     if not os.path.exists("./experiments/plots"):
         os.makedirs("./experiments", exist_ok=True)
         os.makedirs("./experiments/plots")
+    #plt.savefig(extended_path_name, bbox_inches="tight")
+    
+    # Check to make sure file does not override previous images
+    counter = 1
+    new_path_name = path_name # set incase counter not needed
+    while os.path.exists(extended_path_name):
+        extended_path_name = f"{path_name} ({counter}){ext}"
+        new_path_name = f"{path_name} ({counter})" # use for pickle
+        counter += 1
     plt.savefig(extended_path_name, bbox_inches="tight")
     
     # save plot as pickle
     if save_as_pickle:
         fig = plt.gcf()
-        pickle_path = f'{path_name}.pkl' 
+        pickle_path = f'{new_path_name}.pkl' 
         with open(pickle_path, 'wb') as f:
            pickle.dump(fig,f) 
     # Return path_name for use in GUI.
@@ -3235,7 +3244,7 @@ def make_full_metaexperiment(existing_experiments, unique_solvers, unique_proble
     return metaexperiment
 
 
-def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None, IsProblem = False,):
+def create_design(name, factor_headers, factor_settings_filename, fixed_factors, n_stacks='1', design_type='nolhs', cross_design_factors=None, class_type='solver', csv_filename=None):
     """
     Parameters
     ----------
@@ -3253,8 +3262,11 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
         dict of lists of values of factors to include in cross design. The default is None.
-    IsProblem : bool, optional
-        False if creating design over solver factors, True if creating design over problem/model factors  
+    object_type: str, optional
+        determines class type (solver, problem, or model) that design is over. Problem automatically combines problem factors with model factors. Choose model to run without any associated problem(s).
+        default is 'solver'
+    csv_filename: str, optional
+        override default csv file name
 
     Returns
     -------
@@ -3262,16 +3274,17 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         list that contains a dict of factor values for every design point.
     """
     # Search directories to create object based on name provided.
-    if IsProblem == False:
+    if class_type == 'solver': 
         design_object = solver_directory[name]()
-    else:
-        design_object = problem_directory[name]()
+    elif class_type == 'problem':
+        design_object= problem_directory[name]()    
+    elif class_type == 'model':
+        design_object = model_directory[name]()
 
 
     if cross_design_factors is None:
         cross_design_factors = {}
 
-    print('design object', design_object)
     # Create solver factor design from .txt file of factor settings.
     command = f"stack_{design_type}.rb -s {n_stacks} ./data_farming_experiments/{factor_settings_filename}.txt > ./data_farming_experiments/{factor_settings_filename}_design.txt"
     os.system(command)
@@ -3283,12 +3296,13 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
     design_table = pd.read_csv(f"./data_farming_experiments/{design_filename}.txt", header=None, delimiter="\t", encoding="utf-8")
 
     # Create design csv file from design table.
-    csv_filename = f"./data_farming_experiments/{design_filename}.csv"
+    if csv_filename is None:
+        csv_filename = f"./data_farming_experiments/{factor_settings_filename}.csv"
 
     design_table.columns = factor_headers  # Add factor headers names to dt.
     
     # Combine model and problem specifications for problems
-    if IsProblem == True:
+    if class_type == 'problem':
         specifications = {**design_object.specifications, **design_object.model.specifications}
     else:
         specifications = design_object.specifications
@@ -3298,9 +3312,8 @@ def create_design(name, factor_headers, factor_settings_filename, fixed_factors,
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-            print('fixed factors', fixed_factors)
 
-    print('design table before fixed', design_table)
+
     # Add fixed factors to dt.
     for factor in fixed_factors:
         design_table[factor] = str(fixed_factors[factor])  # Change to string to ensure correct addition of tuples & list data types.
