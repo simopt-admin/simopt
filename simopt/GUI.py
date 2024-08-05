@@ -56,8 +56,8 @@ class Main_Menu_Window(tk.Tk):
         # Button to open new experiment window
         self.new_experiment_button = tk.Button(master = self.master, text = 'New Experiment Page', 
                                             font = 'Calibri 13', width = 50, command = self.open_new_experiment)
-        self.new_experiment_button.place( relx = .15, rely = .5) 
-        self.datafarm_prob_sol_button.configure( background = 'light gray')
+        self.new_experiment_button.place( relx = .15, rely = .4) 
+        self.new_experiment_button.configure( background = 'light gray')
         
     def open_experiment_window(self):
         
@@ -7526,14 +7526,7 @@ class Data_Farming_Window():
                     self.current_dec_entry.configure(state = 'disabled')
                     
             self.check_index += 1     
-
-class Solver_Datafarming_Window(tk.Toplevel):
-    def __init__(self, master):
-        
-        pass
-            
-        
-        
+     
     
 # My code ends here
 
