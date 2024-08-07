@@ -6415,10 +6415,10 @@ def create_design(
     factor_headers: list[str],
     factor_settings_filename: str,
     fixed_factors: dict,
+    class_type: Literal["solver", "problem", "model"],
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
-    class_type: Literal["solver", "problem", "model"] = "problem",
     csv_filename: str | None = None,
 ) -> list:
     """Create a design of solver or problem factors using Ruby.
