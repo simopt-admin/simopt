@@ -22,7 +22,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
 from simopt.base import Problem, Solution, Solver
-from simopt.directory import problem_directory, solver_directory
+from simopt.directory import problem_directory, solver_directory, model_directory
 
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
@@ -960,7 +960,7 @@ class ProblemSolver:
                 error_msg = "Solver rename cannot be an empty string."
                 raise ValueError(error_msg)
             self.solver.name = solver_rename
-        
+
         # Initialize problem.
         if isinstance(problem, Problem):  # Method #2
             self.problem = problem
@@ -2059,7 +2059,7 @@ def post_normalize(
             )
 
         experiment.has_postnormalized = True
-        
+
         # Save ProblemSolver object to .pickle file if specified.
         if create_pair_pickles:
             experiment.record_experiment_results()
@@ -5114,28 +5114,28 @@ def save_plot(
     else:
         path_name = os.path.join(plot_dir, plot_title)
     # add extension to path name
-    extended_path_name = f'{path_name}{ext}'
+    extended_path_name = f"{path_name}{ext}"
     # Create directories if they do no exist.
     if not os.path.exists("./experiments/plots"):
         os.makedirs("./experiments", exist_ok=True)
         os.makedirs("./experiments/plots")
-    #plt.savefig(extended_path_name, bbox_inches="tight")
-    
+    # plt.savefig(extended_path_name, bbox_inches="tight")
+
     # Check to make sure file does not override previous images
     counter = 1
-    new_path_name = path_name # set incase counter not needed
+    new_path_name = path_name  # set incase counter not needed
     while os.path.exists(extended_path_name):
         extended_path_name = f"{path_name} ({counter}){ext}"
-        new_path_name = f"{path_name} ({counter})" # use for pickle
+        new_path_name = f"{path_name} ({counter})"  # use for pickle
         counter += 1
     plt.savefig(extended_path_name, bbox_inches="tight")
 
     # save plot as pickle
     if save_as_pickle:
         fig = plt.gcf()
-        pickle_path = f'{new_path_name}.pkl' 
-        with open(pickle_path, 'wb') as f:
-           pickle.dump(fig,f) 
+        pickle_path = f"{new_path_name}.pkl"
+        with open(pickle_path, "wb") as f:
+            pickle.dump(fig, f)
     # Return path_name for use in GUI.
     return extended_path_name
 
@@ -5766,7 +5766,7 @@ class ProblemsSolvers:
                 experiment = self.experiments[solver_idx][problem_idx]
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
-                if not experiment.has_run: 
+                if not experiment.has_run:
                     print(
                         f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}."
                     )
@@ -6409,6 +6409,7 @@ def make_full_metaexperiment(
     metaexperiment = ProblemsSolvers(experiments=full_experiments)
     return metaexperiment
 
+
 def create_design(
     name: str,
     factor_headers: list[str],
@@ -6417,8 +6418,8 @@ def create_design(
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
-    class_type = 'solver',
-    csv_filename = None,
+    class_type: Literal["solver", "problem", "model"] = "problem",
+    csv_filename: str | None = None,
 ) -> list:
     """Create a design of solver or problem factors using Ruby.
 
@@ -6438,7 +6439,7 @@ def create_design(
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
         dict of lists of values of factors to include in cross design. The default is None.
-    object_type: str, optional
+    class_type: str, optional
         determines class type (solver, problem, or model) that design is over. Problem automatically combines problem factors with model factors. Choose model to run without any associated problem(s).
         default is 'solver'
     csv_filename: str, optional
@@ -6460,6 +6461,12 @@ def create_design(
     ValueError
 
     """
+    # Default values
+    if cross_design_factors is None:
+        cross_design_factors = {}
+    if csv_filename is None:
+        csv_filename = factor_settings_filename
+
     # Type checking
     if not isinstance(name, str):
         error_msg = "Name must be a string."
@@ -6481,12 +6488,16 @@ def create_design(
     if not isinstance(design_type, str):
         error_msg = "Design type must be a string."
         raise TypeError(error_msg)
-    if not isinstance(cross_design_factors, (dict, type(None))):
+    if not isinstance(cross_design_factors, dict):
         error_msg = "Cross design factors must be a dictionary or None."
         raise TypeError(error_msg)
-    if not isinstance(is_problem, bool):
-        error_msg = "is_problem must be a boolean."
+    if not isinstance(class_type, str):
+        error_msg = "Class type must be a string."
         raise TypeError(error_msg)
+    if not isinstance(csv_filename, str):
+        error_msg = "CSV filename must be a string or None."
+        raise TypeError(error_msg)
+    
     # TODO: add additional checking
     # Value checking
     if n_stacks <= 0:
@@ -6496,16 +6507,21 @@ def create_design(
         error_msg = "Invalid design type."
         raise ValueError(error_msg)
 
-    # Assign default value for unprovided parameters.
-    if cross_design_factors is None:
-        cross_design_factors = {}
-        
     # Search directories to create object based on name provided.
-    if class_type == 'solver': 
+    if class_type == "solver":
+        if name not in solver_directory:
+            error_msg = f"Solver name {name} not found in solver directory."
+            raise ValueError(error_msg)
         design_object = solver_directory[name]()
-    elif class_type == 'problem':
-        design_object= problem_directory[name]()    
-    elif class_type == 'model':
+    elif class_type == "problem":
+        if name not in problem_directory:
+            error_msg = f"Problem name {name} not found in problem directory."
+            raise ValueError(error_msg)
+        design_object = problem_directory[name]()
+    elif class_type == "model":
+        if name not in model_directory:
+            error_msg = f"Model name {name} not found in model directory."
+            raise ValueError(error_msg)
         design_object = model_directory[name]()
 
     # Check if Ruby and the specified design type are installed/on the system path.
@@ -6523,23 +6539,6 @@ def create_design(
         if not results.stdout.decode("utf-8").strip() == "true":
             error_msg = f"Design type {design_type} is either not valid, not installed, or not in your system path."
             raise Exception(error_msg)
-
-    # Search directories to create object based on name provided.
-    # if is_problem:
-    #     design_object = problem_directory[name]()
-    # else:
-    #     design_object = solver_directory[name]()
-
-    if name in problem_directory:
-        design_object = problem_directory[name]()
-        is_problem = True
-    elif name in solver_directory:
-        design_object = solver_directory[name]()
-        is_problem = False
-    else:
-        raise Exception(
-            f"Name {name} not found in problem or solver directories."
-        )
 
     # Make directory to store the current design file.
     data_farming_path = os.path.join(EXPERIMENT_DIR, "data_farming")
@@ -6581,15 +6580,14 @@ def create_design(
         error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
         raise Exception(error_msg) from pd.errors.EmptyDataError
 
-    # Create design csv file from design table.
-    if csv_filename is None:
-        csv_filename = f"./data_farming_experiments/{factor_settings_filename}.csv"
-
     design_table.columns = factor_headers  # Add factor headers names to dt.
 
     # Combine model and problem specifications for problems
-    if class_type == 'problem':
-        specifications = {**design_object.specifications, **design_object.model.specifications}
+    if class_type == "problem":
+        specifications = {
+            **design_object.specifications,
+            **design_object.model.specifications,
+        }
     else:
         specifications = design_object.specifications
 
