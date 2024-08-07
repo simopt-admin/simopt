@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-"""
-Summary
--------
-Provide dictionary directories listing solvers, problems, and models.
-"""
+"""Provide dictionary directories listing solvers, problems, and models."""
+
 from __future__ import annotations
 
 # import solvers
@@ -134,26 +131,6 @@ model_directory: dict[str, "Model"] = {
     "NETWORK": Network,
     "AMUSEMENTPARK": AmusementPark,
 }
-model_unabbreviated_directory: dict[str, "Model"] = {
-    "Deterministic Function + Noise": ExampleModel,
-    "Continuous Newsvendor": CntNV,
-    "MM1 Queue": MM1Queue,
-    "Facility Sizing": FacilitySize,
-    "Revenue Management Temporal Demand": RMITD,
-    "(s, S) Inventory": SSCont,
-    "Iron Ore": IronOre,
-    "Dynamic Newsvendor": DynamNews,
-    "Dual Sourcing": DualSourcing,
-    "Contamination": Contamination,
-    "Chess Matchmaking": ChessMatchmaking,
-    "Stochastic Activity Network": SAN,
-    "Hotel Booking": Hotel,
-    "Restaurant Table Allocation": TableAllocation,
-    "Gamma Parameter Estimation": ParameterEstimation,
-    "Fixed Stochastic Activity Network": FixedSAN,
-    "Communication Networks System": Network,
-    "Amusement Park (SDDN)": AmusementPark,
-}
 model_problem_unabbreviated_directory: dict[str, str] = {
     "Min Deterministic Function + Noise (SUCG)": "EXAMPLE",
     "Max Profit for Continuous Newsvendor (SBCG)": "CNTNEWS",
@@ -199,4 +176,24 @@ model_problem_class_directory: dict[str, "Model"] = {
     "Min Mean Longest Path for Fixed Stochastic Activity Network (SBCG)": FixedSAN,
     "Min Total Cost for Communication Networks System (SDCN)": Network,
     "Min Total Departed Visitors for Amusement Park (SDDN)": AmusementPark,
+}
+model_unabbreviated_directory: dict[str, "Model"] = {
+    "Deterministic Function + Noise": ExampleModel,
+    "Continuous Newsvendor": CntNV,
+    "MM1 Queue": MM1Queue,
+    "Facility Sizing": FacilitySize,
+    "Revenue Management Temporal Demand": RMITD,
+    "(s, S) Inventory": SSCont,
+    "Iron Ore": IronOre,
+    "Dynamic Newsvendor": DynamNews,
+    "Dual Sourcing": DualSourcing,
+    "Contamination": Contamination,
+    "Chess Matchmaking": ChessMatchmaking,
+    "Stochastic Activity Network": SAN,
+    "Hotel Booking": Hotel,
+    "Restaurant Table Allocation": TableAllocation,
+    "Gamma Parameter Estimation": ParameterEstimation,
+    "Fixed Stochastic Activity Network": FixedSAN,
+    "Communication Networks System": Network,
+    "Amusement Park (SDDN)": AmusementPark,
 }

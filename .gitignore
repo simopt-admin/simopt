@@ -18,7 +18,5 @@ docs/_build/**
 # Pickle files
 .pickle
 
-# Experiment results
-experiments/logs/
-experiments/outputs/
-experiments/plots/
+# Experiment Results
+experiments/*/
