@@ -8,10 +8,8 @@ A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
 """
 import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
 
-from ..base import Solution, Solver
+from simopt.base import Solution, Solver
 
 class NelderMead(Solver):
     """The Nelder-Mead algorithm, which maintains a simplex of points that moves around the feasible

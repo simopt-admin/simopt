@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 """
 import numpy as np
 
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class RMITD(Model):
@@ -397,3 +397,20 @@ class RMITDMaxRevenue(Problem):
             if self.check_deterministic_constraints(x):
                 break
         return x
+
+    def response_dict_to_stoch_constraints(self, response_dict):
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] <= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        tuple
+            vector of LHSs of stochastic constraint
+        """
+        raise NotImplementedError

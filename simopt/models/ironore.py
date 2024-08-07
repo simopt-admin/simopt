@@ -12,7 +12,7 @@ Changed get_random_solution quantiles
 import numpy as np
 from math import sqrt, copysign
 
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class IronOre(Model):

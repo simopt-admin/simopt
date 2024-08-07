@@ -9,10 +9,8 @@ A detailed description of the solver can be found
 from numpy.linalg import norm
 import numpy as np
 import math
-import warnings
-warnings.filterwarnings("ignore")
 
-from ..base import Solver
+from simopt.base import Solver
 
 
 class STRONG(Solver):
