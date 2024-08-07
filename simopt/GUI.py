@@ -661,7 +661,7 @@ class MainMenuWindow(tk.Tk):
         # Button to open original main window to run experiments across solvers & problems
         self.experiment_button = tk.Button(
             master=self.master,
-            text="Problem-Solver Experiment",
+            text="Run Single Problem-Solver Experiment",
             width=50,
             command=self.open_experiment_window,
         )
@@ -671,11 +671,11 @@ class MainMenuWindow(tk.Tk):
         # Button to open model data farming window
         self.datafarm_model_button = tk.Button(
             master=self.master,
-            text="Model Data Farming",
+            text="Data Farm Models",
             width=50,
             command=self.open_model_datafarming,
         )
-        self.datafarm_model_button.place(relx=0.15, rely=0.3)
+        self.datafarm_model_button.place(relx=0.15, rely=0.35)
         self.datafarm_model_button.configure(background="light gray")
 
         # # Button to open solver & problem data farming window
@@ -688,15 +688,15 @@ class MainMenuWindow(tk.Tk):
         # self.datafarm_prob_sol_button.place(relx=0.15, rely=0.4)
         # self.datafarm_prob_sol_button.configure(background="light gray")
 
-        # # Button to open new experiment window
-        # self.new_experiment_button = tk.Button(
-        #     master=self.master,
-        #     text="New Experiment Page",
-        #     width=50,
-        #     command=self.open_new_experiment,
-        # )
-        # self.new_experiment_button.place(relx=0.15, rely=0.5)
-        # self.datafarm_prob_sol_button.configure(background="light gray")
+        # Button to open new experiment window
+        self.new_experiment_button = tk.Button(
+            master=self.master,
+            text="Data Farm Solvers, Problems, and Models",
+            width=50,
+            command=self.open_new_experiment,
+        )
+        self.new_experiment_button.place(relx=0.15, rely=0.5)
+        self.new_experiment_button.configure(background="light gray")
 
         # Open the new experiment window and hide the main menu window
         # self.open_new_experiment()
@@ -5928,6 +5928,7 @@ class NewExperimentWindow(tk.Toplevel):
                 cross_design_factors=self.solver_cross_design_factors,
                 n_stacks=n_stacks,
                 design_type=design_type,
+                class_type="solver",
             )
         except Exception as e:
             # Give error message if design creation fails
@@ -10908,7 +10909,7 @@ class DataFarmingWindow:
         self.design_filename_label.grid(row=0, column=2)
         self.design_filename_var = (
             tk.StringVar()
-        )  # variable to hold user specification of desing file name
+        )  # variable to hold user specification of design file name
         self.design_filename_var.set(self.experiment_name)
         self.design_filename_entry = tk.Entry(
             master=self.design_frame,
