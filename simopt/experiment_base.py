@@ -5114,15 +5114,28 @@ def save_plot(
     else:
         path_name = os.path.join(plot_dir, plot_title)
     # add extension to path name
-    extended_path_name = f"{path_name}{ext}"
+    extended_path_name = f'{path_name}{ext}'
+    # Create directories if they do no exist.
+    if not os.path.exists("./experiments/plots"):
+        os.makedirs("./experiments", exist_ok=True)
+        os.makedirs("./experiments/plots")
+    #plt.savefig(extended_path_name, bbox_inches="tight")
+    
+    # Check to make sure file does not override previous images
+    counter = 1
+    new_path_name = path_name # set incase counter not needed
+    while os.path.exists(extended_path_name):
+        extended_path_name = f"{path_name} ({counter}){ext}"
+        new_path_name = f"{path_name} ({counter})" # use for pickle
+        counter += 1
     plt.savefig(extended_path_name, bbox_inches="tight")
 
     # save plot as pickle
     if save_as_pickle:
         fig = plt.gcf()
-        pickle_path = f"{path_name}.pkl"
-        with open(pickle_path, "wb") as f:
-            pickle.dump(fig, f)
+        pickle_path = f'{new_path_name}.pkl' 
+        with open(pickle_path, 'wb') as f:
+           pickle.dump(fig,f) 
     # Return path_name for use in GUI.
     return extended_path_name
 
@@ -6396,7 +6409,6 @@ def make_full_metaexperiment(
     metaexperiment = ProblemsSolvers(experiments=full_experiments)
     return metaexperiment
 
-
 def create_design(
     name: str,
     factor_headers: list[str],
@@ -6405,7 +6417,8 @@ def create_design(
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
-    is_problem: bool = False,
+    class_type = 'solver',
+    csv_filename = None,
 ) -> list:
     """Create a design of solver or problem factors using Ruby.
 
@@ -6425,8 +6438,11 @@ def create_design(
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
         dict of lists of values of factors to include in cross design. The default is None.
-    is_problem : bool, optional
-        False if creating design over solver factors, True if creating design over problem/model factors
+    object_type: str, optional
+        determines class type (solver, problem, or model) that design is over. Problem automatically combines problem factors with model factors. Choose model to run without any associated problem(s).
+        default is 'solver'
+    csv_filename: str, optional
+        override default csv file name
 
     Returns
     -------
@@ -6471,6 +6487,7 @@ def create_design(
     if not isinstance(is_problem, bool):
         error_msg = "is_problem must be a boolean."
         raise TypeError(error_msg)
+    # TODO: add additional checking
     # Value checking
     if n_stacks <= 0:
         error_msg = "Number of stacks must be positive."
@@ -6482,6 +6499,14 @@ def create_design(
     # Assign default value for unprovided parameters.
     if cross_design_factors is None:
         cross_design_factors = {}
+        
+    # Search directories to create object based on name provided.
+    if class_type == 'solver': 
+        design_object = solver_directory[name]()
+    elif class_type == 'problem':
+        design_object= problem_directory[name]()    
+    elif class_type == 'model':
+        design_object = model_directory[name]()
 
     # Check if Ruby and the specified design type are installed/on the system path.
     if shutil.which("ruby") is None:
@@ -6556,14 +6581,15 @@ def create_design(
         error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
         raise Exception(error_msg) from pd.errors.EmptyDataError
 
+    # Create design csv file from design table.
+    if csv_filename is None:
+        csv_filename = f"./data_farming_experiments/{factor_settings_filename}.csv"
+
     design_table.columns = factor_headers  # Add factor headers names to dt.
 
     # Combine model and problem specifications for problems
-    if is_problem:
-        specifications = {
-            **design_object.specifications,
-            **design_object.model.specifications,
-        }
+    if class_type == 'problem':
+        specifications = {**design_object.specifications, **design_object.model.specifications}
     else:
         specifications = design_object.specifications
 
@@ -6573,12 +6599,6 @@ def create_design(
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-    # Print fixed factors to console.
-    # fixed_factors_string = str(fixed_factors).replace("{", "").replace("}", "")
-    # fixed_factors_multiline = "\n\t".join(fixed_factors_string.split(", "))
-    # print("Fixed Factors", fixed_factors_multiline, sep="\n\t")
-
-    # print("\nDesign Table Before Fixed\b", design_table)
     # Add fixed factors to dt.
     for factor in fixed_factors:
         design_table[factor] = str(
