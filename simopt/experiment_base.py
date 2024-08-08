@@ -24,7 +24,11 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
 from simopt.base import Problem, Solution, Solver
-from simopt.directory import problem_directory, solver_directory, model_directory
+from simopt.directory import (
+    problem_directory,
+    solver_directory,
+    model_directory,
+)
 
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
@@ -66,7 +70,7 @@ class Curve:
     @property
     def n_points(self) -> int:
         """Number of values in x- and y- vectors."""
-        return self.__n_points
+        return len(self.x_vals)
 
     def __init__(self, x_vals: list[float], y_vals: list[float]) -> None:
         """Initialize a curve with x- and y-values.
@@ -103,7 +107,6 @@ class Curve:
         # Each attribute is read-only
         self.__x_vals = x_vals
         self.__y_vals = y_vals
-        self.__n_points = len(x_vals)
 
     def lookup(self, x_val: float) -> float:
         """Lookup the y-value of the curve at an intermediate x-value.
@@ -1158,10 +1161,10 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split("\\")[-1]
-            self.record_experiment_results(
-                file_name=file_name
-            )
+            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
+                "\\"
+            )[-1]
+            self.record_experiment_results(file_name=file_name)
 
     def run_multithread(self, mrep: int) -> tuple:
         """Run a single macroreplication of the solver on the problem.
@@ -1340,10 +1343,10 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split("\\")[-1]
-            self.record_experiment_results(
-                file_name=file_name
-            )
+            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
+                "\\"
+            )[-1]
+            self.record_experiment_results(file_name=file_name)
 
     def post_replicate_multithread(self, mrep: int) -> tuple:
         """Run postreplications at solutions recommended by the solver.
@@ -1633,7 +1636,7 @@ class ProblemSolver:
 
         file_path = os.path.join(EXPERIMENT_DIR, file_name)
         folder_name = os.path.dirname(file_path)
-        
+
         print(f"File Name: {file_name}")
         print(f"Folder Name: {folder_name}")
         print(f"File Path: {file_path}")
@@ -1787,7 +1790,9 @@ def trim_solver_results(
         if not isinstance(intermediate_budgets, list):
             error_msg += f" Found {type(intermediate_budgets)}."
         else:
-            error_msg += f" Found {[type(budget) for budget in intermediate_budgets]}."
+            error_msg += (
+                f" Found {[type(budget) for budget in intermediate_budgets]}."
+            )
         raise TypeError(error_msg)
 
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
@@ -1930,9 +1935,7 @@ def post_normalize(
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
     baseline_rngs = [
-        MRG32k3a(
-            s_ss_sss_index=[0, experiment.problem.model.n_rngs + rng_index, 0]
-        )
+        MRG32k3a(s_ss_sss_index=[0, rng_index, 0])
         for rng_index in range(experiment.problem.model.n_rngs)
     ]
     x0 = ref_experiment.problem.factors["initial_solution"]
@@ -2095,10 +2098,10 @@ def post_normalize(
 
         # Save ProblemSolver object to .pickle file if specified.
         if create_pair_pickles:
-            file_name = experiment.file_name_path.split(EXPERIMENT_DIR)[-1].split("\\")[-1]
-            experiment.record_experiment_results(
-                file_name=file_name
-            )
+            file_name = experiment.file_name_path.split(EXPERIMENT_DIR)[
+                -1
+            ].split("\\")[-1]
+            experiment.record_experiment_results(file_name=file_name)
 
 
 def bootstrap_sample_all(
@@ -6538,7 +6541,7 @@ def create_design(
     if not isinstance(csv_filename, str):
         error_msg = "CSV filename must be a string or None."
         raise TypeError(error_msg)
-    
+
     # TODO: add additional checking
     # Value checking
     if n_stacks <= 0:

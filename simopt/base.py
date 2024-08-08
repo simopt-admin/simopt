@@ -161,7 +161,7 @@ class Solver(ABC):
             True if the two solvers are equivalent, otherwise False.
 
         """
-        return type(self) == type(other) and self.factors == other.factors
+        return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
         """Return the hash value of the solver.
@@ -689,7 +689,7 @@ class Problem(ABC):
             True if the two problems are equivalent, otherwise False.
 
         """
-        if type(self) == type(other) and self.factors == other.factors:
+        if type(self) is type(other) and self.factors == other.factors:
             # Check if non-decision-variable factors of models are the same.
             non_decision_factors = (
                 set(self.model.factors.keys()) - self.model_decision_factors
@@ -1300,7 +1300,7 @@ class Model(ABC):
             True if the two models are equivalent, otherwise False.
 
         """
-        return type(self) == type(other) and self.factors == other.factors
+        return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
         """Return the hash value of the model.
@@ -1492,11 +1492,7 @@ class Solution:
     @property
     def dim(self) -> int:
         """Number of decision variables describing `x`."""
-        return self.__dim
-
-    @dim.setter
-    def dim(self, value: int) -> None:
-        self.__dim = value
+        return len(self.__x)
 
     @property
     def decision_factors(self) -> dict:
@@ -1619,7 +1615,6 @@ class Solution:
         """
         super().__init__()
         self.x = x
-        self.dim = len(x)
         self.decision_factors = problem.vector_to_factor_dict(x)
         self.n_reps = 0
         self.det_objectives, self.det_objectives_gradients = (
