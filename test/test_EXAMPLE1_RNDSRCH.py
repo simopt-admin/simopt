@@ -85,7 +85,8 @@ class test_EXAMPLE1_RNDSRCH(unittest.TestCase):
         self.myexperiment.all_recommended_xs = self.expected_all_recommended_xs
         self.myexperiment.all_intermediate_budgets = self.expected_all_intermediate_budgets
         self.myexperiment.all_est_objectives = self.expected_all_est_objectives
-
+        self.myexperiment.has_run = True
+        self.myexperiment.has_postreplicated= True
         # Check actual post-normalization results against expected
         post_normalize([self.myexperiment], n_postreps_init_opt=self.num_postreps)
 

@@ -122,7 +122,7 @@ class ADAM(Solver):
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -209,6 +209,10 @@ class ADAM(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+
+        # Loop through the budgets and convert any numpy int32s to Python ints.
+        for i in range(len(intermediate_budgets)):
+            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

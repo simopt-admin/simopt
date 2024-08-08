@@ -1,3 +1,4 @@
+"""Create test cases for all compatible problem-solver pairs."""
 # TO RUN FROM TOP DIRECTORY:
 # python -m test.make_tests
 
@@ -9,6 +10,21 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 # Check compatibility of a solver with a problem
 # Based off the similar function in simopt/experiment_base.py
 def is_compatible(problem_name: str, solver_name: str) -> bool:
+    """Check if a solver is compatible with a problem.
+    
+    Parameters
+    ----------
+    problem_name : str
+        Name of the problem.
+    solver_name : str
+        Name of the solver.
+        
+    Returns
+    -------
+    bool
+        True if the solver is compatible with the problem, False otherwise.
+    
+    """
     # Get the problem and solver
     problem = problem_directory[problem_name]()
     solver = solver_directory[solver_name]()
@@ -36,6 +52,16 @@ def is_compatible(problem_name: str, solver_name: str) -> bool:
 
 # Create a test case for a problem and solver
 def create_test(problem_name: str, solver_name: str) -> None:
+    """Create a test case for a problem and solver.
+    
+    Parameters
+    ----------
+    problem_name : str
+        Name of the problem.
+    solver_name : str
+        Name of the solver.
+    
+    """
     # Run the experiment to get the expected results
     myexperiment = ProblemSolver(solver_name, problem_name)
     myexperiment.run(n_macroreps=24)
@@ -74,7 +100,8 @@ def create_test(problem_name: str, solver_name: str) -> None:
     with open(filepath, "xb") as f:
         f.write(template)
 
-def main():
+def main() -> None:
+    """Create test cases for all compatible problem-solver pairs."""
     # Delete all files beginning with "test_" in the test directory
     cwd = os.getcwd() # Get the current working directory
     test_directory = cwd + "/test"

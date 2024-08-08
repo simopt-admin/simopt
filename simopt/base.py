@@ -147,7 +147,7 @@ class Solver(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: "Solver") -> bool:
+    def __eq__(self, other: Solver) -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
@@ -186,7 +186,7 @@ class Solver(ABC):
         self.rng_list = rng_list
 
     @abstractmethod
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """Run a single macroreplication of a solver on a problem.
 
         Parameters
@@ -313,7 +313,7 @@ class Solver(ABC):
         # Return true if no issues
         return True
 
-    def create_new_solution(self, x: tuple, problem: "Problem") -> "Solution":
+    def create_new_solution(self, x: tuple, problem: Problem) -> Solution:
         """Create a new solution object with attached RNGs primed to simulate replications.
 
         Parameters
@@ -578,12 +578,12 @@ class Problem(ABC):
         self.__optimal_solution = value
 
     @property
-    def model(self) -> "Model":
+    def model(self) -> Model:
         """Associated simulation model that generates replications."""
         return self.__model
     
     @model.setter
-    def model(self, value: "Model") -> None:
+    def model(self, value: Model) -> None:
         self.__model = value
 
     @property
@@ -675,7 +675,7 @@ class Problem(ABC):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
-    def __eq__(self, other: "Problem") -> bool:
+    def __eq__(self, other: Problem) -> bool:
         """Check if two problems are equivalent.
 
         Parameters
@@ -1073,7 +1073,7 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    def simulate(self, solution: "Solution", num_macroreps: int = 1) -> None:
+    def simulate(self, solution: Solution, num_macroreps: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.
 
         Notes
@@ -1159,22 +1159,22 @@ class Problem(ABC):
         # Update summary statistics.
         solution.recompute_summary_statistics()
 
-    def simulate_up_to(self, solutions: set["Solution"], n_reps: int) -> None:
-        """Simulate a set of solutions up to a given number of replications.
+    def simulate_up_to(self, solutions: list[Solution], n_reps: int) -> None:
+        """Simulate a list of solutions up to a given number of replications.
 
         Parameters
         ----------
-        solutions : set [``base.Solution``]
-            A set of ``base.Solution`` objects.
+        solutions : list [``base.Solution``]
+            A list of ``base.Solution`` objects.
         n_reps : int
             Common number of replications to simulate each solution up to.
 
         """
         # Type checking
-        if not isinstance(solutions, set) or not all(
+        if not isinstance(solutions, list) or not all(
             isinstance(solution, Solution) for solution in solutions
         ):
-            error_msg = "Input solutions must be a set of Solution objects."
+            error_msg = "Input solutions must be a list of Solution objects."
             raise TypeError(error_msg)
         if not isinstance(n_reps, int):
             error_msg = "Number of replications must be an integer."
@@ -1286,7 +1286,7 @@ class Model(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: "Model") -> bool:
+    def __eq__(self, other: Model) -> bool:
         """Check if two models are equivalent.
 
         Parameters
@@ -1606,7 +1606,7 @@ class Solution:
     def stochastic_constraints_gradients(self, value: np.ndarray) -> None:
         self.__stochastic_constraints_gradients = value
 
-    def __init__(self, x: tuple, problem: "Problem") -> None:
+    def __init__(self, x: tuple, problem: Problem) -> None:
         """Initialize a solution object.
 
         Parameters

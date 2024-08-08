@@ -51,7 +51,9 @@ class ALOE(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name: str = "ALOE", fixed_factors: dict = {}):
+    def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -141,7 +143,7 @@ class ALOE(Solver):
     def check_lambda(self):
         return self.factors["lambda"] > 0
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -200,7 +202,7 @@ class ALOE(Solver):
                 grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
                 expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
                 # A while loop to prevent zero gradient
-                while np.all((grad == 0)):
+                while np.all(grad == 0):
                     if expended_budget > problem.factors["budget"]:
                         break
                     grad = self.finite_diff(new_solution, BdsCheck, problem, alpha, r)
@@ -233,6 +235,9 @@ class ALOE(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
+        # Loop through the budgets and convert any numpy int32s to Python ints.
+        for i in range(len(intermediate_budgets)):
+            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

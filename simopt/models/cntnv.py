@@ -4,6 +4,7 @@ Summary
 Simulate a day's worth of sales for a newsvendor.
 A detailed description of the model/problem can be found `here <https://simopt.readthedocs.io/en/latest/cntnv.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -41,7 +42,10 @@ class CntNV(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+
+    def __init__(self, fixed_factors: dict | None = None):
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "CNTNEWS"
         self.n_rngs = 1
         self.n_responses = 1
@@ -50,33 +54,33 @@ class CntNV(Model):
             "purchase_price": {
                 "description": "purchasing cost per unit",
                 "datatype": float,
-                "default": 5.0
+                "default": 5.0,
             },
             "sales_price": {
                 "description": "sales price per unit",
                 "datatype": float,
-                "default": 9.0
+                "default": 9.0,
             },
             "salvage_price": {
                 "description": "salvage cost per unit",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "order_quantity": {
                 "description": "order quantity",
                 "datatype": float,  # or int
-                "default": 0.5
+                "default": 0.5,
             },
             "Burr_c": {
                 "description": "Burr Type XII cdf shape parameter",
                 "datatype": float,
-                "default": 2.0
+                "default": 2.0,
             },
             "Burr_k": {
                 "description": "Burr Type XII cdf shape parameter",
                 "datatype": float,
-                "default": 20.0
-            }
+                "default": 20.0,
+            },
         }
         self.check_factor_list = {
             "purchase_price": self.check_purchase_price,
@@ -84,7 +88,7 @@ class CntNV(Model):
             "salvage_price": self.check_salvage_price,
             "order_quantity": self.check_order_quantity,
             "Burr_c": self.check_Burr_c,
-            "Burr_k": self.check_Burr_k
+            "Burr_k": self.check_Burr_k,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -108,11 +112,13 @@ class CntNV(Model):
         return self.factors["Burr_k"] > 0
 
     def check_simulatable_factors(self):
-        return (self.factors["salvage_price"]
-                < self.factors["purchase_price"]
-                < self.factors["sales_price"])
+        return (
+            self.factors["salvage_price"]
+            < self.factors["purchase_price"]
+            < self.factors["sales_price"]
+        )
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -134,34 +140,47 @@ class CntNV(Model):
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
         #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
-        base = ((1 - demand_rng.random())**(-1 / self.factors["Burr_k"]) - 1)
-        exponent = (1 / self.factors["Burr_c"])
+        base = (1 - demand_rng.random()) ** (-1 / self.factors["Burr_k"]) - 1
+        exponent = 1 / self.factors["Burr_c"]
         demand = base**exponent
         # Calculate profit.
-        order_cost = (self.factors["purchase_price"]
-                      * self.factors["order_quantity"])
-        sales_revenue = (min(demand, self.factors["order_quantity"])
-                         * self.factors["sales_price"])
-        salvage_revenue = (max(0, self.factors["order_quantity"] - demand)
-                           * self.factors["salvage_price"])
+        order_cost = (
+            self.factors["purchase_price"] * self.factors["order_quantity"]
+        )
+        sales_revenue = (
+            min(demand, self.factors["order_quantity"])
+            * self.factors["sales_price"]
+        )
+        salvage_revenue = (
+            max(0, self.factors["order_quantity"] - demand)
+            * self.factors["salvage_price"]
+        )
         profit = sales_revenue + salvage_revenue - order_cost
         stockout_qty = max(demand - self.factors["order_quantity"], 0)
         stockout = int(stockout_qty > 0)
         # Calculate gradient of profit w.r.t. order quantity.
         if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["sales_price"]
-                                          - self.factors["purchase_price"])
+            grad_profit_order_quantity = (
+                self.factors["sales_price"] - self.factors["purchase_price"]
+            )
         elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = (self.factors["salvage_price"]
-                                          - self.factors["purchase_price"])
+            grad_profit_order_quantity = (
+                self.factors["salvage_price"] - self.factors["purchase_price"]
+            )
         else:
             grad_profit_order_quantity = np.nan
         # Compose responses and gradients.
-        responses = {"profit": profit, "stockout_qty": stockout_qty, "stockout": stockout}
-        gradients = {response_key:
-                     {factor_key: np.nan for factor_key in self.specifications}
-                     for response_key in responses
-                     }
+        responses = {
+            "profit": profit,
+            "stockout_qty": stockout_qty,
+            "stockout": stockout,
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         gradients["profit"]["order_quantity"] = grad_profit_order_quantity
         return responses, gradients
 
@@ -238,7 +257,17 @@ class CntNVMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "CNTNEWS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "CNTNEWS-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         self.name = name
         self.dim = 1
         self.n_objectives = 1
@@ -250,31 +279,33 @@ class CntNVMaxProfit(Problem):
         self.upper_bounds = (np.inf,)
         self.gradient_available = True
         self.optimal_value = None
-        self.optimal_solution = None  # (0.1878,)  # TO DO: Generalize to function of factors.
+        self.optimal_solution = (
+            None  # (0.1878,)  # TO DO: Generalize to function of factors.
+        )
         self.model_default_factors = {
             "purchase_price": 5.0,
             "sales_price": 9.0,
             "salvage_price": 1.0,
             "Burr_c": 2.0,
-            "Burr_k": 20.0
-            }
+            "Burr_k": 20.0,
+        }
         self.model_decision_factors = {"order_quantity"}
         self.factors = fixed_factors
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (0,)
+                "default": (0,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
@@ -294,9 +325,7 @@ class CntNVMaxProfit(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "order_quantity": vector[0]
-        }
+        factor_dict = {"order_quantity": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
@@ -353,7 +382,9 @@ class CntNVMaxProfit(Problem):
         stoch_constraints = None
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -373,7 +404,9 @@ class CntNVMaxProfit(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.

@@ -8,7 +8,7 @@ import itertools
 import os
 import subprocess
 from copy import deepcopy
-from typing import Literal, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ class DesignPoint:
 
     """
 
-    def __init__(self, model: "Model") -> None:
+    def __init__(self, model: Model) -> None:
         """Initialize design point with a model object.
 
         Parameters
