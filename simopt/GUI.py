@@ -4512,6 +4512,14 @@ class NewExperimentWindow(tk.Toplevel):
             command=self.load_design,
         )
         self.load_design_button.grid(row=self.load_design_button_row, column=0)
+        
+        # cross-design window button
+        self.cross_design_button = tk.Button(
+            master=self.main_frame,
+            text="Create Cross Design Using Default Factor Settings",
+            command=self.cross_design_window,
+        )
+        self.cross_design_button.grid(row=self.load_design_button_row, column=1, padx=10)
 
         """Display solver & problem lists"""
 
@@ -4646,6 +4654,388 @@ class NewExperimentWindow(tk.Toplevel):
     def on_mousewheel(self, event: tk.Event) -> None:
         self.master_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
 
+    def check_problem_compatibility(self) -> None: 
+        # create temp objects for current selected solvers and all possilble problems
+        temp_solvers = []
+        for solver_group in self.master_solver_dict:
+            dp_0 = self.master_solver_dict[solver_group][0] # frist design point if design, only design pt if no design
+            solver_name = dp_0[1]
+            temp_solver = solver_directory[solver_name]()
+            temp_solvers.append(temp_solver)
+        # check solver selections based on which tab is open
+        current_tab = self.sol_prob_book.index('current')
+        if current_tab == 0:
+            selected_solver = self.solver_var.get()
+        if current_tab == 2:
+            selected_solver = self.solver_datafarm_var.get()
+        if selected_solver != "Solver":
+            temp_solver = solver_unabbreviated_directory[selected_solver]()
+            temp_solvers.append(temp_solver)
+        all_problems = problem_unabbreviated_directory
+        self.problem_list = {} #clear current problem selection options
+        for problem_name in all_problems:
+            temp_problem = [all_problems[problem_name]()]
+            temp_exp = ProblemsSolvers(solvers=temp_solvers, problems=temp_problem) #temp experiment to run check compatibility
+            error = temp_exp.check_compatibility()
+            if not error:
+                self.problem_list[problem_name] = all_problems[problem_name]
+        
+        #update problem & problem datafarming selections
+        self.problem_select_menu.destroy()
+        self.problem_select_menu = ttk.OptionMenu(
+            self.problem_selection_frame,
+            self.problem_var,
+            "Problem",
+            *self.problem_list,
+            command=self.show_problem_factors,
+        )
+        self.problem_select_menu.grid(row=0, column=1)
+        self.problem_datafarm_select_menu.destroy()
+        self.problem_datafarm_select_menu = ttk.OptionMenu(
+            self.problem_datafarm_selection_frame,
+            self.problem_datafarm_var,
+            "Problem",
+            *self.problem_list,
+            command=self.show_problem_datafarm,
+        )
+        self.problem_datafarm_select_menu.grid(row=0, column=1)
+        
+    def check_solver_compatibility(self) -> None: 
+        # create temp objects for current selected solvers and all possilble problems
+        temp_problems = []
+        for problem_group in self.master_problem_dict:
+            dp_0 = self.master_problem_dict[problem_group][0] # frist design point if design, only design pt if no design
+            problem_name = dp_0[1]
+            temp_problem = problem_directory[problem_name]()
+            temp_problems.append(temp_problem)
+        # check problem selections based on which tab is open
+        current_tab = self.sol_prob_book.index('current')
+        if current_tab == 1:
+            selected_problem = self.problem_var.get()
+        if current_tab == 3:
+            selected_problem = self.problem_datafarm_var.get()
+        if selected_problem != "Problem":
+            temp_problem = problem_unabbreviated_directory[selected_problem]()
+            temp_problems.append(temp_problem)
+        all_solvers = solver_unabbreviated_directory
+        self.solver_list = {} #clear current problem selection options
+        for solver_name in all_solvers:
+            temp_solver = [all_solvers[solver_name]()]
+            temp_exp = ProblemsSolvers(solvers=temp_solver, problems=temp_problems) #temp experiment to run check compatibility
+            error = temp_exp.check_compatibility()
+            if not error:
+                self.solver_list[solver_name] = all_solvers[solver_name]
+        
+        #update solver & solver datafarming selections
+        self.solver_select_menu.destroy()
+        self.solver_select_menu = ttk.OptionMenu(
+            self.solver_selection_frame,
+            self.solver_var,
+            "Solver",
+            *self.solver_list,
+            command=self.show_solver_factors,
+        )
+        self.solver_select_menu.grid(row=0, column=1)
+        self.solver_datafarm_select_menu.destroy()
+        self.solver_datafarm_select_menu = ttk.OptionMenu(
+            self.solver_datafarm_selection_frame,
+            self.solver_datafarm_var,
+            "Solver",
+            *self.solver_list,
+            command=self.show_solver_datafarm,
+        )
+        self.solver_datafarm_select_menu.grid(row=0, column=1)
+    
+    def cross_design_window(self) -> None:
+        self.cross_design_window = tk.Toplevel(self.master)
+        self.cross_design_window.title(
+            "Simopt Graphical User Interface - Cross Design"
+        )
+        # Set the screen width and height
+        # Scaled down slightly so the whole window fits on the screen
+        position = center_window(self.master, 0.8)
+        self.cross_design_window.geometry(position)
+
+        # Configure the grid layout to expand properly
+        self.cross_design_window.grid_rowconfigure(0, weight=1)
+        self.cross_design_window.grid_columnconfigure(0, weight=1)
+        self.cross_design_window.grid_rowconfigure(1, weight=1)
+        self.cross_design_window.grid_columnconfigure(1, weight=1)
+        self.cross_design_window.grid_rowconfigure(2, weight=1)
+        self.cross_design_window.grid_columnconfigure(2, weight=1)
+        
+        self.solvers_canvas = tk.Canvas(
+            master = self.cross_design_window
+        )
+        self.solvers_canvas.grid(row=2, column=0, sticky="nsew")
+        self.problems_canvas = tk.Canvas(
+            master = self.cross_design_window
+        )
+        self.problems_canvas.grid(row=2, column=2, sticky="nsew")
+
+        # Create vertical scrollbar for solvers
+        solver_scroll = ttk.Scrollbar(
+            self.cross_design_window,
+            orient=tk.VERTICAL,
+            command=self.solvers_canvas.yview,
+        )
+        solver_scroll.grid(row=2, column=1, sticky="ns")
+
+        # Create vertical scrollbar for problems
+        problem_scroll = ttk.Scrollbar(
+            self.cross_design_window,
+            orient=tk.VERTICAL,
+            command=self.problems_canvas.yview,
+        )
+        problem_scroll.grid(row=2, column=3, sticky="ns")
+
+        # Configure canvas to use the scrollbars
+        self.solvers_canvas.configure(
+            yscrollcommand=solver_scroll.set 
+        )
+        self.problems_canvas.configure(
+            yscrollcommand=problem_scroll.set 
+        )
+
+        # create master frame inside the canvas
+        self.solvers_frame = tk.Frame(self.solvers_canvas)
+        self.solvers_canvas.create_window(
+            (0, 0), window=self.solvers_frame, anchor="nw"
+        )
+        self.problems_frame = tk.Frame(self.problems_canvas)
+        self.problems_canvas.create_window(
+            (0, 0), window=self.problems_frame, anchor="nw"
+        )
+
+        # Bind the configure event to update the scroll region
+        self.solvers_frame.bind("<Configure>", self.update_solvers_canvas_scroll)
+        self.problems_frame.bind("<Configure>", self.update_problems_canvas_scroll)
+        
+        self.cross_design_title = tk.Label(
+            master=self.cross_design_window,
+            text= 'Select solvers and problems to be included in cross-design. \n Solvers and problems will be run with default factor settings.',
+            font=nametofont("TkHeadingFont")
+        )
+        self.cross_design_title.grid(row=0, column=0, columnspan=4, sticky="n")
+        self.solvers_label = tk.Label(
+            master=self.cross_design_window,
+            text= 'Select Solvers:',
+        )
+        self.solvers_label.grid(row=1, column=0, sticky='nw')
+        self.problems_label = tk.Label(
+            master=self.cross_design_window,
+            text= 'Select Problems:',
+        )
+        self.problems_label.grid(row=1, column=2, sticky='nw')
+        self.solver_checkboxes = {} # holds checkbutton widgets, store as dictonary for now 
+        self.solver_check_vars = {} # holds check boolvars, store as dictonary for now
+        # display all potential solvers
+        for solver in solver_unabbreviated_directory:
+            row=self.solvers_frame.grid_size()[1]
+            checkstate= tk.BooleanVar()
+            solver_checkbox = tk.Checkbutton(
+                master= self.solvers_frame,
+                text= solver,
+                variable = checkstate,
+                command= self.cross_design_problem_compatibility
+                ) 
+            solver_checkbox.grid(row=row, column=0, sticky='w', padx=10)
+            self.solver_checkboxes[solver] = solver_checkbox
+            self.solver_check_vars[solver] = checkstate
+        self.problem_checkboxes = {} # holds checkbutton widgets, store as dictonary for now 
+        self.problem_check_vars = {} # holds check boolvars, store as dictonary for now
+        # display all potential problems
+        for problem in problem_unabbreviated_directory:
+            row=self.problems_frame.grid_size()[1]
+            checkstate= tk.BooleanVar()
+            problem_checkbox = tk.Checkbutton(
+                master= self.problems_frame,
+                text= problem,
+                variable = checkstate,
+                command= self.cross_design_solver_compatibility
+                ) 
+            problem_checkbox.grid(row=row, column=0, sticky='w', padx=10)
+            self.problem_checkboxes[problem] = problem_checkbox
+            self.problem_check_vars[problem] = checkstate
+        self.create_cross_button = tk.Button(
+            master=self.cross_design_window,
+            text= 'Add Cross Design to Experiment',
+            command = self.create_cross_design)
+        self.create_cross_button.grid(row=3,column=0)
+        self.cross_design_problem_compatibility() # run to check solvers already in experiment
+        self.cross_design_solver_compatibility() # run to check problems already in experiment
+
+    def cross_design_problem_compatibility(self) -> None:
+        # create temp objects for current selected solvers and all possilble problems
+        temp_solvers = []
+        # solvers previously added to experiment
+        for solver_group in self.master_solver_dict:
+            dp_0 = self.master_solver_dict[solver_group][0] # frist design point if design, only design pt if no design
+            solver_name = dp_0[1]
+            temp_solver = solver_directory[solver_name]()
+            temp_solvers.append(temp_solver)
+        # solvers currently added to cross design
+        for solver in self.solver_check_vars:
+            checkstate = self.solver_check_vars[solver].get()
+            if checkstate:
+                temp_solver = solver_unabbreviated_directory[solver]()
+                temp_solvers.append(temp_solver)
+        all_problems = problem_unabbreviated_directory
+        for problem_name in all_problems:
+            temp_problem = [all_problems[problem_name]()]
+            temp_exp = ProblemsSolvers(solvers=temp_solvers, problems=temp_problem) #temp experiment to run check compatibility
+            error = temp_exp.check_compatibility()
+            if error:
+                self.problem_checkboxes[problem_name].configure(state='disabled')
+            else:
+                self.problem_checkboxes[problem_name].configure(state='normal')
+        
+        #update problem & problem datafarming selections
+        self.problem_select_menu.destroy()
+        self.problem_select_menu = ttk.OptionMenu(
+            self.problem_selection_frame,
+            self.problem_var,
+            "Problem",
+            *self.problem_list,
+            command=self.show_problem_factors,
+        )
+        self.problem_select_menu.grid(row=0, column=1)
+        self.problem_datafarm_select_menu.destroy()
+        self.problem_datafarm_select_menu = ttk.OptionMenu(
+            self.problem_datafarm_selection_frame,
+            self.problem_datafarm_var,
+            "Problem",
+            *self.problem_list,
+            command=self.show_problem_datafarm,
+        )
+        self.problem_datafarm_select_menu.grid(row=0, column=1)
+    
+    def cross_design_solver_compatibility(self) -> None:
+        # create temp objects for current selected solvers and all possilble problems
+        temp_problems = []
+        # solvers previously added to experiment
+        for problem_group in self.master_problem_dict:
+            dp_0 = self.master_problem_dict[problem_group][0] # frist design point if design, only design pt if no design
+            problem_name = dp_0[1]
+            temp_problem = problem_directory[problem_name]()
+            temp_problems.append(temp_problem)
+        # problems currently added to cross design
+        for problem in self.problem_check_vars:
+            checkstate = self.problem_check_vars[problem].get()
+            if checkstate:
+                temp_problem = problem_unabbreviated_directory[problem]()
+                temp_problems.append(temp_problem)
+        all_solvers = solver_unabbreviated_directory
+        for solver_name in all_solvers:
+            temp_solver = [all_solvers[solver_name]()]
+            temp_exp = ProblemsSolvers(solvers=temp_solver, problems=temp_problems) #temp experiment to run check compatibility
+            error = temp_exp.check_compatibility()
+            if error:
+                self.solver_checkboxes[solver_name].configure(state='disabled')
+            else:
+                self.solver_checkboxes[solver_name].configure(state='normal')
+        
+        #update solver & solver datafarming selections
+        self.solver_select_menu.destroy()
+        self.solver_select_menu = ttk.OptionMenu(
+            self.solver_selection_frame,
+            self.solver_var,
+            "Solver",
+            *self.solver_list,
+            command=self.show_solver_factors,
+        )
+        self.solver_select_menu.grid(row=0, column=1)
+        self.solver_datafarm_select_menu.destroy()
+        self.solver_datafarm_select_menu = ttk.OptionMenu(
+            self.solver_datafarm_selection_frame,
+            self.solver_datafarm_var,
+            "Solver",
+            *self.solver_list,
+            command=self.show_solver_datafarm,
+        )
+        self.solver_datafarm_select_menu.grid(row=0, column=1)
+    def create_cross_design(self) -> None:
+        for solver in self.solver_check_vars:
+            checkstate = self.solver_check_vars[solver].get()
+            if checkstate: #add solver with default factor settings to master dict
+                temp_solver = solver_unabbreviated_directory[solver]()
+                factors = {factor: value["default"] for factor, value in temp_solver.specifications.items()}
+                solver_name = temp_solver.name
+                solver_save_name = self.get_unique_name(
+                    self.master_solver_dict, solver_name
+                )
+                self.master_solver_dict[solver_save_name] = [[factors, solver_name]]
+                # add solver row to list display
+                solver_row = len(self.master_solver_dict) - 1
+                self.solver_list_label = tk.Label(
+                    master=self.solver_list_canvas,
+                    text=solver_save_name,
+                )
+                self.solver_list_label.grid(row=solver_row, column=1)
+                self.solver_list_labels[solver_save_name] = self.solver_list_label
+
+                # add delete and view/edit buttons
+                self.solver_edit_button = tk.Button(
+                    master=self.solver_list_canvas,
+                    text="View/Edit",
+                    command=lambda: self.edit_solver(solver_save_name),
+                )
+                self.solver_edit_button.grid(row=solver_row, column=2)
+                self.solver_edit_buttons[solver_save_name] = self.solver_edit_button
+                self.solver_del_button = tk.Button(
+                    master=self.solver_list_canvas,
+                    text="Delete",
+                    command=lambda: self.delete_solver(solver_save_name),
+                )
+                self.solver_del_button.grid(row=solver_row, column=3)
+                self.solver_del_buttons[solver_save_name] = self.solver_del_button
+                
+        for problem in self.problem_check_vars:
+            checkstate = self.problem_check_vars[problem].get()
+            if checkstate: #add problem with default factor settings to master dict, ignore disabled boxes
+                temp_problem = problem_unabbreviated_directory[problem]()
+                factors = {factor: value["default"] for factor, value in temp_problem.specifications.items()}
+                model_factors = {factor: value["default"] for factor, value in temp_problem.model.specifications.items()}
+                factors.update(model_factors)
+                problem_name = temp_problem.name
+                problem_save_name = self.get_unique_name(
+                    self.master_problem_dict, problem_name
+                )
+                self.master_problem_dict[problem_save_name] = [[factors, problem_name]]
+                # add problem row to list display
+                problem_row = len(self.master_problem_dict) - 1
+                self.problem_list_label = tk.Label(
+                    master=self.problem_list_canvas,
+                    text=problem_save_name,
+                )
+                self.problem_list_label.grid(row=problem_row, column=1)
+                self.problem_list_labels[problem_save_name] = self.problem_list_label
+
+                # add delete and view/edit buttons
+                self.problem_edit_button = tk.Button(
+                    master=self.problem_list_canvas,
+                    text="View/Edit",
+                    command=lambda: self.edit_problem(problem_save_name),
+                )
+                self.problem_edit_button.grid(row=problem_row, column=2)
+                self.problem_edit_buttons[problem_save_name] = self.problem_edit_button
+                self.problem_del_button = tk.Button(
+                    master=self.problem_list_canvas,
+                    text="Delete",
+                    command=lambda: self.delete_problem(problem_save_name),
+                )
+                self.problem_del_button.grid(row=problem_row, column=3)
+                self.problem_del_buttons[problem_save_name] = self.problem_del_button
+        
+    
+    def update_solvers_canvas_scroll(self, event: tk.Event) -> None:
+        self.solvers_canvas.configure(
+            scrollregion=self.solvers_canvas.bbox("all")
+        )
+    def update_problems_canvas_scroll(self, event: tk.Event) -> None:
+        self.problems_canvas.configure(
+            scrollregion=self.problems_canvas.bbox("all")
+        )
     def load_design(self) -> None:
         # get csv file location and convert to dataframe
         design_file = filedialog.askopenfilename()
@@ -5254,6 +5644,8 @@ class NewExperimentWindow(tk.Toplevel):
         # clear previous selections
         self.clear_frame(self.problem_frame)
         self.clear_frame(self.model_frame)
+        #check solver compatibility
+        self.check_solver_compatibility()
 
         """ Initialize frames, headers, and data farming buttons"""
 
@@ -5373,6 +5765,8 @@ class NewExperimentWindow(tk.Toplevel):
     def show_solver_factors(self, event: tk.Event) -> None:
         # clear previous selections
         self.clear_frame(self.solver_frame)
+        # update problem selections
+        self.check_problem_compatibility()
 
         """ Initialize frames and headers"""
 
@@ -5482,6 +5876,8 @@ class NewExperimentWindow(tk.Toplevel):
         self.clear_frame(self.problem_datafarm_frame)
         self.clear_frame(self.model_datafarm_frame)
         self.clear_frame(self.design_display_frame)
+        #check solver compatibility
+        self.check_solver_compatibility()
 
         """ Initialize frames, headers, and data farming buttons"""
 
@@ -5660,6 +6056,8 @@ class NewExperimentWindow(tk.Toplevel):
         """
         # clear previous selections
         self.clear_frame(self.solver_datafarm_frame)
+        # check compatibility of problem selections
+        self.check_problem_compatibility()
 
         # Initialize the frame for the solver data farming factor options
         self.solver_datafarm_frame = tk.Frame(
