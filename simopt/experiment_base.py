@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Provide base classes for problem-solver pairs and helper functions for reading/writing data and plotting."""
 
 import ast
@@ -13,8 +12,8 @@ import time
 from multiprocessing import Pool
 from typing import Literal
 
-import matplotlib.pyplot as plt
 import matplotlib.lines as mpl_lines
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -22,7 +21,11 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
 from simopt.base import Problem, Solution, Solver
-from simopt.directory import problem_directory, solver_directory, model_directory
+from simopt.directory import (
+    model_directory,
+    problem_directory,
+    solver_directory,
+)
 
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
@@ -6497,7 +6500,7 @@ def create_design(
     if not isinstance(csv_filename, str):
         error_msg = "CSV filename must be a string or None."
         raise TypeError(error_msg)
-    
+
     # TODO: add additional checking
     # Value checking
     if n_stacks <= 0:
