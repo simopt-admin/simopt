@@ -46,10 +46,10 @@ class ExperimentWindow(Toplevel):
 
     def __init__(self, root: tk.Tk) -> None:
         """Initialize the main window of the GUI."""
-        super().__init__(root)
-        self.configure_close()
-        self.center_window(0.8) # 80% scaling
-        self.title("SimOpt Experiment")
+        super().__init__(
+            root, title="SimOpt GUI - Experiment", exit_on_close=True
+        )
+        self.center_window(0.8)  # 80% scaling
 
         self.frame = tk.Frame(self)
         self.count_meta_experiment_queue = 0
@@ -3421,10 +3421,8 @@ class PostNormalWindow(Toplevel):
             Whether the window is for a meta experiment, by default False.
 
         """
-        super().__init__(root)
-        self.configure_close()
-        self.center_window(0.8) # 80% scaling
-        self.title("SimOpt Post-Normalization")
+        super().__init__(root, title="SimOpt GUI - Post-Normalization")
+        self.center_window(0.8)  # 80% scaling
 
         self.post_norm_exp_list = experiment_list
         self.meta = meta
@@ -3678,10 +3676,8 @@ class PostProcessingWindow(Toplevel):
             Whether the window is for a meta experiment, by default False.
 
         """
-        super().__init__(root)
-        self.configure_close()
-        self.center_window(0.8) # 80% scaling
-        self.title("SimOpt Post-Processing")
+        super().__init__(root, title="SimOpt GUI - Post-Processing")
+        self.center_window(0.8)  # 80% scaling
 
         self.meta = meta
         self.main_window = main_window
@@ -3993,10 +3989,8 @@ class CrossDesignWindow(Toplevel):
 
         """
         if not forced_creation:
-            super().__init__(root)
-            self.configure_close()
-            self.center_window(0.8) # 80% scaling
-            self.title("SimOpt Cross-Design")
+            super().__init__(root, title="SimOpt GUI - Cross-Design")
+            self.center_window(0.8)  # 80% scaling
 
             self.crossdesign_title_label = tk.Label(
                 master=self,

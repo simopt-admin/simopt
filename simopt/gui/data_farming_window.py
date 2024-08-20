@@ -17,12 +17,11 @@ from simopt.experiment_base import (
     create_design,
 )
 
+
 class DataFarmingWindow(Toplevel):
     """Class to create the data farming window."""
 
-    def __init__(
-        self, root: tk.Tk, forced_creation: bool = False
-    ) -> None:
+    def __init__(self, root: tk.Tk, forced_creation: bool = False) -> None:
         """Initialize the data farming window.
 
         Parameters
@@ -34,10 +33,8 @@ class DataFarmingWindow(Toplevel):
 
         """
         if not forced_creation:
-            super().__init__(root)
-            self.configure_close()
-            self.center_window(0.8) # 80% scaling
-            self.title("Model Data Farming")
+            super().__init__(root, title="SimOpt GUI - Model Data Farming", exit_on_close=True)
+            self.center_window(0.8)  # 80% scaling
 
             self.grid_rowconfigure(0, weight=0)
             self.grid_rowconfigure(1, weight=0)

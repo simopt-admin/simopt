@@ -6,18 +6,31 @@ from tkinter.font import nametofont
 class Toplevel(tk.Toplevel):
     """Custom Toplevel class for the GUI."""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(
+        self,
+        root: tk.Tk,
+        title: str = "SimOpt GUI",
+        exit_on_close: bool = False,
+    ) -> None:
         """Initialize the ToplevelCustom class.
 
         Parameters
         ----------
         root : tk.Tk
             The main window of the GUI
+        exit_on_close : bool, optional
+            If True, the program will exit when the window is closed.
 
         """
         super().__init__(root)
         self.root = root
-
+        # Configure the close button
+        if exit_on_close:
+            self.protocol("WM_DELETE_WINDOW", self.root.quit)
+        else:
+            self.protocol("WM_DELETE_WINDOW", self.destroy)
+        # Set title and theme
+        self.title(title)
         self.set_theme()
 
     def set_theme(self) -> None:
@@ -75,19 +88,3 @@ class Toplevel(tk.Toplevel):
         )  # Slight adjustment for taskbar
         position = f"{width}x{height}+{x}+{y}"
         self.geometry(position)
-
-    def configure_close(self) -> None:
-        """Configure the close button."""
-        self.protocol("WM_DELETE_WINDOW", self.close_window)
-
-    def close_window(self) -> None:
-        """Close the window."""
-        self.destroy()
-
-    def configure_exit(self) -> None:
-        """Configure the exit button."""
-        self.protocol("WM_DELETE_WINDOW", self.exit_application)
-
-    def exit_application(self) -> None:
-        """Exit the application."""
-        self.root.quit()

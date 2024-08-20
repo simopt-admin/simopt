@@ -19,10 +19,8 @@ class MainMenuWindow(Toplevel):
             The main window of the GUI
 
         """
-        super().__init__(root)
-        self.configure_close()
+        super().__init__(root, title="SimOpt GUI - Main Menu", exit_on_close=True)
         self.center_window(0.8)  # 80% scaling
-        self.title("SimOpt Library GUI")
 
         self.menu_frame = tk.Frame(master=self)
         self.menu_frame.pack(anchor="center")
@@ -87,21 +85,18 @@ class MainMenuWindow(Toplevel):
 
     def open_experiment_window(self) -> None:
         """Open the experiment window."""
-        experiment_app = ExperimentWindow(self.root)
+        ExperimentWindow(self.root)
         # Configure the exit button to close the window and close the menu
-        experiment_app.configure_exit()
         self.destroy()
 
     def open_model_datafarming(self) -> None:
         """Open the model data farming window."""
-        datafarming_app = DataFarmingWindow(self.root)
+        DataFarmingWindow(self.root)
         # Configure the exit button to close the window and close the menu
-        datafarming_app.configure_exit()
         self.destroy()
 
     def open_new_experiment(self) -> None:
         """Open the new experiment window."""
-        new_experiment_app = NewExperimentWindow(self.root)
+        NewExperimentWindow(self.root)
         # Configure the exit button to close the window and close the menu
-        new_experiment_app.configure_exit()
         self.destroy()

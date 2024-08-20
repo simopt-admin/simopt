@@ -39,10 +39,8 @@ class NewExperimentWindow(Toplevel):
 
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
-        super().__init__(root)
-        self.configure_close()
+        super().__init__(root, title="SimOpt GUI - New Experiment", exit_on_close=True)
         self.center_window(0.8) # 80% scaling
-        self.title("New Experiment")
 
         # self.main_window = main_widow
         self.grid_rowconfigure(0, weight=1)
@@ -550,7 +548,7 @@ class NewExperimentWindow(Toplevel):
         )
         # Set the screen width and height
         # Scaled down slightly so the whole window fits on the screen
-        self.center_window(self, 0.8)
+        self.center_window(0.8)
         self.set_theme()
 
         # Configure the grid layout to expand properly
