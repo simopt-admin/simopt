@@ -14,7 +14,6 @@ from PIL import Image, ImageTk
 
 from simopt.base import Model, Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
-from simopt.gui.toplevel_custom import Toplevel
 from simopt.directory import (
     problem_directory,
     problem_unabbreviated_directory,
@@ -31,7 +30,8 @@ from simopt.experiment_base import (
     plot_terminal_progress,
     plot_terminal_scatterplots,
 )
-from simopt.gui.df_object import DFFactor, DFBoolean, DFFloat, DFInteger
+from simopt.gui.df_object import DFBoolean, DFFactor, DFFloat, DFInteger
+from simopt.gui.toplevel_custom import Toplevel
 
 
 class NewExperimentWindow(Toplevel):
@@ -39,8 +39,10 @@ class NewExperimentWindow(Toplevel):
 
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
-        super().__init__(root, title="SimOpt GUI - New Experiment", exit_on_close=True)
-        self.center_window(0.8) # 80% scaling
+        super().__init__(
+            root, title="SimOpt GUI - New Experiment", exit_on_close=True
+        )
+        self.center_window(0.8)  # 80% scaling
 
         # self.main_window = main_widow
         self.grid_rowconfigure(0, weight=1)
@@ -434,9 +436,7 @@ class NewExperimentWindow(Toplevel):
         self.load_exp_button.grid(row=0, column=3, padx=10)
 
     def update_main_window_scroll(self, event: tk.Event) -> None:
-        self.root_canvas.configure(
-            scrollregion=self.root_canvas.bbox("all")
-        )
+        self.root_canvas.configure(scrollregion=self.root_canvas.bbox("all"))
 
     def on_mousewheel(self, event: tk.Event) -> None:
         self.root_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
@@ -998,9 +998,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_name_label.grid(row=2, column=0)
             self.design_name_var = tk.StringVar()
             # get unique solver name
-            solver_name = self.get_unique_name(
-                self.root_solver_dict, file_name
-            )
+            solver_name = self.get_unique_name(self.root_solver_dict, file_name)
             self.design_name_var.set(solver_name)
             self.solver_name_entry = tk.Entry(
                 master=self.solver_frame,

@@ -6,8 +6,6 @@ from tkinter.font import nametofont
 
 import pandas as pd
 
-from simopt.gui.toplevel_custom import Toplevel
-
 from simopt.data_farming_base import DATA_FARMING_DIR, DataFarmingExperiment
 from simopt.directory import (
     model_directory,
@@ -16,6 +14,7 @@ from simopt.directory import (
 from simopt.experiment_base import (
     create_design,
 )
+from simopt.gui.toplevel_custom import Toplevel
 
 
 class DataFarmingWindow(Toplevel):
@@ -33,7 +32,11 @@ class DataFarmingWindow(Toplevel):
 
         """
         if not forced_creation:
-            super().__init__(root, title="SimOpt GUI - Model Data Farming", exit_on_close=True)
+            super().__init__(
+                root,
+                title="SimOpt GUI - Model Data Farming",
+                exit_on_close=True,
+            )
             self.center_window(0.8)  # 80% scaling
 
             self.grid_rowconfigure(0, weight=0)

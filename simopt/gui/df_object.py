@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Literal
 
+
 class DFFactor(ABC):
     """Class to store factors for problems and solvers."""
 

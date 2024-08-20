@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter.font import nametofont
 
-from simopt.gui.experiment_window import ExperimentWindow
 from simopt.gui.data_farming_window import DataFarmingWindow
+from simopt.gui.experiment_window import ExperimentWindow
 from simopt.gui.new_experiment_window import NewExperimentWindow
 from simopt.gui.toplevel_custom import Toplevel
 
@@ -19,7 +19,9 @@ class MainMenuWindow(Toplevel):
             The main window of the GUI
 
         """
-        super().__init__(root, title="SimOpt GUI - Main Menu", exit_on_close=True)
+        super().__init__(
+            root, title="SimOpt GUI - Main Menu", exit_on_close=True
+        )
         self.center_window(0.8)  # 80% scaling
 
         self.menu_frame = tk.Frame(master=self)

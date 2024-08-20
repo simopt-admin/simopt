@@ -59,7 +59,7 @@ class PlotWindow(Toplevel):
 
         """
         super().__init__(root, title="SimOpt GUI - Plotting Page")
-        self.center_window(0.8) # 80% scaling
+        self.center_window(0.8)  # 80% scaling
 
         self.metaList = meta_list
         self.experiment_list = experiment_list
