@@ -39,8 +39,10 @@ class NewExperimentWindow(Toplevel):
 
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
-        super().__init__(root, title="SimOpt GUI - New Experiment", exit_on_close=True)
-        self.center_window(0.8) # 80% scaling
+        super().__init__(
+            root, title="SimOpt GUI - New Experiment", exit_on_close=True
+        )
+        self.center_window(0.8)  # 80% scaling
 
         # self.main_window = main_widow
         self.grid_rowconfigure(0, weight=1)
@@ -136,15 +138,6 @@ class NewExperimentWindow(Toplevel):
         self.problem_datafarm_frame = tk.Frame(master=self.main_frame)
         self.model_datafarm_frame = tk.Frame(master=self.main_frame)
         self.design_display_frame = tk.Frame(master=self.main_frame)
-
-        """Title"""
-
-        self.title_label = tk.Label(
-            master=self.main_frame,
-            text="New Experiment Page",
-            font=nametofont("TkHeadingFont"),
-        )
-        self.title_label.grid(row=0, column=0)
 
         # self.add_buttons_frame = tk.Frame(master = self.main_frame)
         # self.add_buttons_frame.grid(row = self.add_buttons_row, column = 0)
@@ -434,9 +427,7 @@ class NewExperimentWindow(Toplevel):
         self.load_exp_button.grid(row=0, column=3, padx=10)
 
     def update_main_window_scroll(self, event: tk.Event) -> None:
-        self.root_canvas.configure(
-            scrollregion=self.root_canvas.bbox("all")
-        )
+        self.root_canvas.configure(scrollregion=self.root_canvas.bbox("all"))
 
     def on_mousewheel(self, event: tk.Event) -> None:
         self.root_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
@@ -998,9 +989,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_name_label.grid(row=2, column=0)
             self.design_name_var = tk.StringVar()
             # get unique solver name
-            solver_name = self.get_unique_name(
-                self.root_solver_dict, file_name
-            )
+            solver_name = self.get_unique_name(self.root_solver_dict, file_name)
             self.design_name_var.set(solver_name)
             self.solver_name_entry = tk.Entry(
                 master=self.solver_frame,
@@ -2116,72 +2105,119 @@ class NewExperimentWindow(Toplevel):
             not self.solver_design_factors
             and not self.solver_cross_design_factors
         ):
-            error_msg = "No factors included in design\nAdding regular solver to experiment via this button is not yet implemented"
-            tk.messagebox.showerror("Error Creating Design", error_msg)
-            return
+            # Create a non-datafarmed solver design
+            solver_list = []
+            solver_list.append(self.solver_fixed_factors)
 
-        """ Create factor settings txt file"""
-        # Check if folder exists, if not create it
-        if not os.path.exists(DATA_FARMING_DIR):
-            os.makedirs(DATA_FARMING_DIR)
-        # If file already exists, clear it and make a new, empty file of the same name
-        filepath = os.path.join(
-            DATA_FARMING_DIR, f"{self.solver_design_name}.txt"
-        )
-        if os.path.exists(filepath):
-            os.remove(filepath)
+            
+            # Nested loop to search for the right solver without knowing its name
+            for solver in solver_directory:
+                # Set of factors for the solver
+                solver_object = solver_directory[solver]()
+                solver_factors = set(solver_object.specifications.keys())
+                # Set of factors for the current design
+                design_factors = set(self.factor_dict)
 
-        # Write the factor settings to the file
-        with open(filepath, "x") as settings_file:
-            # For each factor, write the min, max, and decimal values to the file
-            for factor_name in self.solver_design_factors:
-                # Lookup the factor in the dictionary
-                factor = self.factor_dict[factor_name]
-                min_val = factor.minimum.get()
-                max_val = factor.maximum.get()
-                if factor.type.get() == "float":
-                    dec_val = factor.num_decimals.get()
-                else:
-                    dec_val = "0"
+                # If the sets are equal, we have found the right solver
+                if solver_factors == design_factors:
+                    solver_list.append(solver_directory[solver].name)
+                    break                
 
-                # Write the values to the file
-                data_insert = f"{min_val} {max_val} {dec_val}\n"
-                settings_file.write(data_insert)
+            self.root_solver_dict[self.solver_design_name] = [solver_list]
 
-        try:
-            self.solver_design_list = create_design(
-                name=self.solver_datafarm_object.name,
-                factor_headers=self.solver_design_factors,
-                factor_settings_filename=self.solver_design_name,
-                fixed_factors=self.solver_fixed_factors,
-                cross_design_factors=self.solver_cross_design_factors,
-                n_stacks=n_stacks,
-                design_type=design_type,
-                class_type="solver",
+            # add solver name to solver index
+            solver_row = len(self.root_solver_dict) - 1
+            self.solver_list_label = tk.Label(
+                master=self.solver_list_canvas,
+                text=self.solver_design_name,
             )
-        except Exception as e:
-            # Give error message if design creation fails
-            tk.messagebox.showerror("Error Creating Design", str(e))
-            return
-        # display design tree
-        self.display_design_tree(
-            os.path.join(
-                DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
-            ),
-            self.solver_datafarm_frame,
-            row=999,
-            column=0,
-            columnspan=8,
-        )
-        # button to add solver design to experiment
-        self.add_solver_design_button = tk.Button(
-            master=self.solver_datafarm_frame,
-            text="Add this solver to experiment",
-            command=self.add_solver_design_to_experiment,
-        )
-        self.add_solver_design_button.grid(row=1000, column=0, columnspan=8)
-        # disable design name entry
-        self.solver_design_name_entry.configure(state="disabled")
+            self.solver_list_label.grid(row=solver_row, column=1)
+            self.solver_list_labels[self.solver_design_name] = self.solver_list_label
+
+            # add delete and view/edit buttons
+            self.solver_edit_button = tk.Button(
+                master=self.solver_list_canvas,
+                text="View/Edit",
+                command=lambda: self.edit_solver(self.solver_design_name),
+            )
+            self.solver_edit_button.grid(row=solver_row, column=2)
+            self.solver_edit_buttons[self.solver_design_name] = self.solver_edit_button
+            self.solver_del_button = tk.Button(
+                master=self.solver_list_canvas,
+                text="Delete",
+                command=lambda: self.delete_solver(self.solver_design_name),
+            )
+            self.solver_del_button.grid(row=solver_row, column=3)
+            self.solver_del_buttons[self.solver_design_name] = self.solver_del_button
+
+            # refresh solver name entry box
+            self.solver_design_name_var.set(
+                self.get_unique_name(self.root_solver_dict, self.solver_design_name)
+            )
+        
+        else:
+            """ Create factor settings txt file"""
+            # Check if folder exists, if not create it
+            if not os.path.exists(DATA_FARMING_DIR):
+                os.makedirs(DATA_FARMING_DIR)
+            # If file already exists, clear it and make a new, empty file of the same name
+            filepath = os.path.join(
+                DATA_FARMING_DIR, f"{self.solver_design_name}.txt"
+            )
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+            # Write the factor settings to the file
+            with open(filepath, "x") as settings_file:
+                # For each factor, write the min, max, and decimal values to the file
+                for factor_name in self.solver_design_factors:
+                    # Lookup the factor in the dictionary
+                    factor = self.factor_dict[factor_name]
+                    min_val = factor.minimum.get()
+                    max_val = factor.maximum.get()
+                    if factor.type.get() == "float":
+                        dec_val = factor.num_decimals.get()
+                    else:
+                        dec_val = "0"
+
+                    # Write the values to the file
+                    data_insert = f"{min_val} {max_val} {dec_val}\n"
+                    settings_file.write(data_insert)
+
+            try:
+                self.solver_design_list = create_design(
+                    name=self.solver_datafarm_object.name,
+                    factor_headers=self.solver_design_factors,
+                    factor_settings_filename=self.solver_design_name,
+                    fixed_factors=self.solver_fixed_factors,
+                    cross_design_factors=self.solver_cross_design_factors,
+                    n_stacks=n_stacks,
+                    design_type=design_type,
+                    class_type="solver",
+                )
+            except Exception as e:
+                # Give error message if design creation fails
+                tk.messagebox.showerror("Error Creating Design", str(e))
+                return
+            # display design tree
+            self.display_design_tree(
+                os.path.join(
+                    DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
+                ),
+                self.solver_datafarm_frame,
+                row=999,
+                column=0,
+                columnspan=8,
+            )
+            # button to add solver design to experiment
+            self.add_solver_design_button = tk.Button(
+                master=self.solver_datafarm_frame,
+                text="Add this solver to experiment",
+                command=self.add_solver_design_to_experiment,
+            )
+            self.add_solver_design_button.grid(row=1000, column=0, columnspan=8)
+            # disable design name entry
+            self.solver_design_name_entry.configure(state="disabled")
 
     def create_problem_design(self) -> None:
         # Get unique solver design name
