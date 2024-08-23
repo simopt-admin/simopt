@@ -1,0 +1,34 @@
+Model 1 Results: 
+
+                                             OLS Regression Results                                            
+===============================================================================================================
+Dep. Variable:     Difference btwn Best and Default Avg Optimality Gap   R-squared:                       0.199
+Model:                                                             OLS   Adj. R-squared:                 -0.068
+Method:                                                  Least Squares   F-statistic:                    0.7459
+Date:                                                 Wed, 03 Apr 2024   Prob (F-statistic):              0.651
+Time:                                                         15:29:43   Log-Likelihood:                 130.43
+No. Observations:                                                   33   AIC:                            -242.9
+Df Residuals:                                                       24   BIC:                            -229.4
+Df Model:                                                            8                                         
+Covariance Type:                                             nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+intercept                     0.0044      0.001      4.652      0.000       0.002       0.006
+poly(c_m1, degree=2)[0]      -0.0048      0.005     -0.878      0.389      -0.016       0.006
+poly(c_m1, degree=2)[1]       0.0013      0.008      0.177      0.861      -0.014       0.017
+poly(Mratio, degree=2)[0]     0.0006      0.005      0.104      0.918      -0.011       0.012
+poly(Mratio, degree=2)[1]    -0.0046      0.007     -0.641      0.528      -0.019       0.010
+poly(Rratio, degree=2)[0]    -0.0009      0.005     -0.173      0.864      -0.012       0.010
+poly(Rratio, degree=2)[1]     0.0119      0.007      1.764      0.090      -0.002       0.026
+poly(Sratio, degree=2)[0]    -0.0026      0.005     -0.474      0.640      -0.014       0.009
+poly(Sratio, degree=2)[1]     0.0009      0.006      0.142      0.888      -0.012       0.014
+==============================================================================
+Omnibus:                        5.966   Durbin-Watson:                   1.784
+Prob(Omnibus):                  0.051   Jarque-Bera (JB):                5.319
+Skew:                          -0.983   Prob(JB):                       0.0700
+Kurtosis:                       2.965   Cond. No.                         10.3
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

@@ -22,6 +22,7 @@ SAN-1
 	Problem Factors:
 		initial_solution: (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)
 		budget: 10000
+		arc_costs: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 ----------------------------------------------------------------------------------------------
 Solvers:
@@ -29,56 +30,36 @@ Solvers:
 RNDSRCH
 	Solver Factors:
 		crn_across_solns: True
-		delta_max: 50.0
-		eta_1: 0.1
-		eta_2: 0.5
-		gamma_1: 1.5
-		gamma_2: 0.75
-		w: 0.85
-		mu: 1000
-		beta: 10
-		lambda_min: 8
-		simple_solve: True
-		criticality_select: True
-		criticality_threshold: 0.1
+		sample_size: 15
 
 ASTRODF
 	Solver Factors:
-		crn_across_solns: True
-		delta_max: 50.0
-		eta_1: 0.1
-		eta_2: 0.5
+		eta_1: 0.494
+		eta_2: 0.63
+		lambda_min: 33
+		crn_across_solns: False
 		gamma_1: 1.5
-		gamma_2: 0.75
-		w: 0.85
-		mu: 1000
-		beta: 10
-		lambda_min: 8
-		simple_solve: True
-		criticality_select: True
-		criticality_threshold: 0.1
+		gamma_2: 0.5
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
 
 NELDMD
 	Solver Factors:
 		crn_across_solns: True
-		delta_max: 50.0
-		eta_1: 0.1
-		eta_2: 0.5
-		gamma_1: 1.5
-		gamma_2: 0.75
-		w: 0.85
-		mu: 1000
-		beta: 10
-		lambda_min: 8
-		simple_solve: True
-		criticality_select: True
-		criticality_threshold: 0.1
+		r: 30
+		alpha: 1.0
+		gammap: 2.0
+		betap: 0.5
+		delta: 0.5
+		sensitivity: 1e-07
+		initial_spread: 0.1
 
 ----------------------------------------------------------------------------------------------
 The .pickle files for the associated Problem-Solver pairs are:
-	RNDSRCH_on_CNTNEWS-1.pickle
-	ASTRODF_on_CNTNEWS-1.pickle
-	NELDMD_on_CNTNEWS-1.pickle
-	RNDSRCH_on_SAN-1.pickle
-	ASTRODF_on_SAN-1.pickle
-	NELDMD_on_SAN-1.pickle
+RNDSRCH_on_CNTNEWS-1.pickle
+RNDSRCH_on_SAN-1.pickle
+ASTRODF_on_CNTNEWS-1.pickle
+ASTRODF_on_SAN-1.pickle
+NELDMD_on_CNTNEWS-1.pickle
+NELDMD_on_SAN-1.pickle

@@ -1,0 +1,1157 @@
+Model 2 Results: 
+
+
+ Problem Design Point: 0: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.754
+Model:                                OLS   Adj. R-squared:                  0.508
+Method:                     Least Squares   F-statistic:                     3.067
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0668
+Time:                            15:29:43   Log-Likelihood:                 18.960
+No. Observations:                      17   AIC:                            -19.92
+Df Residuals:                           8   BIC:                            -12.42
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0625      0.028      2.229      0.056      -0.002       0.127
+poly(gamma_1, degree=2)[0]     0.1811      0.126      1.434      0.190      -0.110       0.472
+poly(gamma_1, degree=2)[1]     0.0630      0.145      0.435      0.675      -0.271       0.397
+poly(gamma_2, degree=2)[0]     0.3655      0.119      3.081      0.015       0.092       0.639
+poly(gamma_2, degree=2)[1]     0.3168      0.134      2.356      0.046       0.007       0.627
+poly(eta_1, degree=2)[0]       0.0034      0.124      0.027      0.979      -0.282       0.289
+poly(eta_1, degree=2)[1]      -0.0717      0.141     -0.508      0.625      -0.397       0.254
+poly(eta_2, degree=2)[0]      -0.1340      0.117     -1.142      0.287      -0.405       0.137
+poly(eta_2, degree=2)[1]      -0.0865      0.142     -0.611      0.558      -0.413       0.240
+==============================================================================
+Omnibus:                        0.040   Durbin-Watson:                   1.570
+Prob(Omnibus):                  0.980   Jarque-Bera (JB):                0.101
+Skew:                          -0.040   Prob(JB):                        0.951
+Kurtosis:                       2.632   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 1: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.741
+Model:                                OLS   Adj. R-squared:                  0.481
+Method:                     Least Squares   F-statistic:                     2.854
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0796
+Time:                            15:29:43   Log-Likelihood:                 12.347
+No. Observations:                      17   AIC:                            -6.695
+Df Residuals:                           8   BIC:                            0.8040
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0966      0.041      2.334      0.048       0.001       0.192
+poly(gamma_1, degree=2)[0]     0.2763      0.186      1.483      0.176      -0.153       0.706
+poly(gamma_1, degree=2)[1]     0.1268      0.214      0.593      0.569      -0.366       0.620
+poly(gamma_2, degree=2)[0]     0.5190      0.175      2.965      0.018       0.115       0.923
+poly(gamma_2, degree=2)[1]     0.4343      0.198      2.189      0.060      -0.023       0.892
+poly(eta_1, degree=2)[0]      -0.0193      0.183     -0.106      0.918      -0.441       0.402
+poly(eta_1, degree=2)[1]      -0.0741      0.208     -0.356      0.731      -0.555       0.406
+poly(eta_2, degree=2)[0]      -0.2060      0.173     -1.189      0.268      -0.605       0.193
+poly(eta_2, degree=2)[1]      -0.1426      0.209     -0.682      0.515      -0.625       0.340
+==============================================================================
+Omnibus:                        1.034   Durbin-Watson:                   1.948
+Prob(Omnibus):                  0.596   Jarque-Bera (JB):                0.752
+Skew:                          -0.096   Prob(JB):                        0.686
+Kurtosis:                       1.987   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 2: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.867
+Model:                                OLS   Adj. R-squared:                  0.734
+Method:                     Least Squares   F-statistic:                     6.528
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00779
+Time:                            15:29:43   Log-Likelihood:                 17.685
+No. Observations:                      17   AIC:                            -17.37
+Df Residuals:                           8   BIC:                            -9.872
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1500      0.030      4.962      0.001       0.080       0.220
+poly(gamma_1, degree=2)[0]    -0.0008      0.136     -0.006      0.995      -0.315       0.313
+poly(gamma_1, degree=2)[1]     0.1579      0.156      1.012      0.341      -0.202       0.518
+poly(gamma_2, degree=2)[0]     0.6409      0.128      5.013      0.001       0.346       0.936
+poly(gamma_2, degree=2)[1]     0.6026      0.145      4.158      0.003       0.268       0.937
+poly(eta_1, degree=2)[0]       0.0319      0.134      0.239      0.817      -0.276       0.340
+poly(eta_1, degree=2)[1]      -0.0644      0.152     -0.423      0.683      -0.415       0.287
+poly(eta_2, degree=2)[0]      -0.1964      0.127     -1.552      0.159      -0.488       0.095
+poly(eta_2, degree=2)[1]      -0.1376      0.153     -0.901      0.394      -0.490       0.215
+==============================================================================
+Omnibus:                        0.105   Durbin-Watson:                   2.625
+Prob(Omnibus):                  0.949   Jarque-Bera (JB):                0.331
+Skew:                           0.013   Prob(JB):                        0.847
+Kurtosis:                       2.317   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 3: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.714
+Model:                                OLS   Adj. R-squared:                  0.428
+Method:                     Least Squares   F-statistic:                     2.495
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.109
+Time:                            15:29:43   Log-Likelihood:                 12.400
+No. Observations:                      17   AIC:                            -6.801
+Df Residuals:                           8   BIC:                            0.6980
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1205      0.041      2.921      0.019       0.025       0.216
+poly(gamma_1, degree=2)[0]     0.0052      0.186      0.028      0.978      -0.423       0.434
+poly(gamma_1, degree=2)[1]     0.1151      0.213      0.540      0.604      -0.376       0.606
+poly(gamma_2, degree=2)[0]     0.4392      0.174      2.517      0.036       0.037       0.842
+poly(gamma_2, degree=2)[1]     0.5176      0.198      2.617      0.031       0.062       0.974
+poly(eta_1, degree=2)[0]       0.1122      0.182      0.616      0.555      -0.308       0.532
+poly(eta_1, degree=2)[1]      -0.2502      0.208     -1.204      0.263      -0.729       0.229
+poly(eta_2, degree=2)[0]      -0.0906      0.173     -0.525      0.614      -0.489       0.308
+poly(eta_2, degree=2)[1]      -0.0359      0.208     -0.172      0.867      -0.517       0.445
+==============================================================================
+Omnibus:                        0.878   Durbin-Watson:                   2.079
+Prob(Omnibus):                  0.645   Jarque-Bera (JB):                0.771
+Skew:                           0.448   Prob(JB):                        0.680
+Kurtosis:                       2.465   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 4: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.815
+Model:                                OLS   Adj. R-squared:                  0.629
+Method:                     Least Squares   F-statistic:                     4.394
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0256
+Time:                            15:29:43   Log-Likelihood:                 19.970
+No. Observations:                      17   AIC:                            -21.94
+Df Residuals:                           8   BIC:                            -14.44
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0836      0.026      3.165      0.013       0.023       0.145
+poly(gamma_1, degree=2)[0]     0.2067      0.119      1.737      0.121      -0.068       0.481
+poly(gamma_1, degree=2)[1]     0.0323      0.136      0.237      0.819      -0.282       0.347
+poly(gamma_2, degree=2)[0]     0.4507      0.112      4.032      0.004       0.193       0.708
+poly(gamma_2, degree=2)[1]     0.3775      0.127      2.979      0.018       0.085       0.670
+poly(eta_1, degree=2)[0]       0.0842      0.117      0.721      0.491      -0.185       0.353
+poly(eta_1, degree=2)[1]       0.0154      0.133      0.116      0.911      -0.292       0.322
+poly(eta_2, degree=2)[0]      -0.0669      0.111     -0.605      0.562      -0.322       0.188
+poly(eta_2, degree=2)[1]      -0.0446      0.134     -0.334      0.747      -0.353       0.263
+==============================================================================
+Omnibus:                        0.186   Durbin-Watson:                   1.651
+Prob(Omnibus):                  0.911   Jarque-Bera (JB):                0.050
+Skew:                          -0.081   Prob(JB):                        0.975
+Kurtosis:                       2.789   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 5: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.800
+Model:                                OLS   Adj. R-squared:                  0.600
+Method:                     Least Squares   F-statistic:                     3.995
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0335
+Time:                            15:29:43   Log-Likelihood:                 18.167
+No. Observations:                      17   AIC:                            -18.33
+Df Residuals:                           8   BIC:                            -10.84
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1152      0.029      3.920      0.004       0.047       0.183
+poly(gamma_1, degree=2)[0]     0.1528      0.132      1.154      0.282      -0.152       0.458
+poly(gamma_1, degree=2)[1]     0.0024      0.152      0.016      0.988      -0.348       0.352
+poly(gamma_2, degree=2)[0]     0.4110      0.124      3.307      0.011       0.124       0.698
+poly(gamma_2, degree=2)[1]     0.4950      0.141      3.514      0.008       0.170       0.820
+poly(eta_1, degree=2)[0]       0.0332      0.130      0.256      0.805      -0.266       0.332
+poly(eta_1, degree=2)[1]       0.0692      0.148      0.468      0.653      -0.272       0.410
+poly(eta_2, degree=2)[0]      -0.1298      0.123     -1.055      0.322      -0.413       0.154
+poly(eta_2, degree=2)[1]      -0.1239      0.148     -0.834      0.428      -0.466       0.218
+==============================================================================
+Omnibus:                        1.094   Durbin-Watson:                   1.848
+Prob(Omnibus):                  0.579   Jarque-Bera (JB):                0.157
+Skew:                          -0.182   Prob(JB):                        0.924
+Kurtosis:                       3.300   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 6: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.775
+Model:                                OLS   Adj. R-squared:                  0.550
+Method:                     Least Squares   F-statistic:                     3.440
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0499
+Time:                            15:29:43   Log-Likelihood:                 15.556
+No. Observations:                      17   AIC:                            -13.11
+Df Residuals:                           8   BIC:                            -5.613
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1252      0.034      3.654      0.006       0.046       0.204
+poly(gamma_1, degree=2)[0]     0.2046      0.154      1.326      0.221      -0.151       0.560
+poly(gamma_1, degree=2)[1]     0.2408      0.177      1.361      0.211      -0.167       0.649
+poly(gamma_2, degree=2)[0]     0.3723      0.145      2.569      0.033       0.038       0.706
+poly(gamma_2, degree=2)[1]     0.4679      0.164      2.848      0.022       0.089       0.847
+poly(eta_1, degree=2)[0]       0.0509      0.151      0.337      0.745      -0.298       0.400
+poly(eta_1, degree=2)[1]      -0.0853      0.173     -0.494      0.634      -0.483       0.313
+poly(eta_2, degree=2)[0]      -0.1505      0.143     -1.050      0.325      -0.481       0.180
+poly(eta_2, degree=2)[1]      -0.1987      0.173     -1.148      0.284      -0.598       0.200
+==============================================================================
+Omnibus:                        0.194   Durbin-Watson:                   1.717
+Prob(Omnibus):                  0.907   Jarque-Bera (JB):                0.396
+Skew:                          -0.035   Prob(JB):                        0.820
+Kurtosis:                       2.255   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 7: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.858
+Model:                                OLS   Adj. R-squared:                  0.717
+Method:                     Least Squares   F-statistic:                     6.057
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00986
+Time:                            15:29:43   Log-Likelihood:                 28.983
+No. Observations:                      17   AIC:                            -39.97
+Df Residuals:                           8   BIC:                            -32.47
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0913      0.016      5.872      0.000       0.055       0.127
+poly(gamma_1, degree=2)[0]     0.1217      0.070      1.738      0.120      -0.040       0.283
+poly(gamma_1, degree=2)[1]     0.0896      0.080      1.115      0.297      -0.096       0.275
+poly(gamma_2, degree=2)[0]     0.3023      0.066      4.596      0.002       0.151       0.454
+poly(gamma_2, degree=2)[1]     0.2556      0.075      3.428      0.009       0.084       0.428
+poly(eta_1, degree=2)[0]       0.1819      0.069      2.648      0.029       0.024       0.340
+poly(eta_1, degree=2)[1]       0.1123      0.078      1.434      0.190      -0.068       0.293
+poly(eta_2, degree=2)[0]       0.0006      0.065      0.009      0.993      -0.150       0.151
+poly(eta_2, degree=2)[1]      -0.0050      0.079     -0.064      0.951      -0.186       0.176
+==============================================================================
+Omnibus:                        0.053   Durbin-Watson:                   2.035
+Prob(Omnibus):                  0.974   Jarque-Bera (JB):                0.141
+Skew:                           0.092   Prob(JB):                        0.932
+Kurtosis:                       2.593   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 8: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.796
+Model:                                OLS   Adj. R-squared:                  0.592
+Method:                     Least Squares   F-statistic:                     3.897
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0358
+Time:                            15:29:43   Log-Likelihood:                 23.945
+No. Observations:                      17   AIC:                            -29.89
+Df Residuals:                           8   BIC:                            -22.39
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0594      0.021      2.840      0.022       0.011       0.108
+poly(gamma_1, degree=2)[0]     0.1254      0.094      1.331      0.220      -0.092       0.343
+poly(gamma_1, degree=2)[1]     0.0780      0.108      0.722      0.491      -0.171       0.327
+poly(gamma_2, degree=2)[0]     0.3356      0.088      3.793      0.005       0.132       0.540
+poly(gamma_2, degree=2)[1]     0.2415      0.100      2.408      0.043       0.010       0.473
+poly(eta_1, degree=2)[0]       0.0099      0.092      0.108      0.917      -0.203       0.223
+poly(eta_1, degree=2)[1]      -0.1066      0.105     -1.012      0.341      -0.350       0.136
+poly(eta_2, degree=2)[0]      -0.0571      0.088     -0.652      0.532      -0.259       0.145
+poly(eta_2, degree=2)[1]      -0.0356      0.106     -0.337      0.745      -0.279       0.208
+==============================================================================
+Omnibus:                        2.128   Durbin-Watson:                   1.627
+Prob(Omnibus):                  0.345   Jarque-Bera (JB):                1.370
+Skew:                          -0.448   Prob(JB):                        0.504
+Kurtosis:                       1.936   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 9: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.892
+Model:                                OLS   Adj. R-squared:                  0.785
+Method:                     Least Squares   F-statistic:                     8.296
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00358
+Time:                            15:29:43   Log-Likelihood:                 32.050
+No. Observations:                      17   AIC:                            -46.10
+Df Residuals:                           8   BIC:                            -38.60
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0561      0.013      4.324      0.003       0.026       0.086
+poly(gamma_1, degree=2)[0]     0.1084      0.058      1.854      0.101      -0.026       0.243
+poly(gamma_1, degree=2)[1]     0.0719      0.067      1.072      0.315      -0.083       0.227
+poly(gamma_2, degree=2)[0]     0.3324      0.055      6.051      0.000       0.206       0.459
+poly(gamma_2, degree=2)[1]     0.2316      0.062      3.720      0.006       0.088       0.375
+poly(eta_1, degree=2)[0]      -0.0018      0.057     -0.031      0.976      -0.134       0.130
+poly(eta_1, degree=2)[1]      -0.0119      0.065     -0.182      0.860      -0.163       0.139
+poly(eta_2, degree=2)[0]      -0.0710      0.054     -1.307      0.228      -0.196       0.054
+poly(eta_2, degree=2)[1]      -0.0317      0.066     -0.483      0.642      -0.183       0.120
+==============================================================================
+Omnibus:                        2.827   Durbin-Watson:                   2.580
+Prob(Omnibus):                  0.243   Jarque-Bera (JB):                1.321
+Skew:                           0.664   Prob(JB):                        0.517
+Kurtosis:                       3.316   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 10: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.860
+Model:                                OLS   Adj. R-squared:                  0.719
+Method:                     Least Squares   F-statistic:                     6.120
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00954
+Time:                            15:29:43   Log-Likelihood:                 21.135
+No. Observations:                      17   AIC:                            -24.27
+Df Residuals:                           8   BIC:                            -16.77
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0885      0.025      3.588      0.007       0.032       0.145
+poly(gamma_1, degree=2)[0]     0.0052      0.111      0.047      0.964      -0.251       0.261
+poly(gamma_1, degree=2)[1]    -0.0455      0.127     -0.357      0.730      -0.339       0.248
+poly(gamma_2, degree=2)[0]     0.4973      0.104      4.764      0.001       0.257       0.738
+poly(gamma_2, degree=2)[1]     0.4682      0.118      3.957      0.004       0.195       0.741
+poly(eta_1, degree=2)[0]       0.1734      0.109      1.591      0.150      -0.078       0.425
+poly(eta_1, degree=2)[1]      -0.0806      0.124     -0.649      0.535      -0.367       0.206
+poly(eta_2, degree=2)[0]      -0.0494      0.103     -0.478      0.646      -0.288       0.189
+poly(eta_2, degree=2)[1]      -0.0033      0.125     -0.027      0.979      -0.291       0.284
+==============================================================================
+Omnibus:                        0.054   Durbin-Watson:                   1.114
+Prob(Omnibus):                  0.974   Jarque-Bera (JB):                0.278
+Skew:                          -0.043   Prob(JB):                        0.870
+Kurtosis:                       2.379   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 11: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.822
+Model:                                OLS   Adj. R-squared:                  0.644
+Method:                     Least Squares   F-statistic:                     4.626
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0221
+Time:                            15:29:43   Log-Likelihood:                 21.785
+No. Observations:                      17   AIC:                            -25.57
+Df Residuals:                           8   BIC:                            -18.07
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1141      0.024      4.805      0.001       0.059       0.169
+poly(gamma_1, degree=2)[0]    -0.1354      0.107     -1.266      0.241      -0.382       0.111
+poly(gamma_1, degree=2)[1]     0.2508      0.123      2.044      0.075      -0.032       0.534
+poly(gamma_2, degree=2)[0]     0.3318      0.100      3.303      0.011       0.100       0.563
+poly(gamma_2, degree=2)[1]     0.4054      0.114      3.560      0.007       0.143       0.668
+poly(eta_1, degree=2)[0]       0.1727      0.105      1.646      0.138      -0.069       0.415
+poly(eta_1, degree=2)[1]      -0.1189      0.120     -0.994      0.349      -0.395       0.157
+poly(eta_2, degree=2)[0]      -0.0900      0.099     -0.905      0.392      -0.319       0.139
+poly(eta_2, degree=2)[1]      -0.1132      0.120     -0.944      0.373      -0.390       0.163
+==============================================================================
+Omnibus:                        2.483   Durbin-Watson:                   1.956
+Prob(Omnibus):                  0.289   Jarque-Bera (JB):                1.576
+Skew:                           0.742   Prob(JB):                        0.455
+Kurtosis:                       2.841   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 12: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.767
+Model:                                OLS   Adj. R-squared:                  0.534
+Method:                     Least Squares   F-statistic:                     3.292
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0559
+Time:                            15:29:43   Log-Likelihood:                 22.755
+No. Observations:                      17   AIC:                            -27.51
+Df Residuals:                           8   BIC:                            -20.01
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0527      0.022      2.349      0.047       0.001       0.104
+poly(gamma_1, degree=2)[0]     0.1285      0.101      1.272      0.239      -0.104       0.361
+poly(gamma_1, degree=2)[1]     0.0950      0.116      0.820      0.436      -0.172       0.362
+poly(gamma_2, degree=2)[0]     0.3066      0.095      3.231      0.012       0.088       0.525
+poly(gamma_2, degree=2)[1]     0.2404      0.108      2.235      0.056      -0.008       0.488
+poly(eta_1, degree=2)[0]      -0.0155      0.099     -0.156      0.880      -0.244       0.213
+poly(eta_1, degree=2)[1]      -0.1091      0.113     -0.966      0.362      -0.370       0.151
+poly(eta_2, degree=2)[0]      -0.1132      0.094     -1.206      0.262      -0.330       0.103
+poly(eta_2, degree=2)[1]      -0.0640      0.113     -0.565      0.588      -0.325       0.197
+==============================================================================
+Omnibus:                        0.077   Durbin-Watson:                   2.017
+Prob(Omnibus):                  0.962   Jarque-Bera (JB):                0.240
+Skew:                          -0.129   Prob(JB):                        0.887
+Kurtosis:                       2.477   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 13: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.715
+Model:                                OLS   Adj. R-squared:                  0.430
+Method:                     Least Squares   F-statistic:                     2.509
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.107
+Time:                            15:29:43   Log-Likelihood:                 11.819
+No. Observations:                      17   AIC:                            -5.638
+Df Residuals:                           8   BIC:                             1.861
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.1155      0.043      2.707      0.027       0.017       0.214
+poly(gamma_1, degree=2)[0]     0.0738      0.192      0.384      0.711      -0.370       0.517
+poly(gamma_1, degree=2)[1]     0.0944      0.220      0.428      0.680      -0.414       0.603
+poly(gamma_2, degree=2)[0]     0.4087      0.181      2.264      0.053      -0.008       0.825
+poly(gamma_2, degree=2)[1]     0.5588      0.205      2.730      0.026       0.087       1.031
+poly(eta_1, degree=2)[0]       0.1666      0.189      0.884      0.403      -0.268       0.601
+poly(eta_1, degree=2)[1]      -0.1122      0.215     -0.522      0.616      -0.608       0.384
+poly(eta_2, degree=2)[0]      -0.2786      0.179     -1.559      0.158      -0.691       0.133
+poly(eta_2, degree=2)[1]      -0.1636      0.216     -0.758      0.470      -0.661       0.334
+==============================================================================
+Omnibus:                        1.338   Durbin-Watson:                   1.128
+Prob(Omnibus):                  0.512   Jarque-Bera (JB):                0.561
+Skew:                           0.444   Prob(JB):                        0.756
+Kurtosis:                       3.033   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 14: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.821
+Model:                                OLS   Adj. R-squared:                  0.642
+Method:                     Least Squares   F-statistic:                     4.587
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0227
+Time:                            15:29:43   Log-Likelihood:                 22.533
+No. Observations:                      17   AIC:                            -27.07
+Df Residuals:                           8   BIC:                            -19.57
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0864      0.023      3.802      0.005       0.034       0.139
+poly(gamma_1, degree=2)[0]     0.0634      0.102      0.620      0.553      -0.173       0.299
+poly(gamma_1, degree=2)[1]     0.0933      0.117      0.795      0.450      -0.177       0.364
+poly(gamma_2, degree=2)[0]     0.4113      0.096      4.279      0.003       0.190       0.633
+poly(gamma_2, degree=2)[1]     0.3385      0.109      3.107      0.015       0.087       0.590
+poly(eta_1, degree=2)[0]       0.0420      0.100      0.418      0.687      -0.189       0.273
+poly(eta_1, degree=2)[1]      -0.0862      0.114     -0.753      0.473      -0.350       0.178
+poly(eta_2, degree=2)[0]      -0.0855      0.095     -0.899      0.395      -0.305       0.134
+poly(eta_2, degree=2)[1]      -0.0610      0.115     -0.531      0.610      -0.326       0.204
+==============================================================================
+Omnibus:                        0.251   Durbin-Watson:                   2.336
+Prob(Omnibus):                  0.882   Jarque-Bera (JB):                0.428
+Skew:                           0.162   Prob(JB):                        0.807
+Kurtosis:                       2.293   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 15: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.765
+Model:                                OLS   Adj. R-squared:                  0.530
+Method:                     Least Squares   F-statistic:                     3.259
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0574
+Time:                            15:29:43   Log-Likelihood:                 24.060
+No. Observations:                      17   AIC:                            -30.12
+Df Residuals:                           8   BIC:                            -22.62
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0704      0.021      3.390      0.009       0.023       0.118
+poly(gamma_1, degree=2)[0]     0.0659      0.094      0.704      0.501      -0.150       0.282
+poly(gamma_1, degree=2)[1]    -0.0044      0.107     -0.041      0.968      -0.252       0.243
+poly(gamma_2, degree=2)[0]     0.2919      0.088      3.321      0.011       0.089       0.495
+poly(gamma_2, degree=2)[1]     0.2742      0.100      2.752      0.025       0.044       0.504
+poly(eta_1, degree=2)[0]       0.0522      0.092      0.569      0.585      -0.159       0.264
+poly(eta_1, degree=2)[1]      -0.0270      0.105     -0.258      0.803      -0.268       0.214
+poly(eta_2, degree=2)[0]      -0.1466      0.087     -1.686      0.130      -0.347       0.054
+poly(eta_2, degree=2)[1]      -0.0422      0.105     -0.402      0.698      -0.284       0.200
+==============================================================================
+Omnibus:                        0.240   Durbin-Watson:                   1.577
+Prob(Omnibus):                  0.887   Jarque-Bera (JB):                0.405
+Skew:                           0.198   Prob(JB):                        0.817
+Kurtosis:                       2.356   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 16: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.763
+Model:                                OLS   Adj. R-squared:                  0.526
+Method:                     Least Squares   F-statistic:                     3.223
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0590
+Time:                            15:29:43   Log-Likelihood:                 13.096
+No. Observations:                      17   AIC:                            -8.193
+Df Residuals:                           8   BIC:                           -0.6940
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0957      0.040      2.417      0.042       0.004       0.187
+poly(gamma_1, degree=2)[0]     0.2053      0.178      1.151      0.283      -0.206       0.617
+poly(gamma_1, degree=2)[1]     0.1126      0.204      0.550      0.597      -0.359       0.584
+poly(gamma_2, degree=2)[0]     0.5096      0.167      3.042      0.016       0.123       0.896
+poly(gamma_2, degree=2)[1]     0.4658      0.190      2.454      0.040       0.028       0.904
+poly(eta_1, degree=2)[0]      -0.0067      0.175     -0.038      0.970      -0.410       0.397
+poly(eta_1, degree=2)[1]      -0.1873      0.199     -0.939      0.375      -0.647       0.273
+poly(eta_2, degree=2)[0]      -0.2249      0.166     -1.357      0.212      -0.607       0.157
+poly(eta_2, degree=2)[1]      -0.1192      0.200     -0.596      0.568      -0.581       0.342
+==============================================================================
+Omnibus:                        1.063   Durbin-Watson:                   1.115
+Prob(Omnibus):                  0.588   Jarque-Bera (JB):                0.332
+Skew:                           0.340   Prob(JB):                        0.847
+Kurtosis:                       3.081   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 17: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.798
+Model:                                OLS   Adj. R-squared:                  0.597
+Method:                     Least Squares   F-statistic:                     3.958
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0343
+Time:                            15:29:43   Log-Likelihood:                 26.507
+No. Observations:                      17   AIC:                            -35.01
+Df Residuals:                           8   BIC:                            -27.52
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0441      0.018      2.453      0.040       0.003       0.086
+poly(gamma_1, degree=2)[0]     0.1101      0.081      1.359      0.211      -0.077       0.297
+poly(gamma_1, degree=2)[1]     0.0423      0.093      0.455      0.661      -0.172       0.257
+poly(gamma_2, degree=2)[0]     0.2916      0.076      3.832      0.005       0.116       0.467
+poly(gamma_2, degree=2)[1]     0.2409      0.086      2.793      0.023       0.042       0.440
+poly(eta_1, degree=2)[0]       0.0434      0.079      0.547      0.600      -0.140       0.227
+poly(eta_1, degree=2)[1]      -0.0096      0.091     -0.106      0.918      -0.219       0.199
+poly(eta_2, degree=2)[0]      -0.0894      0.075     -1.188      0.269      -0.263       0.084
+poly(eta_2, degree=2)[1]      -0.0518      0.091     -0.569      0.585      -0.261       0.158
+==============================================================================
+Omnibus:                        0.231   Durbin-Watson:                   1.849
+Prob(Omnibus):                  0.891   Jarque-Bera (JB):                0.365
+Skew:                           0.219   Prob(JB):                        0.833
+Kurtosis:                       2.431   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 18: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.750
+Model:                                OLS   Adj. R-squared:                  0.500
+Method:                     Least Squares   F-statistic:                     2.998
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0707
+Time:                            15:29:43   Log-Likelihood:                 20.219
+No. Observations:                      17   AIC:                            -22.44
+Df Residuals:                           8   BIC:                            -14.94
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0571      0.026      2.191      0.060      -0.003       0.117
+poly(gamma_1, degree=2)[0]     0.1090      0.117      0.929      0.380      -0.161       0.379
+poly(gamma_1, degree=2)[1]     0.0621      0.134      0.462      0.657      -0.248       0.372
+poly(gamma_2, degree=2)[0]     0.3378      0.110      3.066      0.015       0.084       0.592
+poly(gamma_2, degree=2)[1]     0.3060      0.125      2.451      0.040       0.018       0.594
+poly(eta_1, degree=2)[0]       0.0226      0.115      0.197      0.849      -0.243       0.288
+poly(eta_1, degree=2)[1]      -0.0869      0.131     -0.662      0.526      -0.389       0.216
+poly(eta_2, degree=2)[0]      -0.1643      0.109     -1.507      0.170      -0.416       0.087
+poly(eta_2, degree=2)[1]      -0.0775      0.132     -0.589      0.572      -0.381       0.226
+==============================================================================
+Omnibus:                        0.062   Durbin-Watson:                   1.443
+Prob(Omnibus):                  0.970   Jarque-Bera (JB):                0.091
+Skew:                           0.056   Prob(JB):                        0.955
+Kurtosis:                       2.658   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 19: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.883
+Model:                                OLS   Adj. R-squared:                  0.766
+Method:                     Least Squares   F-statistic:                     7.543
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00490
+Time:                            15:29:44   Log-Likelihood:                 26.080
+No. Observations:                      17   AIC:                            -34.16
+Df Residuals:                           8   BIC:                            -26.66
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0784      0.018      4.252      0.003       0.036       0.121
+poly(gamma_1, degree=2)[0]     0.2096      0.083      2.523      0.036       0.018       0.401
+poly(gamma_1, degree=2)[1]    -0.0069      0.095     -0.072      0.944      -0.227       0.213
+poly(gamma_2, degree=2)[0]     0.3418      0.078      4.380      0.002       0.162       0.522
+poly(gamma_2, degree=2)[1]     0.3759      0.088      4.250      0.003       0.172       0.580
+poly(eta_1, degree=2)[0]      -0.1134      0.081     -1.391      0.202      -0.301       0.075
+poly(eta_1, degree=2)[1]       0.0795      0.093      0.855      0.417      -0.135       0.294
+poly(eta_2, degree=2)[0]      -0.2087      0.077     -2.702      0.027      -0.387      -0.031
+poly(eta_2, degree=2)[1]       0.0172      0.093      0.185      0.858      -0.198       0.232
+==============================================================================
+Omnibus:                        3.037   Durbin-Watson:                   3.220
+Prob(Omnibus):                  0.219   Jarque-Bera (JB):                1.176
+Skew:                           0.023   Prob(JB):                        0.555
+Kurtosis:                       1.712   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 20: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.666
+Model:                                OLS   Adj. R-squared:                  0.332
+Method:                     Least Squares   F-statistic:                     1.992
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.175
+Time:                            15:29:44   Log-Likelihood:                 19.829
+No. Observations:                      17   AIC:                            -21.66
+Df Residuals:                           8   BIC:                            -14.16
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0589      0.027      2.209      0.058      -0.003       0.120
+poly(gamma_1, degree=2)[0]     0.2324      0.120      1.936      0.089      -0.044       0.509
+poly(gamma_1, degree=2)[1]     0.0681      0.138      0.495      0.634      -0.249       0.386
+poly(gamma_2, degree=2)[0]     0.2837      0.113      2.517      0.036       0.024       0.544
+poly(gamma_2, degree=2)[1]     0.2432      0.128      1.904      0.093      -0.051       0.538
+poly(eta_1, degree=2)[0]      -0.0059      0.118     -0.051      0.961      -0.277       0.265
+poly(eta_1, degree=2)[1]       0.0530      0.134      0.395      0.703      -0.256       0.362
+poly(eta_2, degree=2)[0]      -0.0466      0.112     -0.418      0.687      -0.304       0.211
+poly(eta_2, degree=2)[1]       0.0746      0.135      0.554      0.595      -0.236       0.385
+==============================================================================
+Omnibus:                        1.416   Durbin-Watson:                   1.966
+Prob(Omnibus):                  0.493   Jarque-Bera (JB):                0.973
+Skew:                           0.563   Prob(JB):                        0.615
+Kurtosis:                       2.677   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 21: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.714
+Model:                                OLS   Adj. R-squared:                  0.428
+Method:                     Least Squares   F-statistic:                     2.497
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.109
+Time:                            15:29:44   Log-Likelihood:                 18.238
+No. Observations:                      17   AIC:                            -18.48
+Df Residuals:                           8   BIC:                            -10.98
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0484      0.029      1.655      0.136      -0.019       0.116
+poly(gamma_1, degree=2)[0]     0.0083      0.132      0.063      0.952      -0.296       0.312
+poly(gamma_1, degree=2)[1]    -0.0139      0.151     -0.092      0.929      -0.362       0.335
+poly(gamma_2, degree=2)[0]     0.3587      0.124      2.898      0.020       0.073       0.644
+poly(gamma_2, degree=2)[1]     0.3564      0.140      2.541      0.035       0.033       0.680
+poly(eta_1, degree=2)[0]       0.0351      0.129      0.272      0.793      -0.263       0.333
+poly(eta_1, degree=2)[1]      -0.0677      0.147     -0.460      0.658      -0.408       0.272
+poly(eta_2, degree=2)[0]      -0.1562      0.122     -1.275      0.238      -0.439       0.126
+poly(eta_2, degree=2)[1]      -0.0908      0.148     -0.614      0.556      -0.432       0.250
+==============================================================================
+Omnibus:                        1.139   Durbin-Watson:                   1.191
+Prob(Omnibus):                  0.566   Jarque-Bera (JB):                0.322
+Skew:                           0.329   Prob(JB):                        0.851
+Kurtosis:                       3.144   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 22: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.734
+Model:                                OLS   Adj. R-squared:                  0.469
+Method:                     Least Squares   F-statistic:                     2.765
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0859
+Time:                            15:29:44   Log-Likelihood:                 18.362
+No. Observations:                      17   AIC:                            -18.72
+Df Residuals:                           8   BIC:                            -11.23
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0532      0.029      1.830      0.105      -0.014       0.120
+poly(gamma_1, degree=2)[0]     0.0914      0.131      0.698      0.505      -0.210       0.393
+poly(gamma_1, degree=2)[1]     0.0347      0.150      0.231      0.823      -0.311       0.381
+poly(gamma_2, degree=2)[0]     0.3642      0.123      2.964      0.018       0.081       0.648
+poly(gamma_2, degree=2)[1]     0.3088      0.139      2.217      0.057      -0.012       0.630
+poly(eta_1, degree=2)[0]       0.0385      0.128      0.300      0.772      -0.257       0.334
+poly(eta_1, degree=2)[1]      -0.1272      0.146     -0.870      0.410      -0.465       0.210
+poly(eta_2, degree=2)[0]      -0.2192      0.122     -1.802      0.109      -0.500       0.061
+poly(eta_2, degree=2)[1]      -0.0348      0.147     -0.237      0.819      -0.373       0.304
+==============================================================================
+Omnibus:                        1.480   Durbin-Watson:                   1.057
+Prob(Omnibus):                  0.477   Jarque-Bera (JB):                0.699
+Skew:                           0.497   Prob(JB):                        0.705
+Kurtosis:                       2.992   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 23: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.844
+Model:                                OLS   Adj. R-squared:                  0.687
+Method:                     Least Squares   F-statistic:                     5.399
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0140
+Time:                            15:29:44   Log-Likelihood:                 17.013
+No. Observations:                      17   AIC:                            -16.03
+Df Residuals:                           8   BIC:                            -8.528
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0943      0.031      2.997      0.017       0.022       0.167
+poly(gamma_1, degree=2)[0]     0.2279      0.142      1.609      0.146      -0.099       0.554
+poly(gamma_1, degree=2)[1]     0.0343      0.162      0.211      0.838      -0.340       0.409
+poly(gamma_2, degree=2)[0]     0.2398      0.133      1.803      0.109      -0.067       0.547
+poly(gamma_2, degree=2)[1]     0.6349      0.151      4.211      0.003       0.287       0.983
+poly(eta_1, degree=2)[0]      -0.1331      0.139     -0.958      0.366      -0.453       0.187
+poly(eta_1, degree=2)[1]      -0.1520      0.158     -0.960      0.365      -0.517       0.213
+poly(eta_2, degree=2)[0]      -0.1982      0.132     -1.506      0.171      -0.502       0.105
+poly(eta_2, degree=2)[1]      -0.2758      0.159     -1.736      0.121      -0.642       0.091
+==============================================================================
+Omnibus:                        0.486   Durbin-Watson:                   1.061
+Prob(Omnibus):                  0.784   Jarque-Bera (JB):                0.549
+Skew:                          -0.063   Prob(JB):                        0.760
+Kurtosis:                       2.129   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 24: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.904
+Model:                                OLS   Adj. R-squared:                  0.807
+Method:                     Least Squares   F-statistic:                     9.374
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00238
+Time:                            15:29:44   Log-Likelihood:                 25.136
+No. Observations:                      17   AIC:                            -32.27
+Df Residuals:                           8   BIC:                            -24.77
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0717      0.020      3.676      0.006       0.027       0.117
+poly(gamma_1, degree=2)[0]     0.1650      0.088      1.878      0.097      -0.038       0.368
+poly(gamma_1, degree=2)[1]     0.0104      0.101      0.103      0.920      -0.222       0.243
+poly(gamma_2, degree=2)[0]     0.2812      0.082      3.409      0.009       0.091       0.471
+poly(gamma_2, degree=2)[1]     0.5590      0.093      5.979      0.000       0.343       0.775
+poly(eta_1, degree=2)[0]      -0.0508      0.086     -0.590      0.572      -0.249       0.148
+poly(eta_1, degree=2)[1]      -0.0448      0.098     -0.457      0.660      -0.271       0.182
+poly(eta_2, degree=2)[0]      -0.0498      0.082     -0.610      0.559      -0.238       0.138
+poly(eta_2, degree=2)[1]      -0.1468      0.099     -1.490      0.175      -0.374       0.080
+==============================================================================
+Omnibus:                        0.330   Durbin-Watson:                   0.844
+Prob(Omnibus):                  0.848   Jarque-Bera (JB):                0.479
+Skew:                           0.117   Prob(JB):                        0.787
+Kurtosis:                       2.212   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 25: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.717
+Model:                                OLS   Adj. R-squared:                  0.434
+Method:                     Least Squares   F-statistic:                     2.530
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.105
+Time:                            15:29:44   Log-Likelihood:                 15.304
+No. Observations:                      17   AIC:                            -12.61
+Df Residuals:                           8   BIC:                            -5.108
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0840      0.035      2.414      0.042       0.004       0.164
+poly(gamma_1, degree=2)[0]     0.1101      0.157      0.703      0.502      -0.251       0.471
+poly(gamma_1, degree=2)[1]     0.1638      0.180      0.912      0.389      -0.250       0.578
+poly(gamma_2, degree=2)[0]     0.3581      0.147      2.435      0.041       0.019       0.697
+poly(gamma_2, degree=2)[1]     0.3987      0.167      2.392      0.044       0.014       0.783
+poly(eta_1, degree=2)[0]      -0.0158      0.154     -0.103      0.921      -0.370       0.338
+poly(eta_1, degree=2)[1]      -0.1286      0.175     -0.734      0.484      -0.532       0.275
+poly(eta_2, degree=2)[0]      -0.1981      0.146     -1.361      0.211      -0.534       0.138
+poly(eta_2, degree=2)[1]      -0.1632      0.176     -0.929      0.380      -0.568       0.242
+==============================================================================
+Omnibus:                        0.571   Durbin-Watson:                   1.261
+Prob(Omnibus):                  0.751   Jarque-Bera (JB):                0.122
+Skew:                           0.207   Prob(JB):                        0.941
+Kurtosis:                       2.969   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 26: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.794
+Model:                                OLS   Adj. R-squared:                  0.588
+Method:                     Least Squares   F-statistic:                     3.853
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0369
+Time:                            15:29:44   Log-Likelihood:                 16.059
+No. Observations:                      17   AIC:                            -14.12
+Df Residuals:                           8   BIC:                            -6.618
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0997      0.033      2.998      0.017       0.023       0.176
+poly(gamma_1, degree=2)[0]     0.2232      0.150      1.490      0.175      -0.122       0.569
+poly(gamma_1, degree=2)[1]     0.0196      0.172      0.114      0.912      -0.377       0.416
+poly(gamma_2, degree=2)[0]     0.4952      0.141      3.519      0.008       0.171       0.820
+poly(gamma_2, degree=2)[1]     0.4656      0.159      2.920      0.019       0.098       0.833
+poly(eta_1, degree=2)[0]       0.1169      0.147      0.796      0.449      -0.222       0.456
+poly(eta_1, degree=2)[1]      -0.0551      0.168     -0.329      0.751      -0.441       0.331
+poly(eta_2, degree=2)[0]      -0.0678      0.139     -0.487      0.639      -0.389       0.253
+poly(eta_2, degree=2)[1]      -0.0513      0.168     -0.305      0.768      -0.439       0.336
+==============================================================================
+Omnibus:                        3.462   Durbin-Watson:                   1.383
+Prob(Omnibus):                  0.177   Jarque-Bera (JB):                1.432
+Skew:                          -0.590   Prob(JB):                        0.489
+Kurtosis:                       3.793   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 27: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.674
+Model:                                OLS   Adj. R-squared:                  0.349
+Method:                     Least Squares   F-statistic:                     2.071
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):              0.162
+Time:                            15:29:44   Log-Likelihood:                 23.297
+No. Observations:                      17   AIC:                            -28.59
+Df Residuals:                           8   BIC:                            -21.10
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0504      0.022      2.320      0.049       0.000       0.101
+poly(gamma_1, degree=2)[0]     0.1106      0.098      1.130      0.291      -0.115       0.336
+poly(gamma_1, degree=2)[1]     0.1073      0.112      0.956      0.367      -0.151       0.366
+poly(gamma_2, degree=2)[0]     0.2608      0.092      2.838      0.022       0.049       0.473
+poly(gamma_2, degree=2)[1]     0.1670      0.104      1.603      0.148      -0.073       0.407
+poly(eta_1, degree=2)[0]      -0.0587      0.096     -0.612      0.557      -0.280       0.163
+poly(eta_1, degree=2)[1]      -0.0159      0.109     -0.145      0.888      -0.268       0.236
+poly(eta_2, degree=2)[0]      -0.0361      0.091     -0.397      0.702      -0.246       0.174
+poly(eta_2, degree=2)[1]      -0.0524      0.110     -0.477      0.646      -0.306       0.201
+==============================================================================
+Omnibus:                       15.625   Durbin-Watson:                   2.530
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               14.515
+Skew:                           1.572   Prob(JB):                     0.000705
+Kurtosis:                       6.257   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 28: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.873
+Model:                                OLS   Adj. R-squared:                  0.746
+Method:                     Least Squares   F-statistic:                     6.870
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):            0.00663
+Time:                            15:29:44   Log-Likelihood:                 25.089
+No. Observations:                      17   AIC:                            -32.18
+Df Residuals:                           8   BIC:                            -24.68
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0805      0.020      4.117      0.003       0.035       0.126
+poly(gamma_1, degree=2)[0]     0.1466      0.088      1.664      0.135      -0.057       0.350
+poly(gamma_1, degree=2)[1]     0.0513      0.101      0.508      0.625      -0.182       0.284
+poly(gamma_2, degree=2)[0]     0.4363      0.083      5.274      0.001       0.246       0.627
+poly(gamma_2, degree=2)[1]     0.3070      0.094      3.274      0.011       0.091       0.523
+poly(eta_1, degree=2)[0]       0.0122      0.086      0.141      0.892      -0.187       0.211
+poly(eta_1, degree=2)[1]      -0.0434      0.098     -0.441      0.671      -0.271       0.184
+poly(eta_2, degree=2)[0]      -0.1116      0.082     -1.363      0.210      -0.300       0.077
+poly(eta_2, degree=2)[1]      -0.1095      0.099     -1.108      0.300      -0.337       0.118
+==============================================================================
+Omnibus:                        0.426   Durbin-Watson:                   2.184
+Prob(Omnibus):                  0.808   Jarque-Bera (JB):                0.519
+Skew:                          -0.003   Prob(JB):                        0.771
+Kurtosis:                       2.144   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 29: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.790
+Model:                                OLS   Adj. R-squared:                  0.580
+Method:                     Least Squares   F-statistic:                     3.760
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0395
+Time:                            15:29:44   Log-Likelihood:                 19.190
+No. Observations:                      17   AIC:                            -20.38
+Df Residuals:                           8   BIC:                            -12.88
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0710      0.028      2.565      0.033       0.007       0.135
+poly(gamma_1, degree=2)[0]     0.1060      0.125      0.851      0.420      -0.181       0.393
+poly(gamma_1, degree=2)[1]     0.0588      0.143      0.412      0.691      -0.271       0.388
+poly(gamma_2, degree=2)[0]     0.3858      0.117      3.297      0.011       0.116       0.656
+poly(gamma_2, degree=2)[1]     0.4071      0.133      3.069      0.015       0.101       0.713
+poly(eta_1, degree=2)[0]      -0.0159      0.122     -0.130      0.900      -0.298       0.266
+poly(eta_1, degree=2)[1]      -0.0657      0.139     -0.472      0.650      -0.387       0.256
+poly(eta_2, degree=2)[0]      -0.1826      0.116     -1.576      0.154      -0.450       0.084
+poly(eta_2, degree=2)[1]      -0.1268      0.140     -0.907      0.391      -0.449       0.196
+==============================================================================
+Omnibus:                        0.566   Durbin-Watson:                   1.454
+Prob(Omnibus):                  0.754   Jarque-Bera (JB):                0.274
+Skew:                           0.296   Prob(JB):                        0.872
+Kurtosis:                       2.809   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 30: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.823
+Model:                                OLS   Adj. R-squared:                  0.646
+Method:                     Least Squares   F-statistic:                     4.657
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0217
+Time:                            15:29:44   Log-Likelihood:                 23.566
+No. Observations:                      17   AIC:                            -29.13
+Df Residuals:                           8   BIC:                            -21.63
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0621      0.021      2.902      0.020       0.013       0.111
+poly(gamma_1, degree=2)[0]     0.0830      0.096      0.861      0.414      -0.139       0.305
+poly(gamma_1, degree=2)[1]     0.0111      0.110      0.100      0.923      -0.244       0.266
+poly(gamma_2, degree=2)[0]     0.4006      0.090      4.427      0.002       0.192       0.609
+poly(gamma_2, degree=2)[1]     0.2956      0.103      2.883      0.020       0.059       0.532
+poly(eta_1, degree=2)[0]       0.0761      0.094      0.805      0.444      -0.142       0.294
+poly(eta_1, degree=2)[1]      -0.0895      0.108     -0.831      0.430      -0.338       0.159
+poly(eta_2, degree=2)[0]      -0.0696      0.090     -0.778      0.459      -0.276       0.137
+poly(eta_2, degree=2)[1]      -0.0059      0.108     -0.054      0.958      -0.255       0.243
+==============================================================================
+Omnibus:                        1.733   Durbin-Watson:                   1.329
+Prob(Omnibus):                  0.421   Jarque-Bera (JB):                0.748
+Skew:                          -0.511   Prob(JB):                        0.688
+Kurtosis:                       3.113   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 31: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.774
+Model:                                OLS   Adj. R-squared:                  0.548
+Method:                     Least Squares   F-statistic:                     3.429
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0503
+Time:                            15:29:44   Log-Likelihood:                 17.418
+No. Observations:                      17   AIC:                            -16.84
+Df Residuals:                           8   BIC:                            -9.338
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0817      0.031      2.662      0.029       0.011       0.153
+poly(gamma_1, degree=2)[0]     0.2130      0.138      1.540      0.162      -0.106       0.532
+poly(gamma_1, degree=2)[1]     0.0784      0.159      0.494      0.634      -0.287       0.444
+poly(gamma_2, degree=2)[0]     0.4518      0.130      3.478      0.008       0.152       0.751
+poly(gamma_2, degree=2)[1]     0.3730      0.147      2.533      0.035       0.033       0.712
+poly(eta_1, degree=2)[0]       0.0610      0.136      0.450      0.665      -0.252       0.374
+poly(eta_1, degree=2)[1]      -0.0210      0.155     -0.136      0.895      -0.378       0.336
+poly(eta_2, degree=2)[0]      -0.1207      0.129     -0.939      0.375      -0.417       0.176
+poly(eta_2, degree=2)[1]      -0.0745      0.155     -0.480      0.644      -0.432       0.283
+==============================================================================
+Omnibus:                        0.070   Durbin-Watson:                   1.742
+Prob(Omnibus):                  0.966   Jarque-Bera (JB):                0.274
+Skew:                          -0.099   Prob(JB):                        0.872
+Kurtosis:                       2.410   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+ Problem Design Point: 32: 
+                              OLS Regression Results                              
+==================================================================================
+Dep. Variable:     Average Optimality Gap   R-squared:                       0.827
+Model:                                OLS   Adj. R-squared:                  0.654
+Method:                     Least Squares   F-statistic:                     4.777
+Date:                    Wed, 03 Apr 2024   Prob (F-statistic):             0.0202
+Time:                            15:29:44   Log-Likelihood:                 24.347
+No. Observations:                      17   AIC:                            -30.69
+Df Residuals:                           8   BIC:                            -23.19
+Df Model:                               8                                         
+Covariance Type:                nonrobust                                         
+==============================================================================================
+                                 coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+intercept                      0.0598      0.020      2.929      0.019       0.013       0.107
+poly(gamma_1, degree=2)[0]     0.1496      0.092      1.626      0.143      -0.063       0.362
+poly(gamma_1, degree=2)[1]     0.0732      0.106      0.693      0.508      -0.170       0.316
+poly(gamma_2, degree=2)[0]     0.3361      0.086      3.889      0.005       0.137       0.535
+poly(gamma_2, degree=2)[1]     0.2981      0.098      3.044      0.016       0.072       0.524
+poly(eta_1, degree=2)[0]      -0.0368      0.090     -0.408      0.694      -0.245       0.171
+poly(eta_1, degree=2)[1]      -0.0554      0.103     -0.539      0.605      -0.293       0.182
+poly(eta_2, degree=2)[0]      -0.1111      0.086     -1.299      0.230      -0.308       0.086
+poly(eta_2, degree=2)[1]      -0.0865      0.103     -0.838      0.426      -0.324       0.152
+==============================================================================
+Omnibus:                        0.620   Durbin-Watson:                   1.547
+Prob(Omnibus):                  0.733   Jarque-Bera (JB):                0.148
+Skew:                           0.228   Prob(JB):                        0.929
+Kurtosis:                       2.974   Cond. No.                         7.43
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+

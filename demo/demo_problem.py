@@ -7,7 +7,7 @@ at a given solution.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
 
 # Import random number generator.
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -68,7 +68,7 @@ mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
 n_reps = 10
-myproblem.simulate(mysolution, m=n_reps)
+myproblem.simulate(mysolution, num_macroreps=n_reps)
 
 # Print results to console.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")

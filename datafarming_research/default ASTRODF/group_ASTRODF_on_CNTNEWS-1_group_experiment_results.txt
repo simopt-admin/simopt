@@ -1,0 +1,681 @@
+./experiments/outputs/group_ASTRODF_on_CNTNEWS-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.2, 1.2, 1.2226, 1.2455]
+		recourse_cost: [2.325, 2.325, 2.3687, 2.4132]
+		salvage_price: [0.525, 0.525, 0.5349, 0.5449]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.1625, 1.1625, 1.395, 1.674]
+		recourse_cost: [1.8891, 1.8891, 2.2669, 2.7203]
+		salvage_price: [0.5522, 0.5522, 0.6626, 0.7952]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.15, 1.15, 1.2506, 1.3601]
+		recourse_cost: [2.7672, 2.7672, 3.0093, 3.2726]
+		salvage_price: [0.496, 0.496, 0.5394, 0.5866]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.025, 1.025, 1.2044, 1.4151]
+		recourse_cost: [2.5625, 2.5625, 3.0109, 3.5379]
+		salvage_price: [0.4933, 0.4933, 0.5797, 0.6811]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.175, 1.175, 1.1824, 1.1899]
+		recourse_cost: [2.3133, 2.3133, 2.3279, 2.3425]
+		salvage_price: [0.5215, 0.5215, 0.5248, 0.5281]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.1875, 1.1875, 1.4102, 1.6746]
+		recourse_cost: [2.1523, 2.1523, 2.5559, 3.0351]
+		salvage_price: [0.5419, 0.5419, 0.6435, 0.7641]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.075, 1.075, 1.1758, 1.2861]
+		recourse_cost: [2.6539, 2.6539, 2.9028, 3.1751]
+		salvage_price: [0.4838, 0.4838, 0.5291, 0.5788]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.0125, 1.0125, 1.1517, 1.3101]
+		recourse_cost: [2.468, 2.468, 2.8073, 3.1933]
+		salvage_price: [0.4747, 0.4747, 0.5399, 0.6142]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.0625, 1.0625, 1.1156, 1.1714]
+		recourse_cost: [1.8262, 1.8262, 1.9175, 2.0134]
+		salvage_price: [0.5379, 0.5379, 0.5648, 0.5931]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.1, 1.1, 1.2444, 1.4078]
+		recourse_cost: [1.9594, 1.9594, 2.2166, 2.5077]
+		salvage_price: [0.5913, 0.5913, 0.6689, 0.7567]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.0875, 1.0875, 1.1351, 1.1849]
+		recourse_cost: [2.4469, 2.4469, 2.554, 2.6659]
+		salvage_price: [0.6458, 0.6458, 0.674, 0.7036]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.1125, 1.1125, 1.2725, 1.4555]
+		recourse_cost: [2.3988, 2.3988, 2.7438, 3.1383]
+		salvage_price: [0.6536, 0.6536, 0.7476, 0.8551]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.0375, 1.0375, 1.07, 1.1035]
+		recourse_cost: [1.7508, 1.7508, 1.8056, 1.8621]
+		salvage_price: [0.5317, 0.5317, 0.5484, 0.5655]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.1375, 1.1375, 1.2726, 1.4238]
+		recourse_cost: [2.1328, 2.1328, 2.3862, 2.6697]
+		salvage_price: [0.6541, 0.6541, 0.7318, 0.8187]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.05, 1.05, 1.0894, 1.1302]
+		recourse_cost: [2.4609, 2.4609, 2.5532, 2.649]
+		salvage_price: [0.6104, 0.6104, 0.6333, 0.657]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.125, 1.125, 1.2656, 1.4238]
+		recourse_cost: [2.3555, 2.3555, 2.6499, 2.9811]
+		salvage_price: [0.675, 0.675, 0.7594, 0.8543]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [1.0, 1.0, 1.1, 1.21]
+		recourse_cost: [2.0, 2.0, 2.2, 2.42]
+		salvage_price: [0.5, 0.5, 0.55, 0.605]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.8, 0.8, 0.945, 1.1164]
+		recourse_cost: [1.65, 1.65, 1.9491, 2.3025]
+		salvage_price: [0.45, 0.45, 0.5316, 0.628]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.8375, 0.8375, 0.8375, 0.8375]
+		recourse_cost: [1.9891, 1.9891, 1.9891, 1.9891]
+		salvage_price: [0.4397, 0.4397, 0.4397, 0.4397]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.85, 0.85, 0.9456, 1.052]
+		recourse_cost: [1.3547, 1.3547, 1.5071, 1.6766]
+		salvage_price: [0.4835, 0.4835, 0.5379, 0.5984]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.975, 0.975, 0.9994, 1.0244]
+		recourse_cost: [1.4625, 1.4625, 1.4991, 1.5365]
+		salvage_price: [0.5058, 0.5058, 0.5185, 0.5314]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.825, 0.825, 0.9849, 1.1758]
+		recourse_cost: [1.6758, 1.6758, 2.0005, 2.3883]
+		salvage_price: [0.4589, 0.4589, 0.5479, 0.6541]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.8125, 0.8125, 0.8227, 0.8329]
+		recourse_cost: [1.7773, 1.7773, 1.7996, 1.8221]
+		salvage_price: [0.4418, 0.4418, 0.4474, 0.453]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.925, 0.925, 1.0233, 1.1321]
+		recourse_cost: [1.4164, 1.4164, 1.567, 1.7335]
+		salvage_price: [0.5088, 0.5088, 0.5628, 0.6227]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.9875, 0.9875, 1.0492, 1.1148]
+		recourse_cost: [1.543, 1.543, 1.6394, 1.7419]
+		salvage_price: [0.5247, 0.5247, 0.5574, 0.5923]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.9375, 0.9375, 1.0781, 1.2398]
+		recourse_cost: [2.1387, 2.1387, 2.4595, 2.8284]
+		salvage_price: [0.4629, 0.4629, 0.5324, 0.6122]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.9, 0.9, 0.9619, 1.0281]
+		recourse_cost: [1.9969, 1.9969, 2.1343, 2.2811]
+		salvage_price: [0.4163, 0.4163, 0.4449, 0.4755]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.9125, 0.9125, 1.0551, 1.22]
+		recourse_cost: [1.5969, 1.5969, 1.8465, 2.1351]
+		salvage_price: [0.3707, 0.3707, 0.4287, 0.4957]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.8875, 0.8875, 0.9375, 0.9902]
+		recourse_cost: [1.6363, 1.6363, 1.7285, 1.8258]
+		salvage_price: [0.3661, 0.3661, 0.3867, 0.4085]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.9625, 0.9625, 1.125, 1.3149]
+		recourse_cost: [2.2258, 2.2258, 2.6015, 3.0406]
+		salvage_price: [0.4692, 0.4692, 0.5484, 0.641]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.8625, 0.8625, 0.9326, 1.0084]
+		recourse_cost: [1.8328, 1.8328, 1.9818, 2.1429]
+		salvage_price: [0.3666, 0.3666, 0.3964, 0.4286]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.95, 0.95, 1.1044, 1.2838]
+		recourse_cost: [1.5734, 1.5734, 1.8291, 2.1264]
+		salvage_price: [0.3979, 0.3979, 0.4625, 0.5377]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+CNTNEWS-1
+	Model Factors:
+		material_cost: [0.875, 0.875, 0.9406, 1.0112]
+		recourse_cost: [1.668, 1.668, 1.7931, 1.9275]
+		salvage_price: [0.35, 0.35, 0.3763, 0.4045]
+		num_material: 4
+		num_product: 3
+		mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+		process_cost: [0.1, 0.1, 0.1]
+		order_cost: 20
+		purchase_yield: [0.9, 0.9, 0.9, 0.9]
+		total_budget: 600
+		sales_price: [12.0, 12.0, 12.0]
+		poi_mean: [15.0, 15.0, 15.0]
+
+	Problem Factors:
+		initial_solution: [20, 20, 20, 20]
+		budget: 1000
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+ASTRODF
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.8
+		gamma_1: 1.5
+		gamma_2: 0.5
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+ASTRODF_0_on_CNTNEWS-1_0.pickle
+ASTRODF_0_on_CNTNEWS-1_1.pickle
+ASTRODF_0_on_CNTNEWS-1_2.pickle
+ASTRODF_0_on_CNTNEWS-1_3.pickle
+ASTRODF_0_on_CNTNEWS-1_4.pickle
+ASTRODF_0_on_CNTNEWS-1_5.pickle
+ASTRODF_0_on_CNTNEWS-1_6.pickle
+ASTRODF_0_on_CNTNEWS-1_7.pickle
+ASTRODF_0_on_CNTNEWS-1_8.pickle
+ASTRODF_0_on_CNTNEWS-1_9.pickle
+ASTRODF_0_on_CNTNEWS-1_10.pickle
+ASTRODF_0_on_CNTNEWS-1_11.pickle
+ASTRODF_0_on_CNTNEWS-1_12.pickle
+ASTRODF_0_on_CNTNEWS-1_13.pickle
+ASTRODF_0_on_CNTNEWS-1_14.pickle
+ASTRODF_0_on_CNTNEWS-1_15.pickle
+ASTRODF_0_on_CNTNEWS-1_16.pickle
+ASTRODF_0_on_CNTNEWS-1_17.pickle
+ASTRODF_0_on_CNTNEWS-1_18.pickle
+ASTRODF_0_on_CNTNEWS-1_19.pickle
+ASTRODF_0_on_CNTNEWS-1_20.pickle
+ASTRODF_0_on_CNTNEWS-1_21.pickle
+ASTRODF_0_on_CNTNEWS-1_22.pickle
+ASTRODF_0_on_CNTNEWS-1_23.pickle
+ASTRODF_0_on_CNTNEWS-1_24.pickle
+ASTRODF_0_on_CNTNEWS-1_25.pickle
+ASTRODF_0_on_CNTNEWS-1_26.pickle
+ASTRODF_0_on_CNTNEWS-1_27.pickle
+ASTRODF_0_on_CNTNEWS-1_28.pickle
+ASTRODF_0_on_CNTNEWS-1_29.pickle
+ASTRODF_0_on_CNTNEWS-1_30.pickle
+ASTRODF_0_on_CNTNEWS-1_31.pickle
+ASTRODF_0_on_CNTNEWS-1_32.pickle

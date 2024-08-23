@@ -1,0 +1,5 @@
+DesignPt#,SolverName,crn_across_solns,sample_size,ProblemName,initial_solution,budget,MacroRep#,Final Relative Optimality Gap,Area Under Progress Curve,0.05-Solve Time,0.05-Solved? (Y/N),0.1-Solve Time,0.1-Solved? (Y/N),0.2-Solve Time,0.2-Solved? (Y/N),0.5-Solve Time,0.5-Solved? (Y/N),Initial Solution,Initial Objective Function Value,Optimal Solution,Optimal Objective Function Value
+0,RND_test1,True,10,EX_test,"(2.0, 2.0)",1000,0,-0.01849655300783123,0.004579875845016786,0.03,1,0.03,1,0.03,1,0.02,1,"(2.0, 2.0)",6.571754485672207,"(0.2115, -0.0843)",-0.14434364823270307
+0,RND_test1,True,10,EX_test,"(2.0, 2.0)",1000,1,0.02550255738589992,0.048911505332302076,0.11,1,0.02,1,0.02,1,0.02,1,"(2.0, 2.0)",8.361331989114621,"(-0.0943, 0.0865)",0.19901719908493823
+1,RND_test2,True,2,EX_test,"(2.0, 2.0)",1000,0,-0.02504033246398586,-0.018181262571451744,0.006,1,0.006,1,0.006,1,0.004,1,"(2.0, 2.0)",6.571754485672207,"(-0.0276, -0.0039)",-0.19541008204508203
+1,RND_test2,True,2,EX_test,"(2.0, 2.0)",1000,1,0.0238778461219286,0.029430480948697657,0.022,1,0.004,1,0.004,1,0.004,1,"(2.0, 2.0)",8.361331989114621,"(-0.0033, -0.0607)",0.1863382555505892

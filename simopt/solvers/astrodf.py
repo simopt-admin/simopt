@@ -14,13 +14,11 @@ This version does not require a delta_max, instead it estimates the maximum step
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
-from math import log, ceil, sqrt
-import warnings
+from math import log, ceil
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
-warnings.filterwarnings("ignore")
 
-from ..base import Solver
+from simopt.base import Solver
 
 
 class ASTRODF(Solver):

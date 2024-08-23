@@ -1,0 +1,56 @@
+./experiments/outputs/test_exp_group_ASTRODF_RNDSRCH_on_CNTNEWS-1_EXAMPLE-1.pickle
+----------------------------------------------------------------------------------------------
+Problems:
+
+EX_test
+	Model Factors:
+
+	Problem Factors:
+		initial_solution: (2.0, 2.0)
+		budget: 1000
+
+NEWS_test
+	Model Factors:
+		purchase_price: 5.0
+		sales_price: 9.0
+		salvage_price: 1.0
+		Burr_c: 2.0
+		Burr_k: 20.0
+
+	Problem Factors:
+		initial_solution: (0,)
+		budget: 1000
+
+----------------------------------------------------------------------------------------------
+Solvers:
+
+RND_test1
+	Solver Factors:
+		crn_across_solns: True
+		sample_size: 10
+
+RND_test2
+	Solver Factors:
+		sample_size: 2
+		crn_across_solns: True
+
+AST_test
+	Solver Factors:
+		crn_across_solns: True
+		eta_1: 0.1
+		eta_2: 0.8
+		gamma_1: 1.5
+		gamma_2: 0.5
+		lambda_min: 4
+		easy_solve: True
+		reuse_points: True
+		ps_sufficient_reduction: 0.1
+
+----------------------------------------------------------------------------------------------
+The .pickle files for the associated Problem-Solver pairs are:
+test_exp_RND_test1_on_EX_test
+test_exp_RND_test1_on_NEWS_test
+test_exp_RND_test2_on_EX_test
+test_exp_RND_test2_on_NEWS_test
+test_exp_AST_test_on_EX_test
+test_exp_AST_test_on_NEWS_test

@@ -1,0 +1,118 @@
+./experiments/outputs/RNDSRCH_1_on_CNTNEWS-1_16.pickle
+Problem: CNTNEWS-1
+Solver: RNDSRCH
+
+Model Factors:
+	material_cost: [1.0, 1.0, 1.1, 1.21]
+	recourse_cost: [2.0, 2.0, 2.2, 2.2]
+	salvage_price: [0.5, 0.5, 0.55, 0.605]
+	num_material: 4
+	num_product: 3
+	mat_to_prod: [[1, 2, 1, 3], [1, 1, 3, 1], [2, 0, 4, 1]]
+	process_cost: [0.1, 0.1, 0.1]
+	order_cost: 20
+	purchase_yield: [0.9, 0.9, 0.9, 0.9]
+	total_budget: 600
+	sales_price: [12.0, 12.0, 12.0]
+	poi_mean: [15.0, 15.0, 15.0]
+
+Problem Factors:
+	initial_solution: [20, 20, 20, 20]
+	budget: 1000
+
+Solver Factors:
+	crn_across_solns: True
+	sample_size: 10
+
+10 macroreplications were run.
+100 postreplications were run at each recommended solution.
+
+The initial solution is (20, 20, 20, 20). Its estimated objective is 98.2606.
+The proxy optimal solution is (79, 49, 114, 98). Its estimated objective is 297.9859.
+200 postreplications were taken at x0 and x_star.
+
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.5188
+	Budget: 20	Recommended Solution: (176, 10, 79, 168)	Estimated Objective: 121.8488
+	Budget: 30	Recommended Solution: (53, 42, 59, 130)	Estimated Objective: 218.7119
+	Budget: 130	Recommended Solution: (86, 0, 155, 20)	Estimated Objective: 206.066
+	Budget: 220	Recommended Solution: (110, 80, 184, 47)	Estimated Objective: 232.4023
+	Budget: 530	Recommended Solution: (96, 56, 105, 133)	Estimated Objective: 259.4798
+	Budget: 1000	Recommended Solution: (96, 56, 105, 133)	Estimated Objective: 259.4798
+	The time taken to complete this macroreplication was 19.52 s.
+
+Macroreplication 2:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 99.2311
+	Budget: 40	Recommended Solution: (61, 2, 46, 91)	Estimated Objective: 203.8265
+	Budget: 100	Recommended Solution: (36, 88, 200, 143)	Estimated Objective: 216.3447
+	Budget: 140	Recommended Solution: (34, 65, 182, 63)	Estimated Objective: 264.1199
+	Budget: 640	Recommended Solution: (83, 77, 121, 112)	Estimated Objective: 284.7845
+	Budget: 1000	Recommended Solution: (83, 77, 121, 112)	Estimated Objective: 284.7845
+	The time taken to complete this macroreplication was 19.82 s.
+
+Macroreplication 3:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.3942
+	Budget: 30	Recommended Solution: (25, 33, 81, 44)	Estimated Objective: 215.2985
+	Budget: 350	Recommended Solution: (42, 43, 182, 98)	Estimated Objective: 277.6324
+	Budget: 660	Recommended Solution: (92, 91, 139, 110)	Estimated Objective: 277.5607
+	Budget: 1000	Recommended Solution: (92, 91, 139, 110)	Estimated Objective: 277.5607
+	The time taken to complete this macroreplication was 20.02 s.
+
+Macroreplication 4:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.5366
+	Budget: 30	Recommended Solution: (117, 11, 191, 146)	Estimated Objective: 192.0097
+	Budget: 70	Recommended Solution: (47, 44, 264, 35)	Estimated Objective: 200.1015
+	Budget: 90	Recommended Solution: (108, 68, 100, 70)	Estimated Objective: 276.9491
+	Budget: 1000	Recommended Solution: (108, 68, 100, 70)	Estimated Objective: 276.9491
+	The time taken to complete this macroreplication was 19.4 s.
+
+Macroreplication 5:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 99.1065
+	Budget: 40	Recommended Solution: (17, 80, 236, 8)	Estimated Objective: 141.9396
+	Budget: 50	Recommended Solution: (57, 172, 28, 58)	Estimated Objective: 154.6552
+	Budget: 100	Recommended Solution: (190, 35, 212, 42)	Estimated Objective: 176.1621
+	Budget: 110	Recommended Solution: (67, 86, 205, 86)	Estimated Objective: 258.1678
+	Budget: 640	Recommended Solution: (79, 86, 134, 84)	Estimated Objective: 290.0574
+	Budget: 1000	Recommended Solution: (79, 86, 134, 84)	Estimated Objective: 290.0574
+	The time taken to complete this macroreplication was 19.65 s.
+
+Macroreplication 6:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.2873
+	Budget: 50	Recommended Solution: (41, 202, 122, 153)	Estimated Objective: 175.7784
+	Budget: 60	Recommended Solution: (15, 137, 142, 118)	Estimated Objective: 211.2446
+	Budget: 70	Recommended Solution: (122, 39, 127, 71)	Estimated Objective: 281.6947
+	Budget: 670	Recommended Solution: (114, 56, 115, 86)	Estimated Objective: 287.2612
+	Budget: 1000	Recommended Solution: (114, 56, 115, 86)	Estimated Objective: 287.2612
+	The time taken to complete this macroreplication was 19.87 s.
+
+Macroreplication 7:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.7147
+	Budget: 80	Recommended Solution: (161, 31, 156, 47)	Estimated Objective: 232.0088
+	Budget: 680	Recommended Solution: (99, 52, 101, 99)	Estimated Objective: 279.5144
+	Budget: 1000	Recommended Solution: (99, 52, 101, 99)	Estimated Objective: 279.5144
+	The time taken to complete this macroreplication was 19.31 s.
+
+Macroreplication 8:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 99.712
+	Budget: 20	Recommended Solution: (84, 47, 193, 134)	Estimated Objective: 255.0272
+	Budget: 160	Recommended Solution: (95, 37, 127, 91)	Estimated Objective: 295.899
+	Budget: 1000	Recommended Solution: (95, 37, 127, 91)	Estimated Objective: 295.899
+	The time taken to complete this macroreplication was 19.64 s.
+
+Macroreplication 9:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.1448
+	Budget: 20	Recommended Solution: (252, 59, 111, 33)	Estimated Objective: 175.958
+	Budget: 50	Recommended Solution: (170, 46, 194, 123)	Estimated Objective: 212.6673
+	Budget: 80	Recommended Solution: (97, 92, 88, 58)	Estimated Objective: 250.2111
+	Budget: 290	Recommended Solution: (80, 84, 136, 68)	Estimated Objective: 291.25
+	Budget: 560	Recommended Solution: (79, 49, 114, 98)	Estimated Objective: 300.7366
+	Budget: 1000	Recommended Solution: (79, 49, 114, 98)	Estimated Objective: 300.7366
+	The time taken to complete this macroreplication was 19.62 s.
+
+Macroreplication 10:
+	Budget: 0	Recommended Solution: (20, 20, 20, 20)	Estimated Objective: 98.6969
+	Budget: 50	Recommended Solution: (116, 59, 108, 79)	Estimated Objective: 282.7315
+	Budget: 1000	Recommended Solution: (116, 59, 108, 79)	Estimated Objective: 282.7315
+	The time taken to complete this macroreplication was 19.78 s.

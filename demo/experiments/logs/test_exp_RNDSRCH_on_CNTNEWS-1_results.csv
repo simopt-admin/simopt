@@ -1,0 +1,5 @@
+DesignPt#,SolverName,crn_across_solns,sample_size,ProblemName,initial_solution,budget,Burr_k,purchase_price,Burr_c,sales_price,salvage_price,MacroRep#,Final Relative Optimality Gap,Area Under Progress Curve,0.05-Solve Time,0.05-Solved? (Y/N),0.1-Solve Time,0.1-Solved? (Y/N),0.2-Solve Time,0.2-Solved? (Y/N),0.5-Solve Time,0.5-Solved? (Y/N),Initial Solution,Initial Objective Function Value,Optimal Solution,Optimal Objective Function Value
+0,RND_test1,True,10,NEWS_test,"(0,)",1000,20.0,5.0,2.0,9.0,1.0,0,-0.0,0.027891916759503543,0.08,1,0.08,1,0.02,1,0.02,1,"(0,)",0.0,"(0.1807,)",0.2810530398645981
+0,RND_test1,True,10,NEWS_test,"(0,)",1000,20.0,5.0,2.0,9.0,1.0,1,-0.46686894618236935,-0.21112679280078922,0.04,1,0.04,1,0.03,1,0.03,1,"(0,)",0.0,"(0.2333,)",0.4122679764075345
+1,RND_test2,True,2,NEWS_test,"(0,)",1000,20.0,5.0,2.0,9.0,1.0,0,0.24255625572998787,0.23674720053199202,0.016,1,0.016,1,0.004,1,0.004,1,"(0,)",0.0,"(0.2974,)",0.21288186685351018
+1,RND_test2,True,2,NEWS_test,"(0,)",1000,20.0,5.0,2.0,9.0,1.0,1,-0.18903208755811873,-0.19310106418200834,0.008,1,0.008,1,0.006,1,0.006,1,"(0,)",0.0,"(0.2822,)",0.33418108270475827

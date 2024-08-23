@@ -6,98 +6,102 @@ macroreplications at each version of the solver. Outputs are printed to a file.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))
+sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))  # type:ignore
+
+from simopt.experiment_base import create_design, ProblemsSolvers
+
+def main():
+    # Specify the name of the solver as it appears in directory.py
+    solver_name = "ASTRODF"
+    # list of problem names for solver design to be run on (if more than one version of same problem, repeat name)
+    # Specify the name of the problem as it appears in directory.py
+    problem_names = ['SSCONT-1', 'SAN-1']
+
+    # Specify the names of the sovler factors (in order) that will be varied.
+    solver_factor_headers = ["eta_1", "eta_2", "lambda_min" ]
 
 
-from simopt.data_farming_base import DataFarmingMetaExperiment
+    # OPTIONAL: factors chosen for cross design
+    # factor name followed by list containing factor values to cross design over
+    solver_cross_design_factors = {'crn_across_solns': [True, False]} 
 
+    # OPTIONAL: Provide additional overrides for solver default factors.
+    # If empty, default factor settings are used.
+    solver_fixed_factors = {}
+    # OPTIONAL: Provide additional overrides for problem default factors.
+    # If empty, default factor settings are used.
+    # list of dictionaries that provide fixed factors for problems when you don't want to use the default values
+    # if you want to use all default values use empty dictionary, order must match problem names 
+    problem_fixed_factors = [{'budget': 2000, 'demand_mean': 90.0, 'fixed_cost':25},{'budget': 500}]
 
-# Specify the name of the solver as it appears in directory.py
-# solver_name = "RNDSRCH"
-solver_name = "ASTRODF"
+    # Provide the name of a file  .txt locatated in the datafarming_experiments folder containing
+    # the following:
+    #    - one row corresponding to each solver factor being varied
+    #    - three columns:
+    #         - first column: lower bound for factor value
+    #         - second column: upper bound for factor value
+    #         - third column: (integer) number of digits for discretizing values
+    #                         (e.g., 0 corresponds to integral values for the factor)
+    solver_factor_settings_filename = "astrodf_testing"
 
-# Specify the names of the model factors (in order) that will be varied.
-# solver_factor_headers = ["sample_size"]
-solver_factor_headers = ["eta_1", "eta_2"]
+    # Specify the number stacks to use for ruby design creation
+    solver_n_stacks = 1
 
-# Specify the name of the problem as it appears in directory.py
-# problem_name = "FACSIZE-2"
-problem_name = "SSCONT-1"
+    # Specify a common number of macroreplications of each unique solver/problem combination
+    # i.e., the number of runs at each design point.
+    n_macroreps = 3
 
-# If creating the design, provide the name of a .txt file containing
-# the following:
-#    - one row corresponding to each solver factor being varied
-#    - three columns:
-#         - first column: lower bound for factor value
-#         - second column: upper bound for factor value
-#         - third column: (integer) number of digits for discretizing values
-#                         (e.g., 0 corresponds to integral values for the factor)
-# solver_factor_settings_filename = "solver_factor_settings"
-solver_factor_settings_filename = None
+    # Specify the number of postreplications to take at each recommended solution
+    # from each macroreplication at each design point.
+    n_postreps = 100
 
-# OR, if the design has been created, provide the name of a .text file
-# containing the following:
-#    - one row corresponding to each design point
-#    - the number of columns equal to the number of factors being varied
-#    - each value in the table gives the value of the factor (col index)
-#      for the design point (row index)
-# E.g., design_filename = "solver_factor_settings_design"
-# design_filename = None
-# design_filename = "random_search_design"
-design_filename = "astrodf_design"
+    # Specify the number of postreplications to take at x0 and x*.
+    n_postreps_init_opt = 200
 
-# OPTIONAL: Provide additional overrides for default solver/problem/model factors.
-# If empty, default factor settings are used.
-solver_fixed_factors = {}
-problem_fixed_factors = {}
-model_fixed_factors = {}
+    # Specify the CRN control for postreplications.
+    crn_across_budget = True  # Default
+    crn_across_macroreps = False  # Default
+    crn_across_init_opt = True  # Default
 
-# Specify a common number of macroreplications of each version of the solver
-# to run on the problem, i.e., the number of runs at each design point.
-n_macroreps = 3
+    # Create DataFarmingExperiment object for sovler design
+    solver_design_list = create_design(name=solver_name,
+                    factor_headers=solver_factor_headers,
+                    factor_settings_filename=solver_factor_settings_filename,
+                    n_stacks=solver_n_stacks,
+                    fixed_factors=solver_fixed_factors, #optional
+                    cross_design_factors= solver_cross_design_factors, #optional
+                    )
 
-# NOT YET IMPLEMENTED.
-# Specify whether to use common random numbers across different design points.
-# Default is to use CRN across design points since each design point is a
-# ProblemSolver instance.
-# crn_across_design_pts = True
+    # create solver name list for ProblemsSolvers (do not edit)
+    solver_names = []
+    for i in range(len(solver_design_list)): 
+        solver_names.append(solver_name)
+        
 
-# Specify the number of postreplications to take at each recommended solution
-# from each macroreplication at each design point.
-n_postreps = 100
+    # Create ProblemsSovlers experiment with solver and model design
+    experiment = ProblemsSolvers(solver_factors = solver_design_list,
+                                problem_factors = problem_fixed_factors,
+                                solver_names = solver_names,
+                                problem_names = problem_names
+                                )
 
-# Specify the number of postreplications to take at x0 and x*.
-n_postreps_init_opt = 200
+    # check compatibility of selected solvers and problems
+    experiment.check_compatibility()
 
-# Specify the CRN control for postreplications.
-crn_across_budget = True  # Default
-crn_across_macroreps = False  # Default
-crn_across_init_opt = True  # Default
+    # Run macroreplications at each design point.
+    experiment.run(n_macroreps)
 
-# No code beyond this point needs to be edited.
+    # Postprocess the experimental results from each design point.
+    experiment.post_replicate(n_postreps=n_postreps,
+                            crn_across_budget=crn_across_budget,
+                            crn_across_macroreps=crn_across_macroreps)
+    experiment.post_normalize(n_postreps_init_opt=n_postreps_init_opt,
+                            crn_across_init_opt=crn_across_init_opt)
 
-# Create DataFarmingExperiment object.
-myDFMetaExperiment = DataFarmingMetaExperiment(solver_name=solver_name,
-                                               problem_name=problem_name,
-                                               solver_factor_headers=solver_factor_headers,
-                                               solver_factor_settings_filename=solver_factor_settings_filename,
-                                               design_filename=design_filename,
-                                               solver_fixed_factors=solver_fixed_factors,
-                                               problem_fixed_factors=problem_fixed_factors,
-                                               model_fixed_factors=model_fixed_factors
-                                               )
+    # Record and log results
+    experiment.record_group_experiment_results()
+    experiment.log_group_experiment_results()
+    experiment.report_group_statistics()
 
-# Run macroreplications at each design point.
-myDFMetaExperiment.run(n_macroreps=n_macroreps)
-
-# Postprocess the experimental results from each design point.
-myDFMetaExperiment.post_replicate(n_postreps=n_postreps,
-                                  crn_across_budget=crn_across_budget,
-                                  crn_across_macroreps=crn_across_macroreps
-                                  )
-myDFMetaExperiment.post_normalize(n_postreps_init_opt=n_postreps_init_opt,
-                                  crn_across_init_opt=crn_across_init_opt
-                                  )
-
-# Compute the performance metrics at each design point and print to csv.
-myDFMetaExperiment.report_statistics(solve_tols=[0.05, 0.10, 0.20, 0.50])
+if __name__ == "__main__":
+    main()

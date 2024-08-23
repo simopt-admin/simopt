@@ -7,9 +7,9 @@ A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/sscont.html>`_.
 """
 import numpy as np
-from math import exp, log, sqrt
+from math import sqrt
 
-from ..base import Model, Problem
+from simopt.base import Model, Problem
 
 
 class SSCont(Model):

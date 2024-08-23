@@ -1,0 +1,56 @@
+./experiments/outputs/ASTRODF_default_0_on_CNTNEWS-1_0_0.pickle
+Problem: CNTNEWS-1
+Solver: ASTRODF
+
+Model Factors:
+	material_cost: [0.925, 1.11, 1.332, 1.5984]
+	recourse_cost: [2.1391, 2.5669, 3.0803, 3.6963]
+	salvage_price: [0.4394, 0.5272, 0.6327, 0.7592]
+	mat_to_prod: [[1, 1, 1, 0], [1, 2, 2, 0], [0, 0, 3, 3]]
+	order_cost: 0
+	purchase_yield: [1, 1, 1, 1]
+	sales_price: [6, 12, 20]
+	poi_mean: [20, 25, 15]
+	num_material: 4
+	num_product: 3
+	process_cost: [0.1, 0.1, 0.1]
+	total_budget: 600
+
+Problem Factors:
+	initial_solution: [20, 20, 20, 20]
+	budget: 1000
+
+Solver Factors:
+	crn_across_solns: True
+	eta_1: 0.1
+	eta_2: 0.8
+	gamma_1: 1.5
+	gamma_2: 0.5
+	lambda_min: 4
+	easy_solve: True
+	reuse_points: True
+	ps_sufficient_reduction: 0.1
+
+10 macroreplications were run.
+Macroreplication Results:
+
+Macroreplication 1:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.7066, 21.7965, 22.1558, 24.0524)	Budget: 72	Recommended Solution: (27.6271, 25.2765, 24.9276, 29.2627)	Budget: 104	Recommended Solution: (32.0419, 29.7332, 31.2022, 38.2831)	Budget: 136	Recommended Solution: (37.3958, 38.4955, 41.8237, 50.1972)	Budget: 168	Recommended Solution: (43.2209, 53.5407, 62.3321, 61.5801)	Budget: 200	Recommended Solution: (47.7636, 69.616, 101.3929, 57.2519)	Budget: 268	Recommended Solution: (49.8535, 77.4164, 120.3382, 62.886)	Budget: 300	Recommended Solution: (52.8167, 83.5222, 135.8008, 66.7798)	Budget: 342	Recommended Solution: (61.3144, 86.3629, 136.9006, 36.4895)	Budget: 383	Recommended Solution: (67.1642, 91.6119, 141.013, 92.6843)	Budget: 424	Recommended Solution: (59.3652, 76.7001, 74.8251, 73.9552)	Budget: 505	Recommended Solution: (61.8168, 94.2408, 149.3112, 47.3045)	Budget: 626	Recommended Solution: (53.5585, 81.8531, 140.2218, 57.6237)	Budget: 725	Recommended Solution: (50.2243, 79.6534, 125.7386, 55.3143)	Budget: 870	Recommended Solution: (48.4905, 76.0635, 122.5502, 57.8505)	Budget: 1000	Recommended Solution: (48.4905, 76.0635, 122.5502, 57.8505)
+Macroreplication 2:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.2647, 21.876, 22.2512, 24.2317)	Budget: 72	Recommended Solution: (25.296, 24.582, 26.7156, 30.123)	Budget: 104	Recommended Solution: (28.3272, 27.2881, 31.1801, 36.0144)	Budget: 136	Recommended Solution: (30.5107, 27.0113, 36.2082, 47.4146)	Budget: 168	Recommended Solution: (33.469, 35.8566, 43.4541, 51.953)	Budget: 200	Recommended Solution: (37.8237, 49.4445, 55.4092, 55.6519)	Budget: 232	Recommended Solution: (41.2202, 65.1533, 78.6162, 51.9655)	Budget: 264	Recommended Solution: (53.4109, 73.963, 118.227, 46.6461)	Budget: 432	Recommended Solution: (50.8289, 74.2005, 121.4799, 49.991)	Budget: 512	Recommended Solution: (48.9164, 72.7761, 120.4443, 46.9467)	Budget: 1000	Recommended Solution: (48.9164, 72.7761, 120.4443, 46.9467)
+Macroreplication 3:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.533, 21.8298, 22.1958, 24.1276)	Budget: 72	Recommended Solution: (27.432, 25.1009, 25.0314, 29.4578)	Budget: 104	Recommended Solution: (30.6606, 29.7652, 30.4158, 39.4036)	Budget: 136	Recommended Solution: (35.2019, 37.7455, 39.986, 52.9795)	Budget: 168	Recommended Solution: (41.2678, 55.387, 59.9618, 60.9423)	Budget: 200	Recommended Solution: (45.6974, 74.669, 97.7887, 62.0545)	Budget: 232	Recommended Solution: (53.7284, 77.0093, 134.3108, 41.5682)	Budget: 342	Recommended Solution: (53.626, 78.8761, 128.8553, 56.5072)	Budget: 462	Recommended Solution: (52.3579, 77.3961, 127.7743, 53.7185)	Budget: 502	Recommended Solution: (47.8084, 78.1007, 124.7924, 52.1351)	Budget: 582	Recommended Solution: (52.1356, 78.775, 120.9296, 55.5322)	Budget: 672	Recommended Solution: (50.3669, 77.2882, 120.3427, 51.0613)	Budget: 1000	Recommended Solution: (50.3669, 77.2882, 120.3427, 51.0613)
+Macroreplication 4:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.9732, 21.7396, 22.0875, 23.9241)	Budget: 72	Recommended Solution: (27.0922, 24.2949, 24.1049, 30.5261)	Budget: 104	Recommended Solution: (32.5579, 28.6644, 29.3072, 39.6945)	Budget: 136	Recommended Solution: (40.019, 37.6217, 39.9032, 50.2789)	Budget: 168	Recommended Solution: (46.688, 55.0493, 59.2973, 59.5593)	Budget: 200	Recommended Solution: (51.8673, 78.0543, 92.398, 46.4515)	Budget: 232	Recommended Solution: (62.3988, 94.8048, 147.3012, 72.8542)	Budget: 264	Recommended Solution: (57.2211, 79.714, 149.8938, 69.7541)	Budget: 423	Recommended Solution: (55.4116, 83.7797, 144.2422, 60.1365)	Budget: 463	Recommended Solution: (53.0676, 86.2769, 135.2333, 44.9161)	Budget: 593	Recommended Solution: (51.6551, 86.8555, 135.3136, 49.1526)	Budget: 633	Recommended Solution: (51.6532, 90.3738, 134.3348, 49.1372)	Budget: 745	Recommended Solution: (50.3518, 89.5914, 132.3161, 46.8946)	Budget: 794	Recommended Solution: (55.3905, 90.0798, 132.1456, 47.0244)	Budget: 1000	Recommended Solution: (55.3905, 90.0798, 132.1456, 47.0244)
+Macroreplication 5:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.953, 21.7988, 22.1586, 23.8739)	Budget: 72	Recommended Solution: (27.4793, 24.6247, 25.812, 29.2897)	Budget: 104	Recommended Solution: (32.5138, 29.6458, 31.7573, 37.9028)	Budget: 136	Recommended Solution: (37.2384, 41.3083, 41.0864, 48.619)	Budget: 168	Recommended Solution: (42.6065, 57.8801, 61.8833, 57.2506)	Budget: 232	Recommended Solution: (45.2323, 65.4331, 81.6738, 56.7239)	Budget: 264	Recommended Solution: (48.2921, 73.954, 100.6675, 60.3506)	Budget: 338	Recommended Solution: (50.6292, 77.2633, 116.1408, 59.5781)	Budget: 378	Recommended Solution: (55.1871, 87.0654, 136.2406, 52.0868)	Budget: 503	Recommended Solution: (53.1491, 82.0848, 135.4886, 54.6434)	Budget: 543	Recommended Solution: (49.4552, 80.4069, 131.6283, 56.0976)	Budget: 583	Recommended Solution: (56.7738, 76.6765, 135.8432, 53.3568)	Budget: 673	Recommended Solution: (50.1102, 82.1947, 130.7239, 52.0812)	Budget: 1000	Recommended Solution: (50.1102, 82.1947, 130.7239, 52.0812)
+Macroreplication 6:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.4522, 21.8444, 22.2133, 24.1604)	Budget: 72	Recommended Solution: (25.3139, 24.7291, 24.7292, 31.111)	Budget: 104	Recommended Solution: (29.3529, 29.8582, 30.4262, 40.3313)	Budget: 136	Recommended Solution: (34.5302, 40.7554, 39.2826, 52.0023)	Budget: 168	Recommended Solution: (40.1651, 56.2043, 60.6901, 61.0443)	Budget: 200	Recommended Solution: (48.0354, 67.5855, 101.0421, 62.987)	Budget: 268	Recommended Solution: (50.3538, 75.0741, 120.8223, 61.2068)	Budget: 342	Recommended Solution: (45.426, 72.0534, 129.7317, 60.1181)	Budget: 427	Recommended Solution: (46.3013, 71.4256, 125.5995, 56.9154)	Budget: 467	Recommended Solution: (44.5863, 71.3788, 130.0582, 50.4901)	Budget: 507	Recommended Solution: (51.4881, 74.7875, 123.8259, 48.1477)	Budget: 587	Recommended Solution: (46.3402, 74.4073, 130.9646, 50.0268)	Budget: 677	Recommended Solution: (45.3295, 71.8878, 128.202, 47.7284)	Budget: 1000	Recommended Solution: (45.3295, 71.8878, 128.202, 47.7284)
+Macroreplication 7:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.7872, 21.78, 22.1361, 24.0153)	Budget: 72	Recommended Solution: (27.7182, 25.356, 24.8766, 29.1669)	Budget: 104	Recommended Solution: (31.13, 30.1014, 30.0759, 39.1117)	Budget: 136	Recommended Solution: (36.5226, 39.1164, 40.5693, 50.9329)	Budget: 168	Recommended Solution: (39.0292, 57.1866, 61.3721, 57.6328)	Budget: 200	Recommended Solution: (42.1544, 77.2564, 98.786, 60.9738)	Budget: 268	Recommended Solution: (53.4389, 80.6958, 128.5483, 61.8509)	Budget: 342	Recommended Solution: (46.2965, 74.9045, 119.2318, 52.6268)	Budget: 468	Recommended Solution: (45.6227, 70.6492, 123.2617, 53.7491)	Budget: 508	Recommended Solution: (46.895, 71.9291, 118.8925, 52.9163)	Budget: 628	Recommended Solution: (45.8605, 71.8529, 121.5597, 51.1219)	Budget: 678	Recommended Solution: (45.4893, 73.4576, 123.0036, 53.6933)	Budget: 727	Recommended Solution: (46.6266, 74.7774, 123.5973, 56.5256)	Budget: 1000	Recommended Solution: (46.6266, 74.7774, 123.5973, 56.5256)
+Macroreplication 8:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.4522, 21.8444, 22.2133, 24.1604)	Budget: 72	Recommended Solution: (25.8036, 24.3488, 28.4175, 28.0533)	Budget: 104	Recommended Solution: (28.448, 28.1352, 32.533, 33.7878)	Budget: 136	Recommended Solution: (31.5044, 33.5257, 42.8385, 37.7233)	Budget: 168	Recommended Solution: (35.2651, 46.3788, 51.7964, 47.7539)	Budget: 200	Recommended Solution: (40.9782, 57.5587, 72.2407, 63.079)	Budget: 232	Recommended Solution: (46.7554, 69.7191, 97.3008, 61.9849)	Budget: 268	Recommended Solution: (53.6607, 78.3825, 123.5249, 62.0968)	Budget: 387	Recommended Solution: (51.1714, 78.0159, 128.7226, 57.9367)	Budget: 1000	Recommended Solution: (51.1714, 78.0159, 128.7226, 57.9367)
+Macroreplication 9:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.1023, 21.9009, 22.2811, 24.2879)	Budget: 72	Recommended Solution: (24.6018, 24.8348, 25.9381, 30.8395)	Budget: 104	Recommended Solution: (26.9592, 30.9349, 31.0584, 40.3843)	Budget: 136	Recommended Solution: (30.26, 39.3912, 40.9878, 53.771)	Budget: 200	Recommended Solution: (32.4473, 47.2107, 52.2725, 56.8276)	Budget: 264	Recommended Solution: (33.8561, 52.3673, 61.089, 59.5961)	Budget: 296	Recommended Solution: (39.048, 61.7052, 72.6858, 62.388)	Budget: 338	Recommended Solution: (40.8448, 65.1652, 87.8955, 59.2418)	Budget: 378	Recommended Solution: (46.171, 70.4806, 109.2921, 51.3336)	Budget: 458	Recommended Solution: (45.6231, 71.6009, 123.6592, 62.1307)	Budget: 543	Recommended Solution: (46.7677, 71.7949, 119.0503, 54.4791)	Budget: 1000	Recommended Solution: (46.7677, 71.7949, 119.0503, 54.4791)
+Macroreplication 10:
+	Budget: 4	Recommended Solution: (20, 20, 20, 20)	Budget: 40	Recommended Solution: (22.2447, 21.8791, 22.255, 24.2389)	Budget: 72	Recommended Solution: (24.6178, 24.9249, 24.8331, 31.2813)	Budget: 104	Recommended Solution: (27.6454, 30.8026, 29.8778, 40.8169)	Budget: 136	Recommended Solution: (31.7007, 38.8976, 38.3543, 55.1828)	Budget: 168	Recommended Solution: (38.3497, 54.7815, 50.0814, 74.5844)	Budget: 200	Recommended Solution: (47.2772, 60.0043, 91.34, 78.3627)	Budget: 300	Recommended Solution: (46.1528, 64.378, 99.9546, 73.9619)	Budget: 342	Recommended Solution: (43.7462, 65.5451, 113.7238, 66.2362)	Budget: 423	Recommended Solution: (44.776, 65.9498, 124.3852, 60.8181)	Budget: 503	Recommended Solution: (43.4902, 66.9428, 133.2354, 61.231)	Budget: 588	Recommended Solution: (44.3374, 66.3883, 129.5722, 58.8144)	Budget: 1000	Recommended Solution: (45.3449, 68.2356, 129.094, 58.1704)
