@@ -859,13 +859,19 @@ class NewExperimentWindow(Toplevel):
         )
 
     def load_design(self) -> None:
-        # get csv file location and convert to dataframe
-        design_file = filedialog.askopenfilename()
+        # Open file dialog to select design file
+        # CSV files only, but all files can be selected (in case someone forgets to change file type)
+        design_file = filedialog.askopenfilename(
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+        # Return if no file is selected
+        if design_file == "":
+            return
+        # Convert whatever is in the file to a dataframe
         self.design_df = pd.read_csv(design_file, index_col=False)
-        file_name = os.path.splitext(os.path.basename(design_file))[0]
-        self.dir_path = os.path.dirname(
-            design_file
-        )  # used to save updated version
+        # Read in the filename and the directory path
+        file_name = os.path.basename(design_file)
+        self.dir_path = os.path.dirname(design_file)
         # Get design information from table
         name = self.design_df.at[1, "Name"]
         if name in solver_directory:  # loaded a solver
@@ -2109,7 +2115,6 @@ class NewExperimentWindow(Toplevel):
             solver_list = []
             solver_list.append(self.solver_fixed_factors)
 
-            
             # Nested loop to search for the right solver without knowing its name
             for solver in solver_directory:
                 # Set of factors for the solver
@@ -2120,8 +2125,8 @@ class NewExperimentWindow(Toplevel):
 
                 # If the sets are equal, we have found the right solver
                 if solver_factors == design_factors:
-                    solver_list.append(solver_directory[solver].name)
-                    break                
+                    solver_list.append(str(solver))
+                    break
 
             self.root_solver_dict[self.solver_design_name] = [solver_list]
 
@@ -2132,7 +2137,9 @@ class NewExperimentWindow(Toplevel):
                 text=self.solver_design_name,
             )
             self.solver_list_label.grid(row=solver_row, column=1)
-            self.solver_list_labels[self.solver_design_name] = self.solver_list_label
+            self.solver_list_labels[self.solver_design_name] = (
+                self.solver_list_label
+            )
 
             # add delete and view/edit buttons
             self.solver_edit_button = tk.Button(
@@ -2141,20 +2148,26 @@ class NewExperimentWindow(Toplevel):
                 command=lambda: self.edit_solver(self.solver_design_name),
             )
             self.solver_edit_button.grid(row=solver_row, column=2)
-            self.solver_edit_buttons[self.solver_design_name] = self.solver_edit_button
+            self.solver_edit_buttons[self.solver_design_name] = (
+                self.solver_edit_button
+            )
             self.solver_del_button = tk.Button(
                 master=self.solver_list_canvas,
                 text="Delete",
                 command=lambda: self.delete_solver(self.solver_design_name),
             )
             self.solver_del_button.grid(row=solver_row, column=3)
-            self.solver_del_buttons[self.solver_design_name] = self.solver_del_button
+            self.solver_del_buttons[self.solver_design_name] = (
+                self.solver_del_button
+            )
 
             # refresh solver name entry box
             self.solver_design_name_var.set(
-                self.get_unique_name(self.root_solver_dict, self.solver_design_name)
+                self.get_unique_name(
+                    self.root_solver_dict, self.solver_design_name
+                )
             )
-        
+
         else:
             """ Create factor settings txt file"""
             # Check if folder exists, if not create it

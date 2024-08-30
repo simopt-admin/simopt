@@ -9,6 +9,7 @@ class GUIMaster(tk.Tk):
     """The master class for the GUI."""
 
     def __init__(self) -> None:
+        """Initialize the GUI."""
         super().__init__()
         # Minimize the GUI window
         self.withdraw()

@@ -6530,17 +6530,24 @@ def create_design(
     # Check if Ruby and the specified design type are installed/on the system path.
     if shutil.which("ruby") is None:
         error_msg = "Ruby is not installed on your system or is not in your system path."
+        error_msg += "\nIf you just installed Ruby, you may need to restart your terminal or IDE."
         raise Exception(error_msg)
     if shutil.which(f"stack_{design_type}.rb") is None:
         # Isn't on path, but could still be installed
+        # Query the list of gems to see if the gem is installed
         results = subprocess.run(
             'gem list -i "^datafarming$"',
-            shell=False,
+            shell=True,
             capture_output=True,
         )
+        process_output = results.stdout.decode("utf-8").strip()
         # Check if the output is true or false
-        if not results.stdout.decode("utf-8").strip() == "true":
-            error_msg = f"Design type {design_type} is either not valid, not installed, or not in your system path."
+        if process_output == "false":
+            error_msg = f"Design type '{design_type}' is either not valid, not installed, or not in your system path."
+            # If the design is supposed to be in the datafarming gem, provide instructions on how to install it
+            if design_type in ["nolhs"]:
+                error_msg += " If you have not installed the 'datafarming' gem, you can install it by running:"
+                error_msg += "\n`gem install datafarming -v 1.4`"
             raise Exception(error_msg)
 
     # Make directory to store the current design file.
