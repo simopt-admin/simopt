@@ -124,22 +124,41 @@ class ASTRODF(Solver):
         super().__init__(fixed_factors)
     
     def check_eta_1(self):
-        return self.factors["eta_1"] > 0
+        check = self.factors["eta_1"] > 0
+        if not check:
+            raise ValueError("eta_1 must be larger than 0.")
+        return check
 
     def check_eta_2(self):
-        return self.factors["eta_2"] > self.factors["eta_1"]
+        check = self.factors["eta_2"] > self.factors["eta_1"]
+        if not check:
+            raise ValueError("eta_2 must be larger than eta_1.")
+        return check
+
 
     def check_gamma_1(self):
-        return self.factors["gamma_1"] > 1
+        check = self.factors["gamma_1"] > 1
+        if not check:
+            raise ValueError("gamma_1 must be larger than 1.")
+        return check
 
     def check_gamma_2(self):
-        return (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
+        check = (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
+        if not check:
+            raise ValueError("gamma_2 must be between 0 and 1.")
+        return check
 
     def check_lambda_min(self):
-        return self.factors["lambda_min"] > 2
+        check = self.factors["lambda_min"] > 2
+        if not check:
+            raise ValueError("labmda_min must be larger than 2.")
+        return check
     
     def check_ps_sufficient_reduction(self):
-        return self.factors["ps_sufficient_reduction"] >= 0
+        check = self.factors["ps_sufficient_reduction"] >= 0
+        if not check:
+            raise ValueError("ps_sufficient_reduction must be greater than or equal to 0.")
+        return check
 
     # generate the coordinate vector corresponding to the variable number v_no
     def get_coordinate_vector(self, size, v_no):

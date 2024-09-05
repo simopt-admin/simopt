@@ -106,22 +106,43 @@ class ADAM(Solver):
         super().__init__(fixed_factors)
 
     def check_r(self):
-        return self.factors["r"] > 0
+        check = self.factors["r"] > 0
+        if not check:
+            raise ValueError("Number of replications (r) must be larger than 0.")
+        return check
 
     def check_beta_1(self):
-        return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+        check = self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+        if not check:
+            raise ValueError("beta_1 must be between 0 and 1.")
+        return check
 
     def check_beta_2(self):
-        return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
+        check = self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
+        if not check:
+            raise ValueError("beta_2 must be between 0 and 1.")
+        return check
+        
 
     def check_alpha(self):
-        return self.factors["alpha"] > 0
+        check = self.factors["alpha"] > 0
+        if not check:
+            raise ValueError("Step size (alpha) must be larger than 0.")
+        return check
+
 
     def check_epsilon(self):
-        return self.factors["epsilon"] > 0
+        check = self.factors["epsilon"] > 0
+        if not check:
+            raise ValueError("epsilon must be larger than 0.")
+        return check
 
     def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
+        check = self.factors["sensitivity"] > 0
+        if not check:
+            raise ValueError("sensitivity must be larger than 0.")
+        return check
+
 
     def solve(self, problem):
         """
