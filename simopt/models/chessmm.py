@@ -89,19 +89,24 @@ class ChessMatchmaking(Model):
         super().__init__(fixed_factors)
 
     def check_elo_mean(self):
-        return self.factors["elo_mean"] > 0
+        if self.factors["elo_mean"] <= 0:
+            raise ValueError("Mean of normal distribution for Elo rating must be greater than 0.")
 
     def check_elo_sd(self):
-        return self.factors["elo_sd"] > 0
+        if self.factors["elo_sd"] <= 0:
+            raise ValueError("Standard deviation of normal distribution for Elo rating must be greater than 0.")
 
     def check_poisson_rate(self):
-        return self.factors["poisson_rate"] > 0
+        if self.factors["poisson_rate"] <= 0:
+            raise ValueError("Rate of Poisson process for player arrivals must be greater than 0.")
 
     def check_num_players(self):
-        return self.factors["num_players"] > 0
+        if self.factors["num_players"] <= 0:
+            raise ValueError("Number of players must be greater than 0.")
 
     def check_allowable_diff(self):
-        return self.factors["allowable_diff"] > 0
+        if self.factors["allowable_diff"] <= 0:
+            raise ValueError("The maximum mallowable different between Elo ratings must be greater than 0.")
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -300,7 +305,8 @@ class ChessAvgDifference(Problem):
         self.model = ChessMatchmaking(self.model_fixed_factors)
 
     def check_upper_time(self):
-        return self.factors["upper_time"] > 0
+        if self.factors["upper_time"] <= 0:
+            raise ValueError("The upper bound on wait time must be greater than 0.")
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
