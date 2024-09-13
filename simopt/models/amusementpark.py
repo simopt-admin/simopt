@@ -135,14 +135,17 @@ class AmusementPark(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors.
-    def check_park_capacity(self) -> bool:
-        return self.factors["park_capacity"] > 0
+    def check_park_capacity(self) -> None:
+        if self.factors["park_capacity"] < 0:
+            raise ValueError("Park capacity must be greater than or equal to 0.")
 
-    def check_number_attractions(self) -> bool:
-        return self.factors["number_attractions"] > 0
+    def check_number_attractions(self) -> None:
+        if self.factors["number_attractions"] < 0:
+            raise ValueError("Number of attractions must be greater than 0.")
 
-    def check_time_open(self) -> bool:
-        return self.factors["time_open"] >= 0
+    def check_time_open(self) -> None:
+        if self.factors["time_open"] < 0:
+            raise ValueError("Time open must be greater than or equal to 0.")
 
     def check_queue_capacities(self) -> bool:
         return all([cap >= 0 for cap in self.factors["queue_capacities"]])
@@ -152,7 +155,7 @@ class AmusementPark(Model):
             len(self.factors["depart_probabilities"])
             != self.factors["number_attractions"]
         ):
-            return False
+            raise ValueError("The number of departure probabilities must match the number of attractions.")
         else:
             return all(
                 [
@@ -166,7 +169,7 @@ class AmusementPark(Model):
             len(self.factors["arrival_gammas"])
             != self.factors["number_attractions"]
         ):
-            return False
+            raise ValueError("The number of arrivals must match the number of attractions.")
         else:
             return all([gamma >= 0 for gamma in self.factors["arrival_gammas"]])
 
@@ -186,14 +189,14 @@ class AmusementPark(Model):
         ):
             return True
         else:
-            return False
+            raise ValueError("The values you entered are invalid. Check that each row and depart probability sums to 1.")
 
     def check_erlang_shape(self) -> bool:
         if (
             len(self.factors["erlang_shape"])
             != self.factors["number_attractions"]
         ):
-            return False
+            raise ValueError("The number of attractions must equal the number of Erlang shape parameters.")
         else:
             return all([gamma >= 0 for gamma in self.factors["erlang_shape"]])
 
@@ -202,15 +205,16 @@ class AmusementPark(Model):
             len(self.factors["erlang_scale"])
             != self.factors["number_attractions"]
         ):
-            return False
+            raise ValueError("The number of attractions must equal the number of Erlang scales.")
         else:
             return all([gamma >= 0 for gamma in self.factors["erlang_scale"]])
 
     def check_simulatable_factors(self) -> bool:
-        return (
+        if (
             sum(self.factors["queue_capacities"])
-            <= self.factors["park_capacity"]
-        )
+            > self.factors["park_capacity"]
+        ):
+            raise ValueError("The sum of the queue capacities must be less than or equal to the park capacity")
 
     def replicate(
         self, rng_list: list[MRG32k3a]
