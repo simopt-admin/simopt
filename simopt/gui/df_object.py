@@ -25,15 +25,13 @@ class DFFactor(ABC):
 
     @property
     @abstractmethod
-    def default(self) -> tk.BooleanVar | tk.IntVar | tk.DoubleVar:
+    def default(self) -> tk.Variable:
         """The default value of the factor."""
         raise NotImplementedError
 
     @default.setter
     @abstractmethod
-    def default(
-        self, default: tk.BooleanVar | tk.IntVar | tk.DoubleVar
-    ) -> None:
+    def default(self, default: tk.Variable) -> None:
         raise NotImplementedError
 
     @property
@@ -83,8 +81,6 @@ class DFFactor(ABC):
             The name of the factor
         description : str
             The description of the factor
-        include : bool
-            Whether to include the factor in the experiment
 
         """
         self.__name = tk.StringVar(value=name)
@@ -94,13 +90,13 @@ class DFFactor(ABC):
         self.__maximum = None
         self.__num_decimals = None
 
-    def get_name_label(self, master: tk.Tk) -> tk.Label:
+    def get_name_label(self, frame: tk.Frame) -> tk.Label:
         """Get the name label of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -110,19 +106,19 @@ class DFFactor(ABC):
         """
         if not hasattr(self, "lbl_name"):
             self.lbl_name = tk.Label(
-                master=master,
+                master=frame,
                 text=self.name.get(),
                 justify=tk.LEFT,
             )
         return self.lbl_name
 
-    def get_description_label(self, master: tk.Tk) -> tk.Label:
+    def get_description_label(self, frame: tk.Frame) -> tk.Label:
         """Get the description label of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -132,20 +128,20 @@ class DFFactor(ABC):
         """
         if not hasattr(self, "lbl_description"):
             self.lbl_description = tk.Label(
-                master=master,
+                master=frame,
                 text=self.description.get(),
                 justify=tk.LEFT,
                 wraplength=300,
             )
         return self.lbl_description
 
-    def get_type_label(self, master: tk.Tk) -> tk.Label:
+    def get_type_label(self, frame: tk.Frame) -> tk.Label:
         """Get the type label of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -155,19 +151,19 @@ class DFFactor(ABC):
         """
         if not hasattr(self, "lbl_type"):
             self.lbl_type = tk.Label(
-                master=master,
+                master=frame,
                 text=self.type.get(),
                 justify=tk.LEFT,
             )
         return self.lbl_type
 
-    def get_default_entry(self, master: tk.Tk) -> ttk.Entry:
+    def get_default_entry(self, frame: tk.Frame) -> ttk.Entry:
         """Get the default entry of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -177,20 +173,20 @@ class DFFactor(ABC):
         """
         if not hasattr(self, "ent_default"):
             self.ent_default = ttk.Entry(
-                master=master,
-                state=self.include_default_state,
+                master=frame,
+                state=str(self.include_default_state),
                 textvariable=self.default,
                 justify=tk.RIGHT,
             )
         return self.ent_default
 
-    def get_include_checkbutton(self, master: tk.Tk) -> tk.Checkbutton | None:
+    def get_include_checkbutton(self, frame: tk.Frame) -> tk.Checkbutton | None:
         """Get the include checkbutton of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -202,19 +198,19 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "chk_include"):
             self.chk_include = tk.Checkbutton(
-                master=master,
+                master=frame,
                 variable=self.include,
                 command=self._toggle_fields,
             )
         return self.chk_include
 
-    def get_minimum_entry(self, master: tk.Tk) -> ttk.Entry | None:
+    def get_minimum_entry(self, frame: tk.Frame) -> ttk.Entry | None:
         """Get the minimum entry of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -226,20 +222,20 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "ent_minimum"):
             self.ent_minimum = ttk.Entry(
-                master=master,
-                state=self.include_datafarm_state,
+                master=frame,
+                state=str(self.include_datafarm_state),
                 textvariable=self.minimum,
                 justify=tk.RIGHT,
             )
         return self.ent_minimum
 
-    def get_maximum_entry(self, master: tk.Tk) -> ttk.Entry | None:
+    def get_maximum_entry(self, frame: tk.Frame) -> ttk.Entry | None:
         """Get the maximum entry of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -251,20 +247,20 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "ent_maximum"):
             self.ent_maximum = ttk.Entry(
-                master=master,
-                state=self.include_datafarm_state,
+                master=frame,
+                state=str(self.include_datafarm_state),
                 textvariable=self.maximum,
                 justify=tk.RIGHT,
             )
         return self.ent_maximum
 
-    def get_num_decimals_entry(self, master: tk.Tk) -> ttk.Entry | None:
+    def get_num_decimals_entry(self, frame: tk.Frame) -> ttk.Entry | None:
         """Get the number of decimals entry of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -276,8 +272,8 @@ class DFFactor(ABC):
             return None
         if not hasattr(self, "ent_num_decimals"):
             self.ent_num_decimals = ttk.Entry(
-                master=master,
-                state=self.include_datafarm_state,
+                master=frame,
+                state=str(self.include_datafarm_state),
                 textvariable=self.num_decimals,
                 justify=tk.RIGHT,
             )
@@ -285,6 +281,8 @@ class DFFactor(ABC):
 
     def _toggle_fields(self) -> None:
         """Toggle the states of the datafarm fields."""
+        if self.include is None:
+            return
         if self.include.get():
             # Disable the default field
             self.ent_default.configure(state="disabled")
@@ -341,16 +339,16 @@ class DFBoolean(DFFactor):
 
         """
         super().__init__(name, description)
-        self.__default = tk.BooleanVar(value=default)
+        self.default = tk.BooleanVar(value=default)
         self.__include = tk.BooleanVar(value=False)
 
-    def get_default_entry(self, master: tk.Tk) -> ttk.Entry:
+    def get_default_entry(self, frame: tk.Frame) -> ttk.Entry:
         """Get the default entry of the factor.
 
         Parameters
         ----------
-        master : tk.Tk
-            The main window of the GUI
+        frame : tk.Frame
+            The frame the entry will be placed in
 
         Returns
         -------
@@ -361,8 +359,8 @@ class DFBoolean(DFFactor):
         if not hasattr(self, "ent_default"):
             # Create a dropdown menu for boolean values
             self.ent_default = ttk.Combobox(
-                master=master,
-                state=self.include_default_state,
+                master=frame,
+                state=str(self.include_default_state),
                 textvariable=self.default,
                 values=["True", "False"],
                 justify=tk.LEFT,
@@ -500,3 +498,136 @@ class DFFloat(DFFactor):
         self.__maximum = tk.DoubleVar(value=default)
         num_decimals = str(default)[::-1].find(".")
         self.__num_decimals = tk.IntVar(value=num_decimals)
+
+
+class DFTuple(DFFactor):
+    """Class to store tuple factors for problems and solvers."""
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="tuple")
+
+    @property
+    def default(self) -> tk.StringVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.StringVar) -> None:
+        self.__default = default
+
+    def __init__(self, name: str, description: str, default: tuple) -> None:
+        """Initialize the tuple factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : tuple
+            The default value of the factor
+
+        """
+        super().__init__(name, description)
+        self.__default = tk.StringVar(value=str(default))
+
+
+class DFList(DFFactor):
+    """Class to store list factors for problems and solvers."""
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="list")
+
+    @property
+    def default(self) -> tk.StringVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.StringVar) -> None:
+        self.__default = default
+
+    def __init__(self, name: str, description: str, default: list) -> None:
+        """Initialize the list factor class.
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : list
+            The default value of the factor
+
+        """
+        super().__init__(name, description)
+        self.__default = tk.StringVar(value=str(default))
+
+
+def spec_dict_to_df_dict(spec_dict: dict[str, dict]) -> dict[str, DFFactor]:
+    """Convert a dictionary of specifications to a dictionary of datafarm factors.
+
+    Parameters
+    ----------
+    spec_dict : dict
+        The dictionary of specifications
+
+    Returns
+    -------
+    dict
+        The dictionary of datafarm factors
+
+    """
+
+    # Create an empty dictionary for the datafarm factors
+    df_dict: dict[str, DFFactor] = {}
+
+    # Iterate over the specification dictionary
+    for spec_name, spec in spec_dict.items():
+        # Convert the specification to a datafarm factor
+        df_dict[spec_name] = spec_to_df(spec_name, spec)
+
+    return df_dict
+
+
+def spec_to_df(spec_name: str, spec: dict) -> DFFactor:
+    """Convert a specification to a datafarm factor.
+
+    Parameters
+    ----------
+    spec_name : str
+        The name of the factor
+    spec : dict
+        The specifications of the factor
+
+    Returns
+    -------
+    DFFactor
+        The datafarm factor
+
+    """
+
+    # Get the factor's datatype, description, and default value
+    f_type = spec["datatype"]
+    f_description = spec["description"]
+    f_default = spec["default"]
+
+    df_factor_map = {
+        bool: DFBoolean,
+        int: DFInteger,
+        float: DFFloat,
+        tuple: DFTuple,
+        list: DFList,
+    }
+
+    # Create the factor object
+    if f_type in df_factor_map:
+        return df_factor_map[f_type](spec_name, f_description, f_default)
+    else:
+        raise NotImplementedError(
+            f"Factor type [{f_type}] not yet implemented."
+        )

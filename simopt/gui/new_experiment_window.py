@@ -5,7 +5,7 @@ import re
 import tkinter as tk
 from tkinter import filedialog, ttk
 from tkinter.font import nametofont
-from typing import Literal
+from typing import Callable, Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,7 +30,7 @@ from simopt.experiment_base import (
     plot_terminal_progress,
     plot_terminal_scatterplots,
 )
-from simopt.gui.df_object import DFBoolean, DFFactor, DFFloat, DFInteger
+from simopt.gui.df_object import DFFactor, spec_dict_to_df_dict
 from simopt.gui.toplevel_custom import Toplevel
 
 
@@ -60,9 +60,10 @@ class NewExperimentWindow(Toplevel):
         self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
         self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
         self.ran_experiments_dict = {}  # dictionary of experiments that have been run orgainized by experiment name
-        self.design_types_list = [
+        self.design_types = Literal[
             "nolhs"
         ]  # available design types that can be used during datafarming
+        self.design_types_list = self.design_types
         self.macro_reps = {}  # dict that contains user specified macroreps for each experiment
         self.post_reps = {}  # dict that contains user specified postrep numbers for each experiment
         self.init_post_reps = {}  # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
@@ -134,8 +135,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_frame = tk.Frame(master=self.main_frame)
         self.problem_frame = tk.Frame(master=self.main_frame)
         self.model_frame = tk.Frame(master=self.main_frame)
-        self.solver_datafarm_frame = tk.Frame(master=self.main_frame)
-        self.problem_datafarm_frame = tk.Frame(master=self.main_frame)
+        self.factor_frame = tk.Frame(master=self.main_frame)
         self.model_datafarm_frame = tk.Frame(master=self.main_frame)
         self.design_display_frame = tk.Frame(master=self.main_frame)
 
@@ -295,7 +295,7 @@ class NewExperimentWindow(Toplevel):
         self.cross_design_button = tk.Button(
             master=self.main_frame,
             text="Create Cross Design Using Default Factor Settings",
-            command=self.cross_design_window,
+            command=self.show_cross_design_window,
         )
         self.cross_design_button.grid(
             row=self.load_design_button_row, column=1, padx=10
@@ -532,8 +532,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.solver_datafarm_select_menu.grid(row=0, column=1)
 
-    def cross_design_window(self) -> None:
-        self.cross_design_window = Toplevel(self)
+    def show_cross_design_window(self) -> None:
+        self.cross_design_window = Toplevel(self.root)
         self.cross_design_window.title(
             "Simopt Graphical User Interface - Cross Design"
         )
@@ -955,15 +955,15 @@ class NewExperimentWindow(Toplevel):
                 width=20,
             )
             self.problem_name_label.grid(row=2, column=0)
-            self.design_name_var = tk.StringVar()
+            self.design_name = tk.StringVar()
             # get unique problem name
             problem_name = self.get_unique_name(
                 self.root_problem_dict, file_name
             )
-            self.design_name_var.set(problem_name)
+            self.design_name.set(problem_name)
             self.problem_name_entry = tk.Entry(
                 master=self.model_frame,
-                textvariable=self.design_name_var,
+                textvariable=self.design_name,
                 width=20,
             )
             self.problem_name_entry.grid(row=2, column=1)
@@ -993,13 +993,13 @@ class NewExperimentWindow(Toplevel):
                 width=20,
             )
             self.solver_name_label.grid(row=2, column=0)
-            self.design_name_var = tk.StringVar()
+            self.design_name = tk.StringVar()
             # get unique solver name
             solver_name = self.get_unique_name(self.root_solver_dict, file_name)
-            self.design_name_var.set(solver_name)
+            self.design_name.set(solver_name)
             self.solver_name_entry = tk.Entry(
                 master=self.solver_frame,
-                textvariable=self.design_name_var,
+                textvariable=self.design_name,
                 width=20,
             )
             self.solver_name_entry.grid(row=2, column=1)
@@ -1038,7 +1038,7 @@ class NewExperimentWindow(Toplevel):
             self.design_df[factor] = fixed_factors[factor]
 
         # create new design csv file that follows original format
-        csv_filename = f"{self.dir_path}/{self.design_name_var.get()}.csv"
+        csv_filename = f"{self.dir_path}/{self.design_name.get()}.csv"
         self.design_df.to_csv(csv_filename, mode="w", header=True, index=False)
 
         # update design tree
@@ -1049,7 +1049,7 @@ class NewExperimentWindow(Toplevel):
         # convert df to list of dictionaries
         self.design_list = self.filtered_design_df.to_dict(orient="records")
 
-        design_name = self.design_name_var.get()
+        design_name = self.design_name.get()
 
         solver_holder_list = []  # used so solver list matches datafarming format
         for dp in self.design_list:
@@ -1086,7 +1086,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_del_buttons[design_name] = self.solver_del_button
 
         # refresh solver design name entry box
-        self.solver_design_name_var.set(
+        self.design_name.set(
             self.get_unique_name(self.root_solver_dict, design_name)
         )
 
@@ -1094,7 +1094,7 @@ class NewExperimentWindow(Toplevel):
         # convert df to list of dictionaries
         self.design_list = self.filtered_design_df.to_dict(orient="records")
 
-        design_name = self.design_name_var.get()
+        design_name = self.design_name.get()
 
         problem_holder_list = []  # holds all problem lists within design name
         for dp in self.design_list:
@@ -1178,12 +1178,12 @@ class NewExperimentWindow(Toplevel):
         for widget in frame.winfo_children():
             widget.destroy()
 
-    def show_factor_headers(
+    def insert_factor_headers(
         self,
         frame: tk.Frame,
         first_row: int = 0,
-    ) -> None:
-        """Show factor headers in the GUI.
+    ) -> int:
+        """Insert the headers for the factors into the frame.
 
         Parameters
         ----------
@@ -1193,6 +1193,11 @@ class NewExperimentWindow(Toplevel):
             List of factor headings.
         first_row : int, optional
             First row to display factors.
+
+        Returns
+        -------
+        int
+            Index of the last row inserted.
 
         """
         header_columns = [
@@ -1220,6 +1225,73 @@ class NewExperimentWindow(Toplevel):
         ttk.Separator(frame, orient="horizontal").grid(
             row=first_row + 1, columnspan=len(header_columns), sticky="ew"
         )
+        return first_row + 1
+
+    def insert_factors(
+        self,
+        frame: tk.Frame,
+        factor_dict: dict[str, DFFactor],
+        first_row: int = 2,
+    ) -> int:
+        """Insert the factors into the frame.
+
+        Parameters
+        ----------
+        frame : tk.Frame
+            Frame to display factors.
+        factors : dict[str, DFFactor]
+            Dictionary of factors.
+        first_row : int, optional
+            First row to display factors.
+
+        Returns
+        -------
+        int
+            Index of the last row displayed.
+        """
+
+        row_index = first_row
+        # Loop through and add everything to the frame
+        for factor_index, factor_name in enumerate(factor_dict):
+            # Skip every other row to allow for the separator
+            row_index = factor_index * 2 + first_row
+
+            # Get the factor object
+            factor_obj = factor_dict[factor_name]
+            # Make a list of functions that will return the widgets for each
+            # column in the frame
+            column_functions: list[Callable[[tk.Frame], tk.Widget | None]] = [
+                factor_obj.get_name_label,
+                factor_obj.get_description_label,
+                factor_obj.get_type_label,
+                factor_obj.get_default_entry,
+                factor_obj.get_include_checkbutton,
+                factor_obj.get_minimum_entry,
+                factor_obj.get_maximum_entry,
+                factor_obj.get_num_decimals_entry,
+            ]
+
+            # If it's not the last row, add a separator
+            if factor_index != len(factor_dict) - 1:
+                ttk.Separator(frame, orient="horizontal").grid(
+                    row=row_index + 1,
+                    column=0,
+                    columnspan=len(column_functions),
+                    sticky=tk.E + tk.W,
+                )
+
+            # Loop through and insert the factor data into the frame
+            for column_index, function in enumerate(column_functions):
+                # Configure the column
+                frame.grid_columnconfigure(column_index)
+                # Call the function to get the widget
+                widget = function(frame)
+                # Display the widget if it exists
+                if widget is not None:
+                    widget.grid(
+                        row=row_index, column=column_index, padx=10, pady=3
+                    )
+        return row_index
 
     def show_factor_defaults(
         self,
@@ -1388,6 +1460,8 @@ class NewExperimentWindow(Toplevel):
         dec_vals = {}  # holds variable for each float factor's # decimals
         widgets = {}  # holds a list of each widget for min, max, and dec entry for each factor
 
+        # TODO: Investigate if this is a valid approach for models
+        # The specification path looks like it's querying a problem object
         if isinstance(base_object, Model):
             specifications = base_object.model.specifications
         else:
@@ -1697,309 +1771,78 @@ class NewExperimentWindow(Toplevel):
 
         return new_name
 
-    def show_problem_datafarm(self, event: tk.Event) -> None:
-        # clear previous selections
-        self.clear_frame(self.problem_datafarm_frame)
-        self.clear_frame(self.model_datafarm_frame)
-        self.clear_frame(self.design_display_frame)
-        # check solver compatibility
-        self.check_solver_compatibility()
-
-        """ Initialize frames, headers, and data farming buttons"""
-
-        self.problem_datafarm_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame, bg="Red"
-        )
-        self.problem_datafarm_frame.grid(row=1, column=0)
-        self.problem_factor_display_canvas = tk.Canvas(
-            master=self.problem_datafarm_frame, bg="Orange"
-        )
-        self.problem_factor_display_canvas.grid(row=1, column=0)
-        self.model_datafarm_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame, bg="Yellow"
-        )
-        self.model_datafarm_frame.grid(row=2, column=0)
-        self.model_factor_display_canvas = tk.Canvas(
-            master=self.model_datafarm_frame, bg="Green"
-        )
-        self.model_factor_display_canvas.grid(row=1, column=0)
-
-        # Create column for problem factor names
-        self.problem_headername_label = tk.Label(
-            master=self.problem_datafarm_frame,
-            text="Problem Factors",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.problem_headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # Create column for factor type
-        self.header_lbl_type = tk.Label(
-            master=self.problem_datafarm_frame,
-            text="Factor Type",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
-
-        # Create column for factor default values
-        self.header_lbl_include = tk.Label(
-            master=self.problem_datafarm_frame,
-            text="Default Value",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-        )
-        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
-
-        """ Get problem information from dicrectory and display"""
-        # Get problem info from directory
-        self.selected_datafarm_problem = self.problem_datafarm_var.get()
-        self.problem_datafarm_object = self.problem_list[
-            self.selected_datafarm_problem
-        ]()
-
-        # show problem factors and store default widgets and values to this dict
-        self.problem_datafarm_defaults, last_row = self.show_factor_defaults(
-            self.problem_datafarm_object, self.problem_factor_display_canvas
-        )
-        (
-            self.problem_checkstates,
-            self.problem_min_vals,
-            self.problem_max_vals,
-            self.problem_dec_vals,
-            self.problem_datafarm_widgets,
-            last_row,
-        ) = self.show_datafarming_options(
-            self.problem_datafarm_object, self.problem_factor_display_canvas
-        )
-
-        """ Get model information from dicrectory and display"""
-        # self.model_problem_dict = model_problem_class_directory # directory that relates problem name to model class
-        # self.model_datafarm_object = self.model_problem_dict[self.selected_datafarm_problem]()
-        # show model factors and store default widgets and default values to these
-        self.model_datafarm_defaults, new_last_row = self.show_factor_defaults(
-            base_object=self.problem_datafarm_object,
-            frame=self.problem_factor_display_canvas,
-            is_model=True,
-            first_row=last_row + 1,
-        )
-        (
-            self.model_checkstates,
-            self.model_min_vals,
-            self.model_max_vals,
-            self.model_dec_vals,
-            self.model_datafarm_widgets,
-            new_last_row,
-        ) = self.show_datafarming_options(
-            self.problem_datafarm_object,
-            self.problem_factor_display_canvas,
-            True,
-            last_row + 1,
-        )
-
-        # Update problem values with model values
-        self.problem_datafarm_defaults.update(self.model_datafarm_defaults)
-        self.problem_checkstates.update(self.model_checkstates)
-        self.problem_min_vals.update(self.model_min_vals)
-        self.problem_max_vals.update(self.model_max_vals)
-        self.problem_dec_vals.update(self.model_dec_vals)
-        self.problem_datafarm_widgets.update(self.model_datafarm_widgets)
-
-        """Options for creaing design"""
-        # Design type for problem
-        self.design_type_label = tk.Label(
-            master=self.problem_datafarm_frame,
-            text="Select Design Type",
-            width=30,
-        )
-        self.design_type_label.grid(row=2, column=0)
-
-        self.problem_design_var = tk.StringVar()
-        self.problem_design_var.set("nolhs")
-        self.problem_design_type_menu = ttk.OptionMenu(
-            self.problem_datafarm_frame,
-            self.problem_design_var,
-            "nolhs",
-            *self.design_types_list,
-        )
-        self.problem_design_type_menu.grid(row=2, column=1, padx=30)
-
-        # Stack selection for problem
-        self.problem_stack_label = tk.Label(
-            master=self.problem_datafarm_frame,
-            text="Number of Stacks for Problem",
-            width=30,
-        )
-        self.problem_stack_label.grid(row=3, column=0)
-        self.problem_stack_var = tk.StringVar()
-        self.problem_stack_var.set("1")
-        self.problem_stack_entry = ttk.Entry(
-            master=self.problem_datafarm_frame,
-            width=10,
-            textvariable=self.problem_stack_var,
-            justify="right",
-        )
-        self.problem_stack_entry.grid(row=3, column=1)
-
-        # design name entry
-        self.problem_design_name_label = tk.Label(
-            master=self.model_datafarm_frame,
-            text="Name of Design",
-            width=20,
-        )
-        self.problem_design_name_label.grid(row=4, column=0)
-        self.problem_design_name_var = tk.StringVar()
-        # get unique problem design name
-        problem_name = self.get_unique_name(
-            self.root_problem_dict,
-            f"{self.problem_datafarm_object.name}_design",
-        )
-        self.problem_design_name_var.set(problem_name)
-        self.problem_design_name_entry = tk.Entry(
-            master=self.model_datafarm_frame,
-            textvariable=self.problem_design_name_var,
-            width=20,
-        )
-        self.problem_design_name_entry.grid(row=4, column=1)
-        # create design button
-        self.create_problem_design_button = tk.Button(
-            master=self.model_datafarm_frame,
-            text="Create Design",
-            command=self.create_problem_design,
-        )
-        self.create_problem_design_button.grid(row=2, column=2)
-
-    def show_solver_datafarm(self, event: tk.Event) -> None:
-        """Show solver data farming options.
+    def __show_datafarming_core(
+        self, base_object: Literal["Problem", "Solver"]
+    ) -> None:
+        """Show data farming options for a solver or problem.
 
         Parameters
         ----------
-        event : tk.Event, optional
-            Event that triggered the function.
+        base_object : Literal["Problem", "Solver"]
+            Solver or Problem object.
 
         """
-        # clear previous selections
-        self.clear_frame(self.solver_datafarm_frame)
-        # check compatibility of problem selections
-        self.check_problem_compatibility()
+        # Check if the base object is a Problem or Solver
+        if base_object not in ("Problem", "Solver"):
+            raise TypeError("base_object must be 'Problem' or 'Solver'")
 
-        # Initialize the frame for the solver data farming factor options
-        self.solver_datafarm_frame = tk.Frame(
-            master=self.solver_datafarm_notebook_frame,
-        )
-        self.solver_datafarm_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
+        # Run compatability checks
+        # TODO: make these not dependent on self attributes
+        # if base_object == "Problem":
+        #     self.check_problem_compatibility()
+        # else:
+        #     self.check_solver_compatibility()
+
+        # Initialize the frame for the data farming factor options
+        if hasattr(self, "factor_frame"):
+            self.factor_frame.destroy()
+        if base_object == "Problem":
+            self.factor_frame = tk.Frame(
+                master=self.problem_datafarm_notebook_frame
+            )
+        else:
+            self.factor_frame = tk.Frame(
+                master=self.solver_datafarm_notebook_frame
+            )
+        self.factor_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
+
+        # Get the name of the problem or solver from the GUI
+        # and use it to get the object
+        if base_object == "Problem":
+            selected_name = self.problem_datafarm_var.get()
+            datafarm_object = self.problem_list[selected_name]()
+            # TODO: revamp problem so this isn't needed
+            self.problem_save_for_later = datafarm_object
+        else:
+            selected_name = self.solver_datafarm_var.get()
+            datafarm_object = self.solver_list[selected_name]()
+            # TODO: revamp solver so this isn't needed
+            self.solver_save_for_later = datafarm_object
+
+        # Convert the specifications to factors so they can be displayed
+        specifications = datafarm_object.specifications
+        self.factor_dict = spec_dict_to_df_dict(specifications)
+        # If the object is a Problem, we need to display the model factors
+        if base_object == "Problem":
+            model_specifications = datafarm_object.model.specifications
+            model_factor_dict = spec_dict_to_df_dict(model_specifications)
+            for factor in model_factor_dict:
+                self.factor_dict[factor] = model_factor_dict[factor]
 
         # Add all the column headers
-        self.show_factor_headers(self.solver_datafarm_frame)
+        header_end_row = self.insert_factor_headers(frame=self.factor_frame)
+        # Add all the factors
+        factor_end_row = self.insert_factors(
+            frame=self.factor_frame,
+            factor_dict=self.factor_dict,
+            first_row=header_end_row + 1,
+        )
 
-        # Get solver info from dictionary
-        selected_solver_name = self.solver_datafarm_var.get()
-        self.solver_datafarm_object = self.solver_list[selected_solver_name]()
+        # Create the design options
+        self.design_frame = tk.Frame(master=self.factor_frame)
+        self.design_frame.grid(row=factor_end_row + 1, column=0, columnspan=8)
 
-        # Create a dictionary of factor objects
-        # Factor name maps to the factor object
-        self.factor_dict: dict[str, DFFactor] = {}
-
-        factors = self.solver_datafarm_object.specifications
-        for factor in factors:
-            # Get the factor's datatype, description, and default value
-            f_type = factors[factor].get("datatype")
-            f_description = factors[factor].get("description")
-            f_default = factors[factor].get("default")
-
-            if f_type is bool:
-                self.factor_dict[factor] = DFBoolean(
-                    factor, f_description, f_default
-                )
-            elif f_type is int:
-                self.factor_dict[factor] = DFInteger(
-                    factor, f_description, f_default
-                )
-            elif f_type is float:
-                self.factor_dict[factor] = DFFloat(
-                    factor, f_description, f_default
-                )
-            else:
-                raise NotImplementedError("Factor type not yet implemented.")
-
-        # Loop through and add everything to the frame
-        for index, factor in enumerate(self.factor_dict):
-            # Skip every other row to allow for the separator
-            row_index = index * 2 + 2
-
-            # Add the line separator
-            ttk.Separator(self.solver_datafarm_frame, orient="horizontal").grid(
-                row=row_index + 1, column=0, columnspan=8, sticky=tk.E + tk.W
-            )
-
-            # Get the factor object
-            factor_obj = self.factor_dict[factor]
-            # Get the name label
-            name_label = factor_obj.get_name_label(self.solver_datafarm_frame)
-            name_label.grid(
-                row=row_index, column=0, padx=10, pady=3, sticky=tk.W
-            )
-            # Get the description label
-            desc_label = factor_obj.get_description_label(
-                self.solver_datafarm_frame
-            )
-            desc_label.grid(
-                row=row_index, column=1, padx=10, pady=3, sticky=tk.W
-            )
-            # Get the type label
-            type_label = factor_obj.get_type_label(self.solver_datafarm_frame)
-            type_label.grid(
-                row=row_index, column=2, padx=10, pady=3, sticky=tk.W
-            )
-            # Get the default value entry
-            default_entry = factor_obj.get_default_entry(
-                self.solver_datafarm_frame
-            )
-            default_entry.grid(
-                row=row_index, column=3, padx=10, pady=3, sticky=tk.W
-            )
-            # Check if the factor is not a bool/int/float
-            if factor_obj.include is None:
-                continue
-            # Get the include in design checkbutton
-            include_checkbutton = factor_obj.get_include_checkbutton(
-                self.solver_datafarm_frame
-            )
-            include_checkbutton.grid(row=row_index, column=4, padx=10, pady=3)
-            # Check if the factor is not an int/float
-            if factor_obj.minimum is None:  # Max entry also works
-                continue
-            # Get the min value entry
-            min_entry = factor_obj.get_minimum_entry(self.solver_datafarm_frame)
-            min_entry.grid(
-                row=row_index, column=5, padx=10, pady=3, sticky=tk.W
-            )
-            # Get the max value entry
-            max_entry = factor_obj.get_maximum_entry(self.solver_datafarm_frame)
-            max_entry.grid(
-                row=row_index, column=6, padx=10, pady=3, sticky=tk.W
-            )
-            # Check if the factor is not a float
-            if factor_obj.num_decimals is None:
-                continue
-            # Get the decimal value entry
-            dec_entry = factor_obj.get_num_decimals_entry(
-                self.solver_datafarm_frame
-            )
-            dec_entry.grid(
-                row=row_index, column=7, padx=10, pady=3, sticky=tk.W
-            )
-
-        new_last_row = row_index * 2 + 2
-
-        """Options for creaing design"""
-
-        self.design_frame = tk.Frame(master=self.solver_datafarm_frame)
-        self.design_frame.grid(row=new_last_row, column=0, columnspan=8)
-
-        # Design type
+        # Design type for problem
         self.design_type_label = tk.Label(
             master=self.design_frame,
             text="Design Type",
@@ -2007,13 +1850,13 @@ class NewExperimentWindow(Toplevel):
         )
         self.design_type_label.grid(row=0, column=0)
 
-        self.solver_design_var = tk.StringVar()
-        self.solver_design_var.set("nolhs")
+        self.design_type = tk.StringVar()
+        self.design_type.set("nolhs")
         self.design_type_menu = ttk.OptionMenu(
             self.design_frame,
-            self.solver_design_var,
+            self.design_type,
             "nolhs",
-            *self.design_types_list,
+            *self.design_types,
         )
         self.design_type_menu.grid(row=0, column=1, padx=30)
 
@@ -2024,105 +1867,108 @@ class NewExperimentWindow(Toplevel):
             width=20,
         )
         self.stack_label.grid(row=1, column=0)
-        self.solver_stack_var = tk.StringVar()
-        self.solver_stack_var.set("1")
+        self.stack_count = tk.StringVar()
+        self.stack_count.set("1")
         self.stack_menu = ttk.Entry(
             master=self.design_frame,
             width=10,
-            textvariable=self.solver_stack_var,
+            textvariable=self.stack_count,
             justify="right",
         )
         self.stack_menu.grid(row=1, column=1)
 
-        # design name entry
-        self.solver_design_name_label = tk.Label(
+        # Design name entry
+        self.name_label = tk.Label(
             master=self.design_frame,
             text="Name of Design",
             width=20,
         )
-        self.solver_design_name_label.grid(row=2, column=0)
-        self.solver_design_name_var = tk.StringVar()
-        # get unique solver design name
-        solver_name = self.get_unique_name(
-            self.root_solver_dict,
-            f"{self.solver_datafarm_object.name}_design",
+        self.name_label.grid(row=2, column=0)
+        self.design_name = tk.StringVar()
+        # Get unique design name
+        if base_object == "Problem":
+            lookup_dict = self.root_problem_dict
+        else:
+            lookup_dict = self.root_solver_dict
+        unique_name = self.get_unique_name(
+            lookup_dict, f"{datafarm_object.name}_design"
         )
-        self.solver_design_name_var.set(solver_name)
-        self.solver_design_name_entry = tk.Entry(
+        # Set the design name
+        self.design_name.set(unique_name)
+        self.design_name_entry = tk.Entry(
             master=self.design_frame,
-            textvariable=self.solver_design_name_var,
+            textvariable=self.design_name,
             width=20,
         )
-        self.solver_design_name_entry.grid(row=2, column=1)
-        # create design button
-        self.create_solver_design_button = tk.Button(
+        self.design_name_entry.grid(row=2, column=1)
+
+        # Delete the create design button if it exists
+        if hasattr(self, "create_design_button"):
+            self.create_design_button.destroy()
+        # Create design button
+        if base_object == "Problem":
+            create_function = self.create_problem_design
+        else:
+            create_function = self.create_solver_design
+        self.create_design_button = tk.Button(
             master=self.design_frame,
             text="Create Design",
-            command=self.create_solver_design,
+            command=create_function,
         )
-        self.create_solver_design_button.grid(row=4, column=0, columnspan=2)
+        self.create_design_button.grid(row=3, column=0, columnspan=2)
 
-    def enable_datafarm_entry(self, class_type: Problem) -> None:
-        # enable datafarming options for factors selected to be included in design
-        if class_type == Problem:
-            for factor in self.problem_checkstates:
-                checkstate = self.problem_checkstates[factor].get()
-                if factor in self.problem_datafarm_widgets:
-                    datafarm_widget_list = self.problem_datafarm_widgets[factor]
-                    if checkstate:
-                        for widget in datafarm_widget_list:
-                            widget.configure(state="normal")
-                    else:
-                        for widget in datafarm_widget_list:
-                            widget.delete(0, tk.END)
-                            widget.configure(state="disabled")
+    def show_problem_datafarm(self, option: tk.StringVar | None = None) -> None:
+        self.__show_datafarming_core(base_object="Problem")
+
+    def show_solver_datafarm(self, option: tk.StringVar | None = None) -> None:
+        self.__show_datafarming_core(base_object="Solver")
 
     def create_solver_design(self) -> None:
         # Get unique solver design name
         self.solver_design_name = self.get_unique_name(
-            self.root_solver_dict, self.solver_design_name_var.get()
+            self.root_solver_dict, self.design_name.get()
         )
 
         # get n stacks and design type from user input
-        n_stacks = int(self.solver_stack_var.get())
-        design_type = self.solver_design_var.get()
+        n_stacks = int(self.stack_count.get())
+        design_type = self.design_type.get()
 
         """ Determine factors included in design """
-        self.solver_design_factors = []  # list of names of factors included in design
-        self.solver_cross_design_factors = {}  # dict of cross design factors w/ lists of possible values
-        self.solver_fixed_factors = {}  # contains fixed values for factors not in design
+        # List of names of factors included in the design
+        self.design_factors: list[str] = []
+        # Dict of cross design factors w/ lists of possible values
+        # TODO: figure out if this will ever be anything other than bools
+        self.cross_design_factors: dict[str, list[str]] = {}
+        # Dict of factors not included in the design
+        # Key is the factor name, value is the default value
+        self.fixed_factors: dict[str, bool | float | int] = {}
         for factor in self.factor_dict:
             # If the factor is not included in the design, it's a fixed factor
             if (
                 self.factor_dict[factor].include is None
-                or not self.factor_dict[factor].include.get()
+                or not self.factor_dict[factor].include.get()  # type: ignore
             ):
                 fixed_val = self.factor_dict[factor].default.get()
-                self.solver_fixed_factors[factor] = [fixed_val]
+                self.fixed_factors[factor] = fixed_val
             # If the factor is included in the design, add it to the list of factors
             else:
                 if self.factor_dict[factor].type.get() in ("int", "float"):
-                    self.solver_design_factors.append(factor)
+                    self.design_factors.append(factor)
                 elif self.factor_dict[factor].type.get() == "bool":
-                    self.solver_cross_design_factors[factor] = ["True", "False"]
+                    self.cross_design_factors[factor] = ["True", "False"]
 
         """ Check if there are any factors included in the design """
-        if (
-            not self.solver_design_factors
-            and not self.solver_cross_design_factors
-        ):
+        if not self.design_factors and not self.cross_design_factors:
             # Create a non-datafarmed solver design
             solver_list = []
-            solver_list.append(self.solver_fixed_factors)
+            solver_list.append(self.fixed_factors)
 
             # Nested loop to search for the right solver without knowing its name
+            design_factors = set(self.factor_dict)
             for solver in solver_directory:
                 # Set of factors for the solver
                 solver_object = solver_directory[solver]()
                 solver_factors = set(solver_object.specifications.keys())
-                # Set of factors for the current design
-                design_factors = set(self.factor_dict)
-
                 # If the sets are equal, we have found the right solver
                 if solver_factors == design_factors:
                     solver_list.append(str(solver))
@@ -2162,7 +2008,7 @@ class NewExperimentWindow(Toplevel):
             )
 
             # refresh solver name entry box
-            self.solver_design_name_var.set(
+            self.design_name.set(
                 self.get_unique_name(
                     self.root_solver_dict, self.solver_design_name
                 )
@@ -2183,12 +2029,16 @@ class NewExperimentWindow(Toplevel):
             # Write the factor settings to the file
             with open(filepath, "x") as settings_file:
                 # For each factor, write the min, max, and decimal values to the file
-                for factor_name in self.solver_design_factors:
+                for factor_name in self.design_factors:
                     # Lookup the factor in the dictionary
                     factor = self.factor_dict[factor_name]
+                    # Make sure the factor has a minimum and maximum value
+                    assert factor.minimum is not None
+                    assert factor.maximum is not None
                     min_val = factor.minimum.get()
                     max_val = factor.maximum.get()
                     if factor.type.get() == "float":
+                        assert factor.num_decimals is not None
                         dec_val = factor.num_decimals.get()
                     else:
                         dec_val = "0"
@@ -2199,11 +2049,11 @@ class NewExperimentWindow(Toplevel):
 
             try:
                 self.solver_design_list = create_design(
-                    name=self.solver_datafarm_object.name,
-                    factor_headers=self.solver_design_factors,
+                    name=self.solver_save_for_later.name,
+                    factor_headers=self.design_factors,
                     factor_settings_filename=self.solver_design_name,
-                    fixed_factors=self.solver_fixed_factors,
-                    cross_design_factors=self.solver_cross_design_factors,
+                    fixed_factors=self.fixed_factors,
+                    cross_design_factors=self.cross_design_factors,
                     n_stacks=n_stacks,
                     design_type=design_type,
                     class_type="solver",
@@ -2217,134 +2067,181 @@ class NewExperimentWindow(Toplevel):
                 os.path.join(
                     DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
                 ),
-                self.solver_datafarm_frame,
+                self.factor_frame,
                 row=999,
                 column=0,
                 columnspan=8,
             )
             # button to add solver design to experiment
             self.add_solver_design_button = tk.Button(
-                master=self.solver_datafarm_frame,
+                master=self.factor_frame,
                 text="Add this solver to experiment",
                 command=self.add_solver_design_to_experiment,
             )
             self.add_solver_design_button.grid(row=1000, column=0, columnspan=8)
             # disable design name entry
-            self.solver_design_name_entry.configure(state="disabled")
+            self.design_name_entry.configure(state="disabled")
 
     def create_problem_design(self) -> None:
         # Get unique solver design name
         self.problem_design_name = self.get_unique_name(
-            self.root_problem_dict, self.problem_design_name_var.get()
+            self.root_problem_dict, self.design_name.get()
         )
 
         # get n stacks and design type from user input
-        n_stacks = self.problem_stack_var.get()
-        design_type = self.problem_design_var.get()
-        # combine model and problem specifications dictionaries
-        specifications = {
-            **self.problem_datafarm_object.specifications,
-            **self.problem_datafarm_object.model.specifications,
-        }
-        print("specifications", specifications)
+        n_stacks = int(self.stack_count.get())
+        design_type = self.design_type.get()
 
         """ Determine factors included in design """
-        self.problem_design_factors = []  # list of names of factors included in design
-        self.problem_cross_design_factors = {}  # dict of cross design factors w/ lists of possible values
-        for factor in self.problem_checkstates:
-            checkstate = self.problem_checkstates[factor].get()
-            factor_datatype = specifications[factor].get("datatype")
-
-            if checkstate:
-                if factor_datatype in (int, float):
-                    self.problem_design_factors.append(factor)
-                elif factor_datatype is bool:
-                    self.problem_cross_design_factors[factor] = [
-                        "True",
-                        "False",
-                    ]
-
-        # if no cross design factors, set dict to None
-        if self.problem_cross_design_factors == {}:
-            self.problem_cross_design_factors = None
-
-        """ Determine values of fixed factors """
-        problem_fixed_factors = {}  # contains fixed values for factors not in design
-        for factor in self.problem_datafarm_defaults:
-            if factor not in self.problem_design_factors:
-                factor_value = self.problem_datafarm_defaults[factor].get()
-                problem_fixed_factors[factor] = ast.literal_eval(factor_value)
-        self.problem_fixed_factors = problem_fixed_factors
-        # # convert fixed factors to proper datatype
-        # self.problem_fixed_factors = self.convert_proper_datatype(
-        #     problem_fixed_factors, self.problem_datafarm_object
-        # )
-
-        """ Create factor settings txt file"""
-        settings_filename = f"{self.problem_design_name}_problem_factors"
-        settings_filepath = os.path.join(
-            DATA_FARMING_DIR, f"{settings_filename}.txt"
-        )
-        with open(
-            settings_filepath,
-            "w",
-        ) as settings_file:
-            settings_file.write("")
-        for factor in self.problem_design_factors:
-            factor_datatype = specifications[factor].get("datatype")
-            min_val = self.problem_min_vals[factor].get()
-            max_val = self.problem_max_vals[factor].get()
-            if factor_datatype is float:
-                dec_val = self.problem_dec_vals[factor].get()
+        # List of names of factors included in the design
+        self.design_factors: list[str] = []
+        # Dict of cross design factors w/ lists of possible values
+        # TODO: figure out if this will ever be anything other than bools
+        self.cross_design_factors: dict[str, list[str]] = {}
+        # Dict of factors not included in the design
+        # Key is the factor name, value is the default value
+        self.fixed_factors: dict[str, bool | float | int] = {}
+        for factor in self.factor_dict:
+            # If the factor is not included in the design, it's a fixed factor
+            if (
+                self.factor_dict[factor].include is None
+                or not self.factor_dict[factor].include.get()  # type: ignore
+            ):
+                fixed_val = self.factor_dict[factor].default.get()
+                self.fixed_factors[factor] = fixed_val
+            # If the factor is included in the design, add it to the list of factors
             else:
-                dec_val = "0"
-            data_insert = f"{min_val} {max_val} {dec_val}\n"
-            with open(
-                settings_filepath,
-                "a",
-            ) as settings_file:
-                settings_file.write(data_insert)
+                if self.factor_dict[factor].type.get() in ("int", "float"):
+                    self.design_factors.append(factor)
+                elif self.factor_dict[factor].type.get() == "bool":
+                    self.cross_design_factors[factor] = ["True", "False"]
 
-        self.problem_design_list = create_design(
-            name=self.problem_datafarm_object.name,
-            factor_headers=self.problem_design_factors,
-            factor_settings_filename=settings_filename,
-            fixed_factors=self.problem_fixed_factors,
-            cross_design_factors=self.problem_cross_design_factors,
-            n_stacks=n_stacks,
-            design_type=design_type,
-            is_problem=True,
-        )
+        """ Check if there are any factors included in the design """
+        if not self.design_factors and not self.cross_design_factors:
+            # Create a non-datafarmed problem design
+            problem_list = []
+            problem_list.append(self.fixed_factors)
 
-        # display design tree for problem, model, or both depending on design options
-        self.design_display_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame
-        )
-        self.design_display_frame.grid(row=3, column=0)
+            # Nested loop to search for the right solver without knowing its name
+            design_factors = set(self.factor_dict)
+            for problem in problem_directory:
+                # Set of factors for the solver
+                problem_object = problem_directory[problem]()
+                problem_factors = set(problem_object.specifications.keys())
+                # If the sets are equal, we have found the right solver
+                if problem_factors == design_factors:
+                    problem_list.append(str(problem))
+                    break
 
-        # display only problem design if no model design created
-        # if all_false_model:
-        self.problem_design_tree_label = tk.Label(
-            master=self.design_display_frame,
-            text="Generated Design over Problem Factors",
-            font=nametofont("TkHeadingFont"),
-        )
-        self.problem_design_tree_label.grid(row=0, column=0)
-        self.display_design_tree(
-            os.path.join(
-                DATA_FARMING_DIR,
-                f"{self.problem_design_name}_problem_factors_design.csv",
-            ),
-            self.design_display_frame,
-            row=1,
-        )
-        # button to add problem design to experiment
-        self.add_problem_design_button = tk.Button(
-            master=self.design_display_frame,
-            text="Add this problem design to experiment",
-            command=self.add_problem_design_to_experiment,
-        )
-        self.add_problem_design_button.grid(row=2, column=0)
+            self.root_problem_dict[self.problem_design_name] = [problem_list]
+
+            # add solver name to solver index
+            problem_row = len(self.root_problem_dict) - 1
+            self.problem_list_label = tk.Label(
+                master=self.problem_list_canvas,
+                text=self.problem_design_name,
+            )
+            self.problem_list_label.grid(row=problem_row, column=1)
+            self.problem_list_labels[self.problem_design_name] = (
+                self.problem_list_label
+            )
+
+            # add delete and view/edit buttons
+            self.problem_edit_button = tk.Button(
+                master=self.problem_list_canvas,
+                text="View/Edit",
+                command=lambda: self.edit_problem(self.problem_design_name),
+            )
+            self.problem_edit_button.grid(row=problem_row, column=2)
+            self.problem_edit_buttons[self.problem_design_name] = (
+                self.problem_edit_button
+            )
+            self.problem_del_button = tk.Button(
+                master=self.problem_list_canvas,
+                text="Delete",
+                command=lambda: self.delete_problem(self.problem_design_name),
+            )
+            self.problem_del_button.grid(row=problem_row, column=3)
+            self.problem_del_buttons[self.problem_design_name] = (
+                self.problem_del_button
+            )
+
+            # refresh solver name entry box
+            self.design_name.set(
+                self.get_unique_name(
+                    self.root_problem_dict, self.problem_design_name
+                )
+            )
+
+        else:
+            """ Create factor settings txt file"""
+            # Check if folder exists, if not create it
+            if not os.path.exists(DATA_FARMING_DIR):
+                os.makedirs(DATA_FARMING_DIR)
+            # If file already exists, clear it and make a new, empty file of the same name
+            filepath = os.path.join(
+                DATA_FARMING_DIR, f"{self.problem_design_name}.txt"
+            )
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+            # Write the factor settings to the file
+            with open(filepath, "x") as settings_file:
+                # For each factor, write the min, max, and decimal values to the file
+                for factor_name in self.design_factors:
+                    # Lookup the factor in the dictionary
+                    factor = self.factor_dict[factor_name]
+                    # Make sure the factor has a minimum and maximum value
+                    assert factor.minimum is not None
+                    assert factor.maximum is not None
+                    min_val = factor.minimum.get()
+                    max_val = factor.maximum.get()
+                    if factor.type.get() == "float":
+                        assert factor.num_decimals is not None
+                        dec_val = factor.num_decimals.get()
+                    else:
+                        dec_val = "0"
+
+                    # Write the values to the file
+                    data_insert = f"{min_val} {max_val} {dec_val}\n"
+                    settings_file.write(data_insert)
+
+            try:
+                self.problem_design_list = create_design(
+                    name=self.problem_save_for_later.name,
+                    factor_headers=self.design_factors,
+                    factor_settings_filename=self.problem_design_name,
+                    fixed_factors=self.fixed_factors,
+                    cross_design_factors=self.cross_design_factors,
+                    n_stacks=n_stacks,
+                    design_type=design_type,
+                    class_type="problem",
+                )
+            except Exception as e:
+                # Give error message if design creation fails
+                tk.messagebox.showerror("Error Creating Design", str(e))
+                return
+            # display design tree
+            self.display_design_tree(
+                os.path.join(
+                    DATA_FARMING_DIR, f"{self.problem_design_name}_design.csv"
+                ),
+                self.factor_frame,
+                row=999,
+                column=0,
+                columnspan=8,
+            )
+            # button to add solver design to experiment
+            self.add_problem_design_button = tk.Button(
+                master=self.factor_frame,
+                text="Add this problem to experiment",
+                command=self.add_problem_design_to_experiment,
+            )
+            self.add_problem_design_button.grid(
+                row=1000, column=0, columnspan=8
+            )
+            # disable design name entry
+            self.design_name_entry.configure(state="disabled")
 
     def display_design_tree(
         self,
@@ -2637,7 +2534,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_del_buttons[solver_design_name] = self.solver_del_button
 
         # refresh solver design name entry box
-        self.solver_design_name_var.set(
+        self.design_name.set(
             self.get_unique_name(self.root_solver_dict, solver_design_name)
         )
 
