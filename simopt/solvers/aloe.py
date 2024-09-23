@@ -120,28 +120,36 @@ class ALOE(Solver):
         super().__init__(fixed_factors)
 
     def check_r(self):
-        return self.factors["r"] > 0
+        if self.factors["r"] <= 0:
+            raise ValueError("The number of replications taken at each solution must be greater than 0.")
 
     def check_theta(self):
-        return self.factors["theta"] > 0 & self.factors["theta"] < 1
+        if self.factors["theta"] <= 0 or self.factors["theta"] >= 1:
+            raise ValueError("Theta must be between 0 and 1.")
 
     def check_gamma(self):
-        return self.factors["gamma"] > 0 & self.factors["gamma"] < 1
+        if self.factors["gamma"] <= 0 or self.factors["gamma"] >= 1:
+            raise ValueError("Gamma must be between 0 and 1.")
 
     def check_alpha_max(self):
-        return self.factors["alpha_max"] > 0
+        if self.factors["alpha_max"] <= 0:
+            raise ValueError("The maximum step size must be greater than 0.")
 
     def check_alpha_0(self):
-        return self.factors["alpha_0"] > 0
+        if self.factors["alpha_0"] <= 0:
+            raise ValueError("The initial step size must be greater than 0.")
 
     def check_epsilon_f(self):
-        return self.factors["epsilon_f"] > 0
+        if self.factors["epsilon_f"] <= 0:
+            raise ValueError("epsilon_f must be greater than 0.")
 
     def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
+        if self.factors["sensitivity"] <= 0:
+            raise ValueError("Sensitivity must be greater than 0.")
 
     def check_lambda(self):
-        return self.factors["lambda"] > 0
+        if self.factors["lambda"] <= 0:
+            raise ValueError("Lambda must be greater than 0.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
