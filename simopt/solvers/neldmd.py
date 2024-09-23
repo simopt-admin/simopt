@@ -112,25 +112,32 @@ class NelderMead(Solver):
         super().__init__(fixed_factors)
 
     def check_r(self):
-        return self.factors["r"] > 0
+        if self.factors["r"] <= 0:
+            raise ValueError("The number of replications taken at each solution must be greater than 0.")
 
     def check_alpha(self):
-        return self.factors["alpha"] > 0
+        if self.factors["alpha"] <= 0:
+            raise ValueError("Alpha must be greater than 0.")
 
     def check_gammap(self):
-        return self.factors["gammap"] > 1
+        if self.factors["gammap"] <= 1:
+            raise ValueError("Gammap must be greater than 1.")
 
     def check_betap(self):
-        return (self.factors["betap"] > 0) & (self.factors["betap"] < 1)
+        if (self.factors["betap"] <= 0) or (self.factors["betap"] >= 1):
+            raise ValueError("betap must be between 0 and 1.")
 
     def check_delta(self):
-        return (self.factors["delta"] > 0) & (self.factors["delta"] < 1)
+        if (self.factors["delta"] <= 0) or (self.factors["delta"] >= 1):
+            raise ValueError("Delta must be between 0 and 1.")
 
     def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
+        if self.factors["sensitivity"] <= 0:
+            raise ValueError("Sensitivity must be greater than 0.")
 
     def check_initial_spread(self):
-        return self.factors["initial_spread"] > 0
+        if self.factors["initial_spread"] <= 0:
+            raise ValueError("Initial spread must be greater than 0.")
 
     def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """

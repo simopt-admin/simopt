@@ -112,25 +112,32 @@ class SPSA(Solver):
         super().__init__(fixed_factors)
 
     def check_alpha(self):
-        return self.factors["alpha"] > 0
+        if self.factors["alpha"] <= 0:
+            raise ValueError("Alpha must be greater than 0.")
 
     def check_gamma(self):
-        return self.factors["gamma"] > 0
+        if self.factors["gamma"] <= 0:
+            raise ValueError("Gamma must be greater than 0.")
 
     def check_step(self):
-        return self.factors["step"] > 0
+        if self.factors["step"] <= 0:
+            raise ValueError("Step must be greater than 0.")
 
     def check_gavg(self):
-        return self.factors["gavg"] > 0
+        if self.factors["gavg"] <= 0:
+            raise ValueError("gavg must be greater than 0.")
 
     def check_n_reps(self):
-        return self.factors["n_reps"] > 0
+        if self.factors["n_reps"] <= 0:
+            raise ValueError("The number of replications taken at each solution must be greater than 0.")
 
     def check_n_loss(self):
-        return self.factors["n_loss"] > 0
+        if self.factors["n_loss"] <= 0:
+            raise ValueError("n_loss must be greater than 0.")
 
     def check_eval_pct(self):
-        return 0 < self.factors["eval_pct"] <= 1
+        if 0 >= self.factors["eval_pct"] or self.factors["eval_pct"] > 1:
+            raise ValueError("eval_pct must be between 0 and 1.")
 
     def check_iter_pct(self):
         return 0 < self.factors["iter_pct"] <= 1
