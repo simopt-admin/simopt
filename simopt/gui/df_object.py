@@ -35,6 +35,12 @@ class DFFactor(ABC):
         raise NotImplementedError
 
     @property
+    @abstractmethod
+    def default_eval(self) -> any:
+        """Evaluated default value of the factor."""
+        raise NotImplementedError
+
+    @property
     def include(self) -> tk.BooleanVar | None:
         """Whether to include the factor in the experiment."""
         return None
@@ -325,6 +331,11 @@ class DFBoolean(DFFactor):
     def default(self, default: tk.BooleanVar) -> None:
         self.__default = default
 
+    @property
+    def default_eval(self) -> bool:
+        """Evaluated default value of the factor."""
+        return self.default.get()
+
     def __init__(self, name: str, description: str, default: bool) -> None:
         """Initialize the boolean factor class.
 
@@ -387,6 +398,16 @@ class DFInteger(DFFactor):
         self.__default = default
 
     @property
+    def default_eval(self) -> int:
+        """Evaluated default value of the factor."""
+        try:
+            return int(self.default.get())
+        except ValueError:
+            raise ValueError(
+                f"Default value for {self.name.get()} must be an integer."
+            ) from None
+
+    @property
     def include(self) -> tk.BooleanVar:
         """Whether to include the factor in the experiment."""
         return self.__include
@@ -445,6 +466,16 @@ class DFFloat(DFFactor):
     @default.setter
     def default(self, default: tk.DoubleVar) -> None:
         self.__default = default
+
+    @property
+    def default_eval(self) -> float:
+        """Evaluated default value of the factor."""
+        try:
+            return float(self.default.get())
+        except ValueError:
+            raise ValueError(
+                f"Default value for {self.name.get()} must be a float."
+            ) from None
 
     @property
     def include(self) -> tk.BooleanVar:
@@ -517,6 +548,16 @@ class DFTuple(DFFactor):
     def default(self, default: tk.StringVar) -> None:
         self.__default = default
 
+    @property
+    def default_eval(self) -> tuple:
+        """Evaluated default value of the factor."""
+        try:
+            return tuple(eval(self.default.get()))
+        except ValueError:
+            raise ValueError(
+                f"Default value for {self.name.get()} must be a tuple."
+            ) from None
+
     def __init__(self, name: str, description: str, default: tuple) -> None:
         """Initialize the tuple factor class.
 
@@ -550,6 +591,16 @@ class DFList(DFFactor):
     @default.setter
     def default(self, default: tk.StringVar) -> None:
         self.__default = default
+
+    @property
+    def default_eval(self) -> list:
+        """Evaluated default value of the factor."""
+        try:
+            return list(eval(self.default.get()))
+        except ValueError:
+            raise ValueError(
+                f"Default value for {self.name.get()} must be a list."
+            ) from None
 
     def __init__(self, name: str, description: str, default: list) -> None:
         """Initialize the list factor class.
