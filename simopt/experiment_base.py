@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Provide base classes for problem-solver pairs and helper functions for reading/writing data and plotting."""
 
 from __future__ import annotations
@@ -15,8 +14,8 @@ import time
 from multiprocessing import Pool
 from typing import Literal
 
-import matplotlib.pyplot as plt
 import matplotlib.lines as mpl_lines
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -25,9 +24,9 @@ from scipy.stats import norm
 
 from simopt.base import Problem, Solution, Solver
 from simopt.directory import (
+    model_directory,
     problem_directory,
     solver_directory,
-    model_directory,
 )
 
 """Set the default directory for saving experiment results."""
@@ -6571,17 +6570,41 @@ def create_design(
     # Check if Ruby and the specified design type are installed/on the system path.
     if shutil.which("ruby") is None:
         error_msg = "Ruby is not installed on your system or is not in your system path."
+        error_msg += "\nIf you just installed Ruby, you may need to restart your terminal or IDE."
         raise Exception(error_msg)
     if shutil.which(f"stack_{design_type}.rb") is None:
         # Isn't on path, but could still be installed
+        # Query the list of gems to see if the gem is installed
         results = subprocess.run(
-            'gem list -i "^datafarming$"',
-            shell=False,
+            'gem list',
+            shell=True,
             capture_output=True,
         )
-        # Check if the output is true or false
-        if not results.stdout.decode("utf-8").strip() == "true":
-            error_msg = f"Design type {design_type} is either not valid, not installed, or not in your system path."
+        # Break the gems into an array
+        gem_list = results.stdout.decode("utf-8").strip().splitlines()
+        # Get only the line with the datafarming
+        datafarming_line = [gem for gem in gem_list if gem.startswith("datafarming ")]
+        # If the new array is empty, then datafarming isn't installed
+        if (len(datafarming_line) == 0):
+            error_msg = "Datafarming gem is not installed. Please install it by running:"
+            error_msg += "\n`gem install datafarming -v 1.4`"
+            raise Exception(error_msg)
+        # The datafarming gem exists, but is there a valid version installed?
+        # Strip away all the information except for version(s)
+        datafarming_versions = datafarming_line[0].replace("datafarming (", "").replace("default: ", "").replace(")", "").split(", ")
+        # Check for valid versions (min <= version < max)
+        min_version = "1.0.0"
+        max_version = "2.0.0"
+        version_check_results = [min_version <= version < max_version for version in datafarming_versions]
+        if not any(version_check_results):
+            # Write the correct error message depending on plurality
+            if len(version_check_results) == 1:
+                error_msg = f"Datafarming gem is installed, but the installed version {datafarming_versions} is not supported."
+            else:
+                error_msg = f"Datafarming gem is installed, but the installed versions {datafarming_versions.sort()} are not supported."
+            error_msg += f" Please install version {min_version} <= x < {max_version}."
+            error_msg += " This can be done by running:"
+            error_msg += "\n`gem install datafarming -v 1.4`"
             raise Exception(error_msg)
 
     # Make directory to store the current design file.

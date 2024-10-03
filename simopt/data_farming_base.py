@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import csv
+from enum import Enum
 import itertools
 import os
 import subprocess
@@ -21,6 +22,8 @@ from simopt.experiment_base import ProblemSolver, post_normalize, EXPERIMENT_DIR
 
 DATA_FARMING_DIR = os.path.join(EXPERIMENT_DIR, "data_farming")
 
+class DesignType(Enum):
+    nolhs = "nolhs"
 
 class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
