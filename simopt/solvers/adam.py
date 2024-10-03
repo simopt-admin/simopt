@@ -4,11 +4,12 @@ Summary
 ADAM
 An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
-import numpy as np
+from __future__ import annotations
 
-from simopt.base import Solver
+import numpy as np
+from simopt.base import Solver, Problem, Solution
 
 
 class ADAM(Solver):
@@ -49,9 +50,7 @@ class ADAM(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ADAM", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "ADAM", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -123,7 +122,7 @@ class ADAM(Solver):
     def check_sensitivity(self):
         return self.factors["sensitivity"] > 0
 
-    def solve(self, problem):
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -210,6 +209,10 @@ class ADAM(Solver):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+
+        # Loop through the budgets and convert any numpy int32s to Python ints.
+        for i in range(len(intermediate_budgets)):
+            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.

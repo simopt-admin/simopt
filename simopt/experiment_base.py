@@ -1,5 +1,7 @@
 """Provide base classes for problem-solver pairs and helper functions for reading/writing data and plotting."""
 
+from __future__ import annotations
+
 import ast
 import csv
 import importlib
@@ -67,7 +69,7 @@ class Curve:
     @property
     def n_points(self) -> int:
         """Number of values in x- and y- vectors."""
-        return self.__n_points
+        return len(self.x_vals)
 
     def __init__(self, x_vals: list[float], y_vals: list[float]) -> None:
         """Initialize a curve with x- and y-values.
@@ -104,7 +106,6 @@ class Curve:
         # Each attribute is read-only
         self.__x_vals = x_vals
         self.__y_vals = y_vals
-        self.__n_points = len(x_vals)
 
     def lookup(self, x_val: float) -> float:
         """Lookup the y-value of the curve at an intermediate x-value.
@@ -184,7 +185,7 @@ class Curve:
         area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
         return area
 
-    def curve_to_mesh(self, mesh: list[float]) -> "Curve":
+    def curve_to_mesh(self, mesh: list[float]) -> Curve:
         """Create a curve defined at equally spaced x values.
 
         Parameters
@@ -212,7 +213,7 @@ class Curve:
         mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
         return mesh_curve
 
-    def curve_to_full_curve(self) -> "Curve":
+    def curve_to_full_curve(self) -> Curve:
         """Create a curve with duplicate x- and y-values to indicate steps.
 
         Returns
@@ -1159,7 +1160,10 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            self.record_experiment_results()
+            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
+                "\\"
+            )[-1]
+            self.record_experiment_results(file_name=file_name)
 
     def run_multithread(self, mrep: int) -> tuple:
         """Run a single macroreplication of the solver on the problem.
@@ -1338,7 +1342,10 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            self.record_experiment_results()
+            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
+                "\\"
+            )[-1]
+            self.record_experiment_results(file_name=file_name)
 
     def post_replicate_multithread(self, mrep: int) -> tuple:
         """Run postreplications at solutions recommended by the solver.
@@ -1607,19 +1614,40 @@ class ProblemSolver:
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
-    def record_experiment_results(self) -> None:
+    def record_experiment_results(self, file_name: os.PathLike | str) -> None:
         """Save ``experiment_base.ProblemSolver`` object to .pickle file.
+
+        Parameters
+        ----------
+        file_name : str
+            Name of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
+            File name is appended to the ``EXPERIMENT_DIR`` directory path.
 
         Raises
         ------
         FileNotFoundError
 
         """
-        # Create experiments folder if it does not exist.
-        if not os.path.exists(self.file_name_path):
-            error_msg = "File path '{self.file_name_path}' does not exist."
-            raise FileNotFoundError(error_msg)
-        with open(self.file_name_path, "wb") as file:
+        # Type checking
+        if not isinstance(file_name, (str, os.PathLike)):
+            error_msg = "File name must be a string or os.PathLike object."
+            raise TypeError(error_msg)
+
+        file_path = os.path.join(EXPERIMENT_DIR, file_name)
+        folder_name = os.path.dirname(file_path)
+
+        print(f"File Name: {file_name}")
+        print(f"Folder Name: {folder_name}")
+        print(f"File Path: {file_path}")
+
+        # Create the directory if it does not exist.
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        # Delete the file if it already exists.
+        elif os.path.exists(file_path):
+            os.remove(file_path)
+        # Create and dump the object to the file
+        with open(file_path, "xb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def log_experiment_results(self, print_solutions: bool = True) -> None:
@@ -1758,6 +1786,12 @@ def trim_solver_results(
         isinstance(budget, int) for budget in intermediate_budgets
     ):
         error_msg = "Intermediate budgets must be a list of integers."
+        if not isinstance(intermediate_budgets, list):
+            error_msg += f" Found {type(intermediate_budgets)}."
+        else:
+            error_msg += (
+                f" Found {[type(budget) for budget in intermediate_budgets]}."
+            )
         raise TypeError(error_msg)
 
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
@@ -1900,9 +1934,7 @@ def post_normalize(
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
     baseline_rngs = [
-        MRG32k3a(
-            s_ss_sss_index=[0, experiment.problem.model.n_rngs + rng_index, 0]
-        )
+        MRG32k3a(s_ss_sss_index=[0, rng_index, 0])
         for rng_index in range(experiment.problem.model.n_rngs)
     ]
     x0 = ref_experiment.problem.factors["initial_solution"]
@@ -1974,7 +2006,7 @@ def post_normalize(
     # found by any solver on any macroreplication.
     else:
         print("\t...using best postreplicated solution as proxy for x*.")
-        # TO DO: Simplify this block of code.
+        # TODO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
             experiment = experiments[experiment_idx]
@@ -2065,7 +2097,10 @@ def post_normalize(
 
         # Save ProblemSolver object to .pickle file if specified.
         if create_pair_pickles:
-            experiment.record_experiment_results()
+            file_name = experiment.file_name_path.split(EXPERIMENT_DIR)[
+                -1
+            ].split("\\")[-1]
+            experiment.record_experiment_results(file_name=file_name)
 
 
 def bootstrap_sample_all(
@@ -2411,7 +2446,7 @@ def functional_of_curves(
 
     Returns
     -------
-    list
+    "Curve" | float
         Functional of bootstrapped curves, e.g, mean progress curves,
         mean area under progress curve, quantile of crossing time, etc.
 
@@ -3170,7 +3205,7 @@ def plot_solvability_cdfs(
         True if curves are to be plotted together, otherwise False.
     n_bootstraps : int, default=100
         Number of bootstrap samples.
-    conf_level : float
+    conf_level : float, default=0.95
         Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
     plot_conf_ints : bool, default=True
         True if bootstrapping confidence intervals are to be plotted, otherwise False.
@@ -3404,6 +3439,11 @@ def plot_area_scatterplots(
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
 
     Either one plot for each solver or one plot for all solvers.
+
+    Notes
+    -----
+    TODO: Add the capability to compute and print the max halfwidth of
+    the bootstrapped CI intervals.
 
     Parameters
     ----------
@@ -6213,7 +6253,7 @@ class ProblemsSolvers:
 
 def read_group_experiment_results(
     file_name_path: str | os.PathLike,
-) -> "ProblemsSolvers":
+) -> ProblemsSolvers:
     """Read in ``experiment_base.ProblemsSolvers`` object from .pickle file.
 
     Parameters
@@ -6339,7 +6379,7 @@ def make_full_metaexperiment(
     unique_solvers: list[Solver],
     unique_problems: list[Problem],
     missing_experiments: list[tuple[Solver, Problem]],
-) -> "ProblemsSolvers":
+) -> ProblemsSolvers:
     """Create experiment objects for missing problem-solver pairs and run them.
 
     Parameters

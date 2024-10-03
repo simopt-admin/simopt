@@ -5,3 +5,4 @@ simopt
    :maxdepth: 4
 
    simopt
+   test

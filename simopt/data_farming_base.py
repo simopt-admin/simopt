@@ -1,5 +1,7 @@
 """Base classes for data-farming experiments and meta-experiments."""
 
+from __future__ import annotations
+
 import ast
 import csv
 from enum import Enum
@@ -48,7 +50,7 @@ class DesignPoint:
 
     """
 
-    def __init__(self, model: "Model") -> None:
+    def __init__(self, model: Model) -> None:
         """Initialize design point with a model object.
 
         Parameters
@@ -427,14 +429,18 @@ class DataFarmingMetaExperiment:
     ----------
     solver_name : str
         Name of solver.
-    problem_name : str
-        Name of problem.
+    n_stacks : int, default = 1
+        Number of stacks in the design.
+    design_type : str, default = "nolhs"
+        Type of design to use.
     solver_factor_headers : list [str]
         Ordered list of solver factor names appearing in factor settings/design file.
     solver_factor_settings_filename : str | None, default=None
         Name of .txt file containing solver factor ranges and # of digits.
     design_filename : str, default=None
         Name of .txt file containing design matrix.
+    csv_filename : str, default=None
+        Name of .csv file to print output to.
     solver_fixed_factors : dict, default=None
         Dictionary of user-specified solver factors that will not be varied.
     problem_fixed_factors : dict, default=None

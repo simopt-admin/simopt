@@ -3,11 +3,13 @@ Summary
 -------
 Simulate duration of a stochastic activity network (SAN).
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/san.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/san.html>`__.
 """
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class FixedSAN(Model):
@@ -40,9 +42,7 @@ class FixedSAN(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "FIXEDSAN"
         self.n_rngs = 1
         self.n_responses = 1
@@ -83,7 +83,7 @@ class FixedSAN(Model):
             positive = positive & x > 0
         return (len(self.factors["arc_means"]) != self.factors["num_arcs"]) & positive
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -250,11 +250,7 @@ class FixedSANLongestPath(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="FIXEDSAN-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "FIXEDSAN-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

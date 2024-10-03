@@ -3,11 +3,13 @@ Summary
 -------
 Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/dynamnews.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/dynamnews.html>`__.
 """
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 from simopt.base import Model, Problem
+from mrg32k3a.mrg32k3a import MRG32k3a
 
 
 class DynamNews(Model):
@@ -40,12 +42,10 @@ class DynamNews(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, fixed_factors: dict = {}):
         self.name = "DYNAMNEWS"
         self.n_rngs = 1
-        self.n_responses = 2
+        self.n_responses = 4
         self.factors = fixed_factors
         self.specifications = {
             "num_prod": {
@@ -120,7 +120,7 @@ class DynamNews(Model):
     def check_simulatable_factors(self):
         return all(np.subtract(self.factors["price"], self.factors["cost"]) >= 0)
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -135,6 +135,8 @@ class DynamNews(Model):
             performance measures of interest
             "profit" = profit in this scenario
             "n_prod_stockout" = number of products which are out of stock
+            "n_missed_orders" = number of unmet customer orders
+            "fill_rate" = fraction of customer orders fulfilled
         """
         # Designate random number generator for generating a Gumbel random variable.
         Gumbel_rng = rng_list[0]
@@ -165,6 +167,7 @@ class DynamNews(Model):
             for j in instock:
                 if utility[t][j + 1] > utility[t][int(itembought[t])]:
                     itembought[t] = j + 1
+            # print("item bought", int(itembought[t]))
             if itembought[t] != 0:
                 inventory[int(itembought[t] - 1)] -= 1
 
@@ -173,9 +176,11 @@ class DynamNews(Model):
         revenue = numsold * np.array(self.factors["price"])
         cost = self.factors["init_level"] * np.array(self.factors["cost"])
         profit = revenue - cost
+        unmet_demand = self.factors["num_customer"] - sum(numsold)
+        order_fill_rate = sum(numsold) / self.factors["num_customer"]
 
         # Compose responses and gradients.
-        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0)}
+        responses = {"profit": np.sum(profit), "n_prod_stockout": np.sum(inventory == 0), "n_missed_orders": unmet_demand, "fill_rate": order_fill_rate}
         gradients = {response_key:
                      {factor_key: np.nan for factor_key in self.specifications}
                      for response_key in responses
@@ -255,11 +260,7 @@ class DynamNewsMaxProfit(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="DYNAMNEWS-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
+    def __init__(self, name: str = "DYNAMNEWS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
@@ -296,7 +297,7 @@ class DynamNewsMaxProfit(Problem):
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -315,7 +316,7 @@ class DynamNewsMaxProfit(Problem):
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.

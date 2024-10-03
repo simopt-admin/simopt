@@ -5,11 +5,13 @@ Nelder-Mead: An algorithm that maintains a simplex of points that moves around t
 region according to certain geometric operations: reflection, expansion,
 contraction, and shrinking.
 A detailed description of the solver can be found 
-`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/neldmd.html>`__.
 """
-import numpy as np
+from __future__ import annotations
 
-from simopt.base import Solution, Solver
+import numpy as np
+from simopt.base import Solver, Problem, Solution
+
 
 class NelderMead(Solver):
     """The Nelder-Mead algorithm, which maintains a simplex of points that moves around the feasible
@@ -49,9 +51,7 @@ class NelderMead(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="NELDMD", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "NELDMD", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -132,7 +132,7 @@ class NelderMead(Solver):
     def check_initial_spread(self):
         return self.factors["initial_spread"] > 0
 
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -374,8 +374,10 @@ class NelderMead(Solver):
         sort_sol = sorted(sol, key=lambda s: tuple([-1 * i for i in problem.minmax]) * s.objectives_mean)
         return sort_sol
 
-    # Check & modify (if needed) the new point based on bounds.
     def check_const(self, pt, pt2):
+        """
+        Check & modify (if needed) the new point based on bounds.
+        """
         col = len(pt2)
         step = tuple(map(lambda i, j: i - j, pt, pt2))
         tmax = np.ones(col)

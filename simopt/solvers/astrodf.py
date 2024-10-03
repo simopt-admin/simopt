@@ -2,7 +2,7 @@
 Summary
 -------
 The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`__.
 
 This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is therefore not needed and removed from this version as well.
 - Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution(). 
@@ -11,15 +11,15 @@ This version does not require a delta_max, instead it estimates the maximum step
 - It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
 - Added sufficient reduction for the pattern search
 """
+from __future__ import annotations
+
 from numpy.linalg import pinv
 from numpy.linalg import norm
 import numpy as np
 from math import log, ceil
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
-
-from simopt.base import Solver
-
+from simopt.base import Solver, Problem, Solution
 
 class ASTRODF(Solver):
     """The ASTRO-DF solver.
@@ -56,9 +56,7 @@ class ASTRODF(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ASTRODF", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
+    def __init__(self, name: str = "ASTRODF", fixed_factors: dict = {}):
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -141,14 +139,18 @@ class ASTRODF(Solver):
     def check_ps_sufficient_reduction(self):
         return self.factors["ps_sufficient_reduction"] >= 0
 
-    # generate the coordinate vector corresponding to the variable number v_no
     def get_coordinate_vector(self, size, v_no):
+        """
+        Generate the coordinate vector corresponding to the variable number v_no.
+        """
         arr = np.zeros(size)
         arr[v_no] = 1.0
         return arr
 
-    # generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
     def get_rotated_basis(self, first_basis, rotate_index):
+        """
+        Generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
+        """
         rotate_matrix = np.array(first_basis)
         rotation = np.matrix([[0, -1], [1, 0]])
 
@@ -166,26 +168,33 @@ class ASTRODF(Solver):
 
         return rotate_matrix
 
-    # compute the local model value with a linear interpolation with a diagonal Hessian
     def evaluate_model(self, x_k, q):
+        """
+        Compute the local model value with a linear interpolation with a diagonal Hessian
+        """
         X = [1]
         X = np.append(X, np.array(x_k))
         X = np.append(X, np.array(x_k) ** 2)
         return np.matmul(X, q)
 
-    # compute the sample size based on adaptive sampling stopping rule using the optimality gap
     def get_stopping_time(self, k, sig2, delta, kappa, dim):
-        if kappa == 0: kappa = 1
+        """
+        Compute the sample size based on adaptive sampling stopping rule using the optimality gap
+        """
+        if kappa == 0:
+            kappa = 1
         lambda_k = max(self.factors["lambda_min"], 2 * log(dim + .5, 10)) * max(log(k + 0.1, 10) ** (1.01), 1)
     
         # compute sample size
         N_k = ceil(max(lambda_k, lambda_k * sig2 / (kappa ** 2 * delta ** 4)))
         return N_k
 
-    # construct the "qualified" local model for each iteration k with the center point x_k
-    # reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
-    # the criticality condition keeps the model gradient norm and the trust-region size in lock-step
     def construct_model(self, x_k, delta, k, problem, expended_budget, kappa, new_solution, visited_pts_list):
+        """
+        construct the "qualified" local model for each iteration k with the center point x_k
+        reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
+        the criticality condition keeps the model gradient norm and the trust-region size in lock-step
+        """
         interpolation_solns = []
         
         ## inner loop parameters
@@ -318,8 +327,10 @@ class ASTRODF(Solver):
 
         return fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, visited_pts_list
 
-    # compute the model coefficients using (2d+1) design points and their function estimates
     def get_model_coefficients(self, Y, fval, problem):
+        """
+        Compute the model coefficients using (2d+1) design points and their function estimates
+        """
         M = []
         for i in range(0, 2 * problem.dim + 1):
             M.append(1)
@@ -333,8 +344,10 @@ class ASTRODF(Solver):
         Hessian = np.reshape(Hessian, problem.dim)
         return q, grad, Hessian
 
-    # compute the interpolation points (2d+1) using the coordinate basis
     def get_coordinate_basis_interpolation_points(self, x_k, delta, problem):
+        """
+        Compute the interpolation points (2d+1) using the coordinate basis
+        """
         Y = [[x_k]]
         epsilon = 0.01
         for i in range(0, problem.dim):
@@ -352,8 +365,10 @@ class ASTRODF(Solver):
             Y.append(minus)
         return Y
 
-    # compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point)
     def get_rotated_basis_interpolation_points(self, x_k, delta, problem, rotate_matrix, reused_x):
+        """
+        Compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point)
+        """
         Y = [[x_k]]
         epsilon = 0.01
         for i in range(0, problem.dim):
@@ -379,8 +394,10 @@ class ASTRODF(Solver):
             Y.append(minus)
         return Y
 
-    # run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
     def iterate(self, k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget_limit, recommended_solns, intermediate_budgets, kappa, new_solution):
+        """
+        Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
+        """
         # default values
         eta_1 = self.factors["eta_1"]
         eta_2 = self.factors["eta_2"]
@@ -478,7 +495,7 @@ class ASTRODF(Solver):
             candidate_solution = interpolation_solns[fval.index(min(fval))]
     
         # compute the success ratio rho
-        if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) == 0:
+        if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) <= 0:
             rho = 0
         else:
             rho = (fval[0] - fval_tilde) / (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(candidate_x - new_x, q))
@@ -505,8 +522,7 @@ class ASTRODF(Solver):
         
         return final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list
        
-    # start the search and stop when the budget is exhausted
-    def solve(self, problem):
+    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
         Arguments

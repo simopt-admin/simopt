@@ -92,14 +92,6 @@ models.paramesti module
    :undoc-members:
    :show-inheritance:
 
-models.prodsys module
----------------------
-
-.. automodule:: models.prodsys
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 models.rmitd module
 -------------------
 
@@ -128,14 +120,6 @@ models.tableallocation module
 -----------------------------
 
 .. automodule:: models.tableallocation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-models.voting module
---------------------
-
-.. automodule:: models.voting
    :members:
    :undoc-members:
    :show-inheritance:
