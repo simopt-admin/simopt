@@ -160,7 +160,7 @@ class STRONG(Solver):
     def check_lambda(self):
         return self.factors["lambda"] > 1
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -384,6 +384,9 @@ class STRONG(Solver):
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
+        # Loop through each budget and convert any numpy int32s to Python ints.
+        for i in range(len(intermediate_budgets)):
+            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     def cauchy_point(self, grad, Hessian, new_x, problem):

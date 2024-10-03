@@ -8,6 +8,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import numpy as np
+import sys
 from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -317,6 +318,8 @@ class MM1MinMeanSojournTime(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
+        if vector[0] == 0:
+            vector = (sys.float_info.min, )
         factor_dict = {
             "mu": vector[0]
         }
