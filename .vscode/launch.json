@@ -5,8 +5,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "simopt",
-            "justMyCode": false,
-        
+            "justMyCode": true,
         }
     ]
 }

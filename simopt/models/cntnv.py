@@ -94,29 +94,38 @@ class CntNV(Model):
         super().__init__(fixed_factors)
 
     def check_purchase_price(self):
-        return self.factors["purchase_price"] > 0
+        if self.factors["purchase_price"] <= 0:
+            raise ValueError("Purchasing cost per unit must be greater than 0.")
 
     def check_sales_price(self):
-        return self.factors["sales_price"] > 0
+        if self.factors["sales_price"] <= 0:
+            raise ValueError("Sales price per unit must be greater than 0.")
 
     def check_salvage_price(self):
-        return self.factors["salvage_price"] > 0
+        if self.factors["salvage_price"] <= 0:
+            raise ValueError("Salvage cost per unit must be greater than 0.")
 
     def check_order_quantity(self):
-        return self.factors["order_quantity"] > 0
+        if self.factors["order_quantity"] <= 0:
+            raise ValueError("Order quantity must be greater than 0.")
 
     def check_Burr_c(self):
-        return self.factors["Burr_c"] > 0
+        if self.factors["Burr_c"] <= 0:
+            raise ValueError("Burr Type XII cdf shape parameter must be greater than 0.")
 
     def check_Burr_k(self):
-        return self.factors["Burr_k"] > 0
+        if self.factors["Burr_k"] <= 0:
+            raise ValueError("Burr Type XII cdf shape parameter must be greater than 0.")            
 
     def check_simulatable_factors(self):
-        return (
+        if (
             self.factors["salvage_price"]
             < self.factors["purchase_price"]
             < self.factors["sales_price"]
-        )
+        ):
+            return True
+        else:
+            raise ValueError("The salvage cost per unit must be greater than the purchasing cost per unit, which must be greater than the sales price per unit.")
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

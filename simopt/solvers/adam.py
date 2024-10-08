@@ -105,22 +105,28 @@ class ADAM(Solver):
         super().__init__(fixed_factors)
 
     def check_r(self):
-        return self.factors["r"] > 0
+        if self.factors["r"] <= 0:
+            raise ValueError("The number of replications taken at each solution must be greater than 0.")
 
     def check_beta_1(self):
-        return self.factors["beta_1"] > 0 & self.factors["beta_1"] < 1
+        if self.factors["beta_1"] <= 0 or self.factors["beta_1"] >= 1:
+            raise ValueError("Beta 1 must be between 0 and 1.")
 
     def check_beta_2(self):
-        return self.factors["beta_2"] > 0 & self.factors["beta_2"] < 1
+        if self.factors["beta_2"] > 0 & self.factors["beta_2"] >= 1:
+            raise ValueError("Beta 2 must be less than 1.")
 
     def check_alpha(self):
-        return self.factors["alpha"] > 0
+        if self.factors["alpha"] <= 0:
+            raise ValueError("Alpha must be greater than 0.")
 
     def check_epsilon(self):
-        return self.factors["epsilon"] > 0
+        if self.factors["epsilon"] <= 0:
+            raise ValueError("Epsilon must be greater than 0.")
 
     def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
+        if self.factors["sensitivity"] <= 0:
+            raise ValueError("Sensitivity must be greater than 0.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """

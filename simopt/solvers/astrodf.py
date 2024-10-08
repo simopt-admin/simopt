@@ -122,22 +122,28 @@ class ASTRODF(Solver):
         super().__init__(fixed_factors)
     
     def check_eta_1(self):
-        return self.factors["eta_1"] > 0
+        if self.factors["eta_1"] <= 0:
+            raise ValueError("Eta 1 must be greater than 0.")
 
     def check_eta_2(self):
-        return self.factors["eta_2"] > self.factors["eta_1"]
+        if self.factors["eta_2"] <= self.factors["eta_1"]:
+            raise ValueError("Eta 2 must be greater than Eta 1.")
 
     def check_gamma_1(self):
-        return self.factors["gamma_1"] > 1
+        if self.factors("gamma_1") <=1:
+            raise ValueError("Gamma 1 must be greater than 1.")
 
     def check_gamma_2(self):
-        return (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
+        if (self.factors["gamma_2"] >= 1 or self.factors["gamma_2"] <= 0):
+            raise ValueError("Gamma 2 must be between 0 and 1.")
 
     def check_lambda_min(self):
-        return self.factors["lambda_min"] > 2
+        if self.factors["lambda_min"] <= 2:
+            raise ValueError("The minimum sample size must be greater than 2.")
     
     def check_ps_sufficient_reduction(self):
-        return self.factors["ps_sufficient_reduction"] >= 0
+        if self.factors["ps_sufficient_reduction"] < 0:
+            raise ValueError("ps_sufficient reduction must be greater than or equal to 0.")
 
     def get_coordinate_vector(self, size, v_no):
         """

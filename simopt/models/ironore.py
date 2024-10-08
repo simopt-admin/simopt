@@ -141,7 +141,8 @@ class IronOre(Model):
 
     # Check for simulatable factors
     def check_mean_price(self):
-        return self.factors["mean_price"] > 0
+        if self.factors["mean_price"] <= 0:
+            raise ValueError("Mean iron ore price per unit must be greater than 0.")
 
     def check_max_price(self):
         return self.factors["max_price"] > 0

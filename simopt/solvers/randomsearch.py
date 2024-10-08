@@ -73,7 +73,8 @@ class RandomSearch(Solver):
         super().__init__(fixed_factors)
 
     def check_sample_size(self):
-        return self.factors["sample_size"] > 0
+        if self.factors["sample_size"] <= 0:
+            raise ValueError("Sample size must be greater than 0.")
 
     def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
         """
