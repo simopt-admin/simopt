@@ -25,9 +25,9 @@ class Solver(ABC):
         Description of variable types: "discrete", "continuous", "mixed".
     gradient_needed : bool
         True if gradient of objective function is needed, otherwise False.
-    factors : dict
+    factors : dict[str, int | float | bool]
         Changeable factors (i.e., parameters) of the solver.
-    specifications : dict
+    specifications : dict[str, dict[str, str | type | int | float | bool]]
         Details of each factor (for GUI, data validation, and defaults).
     rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
         List of RNGs used for the solver's internal purposes.
@@ -96,7 +96,7 @@ class Solver(ABC):
         self.__factors = value
 
     @property
-    def specifications(self) -> dict:
+    def specifications(self) -> dict[str, dict[str, str | type | int | float | bool]]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         return self.__specifications
     
@@ -268,7 +268,7 @@ class Solver(ABC):
         """
         return isinstance(
             self.factors[factor_name],
-            self.specifications[factor_name]["datatype"],
+            type(self.specifications[factor_name]["datatype"])
         )
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
