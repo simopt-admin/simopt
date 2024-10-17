@@ -168,7 +168,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.sol_prob_book.add(
             self.mass_add_notebook_frame,
-            text="Add Solvers & Problems with Default Settings",
+            text="Add Problems & Solvers with Default Settings",
         )
 
         # # Solver selection menu frames
@@ -297,15 +297,17 @@ class NewExperimentWindow(Toplevel):
         )
         self.load_design_button.grid(row=self.load_design_button_row, column=0)
 
-        # cross-design window button
-        self.cross_design_button = tk.Button(
-            master=self.main_frame,
-            text="Create Cross Design Using Default Factor Settings",
-            command=self.show_cross_design_window,
-        )
-        self.cross_design_button.grid(
-            row=self.load_design_button_row, column=0, padx=10
-        )
+        def update_correct_tab(event: tk.Event) -> None:
+            # TODO: figure out a less hard-coded way to do this
+            # Starts at 0, so the index of the "Add Problems & Solvers with
+            # Default Settings" tab is 2
+            if self.sol_prob_book.index("current") == 2:
+                self.show_cross_design_window()
+
+        # Whenever the tab is changed to "Add Problems & Solvers with Default
+        # Settings", populate the tab
+        # self.show_cross_design_window
+        self.sol_prob_book.bind("<<NotebookTabChanged>>", update_correct_tab)
 
         """Display solver & problem lists"""
 
@@ -540,14 +542,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_selection_dropdown.grid(row=0, column=1)
 
     def show_cross_design_window(self) -> None:
-        self.cross_design_window = Toplevel(self.root)
-        self.cross_design_window.title(
-            "Simopt Graphical User Interface - Cross Design"
-        )
-        # Set the screen width and height
-        # Scaled down slightly so the whole window fits on the screen
-        self.center_window(0.8)
-        self.set_theme()
+        self.cross_design_window = self.mass_add_notebook_frame
 
         # Configure the grid layout to expand properly
         self.cross_design_window.grid_rowconfigure(0, weight=1)
@@ -687,15 +682,6 @@ class NewExperimentWindow(Toplevel):
                 self.problem_checkboxes[problem_name].configure(state="normal")
 
         # update problem & problem datafarming selections
-        self.problem_select_menu.destroy()
-        self.problem_select_menu = ttk.OptionMenu(
-            self.problem_selection_frame,
-            self.problem_var,
-            "Problem",
-            *self.problem_list,
-            command=self.show_problem_factors,
-        )
-        self.problem_select_menu.grid(row=0, column=1)
         self.problem_datafarm_select_menu.destroy()
         self.problem_datafarm_select_menu = ttk.OptionMenu(
             self.problem_datafarm_selection_frame,
@@ -736,15 +722,6 @@ class NewExperimentWindow(Toplevel):
                 self.solver_checkboxes[solver_name].configure(state="normal")
 
         # update solver & solver datafarming selections
-        self.solver_select_menu.destroy()
-        self.solver_select_menu = ttk.OptionMenu(
-            self.solver_selection_frame,
-            self.solver_var,
-            "Solver",
-            *self.solver_list,
-            command=self.show_solver_factors,
-        )
-        self.solver_select_menu.grid(row=0, column=1)
         self.solver_selection_dropdown.destroy()
         self.solver_selection_dropdown = ttk.OptionMenu(
             self.solver_datafarm_selection_frame,
