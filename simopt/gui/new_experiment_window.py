@@ -89,7 +89,51 @@ class NewExperimentWindow(Toplevel):
         self.center_window(0.8)
         self.minsize(1280, 720)
 
-        # Variables
+        # master list variables
+        self.root_solver_dict = {}  # for each name of solver or solver design has list that includes: [[solver factors], solver name]
+        self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
+        self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
+        self.ran_experiments_dict = {}  # dictionary of experiments that have been run orgainized by experiment name
+        self.design_types = Literal[
+            "nolhs"
+        ]  # available design types that can be used during datafarming
+        self.design_types_list = self.design_types
+        self.macro_reps = {}  # dict that contains user specified macroreps for each experiment
+        self.post_reps = {}  # dict that contains user specified postrep numbers for each experiment
+        self.init_post_reps = {}  # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
+        self.crn_budgets = {}  # contains bool val for if crn is used across budget for each experiment
+        self.crn_macros = {}  # contains bool val for if crn is used across macroreps for each experiment
+        self.crn_inits = {}  # contains bool val for if crn is used across initial and optimal solution for each experiment
+        self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
+        self.pickle_checkstates = {}  # contains bool val for if pickles should be created for each individual problem-solver pair
+
+        # widget lists for enable/delete functions
+        self.solver_list_labels = {}  # holds widgets for solver name labels in solver list display
+        self.problem_list_labels = {}  # holds widgets for problem name labels in problem list display
+        self.experiment_list_labels = {}  # holds widgets for experimet name labels in experiment list display
+        self.solver_edit_buttons = {}
+        self.solver_del_buttons = {}
+        self.problem_edit_buttons = {}
+        self.problem_del_buttons = {}
+        self.run_buttons = {}
+        self.macro_entries = {}
+        self.experiment_del_buttons = {}
+        self.post_process_opt_buttons = {}
+        self.post_process_buttons = {}
+        self.post_norm_buttons = {}
+        self.log_buttons = {}
+        self.all_buttons = {}
+        self.macro_vars = []  # list used for updated macro entries when default is changed
+
+        # Default experiment options (can be changed in GUI)
+        self.macro_default = 10
+        self.post_default = 100
+        self.init_default = 100
+        self.crn_budget_default = True
+        self.crn_macro_default = True
+        self.crn_init_default = True
+        self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
+
         # Using dictionaries to store TK variables so they don't clutter
         # the namespace with this.____
         self.labels: dict[str, tk.Label] = {}
@@ -297,6 +341,8 @@ class NewExperimentWindow(Toplevel):
             width=10,
         )
         self.canvases["gen_design.display"].grid(row=1, column=0, sticky="nsew")
+        # Hide the generated design frame by default
+        self._hide_gen_design()
 
         # Setup the design options frame
         self.frames["design_opts"] = ttk.Frame(
@@ -353,63 +399,6 @@ class NewExperimentWindow(Toplevel):
         self.buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
-
-        self.frames["gen_design"].grid_forget()
-        self.frames["ntbk"].grid(rowspan=2)
-
-        self.frames["ntbk"].grid(rowspan=1)
-        self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
-
-        # master row numbers
-        self.notebook_row = 1
-        self.load_design_button_row = 2
-        self.sol_prob_list_display_row = 3
-        self.experiment_button_row = 5
-        self.experiment_list_display_row = 6
-        # master list variables
-        self.root_solver_dict = {}  # for each name of solver or solver design has list that includes: [[solver factors], solver name]
-        self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
-        self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
-        self.ran_experiments_dict = {}  # dictionary of experiments that have been run orgainized by experiment name
-        self.design_types = Literal[
-            "nolhs"
-        ]  # available design types that can be used during datafarming
-        self.design_types_list = self.design_types
-        self.macro_reps = {}  # dict that contains user specified macroreps for each experiment
-        self.post_reps = {}  # dict that contains user specified postrep numbers for each experiment
-        self.init_post_reps = {}  # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
-        self.crn_budgets = {}  # contains bool val for if crn is used across budget for each experiment
-        self.crn_macros = {}  # contains bool val for if crn is used across macroreps for each experiment
-        self.crn_inits = {}  # contains bool val for if crn is used across initial and optimal solution for each experiment
-        self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
-        self.pickle_checkstates = {}  # contains bool val for if pickles should be created for each individual problem-solver pair
-
-        # widget lists for enable/delete functions
-        self.solver_list_labels = {}  # holds widgets for solver name labels in solver list display
-        self.problem_list_labels = {}  # holds widgets for problem name labels in problem list display
-        self.experiment_list_labels = {}  # holds widgets for experimet name labels in experiment list display
-        self.solver_edit_buttons = {}
-        self.solver_del_buttons = {}
-        self.problem_edit_buttons = {}
-        self.problem_del_buttons = {}
-        self.run_buttons = {}
-        self.macro_entries = {}
-        self.experiment_del_buttons = {}
-        self.post_process_opt_buttons = {}
-        self.post_process_buttons = {}
-        self.post_norm_buttons = {}
-        self.log_buttons = {}
-        self.all_buttons = {}
-        self.macro_vars = []  # list used for updated macro entries when default is changed
-
-        # Default experiment options (can be changed in GUI)
-        self.macro_default = 10
-        self.post_default = 100
-        self.init_default = 100
-        self.crn_budget_default = True
-        self.crn_macro_default = True
-        self.crn_init_default = True
-        self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
 
         """Solver/Problem Notebook & Selection Menus"""
 
@@ -642,6 +631,14 @@ class NewExperimentWindow(Toplevel):
             command=self.load_experiment,
         )
         self.load_exp_button.grid(row=0, column=3, padx=10)
+
+    def _hide_gen_design(self) -> None:
+        self.frames["gen_design"].grid_forget()
+        self.frames["ntbk"].grid(rowspan=2)
+
+    def _show_gen_design(self) -> None:
+        self.frames["ntbk"].grid(rowspan=1)
+        self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
 
     def update_main_window_scroll(self, event: tk.Event) -> None:
         self.root_canvas.configure(scrollregion=self.root_canvas.bbox("all"))
