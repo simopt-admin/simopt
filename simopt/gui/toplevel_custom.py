@@ -37,7 +37,6 @@ class Toplevel(tk.Toplevel):
         """Set the theme of the GUI."""
         # Configure the theme of the GUI
         self.style = ttk.Style()
-        self.style.theme_use("alt")
         # Configure the default fonts based on screen size
         # https://tkinter-docs.readthedocs.io/en/latest/generic/fonts.html
         # Scale by width because it's easy to scroll vertically, but scrolling

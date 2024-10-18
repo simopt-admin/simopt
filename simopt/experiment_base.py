@@ -315,7 +315,7 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
         [x_val for curve in curves for x_val in curve.x_vals]
     )
     mean_y_vals = [
-        float(np.mean([curve.lookup(x_val) for curve in curves]))
+        float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
         for x_val in unique_x_vals
     ]
     mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
@@ -2366,8 +2366,9 @@ def bootstrap_procedure(
         bs_conf_int_lower_bound_list = []
         bs_conf_int_upper_bound_list = []
         for budget in unique_budget_list:
+            budget_float = float(budget)
             bootstrap_subreplications = [
-                curve.lookup(budget) for curve in bootstrap_replications
+                curve.lookup(budget_float) for curve in bootstrap_replications
             ]
             if estimator is None:
                 error_msg = "Estimator must be provided for functional that returns a curve."
@@ -2375,7 +2376,7 @@ def bootstrap_procedure(
             if isinstance(estimator, (int, float)):
                 error_msg = "Estimator must be a Curve object for functional that returns a curve."
                 raise ValueError(error_msg)
-            sub_estimator = estimator.lookup(budget)
+            sub_estimator = estimator.lookup(budget_float)
             bs_conf_int_lower_bound, bs_conf_int_upper_bound = (
                 compute_bootstrap_conf_int(
                     bootstrap_subreplications,
