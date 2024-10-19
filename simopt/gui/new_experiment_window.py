@@ -92,15 +92,17 @@ class NewExperimentWindow(Toplevel):
         self.center_window(0.8)
         self.minsize(1280, 720)
 
-        # master list variables
-        self.root_solver_dict = {}  # for each name of solver or solver design has list that includes: [[solver factors], solver name]
-        self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
-        self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
-        self.ran_experiments_dict = {}  # dictionary of experiments that have been run orgainized by experiment name
+        # TODO: integrate this into a class somewhere so it's not based in
+        # the GUI
         self.design_types = Literal[
             "nolhs"
         ]  # available design types that can be used during datafarming
         self.design_types_list = self.design_types
+
+        # master list variables
+        self.root_solver_dict = {}  # for each name of solver or solver design has list that includes: [[solver factors], solver name]
+        self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
+        self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
         self.macro_reps = {}  # dict that contains user specified macroreps for each experiment
         self.post_reps = {}  # dict that contains user specified postrep numbers for each experiment
         self.init_post_reps = {}  # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
@@ -108,19 +110,15 @@ class NewExperimentWindow(Toplevel):
         self.crn_macros = {}  # contains bool val for if crn is used across macroreps for each experiment
         self.crn_inits = {}  # contains bool val for if crn is used across initial and optimal solution for each experiment
         self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
-        self.pickle_checkstates = {}  # contains bool val for if pickles should be created for each individual problem-solver pair
 
         # widget lists for enable/delete functions
         self.solver_list_labels = {}  # holds widgets for solver name labels in solver list display
         self.problem_list_labels = {}  # holds widgets for problem name labels in problem list display
-        self.experiment_list_labels = {}  # holds widgets for experimet name labels in experiment list display
         self.solver_edit_buttons = {}
         self.solver_del_buttons = {}
         self.problem_edit_buttons = {}
         self.problem_del_buttons = {}
         self.run_buttons = {}
-        self.macro_entries = {}
-        self.experiment_del_buttons = {}
         self.post_process_opt_buttons = {}
         self.post_process_buttons = {}
         self.post_norm_buttons = {}
@@ -140,15 +138,21 @@ class NewExperimentWindow(Toplevel):
         # Variables used by the GUI
         self.current_experiment_name = tk.StringVar()
         self.current_experiment_enable_pickle = tk.BooleanVar()
-
+        # Add the name of the problem/solver to the displayed description
+        # TODO: update the problem/solver implementations so that "name" is an
+        # attribute of the class, as currently it is only initialized in the
+        # __init__ method of the class. This will eliminate the need to
+        # instantiate the class to get the name.
         self.valid_problems = {
             f"{problem().name} - {key}": problem
             for key, problem in problem_unabbreviated_directory.items()
         }
-        self.valid_solvers = solver_unabbreviated_directory
+        self.valid_solvers = {
+            f"{solver().name} - {key}": solver
+            for key, solver in solver_unabbreviated_directory.items()
+        }
         self.selected_problem_name = tk.StringVar()
         self.selected_solver_name = tk.StringVar()
-
         self.design_type = tk.StringVar()
         self.design_num_stacks = tk.IntVar()
         self.design_name = tk.StringVar()
@@ -448,193 +452,6 @@ class NewExperimentWindow(Toplevel):
         self.buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
-
-        # Loop to keep the window open
-        # Everything under this code errors, so we need to artificially
-        # stall the code here in the meantime
-        while True:
-            self.update()
-
-        """Solver/Problem Notebook & Selection Menus"""
-
-        # Solver selection w/ data farming
-        self.solver_datafarm_selection_frame = tk.Frame(
-            master=self.solver_datafarm_notebook_frame
-        )
-        self.solver_datafarm_selection_frame.grid(row=0, column=0)
-
-        # Option menu to select solver
-        self.solver_select_label = tk.Label(
-            master=self.solver_datafarm_selection_frame,
-            text="Select Solver:",
-            width=20,
-        )
-        self.solver_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # Problem selection w/ data farming
-        self.problem_datafarm_selection_frame = tk.Frame(
-            master=self.problem_datafarm_notebook_frame
-        )
-        self.problem_datafarm_selection_frame.grid(
-            row=0, column=0, sticky=tk.N + tk.W
-        )
-
-        # Option menu to select problem
-        self.problem_select_label = tk.Label(
-            master=self.problem_datafarm_selection_frame,
-            text="Select Problem",
-            width=20,
-        )
-        self.problem_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # Variable to store selected problem
-        self.selected_problem_name = tk.StringVar()
-
-        # Directory of problem names
-        self.problem_list = problem_unabbreviated_directory
-
-        self.problem_datafarm_select_menu = ttk.OptionMenu(
-            self.problem_datafarm_selection_frame,
-            self.selected_problem_name,
-            "Problem",
-            *self.problem_list,
-            command=self.show_problem_datafarm,
-        )
-        self.problem_datafarm_select_menu.grid(row=0, column=1)
-
-        # load design button
-        self.load_design_button = tk.Button(
-            master=self.main_frame,
-            text="Load Design from CSV",
-            command=self.load_design,
-        )
-        self.load_design_button.grid(row=self.load_design_button_row, column=0)
-
-        """Display solver & problem lists"""
-
-        self.display_sol_prob_list_frame = tk.Frame(master=self.main_frame)
-        self.display_sol_prob_list_frame.grid(
-            row=self.sol_prob_list_display_row, column=0
-        )
-        self.display_solver_list_frame = tk.Frame(
-            master=self.display_sol_prob_list_frame
-        )
-        self.display_solver_list_frame.grid(row=0, column=0)
-        self.display_problem_list_frame = tk.Frame(
-            master=self.display_sol_prob_list_frame
-        )
-        self.display_problem_list_frame.grid(row=0, column=1)
-
-        self.solver_list_canvas = tk.Canvas(
-            master=self.display_solver_list_frame
-        )
-        self.solver_list_canvas.grid(row=1, column=0)
-
-        self.problem_list_canvas = tk.Canvas(
-            master=self.display_problem_list_frame
-        )
-        self.problem_list_canvas.grid(row=1, column=0)
-
-        self.solver_list_title = tk.Label(
-            master=self.display_solver_list_frame,
-            text="Created Solvers",
-            font=nametofont("TkHeadingFont"),
-        )
-        self.solver_list_title.grid(row=0, column=0)
-
-        self.problem_list_title = tk.Label(
-            master=self.display_problem_list_frame,
-            text="Created Problems",
-            font=nametofont("TkHeadingFont"),
-        )
-        self.problem_list_title.grid(row=0, column=1)
-
-        # set experiment name and create experiment
-        self.experiment_button_frame = tk.Frame(master=self.main_frame)
-        self.experiment_button_frame.grid(
-            row=self.experiment_button_row, column=0
-        )
-        # clear experiment selections
-        self.clear_experiment_button = tk.Button(
-            master=self.experiment_button_frame,
-            text="Clear Current Experiment",
-            command=self.clear_experiment,
-        )
-        self.clear_experiment_button.grid(row=0, column=0, columnspan=2)
-        self.experiment_name_label = tk.Label(
-            master=self.experiment_button_frame,
-            text="Experiment Name",
-        )
-        self.experiment_name_label.grid(row=1, column=0)
-        self.experiment_name_var = tk.StringVar()
-        self.experiment_name_var.set("experiment")
-        self.experiment_name_entry = tk.Entry(
-            master=self.experiment_button_frame,
-            textvariable=self.experiment_name_var,
-            width=30,
-            justify="left",
-        )
-        self.experiment_name_entry.grid(row=1, column=1)
-
-        # ind pair pickle checkbox
-        self.pickle_label = tk.Label(
-            master=self.experiment_button_frame,
-            text="Create pickles for each problem-solver pair?",
-        )
-        self.pickle_label.grid(row=2, column=0)
-        self.pickle_checkstate = tk.BooleanVar()
-        self.pickle_checkbox = tk.Checkbutton(
-            master=self.experiment_button_frame,
-            variable=self.pickle_checkstate,
-            width=5,
-        )
-        self.pickle_checkbox.grid(row=2, column=1)
-
-        self.run_experiment_button = tk.Button(
-            master=self.experiment_button_frame,
-            text="Create experiment with listed solvers & problems",
-            command=self.create_experiment,
-        )
-        self.run_experiment_button.grid(row=3, column=0, columnspan=2)
-
-        """ Display experiment list and run options"""
-        self.experiment_list_display_frame = tk.Frame(master=self.main_frame)
-        self.experiment_list_display_frame.grid(
-            row=self.experiment_list_display_row, column=0
-        )
-        self.experiment_display_canvas = tk.Canvas(
-            master=self.experiment_list_display_frame
-        )
-        self.experiment_display_canvas.grid(row=1, column=0)
-
-        self.experiment_list_title = tk.Label(
-            master=self.experiment_list_display_frame,
-            text="Created Experiments",
-            font=nametofont("TkHeadingFont"),
-        )
-        self.experiment_list_title.grid(row=0, column=0)
-        self.experiment_defaults_button = tk.Button(
-            master=self.experiment_list_display_frame,
-            text="Change default experiment options",
-            command=self.open_defaults_window,
-        )
-        self.experiment_defaults_button.grid(row=0, column=1, padx=10)
-
-        # plots window button
-        self.plot_window_button = tk.Button(
-            master=self.experiment_list_display_frame,
-            text="Open Plotting Window",
-            command=self.open_plotting_window,
-        )
-        self.plot_window_button.grid(row=0, column=2, padx=10)
-
-        # load experiment button
-        self.load_exp_button = tk.Button(
-            master=self.experiment_list_display_frame,
-            text="Load Experiment",
-            command=self.load_experiment,
-        )
-        self.load_exp_button.grid(row=0, column=3, padx=10)
 
     def _hide_gen_design(self) -> None:
         self.frames["gen_design"].grid_forget()
@@ -2906,7 +2723,7 @@ class NewExperimentWindow(Toplevel):
         )
 
         # get pickle checkstate
-        pickle_checkstate = self.pickle_checkstate.get()
+        pickle_checkstate = self.current_experiment_enable_pickle.get()
 
         # Extract solver and problem information from master dictionaries
         master_solver_factor_list = []  # holds dict of factors for each dp
@@ -3096,7 +2913,6 @@ class NewExperimentWindow(Toplevel):
         # use ProblemsSolvers run
         experiment.run(n_macroreps=n_macroreps)
         # disable run buttons
-        # self.macro_entries[experiment_name].configure(state = 'disabled')
         self.run_buttons[experiment_name].configure(state="disabled")
 
         # enable post-processing buttons
