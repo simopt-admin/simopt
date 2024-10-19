@@ -52,7 +52,8 @@ from simopt.gui.toplevel_custom import Toplevel
 # | |  Problem | | |  Solver  | |                                             |
 # | |   List   | | |   List   | |                                             |
 # | ------------ | ------------ |                                             |
-# | [        Clear List       ] |---------------------------------------------|
+# | [       Load Design       ] |                                             |
+# | [       Clear List        ] |---------------------------------------------|
 # | Exper Name    [___________] | Design Type: [______^]                      |
 # | Make Pickle?  [___________] | # of Stacks: [_______]  [ Generate Design ] |
 # | [    Create Experiment    ] | Design Name: [_______]                      |
@@ -68,10 +69,12 @@ from simopt.gui.toplevel_custom import Toplevel
 # |  |  |--Problem List (problems)
 # |  |  |--Solver List (solvers)
 # |  |--Current Experiment Fields (fields)
-# |--Notebook (notebook)
+# |--Notebook (ntbk)
 # |  |--Problem/Solver Adding (Notebook) (ps_adding)
 # |     |--Add Problem (problem)
+# |     |  |--Problem Factors (factors)
 # |     |--Add Solver (solver)
+# |     |  |--Solver Factors (factors)
 # |     |--Quick-Add Problems/Solvers (quick_add)
 # |--Generated Design (gen_design)
 # |--Design Options (design_opts)
@@ -134,6 +137,22 @@ class NewExperimentWindow(Toplevel):
         self.crn_init_default = True
         self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
 
+        # Variables used by the GUI
+        self.current_experiment_name = tk.StringVar()
+        self.current_experiment_enable_pickle = tk.BooleanVar()
+
+        self.valid_problems = {
+            f"{problem().name} - {key}": problem
+            for key, problem in problem_unabbreviated_directory.items()
+        }
+        self.valid_solvers = solver_unabbreviated_directory
+        self.selected_problem_name = tk.StringVar()
+        self.selected_solver_name = tk.StringVar()
+
+        self.design_type = tk.StringVar()
+        self.design_num_stacks = tk.IntVar()
+        self.design_name = tk.StringVar()
+
         # Using dictionaries to store TK variables so they don't clutter
         # the namespace with this.____
         self.labels: dict[str, tk.Label] = {}
@@ -141,6 +160,7 @@ class NewExperimentWindow(Toplevel):
         self.entries: dict[str, tk.Entry] = {}
         self.checkbuttons: dict[str, tk.Checkbutton] = {}
         self.canvases: dict[str, tk.Canvas] = {}
+        self.comboboxes: dict[str, ttk.Combobox] = {}
         self.notebooks: dict[str, ttk.Notebook] = {}
         self.frames: dict[str, tk.Frame] = {}
 
@@ -236,13 +256,21 @@ class NewExperimentWindow(Toplevel):
         )
         self.frames["curr_exp.fields"].grid(row=2, column=0, sticky="nsew")
         self.frames["curr_exp.fields"].grid_columnconfigure(1, weight=1)
+        self.buttons["curr_exp.fields.load_design"] = ttk.Button(
+            self.frames["curr_exp.fields"],
+            text="Load Design from CSV",
+            command=self.load_design,
+        )
+        self.buttons["curr_exp.fields.load_design"].grid(
+            row=0, column=0, columnspan=2, sticky="ew"
+        )
         self.buttons["curr_exp.fields.clear_list"] = ttk.Button(
             self.frames["curr_exp.fields"],
             text="Clear Problem/Solver Lists",
             command=self.clear_experiment,
         )
         self.buttons["curr_exp.fields.clear_list"].grid(
-            row=0, column=0, columnspan=2, sticky="ew"
+            row=1, column=0, columnspan=2, sticky="ew"
         )
         self.labels["curr_exp.fields.exp_name"] = ttk.Label(
             self.frames["curr_exp.fields"],
@@ -250,15 +278,14 @@ class NewExperimentWindow(Toplevel):
             anchor="e",
         )
         self.labels["curr_exp.fields.exp_name"].grid(
-            row=1, column=0, sticky="ew"
+            row=2, column=0, sticky="ew"
         )
-        self.current_experiment_name = tk.StringVar()
         self.entries["curr_exp.fields.exp_name"] = ttk.Entry(
             self.frames["curr_exp.fields"],
             textvariable=self.current_experiment_name,
         )
         self.entries["curr_exp.fields.exp_name"].grid(
-            row=1, column=1, sticky="ew"
+            row=2, column=1, sticky="ew"
         )
         self.labels["curr_exp.fields.make_pickle"] = ttk.Label(
             self.frames["curr_exp.fields"],
@@ -266,15 +293,14 @@ class NewExperimentWindow(Toplevel):
             anchor="e",
         )
         self.labels["curr_exp.fields.make_pickle"].grid(
-            row=2, column=0, sticky="ew"
+            row=3, column=0, sticky="ew"
         )
-        self.current_experiment_enable_pickle = tk.BooleanVar()
         self.checkbuttons["curr_exp.fields.make_pickle"] = ttk.Checkbutton(
             self.frames["curr_exp.fields"],
             variable=self.current_experiment_enable_pickle,
         )
         self.checkbuttons["curr_exp.fields.make_pickle"].grid(
-            row=2, column=1, sticky="w"
+            row=3, column=1, sticky="w"
         )
         self.buttons["curr_exp.fields.create_exp"] = ttk.Button(
             self.frames["curr_exp.fields"],
@@ -282,7 +308,7 @@ class NewExperimentWindow(Toplevel):
             command=self.create_experiment,
         )
         self.buttons["curr_exp.fields.create_exp"].grid(
-            row=3, column=0, columnspan=2, sticky="ew"
+            row=4, column=0, columnspan=2, sticky="ew"
         )
 
         # Setup the notebook frame
@@ -304,21 +330,47 @@ class NewExperimentWindow(Toplevel):
         self.frames["ntbk.ps_adding.problem"] = ttk.Frame(
             self.notebooks["ntbk.ps_adding"]
         )
+        self.notebooks["ntbk.ps_adding"].add(
+            self.frames["ntbk.ps_adding.problem"], text="Add Problem"
+        )
+        self.frames["ntbk.ps_adding.problem"].grid_columnconfigure(1, weight=1)
+        self.frames["ntbk.ps_adding.problem"].grid_rowconfigure(1, weight=1)
+        self.labels["ntbk.ps_adding.problem.select"] = ttk.Label(
+            self.frames["ntbk.ps_adding.problem"], text="Selected Problem"
+        )
+        self.labels["ntbk.ps_adding.problem.select"].grid(
+            row=0, column=0, padx=5
+        )
+        # Setting this to readonly prevents the user from typing in the combobox
+        self.comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
+            self.frames["ntbk.ps_adding.problem"],
+            textvariable=self.selected_problem_name,
+            values=sorted(list(self.valid_problems.keys())),
+            state="readonly",
+        )
+        self.comboboxes["ntbk.ps_adding.problem.select"].grid(
+            row=0, column=1, sticky="ew", padx=5
+        )
+        self.canvases["ntbk.ps_adding.problem.factors"] = tk.Canvas(
+            self.frames["ntbk.ps_adding.problem"]
+        )
+        self.canvases["ntbk.ps_adding.problem.factors"].grid(row=1, column=0)
+
         self.frames["ntbk.ps_adding.solver"] = ttk.Frame(
             self.notebooks["ntbk.ps_adding"]
+        )
+        self.notebooks["ntbk.ps_adding"].add(
+            self.frames["ntbk.ps_adding.solver"], text="Add Solver"
         )
         self.frames["ntbk.ps_adding.quick_add"] = ttk.Frame(
             self.notebooks["ntbk.ps_adding"]
         )
         self.notebooks["ntbk.ps_adding"].add(
-            self.frames["ntbk.ps_adding.problem"], text="Add Problem"
-        )
-        self.notebooks["ntbk.ps_adding"].add(
-            self.frames["ntbk.ps_adding.solver"], text="Add Solver"
-        )
-        self.notebooks["ntbk.ps_adding"].add(
             self.frames["ntbk.ps_adding.quick_add"],
             text="Quick-Add Problems/Solvers",
+        )
+        self.notebooks["ntbk.ps_adding"].bind(
+            "<<NotebookTabChanged>>", self._on_notebook_tab_change
         )
 
         # Setup the generated design frame
@@ -364,7 +416,6 @@ class NewExperimentWindow(Toplevel):
             self.frames["design_opts"], text="Design Type ", anchor="e"
         )
         self.labels["design_opts.type"].grid(row=1, column=0, sticky="ew")
-        self.design_type = tk.StringVar()
         self.entries["design_opts.type"] = ttk.Entry(
             self.frames["design_opts"], textvariable=self.design_type
         )
@@ -373,9 +424,8 @@ class NewExperimentWindow(Toplevel):
             self.frames["design_opts"], text="# of Stacks ", anchor="e"
         )
         self.labels["design_opts.num_stacks"].grid(row=2, column=0, sticky="ew")
-        self.number_of_stacks = tk.IntVar()
         self.entries["design_opts.num_stacks"] = ttk.Entry(
-            self.frames["design_opts"], textvariable=self.number_of_stacks
+            self.frames["design_opts"], textvariable=self.design_num_stacks
         )
         self.entries["design_opts.num_stacks"].grid(
             row=2, column=1, sticky="ew"
@@ -384,7 +434,6 @@ class NewExperimentWindow(Toplevel):
             self.frames["design_opts"], text="Design Name ", anchor="e"
         )
         self.labels["design_opts.name"].grid(row=3, column=0, sticky="ew")
-        self.design_name = tk.StringVar()
         self.entries["design_opts.name"] = ttk.Entry(
             self.frames["design_opts"], textvariable=self.design_name
         )
@@ -400,31 +449,13 @@ class NewExperimentWindow(Toplevel):
             row=1, column=2, sticky="nsew", rowspan=3
         )
 
+        # Loop to keep the window open
+        # Everything under this code errors, so we need to artificially
+        # stall the code here in the meantime
+        while True:
+            self.update()
+
         """Solver/Problem Notebook & Selection Menus"""
-
-        self.sol_prob_book = ttk.Notebook(master=self.main_frame)
-        self.sol_prob_book.grid(row=self.notebook_row, column=0, sticky="nsew")
-
-        self.solver_datafarm_notebook_frame = ttk.Frame(
-            master=self.sol_prob_book
-        )
-        self.problem_datafarm_notebook_frame = ttk.Frame(
-            master=self.sol_prob_book
-        )
-        self.mass_add_notebook_frame = ttk.Frame(master=self.sol_prob_book)
-
-        self.sol_prob_book.add(
-            self.solver_datafarm_notebook_frame,
-            text="Add Data Farmed Solver",
-        )
-        self.sol_prob_book.add(
-            self.problem_datafarm_notebook_frame,
-            text="Add Data Farmed Problem",
-        )
-        self.sol_prob_book.add(
-            self.mass_add_notebook_frame,
-            text="Add Problems & Solvers with Default Settings",
-        )
 
         # Solver selection w/ data farming
         self.solver_datafarm_selection_frame = tk.Frame(
@@ -439,21 +470,6 @@ class NewExperimentWindow(Toplevel):
             width=20,
         )
         self.solver_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # Variable to store selected solver
-        self.selected_solver = tk.StringVar()
-
-        # Directory of solver names
-        self.solver_list = solver_unabbreviated_directory
-
-        self.solver_selection_dropdown = ttk.OptionMenu(
-            self.solver_datafarm_selection_frame,
-            self.selected_solver,
-            "Solver",
-            *self.solver_list,
-            command=self.show_solver_datafarm,
-        )
-        self.solver_selection_dropdown.grid(row=0, column=1, sticky=tk.N + tk.W)
 
         # Problem selection w/ data farming
         self.problem_datafarm_selection_frame = tk.Frame(
@@ -472,14 +488,14 @@ class NewExperimentWindow(Toplevel):
         self.problem_select_label.grid(row=0, column=0, sticky=tk.N + tk.W)
 
         # Variable to store selected problem
-        self.selected_problem = tk.StringVar()
+        self.selected_problem_name = tk.StringVar()
 
         # Directory of problem names
         self.problem_list = problem_unabbreviated_directory
 
         self.problem_datafarm_select_menu = ttk.OptionMenu(
             self.problem_datafarm_selection_frame,
-            self.selected_problem,
+            self.selected_problem_name,
             "Problem",
             *self.problem_list,
             command=self.show_problem_datafarm,
@@ -493,18 +509,6 @@ class NewExperimentWindow(Toplevel):
             command=self.load_design,
         )
         self.load_design_button.grid(row=self.load_design_button_row, column=0)
-
-        def update_correct_tab(event: tk.Event) -> None:
-            # TODO: figure out a less hard-coded way to do this
-            # Starts at 0, so the index of the "Add Problems & Solvers with
-            # Default Settings" tab is 2
-            if self.sol_prob_book.index("current") == 2:
-                self.show_cross_design_window()
-
-        # Whenever the tab is changed to "Add Problems & Solvers with Default
-        # Settings", populate the tab
-        # self.show_cross_design_window
-        self.sol_prob_book.bind("<<NotebookTabChanged>>", update_correct_tab)
 
         """Display solver & problem lists"""
 
@@ -640,102 +644,102 @@ class NewExperimentWindow(Toplevel):
         self.frames["ntbk"].grid(rowspan=1)
         self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
 
-    def update_main_window_scroll(self, event: tk.Event) -> None:
-        self.root_canvas.configure(scrollregion=self.root_canvas.bbox("all"))
+    def _on_notebook_tab_change(self, event: tk.Event) -> None:
+        self.selected_problem_name.set("")
+        self.selected_solver_name.set("")
 
-    def on_mousewheel(self, event: tk.Event) -> None:
-        self.root_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+    def update_compatible_problem_list(self) -> None:
+        pass
+        # # create temp objects for current selected solvers and all possilble problems
+        # temp_solvers = []
+        # for solver_group in self.root_solver_dict:
+        #     dp_0 = self.root_solver_dict[solver_group][
+        #         0
+        #     ]  # frist design point if design, only design pt if no design
+        #     solver_name = dp_0[1]
+        #     temp_solver = solver_directory[solver_name]()
+        #     temp_solvers.append(temp_solver)
+        # # check solver selections based on which tab is open
+        # current_tab = self.sol_prob_book.index("current")
+        # if current_tab == 0:
+        #     selected_solver = self.solver_var.get()
+        # if current_tab == 2:
+        #     selected_solver = self.selected_solver.get()
+        # if selected_solver != "Solver":
+        #     temp_solver = solver_unabbreviated_directory[selected_solver]()
+        #     temp_solvers.append(temp_solver)
+        # all_problems = problem_unabbreviated_directory
+        # self.problem_list = {}  # clear current problem selection options
+        # for problem_name in all_problems:
+        #     temp_problem = [all_problems[problem_name]()]
+        #     temp_exp = ProblemsSolvers(
+        #         solvers=temp_solvers, problems=temp_problem
+        #     )  # temp experiment to run check compatibility
+        #     error = temp_exp.check_compatibility()
+        #     if not error:
+        #         self.problem_list[problem_name] = all_problems[problem_name]
 
-    def check_problem_compatibility(self) -> None:
-        # create temp objects for current selected solvers and all possilble problems
-        temp_solvers = []
-        for solver_group in self.root_solver_dict:
-            dp_0 = self.root_solver_dict[solver_group][
-                0
-            ]  # frist design point if design, only design pt if no design
-            solver_name = dp_0[1]
-            temp_solver = solver_directory[solver_name]()
-            temp_solvers.append(temp_solver)
-        # check solver selections based on which tab is open
-        current_tab = self.sol_prob_book.index("current")
-        if current_tab == 0:
-            selected_solver = self.solver_var.get()
-        if current_tab == 2:
-            selected_solver = self.selected_solver.get()
-        if selected_solver != "Solver":
-            temp_solver = solver_unabbreviated_directory[selected_solver]()
-            temp_solvers.append(temp_solver)
-        all_problems = problem_unabbreviated_directory
-        self.problem_list = {}  # clear current problem selection options
-        for problem_name in all_problems:
-            temp_problem = [all_problems[problem_name]()]
-            temp_exp = ProblemsSolvers(
-                solvers=temp_solvers, problems=temp_problem
-            )  # temp experiment to run check compatibility
-            error = temp_exp.check_compatibility()
-            if not error:
-                self.problem_list[problem_name] = all_problems[problem_name]
-
-        # update problem & problem datafarming selections
-        self.problem_select_menu.destroy()
-        self.problem_select_menu = ttk.OptionMenu(
-            self.problem_selection_frame,
-            self.problem_var,
-            "Problem",
-            *self.problem_list,
-            command=self.show_problem_factors,
-        )
-        self.problem_select_menu.grid(row=0, column=1)
-        self.problem_datafarm_select_menu.destroy()
-        self.problem_datafarm_select_menu = ttk.OptionMenu(
-            self.problem_datafarm_selection_frame,
-            self.selected_problem,
-            "Problem",
-            *self.problem_list,
-            command=self.show_problem_datafarm,
-        )
-        self.problem_datafarm_select_menu.grid(row=0, column=1)
+        # # update problem & problem datafarming selections
+        # self.problem_select_menu.destroy()
+        # self.problem_select_menu = ttk.OptionMenu(
+        #     self.problem_selection_frame,
+        #     self.problem_var,
+        #     "Problem",
+        #     *self.problem_list,
+        #     command=self.show_problem_factors,
+        # )
+        # self.problem_select_menu.grid(row=0, column=1)
+        # self.problem_datafarm_select_menu.destroy()
+        # self.problem_datafarm_select_menu = ttk.OptionMenu(
+        #     self.problem_datafarm_selection_frame,
+        #     self.selected_problem,
+        #     "Problem",
+        #     *self.problem_list,
+        #     command=self.show_problem_datafarm,
+        # )
+        # self.problem_datafarm_select_menu.grid(row=0, column=1)
 
     def check_solver_compatibility(self) -> None:
-        # create temp objects for current selected solvers and all possilble problems
-        temp_problems = []
-        for problem_group in self.root_problem_dict:
-            dp_0 = self.root_problem_dict[problem_group][
-                0
-            ]  # frist design point if design, only design pt if no design
-            problem_name = dp_0[1]
-            temp_problem = problem_directory[problem_name]()
-            temp_problems.append(temp_problem)
-        # check problem selections based on which tab is open
-        current_tab = self.sol_prob_book.index("current")
-        if current_tab == 1:
-            selected_problem = self.problem_var.get()
-        if current_tab == 3:
-            selected_problem = self.selected_problem.get()
-        if selected_problem != "Problem":
-            temp_problem = problem_unabbreviated_directory[selected_problem]()
-            temp_problems.append(temp_problem)
-        all_solvers = solver_unabbreviated_directory
-        self.solver_list = {}  # clear current problem selection options
-        for solver_name in all_solvers:
-            temp_solver = [all_solvers[solver_name]()]
-            temp_exp = ProblemsSolvers(
-                solvers=temp_solver, problems=temp_problems
-            )  # temp experiment to run check compatibility
-            error = temp_exp.check_compatibility()
-            if not error:
-                self.solver_list[solver_name] = all_solvers[solver_name]
+        pass
+        # # create temp objects for current selected solvers and all possilble problems
+        # temp_problems = []
+        # for problem_group in self.root_problem_dict:
+        #     dp_0 = self.root_problem_dict[problem_group][
+        #         0
+        #     ]  # frist design point if design, only design pt if no design
+        #     problem_name = dp_0[1]
+        #     temp_problem = problem_directory[problem_name]()
+        #     temp_problems.append(temp_problem)
+        # # check problem selections based on which tab is open
+        # current_tab = self.sol_prob_book.index("current")
+        # if current_tab == 1:
+        #     selected_problem = self.problem_var.get()
+        # if current_tab == 3:
+        #     selected_problem = self.selected_problem.get()
+        # if selected_problem != "Problem":
+        #     temp_problem = problem_unabbreviated_directory[selected_problem]()
+        #     temp_problems.append(temp_problem)
+        # all_solvers = solver_unabbreviated_directory
+        # self.solver_list = {}  # clear current problem selection options
+        # for solver_name in all_solvers:
+        #     temp_solver = [all_solvers[solver_name]()]
+        #     temp_exp = ProblemsSolvers(
+        #         solvers=temp_solver, problems=temp_problems
+        #     )  # temp experiment to run check compatibility
+        #     error = temp_exp.check_compatibility()
+        #     if not error:
+        #         self.solver_list[solver_name] = all_solvers[solver_name]
 
-        # update solver & solver datafarming selections
-        self.solver_selection_dropdown.destroy()
-        self.solver_selection_dropdown = ttk.OptionMenu(
-            self.solver_datafarm_selection_frame,
-            self.selected_solver,
-            "Solver",
-            *self.solver_list,
-            command=self.show_solver_datafarm,
-        )
-        self.solver_selection_dropdown.grid(row=0, column=1)
+        # # update solver & solver datafarming selections
+        # self.solver_selection_dropdown.destroy()
+        # self.solver_selection_dropdown = ttk.OptionMenu(
+        #     self.solver_datafarm_selection_frame,
+        #     self.selected_solver,
+        #     "Solver",
+        #     *self.solver_list,
+        #     command=self.show_solver_datafarm,
+        # )
+        # self.solver_selection_dropdown.grid(row=0, column=1)
 
     def show_cross_design_window(self) -> None:
         self.cross_design_window = self.mass_add_notebook_frame
@@ -881,7 +885,7 @@ class NewExperimentWindow(Toplevel):
         self.problem_datafarm_select_menu.destroy()
         self.problem_datafarm_select_menu = ttk.OptionMenu(
             self.problem_datafarm_selection_frame,
-            self.selected_problem,
+            self.selected_problem_name,
             "Problem",
             *self.problem_list,
             command=self.show_problem_datafarm,
@@ -921,7 +925,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_selection_dropdown.destroy()
         self.solver_selection_dropdown = ttk.OptionMenu(
             self.solver_datafarm_selection_frame,
-            self.selected_solver,
+            self.selected_solver_name,
             "Solver",
             *self.solver_list,
             command=self.show_solver_datafarm,
@@ -1792,8 +1796,8 @@ class NewExperimentWindow(Toplevel):
 
         """ Get problem information from directory and display"""
         # Get problem info from directory
-        self.selected_problem = self.problem_var.get()
-        self.problem_object = self.problem_list[self.selected_problem]()
+        self.selected_problem_name = self.problem_var.get()
+        self.problem_object = self.problem_list[self.selected_problem_name]()
 
         # show problem factors and store default widgets and values to this dict
         self.problem_defaults, last_row = self.show_factor_defaults(
@@ -1895,8 +1899,8 @@ class NewExperimentWindow(Toplevel):
 
         """ Get solver information from dicrectory and display"""
         # Get solver info from dictionary
-        self.selected_solver = self.solver_var.get()
-        self.solver_object = self.solver_list[self.selected_solver]()
+        self.selected_solver_name = self.solver_var.get()
+        self.solver_object = self.solver_list[self.selected_solver_name]()
         # show problem factors and store default widgets to this dict
         self.solver_defaults, last_row = self.show_factor_defaults(
             self.solver_object, frame=self.solver_frame, first_row=1
@@ -2001,12 +2005,12 @@ class NewExperimentWindow(Toplevel):
         # Get the name of the problem or solver from the GUI
         # and use it to get the object
         if base_object == "Problem":
-            selected_name = self.selected_problem.get()
+            selected_name = self.selected_problem_name.get()
             datafarm_object = self.problem_list[selected_name]()
             # TODO: revamp problem so this isn't needed
             self.problem_save_for_later = datafarm_object
         else:
-            selected_name = self.selected_solver.get()
+            selected_name = self.selected_solver_name.get()
             datafarm_object = self.solver_list[selected_name]()
             # TODO: revamp solver so this isn't needed
             self.solver_save_for_later = datafarm_object
