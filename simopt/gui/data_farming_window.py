@@ -674,6 +674,7 @@ class DataFarmingWindow(Toplevel):
         # Get model info from dictionary
         self.model_object = self.model_list[self.selected_model]()
         self.model_name = self.model_object.name
+        self.experiment_name = f"{self.model_name}_design"
 
         for factor in self.model_object.specifications:
             self.factor_datatype = self.model_object.specifications[factor].get(
