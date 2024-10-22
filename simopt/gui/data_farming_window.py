@@ -1085,7 +1085,7 @@ class DataFarmingWindow(Toplevel):
         self.design_tree.heading("#0", text="Design #")
 
         # Get design point values from csv
-        design_table = pd.read_csv(self.csv_filename, index_col="Design #")
+        design_table = pd.read_csv(self.csv_filename, index_col="design_num")
         num_dp = len(design_table)  # used for label
         self.create_design_label = tk.Label(
             master=self.create_design_frame,
@@ -1194,10 +1194,15 @@ class DataFarmingWindow(Toplevel):
         max_values = [max_val.get() for max_val in self.max_list]
         dec_values = [dec_val.get() for dec_val in self.dec_list]
 
-        with open(
-            os.path.join(DATA_FARMING_DIR, f"{self.experiment_name}.txt"),
-        ) as self.model_design_factors:
-            self.model_design_factors.write("")
+        os.makedirs(DATA_FARMING_DIR, exist_ok=True)
+        model_design_filepath = os.path.join(
+            DATA_FARMING_DIR,
+            f"{self.experiment_name}.txt",
+        )
+        if os.path.exists(model_design_filepath):
+            os.remove(model_design_filepath)
+        with open(model_design_filepath, mode="x") as file:
+            file.write("")
 
         # values to index through factors
         maxmin_index = 0
@@ -1264,7 +1269,7 @@ class DataFarmingWindow(Toplevel):
             factor_headers=self.factor_names,
             factor_settings_filename=self.experiment_name,
             fixed_factors=self.fixed_factors,
-            n_stacks=n_stacks,
+            n_stacks=int(n_stacks),
             design_type=design_type,
             class_type="model",
             csv_filename=self.csv_filename,

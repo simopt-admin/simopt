@@ -6607,7 +6607,7 @@ def create_design(
     fixed_factors : dict
         dict of fixed factor values that are different that defaults.
     n_stacks : int, optional
-        number of stacks for ruby calculation. The default is '1'.
+        number of stacks for ruby calculation. The default is 1.
     design_type : str, optional
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
