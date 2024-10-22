@@ -355,6 +355,9 @@ class NewExperimentWindow(Toplevel):
         self.comboboxes["ntbk.ps_adding.problem.select"].grid(
             row=0, column=1, sticky="ew", padx=5
         )
+        self.comboboxes["ntbk.ps_adding.problem.select"].bind(
+            "<<ComboboxSelected>>", self._on_problem_combobox_change
+        )
         self.canvases["ntbk.ps_adding.problem.factors"] = tk.Canvas(
             self.frames["ntbk.ps_adding.problem"]
         )
@@ -464,6 +467,19 @@ class NewExperimentWindow(Toplevel):
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
         self.selected_problem_name.set("")
         self.selected_solver_name.set("")
+
+    def _on_problem_combobox_change(self, _: tk.Event) -> None:
+        problem_name = self.selected_problem_name.get()
+        problem = self.valid_problems[problem_name]
+        self._create_problem_factors_canvas(problem)
+
+    def _on_solver_combobox_change(self) -> None:
+        solver_name = self.selected_solver_name.get()
+        # If the user hasn't selected a solver, don't do anything
+        if solver_name == "":
+            return
+        solver = self.valid_solvers[solver_name]
+        self._create_solver_factors_canvas(solver)
 
     def update_compatible_problem_list(self) -> None:
         pass
@@ -857,16 +873,6 @@ class NewExperimentWindow(Toplevel):
                     self.problem_del_button
                 )
 
-    def update_solvers_canvas_scroll(self, event: tk.Event) -> None:
-        self.solvers_canvas.configure(
-            scrollregion=self.solvers_canvas.bbox("all")
-        )
-
-    def update_problems_canvas_scroll(self, event: tk.Event) -> None:
-        self.problems_canvas.configure(
-            scrollregion=self.problems_canvas.bbox("all")
-        )
-
     def load_design(self) -> None:
         # Open file dialog to select design file
         # CSV files only, but all files can be selected (in case someone forgets to change file type)
@@ -1182,10 +1188,10 @@ class NewExperimentWindow(Toplevel):
                 state="normal"
             )
 
-    def clear_frame(self, frame: tk.Frame) -> None:
+    def destroy_widget_children(self, widget: tk.Widget) -> None:
         """Clear frame of all widgets."""
-        for widget in frame.winfo_children():
-            widget.destroy()
+        for child in widget.children.values():
+            child.destroy()
 
     def insert_factor_headers(
         self,
@@ -1551,8 +1557,8 @@ class NewExperimentWindow(Toplevel):
 
     def show_problem_factors(self, event: tk.Event) -> None:
         # clear previous selections
-        self.clear_frame(self.problem_frame)
-        self.clear_frame(self.model_frame)
+        self.destroy_widget_children(self.problem_frame)
+        self.destroy_widget_children(self.model_frame)
         # check solver compatibility
         self.check_solver_compatibility()
 
@@ -1673,7 +1679,7 @@ class NewExperimentWindow(Toplevel):
 
     def show_solver_factors(self, event: tk.Event) -> None:
         # clear previous selections
-        self.clear_frame(self.solver_frame)
+        self.destroy_widget_children(self.solver_frame)
         # update problem selections
         self.check_problem_compatibility()
 
@@ -2572,7 +2578,7 @@ class NewExperimentWindow(Toplevel):
 
     def edit_solver(self, solver_save_name: str) -> None:
         # clear previous selections
-        self.clear_frame(self.solver_frame)
+        self.destroy_widget_children(self.solver_frame)
 
         """ Initialize frames and headers"""
 
@@ -2796,8 +2802,8 @@ class NewExperimentWindow(Toplevel):
         self.root_problem_name_list = []
         self.root_solver_dict = {}
         self.root_problem_dict = {}
-        self.clear_frame(self.solver_list_canvas)
-        self.clear_frame(self.problem_list_canvas)
+        self.destroy_widget_children(self.solver_list_canvas)
+        self.destroy_widget_children(self.problem_list_canvas)
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
@@ -2892,7 +2898,7 @@ class NewExperimentWindow(Toplevel):
         self, experiment_name: str, experiment_frame: tk.Frame
     ) -> None:
         del self.root_experiment_dict[experiment_name]
-        self.clear_frame(experiment_frame)
+        self.destroy_widget_children(experiment_frame)
         # move up other frames below deleted one
         row = experiment_frame.grid_info()["row"]
         experiment_frames = self.experiment_display_canvas.winfo_children()
@@ -3912,7 +3918,7 @@ class NewExperimentWindow(Toplevel):
                 )
 
     def show_plot_options(self, plot_type: str) -> None:
-        self.clear_frame(self.more_options_frame)
+        self.destroy_widget_children(self.more_options_frame)
         self.more_options_frame.grid(row=1, column=0, columnspan=2)
 
         self.plot_type = plot_type
@@ -5785,7 +5791,7 @@ class NewExperimentWindow(Toplevel):
         file_path: os.PathLike | str,
         image_frame: tk.Frame,
     ) -> None:
-        self.clear_frame(self.edit_x_axis_frame)
+        self.destroy_widget_children(self.edit_x_axis_frame)
         self.edit_x_axis_frame.grid(row=1, column=0)
 
         # load plot pickle
