@@ -22,8 +22,10 @@ from simopt.experiment_base import ProblemSolver, post_normalize, EXPERIMENT_DIR
 
 DATA_FARMING_DIR = os.path.join(EXPERIMENT_DIR, "data_farming")
 
+
 class DesignType(Enum):
     nolhs = "nolhs"
+
 
 class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
@@ -187,7 +189,7 @@ class DataFarmingExperiment:
     def __init__(
         self,
         model_name: str,
-        factor_settings_filename: str | os.PathLike,
+        factor_settings_filename: str | os.PathLike | None,
         factor_headers: list[str],
         design_filepath: str | os.PathLike | None = None,
         model_fixed_factors: dict | None = None,
@@ -200,8 +202,8 @@ class DataFarmingExperiment:
         ----------
         model_name : str
             Name of model on which the experiment is run.
-        factor_settings_filename : str | os.PathLike
-            Name of .txt file containing factor ranges and # of digits.
+        factor_settings_filename : str | os.PathLike, optional
+            Name of .txt file containing factor ranges and # of digits, only used if design_filepath is None.
         factor_headers : list [str]
             Ordered list of factor names appearing in factor settings/design file.
         design_filepath : str, optional
@@ -223,7 +225,9 @@ class DataFarmingExperiment:
         if not isinstance(model_name, str):
             error_msg = "model_name must be a string."
             raise TypeError(error_msg)
-        if not isinstance(factor_settings_filename, (str, os.PathLike)):
+        if not isinstance(
+            factor_settings_filename, (str, os.PathLike, type(None))
+        ):
             error_msg = (
                 "factor_settings_filename must be a string or path-like object."
             )
@@ -246,7 +250,12 @@ class DataFarmingExperiment:
         if model_name not in model_directory:
             error_msg = "model_name must be a valid model name."
             raise ValueError(error_msg)
-        if not os.path.exists(factor_settings_filename):
+        if factor_settings_filename is None and design_filepath is None:
+            error_msg = "Either factor_settings_filename or design_filepath must be provided."
+            raise ValueError(error_msg)
+        if factor_settings_filename is not None and not os.path.exists(
+            factor_settings_filename
+        ):
             error_msg = f"{factor_settings_filename} is not a valid file path."
             raise ValueError(error_msg)  # Change to FileNotFoundError?
         if design_filepath is not None and not os.path.exists(design_filepath):
@@ -266,12 +275,15 @@ class DataFarmingExperiment:
         if design_filepath is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            filepath_core = os.path.join(DATA_FARMING_DIR, factor_settings_filename)
+            filepath_core = os.path.join(
+                DATA_FARMING_DIR, factor_settings_filename
+            )
             source_filepath = filepath_core + ".txt"
             design_filepath = filepath_core + "_design.txt"
             command = f"stack_{design_type}.rb -s {stacks} {source_filepath} > {design_filepath}"
             subprocess.run(command)
             # Append design to base filename.
+            design_filepath = f"{factor_settings_filename}_design"
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
         design_table = pd.read_csv(
             design_filepath,
@@ -378,6 +390,9 @@ class DataFarmingExperiment:
         # Create directory if they do no exist.
         if not os.path.exists(DATA_FARMING_DIR):
             os.makedirs(DATA_FARMING_DIR)
+        #If the file already exists, delete it
+        if os.path.exists(csv_filename):
+            os.remove(csv_filename)
 
         # Write results to csv file.
         with open(csv_filename, mode="x", newline="") as output_file:

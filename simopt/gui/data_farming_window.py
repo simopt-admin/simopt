@@ -1303,6 +1303,10 @@ class DataFarmingWindow(Toplevel):
         else:
             crn_across_design_pts = False
 
+        design_filepath = os.path.join(
+            DATA_FARMING_DIR,
+            f"{self.experiment_name}_design.txt",
+        )
         output_filename = os.path.join(
             DATA_FARMING_DIR,
             f"{self.experiment_name}_raw_results",
@@ -1313,7 +1317,7 @@ class DataFarmingWindow(Toplevel):
             model_name=self.model_object.name,
             factor_settings_filename=None,
             factor_headers=self.factor_names,
-            design_filepath=self.design_filename,
+            design_filepath=design_filepath,
             model_fixed_factors=self.fixed_factors,
         )
 
