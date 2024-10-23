@@ -218,9 +218,9 @@ class DataFarmingWindow(Toplevel):
         self.design_table = pd.read_csv(self.csv_filename, index_col=False)
 
         # Get design information from table
-        self.model_name = self.design_table.at[1, "Name"]
-        self.design_type = self.design_table.at[1, "Design Type"]
-        self.n_stacks = self.design_table.at[1, "Number Stacks"]
+        self.model_name = self.design_table.at[1, "name"]
+        self.design_type = self.design_table.at[1, "design_type"]
+        self.n_stacks = self.design_table.at[1, "num_stacks"]
         self.model_var.set(self.model_name)
 
         all_factor_names = [col for col in self.design_table.columns[1:-3]]
@@ -674,7 +674,7 @@ class DataFarmingWindow(Toplevel):
         # Get model info from dictionary
         self.model_object = self.model_list[self.selected_model]()
         self.model_name = self.model_object.name
-        self.experiment_name = f"{self.model_name}_design"
+        self.experiment_name = f"{self.model_name}"
 
         for factor in self.model_object.specifications:
             self.factor_datatype = self.model_object.specifications[factor].get(
