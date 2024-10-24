@@ -482,6 +482,8 @@ class DataFarmingWindow(Toplevel):
         self.experiment_name = (
             self.design_filename_var.get()
         )  # name of design file specified by user
+        if not os.path.exists(DATA_FARMING_DIR):
+            os.makedirs(DATA_FARMING_DIR)
         self.design_table[self.factor_names].to_csv(
             os.path.join(
                 DATA_FARMING_DIR,
