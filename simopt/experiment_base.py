@@ -6821,6 +6821,37 @@ def create_design(
             factor_str = str(dp_dict[factor][dp])
             dp_factors[factor] = ast.literal_eval(factor_str)
         design_list.append(dp_factors)
+        
+    # check factors for each design point
+    for dp in design_list:
+        if class_type == "solver":
+            # initialize temporary solver to run factor checks
+            temp = solver_directory[name](fixed_factors=dp) 
+            # run check function on temp solver
+            temp.run_all_checks(factor_names = dp.keys()) 
+        if class_type == "model":
+            # initialize temporary model to run factor checks
+            temp = model_directory[name](fixed_factors=dp) 
+            # run check function on temp model
+            temp.run_all_checks(factor_names = dp.keys()) 
+        if class_type == "problem":
+            # seperate problem and model factors in dp
+            problem_factor_names =design_object.specifications.keys()
+            problem_factors = {}
+            model_factors = {}
+            for factor in dp:
+                if factor in problem_factor_names:
+                    problem_factors[factor] = dp[factor]
+                else:
+                    model_factors[factor] = dp[factor]
+            # initialize temporary problem to run factor checks
+            temp_problem = problem_directory[name](fixed_factors=problem_factors, model_fixed_factors=model_factors) 
+            # initialize temporary model to run factor checks
+            temp_model = temp_problem.model
+            # run check function on temp problem       
+            temp_problem.run_all_checks(factor_names = problem_factors.keys())
+            # run check function on temp model       
+            temp_model.run_all_checks(factor_names = model_factors.keys())
 
     # print("Design List", design_list, sep="\n\t")
 
