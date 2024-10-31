@@ -7,25 +7,32 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+### Describe the Bug
 
-**To Reproduce**
-Steps to reproduce the behavior:
+A clear and concise description of what the bug is
+
+### Steps To Reproduce
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+### Expected Behavior
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+A clear and concise description of what you expected to happen
 
-**Desktop (please complete the following information):**
- - OS: [e.g. Windows]
- - Python Version [e.g. 3.12]
+### Environment
 
-**Additional context**
-Add any other context about the problem here.
+Please provide some details about your enviroment to help us replicate the bug:
+
+- Operating System: (e.g. Windows 11, macOS 15, Ubuntu 24.04)
+- Python Version: (e.g. 3.11.9)
+
+### Screenshots (If Applicable)
+
+If applicable, add screenshots to help explain your problem
+
+### Additional Details (If Applicable)
+
+Any details you'd like to include that aren't already mentioned in other sections
