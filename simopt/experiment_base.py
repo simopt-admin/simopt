@@ -4742,6 +4742,178 @@ def plot_terminal_scatterplots(
             )
     return file_list
 
+def plot_terminal_feasibility_scatterplots(
+    experiments: list[list[ProblemSolver]],
+    all_in_one: float = True,
+    plot_title: str | None = None,
+    legend_loc: str = "best",
+    ext: str = ".png",
+    save_as_pickle: bool = False,
+    solver_set_name: str = "SOLVER_SET",
+    problem_set_name: str = "PROBLEM_SET",
+) -> list[str | os.PathLike]:
+    """Plot a scatter plot of mean and standard deviation of terminal feasibility scores.
+
+    Either one plot for each solver or one plot for all solvers.
+
+    Parameters
+    ----------
+    experiments : list [list [``experiment_base.ProblemSolver``]]
+        ProblemSolver pairs used to produce plots.
+    all_in_one : bool, default=True
+        True if curves are to be plotted together, otherwise False.
+    plot_title : str, opt
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
+    ext: str, default = '.png'
+        Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+        True if plot should be saved to pickle file, False otherwise.
+    solver_set_name: str, default = "SOLVER_SET"
+        Use to change name of solver groups for plot titles.
+    problem_set_name: str, default = "PROBLEM_SET"
+        USe to change name of problem groups for plot titles.
+
+    Returns
+    -------
+    file_list : list [str]
+        List compiling path names for plots produced.
+
+    Raises
+    ------
+    TypeError
+
+    """
+    # Type checking
+    if (
+        not isinstance(experiments, list)
+        or not all(
+            [
+                isinstance(experiment_list, list)
+                for experiment_list in experiments
+            ]
+        )
+        or not all(
+            [
+                isinstance(experiment, ProblemSolver)
+                for experiment in experiment_list
+            ]
+            for experiment_list in experiments
+        )
+    ):
+        error_msg = (
+            "Experiments must be a list of lists of ProblemSolver objects."
+        )
+        raise TypeError(error_msg)
+    if not isinstance(all_in_one, bool):
+        error_msg = "All in one must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(plot_title, (str, type(None))):
+        error_msg = "Plot title must be a string or None."
+        raise TypeError(error_msg)
+    if not isinstance(legend_loc, str):
+        error_msg = "Legend location must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(ext, str):
+        error_msg = "Extension must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(save_as_pickle, bool):
+        error_msg = "Save as pickle must be a boolean."
+        raise TypeError(error_msg)
+    if not isinstance(solver_set_name, str):
+        error_msg = "Solver set name must be a string."
+        raise TypeError(error_msg)
+    if not isinstance(problem_set_name, str):
+        error_msg = "Problem set name must be a string."
+        raise TypeError(error_msg)
+
+    file_list = []
+    # Set up plot.
+    n_solvers = len(experiments)
+    n_problems = len(experiments[0])
+    if all_in_one:
+        marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
+        setup_plot(
+            plot_type="terminal_scatter",
+            solver_name=solver_set_name,
+            problem_name=problem_set_name,
+            plot_title=plot_title,
+        )
+        solver_names = [
+            solver_experiments[0].solver.name
+            for solver_experiments in experiments
+        ]
+        solver_curve_handles = []
+        for solver_idx in range(n_solvers):
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                color_str = "C" + str(solver_idx)
+                marker_str = marker_list[
+                    solver_idx % len(marker_list)
+                ]  # Cycle through list of marker types.
+                # Plot mean and standard deviation of terminal progress.
+                terminals = [
+                    curve.y_vals[-1] for curve in experiment.progress_curves
+                ]
+                # find max LHS average to use as feasibility score
+                
+                mean_estimator = np.mean(terminals)
+                std_dev_estimator = np.std(terminals, ddof=1)
+                handle = plt.scatter(
+                    x=mean_estimator,
+                    y=std_dev_estimator,
+                    color=color_str,
+                    marker=marker_str,
+                )
+            solver_curve_handles.append(handle)
+        plt.legend(
+            handles=solver_curve_handles, labels=solver_names, loc=legend_loc
+        )
+        file_list.append(
+            save_plot(
+                solver_name=solver_set_name,
+                problem_name=problem_set_name,
+                plot_type="terminal_scatter",
+                normalize=True,
+                plot_title=plot_title,
+                ext=ext,
+                save_as_pickle=save_as_pickle,
+            )
+        )
+    else:
+        for solver_idx in range(n_solvers):
+            ref_experiment = experiments[solver_idx][0]
+            setup_plot(
+                plot_type="terminal_scatter",
+                solver_name=ref_experiment.solver.name,
+                problem_name=problem_set_name,
+            )
+            for problem_idx in range(n_problems):
+                experiment = experiments[solver_idx][problem_idx]
+                # Plot mean and standard deviation of terminal progress.
+                terminals = [
+                    curve.y_vals[-1] for curve in experiment.progress_curves
+                ]
+                mean_estimator = np.mean(terminals)
+                std_dev_estimator = np.std(terminals, ddof=1)
+                handle = plt.scatter(
+                    x=mean_estimator,
+                    y=std_dev_estimator,
+                    color="C0",
+                    marker="o",
+                )
+            file_list.append(
+                save_plot(
+                    solver_name=experiment.solver.name,
+                    problem_name=problem_set_name,
+                    plot_type="terminal_scatter",
+                    normalize=True,
+                    ext=ext,
+                    save_as_pickle=save_as_pickle,
+                )
+            )
+    return file_list
 
 def setup_plot(
     plot_type: Literal[
