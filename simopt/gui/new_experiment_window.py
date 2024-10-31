@@ -76,6 +76,8 @@ from simopt.gui.toplevel_custom import Toplevel
 # |     |--Add Solver (solver)
 # |     |  |--Solver Factors (factors)
 # |     |--Quick-Add Problems/Solvers (quick_add)
+# |        |--Problem Selection (problems)
+# |        |--Solver Selection (solvers)
 # |--Generated Design (gen_design)
 # |--Design Options (design_opts)
 
@@ -167,6 +169,7 @@ class NewExperimentWindow(Toplevel):
         self.comboboxes: dict[str, ttk.Combobox] = {}
         self.notebooks: dict[str, ttk.Notebook] = {}
         self.frames: dict[str, tk.Frame] = {}
+        self.scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
         self.frames["main"] = ttk.Frame(self)
@@ -255,6 +258,14 @@ class NewExperimentWindow(Toplevel):
         self.labels["curr_exp.lists.solver_header"].grid(
             row=0, column=1, sticky="nsew"
         )
+        self.canvases["curr_exp.lists.problems"] = tk.Canvas(
+            self.frames["curr_exp.lists"],
+        )
+        self.canvases["curr_exp.lists.problems"].grid(row=1, column=0, sticky="nsew")
+        self.canvases["curr_exp.lists.solvers"] = tk.Canvas(
+            self.frames["curr_exp.lists"],
+        )
+        self.canvases["curr_exp.lists.solvers"].grid(row=1, column=1, sticky="nsew")
         self.frames["curr_exp.fields"] = ttk.Frame(
             self.frames["curr_exp"],
         )
@@ -399,9 +410,7 @@ class NewExperimentWindow(Toplevel):
             height=10,
             width=10,
         )
-        self.canvases["gen_design.display"].grid(row=1, column=0, sticky="nsew")
-        # Hide the generated design frame by default
-        self._hide_gen_design()
+        # self.canvases["gen_design.display"].grid(row=1, column=0, sticky="nsew")
 
         # Setup the design options frame
         self.frames["design_opts"] = ttk.Frame(
@@ -445,29 +454,46 @@ class NewExperimentWindow(Toplevel):
             self.frames["design_opts"], textvariable=self.design_name
         )
         self.entries["design_opts.name"].grid(row=3, column=1, sticky="ew")
-        # TODO: make this correclty pick the right function instead of being
-        # hardcoded for problem design
         self.buttons["design_opts.generate"] = ttk.Button(
             self.frames["design_opts"],
             text="Generate Design",
-            command=self.create_problem_design,
         )
         self.buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
 
-    def _hide_gen_design(self) -> None:
+    # Event handler for when the user changes the notebook tab
+    def _on_notebook_tab_change(self, event: tk.Event) -> None:
+        # Exit if this is called during setup
+        if self.buttons.get("design_opts.generate") is None:
+            return
+        # Hide the generated design frame
         self.frames["gen_design"].grid_forget()
         self.frames["ntbk"].grid(rowspan=2)
 
-    def _show_gen_design(self) -> None:
-        self.frames["ntbk"].grid(rowspan=1)
-        self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
+        # Figure out what tab is being switched to
+        tab = event.widget.tab(event.widget.select(), "text")
+        # Switch on the tab name
+        if tab == "Add Problem":
+            self.selected_problem_name.set("")
+            self.buttons["design_opts.generate"].configure(
+                command=self.create_problem_design
+            )
 
-    def _on_notebook_tab_change(self, event: tk.Event) -> None:
-        self.selected_problem_name.set("")
-        self.selected_solver_name.set("")
+        elif tab == "Add Solver":
+            self.selected_solver_name.set("")
+            self.buttons["design_opts.generate"].configure(
+                command=self.create_solver_design
+            )
 
+        elif tab == "Quick-Add Problems/Solvers":
+            self._add_with_default_options()
+
+        else:
+            error_msg = f"Unknown tab name: {tab}"
+            raise ValueError(error_msg)
+
+    # Event handler for when the user changes the problem combobox
     def _on_problem_combobox_change(self, _: tk.Event) -> None:
         problem_name = self.selected_problem_name.get()
         problem = self.valid_problems[problem_name]
@@ -475,9 +501,6 @@ class NewExperimentWindow(Toplevel):
 
     def _on_solver_combobox_change(self) -> None:
         solver_name = self.selected_solver_name.get()
-        # If the user hasn't selected a solver, don't do anything
-        if solver_name == "":
-            return
         solver = self.valid_solvers[solver_name]
         self._create_solver_factors_canvas(solver)
 
@@ -574,114 +597,135 @@ class NewExperimentWindow(Toplevel):
         # )
         # self.solver_selection_dropdown.grid(row=0, column=1)
 
-    def show_cross_design_window(self) -> None:
-        self.cross_design_window = self.mass_add_notebook_frame
-
+    def _add_with_default_options(self) -> None:
+        # Delete all existing children of the frame
+        for child in self.frames["ntbk.ps_adding.quick_add"].winfo_children():
+            child.destroy()
         # Configure the grid layout to expand properly
-        self.cross_design_window.grid_rowconfigure(0, weight=1)
-        self.cross_design_window.grid_columnconfigure(0, weight=1)
-        self.cross_design_window.grid_rowconfigure(1, weight=1)
-        self.cross_design_window.grid_columnconfigure(1, weight=1)
-        self.cross_design_window.grid_rowconfigure(2, weight=1)
-        self.cross_design_window.grid_columnconfigure(2, weight=1)
-
-        self.solvers_canvas = tk.Canvas(master=self.cross_design_window)
-        self.solvers_canvas.grid(row=2, column=0, sticky="nsew")
-        self.problems_canvas = tk.Canvas(master=self.cross_design_window)
-        self.problems_canvas.grid(row=2, column=2, sticky="nsew")
-
-        # Create vertical scrollbar for solvers
-        solver_scroll = ttk.Scrollbar(
-            self.cross_design_window,
-            orient=tk.VERTICAL,
-            command=self.solvers_canvas.yview,
+        problem_frame_weight = 2
+        solver_frame_weight = 1
+        self.frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(2, weight=1)
+        self.frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
+            0, weight=problem_frame_weight
         )
-        solver_scroll.grid(row=2, column=1, sticky="ns")
-
-        # Create vertical scrollbar for problems
-        problem_scroll = ttk.Scrollbar(
-            self.cross_design_window,
-            orient=tk.VERTICAL,
-            command=self.problems_canvas.yview,
-        )
-        problem_scroll.grid(row=2, column=3, sticky="ns")
-
-        # Configure canvas to use the scrollbars
-        self.solvers_canvas.configure(yscrollcommand=solver_scroll.set)
-        self.problems_canvas.configure(yscrollcommand=problem_scroll.set)
-
-        # create master frame inside the canvas
-        self.solvers_frame = tk.Frame(self.solvers_canvas)
-        self.solvers_canvas.create_window(
-            (0, 0), window=self.solvers_frame, anchor="nw"
-        )
-        self.problems_frame = tk.Frame(self.problems_canvas)
-        self.problems_canvas.create_window(
-            (0, 0), window=self.problems_frame, anchor="nw"
+        self.frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
+            1, weight=solver_frame_weight
         )
 
-        # Bind the configure event to update the scroll region
-        self.solvers_frame.bind(
-            "<Configure>", self.update_solvers_canvas_scroll
+        # Create labels for the title and the column headers
+        self.labels["ntbk.ps_adding.quick_add.title"] = ttk.Label(
+            self.frames["ntbk.ps_adding.quick_add"],
+            text="Select problems and solvers to be included in cross-design.\nSolvers and problems will be run with default factor settings.",
+            anchor="center",
+            justify="center",
         )
-        self.problems_frame.bind(
-            "<Configure>", self.update_problems_canvas_scroll
+        self.labels["ntbk.ps_adding.quick_add.title"].grid(
+            row=0, column=0, columnspan=2
         )
-
-        self.cross_design_title = tk.Label(
-            master=self.cross_design_window,
-            text="Select solvers and problems to be included in cross-design. \n Solvers and problems will be run with default factor settings.",
+        self.labels["ntbk.ps_adding.quick_add.problems"] = ttk.Label(
+            self.frames["ntbk.ps_adding.quick_add"],
+            text="Problems",
+            anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.cross_design_title.grid(row=0, column=0, columnspan=4, sticky="n")
-        self.solvers_label = tk.Label(
-            master=self.cross_design_window,
-            text="Select Solvers:",
+        self.labels["ntbk.ps_adding.quick_add.problems"].grid(
+            row=1, column=0, sticky="ew"
         )
-        self.solvers_label.grid(row=1, column=0, sticky="nw")
-        self.problems_label = tk.Label(
-            master=self.cross_design_window,
-            text="Select Problems:",
+        self.labels["ntbk.ps_adding.quick_add.solvers"] = ttk.Label(
+            self.frames["ntbk.ps_adding.quick_add"],
+            text="Solvers",
+            anchor="center",
+            font=nametofont("TkHeadingFont"),
         )
-        self.problems_label.grid(row=1, column=2, sticky="nw")
-        self.solver_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
-        self.solver_check_vars = {}  # holds check boolvars, store as dictonary for now
-        # display all potential solvers
-        for solver in solver_unabbreviated_directory:
-            row = self.solvers_frame.grid_size()[1]
-            checkstate = tk.BooleanVar()
-            solver_checkbox = tk.Checkbutton(
-                master=self.solvers_frame,
-                text=solver,
-                variable=checkstate,
-                command=self.cross_design_problem_compatibility,
-            )
-            solver_checkbox.grid(row=row, column=0, sticky="w", padx=10)
-            self.solver_checkboxes[solver] = solver_checkbox
-            self.solver_check_vars[solver] = checkstate
+        self.labels["ntbk.ps_adding.quick_add.solvers"].grid(
+            row=1, column=1, sticky="ew"
+        )
+
+        # Create canvases for the problems and solvers
+        self.canvases["ntbk.ps_adding.quick_add.problems"] = tk.Canvas(
+            self.frames["ntbk.ps_adding.quick_add"]
+        )
+        self.canvases["ntbk.ps_adding.quick_add.problems"].grid(
+            row=2, column=0, sticky="nsew"
+        )
+        self.canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
+            self.frames["ntbk.ps_adding.quick_add"]
+        )
+        self.canvases["ntbk.ps_adding.quick_add.solvers"].grid(
+            row=2, column=1, sticky="nsew"
+        )
+
+        # create master frame inside the canvas
+        self.frames["ntbk.ps_adding.quick_add.problems_frame"] = ttk.Frame(
+            self.canvases["ntbk.ps_adding.quick_add.problems"],
+            width=0,
+        )
+        self.canvases["ntbk.ps_adding.quick_add.problems"].create_window(
+            (0, 0),
+            window=self.frames["ntbk.ps_adding.quick_add.problems_frame"],
+            anchor="nw",
+        )
+        self.frames["ntbk.ps_adding.quick_add.solvers_frame"] = ttk.Frame(
+            self.canvases["ntbk.ps_adding.quick_add.solvers"],
+            width=0,
+        )
+        self.canvases["ntbk.ps_adding.quick_add.solvers"].create_window(
+            (0, 0),
+            window=self.frames["ntbk.ps_adding.quick_add.solvers_frame"],
+            anchor="nw",
+        )
+
+        # Calculate how much space for text to wrap
+        checkbox_size = 50
+        total_scale = problem_frame_weight + solver_frame_weight
+        problem_scale = problem_frame_weight / total_scale
+        solver_scale = solver_frame_weight / total_scale
+        problem_frame_wrap = self.frames["ntbk.ps_adding.quick_add"].winfo_width() * problem_scale - checkbox_size
+        solver_frame_wrap = self.frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale - checkbox_size
+
+        # display all potential problems
         self.problem_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
         self.problem_check_vars = {}  # holds check boolvars, store as dictonary for now
-        # display all potential problems
         for problem in problem_unabbreviated_directory:
-            row = self.problems_frame.grid_size()[1]
+            row = self.frames[
+                "ntbk.ps_adding.quick_add.problems_frame"
+            ].grid_size()[1]
             checkstate = tk.BooleanVar()
             problem_checkbox = tk.Checkbutton(
-                master=self.problems_frame,
+                master=self.frames["ntbk.ps_adding.quick_add.problems_frame"],
                 text=problem,
                 variable=checkstate,
                 command=self.cross_design_solver_compatibility,
+                wraplength=problem_frame_wrap,
+                justify="left",
             )
             problem_checkbox.grid(row=row, column=0, sticky="w", padx=10)
             self.problem_checkboxes[problem] = problem_checkbox
             self.problem_check_vars[problem] = checkstate
-        self.create_cross_button = tk.Button(
-            master=self.cross_design_window,
+        # display all potential solvers
+        self.solver_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
+        self.solver_check_vars = {}  # holds check boolvars, store as dictonary for now
+        # display all potential solvers
+        for solver in solver_unabbreviated_directory:
+            row = self.frames["ntbk.ps_adding.quick_add.solvers_frame"].grid_size()[1]
+            checkstate = tk.BooleanVar()
+            solver_checkbox = tk.Checkbutton(
+                master=self.frames["ntbk.ps_adding.quick_add.solvers_frame"],
+                text=solver,
+                variable=checkstate,
+                command=self.cross_design_problem_compatibility,
+                wraplength=solver_frame_wrap,
+                justify="left",
+            )
+            solver_checkbox.grid(row=row, column=0, sticky="w", padx=10)
+            self.solver_checkboxes[solver] = solver_checkbox
+            self.solver_check_vars[solver] = checkstate
+        
+        # Configure the add button
+        self.buttons["design_opts.generate"].configure(
             text="Add Cross Design to Experiment",
-            command=self.create_cross_design,
+            command=self.create_cross_design
         )
-        self.create_cross_button.grid(row=3, column=0)
-        self.cross_design_problem_compatibility()  # run to check solvers already in experiment
-        self.cross_design_solver_compatibility()  # run to check problems already in experiment
 
     def cross_design_problem_compatibility(self) -> None:
         # create temp objects for current selected solvers and all possilble problems
@@ -714,17 +758,6 @@ class NewExperimentWindow(Toplevel):
             else:
                 self.problem_checkboxes[problem_name].configure(state="normal")
 
-        # update problem & problem datafarming selections
-        self.problem_datafarm_select_menu.destroy()
-        self.problem_datafarm_select_menu = ttk.OptionMenu(
-            self.problem_datafarm_selection_frame,
-            self.selected_problem_name,
-            "Problem",
-            *self.problem_list,
-            command=self.show_problem_datafarm,
-        )
-        self.problem_datafarm_select_menu.grid(row=0, column=1)
-
     def cross_design_solver_compatibility(self) -> None:
         # create temp objects for current selected solvers and all possilble problems
         temp_problems = []
@@ -754,17 +787,6 @@ class NewExperimentWindow(Toplevel):
             else:
                 self.solver_checkboxes[solver_name].configure(state="normal")
 
-        # update solver & solver datafarming selections
-        self.solver_selection_dropdown.destroy()
-        self.solver_selection_dropdown = ttk.OptionMenu(
-            self.solver_datafarm_selection_frame,
-            self.selected_solver_name,
-            "Solver",
-            *self.solver_list,
-            command=self.show_solver_datafarm,
-        )
-        self.solver_selection_dropdown.grid(row=0, column=1)
-
     def create_cross_design(self) -> None:
         for solver in self.solver_check_vars:
             checkstate = self.solver_check_vars[solver].get()
@@ -786,7 +808,7 @@ class NewExperimentWindow(Toplevel):
                 # add solver row to list display
                 solver_row = len(self.root_solver_dict) - 1
                 self.solver_list_label = tk.Label(
-                    master=self.solver_list_canvas,
+                    master=self.canvases["curr_exp.lists.solvers"],
                     text=solver_save_name,
                 )
                 self.solver_list_label.grid(row=solver_row, column=1)
@@ -796,7 +818,7 @@ class NewExperimentWindow(Toplevel):
 
                 # add delete and view/edit buttons
                 self.solver_edit_button = tk.Button(
-                    master=self.solver_list_canvas,
+                    master=self.canvases["curr_exp.lists.solvers"],
                     text="View/Edit",
                     command=lambda solver_name=solver_save_name: self.edit_solver(
                         solver_name
@@ -807,7 +829,7 @@ class NewExperimentWindow(Toplevel):
                     self.solver_edit_button
                 )
                 self.solver_del_button = tk.Button(
-                    master=self.solver_list_canvas,
+                    master=self.canvases["curr_exp.lists.solvers"],
                     text="Delete",
                     command=lambda solver_name=solver_save_name: self.delete_solver(
                         solver_name
@@ -841,7 +863,7 @@ class NewExperimentWindow(Toplevel):
                 # add problem row to list display
                 problem_row = len(self.root_problem_dict) - 1
                 self.problem_list_label = tk.Label(
-                    master=self.problem_list_canvas,
+                    master=self.canvases["curr_exp.lists.problems"],
                     text=problem_save_name,
                 )
                 self.problem_list_label.grid(row=problem_row, column=1)
@@ -851,7 +873,7 @@ class NewExperimentWindow(Toplevel):
 
                 # add delete and view/edit buttons
                 self.problem_edit_button = tk.Button(
-                    master=self.problem_list_canvas,
+                    master=self.canvases["curr_exp.lists.problems"],
                     text="View/Edit",
                     command=lambda problem_name=problem_save_name: self.edit_problem(
                         problem_name
@@ -862,7 +884,7 @@ class NewExperimentWindow(Toplevel):
                     self.problem_edit_button
                 )
                 self.problem_del_button = tk.Button(
-                    master=self.problem_list_canvas,
+                    master=self.canvases["curr_exp.lists.problems"],
                     text="Delete",
                     command=lambda problem_name=problem_save_name: self.delete_problem(
                         problem_name
