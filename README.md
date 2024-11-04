@@ -1,8 +1,5 @@
 This branch is dedicated to the experiments conducted for the 2024 Winter Simulation Conference paper.
 
-## Paper TODO
-1. Update .rst files.
-
 ## Paper Results
 All plots created in the experiments can be found in `experiments/plots`.
 
@@ -24,6 +21,28 @@ To replicate the experiments conducted in the paper, run the command
 To generate plots for the selected top 5 solvers, run the command (after the previous one) 
 
 ```python demo/demo_random_top_plots.py ```
+
+## Note
+1. The .rst files in this repository are pending updates
+
+## Citation
+To cite this work, please use
+```
+@inproceedings{boometal24,
+	abstract = {Linearly constrained simulation optimization problems are those that include deterministic linear constraints in addition to an objective function that can only be evaluated through simulation. We provide several solvers for linearly constrained simulation optimization that all rely on gradient estimates of the objective function. We compare these solvers on random instances of 4 test problems from SimOpt.
+},
+	address = {Piscataway, New Jersey},
+	author = {Natthawut Boonsiriphatthanajaroen and Rongyi He and Litong Liu and Tinghan Ye and Shane G. Henderson},
+	booktitle = {Proceedings of the 2024 Winter Simulation Conference},
+	date-added = {2023-05-05 13:46:37 -0400},
+	date-modified = {2024-05-03 09:58:07 -0400},
+	editor = {H. Lam and E. Azar and D. Batur and S. Gao and W. Xie and S.R. Hunter and M. D. Rossetti},
+	pages = {Submitted},
+	publisher = {IEEE},
+	title = {Evaluating Solvers for Linearly Constrained Simulation Optimization},
+	year = {2024}}
+
+```
 
 ## Description
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
