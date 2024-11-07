@@ -242,6 +242,7 @@ class NewExperimentWindow(Toplevel):
         self.labels["curr_exp.header"].grid(row=0, column=0, sticky="nsew")
         self.frames["curr_exp.lists"] = ttk.Frame(self.frames["curr_exp"])
         self.frames["curr_exp.lists"].grid(row=1, column=0, sticky="nsew")
+        self.frames["curr_exp.lists"].grid_propagate(False)
         self.frames["curr_exp.lists"].grid_columnconfigure(0, weight=1)
         self.frames["curr_exp.lists"].grid_columnconfigure(1, weight=1)
         self.labels["curr_exp.lists.problem_header"] = ttk.Label(
@@ -261,11 +262,15 @@ class NewExperimentWindow(Toplevel):
         self.canvases["curr_exp.lists.problems"] = tk.Canvas(
             self.frames["curr_exp.lists"],
         )
-        self.canvases["curr_exp.lists.problems"].grid(row=1, column=0, sticky="nsew")
+        self.canvases["curr_exp.lists.problems"].grid(
+            row=1, column=0, sticky="nsew"
+        )
         self.canvases["curr_exp.lists.solvers"] = tk.Canvas(
             self.frames["curr_exp.lists"],
         )
-        self.canvases["curr_exp.lists.solvers"].grid(row=1, column=1, sticky="nsew")
+        self.canvases["curr_exp.lists.solvers"].grid(
+            row=1, column=1, sticky="nsew"
+        )
         self.frames["curr_exp.fields"] = ttk.Frame(
             self.frames["curr_exp"],
         )
@@ -331,6 +336,7 @@ class NewExperimentWindow(Toplevel):
             self.frames["main"], borderwidth=1, relief="solid"
         )
         self.frames["ntbk"].grid(row=0, column=1, sticky="nsew")
+        self.frames["ntbk"].grid_propagate(False)
         self.frames["ntbk"].grid_columnconfigure(0, weight=1)
         self.frames["ntbk"].grid_rowconfigure(1, weight=1)
         self.labels["ntbk.header"] = ttk.Label(
@@ -372,7 +378,9 @@ class NewExperimentWindow(Toplevel):
         self.canvases["ntbk.ps_adding.problem.factors"] = tk.Canvas(
             self.frames["ntbk.ps_adding.problem"]
         )
-        self.canvases["ntbk.ps_adding.problem.factors"].grid(row=1, column=0)
+        self.canvases["ntbk.ps_adding.problem.factors"].grid(
+            row=1, column=0, sticky="nsew", columnspan=2
+        )
 
         self.frames["ntbk.ps_adding.solver"] = ttk.Frame(
             self.notebooks["ntbk.ps_adding"]
@@ -410,6 +418,7 @@ class NewExperimentWindow(Toplevel):
             height=10,
             width=10,
         )
+        # Don't grid this by default, it'll be gridded as needed
         # self.canvases["gen_design.display"].grid(row=1, column=0, sticky="nsew")
 
         # Setup the design options frame
@@ -461,6 +470,30 @@ class NewExperimentWindow(Toplevel):
         self.buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
+
+        # # Create a ttk frame style for each color
+        # # We have to do this instead of setting the bg color because the
+        # # widgets are ttk objects and thus don't have a bg attribute
+        # self.style_colors = []
+        # for color in [
+        #     "red",
+        #     "orange",
+        #     "yellow",
+        #     "green",
+        #     "blue",
+        #     "purple",
+        #     "pink",
+        # ]:
+        #     style = ttk.Style()
+        #     style.configure(f"{color}.TFrame", background=color)
+        #     self.style_colors.append(color)
+        # # Apply the styles
+        # index = 0
+        # for frame in self.frames.values():
+        #     frame.configure(style=f"{self.style_colors[index]}.TFrame")
+        #     index += 1
+        #     if index >= len(self.style_colors):
+        #         index = 0
 
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
@@ -680,8 +713,15 @@ class NewExperimentWindow(Toplevel):
         total_scale = problem_frame_weight + solver_frame_weight
         problem_scale = problem_frame_weight / total_scale
         solver_scale = solver_frame_weight / total_scale
-        problem_frame_wrap = self.frames["ntbk.ps_adding.quick_add"].winfo_width() * problem_scale - checkbox_size
-        solver_frame_wrap = self.frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale - checkbox_size
+        problem_frame_wrap = (
+            self.frames["ntbk.ps_adding.quick_add"].winfo_width()
+            * problem_scale
+            - checkbox_size
+        )
+        solver_frame_wrap = (
+            self.frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale
+            - checkbox_size
+        )
 
         # display all potential problems
         self.problem_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
@@ -707,7 +747,9 @@ class NewExperimentWindow(Toplevel):
         self.solver_check_vars = {}  # holds check boolvars, store as dictonary for now
         # display all potential solvers
         for solver in solver_unabbreviated_directory:
-            row = self.frames["ntbk.ps_adding.quick_add.solvers_frame"].grid_size()[1]
+            row = self.frames[
+                "ntbk.ps_adding.quick_add.solvers_frame"
+            ].grid_size()[1]
             checkstate = tk.BooleanVar()
             solver_checkbox = tk.Checkbutton(
                 master=self.frames["ntbk.ps_adding.quick_add.solvers_frame"],
@@ -720,11 +762,11 @@ class NewExperimentWindow(Toplevel):
             solver_checkbox.grid(row=row, column=0, sticky="w", padx=10)
             self.solver_checkboxes[solver] = solver_checkbox
             self.solver_check_vars[solver] = checkstate
-        
+
         # Configure the add button
         self.buttons["design_opts.generate"].configure(
             text="Add Cross Design to Experiment",
-            command=self.create_cross_design
+            command=self.create_cross_design,
         )
 
     def cross_design_problem_compatibility(self) -> None:
