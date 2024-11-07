@@ -1161,9 +1161,7 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
-                "\\"
-            )[-1]
+            file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
     def run_multithread(self, mrep: int) -> tuple:
@@ -1343,9 +1341,7 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
-                "\\"
-            )[-1]
+            file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
     def post_replicate_multithread(self, mrep: int) -> tuple:
@@ -2098,9 +2094,7 @@ def post_normalize(
 
         # Save ProblemSolver object to .pickle file if specified.
         if create_pair_pickles:
-            file_name = experiment.file_name_path.split(EXPERIMENT_DIR)[
-                -1
-            ].split("\\")[-1]
+            file_name = os.path.basename(experiment.file_name_path)
             experiment.record_experiment_results(file_name=file_name)
 
 
