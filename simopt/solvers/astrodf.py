@@ -21,6 +21,7 @@ from math import log, ceil
 from scipy.optimize import NonlinearConstraint
 from scipy.optimize import minimize
 from simopt.base import Solver, Problem, Solution
+from typing import Callable
 
 
 class ASTRODF(Solver):
@@ -59,7 +60,20 @@ class ASTRODF(Solver):
     base.Solver
     """
 
-    def __init__(self, name: str = "ASTRODF", fixed_factors: dict = {}):
+    def __init__(
+        self, name: str = "ASTRODF", fixed_factors: dict | None = None
+    ) -> None:
+        """
+        Initialize the ASTRO-DF solver.
+        Arguments
+        ---------
+        name : str
+            user-specified name for solver
+        fixed_factors : dict
+            fixed_factors of the solver
+        """
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -112,8 +126,9 @@ class ASTRODF(Solver):
                 "default": 0.1,
             },
         }
-        self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_solns,
+        # TODO: fix so we don't have to type ignore the check_crn_across_solns
+        self.check_factor_list: dict[str, Callable[[], None]] = {
+            "crn_across_solns": self.check_crn_across_solns, # type: ignore
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
@@ -123,33 +138,33 @@ class ASTRODF(Solver):
         }
         super().__init__(fixed_factors)
 
-    def check_eta_1(self):
+    def check_eta_1(self) -> None:
         if self.factors["eta_1"] <= 0:
             raise ValueError("Eta 1 must be greater than 0.")
 
-    def check_eta_2(self):
+    def check_eta_2(self) -> None:
         if self.factors["eta_2"] <= self.factors["eta_1"]:
             raise ValueError("Eta 2 must be greater than Eta 1.")
 
-    def check_gamma_1(self):
-        if self.factors("gamma_1") <= 1:
+    def check_gamma_1(self) -> None:
+        if self.factors["gamma_1"] <= 1:
             raise ValueError("Gamma 1 must be greater than 1.")
 
-    def check_gamma_2(self):
+    def check_gamma_2(self) -> None:
         if self.factors["gamma_2"] >= 1 or self.factors["gamma_2"] <= 0:
             raise ValueError("Gamma 2 must be between 0 and 1.")
 
-    def check_lambda_min(self):
+    def check_lambda_min(self) -> None:
         if self.factors["lambda_min"] <= 2:
             raise ValueError("The minimum sample size must be greater than 2.")
 
-    def check_ps_sufficient_reduction(self):
+    def check_ps_sufficient_reduction(self) -> None:
         if self.factors["ps_sufficient_reduction"] < 0:
             raise ValueError(
                 "ps_sufficient reduction must be greater than or equal to 0."
             )
 
-    def get_coordinate_vector(self, size, v_no):
+    def get_coordinate_vector(self, size: int, v_no: int) -> np.ndarray:
         """
         Generate the coordinate vector corresponding to the variable number v_no.
         """
@@ -157,12 +172,14 @@ class ASTRODF(Solver):
         arr[v_no] = 1.0
         return arr
 
-    def get_rotated_basis(self, first_basis, rotate_index):
+    def get_rotated_basis(self, first_basis, rotate_index) -> np.ndarray:
         """
         Generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
         """
         rotate_matrix = np.array(first_basis)
-        rotation = np.matrix([[0, -1], [1, 0]])
+        rotation = np.zeros((2, 2), dtype=int)
+        rotation[0][1] = -1
+        rotation[1][0] = 1
 
         # rotate the coordinate basis based on the first basis vector (first_basis)
         # choose two dimensions which we use for the rotation (0,i)
@@ -180,16 +197,16 @@ class ASTRODF(Solver):
 
         return rotate_matrix
 
-    def evaluate_model(self, x_k, q):
+    def evaluate_model(self, x_k, q) -> np.ndarray:
         """
         Compute the local model value with a linear interpolation with a diagonal Hessian
         """
-        X = [1]
-        X = np.append(X, np.array(x_k))
-        X = np.append(X, np.array(x_k) ** 2)
-        return np.matmul(X, q)
+        x_val = [1]
+        x_val = np.append(x_val, np.array(x_k))
+        x_val = np.append(x_val, np.array(x_k) ** 2)
+        return np.matmul(x_val, q)
 
-    def get_stopping_time(self, k, sig2, delta, kappa, dim):
+    def get_stopping_time(self, k, sig2, delta: float, kappa, dim: int) -> int:
         """
         Compute the sample size based on adaptive sampling stopping rule using the optimality gap
         """
@@ -200,19 +217,26 @@ class ASTRODF(Solver):
         ) * max(log(k + 0.1, 10) ** (1.01), 1)
 
         # compute sample size
-        N_k = ceil(max(lambda_k, lambda_k * sig2 / (kappa**2 * delta**4)))
-        return N_k
+        raw_sample_size = max(
+            lambda_k, lambda_k * sig2 / (kappa**2 * delta**4)
+        )
+        # Convert out of ndarray if it is
+        if isinstance(raw_sample_size, np.ndarray):
+            raw_sample_size = raw_sample_size[0]
+        # round up to the nearest integer
+        sample_size: int = ceil(raw_sample_size)
+        return sample_size
 
     def construct_model(
         self,
         x_k,
-        delta,
-        k,
-        problem,
+        delta: float,
+        k: int,
+        problem: Problem,
         expended_budget,
         kappa,
-        new_solution,
-        visited_pts_list,
+        new_solution: Solution,
+        visited_pts_list: list,
     ):
         """
         construct the "qualified" local model for each iteration k with the center point x_k
@@ -242,19 +266,19 @@ class ASTRODF(Solver):
             delta_k = delta * w ** (j - 1)
 
             # Calculate the distance between the center point and other design points
-            Dist = []
+            distance_array = []
             for i in range(len(visited_pts_list)):
-                Dist.append(
+                distance_array.append(
                     norm(np.array(visited_pts_list[i].x) - np.array(x_k))
                     - delta_k
                 )
                 # If the design point is outside the trust region, we will not reuse it (distance = -big M)
-                if Dist[i] > 0:
-                    Dist[i] = -delta_k * 10000
+                if distance_array[i] > 0:
+                    distance_array[i] = -delta_k * 10000
 
             # Find the index of visited design points list for reusing points
             # The reused point will be the farthest point from the center point among the design points within the trust region
-            f_index = Dist.index(max(Dist))
+            f_index = distance_array.index(max(distance_array))
 
             # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
 
@@ -264,20 +288,20 @@ class ASTRODF(Solver):
                     norm(np.array(x_k) - np.array(visited_pts_list[f_index].x))
                     == 0
                 )
-                or reuse_points == False
+                or not reuse_points
             ):
                 # Construct the interpolation set
-                Y = self.get_coordinate_basis_interpolation_points(
+                var_y = self.get_coordinate_basis_interpolation_points(
                     x_k, delta_k, problem
                 )
-                Z = self.get_coordinate_basis_interpolation_points(
+                var_z = self.get_coordinate_basis_interpolation_points(
                     np.zeros(problem.dim), delta_k, problem
                 )
             # Else if we will reuse one design point
             elif k > 1:
-                first_basis = (
-                    np.array(visited_pts_list[f_index].x) - np.array(x_k)
-                ) / norm(np.array(visited_pts_list[f_index].x) - np.array(x_k))
+                visited_pts_array = np.array(visited_pts_list[f_index].x)
+                diff_array = visited_pts_array - np.array(x_k)
+                first_basis = (diff_array) / norm(diff_array)
                 # if first_basis has some non-zero components, use rotated basis for those dimensions
                 rotate_list = np.nonzero(first_basis)[0]
                 rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
@@ -285,28 +309,36 @@ class ASTRODF(Solver):
                 # if first_basis has some zero components, use coordinate basis for those dimensions
                 for i in range(problem.dim):
                     if first_basis[i] == 0:
+                        coord_vector = self.get_coordinate_vector(
+                            problem.dim, i
+                        )
                         rotate_matrix = np.vstack(
                             (
                                 rotate_matrix,
-                                self.get_coordinate_vector(problem.dim, i),
+                                coord_vector,
                             )
                         )
 
                 # construct the interpolation set
-                Y = self.get_rotated_basis_interpolation_points(
+                var_y = self.get_rotated_basis_interpolation_points(
                     x_k,
                     delta_k,
                     problem,
                     rotate_matrix,
                     visited_pts_list[f_index].x,
                 )
-                Z = self.get_rotated_basis_interpolation_points(
+                var_z = self.get_rotated_basis_interpolation_points(
                     np.zeros(problem.dim),
                     delta_k,
                     problem,
                     rotate_matrix,
                     np.array(visited_pts_list[f_index].x) - np.array(x_k),
                 )
+            # Else
+            # TODO: figure out what to do if the above conditions are not met
+            else:
+                error_msg = "Error in constructing the interpolation set"
+                raise ValueError(error_msg)
             # Evaluate the function estimate for the interpolation points
             for i in range(2 * problem.dim + 1):
                 # for x_0, we don't need to simulate the new solution
@@ -348,7 +380,7 @@ class ASTRODF(Solver):
                         )
                         != 0
                     )
-                    and reuse_points == True
+                    and reuse_points
                 ):
                     sample_size = visited_pts_list[f_index].n_reps
                     sig2 = visited_pts_list[f_index].objectives_var
@@ -376,7 +408,7 @@ class ASTRODF(Solver):
                 # for new points, run the simulation with pilot run
                 else:
                     new_solution = self.create_new_solution(
-                        tuple(Y[i][0]), problem
+                        tuple(var_y[i][0]), problem
                     )
                     visited_pts_list.append(new_solution)
                     pilot_run = ceil(
@@ -407,7 +439,7 @@ class ASTRODF(Solver):
                     interpolation_solns.append(new_solution)
 
             # construct the model and obtain the model coefficients
-            q, grad, Hessian = self.get_model_coefficients(Z, fval, problem)
+            q, grad, hessian = self.get_model_coefficients(var_z, fval, problem)
 
             if not skip_criticality:
                 # check the condition and break
@@ -420,49 +452,50 @@ class ASTRODF(Solver):
             # If a model gradient norm is zero, there is a possibility that the code stuck in this while loop
             if norm(grad) == 0:
                 break
-
-        delta_k = min(max(beta * norm(grad), delta_k), delta)
+        
+        beta_n_grad = float(beta * norm(grad))
+        delta_k = min(max(beta_n_grad, delta_k), delta)
 
         return (
             fval,
-            Y,
+            var_y,
             q,
             grad,
-            Hessian,
+            hessian,
             delta_k,
             expended_budget,
             interpolation_solns,
             visited_pts_list,
         )
 
-    def get_model_coefficients(self, Y, fval, problem):
+    def get_model_coefficients(self, y_var: list, fval: list, problem: Problem) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the model coefficients using (2d+1) design points and their function estimates
         """
-        M = []
+        m_var = []
         for i in range(0, 2 * problem.dim + 1):
-            M.append(1)
-            M[i] = np.append(M[i], np.array(Y[i]))
-            M[i] = np.append(M[i], np.array(Y[i]) ** 2)
+            m_var.append(1)
+            m_var[i] = np.append(m_var[i], np.array(y_var[i]))
+            m_var[i] = np.append(m_var[i], np.array(y_var[i]) ** 2)
 
-        q = np.matmul(
-            pinv(M), fval
+        q: np.ndarray = np.matmul(
+            pinv(m_var), fval
         )  # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
         grad = q[1 : problem.dim + 1]
         grad = np.reshape(grad, problem.dim)
-        Hessian = q[problem.dim + 1 : 2 * problem.dim + 1]
-        Hessian = np.reshape(Hessian, problem.dim)
-        return q, grad, Hessian
+        hessian = q[problem.dim + 1 : 2 * problem.dim + 1]
+        hessian = np.reshape(hessian, problem.dim)
+        return q, grad, hessian
 
     def get_coordinate_basis_interpolation_points(self, x_k, delta, problem):
         """
         Compute the interpolation points (2d+1) using the coordinate basis
         """
-        Y = [[x_k]]
+        y_var = [[x_k]]
         epsilon = 0.01
         for i in range(0, problem.dim):
-            plus = Y[0] + delta * self.get_coordinate_vector(problem.dim, i)
-            minus = Y[0] - delta * self.get_coordinate_vector(problem.dim, i)
+            plus = y_var[0] + delta * self.get_coordinate_vector(problem.dim, i)
+            minus = y_var[0] - delta * self.get_coordinate_vector(problem.dim, i)
 
             if sum(x_k) != 0:
                 # block constraints
@@ -471,9 +504,9 @@ class ASTRODF(Solver):
                 if plus[0][i] >= problem.upper_bounds[i]:
                     plus[0][i] = problem.upper_bounds[i] - epsilon
 
-            Y.append(plus)
-            Y.append(minus)
-        return Y
+            y_var.append(plus)
+            y_var.append(minus)
+        return y_var
 
     def get_rotated_basis_interpolation_points(
         self, x_k, delta, problem, rotate_matrix, reused_x
@@ -508,18 +541,18 @@ class ASTRODF(Solver):
 
     def iterate(
         self,
-        k,
-        delta_k,
-        delta_max,
-        problem,
-        visited_pts_list,
-        new_x,
+        k: int,
+        delta_k: float,
+        delta_max: float | int,
+        problem: Problem,
+        visited_pts_list: list,
+        new_x: tuple[int | float, ...],
         expended_budget,
         budget_limit,
-        recommended_solns,
-        intermediate_budgets,
+        recommended_solns: list,
+        intermediate_budgets: list,
         kappa,
-        new_solution,
+        new_solution: Solution,
     ):
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
@@ -572,10 +605,10 @@ class ASTRODF(Solver):
         # build the local model (subproblem)
         (
             fval,
-            Y,
+            y_var,
             q,
             grad,
-            Hessian,
+            hessian,
             delta_k,
             expended_budget,
             interpolation_solns,
@@ -594,26 +627,27 @@ class ASTRODF(Solver):
         # solve the local model (subproblem)
         if easy_solve:
             # Cauchy reduction
-            if np.dot(np.multiply(grad, Hessian), grad) <= 0:
+            if np.dot(np.multiply(grad, hessian), grad) <= 0:
                 tau = 1
             else:
                 tau = min(
                     1,
                     norm(grad) ** 3
-                    / (delta_k * np.dot(np.multiply(grad, Hessian), grad)),
+                    / (delta_k * np.dot(np.multiply(grad, hessian), grad)),
                 )
             grad = np.reshape(grad, (1, problem.dim))[0]
             candidate_x = new_x - tau * delta_k * grad / norm(grad)
         else:
             # Search engine - solve subproblem
             def subproblem(s):
-                return (
-                    fval[0]
-                    + np.dot(s, grad)
-                    + np.dot(np.multiply(s, Hessian), s)
-                )
+                s_grad_dot: np.ndarray = np.dot(s, grad)
+                s_hessian_dot: np.ndarray = np.dot(np.multiply(s, hessian), s)
+                result = fval[0] + s_grad_dot + s_hessian_dot
+                return result
 
-            con_f = lambda s: norm(s)
+            def con_f(s) -> float:
+                return float(norm(s))
+            
             nlc = NonlinearConstraint(con_f, 0, delta_k)
             solve_subproblem = minimize(
                 subproblem,
@@ -669,7 +703,7 @@ class ASTRODF(Solver):
             >= self.factors["ps_sufficient_reduction"] * delta_k**2
         ):
             fval_tilde = min(fval)
-            candidate_x = Y[fval.index(min(fval))][0]
+            candidate_x = y_var[fval.index(min(fval))][0]
             candidate_solution = interpolation_solns[fval.index(min(fval))]
 
         # compute the success ratio rho
@@ -716,7 +750,7 @@ class ASTRODF(Solver):
             visited_pts_list,
         )
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
         Arguments
@@ -739,13 +773,14 @@ class ASTRODF(Solver):
         find_next_soln_rng = self.rng_list[1]
 
         # Generate many dummy solutions without replication only to find a reasonable maximum radius
-        dummy_solns = []
-        for i in range(1000 * problem.dim):
-            dummy_solns += [problem.get_random_solution(find_next_soln_rng)]
+        dummy_solns: list[tuple[int, ...]] = []
+        for _ in range(1000 * problem.dim):
+            random_soln = problem.get_random_solution(find_next_soln_rng)
+            dummy_solns.append(random_soln)
         # Range for each dimension is calculated and compared with box constraints range if given
         # TODO: just use box constraints range if given
         # delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
-        delta_max_arr = []
+        delta_max_arr: list[float | int] = []
         for i in range(problem.dim):
             delta_max_arr += [
                 min(
@@ -761,9 +796,10 @@ class ASTRODF(Solver):
         visited_pts_list = []
         k = 0
         delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
-        new_x = problem.factors["initial_solution"]
+        new_x: tuple[int | float, ...] = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
-        new_solution, recommended_solns, intermediate_budgets = [], [], []
+        recommended_solns, intermediate_budgets = [], []
+        new_solution = self.create_new_solution(tuple(new_x), problem)
 
         while expended_budget < budget:
             k += 1
