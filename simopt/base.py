@@ -147,20 +147,22 @@ class Solver(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: Solver) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
         ----------
-        other : ``base.Solver``
-            Other Solver object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
         bool
-            True if the two solvers are equivalent, otherwise False.
+            True if the two objects are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Solver):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
@@ -675,12 +677,12 @@ class Problem(ABC):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
-    def __eq__(self, other: Problem) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
 
         Parameters
         ----------
-        other : ``base.Problem``
+        other : object
             Other ``base.Problem`` objects to compare to self.
 
         Returns
@@ -689,6 +691,8 @@ class Problem(ABC):
             True if the two problems are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Problem):
+            return False
         if type(self) is type(other) and self.factors == other.factors:
             # Check if non-decision-variable factors of models are the same.
             non_decision_factors = (
@@ -1127,16 +1131,20 @@ class Problem(ABC):
             if self.gradient_available:
                 # print(self.response_dict_to_objectives_gradients(vector_gradients))
                 # print(solution.det_objectives_gradients)
-                solution.objectives_gradients[solution.n_reps] = [
-                    [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
-                    for stoch_obj, det_obj in zip(
-                        self.response_dict_to_objectives_gradients(
-                            vector_gradients
-                        ),
-                        solution.det_objectives_gradients,
-                    )
-                ]
-                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                # TODO: Ensure that this never happens
+                if "vector_gradients" not in locals():
+                    raise ValueError("vector_gradients not defined")
+                else:
+                    solution.objectives_gradients[solution.n_reps] = [
+                        [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
+                        for stoch_obj, det_obj in zip(
+                            self.response_dict_to_objectives_gradients(
+                                vector_gradients # type: ignore
+                            ),
+                            solution.det_objectives_gradients,
+                        )
+                    ]
+                    # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
             if (
                 self.n_stochastic_constraints > 0
                 and solution.stoch_constraints is not None
@@ -1286,13 +1294,13 @@ class Model(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: Model) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
 
         Parameters
         ----------
-        other : ``base.Model``
-            Other ``base.Model`` object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
@@ -1300,6 +1308,8 @@ class Model(ABC):
             True if the two models are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Model):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
