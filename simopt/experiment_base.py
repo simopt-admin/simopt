@@ -996,17 +996,6 @@ class ProblemSolver:
         else:
             self.file_name_path = file_name_path
 
-        # Set the maximum number of active threads to be running at once
-        # Set to either 4 (if CPU can't be determined) or the number of cores * 2 (accounting for threads)
-        cpu_count = os.cpu_count()
-        if cpu_count is None or (
-            isinstance(cpu_count, int) and cpu_count < self.CPU_COUNT_LIMIT
-        ):
-            self.active_thread_limit = self.ACTIVE_THREAD_LIMIT_DEFAULT
-        # If we can determine CPU Count, set the thread limit to the number of virtual cores
-        else:
-            self.active_thread_limit = cpu_count * 2
-
     # TODO: Convert this to throwing exceptions?
     # TODO: Convert this functionality to run automatically
     def check_compatibility(self) -> str:
