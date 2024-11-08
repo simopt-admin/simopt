@@ -118,6 +118,8 @@ class MM1Queue(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        if not self.check_mu():
+            raise ValueError("Service rate must be positive.")
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
         # Designate separate RNGs for interarrival and serivce times.
@@ -318,8 +320,6 @@ class MM1MinMeanSojournTime(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        if vector[0] == 0:
-            vector = (sys.float_info.min, )
         factor_dict = {
             "mu": vector[0]
         }
