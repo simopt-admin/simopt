@@ -163,6 +163,11 @@ class ChessMatchmaking(Model):
             # If incoming player is not matched, add them to the waiting pool.
             if old_total == total_diff:
                 waiting_players.append(player_rating)
+        # If there weren't any matches, the elo_diffs list will be empty.
+        # This throws some warnings, so we'll add a 0 to the list.
+        # TODO: Check to see if there is a better way to handle this.
+        if not elo_diffs:
+            elo_diffs.append(0)
         # Compose responses and gradients.
         responses = {
             "avg_diff": np.mean(elo_diffs),
