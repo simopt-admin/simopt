@@ -4,6 +4,7 @@ Summary
 Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for optimizing systems with multiple unknown parameters.
 """
 from __future__ import annotations
+import sys
 
 import numpy as np
 from simopt.base import Solver, Problem, Solution
@@ -196,7 +197,15 @@ class SPSA(Solver):
         problem.simulate(theta_sol, self.factors["n_reps"])
         expended_budget = self.factors["n_reps"]
         # Determine initial value for the parameters c, a, and A (Aalg) (according to Section III.B of Spall (1998)).
-        c = float(max((theta_sol.objectives_var / self.factors["gavg"]) ** 0.5, .0001))
+        if len(theta_sol.objectives_var) == 1:
+            # There's only one index, so we can safely index it.
+            c_calculated = np.sqrt(theta_sol.objectives_var[0] / self.factors["gavg"])
+            c = float(max(c_calculated, .0001))
+        else:
+            # Raise the error to the user
+            with np.errstate(all="raise"):
+                c_calculated = np.sqrt(max(theta_sol.objectives_var) / self.factors["gavg"])
+                c = float(max(c_calculated, .0001))
         # Calculating the maximum expected number of loss evaluations per run.
         nEvals = round((problem.factors["budget"] / self.factors["n_reps"]) * self.factors["eval_pct"])
         Aalg = self.factors["iter_pct"] * nEvals / (2 * self.factors["gavg"])
@@ -223,7 +232,19 @@ class SPSA(Solver):
                 ghat += np.dot(-1, problem.minmax) * np.divide((thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean) / ((step_weight_plus + step_weight_minus) * c), delta)
             gbar += np.abs(np.divide(ghat, self.factors["gavg"]))
         meangbar = np.mean(gbar) / (self.factors["n_loss"] / (2 * self.factors["gavg"]))
-        a = self.factors["step"] * ((Aalg + 1) ** self.factors["alpha"]) / meangbar
+
+        a_leftside = self.factors["step"] * ((Aalg + 1) ** self.factors["alpha"])
+        if meangbar == 0:
+            print("Warning: Division by zero in SPSA solver (meangbar == 0)", file=sys.stderr)
+            # Follow IEEE 754 standard.
+            if a_leftside < 0:
+                a = -np.inf
+            elif a_leftside > 0:
+                a = np.inf
+            else:
+                a = np.nan
+        else:
+            a = a_leftside / meangbar
         # Run the main algorithm.
         # Initiate iteration counter.
         k = 0
@@ -246,7 +267,21 @@ class SPSA(Solver):
             problem.simulate(thetaminus_sol, self.factors["n_reps"])
             expended_budget += 2 * self.factors["n_reps"]
             # Estimate current solution's objective funtion value by weighted average.
-            ftheta = ((thetaplus_sol.objectives_mean * step_weight_minus) + (thetaminus_sol.objectives_mean * step_weight_plus)) / (step_weight_plus + step_weight_minus)
+            mean_minus = thetaplus_sol.objectives_mean * step_weight_minus
+            mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
+            mean_net = mean_minus + mean_plus
+            net_step_weight = step_weight_plus + step_weight_minus
+            if net_step_weight == 0:
+                print("Warning: Division by zero in SPSA solver (step_weight_minus = step_weight_plus)", file=sys.stderr)
+                # Follow IEEE 754 standard.
+                if mean_net < 0:
+                    ftheta = -np.inf
+                elif mean_net > 0:
+                    ftheta = np.inf
+                else:
+                    ftheta = np.nan
+            else:
+                ftheta = mean_net / net_step_weight
             # If on the first iteration, record the initial solution as best estimated objective.
             if k == 1:
                 ftheta_best = ftheta
@@ -275,11 +310,27 @@ def check_cons(candidate_x, new_x, lower_bound, upper_bound):
     tmaxV = np.ones((2, len(candidate_x)))
     for i in range(0, len(candidate_x)):
         if stepV[i] > 0:
-            tmaxV[0, i] = (upper_bound[i] - new_x[i]) / stepV[i]
+            diff = upper_bound[i] - new_x[i]
+            if stepV[i] == np.inf:
+                print("Warning: Division by +inf in SPSA solver", file=sys.stderr)
+                # IEEE 754 standard.
+                tmaxV[0, i] = 0
+            else:
+                tmaxV[0, i] = diff / stepV[i]
         elif stepV[i] < 0:
-            tmaxV[1, i] = (lower_bound[i] - new_x[i]) / stepV[i]
+            diff = lower_bound[i] - new_x[i]
+            if stepV[i] == -np.inf:
+                print("Warning: Division by -inf in SPSA solver", file=sys.stderr)
+                # IEEE 754 standard.
+                tmaxV[1, i] = 0
+            else:
+                tmaxV[1, i] = diff / stepV[i]
     # Find the minimum stepsize.
     t2 = tmaxV.min()
     # Calculate the modified x.
-    modified_x = new_x + t2 * stepV
+    if t2 == 0:
+        # If t2 is 0, then there shouldn't be any change.
+        modified_x = new_x
+    else:
+        modified_x = new_x + t2 * stepV
     return modified_x, t2

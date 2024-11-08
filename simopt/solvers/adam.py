@@ -267,20 +267,33 @@ class ADAM(Solver):
                 problem.simulate_up_to([x1_solution], r)
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 # First column is f(x+h,y).
-                FnPlusMinus[i, 0] = fn1
+                FnPlusMinus[i, 0] = (fn1[0] if isinstance(fn1, np.ndarray) else fn1)
             x2_solution = self.create_new_solution(tuple(x2), problem)
             if BdsCheck[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
-                FnPlusMinus[i, 1] = fn2
+                FnPlusMinus[i, 1] = (fn2[0] if isinstance(fn2, np.ndarray) else fn2)
 
             # Calculate gradient.
+            fn_divisor = FnPlusMinus[i, 2][0] if isinstance(FnPlusMinus[i, 2], np.ndarray) else FnPlusMinus[i, 2]
             if BdsCheck[i] == 0:
-                grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
+                fn_diff = fn1 - fn2 # type: ignore
+                fn_divisor = 2 * fn_divisor
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
             elif BdsCheck[i] == 1:
-                grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
+                fn_diff = fn1 - fn # type: ignore
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
             elif BdsCheck[i] == -1:
-                grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
-
+                fn_diff = fn - fn2 # type: ignore
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
         return grad

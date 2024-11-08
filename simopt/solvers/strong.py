@@ -7,6 +7,7 @@ A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/strong.html>`__.
 """
 from __future__ import annotations
+import sys
 
 from numpy.linalg import norm
 import numpy as np
@@ -240,13 +241,25 @@ class STRONG(Solver):
                 # Find the old objective value and the new objective value.
                 g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
                 g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
+                g_diff = g_old - g_new
                 # Construct the polynomial.
                 r_old = g_old
                 r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + 0.5 * np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
-                rho = (g_old - g_new) / (r_old - r_new)
+                r_diff = r_old - r_new
+                if r_diff == 0:
+                    print("Warning: Division by zero in STRONG solver (r_diff == 0)", file=sys.stderr)
+                    # Follow IEEE 754 standard.
+                    if g_diff < 0:
+                        rho = -np.inf
+                    elif g_diff > 0:
+                        rho = np.inf
+                    else:
+                        rho = np.nan
+                else:
+                    rho = g_diff / r_diff
 
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new) <= 0):
+                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
                     # The solution fails either the RC or SR test, the center point reamins and the trust region shrinks.
                     delta_T = gamma_1 * delta_T
                 elif (eta_0 <= rho) & (rho < eta_1):
@@ -276,7 +289,7 @@ class STRONG(Solver):
                     NumOfEval = problem.dim ** 2
                 else:
                     NumOfEval = problem.dim ** 2 + problem.dim - math.factorial(n_onbound) / (math.factorial(2), math.factorial(n_onbound - 2))
-                # Step1: Build the quadratic model.
+                # Step 1: Build the quadratic model.
                 grad, Hessian = self.finite_diff(new_solution, BdsCheck, 2, problem, n_r)
                 expended_budget += NumOfEval * n_r
                 # A while loop to prevent zero gradient
@@ -287,7 +300,7 @@ class STRONG(Solver):
                     expended_budget += NumOfEval * n_r
                     # Update n_r and counter after each loop.
                     n_r = int(lam * n_r)
-                # Step2: Solve the subproblem.
+                # Step 2: Solve the subproblem.
                 # Cauchy reduction.
                 candidate_x = self.cauchy_point(grad, Hessian, new_x, problem,)
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
@@ -298,12 +311,18 @@ class STRONG(Solver):
                 # Find the old objective value and the new objective value.
                 g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
                 g_new = -1 * problem.minmax[0] * candidate_solution.objectives_mean
+                g_diff = g_old - g_new
                 # Construct the polynomial.
                 r_old = g_old
                 r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + 0.5 * np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
-                rho = (g_old - g_new) / (r_old - r_new)
-                # Step4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new) <= 0):
+                r_diff = r_old - r_new
+                if r_diff == 0:
+                    print("Warning: Division by zero in STRONG solver (r_diff == 0)", file=sys.stderr)
+                    rho = 0
+                else:
+                    rho = g_diff / r_diff
+                # Step 4: Update the trust region size and determine to accept or reject the solution.
+                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
                     # Inner Loop.
                     rr_old = r_old
                     g_b_old = rr_old
@@ -326,7 +345,7 @@ class STRONG(Solver):
                             # Update n_r and counter after each loop.
                             n_r = int(lam * n_r)
 
-                        # Step2: determine the new inner solution based on the accumulated design matrix X.
+                        # Step 2: determine the new inner solution based on the accumulated design matrix X.
                         try_x = self.cauchy_point(G, H, new_x, problem)
                         try_solution = self.create_new_solution(tuple(try_x), problem)
 
@@ -342,8 +361,16 @@ class STRONG(Solver):
                         g_b_old = (g_b_old * (n_r + np.ceil((sub_counter - 1)**self.factors["lambda_2"])) + (np.ceil(sub_counter**self.factors["lambda_2"]) - np.ceil((sub_counter - 1)**self.factors["lambda_2"])) * dummy) / (n_r + np.ceil(sub_counter**self.factors["lambda_2"]))
                         rr_new = g_b_old + np.matmul(np.subtract(try_x, new_x), G) + 0.5 * np.matmul(np.matmul(np.subtract(try_x, new_x), H), np.subtract(try_x, new_x))
                         rr_old = g_b_old
-                        rrho = (g_b_old - g_b_new) / (rr_old - rr_new)
-                        if (rrho < eta_0) | ((g_b_old - g_b_new) <= 0) | ((rr_old - rr_new) <= 0):
+                        # Set rho to the ratio.
+                        g_b_diff = g_b_old - g_b_new
+                        rr_diff = rr_old - rr_new
+                        if rr_diff == 0:
+                            print("Warning: Division by zero in STRONG solver (rr_diff == 0)", file=sys.stderr)
+                            rrho = 0
+                        else:
+                            rrho = (g_b_diff) / (rr_diff)
+
+                        if (rrho < eta_0) | ((g_b_diff) <= 0) | ((rr_diff) <= 0):
                             delta_T = gamma_1 * delta_T
                             result_solution = new_solution
                             result_x = new_x
@@ -468,31 +495,50 @@ class STRONG(Solver):
                 FnPlusMinus[i, 2] = steph2
                 x2[i] = x2[i] - FnPlusMinus[i, 2]
             x1_solution = self.create_new_solution(tuple(x1), problem)
+
+            # Run bounds checks.
             if BdsCheck[i] != -1:
                 problem.simulate_up_to([x1_solution], n_r)
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 # First column is f(x+h,y).
-                FnPlusMinus[i, 0] = fn1
+                FnPlusMinus[i, 0] = (fn1[0] if isinstance(fn1, np.ndarray) else fn1)
             x2_solution = self.create_new_solution(tuple(x2), problem)
             if BdsCheck[i] != 1:
                 problem.simulate_up_to([x2_solution], n_r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
-                FnPlusMinus[i, 1] = fn2
+                FnPlusMinus[i, 1] = (fn2[0] if isinstance(fn2, np.ndarray) else fn2)
 
             # Calculate gradient.
+            fn_divisor = FnPlusMinus[i, 2][0] if isinstance(FnPlusMinus[i, 2], np.ndarray) else FnPlusMinus[i, 2]
             if BdsCheck[i] == 0:
-                grad[i] = (fn1 - fn2) / (2 * FnPlusMinus[i, 2])
+                fn_diff = fn1 - fn2 # type: ignore
+                fn_divisor = 2 * fn_divisor
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
             elif BdsCheck[i] == 1:
-                grad[i] = (fn1 - fn) / FnPlusMinus[i, 2]
+                fn_diff = fn1 - fn # type: ignore
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
             elif BdsCheck[i] == -1:
-                grad[i] = (fn - fn2) / FnPlusMinus[i, 2]
+                fn_diff = fn - fn2 # type: ignore
+                if isinstance(fn_diff, np.ndarray):
+                    grad[i] = fn_diff[0] / fn_divisor
+                else:
+                    grad[i] = fn_diff / fn_divisor
 
         if stage == 2:
             # Diagonal in Hessian.
             for i in range(problem.dim):
+                fn_1 = FnPlusMinus[i, 1][0] if isinstance(FnPlusMinus[i, 1], np.ndarray) else FnPlusMinus[i, 1]
+                fn_2 = FnPlusMinus[i, 2][0] if isinstance(FnPlusMinus[i, 2], np.ndarray) else FnPlusMinus[i, 2]
                 if BdsCheck[i] == 0:
-                    Hessian[i, i] = (FnPlusMinus[i, 0] - 2 * fn + FnPlusMinus[i, 1]) / (FnPlusMinus[i, 2]**2)
+                    fn_0 = FnPlusMinus[i, 0][0] if isinstance(FnPlusMinus[i, 0], np.ndarray) else FnPlusMinus[i, 0]
+                    Hessian[i, i] = (fn_0 - 2 * fn[0] + fn_1) / (fn_2**2)
                 elif BdsCheck[i] == 1:
                     x3 = list(new_x)
                     x3[i] = x3[i] + FnPlusMinus[i, 2] / 2
@@ -500,7 +546,7 @@ class STRONG(Solver):
                     # Check budget.
                     problem.simulate_up_to([x3_solution], n_r)
                     fn3 = -1 * problem.minmax[0] * x3_solution.objectives_mean
-                    Hessian[i, i] = 4 * (FnPlusMinus[i, 1] - 2 * fn3 + fn) / (FnPlusMinus[i, 2]**2)
+                    Hessian[i, i] = 4 * (fn_1 - 2 * fn3[0] + fn[0]) / (fn_2**2)
                 elif BdsCheck[i] == -1:
                     x4 = list(new_x)
                     x4[i] = x4[i] - FnPlusMinus[i, 2] / 2
@@ -508,7 +554,7 @@ class STRONG(Solver):
                     # Check budget.
                     problem.simulate_up_to([x4_solution], n_r)
                     fn4 = -1 * problem.minmax[0] * x4_solution.objectives_mean
-                    Hessian[i, i] = 4 * (fn - 2 * fn4 + FnPlusMinus[i, 1]) / (FnPlusMinus[i, 2]**2)
+                    Hessian[i, i] = 4 * (fn[0] - 2 * fn4[0] + fn_1) / (fn_2**2)
 
                 # Upper triangle in Hessian
                 for j in range(i + 1, problem.dim):
@@ -531,7 +577,13 @@ class STRONG(Solver):
                         problem.simulate_up_to([x6_solution], n_r)
                         fn6 = -1 * problem.minmax[0] * x6_solution .objectives_mean
                         # Compute second order gradient.
-                        Hessian[i, j] = (fn5 - FnPlusMinus[i, 0] - FnPlusMinus[j, 0] + 2 * fn - FnPlusMinus[i, 1] - FnPlusMinus[j, 1] + fn6) / (2 * FnPlusMinus[i, 2] * FnPlusMinus[j, 2])
+                        fn_i0 = FnPlusMinus[i, 0][0] if isinstance(FnPlusMinus[i, 0], np.ndarray) else FnPlusMinus[i, 0]
+                        fn_j0 = FnPlusMinus[j, 0][0] if isinstance(FnPlusMinus[j, 0], np.ndarray) else FnPlusMinus[j, 0]
+                        fn_i1 = FnPlusMinus[i, 1][0] if isinstance(FnPlusMinus[i, 1], np.ndarray) else FnPlusMinus[i, 1]
+                        fn_j1 = FnPlusMinus[j, 1][0] if isinstance(FnPlusMinus[j, 1], np.ndarray) else FnPlusMinus[j, 1]
+                        fn_i2 = FnPlusMinus[i, 2][0] if isinstance(FnPlusMinus[i, 2], np.ndarray) else FnPlusMinus[i, 2]
+                        fn_j2 = FnPlusMinus[j, 2][0] if isinstance(FnPlusMinus[j, 2], np.ndarray) else FnPlusMinus[j, 2]
+                        Hessian[i, j] = (fn5[0] - fn_i0 - fn_j0 + 2 * fn[0] - fn_i1 - fn_j1 + fn6[0]) / (2 * fn_i2 * fn_j2)
                         Hessian[j, i] = Hessian[i, j]
                     # When x on boundary, y not.
                     elif BdsCheck[j] == 0:
