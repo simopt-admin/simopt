@@ -2076,10 +2076,23 @@ def post_normalize(
                 )
             )
             # Normalize by initial optimality gap.
-            norm_est_objectives = [
-                (est_objective - opt_obj_val) / initial_opt_gap
-                for est_objective in est_objectives
-            ]
+            if initial_opt_gap == 0:
+                print("Warning: Divide by zero during post-normalization (initial_opt_gap is 0).")
+                norm_est_objectives = []
+                for est_objective in est_objectives:
+                    est_diff = est_objective - opt_obj_val
+                    # Follow IEEE 754 standard for division by zero.
+                    if est_diff < 0:
+                        norm_est_objectives.append(-np.inf)
+                    elif est_diff > 0:
+                        norm_est_objectives.append(np.inf)
+                    else:
+                        norm_est_objectives.append(np.nan)
+            else:
+                norm_est_objectives = [
+                    (est_objective - opt_obj_val) / initial_opt_gap
+                    for est_objective in est_objectives
+                ]
             frac_intermediate_budgets = [
                 budget / experiment.problem.factors["budget"]
                 for budget in experiment.all_intermediate_budgets[mrep]
