@@ -141,7 +141,8 @@ class SSCont(Model):
 
     # Check for simulatable factors
     def check_demand_mean(self):
-        return self.factors["demand_mean"] > 0
+        if self.factors["demand_mean"] <= 0:
+            raise ValueError("demand_mean must be greater than 0.")
 
     def check_lead_mean(self):
         return self.factors["lead_mean"] > 0

@@ -103,7 +103,8 @@ class RMITD(Model):
         super().__init__(fixed_factors)
 
     def check_time_horizon(self):
-        return self.factors["time_horizon"] > 0
+        if self.factors["time_horizon"] <= 0:
+            raise ValueError("time_horizon must be greater than 0.")
 
     def check_prices(self):
         return all(price > 0 for price in self.factors["prices"])

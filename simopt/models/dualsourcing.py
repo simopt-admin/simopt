@@ -206,6 +206,7 @@ class DualSourcing(Model):
             raise ValueError("lead_exp must be less than lead_reg and cost_exp must be greater than cost_reg")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+        
         """
         Simulate a single replication for the current model factors.
 
