@@ -578,9 +578,11 @@ class NewExperimentWindow(Toplevel):
         )
 
         # Create labels for the title and the column headers
+        title_text = "Select problems/solvers to be included in cross-design."
+        title_text += "\nThese will be added with default factor settings."
         self.labels["ntbk.ps_adding.quick_add.title"] = ttk.Label(
             self.frames["ntbk.ps_adding.quick_add"],
-            text="Select problems and solvers to be included in cross-design.\nSolvers and problems will be run with default factor settings.",
+            text=title_text,
             anchor="center",
             justify="center",
         )
@@ -1179,8 +1181,12 @@ class NewExperimentWindow(Toplevel):
                 state="normal"
             )
 
-    def destroy_widget_children(self, widget: tk.Widget) -> None:
-        """Clear frame of all widgets."""
+    def _destroy_widget_children(self, widget: tk.Widget) -> None:
+        """_Destroy all children of a widget._
+
+        Args:
+            widget (tk.Widget): _The widget whose children will be destroyed._
+        """        
         children = widget.winfo_children()
         for child in children:
             child.destroy()
@@ -1307,7 +1313,7 @@ class NewExperimentWindow(Toplevel):
     def _create_problem_factors_canvas(self, event: tk.Event) -> None:
         # Clear the canvas
         canvas = self.canvases["ntbk.ps_adding.problem.factors"]
-        self.destroy_widget_children(canvas)
+        self._destroy_widget_children(canvas)
 
         # Initialize the frames and headers
         self.frames["ntbk.ps_adding.problem.factors.problems"] = ttk.Frame(
@@ -1432,7 +1438,7 @@ class NewExperimentWindow(Toplevel):
 
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
-        self.destroy_widget_children(
+        self._destroy_widget_children(
             self.canvases["ntbk.ps_adding.solver.factors"]
         )
 
@@ -1452,11 +1458,12 @@ class NewExperimentWindow(Toplevel):
         )
 
         # Update the design name to be unique
-        self.design_name = self.get_unique_name(
+        unique_name = self.get_unique_name(
             self.root_solver_dict, solver.name
         )
+        self.design_name.set(unique_name)
         self.entries["design_opts.name"].delete(0, tk.END)
-        self.entries["design_opts.name"].insert(0, self.design_name)
+        self.entries["design_opts.name"].insert(0, unique_name)
 
     def get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
         """Determine unique name from dictionary.
@@ -2177,7 +2184,7 @@ class NewExperimentWindow(Toplevel):
 
     def edit_solver(self, solver_save_name: str) -> None:
         # clear previous selections
-        self.destroy_widget_children(self.solver_frame)
+        self._destroy_widget_children(self.solver_frame)
 
         """ Initialize frames and headers"""
 
@@ -2401,8 +2408,8 @@ class NewExperimentWindow(Toplevel):
         self.root_problem_name_list = []
         self.root_solver_dict = {}
         self.root_problem_dict = {}
-        self.destroy_widget_children(self.solver_list_canvas)
-        self.destroy_widget_children(self.problem_list_canvas)
+        self._destroy_widget_children(self.solver_list_canvas)
+        self._destroy_widget_children(self.problem_list_canvas)
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
@@ -2497,7 +2504,7 @@ class NewExperimentWindow(Toplevel):
         self, experiment_name: str, experiment_frame: tk.Frame
     ) -> None:
         del self.root_experiment_dict[experiment_name]
-        self.destroy_widget_children(experiment_frame)
+        self._destroy_widget_children(experiment_frame)
         # move up other frames below deleted one
         row = experiment_frame.grid_info()["row"]
         experiment_frames = self.experiment_display_canvas.winfo_children()
@@ -3517,7 +3524,7 @@ class NewExperimentWindow(Toplevel):
                 )
 
     def show_plot_options(self, plot_type: str) -> None:
-        self.destroy_widget_children(self.more_options_frame)
+        self._destroy_widget_children(self.more_options_frame)
         self.more_options_frame.grid(row=1, column=0, columnspan=2)
 
         self.plot_type = plot_type
@@ -5390,7 +5397,7 @@ class NewExperimentWindow(Toplevel):
         file_path: os.PathLike | str,
         image_frame: tk.Frame,
     ) -> None:
-        self.destroy_widget_children(self.edit_x_axis_frame)
+        self._destroy_widget_children(self.edit_x_axis_frame)
         self.edit_x_axis_frame.grid(row=1, column=0)
 
         # load plot pickle
