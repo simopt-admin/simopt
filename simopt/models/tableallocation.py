@@ -134,17 +134,18 @@ class TableAllocation(Model):
         return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
 
     def check_num_tables(self):
-        return self.factors["num_tables"] >= [0, 0, 0, 0]
+        if self.factors["num_tables"] < [0, 0, 0, 0]:
+            raise ValueError("Each element in num_tables must be greater than or equal to 0.")
 
     def check_simulatable_factors(self):
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
-            return False
+            raise ValueError("The length of num_tables must be equal to the length of table_cap.")
         elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
-            return False
+            raise ValueError("The length of lamda must be equal to the maximum value in table_cap.")
         elif len(self.factors["lambda"]) != len(self.factors["service_time_means"]):
-            return False
+            raise ValueError("The length of lambda must be equal to the length of service_time_means.")
         elif len(self.factors["service_time_means"]) != len(self.factors["table_revenue"]):
-            return False
+            raise ValueError("The length of service_time_means must be equal to the length of table_revenue.")
         else:
             return True
 

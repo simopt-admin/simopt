@@ -87,7 +87,7 @@ class SAN(Model):
 
     def check_arcs(self):
         if len(self.factors["arcs"]) <= 0:
-            return False
+            raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
         graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:

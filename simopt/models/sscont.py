@@ -145,34 +145,44 @@ class SSCont(Model):
             raise ValueError("demand_mean must be greater than 0.")
 
     def check_lead_mean(self):
-        return self.factors["lead_mean"] > 0
+        if self.factors["lead_mean"] <= 0:
+            raise ValueError("lead_mean must be greater than 0.")
 
     def check_backorder_cost(self):
-        return self.factors["backorder_cost"] > 0
+        if self.factors["backorder_cost"] <= 0:
+            raise ValueError("backorder_cost must be greater than 0.")
 
     def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+        if self.factors["holding_cost"] <= 0:
+            raise ValueError("holding_cost must be greater than 0.")
 
     def check_fixed_cost(self):
-        return self.factors["fixed_cost"] > 0
+        if self.factors["fixed_cost"] <= 0:
+            raise ValueError("fixed_cost must be greater than 0.")
 
     def check_variable_cost(self):
-        return self.factors["variable_cost"] > 0
+        if self.factors["variable_cost"] <= 0:
+            raise ValueError("variable_cost must be greater than 0.")
 
     def check_s(self):
-        return self.factors["s"] > 0
+        if self.factors["s"] <= 0:
+            raise ValueError("s must be greater than 0.")
 
     def check_S(self):
-        return self.factors["S"] > 0
+        if self.factors["S"] <= 0:
+            raise ValueError("S must be greater than 0.")
 
     def check_n_days(self):
-        return self.factors["n_days"] >= 1
+        if self.factors["n_days"] < 1:
+            raise ValueError("n_days must be greater than or equal to 1.")
 
     def check_warmup(self):
-        return self.factors["warmup"] >= 0
+        if self.factors["warmup"] < 0:
+            raise ValueError("warmup must be greater than or equal to 0.")
 
     def check_simulatable_factors(self):
-        return self.factors["s"] < self.factors["S"]
+        if self.factors["s"] >= self.factors["S"]:
+            raise ValueError("s must be less than S.")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
