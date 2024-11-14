@@ -411,11 +411,8 @@ class NewExperimentWindow(Toplevel):
         self.comboboxes["ntbk.ps_adding.solver.select"].bind(
             "<<ComboboxSelected>>", self._on_solver_combobox_change
         )
-        # self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
-        #     self.frames["ntbk.ps_adding.solver"]
-        # )
-        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Frame(
-            self.frames["ntbk.ps_adding.solver"],
+        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
+            self.frames["ntbk.ps_adding.solver"]
         )
         self.canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
