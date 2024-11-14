@@ -411,8 +411,11 @@ class NewExperimentWindow(Toplevel):
         self.comboboxes["ntbk.ps_adding.solver.select"].bind(
             "<<ComboboxSelected>>", self._on_solver_combobox_change
         )
-        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
-            self.frames["ntbk.ps_adding.solver"]
+        # self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
+        #     self.frames["ntbk.ps_adding.solver"]
+        # )
+        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Frame(
+            self.frames["ntbk.ps_adding.solver"],
         )
         self.canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
@@ -1338,13 +1341,6 @@ class NewExperimentWindow(Toplevel):
                 column=header_columns.index(heading),
                 padx=10,
             )
-        # Update the frame to display the headers
-        frame.update()
-        # Now that the headers are displayed, we can lock the column widths
-        for heading in header_columns:
-            heading_index = header_columns.index(heading)
-            frame.grid_columnconfigure(heading_index, weight=1)
-
         # Insert horizontal separator
         ttk.Separator(frame, orient="horizontal").grid(
             row=first_row + 1, columnspan=len(header_columns), sticky="ew"
@@ -1548,18 +1544,16 @@ class NewExperimentWindow(Toplevel):
 
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
-        canvas = self.canvases["ntbk.ps_adding.solver.factors"]
-        self.destroy_widget_children(canvas)
+        self.destroy_widget_children(self.canvases["ntbk.ps_adding.solver.factors"])
 
         # Initialize the frames and headers
         self.frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
-            master=canvas
+            master=self.canvases["ntbk.ps_adding.solver.factors"], 
         )
         self.frames["ntbk.ps_adding.solver.factors.solvers"].grid(
-            row=0, column=0, sticky=tk.N + tk.W
+            row=0, column=0, sticky="nsew"
         )
 
-        """ Get solver information from directory and display"""
         # show problem factors and store default widgets to this dict
         self.__show_data_farming_core(
             solver,
@@ -1628,13 +1622,6 @@ class NewExperimentWindow(Toplevel):
             error_msg += f" Received {type(base_object)}."
             raise TypeError(error_msg)
 
-        # Run compatability checks
-        # TODO: make these not dependent on self attributes
-        # if base_object == "Problem":
-        #     self.check_problem_compatibility()
-        # else:
-        #     self.check_solver_compatibility()
-
         # Grab the specifications from the base object
         specifications = base_object.specifications
         # If we're dealing with a Problem, we also need to grab the
@@ -1647,13 +1634,16 @@ class NewExperimentWindow(Toplevel):
         self.factor_dict = spec_dict_to_df_dict(specifications)
 
         # Add all the column headers
-        header_end_row = self.insert_factor_headers(frame=frame)
+        self.insert_factor_headers(frame=frame)
         # Add all the factors
         self.insert_factors(
             frame=frame,
             factor_dict=self.factor_dict,
-            first_row=header_end_row + 1,
         )
+        
+        # Set all the columns to automatically expand if there's room
+        for i in range(len(self.factor_dict) + 1):
+            frame.grid_rowconfigure(i, weight=1)
 
     def show_problem_datafarm(self, option: tk.StringVar | None = None) -> None:
         self.__show_data_farming_core(base_object="Problem")
