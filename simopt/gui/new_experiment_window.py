@@ -311,7 +311,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.labels["curr_exp.fields.make_pickle"] = ttk.Label(
             self.frames["curr_exp.fields"],
-            text="Create Pickles for each Problem-Solver Pair? ",
+            text="Create Pickles for each pair? ",
             anchor="e",
         )
         self.labels["curr_exp.fields.make_pickle"].grid(
@@ -456,8 +456,7 @@ class NewExperimentWindow(Toplevel):
             self.frames["main"], borderwidth=1, relief="solid"
         )
         self.frames["design_opts"].grid(row=2, column=1, sticky="nsew")
-        self.frames["design_opts"].grid_columnconfigure(1, weight=2)
-        self.frames["design_opts"].grid_columnconfigure(2, weight=1)
+        self.frames["design_opts"].grid_columnconfigure(1, weight=1)
         self.labels["design_opts.header"] = ttk.Label(
             self.frames["design_opts"],
             text="Design Options",
@@ -496,6 +495,7 @@ class NewExperimentWindow(Toplevel):
         self.buttons["design_opts.generate"] = ttk.Button(
             self.frames["design_opts"],
             text="Generate Design",
+            width=40,
         )
         self.buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
@@ -516,17 +516,21 @@ class NewExperimentWindow(Toplevel):
         if tab == "Add Problem":
             self.selected_problem_name.set("")
             self.buttons["design_opts.generate"].configure(
-                command=self.create_problem_design
+                text="Add Experiment", command=self.create_problem_design
             )
 
         elif tab == "Add Solver":
             self.selected_solver_name.set("")
             self.buttons["design_opts.generate"].configure(
-                command=self.create_solver_design
+                text="Add Experiment", command=self.create_solver_design
             )
 
         elif tab == "Quick-Add Problems/Solvers":
             self._add_with_default_options()
+            self.buttons["design_opts.generate"].configure(
+                text="Add Cross Design to Experiment",
+                command=self.create_cross_design,
+            )
 
         else:
             error_msg = f"Unknown tab name: {tab}"
@@ -681,12 +685,6 @@ class NewExperimentWindow(Toplevel):
             solver_checkbox.grid(row=row, column=0, sticky="w", padx=10)
             self.solver_checkboxes[solver] = solver_checkbox
             self.solver_check_vars[solver] = checkstate
-
-        # Configure the add button
-        self.buttons["design_opts.generate"].configure(
-            text="Add Cross Design to Experiment",
-            command=self.create_cross_design,
-        )
 
     def cross_design_problem_compatibility(self) -> None:
         # create temp objects for current selected solvers and all possilble problems
@@ -1290,7 +1288,7 @@ class NewExperimentWindow(Toplevel):
                         column=column_index,
                         padx=10,
                         pady=3,
-                        sticky="ew"
+                        sticky="ew",
                     )
                 else:
                     break
@@ -1424,11 +1422,13 @@ class NewExperimentWindow(Toplevel):
 
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
-        self.destroy_widget_children(self.canvases["ntbk.ps_adding.solver.factors"])
+        self.destroy_widget_children(
+            self.canvases["ntbk.ps_adding.solver.factors"]
+        )
 
         # Initialize the frames and headers
         self.frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
-            master=self.canvases["ntbk.ps_adding.solver.factors"], 
+            master=self.canvases["ntbk.ps_adding.solver.factors"],
         )
         self.frames["ntbk.ps_adding.solver.factors.solvers"].grid(
             row=0, column=0, sticky="nsew"
@@ -1520,7 +1520,7 @@ class NewExperimentWindow(Toplevel):
             frame=frame,
             factor_dict=self.factor_dict,
         )
-        
+
         # Set all the columns to automatically expand if there's room
         for i in range(len(self.factor_dict) + 1):
             frame.grid_rowconfigure(i, weight=1)
