@@ -247,7 +247,7 @@ class STRONG(Solver):
                 r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + 0.5 * np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    print("Warning: Division by zero in STRONG solver (r_diff == 0)", file=sys.stderr)
+                    print("Warning: Division by zero in STRONG solver (r_diff == 0 (Step I_3))", file=sys.stderr)
                     # Follow IEEE 754 standard.
                     if g_diff < 0:
                         rho = -np.inf
@@ -317,7 +317,7 @@ class STRONG(Solver):
                 r_new = g_old + np.matmul(np.subtract(candidate_x, new_x), grad) + 0.5 * np.matmul(np.matmul(np.subtract(candidate_x, new_x), Hessian), np.subtract(candidate_x, new_x))
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    print("Warning: Division by zero in STRONG solver (r_diff == 0)", file=sys.stderr)
+                    print("Warning: Division by zero in STRONG solver (r_diff == 0 (Step II_3))", file=sys.stderr)
                     rho = 0
                 else:
                     rho = g_diff / r_diff
