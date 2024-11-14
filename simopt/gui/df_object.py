@@ -540,9 +540,32 @@ class DFFloat(DFFactor):
         self.__include = tk.BooleanVar(value=False)
         self.__minimum = tk.DoubleVar(value=default)
         self.__maximum = tk.DoubleVar(value=default)
-        num_decimals = str(default)[::-1].find(".")
+        num_decimals = self.__find_num_decimals(default)
         self.__num_decimals = tk.IntVar(value=num_decimals)
 
+    def __find_num_decimals(self, value: float) -> int:
+        """Find the number of decimals in a float value.
+
+        Parameters
+        ----------
+        value : float
+            The float value to find the number of decimals in
+
+        Returns
+        -------
+        int
+            The number of decimals in the float value
+
+        """
+        # Case 1: Decimal point in value
+        if "." in str(value):
+            return len(str(value).split(".")[1])
+        # Case 2: No decimal point in value, but xe-y format
+        elif "e-" in str(value):
+            return int(str(value).split("e-")[1])
+        # Case 3: No decimal point and not in xe-y format
+        return 0
+        
 
 class DFTuple(DFFactor):
     """Class to store tuple factors for problems and solvers."""
