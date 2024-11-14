@@ -92,22 +92,22 @@ class MM1Queue(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_lambda(self):
+    def check_lambda(self) -> bool:
         return self.factors["lambda"] > 0
 
-    def check_mu(self):
+    def check_mu(self) -> bool:
         return self.factors["mu"] > 0
 
-    def check_epsilon(self):
+    def check_epsilon(self) -> bool:
         return self.factors["epsilon"] > 0
 
-    def check_warmup(self):
+    def check_warmup(self) -> bool:
         return self.factors["warmup"] >= 0
 
-    def check_people(self):
+    def check_people(self) -> bool:
         return self.factors["people"] >= 1
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         # demo for condition that queue must be stable
         # return self.factors["mu"] > self.factors["lambda"]
         return True
@@ -220,10 +220,14 @@ class MM1Queue(Model):
             }
             for response_key in responses
         }
-        gradients["avg_sojourn_time"]["mu"] = grad_mean_sojourn_time_mu
-        gradients["avg_sojourn_time"]["lambda"] = grad_mean_sojourn_time_lambda
-        gradients["avg_waiting_time"]["mu"] = grad_mean_waiting_time_mu
-        gradients["avg_waiting_time"]["lambda"] = grad_mean_waiting_time_lambda
+        gradients["avg_sojourn_time"]["mu"] = float(grad_mean_sojourn_time_mu)
+        gradients["avg_sojourn_time"]["lambda"] = float(
+            grad_mean_sojourn_time_lambda
+        )
+        gradients["avg_waiting_time"]["mu"] = float(grad_mean_waiting_time_mu)
+        gradients["avg_waiting_time"]["lambda"] = float(
+            grad_mean_waiting_time_lambda
+        )
         return responses, gradients
 
 
@@ -348,7 +352,7 @@ class MM1MinMeanSojournTime(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = MM1Queue(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -365,7 +369,7 @@ class MM1MinMeanSojournTime(Problem):
         factor_dict = {"mu": vector[0]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -383,7 +387,7 @@ class MM1MinMeanSojournTime(Problem):
         vector = (factor_dict["mu"],)
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -401,7 +405,7 @@ class MM1MinMeanSojournTime(Problem):
         objectives = (response_dict["avg_sojourn_time"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -416,10 +420,12 @@ class MM1MinMeanSojournTime(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -439,7 +445,9 @@ class MM1MinMeanSojournTime(Problem):
         det_objectives_gradients = ((2 * self.factors["cost"] * x[0],),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -458,11 +466,11 @@ class MM1MinMeanSojournTime(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -481,7 +489,7 @@ class MM1MinMeanSojournTime(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         return box_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

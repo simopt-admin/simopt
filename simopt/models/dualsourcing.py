@@ -158,43 +158,43 @@ class DualSourcing(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_days(self):
+    def check_n_days(self) -> bool:
         return self.factors["n_days"] >= 1
 
-    def check_initial_inv(self):
+    def check_initial_inv(self) -> bool:
         return self.factors["initial_inv"] >= 0
 
-    def check_cost_reg(self):
+    def check_cost_reg(self) -> bool:
         return self.factors["cost_reg"] > 0
 
-    def check_cost_exp(self):
+    def check_cost_exp(self) -> bool:
         return self.factors["cost_exp"] > 0
 
-    def check_lead_reg(self):
+    def check_lead_reg(self) -> bool:
         return self.factors["lead_reg"] >= 0
 
-    def check_lead_exp(self):
+    def check_lead_exp(self) -> bool:
         return self.factors["lead_exp"] >= 0
 
-    def check_holding_cost(self):
+    def check_holding_cost(self) -> bool:
         return self.factors["holding_cost"] > 0
 
-    def check_penalty_cost(self):
+    def check_penalty_cost(self) -> bool:
         return self.factors["penalty_cost"] > 0
 
-    def check_st_dev(self):
+    def check_st_dev(self) -> bool:
         return self.factors["st_dev"] > 0
 
-    def check_mu(self):
+    def check_mu(self) -> bool:
         return self.factors["mu"] > 0
 
-    def check_order_level_reg(self):
+    def check_order_level_reg(self) -> bool:
         return self.factors["order_level_reg"] >= 0
 
-    def check_order_level_exp(self):
+    def check_order_level_exp(self) -> bool:
         return self.factors["order_level_exp"] >= 0
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         return (self.factors["lead_exp"] < self.factors["lead_reg"]) & (
             self.factors["cost_exp"] > self.factors["cost_reg"]
         )
@@ -506,7 +506,7 @@ class DualSourcingMinCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(
@@ -551,8 +551,8 @@ class DualSourcingMinCost(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:

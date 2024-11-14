@@ -47,6 +47,8 @@ class ParameterEstimation(Model):
     """
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "PARAMESTI"
         self.n_rngs = 2
         self.n_responses = 1
@@ -66,13 +68,13 @@ class ParameterEstimation(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_xstar(self):
+    def check_xstar(self) -> bool:
         return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
 
-    def check_x(self):
+    def check_x(self) -> bool:
         return all(x_i > 0 for x_i in self.factors["x"])
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         # Check for dimension of x and xstar.
         if len(self.factors["x"]) != 2:
             return False
@@ -244,10 +246,10 @@ class ParamEstiMaxLogLik(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = ParameterEstimation(self.model_fixed_factors)
-        self.optimal_solution = list(self.model.factors["xstar"])
+        self.optimal_solution: list = self.model.factors["xstar"]
         self.optimal_value = None
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -264,7 +266,7 @@ class ParamEstiMaxLogLik(Problem):
         factor_dict = {"x": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -282,7 +284,7 @@ class ParamEstiMaxLogLik(Problem):
         vector = tuple(factor_dict["x"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -300,7 +302,9 @@ class ParamEstiMaxLogLik(Problem):
         objectives = (response_dict["loglik"],)
         return objectives
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -320,7 +324,7 @@ class ParamEstiMaxLogLik(Problem):
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -336,7 +340,7 @@ class ParamEstiMaxLogLik(Problem):
         """
         return True
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -360,7 +364,7 @@ class ParamEstiMaxLogLik(Problem):
         )
         return x
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0

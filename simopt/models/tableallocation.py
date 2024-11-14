@@ -117,32 +117,32 @@ class TableAllocation(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_hours(self):
+    def check_n_hours(self) -> bool:
         return self.factors["n_hours"] > 0
 
-    def check_capacity(self):
+    def check_capacity(self) -> bool:
         return self.factors["capacity"] > 0
 
-    def check_table_cap(self):
+    def check_table_cap(self) -> bool:
         return self.factors["table_cap"] > [0, 0, 0, 0]
 
-    def check_lambda(self):
+    def check_lambda(self) -> bool:
         return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
-    def check_service_time_means(self):
+    def check_service_time_means(self) -> bool:
         return self.factors["service_time_means"] > [0] * max(
             self.factors["table_cap"]
         )
 
-    def check_table_revenue(self):
+    def check_table_revenue(self) -> bool:
         return self.factors["table_revenue"] >= [0] * max(
             self.factors["table_cap"]
         )
 
-    def check_num_tables(self):
+    def check_num_tables(self) -> bool:
         return self.factors["num_tables"] >= [0, 0, 0, 0]
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
             return False
         elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
@@ -211,6 +211,9 @@ class TableAllocation(Model):
             table_size_idx = 0
             while self.factors["table_cap"][table_size_idx] < group_size:
                 table_size_idx = table_size_idx + 1
+            # Initialize k and j to make sure they're not unbound
+            k = 0
+            j = 0
             # Find smallest available table.
             for k in range(table_size_idx, len(self.factors["num_tables"])):
                 for j in range(self.factors["num_tables"][k]):
@@ -317,7 +320,7 @@ class TableAllocationMaxRev(Problem):
     def __init__(
         self,
         name: str = "TABLEALLOCATION-1",
-        fixed_factors: dict = {},
+        fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
         # Handle default arguments.
@@ -333,8 +336,8 @@ class TableAllocationMaxRev(Problem):
         self.minmax = (1,)
         self.constraint_type = "deterministic"
         self.variable_type = "discrete"
-        self.lower_bounds = [0, 0, 0, 0]
-        self.upper_bounds = [np.inf, np.inf, np.inf, np.inf]
+        self.lower_bounds = (0, 0, 0, 0)
+        self.upper_bounds = (np.inf, np.inf, np.inf, np.inf)
         self.gradient_available = False
         self.optimal_value = None
         self.optimal_solution = None
@@ -361,7 +364,7 @@ class TableAllocationMaxRev(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = TableAllocation(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -378,7 +381,7 @@ class TableAllocationMaxRev(Problem):
         factor_dict = {"num_tables": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -396,7 +399,7 @@ class TableAllocationMaxRev(Problem):
         vector = (factor_dict["num_tables"],)
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -414,7 +417,7 @@ class TableAllocationMaxRev(Problem):
         objectives = (response_dict["total_revenue"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -429,10 +432,12 @@ class TableAllocationMaxRev(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -452,7 +457,9 @@ class TableAllocationMaxRev(Problem):
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -470,11 +477,11 @@ class TableAllocationMaxRev(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -494,7 +501,7 @@ class TableAllocationMaxRev(Problem):
             <= self.model_fixed_factors["capacity"]
         )
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

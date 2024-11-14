@@ -146,37 +146,38 @@ class SSCont(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
+    def check_demand_mean(self) -> bool:
         return self.factors["demand_mean"] > 0
 
-    def check_lead_mean(self):
+    def check_lead_mean(self) -> bool:
         return self.factors["lead_mean"] > 0
 
-    def check_backorder_cost(self):
+    def check_backorder_cost(self) -> bool:
         return self.factors["backorder_cost"] > 0
 
-    def check_holding_cost(self):
+    def check_holding_cost(self) -> bool:
         return self.factors["holding_cost"] > 0
 
-    def check_fixed_cost(self):
+    def check_fixed_cost(self) -> bool:
         return self.factors["fixed_cost"] > 0
 
-    def check_variable_cost(self):
+    def check_variable_cost(self) -> bool:
         return self.factors["variable_cost"] > 0
 
-    def check_s(self):
+    def check_s(self) -> bool:
         return self.factors["s"] > 0
 
-    def check_S(self):
+    # TODO: refactor to change variable names from s and S since it's confusing
+    def check_S(self) -> bool:  # noqa: N802
         return self.factors["S"] > 0
 
-    def check_n_days(self):
+    def check_n_days(self) -> bool:
         return self.factors["n_days"] >= 1
 
-    def check_warmup(self):
+    def check_warmup(self) -> bool:
         return self.factors["warmup"] >= 0
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         return self.factors["s"] < self.factors["S"]
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
@@ -468,7 +469,7 @@ class SSContMinCost(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = SSCont(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -485,7 +486,7 @@ class SSContMinCost(Problem):
         factor_dict = {"s": vector[0], "S": vector[0] + vector[1]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -503,7 +504,7 @@ class SSContMinCost(Problem):
         vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -525,7 +526,7 @@ class SSContMinCost(Problem):
         )
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -540,10 +541,12 @@ class SSContMinCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -563,7 +566,9 @@ class SSContMinCost(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -581,11 +586,11 @@ class SSContMinCost(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -602,7 +607,7 @@ class SSContMinCost(Problem):
         """
         return x[0] >= 0 and x[1] >= 0
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

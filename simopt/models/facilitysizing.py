@@ -86,27 +86,26 @@ class FacilitySize(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self):
+    def check_mean_vec(self) -> bool:
         return all(mean > 0 for mean in self.factors["mean_vec"])
 
-    def check_cov(self):
+    def check_cov(self) -> bool:
         try:
             np.linalg.cholesky(np.matrix(self.factors["cov"]))
             return True
-        except np.linalg.linalg.LinAlgError as err:
-            if "Matrix is not positive definite" in err.message:
+        except np.linalg.LinAlgError as err:
+            if "Matrix is not positive definite" in err.args[0]:
                 return False
             else:
                 raise
-        return
 
-    def check_capacity(self):
+    def check_capacity(self) -> bool:
         return len(self.factors["capacity"]) == self.factors["n_fac"]
 
-    def check_n_fac(self):
+    def check_n_fac(self) -> bool:
         return self.factors["n_fac"] > 0
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             return False
         elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
@@ -304,7 +303,7 @@ class FacilitySizingTotalCost(Problem):
         self.lower_bounds = (0,) * self.model.factors["n_fac"]
         self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
-    def check_installation_costs(self):
+    def check_installation_costs(self) -> bool:
         if (
             len(self.factors["installation_costs"])
             != self.model.factors["n_fac"]
@@ -315,10 +314,10 @@ class FacilitySizingTotalCost(Problem):
         else:
             return True
 
-    def check_epsilon(self):
+    def check_epsilon(self) -> bool:
         return 0 <= self.factors["epsilon"] <= 1
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -335,7 +334,7 @@ class FacilitySizingTotalCost(Problem):
         factor_dict = {"capacity": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -353,7 +352,7 @@ class FacilitySizingTotalCost(Problem):
         vector = tuple(factor_dict["capacity"])
         return vector
 
-    def factor_dict_to_vector_gradients(self, factor_dict):
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
         """Convert a dictionary with factor keys to a gradient vector.
 
         Notes
@@ -375,7 +374,7 @@ class FacilitySizingTotalCost(Problem):
         vector = (np.nan * len(self.model.factors["capacity"]),)
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -393,7 +392,9 @@ class FacilitySizingTotalCost(Problem):
         objectives = (0,)
         return objectives
 
-    def response_dict_to_objectives_gradients(self, response_dict):
+    def response_dict_to_objectives_gradients(
+        self, response_dict: dict
+    ) -> tuple:
         """Convert a dictionary with response keys to a vector
         of gradients.
 
@@ -415,7 +416,7 @@ class FacilitySizingTotalCost(Problem):
         """
         return ((0,) * len(self.model.factors["capacity"]),)
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -433,7 +434,9 @@ class FacilitySizingTotalCost(Problem):
         stoch_constraints = (response_dict["stockout_flag"],)
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -453,7 +456,9 @@ class FacilitySizingTotalCost(Problem):
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -473,7 +478,7 @@ class FacilitySizingTotalCost(Problem):
         det_objectives_gradients = (tuple(self.factors["installation_costs"]),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -491,7 +496,7 @@ class FacilitySizingTotalCost(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         return box_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -649,7 +654,7 @@ class FacilitySizingMaxService(Problem):
         self.lower_bounds = (0,) * self.model.factors["n_fac"]
         self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
-    def check_installation_costs(self):
+    def check_installation_costs(self) -> bool:
         if (
             len(self.factors["installation_costs"])
             != self.model.factors["n_fac"]
@@ -660,10 +665,10 @@ class FacilitySizingMaxService(Problem):
         else:
             return True
 
-    def check_installation_budget(self):
+    def check_installation_budget(self) -> bool:
         return self.factors["installation_budget"] > 0
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -680,7 +685,7 @@ class FacilitySizingMaxService(Problem):
         factor_dict = {"capacity": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -698,7 +703,7 @@ class FacilitySizingMaxService(Problem):
         vector = tuple(factor_dict["capacity"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -716,7 +721,7 @@ class FacilitySizingMaxService(Problem):
         objectives = (1 - response_dict["stockout_flag"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -728,13 +733,15 @@ class FacilitySizingMaxService(Problem):
 
         Returns
         -------
-        stoch_constraints : tuple
+        tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -745,16 +752,18 @@ class FacilitySizingMaxService(Problem):
 
         Returns
         -------
-        det_objectives : tuple
+        tuple
             vector of deterministic components of objectives
-        det_objectives_gradients : tuple
+        tuple
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -770,11 +779,11 @@ class FacilitySizingMaxService(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -797,7 +806,7 @@ class FacilitySizingMaxService(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         return budget_feasible * box_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -808,7 +817,7 @@ class FacilitySizingMaxService(Problem):
 
         Returns
         -------
-        x : tuple
+        tuple
             vector of decision variables
         """
         # Generate random vector of length # of facilities of continuous values
@@ -818,4 +827,4 @@ class FacilitySizingMaxService(Problem):
             summation=self.factors["installation_budget"],
             exact_sum=False,
         )
-        return x
+        return tuple(x)

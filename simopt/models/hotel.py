@@ -44,6 +44,8 @@ class Hotel(Model):
     """
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "HOTEL"
         self.n_rngs = 1
         self.n_responses = 1
@@ -594,25 +596,25 @@ class Hotel(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_num_products(self):
+    def check_num_products(self) -> bool:
         return self.factors["num_products"] > 0
 
-    def check_lambda(self):
+    def check_lambda(self) -> bool:
         for i in self.factors["lambda"]:
             if i <= 0:
                 return False
         return len(self.factors["lambda"]) == self.factors["num_products"]
 
-    def check_num_rooms(self):
+    def check_num_rooms(self) -> bool:
         return self.factors["num_rooms"] > 0
 
-    def check_discount_rate(self):
+    def check_discount_rate(self) -> bool:
         return self.factors["discount_rate"] > 0
 
-    def check_rack_rate(self):
+    def check_rack_rate(self) -> bool:
         return self.factors["rack_rate"] > 0
 
-    def check_product_incidence(self):
+    def check_product_incidence(self) -> bool:
         m, n = self.factors["product_incidence"].shape
         for i in range(m):
             for j in range(n):
@@ -620,19 +622,19 @@ class Hotel(Model):
                     return False
         return m * n == self.factors["num_products"]
 
-    def check_time_limit(self):
+    def check_time_limit(self) -> bool:
         for i in self.factors["time_limit"]:
             if i <= 0:
                 return False
         return len(self.factors["time_limit"]) == self.factors["num_products"]
 
-    def check_time_before(self):
+    def check_time_before(self) -> bool:
         return self.factors["time_before"] > 0
 
-    def check_runlength(self):
+    def check_runlength(self) -> bool:
         return self.factors["runlength"] > 0
 
-    def check_booking_limits(self):
+    def check_booking_limits(self) -> bool:
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
                 return False
@@ -662,7 +664,7 @@ class Hotel(Model):
 
         total_revenue = 0
         b = list(self.factors["booking_limits"])
-        A = np.array(self.factors["product_incidence"])
+        a_array = np.array(self.factors["product_incidence"])
         # Vector of next arrival time per product.
         # (Starts at time = -1*time_before, e.g., t = -168.)
         arrival = (
@@ -688,6 +690,7 @@ class Hotel(Model):
         min_time = (
             0  # Keeps track of minimum time of the orders not yet received.
         )
+        min_idx = 0
         while min_time <= self.factors["runlength"]:
             min_time = self.factors["runlength"] + 1
             for i in range(self.factors["num_products"]):
@@ -701,15 +704,15 @@ class Hotel(Model):
             if b[min_idx] > 0:
                 if min_idx % 2 == 0:  # Rack_rate.
                     total_revenue += sum(
-                        self.factors["rack_rate"] * A[:, min_idx]
+                        self.factors["rack_rate"] * a_array[:, min_idx]
                     )
                 else:  # Discount_rate.
                     total_revenue += sum(
-                        self.factors["discount_rate"] * A[:, min_idx]
+                        self.factors["discount_rate"] * a_array[:, min_idx]
                     )
                 # Reduce the inventory of products sharing the same resource.
                 for i in range(self.factors["num_products"]):
-                    if np.dot(A[:, i].T, A[:, min_idx]) >= 1:
+                    if np.dot(a_array[:, i].T, a_array[:, min_idx]) >= 1:
                         if b[i] != 0:
                             b[i] -= 1
             arrival[min_idx] += arr_time[min_idx, a[min_idx]]
@@ -847,13 +850,13 @@ class HotelRevenue(Problem):
             self.model.factors["num_rooms"] * np.ones(self.dim)
         )
 
-    def check_initial_solution(self):
+    def check_initial_solution(self) -> bool:
         return len(self.factors["initial_solution"]) == self.dim
 
-    def check_budget(self):
+    def check_budget(self) -> bool:
         return self.factors["budget"] > 0
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.lower_bounds) != self.dim:
             return False
         elif len(self.upper_bounds) != self.dim:
@@ -861,7 +864,7 @@ class HotelRevenue(Problem):
         else:
             return True
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -878,7 +881,7 @@ class HotelRevenue(Problem):
         factor_dict = {"booking_limits": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -896,7 +899,7 @@ class HotelRevenue(Problem):
         vector = tuple(factor_dict["booking_limits"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -914,7 +917,7 @@ class HotelRevenue(Problem):
         objectives = (response_dict["revenue"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -929,10 +932,12 @@ class HotelRevenue(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -948,11 +953,13 @@ class HotelRevenue(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -972,7 +979,7 @@ class HotelRevenue(Problem):
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -988,7 +995,7 @@ class HotelRevenue(Problem):
         """
         return True
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

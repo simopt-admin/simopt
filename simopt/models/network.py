@@ -135,7 +135,7 @@ class Network(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_process_prob(self):
+    def check_process_prob(self) -> bool:
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
         return (
@@ -143,38 +143,38 @@ class Network(Model):
             and round(sum(self.factors["process_prob"]), 10) == 1.0
         )
 
-    def check_cost_process(self):
+    def check_cost_process(self) -> bool:
         return all(cost_i > 0 for cost_i in self.factors["cost_process"])
 
-    def check_cost_time(self):
+    def check_cost_time(self) -> bool:
         return all(cost_time_i > 0 for cost_time_i in self.factors["cost_time"])
 
-    def check_mode_transit_time(self):
+    def check_mode_transit_time(self) -> bool:
         return all(
             transit_time_i > 0
             for transit_time_i in self.factors["mode_transit_time"]
         )
 
-    def check_lower_limits_transit_time(self):
+    def check_lower_limits_transit_time(self) -> bool:
         return all(
             lower_i > 0 for lower_i in self.factors["lower_limits_transit_time"]
         )
 
-    def check_upper_limits_transit_time(self):
+    def check_upper_limits_transit_time(self) -> bool:
         return all(
             upper_i > 0 for upper_i in self.factors["upper_limits_transit_time"]
         )
 
-    def check_arrival_rate(self):
+    def check_arrival_rate(self) -> bool:
         return self.factors["arrival_rate"] > 0
 
-    def check_n_messages(self):
+    def check_n_messages(self) -> bool:
         return self.factors["n_messages"] > 0
 
-    def check_n_networks(self):
+    def check_n_networks(self) -> bool:
         return self.factors["n_networks"] > 0
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["process_prob"]) != self.factors["n_networks"]:
             return False
         elif len(self.factors["cost_process"]) != self.factors["n_networks"]:
@@ -436,7 +436,7 @@ class NetworkMinTotalCost(Problem):
             [1 for _ in range(self.model.factors["n_networks"])]
         )
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -453,7 +453,7 @@ class NetworkMinTotalCost(Problem):
         factor_dict = {"process_prob": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -471,7 +471,7 @@ class NetworkMinTotalCost(Problem):
         vector = tuple(factor_dict["process_prob"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -489,7 +489,7 @@ class NetworkMinTotalCost(Problem):
         objectives = (response_dict["total_cost"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -504,10 +504,12 @@ class NetworkMinTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -527,7 +529,9 @@ class NetworkMinTotalCost(Problem):
         det_objectives_gradients = (0,) * self.model.factors["n_networks"]
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -546,11 +550,11 @@ class NetworkMinTotalCost(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -569,9 +573,9 @@ class NetworkMinTotalCost(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         # Check constraint that probabilities sum to one.
         probability_feasible = round(sum(x), 10) == 1.0
-        return box_feasible * probability_feasible
+        return box_feasible and probability_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -591,4 +595,4 @@ class NetworkMinTotalCost(Problem):
             summation=1.0,
             exact_sum=True,
         )
-        return x
+        return tuple(x)

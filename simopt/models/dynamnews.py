@@ -101,34 +101,34 @@ class DynamNews(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_num_prod(self):
+    def check_num_prod(self) -> bool:
         return self.factors["num_prod"] > 0
 
-    def check_num_customer(self):
+    def check_num_customer(self) -> bool:
         return self.factors["num_customer"] > 0
 
-    def check_c_utility(self):
+    def check_c_utility(self) -> bool:
         return len(self.factors["c_utility"]) == self.factors["num_prod"]
 
-    def check_init_level(self):
+    def check_init_level(self) -> bool:
         return all(np.array(self.factors["init_level"]) >= 0) & (
             len(self.factors["init_level"]) == self.factors["num_prod"]
         )
 
-    def check_mu(self):
+    def check_mu(self) -> bool:
         return True
 
-    def check_price(self):
+    def check_price(self) -> bool:
         return all(np.array(self.factors["price"]) >= 0) & (
             len(self.factors["price"]) == self.factors["num_prod"]
         )
 
-    def check_cost(self):
+    def check_cost(self) -> bool:
         return all(np.array(self.factors["cost"]) >= 0) & (
             len(self.factors["cost"]) == self.factors["num_prod"]
         )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         return all(
             np.subtract(self.factors["price"], self.factors["cost"]) >= 0
         )
@@ -152,14 +152,14 @@ class DynamNews(Model):
             "fill_rate" = fraction of customer orders fulfilled
         """
         # Designate random number generator for generating a Gumbel random variable.
-        Gumbel_rng = rng_list[0]
+        gumbel_rng = rng_list[0]
         # Compute Gumbel rvs for the utility of the products.
         gumbel = np.zeros(
             (self.factors["num_customer"], self.factors["num_prod"])
         )
         for t in range(self.factors["num_customer"]):
             for j in range(self.factors["num_prod"]):
-                gumbel[t][j] = Gumbel_rng.gumbelvariate(
+                gumbel[t][j] = gumbel_rng.gumbelvariate(
                     -self.factors["mu"] * np.euler_gamma, self.factors["mu"]
                 )
         # Compute utility for each product and each customer.
@@ -372,7 +372,7 @@ class DynamNewsMaxProfit(Problem):
         vector = tuple(factor_dict["init_level"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -390,7 +390,7 @@ class DynamNewsMaxProfit(Problem):
         objectives = (response_dict["profit"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -405,10 +405,10 @@ class DynamNewsMaxProfit(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -428,7 +428,9 @@ class DynamNewsMaxProfit(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -446,11 +448,11 @@ class DynamNewsMaxProfit(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -465,9 +467,10 @@ class DynamNewsMaxProfit(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x > 0)
+        greater_than_zero: list[bool] = [x[j] > 0 for j in range(self.dim)]
+        return all(greater_than_zero)
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

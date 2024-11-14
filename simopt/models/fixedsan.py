@@ -46,6 +46,8 @@ class FixedSAN(Model):
     """
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "FIXEDSAN"
         self.n_rngs = 1
         self.n_responses = 1
@@ -74,13 +76,13 @@ class FixedSAN(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_num_arcs(self):
+    def check_num_arcs(self) -> bool:
         return self.factors["num_arcs"] > 0
 
-    def check_num_nodes(self):
+    def check_num_nodes(self) -> bool:
         return self.factors["num_nodes"] > 0
 
-    def check_arc_means(self):
+    def check_arc_means(self) -> bool:
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & x > 0
@@ -109,71 +111,77 @@ class FixedSAN(Model):
         exp_rng = rng_list[0]
 
         # Generate arc lengths.
-        T = np.zeros(self.factors["num_nodes"])
-        Tderiv = np.zeros((self.factors["num_nodes"], self.factors["num_arcs"]))
+        nodes = np.zeros(self.factors["num_nodes"])
+        time_deriv = np.zeros(
+            (self.factors["num_nodes"], self.factors["num_arcs"])
+        )
         thetas = list(self.factors["arc_means"])
         arcs = [exp_rng.expovariate(1 / x) for x in thetas]
 
         # Brute force calculation like in Matlab code
-        T[1] = T[0] + arcs[0]
-        Tderiv[1, :] = Tderiv[0, :]
-        Tderiv[1, 0] = Tderiv[1, 0] + arcs[0] / thetas[0]
+        nodes[1] = nodes[0] + arcs[0]
+        time_deriv[1, :] = time_deriv[0, :]
+        time_deriv[1, 0] = time_deriv[1, 0] + arcs[0] / thetas[0]
 
-        T[2] = max(T[0] + arcs[1], T[1] + arcs[2])
-        if T[0] + arcs[1] > T[1] + arcs[2]:
-            T[2] = T[0] + arcs[1]
-            Tderiv[2, :] = Tderiv[0, :]
-            Tderiv[2, 1] = Tderiv[2, 1] + arcs[1] / thetas[1]
+        nodes[2] = max(nodes[0] + arcs[1], nodes[1] + arcs[2])
+        if nodes[0] + arcs[1] > nodes[1] + arcs[2]:
+            nodes[2] = nodes[0] + arcs[1]
+            time_deriv[2, :] = time_deriv[0, :]
+            time_deriv[2, 1] = time_deriv[2, 1] + arcs[1] / thetas[1]
         else:
-            T[2] = T[1] + arcs[2]
-            Tderiv[2, :] = Tderiv[1, :]
-            Tderiv[2, 2] = Tderiv[2, 2] + arcs[2] / thetas[2]
+            nodes[2] = nodes[1] + arcs[2]
+            time_deriv[2, :] = time_deriv[1, :]
+            time_deriv[2, 2] = time_deriv[2, 2] + arcs[2] / thetas[2]
 
-        T[3] = T[1] + arcs[3]
-        Tderiv[3, :] = Tderiv[1, :]
-        Tderiv[3, 3] = Tderiv[3, 3] + arcs[3] / thetas[3]
+        nodes[3] = nodes[1] + arcs[3]
+        time_deriv[3, :] = time_deriv[1, :]
+        time_deriv[3, 3] = time_deriv[3, 3] + arcs[3] / thetas[3]
 
-        T[4] = T[3] + arcs[6]
-        Tderiv[4, :] = Tderiv[3, :]
-        Tderiv[4, 6] = Tderiv[4, 6] + arcs[6] / thetas[6]
+        nodes[4] = nodes[3] + arcs[6]
+        time_deriv[4, :] = time_deriv[3, :]
+        time_deriv[4, 6] = time_deriv[4, 6] + arcs[6] / thetas[6]
 
-        T[5] = max([T[1] + arcs[4], T[2] + arcs[5], T[4] + arcs[8]])
-        ind = np.argmax([T[1] + arcs[4], T[2] + arcs[5], T[4] + arcs[8]])
+        nodes[5] = max(
+            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
+        )
+        ind = np.argmax(
+            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
+        )
 
         if ind == 1:
-            Tderiv[5, :] = Tderiv[1, :]
-            Tderiv[5, 4] = Tderiv[5, 4] + arcs[4] / thetas[4]
+            time_deriv[5, :] = time_deriv[1, :]
+            time_deriv[5, 4] = time_deriv[5, 4] + arcs[4] / thetas[4]
         elif ind == 2:
-            Tderiv[5, :] = Tderiv[2, :]
-            Tderiv[5, 5] = Tderiv[5, 5] + arcs[5] / thetas[5]
+            time_deriv[5, :] = time_deriv[2, :]
+            time_deriv[5, 5] = time_deriv[5, 5] + arcs[5] / thetas[5]
         else:
-            Tderiv[5, :] = Tderiv[4, :]
-            Tderiv[5, 8] = Tderiv[5, 8] + arcs[8] / thetas[8]
+            time_deriv[5, :] = time_deriv[4, :]
+            time_deriv[5, 8] = time_deriv[5, 8] + arcs[8] / thetas[8]
 
-        T[6] = T[3] + arcs[7]
-        Tderiv[6, :] = Tderiv[3, :]
-        Tderiv[6, 7] = Tderiv[6, 7] + arcs[7] / thetas[7]
+        nodes[6] = nodes[3] + arcs[7]
+        time_deriv[6, :] = time_deriv[3, :]
+        time_deriv[6, 7] = time_deriv[6, 7] + arcs[7] / thetas[7]
 
-        if T[6] + arcs[11] > T[4] + arcs[9]:
-            T[7] = T[6] + arcs[11]
-            Tderiv[7, :] = Tderiv[6, :]
-            Tderiv[7, 11] = Tderiv[7, 11] + arcs[11] / thetas[11]
+        if nodes[6] + arcs[11] > nodes[4] + arcs[9]:
+            nodes[7] = nodes[6] + arcs[11]
+            time_deriv[7, :] = time_deriv[6, :]
+            time_deriv[7, 11] = time_deriv[7, 11] + arcs[11] / thetas[11]
         else:
-            T[7] = T[4] + arcs[9]
-            Tderiv[7, :] = Tderiv[4, :]
-            Tderiv[7, 9] = Tderiv[7, 9] + arcs[9] / thetas[9]
+            nodes[7] = nodes[4] + arcs[9]
+            time_deriv[7, :] = time_deriv[4, :]
+            time_deriv[7, 9] = time_deriv[7, 9] + arcs[9] / thetas[9]
 
-        if T[5] + arcs[10] > T[7] + arcs[12]:
-            T[8] = T[5] + arcs[10]
-            Tderiv[8, :] = Tderiv[5, :]
-            Tderiv[8, 10] = Tderiv[8, 10] + arcs[10] / thetas[10]
+        if nodes[5] + arcs[10] > nodes[7] + arcs[12]:
+            nodes[8] = nodes[5] + arcs[10]
+            time_deriv[8, :] = time_deriv[5, :]
+            time_deriv[8, 10] = time_deriv[8, 10] + arcs[10] / thetas[10]
         else:
-            T[8] = T[7] + arcs[12]
-            Tderiv[8, :] = Tderiv[7, :]
-            Tderiv[8, 12] = Tderiv[8, 12] + arcs[12] / thetas[12]
+            nodes[8] = nodes[7] + arcs[12]
+            time_deriv[8, :] = time_deriv[7, :]
+            time_deriv[8, 12] = time_deriv[8, 12] + arcs[12] / thetas[12]
 
-        longest_path = T[8]
-        longest_path_gradient = Tderiv[8, :]
+        longest_path = nodes[8]
+        longest_path_gradient = time_deriv[8, :]
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
@@ -183,7 +191,9 @@ class FixedSAN(Model):
             }
             for response_key in responses
         }
-        gradients["longest_path_length"]["arc_means"] = longest_path_gradient
+        gradients["longest_path_length"]["arc_means"] = float(
+            longest_path_gradient
+        )
 
         return responses, gradients
 
@@ -314,7 +324,7 @@ class FixedSANLongestPath(Problem):
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
-    def check_arc_costs(self):
+    def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
@@ -322,7 +332,7 @@ class FixedSANLongestPath(Problem):
             len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
         ) & positive
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -339,7 +349,7 @@ class FixedSANLongestPath(Problem):
         factor_dict = {"arc_means": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -357,7 +367,7 @@ class FixedSANLongestPath(Problem):
         vector = tuple(factor_dict["arc_means"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -375,7 +385,7 @@ class FixedSANLongestPath(Problem):
         objectives = (response_dict["longest_path_length"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -390,10 +400,12 @@ class FixedSANLongestPath(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -409,13 +421,15 @@ class FixedSANLongestPath(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
+        det_stoch_constraints = ()
         det_stoch_constraints_gradients = (
             (0,) * self.dim,
-        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -439,7 +453,7 @@ class FixedSANLongestPath(Problem):
         )
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -453,9 +467,10 @@ class FixedSANLongestPath(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(np.array(x) >= 0)
+        is_positive: list[bool] = [x_i >= 0 for x_i in x]
+        return all(is_positive)
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 

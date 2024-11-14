@@ -46,6 +46,8 @@ class SAN(Model):
     """
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "SAN"
         self.n_rngs = 1
         self.n_responses = 1
@@ -88,19 +90,20 @@ class SAN(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_num_nodes(self):
+    def check_num_nodes(self) -> bool:
         return self.factors["num_nodes"] > 0
 
-    def dfs(self, graph, start, visited=None) -> None:
+    # TODO: figure out variable types for this method
+    def dfs(self, graph, start, visited=None) -> set:  # noqa: ANN001
         if visited is None:
             visited = set()
         visited.add(start)
 
-        for next in graph[start] - visited:
-            self.dfs(graph, next, visited)
+        for neighbor in graph[start] - visited:
+            self.dfs(graph, neighbor, visited)
         return visited
 
-    def check_arcs(self):
+    def check_arcs(self) -> bool:
         if len(self.factors["arcs"]) <= 0:
             return False
         # Check graph is connected.
@@ -114,7 +117,7 @@ class SAN(Model):
             return True
         return False
 
-    def check_arc_means(self):
+    def check_arc_means(self) -> bool:
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & (x > 0)
@@ -177,15 +180,20 @@ class SAN(Model):
             )
 
         # Calculate the length of the longest path.
-        T = np.zeros(self.factors["num_nodes"])
+        path_length = np.zeros(self.factors["num_nodes"])
         prev = np.zeros(self.factors["num_nodes"])
         for i in range(1, self.factors["num_nodes"]):
             vi = topo_order[i - 1]
             for j in graph_out[vi]:
-                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
-                    T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+                if (
+                    path_length[j - 1]
+                    < path_length[vi - 1] + arc_length[str((vi, j))]
+                ):
+                    path_length[j - 1] = (
+                        path_length[vi - 1] + arc_length[str((vi, j))]
+                    )
                     prev[j - 1] = vi
-        longest_path = T[self.factors["num_nodes"] - 1]
+        longest_path = path_length[self.factors["num_nodes"] - 1]
 
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
@@ -211,7 +219,7 @@ class SAN(Model):
             }
             for response_key in responses
         }
-        gradients["longest_path_length"]["arc_means"] = gradient
+        gradients["longest_path_length"]["arc_means"] = float(gradient)
         return responses, gradients
 
 
@@ -341,7 +349,7 @@ class SANLongestPath(Problem):
         self.lower_bounds = (1e-2,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
 
-    def check_arc_costs(self):
+    def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
@@ -349,7 +357,7 @@ class SANLongestPath(Problem):
             len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
         ) & positive
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -366,7 +374,7 @@ class SANLongestPath(Problem):
         factor_dict = {"arc_means": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -384,7 +392,7 @@ class SANLongestPath(Problem):
         vector = tuple(factor_dict["arc_means"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -402,7 +410,7 @@ class SANLongestPath(Problem):
         objectives = (response_dict["longest_path_length"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -417,10 +425,12 @@ class SANLongestPath(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -436,13 +446,15 @@ class SANLongestPath(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
+        det_stoch_constraints = ()
         det_stoch_constraints_gradients = (
             (0,) * self.dim,
-        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -466,7 +478,7 @@ class SANLongestPath(Problem):
         )
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -480,9 +492,10 @@ class SANLongestPath(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(np.array(x) >= 0)
+        is_positive: list[bool] = [x_i >= 0 for x_i in x]
+        return all(is_positive)
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
