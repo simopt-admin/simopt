@@ -174,6 +174,15 @@ class NewExperimentWindow(Toplevel):
         self.scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
+        self._initialize_main_frame()
+        # Setup each subframe
+        self._initialize_experiment_frame()
+        self._initialize_current_experiment_frame()
+        self._initialize_notebook_frame()
+        self._initialize_generated_design_frame()
+        self._initialize_design_options()
+
+    def _initialize_main_frame(self) -> None:
         self.frames["main"] = ttk.Frame(self)
         self.frames["main"].pack(fill="both", expand=True)
         self.frames["main"].grid_rowconfigure(0, weight=1)
@@ -181,7 +190,7 @@ class NewExperimentWindow(Toplevel):
         self.frames["main"].grid_columnconfigure(0, weight=1)
         self.frames["main"].grid_columnconfigure(1, weight=2)
 
-        # Setup the experiments frame
+    def _initialize_experiment_frame(self) -> None:
         self.frames["exps"] = ttk.Frame(
             self.frames["main"], borderwidth=1, relief="solid"
         )
@@ -228,7 +237,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.buttons["exps.fields.load_exp"].grid(row=2, column=0, sticky="ew")
 
-        # Setup the current experiment frame
+    def _initialize_current_experiment_frame(self) -> None:
         self.frames["curr_exp"] = ttk.Frame(
             self.frames["main"], borderwidth=1, relief="solid"
         )
@@ -333,7 +342,7 @@ class NewExperimentWindow(Toplevel):
             row=4, column=0, columnspan=2, sticky="ew"
         )
 
-        # Setup the notebook frame
+    def _initialize_notebook_frame(self) -> None:
         self.frames["ntbk"] = ttk.Frame(
             self.frames["main"], borderwidth=1, relief="solid"
         )
@@ -429,7 +438,7 @@ class NewExperimentWindow(Toplevel):
             "<<NotebookTabChanged>>", self._on_notebook_tab_change
         )
 
-        # Setup the generated design frame
+    def _initialize_generated_design_frame(self) -> None:
         self.frames["gen_design"] = ttk.Frame(
             self.frames["main"], borderwidth=1, relief="solid"
         )
@@ -451,7 +460,7 @@ class NewExperimentWindow(Toplevel):
         # Don't grid this by default, it'll be gridded as needed
         # self.canvases["gen_design.display"].grid(row=1, column=0, sticky="nsew")
 
-        # Setup the design options frame
+    def _initialize_design_options(self) -> None:
         self.frames["design_opts"] = ttk.Frame(
             self.frames["main"], borderwidth=1, relief="solid"
         )
@@ -504,6 +513,7 @@ class NewExperimentWindow(Toplevel):
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
         # Exit if this is called during setup
+        # Not totally sure why this is necessary, but it is
         if self.buttons.get("design_opts.generate") is None:
             return
         # Hide the generated design frame
@@ -511,21 +521,21 @@ class NewExperimentWindow(Toplevel):
         self.frames["ntbk"].grid(rowspan=2)
 
         # Figure out what tab is being switched to
-        tab = event.widget.tab(event.widget.select(), "text")
+        tab_name = event.widget.tab(event.widget.select(), "text")
         # Switch on the tab name
-        if tab == "Add Problem":
+        if tab_name == "Add Problem":
             self.selected_problem_name.set("")
             self.buttons["design_opts.generate"].configure(
                 text="Add Experiment", command=self.create_problem_design
             )
 
-        elif tab == "Add Solver":
+        elif tab_name == "Add Solver":
             self.selected_solver_name.set("")
             self.buttons["design_opts.generate"].configure(
                 text="Add Experiment", command=self.create_solver_design
             )
 
-        elif tab == "Quick-Add Problems/Solvers":
+        elif tab_name == "Quick-Add Problems/Solvers":
             self._add_with_default_options()
             self.buttons["design_opts.generate"].configure(
                 text="Add Cross Design to Experiment",
@@ -533,7 +543,7 @@ class NewExperimentWindow(Toplevel):
             )
 
         else:
-            error_msg = f"Unknown tab name: {tab}"
+            error_msg = f"Unknown tab name: {tab_name}"
             raise ValueError(error_msg)
 
     # Event handler for when the user changes the problem combobox
