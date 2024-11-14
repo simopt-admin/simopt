@@ -1,3 +1,4 @@
+from abc import ABCMeta
 import ast
 import os
 import pickle
@@ -13,7 +14,7 @@ from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageTk
 
 from simopt.base import Model, Problem, Solver
-from simopt.data_farming_base import DATA_FARMING_DIR, DesignType
+from simopt.data_farming_base import DATA_FARMING_DIR
 from simopt.directory import (
     problem_directory,
     problem_unabbreviated_directory,
@@ -146,29 +147,30 @@ class NewExperimentWindow(Toplevel):
         # __init__ method of the class. This will eliminate the need to
         # instantiate the class to get the name.
         self.valid_problems = {
-            f"{problem().name} - {key}": problem
+            f"{problem().name} - {key}": problem  # type: ignore
             for key, problem in problem_unabbreviated_directory.items()
         }
         self.valid_solvers = {
-            f"{solver().name} - {key}": solver
+            f"{solver().name} - {key}": solver  # type: ignore
             for key, solver in solver_unabbreviated_directory.items()
         }
         self.selected_problem_name = tk.StringVar()
         self.selected_solver_name = tk.StringVar()
+        self.factor_dict: dict[str, DFFactor] = {}
         self.design_type = tk.StringVar()
         self.design_num_stacks = tk.IntVar()
         self.design_name = tk.StringVar()
 
         # Using dictionaries to store TK variables so they don't clutter
         # the namespace with this.____
-        self.labels: dict[str, tk.Label] = {}
-        self.buttons: dict[str, tk.Button] = {}
-        self.entries: dict[str, tk.Entry] = {}
-        self.checkbuttons: dict[str, tk.Checkbutton] = {}
+        self.labels: dict[str, ttk.Label] = {}
+        self.buttons: dict[str, ttk.Button] = {}
+        self.entries: dict[str, ttk.Entry] = {}
+        self.checkbuttons: dict[str, ttk.Checkbutton] = {}
         self.canvases: dict[str, tk.Canvas] = {}
         self.comboboxes: dict[str, ttk.Combobox] = {}
         self.notebooks: dict[str, ttk.Notebook] = {}
-        self.frames: dict[str, tk.Frame] = {}
+        self.frames: dict[str, ttk.Frame] = {}
         self.scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
@@ -388,6 +390,34 @@ class NewExperimentWindow(Toplevel):
         self.notebooks["ntbk.ps_adding"].add(
             self.frames["ntbk.ps_adding.solver"], text="Add Solver"
         )
+        self.frames["ntbk.ps_adding.solver"].grid_columnconfigure(1, weight=1)
+        self.frames["ntbk.ps_adding.solver"].grid_rowconfigure(1, weight=1)
+        self.labels["ntbk.ps_adding.solver.select"] = ttk.Label(
+            self.frames["ntbk.ps_adding.solver"], text="Selected Solver"
+        )
+        self.labels["ntbk.ps_adding.solver.select"].grid(
+            row=0, column=0, padx=5
+        )
+        # Setting this to readonly prevents the user from typing in the combobox
+        self.comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
+            self.frames["ntbk.ps_adding.solver"],
+            textvariable=self.selected_solver_name,
+            values=sorted(list(self.valid_solvers.keys())),
+            state="readonly",
+        )
+        self.comboboxes["ntbk.ps_adding.solver.select"].grid(
+            row=0, column=1, sticky="ew", padx=5
+        )
+        self.comboboxes["ntbk.ps_adding.solver.select"].bind(
+            "<<ComboboxSelected>>", self._on_solver_combobox_change
+        )
+        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
+            self.frames["ntbk.ps_adding.solver"]
+        )
+        self.canvases["ntbk.ps_adding.solver.factors"].grid(
+            row=1, column=0, sticky="nsew", columnspan=2
+        )
+
         self.frames["ntbk.ps_adding.quick_add"] = ttk.Frame(
             self.notebooks["ntbk.ps_adding"]
         )
@@ -532,9 +562,14 @@ class NewExperimentWindow(Toplevel):
         problem = self.valid_problems[problem_name]
         self._create_problem_factors_canvas(problem)
 
-    def _on_solver_combobox_change(self) -> None:
+    def _on_solver_combobox_change(self, _: tk.Event) -> None:
         solver_name = self.selected_solver_name.get()
-        solver = self.valid_solvers[solver_name]
+        # Initialize solver for later. This is needed since the solver has many
+        # of its attributes set in the __init__ method, and if it is not
+        # initialized here, the solver will not have the correct attributes
+        # TODO: remove the need to do this
+        solver_class: ABCMeta = self.valid_solvers[solver_name]  # type: ignore
+        solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
 
     def update_compatible_problem_list(self) -> None:
@@ -709,6 +744,7 @@ class NewExperimentWindow(Toplevel):
         )
 
         # Calculate how much space for text to wrap
+        # TODO: make this check happen whenever the window is resized
         checkbox_size = 50
         total_scale = problem_frame_weight + solver_frame_weight
         problem_scale = problem_frame_weight / total_scale
@@ -1010,14 +1046,14 @@ class NewExperimentWindow(Toplevel):
 
         if is_problem:
             # show problem factors and store default widgets and values to this dict
-            self.design_defaults, last_row = self.show_factor_defaults(
+            self.design_defaults, last_row = self._show_factor_defaults(
                 self.obj,
                 self.problem_factor_display_canvas,
                 factor_dict=problem_defaults,
                 design_factors=self.design_factors,
             )
             # # show model factors and store default widgets and default values to these
-            self.model_defaults, new_last_row = self.show_factor_defaults(
+            self.model_defaults, new_last_row = self._show_factor_defaults(
                 base_object=self.obj,
                 frame=self.problem_factor_display_canvas,
                 IsModel=True,
@@ -1058,7 +1094,7 @@ class NewExperimentWindow(Toplevel):
 
         else:
             # show problem factors and store default widgets to this dict
-            self.design_defaults, last_row = self.show_factor_defaults(
+            self.design_defaults, last_row = self._show_factor_defaults(
                 self.obj,
                 self.factor_display_canvas,
                 factor_dict=solver_defaults,
@@ -1254,12 +1290,13 @@ class NewExperimentWindow(Toplevel):
 
     def destroy_widget_children(self, widget: tk.Widget) -> None:
         """Clear frame of all widgets."""
-        for child in widget.children.values():
+        children = widget.winfo_children()
+        for child in children:
             child.destroy()
 
     def insert_factor_headers(
         self,
-        frame: tk.Frame,
+        frame: ttk.Frame,
         first_row: int = 0,
     ) -> int:
         """Insert the headers for the factors into the frame.
@@ -1281,16 +1318,16 @@ class NewExperimentWindow(Toplevel):
         """
         header_columns = [
             "Factor Name",
-            "Factor Description",
-            "Factor Type",
+            "Description",
+            "Type",
             "Default Value",
             "Include in Design?",
-            "Min Value",
-            "Max Value",
+            "Minimum",
+            "Maximum",
             "# Decimals",
         ]
         for heading in header_columns:
-            frame.grid_columnconfigure(header_columns.index(heading))
+            frame.grid_columnconfigure(header_columns.index(heading), weight=1)
             label = tk.Label(
                 master=frame,
                 text=heading,
@@ -1299,7 +1336,15 @@ class NewExperimentWindow(Toplevel):
             label.grid(
                 row=first_row,
                 column=header_columns.index(heading),
+                padx=10,
             )
+        # Update the frame to display the headers
+        frame.update()
+        # Now that the headers are displayed, we can lock the column widths
+        for heading in header_columns:
+            heading_index = header_columns.index(heading)
+            frame.grid_columnconfigure(heading_index, weight=1)
+
         # Insert horizontal separator
         ttk.Separator(frame, orient="horizontal").grid(
             row=first_row + 1, columnspan=len(header_columns), sticky="ew"
@@ -1308,7 +1353,7 @@ class NewExperimentWindow(Toplevel):
 
     def insert_factors(
         self,
-        frame: tk.Frame,
+        frame: ttk.Frame,
         factor_dict: dict[str, DFFactor],
         first_row: int = 2,
     ) -> int:
@@ -1339,7 +1384,7 @@ class NewExperimentWindow(Toplevel):
             factor_obj = factor_dict[factor_name]
             # Make a list of functions that will return the widgets for each
             # column in the frame
-            column_functions: list[Callable[[tk.Frame], tk.Widget | None]] = [
+            column_functions: list[Callable[[ttk.Frame], tk.Widget | None]] = [
                 factor_obj.get_name_label,
                 factor_obj.get_description_label,
                 factor_obj.get_type_label,
@@ -1361,275 +1406,35 @@ class NewExperimentWindow(Toplevel):
 
             # Loop through and insert the factor data into the frame
             for column_index, function in enumerate(column_functions):
-                # Configure the column
-                frame.grid_columnconfigure(column_index)
-                # Call the function to get the widget
                 widget = function(frame)
                 # Display the widget if it exists
                 if widget is not None:
                     widget.grid(
-                        row=row_index, column=column_index, padx=10, pady=3
+                        row=row_index,
+                        column=column_index,
+                        padx=10,
+                        pady=3,
+                        sticky="ew"
                     )
+                else:
+                    break
         return row_index
 
-    def show_factor_defaults(
-        self,
-        base_object: Solver | Problem,
-        frame: tk.Frame,
-        factor_dict: dict | None = None,
-        is_model: bool = False,
-        first_row: int = 1,
-        empty_rows_between: int = 0,
-    ) -> tuple[dict, int]:
-        """Show default factors for a solver or problem.
+    def _create_problem_factors_canvas(self, event: tk.Event) -> None:
+        # Clear the canvas
+        canvas = self.canvases["ntbk.ps_adding.problem.factors"]
+        self.destroy_widget_children(canvas)
 
-        Parameters
-        ----------
-        base_object : Solver | Problem
-            Solver or Problem object.
-        frame : tk.Frame
-            Frame to display factors.
-        factor_dict : dict, optional
-            Dictionary of factors and their default values.
-        is_model : bool, optional
-            If True, base_object is a model.
-        first_row : int, optional
-            First row to display factors.
-        empty_rows_between : int, optional
-            Number of empty rows between factors.
-
-        Returns
-        -------
-        dict
-            Dictionary of factors and their default values.
-        int
-            Last row to display factors.
-
-        """
-        # Widget lists
-        defaults = {}
-        # Initial variable values
-        # self.factor_que_length = 0
-        entry_width = 10
-        # append_list
-        if is_model:
-            base_object = base_object.model
-
-        # Store outside of loop so we can return at end
-        row_index = first_row
-
-        factor_spec = base_object.specifications
-        for index, factor in enumerate(factor_spec):
-            # Update the row index
-            # Skip every other row to allow for the separator
-            row_index = first_row + index * (empty_rows_between + 1)
-
-            # Get the factor's datatype, description, and default value
-            f_type = factor_spec[factor].get("datatype")
-            f_type_str = f_type.__name__
-            f_description = factor_spec[factor].get("description")
-            if factor_dict is not None:
-                f_default = factor_dict[factor]
-            else:
-                f_default = factor_spec[factor].get("default")
-
-            # Loop through and insert the factor data into the frame
-            column_data = [factor, f_description, f_type_str]
-            for column_index, column in enumerate(column_data):
-                frame.grid_columnconfigure(column_index)
-                label = tk.Label(
-                    master=frame,
-                    text=column,
-                    wraplength=250,
-                    justify=tk.LEFT,
-                )
-                label.grid(
-                    row=row_index,
-                    column=column_index,
-                    padx=10,
-                    pady=3,
-                    sticky=tk.W,
-                )
-
-            default_value = tk.StringVar()
-            if f_type is bool:
-                # Add option menu for true/false
-                default_value.set(str(True))  # Set default bool option
-                bool_menu = ttk.OptionMenu(
-                    frame, default_value, str(True), str(True), str(False)
-                )
-                bool_menu.grid(row=row_index, column=3, sticky=tk.W + tk.E)
-
-            elif f_type in (list, tuple):
-                # Add entry box for default value
-                default_len = len(str(f_default))
-                if default_len > entry_width:
-                    entry_width = default_len
-                    if default_len > 150:
-                        entry_width = 150
-                default_value = tk.StringVar()
-                default_entry = tk.Entry(
-                    master=frame,
-                    width=entry_width,
-                    textvariable=default_value,
-                    justify=tk.LEFT,
-                )
-                default_entry.grid(
-                    row=row_index, column=3, sticky=tk.W + tk.E, columnspan=5
-                )
-                # Display original default value
-                default_entry.insert(0, str(f_default))
-
-            # Add entry box for default value
-            elif f_type in (int, float):
-                default_entry = tk.Entry(
-                    master=frame,
-                    width=entry_width,
-                    textvariable=default_value,
-                    justify=tk.RIGHT,
-                )
-                default_entry.grid(row=row_index, column=3, sticky=tk.W + tk.E)
-                # Display original default value
-                default_entry.insert(0, f_default)
-
-            # add varibles to default list
-            defaults[factor] = default_value
-
-        return defaults, row_index
-
-    def show_data_farming_options(
-        self,
-        base_object: Solver | Problem | Model,
-        frame: tk.Frame,
-        first_row: int = 1,
-        empty_rows_between: int = 0,
-    ) -> tuple[dict, dict, dict, dict, dict, int]:
-        """Show data farming options for a solver or problem.
-
-        Parameters
-        ----------
-        base_object : Solver | Problem | Model
-            Solver, Problem, or Model object.
-        frame : tk.Frame
-            Frame to display factors.
-        first_row : int, optional
-            First row to display factors.
-        empty_rows_between : int, optional
-            Number of empty rows between factors.
-
-        Returns
-        -------
-        dict
-            Dictionary of factors and their check states.
-        dict
-            Dictionary of factors and their minimum values.
-        dict
-            Dictionary of factors and their maximum values.
-        dict
-            Dictionary of float factors and their number of decimals.
-        dict
-            Dictionary of factors and their widgets.
-        int
-            Last row to display factors.
-
-        """
-        checkstates = {}  # holds variable for each factor's check state
-        min_vals = {}  # holds variable for each factor's min value
-        max_vals = {}  # holds variable for each factor's max values
-        dec_vals = {}  # holds variable for each float factor's # decimals
-        widgets = {}  # holds a list of each widget for min, max, and dec entry for each factor
-
-        # TODO: Investigate if this is a valid approach for models
-        # The specification path looks like it's querying a problem object
-        if isinstance(base_object, Model):
-            specifications = base_object.model.specifications
-        else:
-            specifications = base_object.specifications
-
-        for index, factor in enumerate(specifications):
-            factor_datatype = specifications[factor].get("datatype")
-            class_type = type(base_object).__base__
-            widget_list = []
-            row_index = first_row + index * (empty_rows_between + 1)
-
-            # If the factor is an int, float, or bool, we can farm it
-            if factor_datatype in (int, float, bool):
-                # Add check box to include in design
-                checkstate = tk.BooleanVar()
-                checkbox = tk.Checkbutton(
-                    master=frame,
-                    variable=checkstate,
-                    width=5,
-                    command=lambda class_type=class_type: self.enable_datafarm_entry(
-                        class_type
-                    ),
-                )
-                checkbox.grid(
-                    row=row_index, column=4, sticky=tk.W + tk.E, padx=5
-                )
-                checkstates[factor] = checkstate
-
-                if factor_datatype in (int, float):
-                    # Add entry box for min val
-                    min_val = tk.StringVar()
-                    min_entry = tk.Entry(
-                        master=frame,
-                        width=10,
-                        textvariable=min_val,
-                        justify="right",
-                    )
-                    min_entry.grid(
-                        row=row_index, column=5, sticky=tk.W + tk.E, padx=5
-                    )
-                    min_entry.configure(state="disabled")
-                    min_vals[factor] = min_val
-                    widget_list.append(min_entry)
-
-                    # Add entry box for max val
-                    max_val = tk.StringVar()
-                    max_entry = tk.Entry(
-                        master=frame,
-                        width=10,
-                        textvariable=max_val,
-                        justify="right",
-                    )
-                    max_entry.grid(
-                        row=row_index, column=6, sticky=tk.W + tk.E, padx=5
-                    )
-                    max_entry.configure(state="disabled")
-                    max_vals[factor] = max_val
-                    widget_list.append(max_entry)
-
-                    # Add entry box for dec val for float factors
-                    if factor_datatype is float:
-                        dec_val = tk.StringVar()
-                        dec_entry = tk.Entry(
-                            master=frame,
-                            width=10,
-                            textvariable=dec_val,
-                            justify="right",
-                        )
-                        dec_entry.grid(
-                            row=row_index, column=7, sticky=tk.W + tk.E, padx=5
-                        )
-                        dec_entry.configure(state="disabled")
-                        dec_vals[factor] = dec_val
-                        widget_list.append(dec_entry)
-
-                widgets[factor] = widget_list
-        return checkstates, min_vals, max_vals, dec_vals, widgets, row_index
-
-    def show_problem_factors(self, event: tk.Event) -> None:
-        # clear previous selections
-        self.destroy_widget_children(self.problem_frame)
-        self.destroy_widget_children(self.model_frame)
-        # check solver compatibility
-        self.check_solver_compatibility()
-
-        """ Initialize frames, headers, and data farming buttons"""
-
-        # self.prob_mod_frame = tk.Frame(master = self)
-        # self.prob_mod_frame.grid(row = self.factors_display_row, column = 0)
+        # Initialize the frames and headers
+        self.frames["ntbk.ps_adding.problem.factors.problems"] = ttk.Frame(
+            master=canvas
+        )
+        self.frames["ntbk.ps_adding.problem.factors.problems"].grid(
+            row=0, column=0, sticky=tk.N + tk.W
+        )
+        self.frames["ntbk.ps_adding.problem.factors.models"] = ttk.Frame(
+            master=canvas
+        )
 
         self.problem_frame = tk.Frame(master=self.problem_notebook_frame)
         self.problem_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
@@ -1687,7 +1492,7 @@ class NewExperimentWindow(Toplevel):
         self.problem_object = self.problem_list[self.selected_problem_name]()
 
         # show problem factors and store default widgets and values to this dict
-        self.problem_defaults, last_row = self.show_factor_defaults(
+        self.problem_defaults, last_row = self._show_factor_defaults(
             self.problem_object, self.problem_frame
         )
 
@@ -1707,7 +1512,7 @@ class NewExperimentWindow(Toplevel):
         # self.model_problem_dict = model_problem_class_directory # directory that relates problem name to model class
         # self.model_object = self.model_problem_dict[self.selected_problem]()
         # # show model factors and store default widgets and default values to these
-        self.model_defaults, new_last_row = self.show_factor_defaults(
+        self.model_defaults, new_last_row = self._show_factor_defaults(
             base_object=self.problem_object,
             frame=self.problem_frame,
             is_model=True,
@@ -1741,83 +1546,33 @@ class NewExperimentWindow(Toplevel):
         )
         self.add_prob_to_exp_button.grid(row=new_last_row + 2, column=0)
 
-    def show_solver_factors(self, event: tk.Event) -> None:
-        # clear previous selections
-        self.destroy_widget_children(self.solver_frame)
-        # update problem selections
-        self.check_problem_compatibility()
+    def _create_solver_factors_canvas(self, solver: Solver) -> None:
+        # Clear the canvas
+        canvas = self.canvases["ntbk.ps_adding.solver.factors"]
+        self.destroy_widget_children(canvas)
 
-        """ Initialize frames and headers"""
-
-        # TODO:
-        self.solver_frame = tk.Frame(
-            master=self.solver_notebook_frame, bg="green"
+        # Initialize the frames and headers
+        self.frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
+            master=canvas
         )
-        self.solver_frame.grid(row=1, column=0)
-
-        # Create column for solver factor names
-        self.header_lbl_name = tk.Label(
-            master=self.solver_frame,
-            text="Solver Factors",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
+        self.frames["ntbk.ps_adding.solver.factors.solvers"].grid(
+            row=0, column=0, sticky=tk.N + tk.W
         )
-        self.header_lbl_name.grid(row=0, column=0, sticky=tk.N + tk.W)
 
-        # Create column for factor type
-        self.header_lbl_type = tk.Label(
-            master=self.solver_frame,
-            text="Factor Type",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
-
-        # Create column for factor default values
-        self.header_lbl_include = tk.Label(
-            master=self.solver_frame,
-            text="Default Value",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-        )
-        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
-
-        """ Get solver information from dicrectory and display"""
-        # Get solver info from dictionary
-        self.selected_solver_name = self.solver_var.get()
-        self.solver_object = self.solver_list[self.selected_solver_name]()
+        """ Get solver information from directory and display"""
         # show problem factors and store default widgets to this dict
-        self.solver_defaults, last_row = self.show_factor_defaults(
-            self.solver_object, frame=self.solver_frame, first_row=1
+        self.__show_data_farming_core(
+            solver,
+            frame=self.frames["ntbk.ps_adding.solver.factors.solvers"],
+            row=1,
         )
 
-        # entry for solver name and add solver button
-        self.solver_name_label = tk.Label(
-            master=self.solver_frame,
-            text="Solver Name",
-            width=20,
+        # Update the design name to be unique
+        self.design_name = self.get_unique_name(
+            self.root_solver_dict, solver.name
         )
-        self.solver_name_label.grid(row=last_row + 1, column=0)
-        self.solver_name_var = tk.StringVar()
-        # get unique solver name
-        solver_name = self.get_unique_name(
-            self.root_solver_dict, self.solver_object.name
-        )
-        self.solver_name_var.set(solver_name)
-        self.solver_name_entry = tk.Entry(
-            master=self.solver_frame,
-            textvariable=self.solver_name_var,
-            width=20,
-        )
-        self.solver_name_entry.grid(row=last_row + 1, column=1)
-        self.add_sol_to_exp_button = tk.Button(
-            master=self.solver_frame,
-            text="Add this solver to experiment",
-            command=self.add_solver_to_experiment,
-        )
-        self.add_sol_to_exp_button.grid(row=last_row + 2, column=0)
+        self.entries["design_opts.name"].delete(0, tk.END)
+        self.entries["design_opts.name"].insert(0, self.design_name)
 
     def get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
         """Determine unique name from dictionary.
@@ -1857,19 +1612,21 @@ class NewExperimentWindow(Toplevel):
         return new_name
 
     def __show_data_farming_core(
-        self, base_object: Literal["Problem", "Solver"]
+        self, base_object: Solver | Problem, frame: ttk.Frame, row: int = 1
     ) -> None:
         """Show data farming options for a solver or problem.
 
         Parameters
         ----------
-        base_object : Literal["Problem", "Solver"]
+        base_object : Solver or Problem
             Solver or Problem object.
 
         """
         # Check if the base object is a Problem or Solver
-        if base_object not in ("Problem", "Solver"):
-            raise TypeError("base_object must be 'Problem' or 'Solver'")
+        if not isinstance(base_object, (Problem, Solver)):
+            error_msg = "base_object must be a Problem or Solver object."
+            error_msg += f" Received {type(base_object)}."
+            raise TypeError(error_msg)
 
         # Run compatability checks
         # TODO: make these not dependent on self attributes
@@ -1878,127 +1635,25 @@ class NewExperimentWindow(Toplevel):
         # else:
         #     self.check_solver_compatibility()
 
-        # Initialize the frame for the data farming factor options
-        if hasattr(self, "factor_frame"):
-            self.factor_frame.destroy()
-        if base_object == "Problem":
-            self.factor_frame = tk.Frame(
-                master=self.problem_datafarm_notebook_frame
-            )
-        else:
-            self.factor_frame = tk.Frame(master=self.frames["add solver"])
-        self.factor_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
-
-        # Get the name of the problem or solver from the GUI
-        # and use it to get the object
-        if base_object == "Problem":
-            selected_name = self.selected_problem_name.get()
-            datafarm_object = self.problem_list[selected_name]()
-            # TODO: revamp problem so this isn't needed
-            self.problem_save_for_later = datafarm_object
-        else:
-            selected_name = self.selected_solver_name.get()
-            datafarm_object = self.solver_list[selected_name]()
-            # TODO: revamp solver so this isn't needed
-            self.solver_save_for_later = datafarm_object
-
-        # Convert the specifications to factors so they can be displayed
-        specifications = datafarm_object.specifications
+        # Grab the specifications from the base object
+        specifications = base_object.specifications
+        # If we're dealing with a Problem, we also need to grab the
+        # specifications for the model
+        if isinstance(base_object, Problem):
+            model_specifications = base_object.model.specifications
+            for factor in model_specifications.keys():
+                specifications[factor] = model_specifications[factor]
+        # Convert the specifications to a dictionary of DFFactor objects
         self.factor_dict = spec_dict_to_df_dict(specifications)
-        # If the object is a Problem, we need to display the model factors
-        if base_object == "Problem":
-            model_specifications = datafarm_object.model.specifications
-            model_factor_dict = spec_dict_to_df_dict(model_specifications)
-            for factor in model_factor_dict:
-                self.factor_dict[factor] = model_factor_dict[factor]
 
         # Add all the column headers
-        header_end_row = self.insert_factor_headers(frame=self.factor_frame)
+        header_end_row = self.insert_factor_headers(frame=frame)
         # Add all the factors
-        factor_end_row = self.insert_factors(
-            frame=self.factor_frame,
+        self.insert_factors(
+            frame=frame,
             factor_dict=self.factor_dict,
             first_row=header_end_row + 1,
         )
-
-        # Create the design options
-        self.design_frame = tk.Frame(master=self.factor_frame)
-        self.design_frame.grid(row=factor_end_row + 1, column=0, columnspan=8)
-
-        # Design type for problem
-        self.design_type_label = tk.Label(
-            master=self.design_frame,
-            text="Design Type",
-            width=20,
-        )
-        self.design_type_label.grid(row=0, column=0)
-
-        self.design_type = tk.StringVar()
-        self.design_type.set("nolhs")
-        self.design_type_menu = ttk.OptionMenu(
-            self.design_frame,
-            self.design_type,
-            "nolhs",
-            *DesignType._member_names_,
-        )
-        self.design_type_menu.grid(row=0, column=1, padx=30)
-
-        # Stack selection menu
-        self.stack_label = tk.Label(
-            self.design_frame,
-            text="Number of Stacks",
-            width=20,
-        )
-        self.stack_label.grid(row=1, column=0)
-        self.stack_count = tk.StringVar()
-        self.stack_count.set("1")
-        self.stack_menu = ttk.Entry(
-            master=self.design_frame,
-            width=10,
-            textvariable=self.stack_count,
-            justify="right",
-        )
-        self.stack_menu.grid(row=1, column=1)
-
-        # Design name entry
-        self.name_label = tk.Label(
-            master=self.design_frame,
-            text="Name of Design",
-            width=20,
-        )
-        self.name_label.grid(row=2, column=0)
-        self.design_name = tk.StringVar()
-        # Get unique design name
-        if base_object == "Problem":
-            lookup_dict = self.root_problem_dict
-        else:
-            lookup_dict = self.root_solver_dict
-        unique_name = self.get_unique_name(
-            lookup_dict, f"{datafarm_object.name}_design"
-        )
-        # Set the design name
-        self.design_name.set(unique_name)
-        self.design_name_entry = tk.Entry(
-            master=self.design_frame,
-            textvariable=self.design_name,
-            width=20,
-        )
-        self.design_name_entry.grid(row=2, column=1)
-
-        # Delete the create design button if it exists
-        if hasattr(self, "create_design_button"):
-            self.create_design_button.destroy()
-        # Create design button
-        if base_object == "Problem":
-            create_function = self.create_problem_design
-        else:
-            create_function = self.create_solver_design
-        self.create_design_button = tk.Button(
-            master=self.design_frame,
-            text="Create Design",
-            command=create_function,
-        )
-        self.create_design_button.grid(row=3, column=0, columnspan=2)
 
     def show_problem_datafarm(self, option: tk.StringVar | None = None) -> None:
         self.__show_data_farming_core(base_object="Problem")
@@ -2686,7 +2341,7 @@ class NewExperimentWindow(Toplevel):
         self.solver_object = solver_directory[solver]()
 
         # show problem factors and store default widgets to this dict
-        self.solver_defaults = self.show_factor_defaults(
+        self.solver_defaults = self._show_factor_defaults(
             self.solver_object,
             self.factor_display_canvas,
             factor_dict=self.root_solver_dict[solver_save_name][0][0],

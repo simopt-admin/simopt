@@ -131,7 +131,7 @@ class Solver(ABC):
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
 
-    def __init__(self, fixed_factors: dict) -> None:
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
         Parameters
@@ -140,6 +140,8 @@ class Solver(ABC):
             Dictionary of user-specified solver factors.
 
         """
+        if fixed_factors is None:
+            fixed_factors = {}
         # Set factors of the solver.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
