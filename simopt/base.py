@@ -564,21 +564,21 @@ class Problem(ABC):
         self.__gradient_available = value
 
     @property
-    def optimal_value(self) -> float:
+    def optimal_value(self) -> float | None:
         """Optimal objective function value."""
         return self.__optimal_value
 
     @optimal_value.setter
-    def optimal_value(self, value: float) -> None:
+    def optimal_value(self, value: float | None) -> None:
         self.__optimal_value = value
 
     @property
-    def optimal_solution(self) -> tuple:
+    def optimal_solution(self) -> tuple | None:
         """Optimal solution."""
         return self.__optimal_solution
 
     @optimal_solution.setter
-    def optimal_solution(self, value: tuple) -> None:
+    def optimal_solution(self, value: tuple | None) -> None:
         self.__optimal_solution = value
 
     @property
@@ -745,7 +745,7 @@ class Problem(ABC):
         return len(
             self.factors["initial_solution"]
         ) == self.dim and self.check_deterministic_constraints(
-            decision_variables=self.factors["initial_solution"]
+            x=self.factors["initial_solution"]
         )
 
     def check_budget(self) -> bool:
@@ -987,13 +987,13 @@ class Problem(ABC):
         raise NotImplementedError
 
     def deterministic_objectives_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1011,13 +1011,13 @@ class Problem(ABC):
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of stochastic constraints for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1035,13 +1035,13 @@ class Problem(ABC):
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1055,9 +1055,9 @@ class Problem(ABC):
             np.prod(
                 [
                     self.lower_bounds[idx]
-                    <= decision_variables[idx]
+                    <= x[idx]
                     <= self.upper_bounds[idx]
-                    for idx in range(len(decision_variables))
+                    for idx in range(len(x))
                 ]
             )
         )
