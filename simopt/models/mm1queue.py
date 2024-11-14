@@ -8,7 +8,6 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import numpy as np
-import sys
 from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -47,7 +46,9 @@ class MM1Queue(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "MM1"
         self.n_rngs = 2
         self.n_responses = 3
@@ -61,6 +62,11 @@ class MM1Queue(Model):
                 "description": "rate parameter of service time distribution",
                 "datatype": float,
                 "default": 3.0
+            },
+            "epsilon": {
+                "description": "the minimum value of mu",
+                "datatype": float,
+                "default": 0.001
             },
             "warmup": {
                 "description": "number of people as warmup before collecting statistics",
@@ -76,6 +82,7 @@ class MM1Queue(Model):
         self.check_factor_list = {
             "lambda": self.check_lambda,
             "mu": self.check_mu,
+            "epsilon": self.check_epsilon,
             "warmup": self.check_warmup,
             "people": self.check_people
         }
@@ -87,6 +94,9 @@ class MM1Queue(Model):
 
     def check_mu(self):
         return self.factors["mu"] > 0
+    
+    def check_epsilon(self):
+        return self.factors["epsilon"] > 0
 
     def check_warmup(self):
         return self.factors["warmup"] >= 0
@@ -99,7 +109,7 @@ class MM1Queue(Model):
         # return self.factors["mu"] > self.factors["lambda"]
         return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -118,8 +128,8 @@ class MM1Queue(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        if not self.check_mu():
-            raise ValueError("Service rate must be positive.")
+        # Set mu to be at least epsilon.
+        self.factors["mu"] = max(self.factors["mu"], self.factors["epsilon"])
         # Calculate total number of arrivals to simulate.
         total = self.factors["warmup"] + self.factors["people"]
         # Designate separate RNGs for interarrival and serivce times.
