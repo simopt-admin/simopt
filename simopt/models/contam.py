@@ -131,7 +131,7 @@ class Contamination(Model):
             raise ValueError("initial_rate_beta must be greater than 0.")
 
     def check_prev_cost(self):
-        if any(cost <= 0 for cost in self.factors["prev_cost"])
+        if any(cost <= 0 for cost in self.factors["prev_cost"]):
             raise ValueError("All costs in prev_cost must be greater than 0.")
 
     def check_stages(self):

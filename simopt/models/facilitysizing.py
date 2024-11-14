@@ -78,7 +78,8 @@ class FacilitySize(Model):
         super().__init__(fixed_factors)
 
     def check_mean_vec(self):
-        return all(mean > 0 for mean in self.factors["mean_vec"])
+        if any(mean <= 0 for mean in self.factors["mean_vec"]):
+            raise ValueError("All elements in mean_vec must be greater than 0.")
 
     def check_cov(self):
         try:
@@ -92,20 +93,22 @@ class FacilitySize(Model):
         return
 
     def check_capacity(self):
-        return len(self.factors["capacity"]) == self.factors["n_fac"]
+        if len(self.factors["capacity"]) != self.factors["n_fac"]:
+            raise ValueError("The length of capacity must equal n_fac.")
 
     def check_n_fac(self):
-        return self.factors["n_fac"] > 0
+        if self.factors["n_fac"] <= 0:
+            raise ValueError("n_fac must be greater than 0.")
 
     def check_simulatable_factors(self):
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
-            return False
+            raise ValueError("The length of capacity must be equal to n_fac.")
         elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
-            return False
+            raise ValueError("The length of mean_vec must be equal to n_fac.")
         elif len(self.factors["cov"]) != self.factors["n_fac"]:
-            return False
+            raise ValueError("The length of cov must be equal to n_fac.")
         elif len(self.factors["cov"][0]) != self.factors["n_fac"]:
-            return False
+            raise ValueError("The length of cov[0] must be equal to n_fac.")
         else:
             return True
 
@@ -274,14 +277,15 @@ class FacilitySizingTotalCost(Problem):
 
     def check_installation_costs(self):
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
-            return False
+            raise ValueError("The length of installation_costs must equal n_fac.")
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
-            return False
+            raise ValueError("All elements in installation_costs must be greater than or equal to 0.")
         else:
             return True
 
     def check_epsilon(self):
-        return 0 <= self.factors["epsilon"] <= 1
+        if 0 > self.factors["epsilon"] or self.factors["epsilon"] > 1:
+            raise ValueError("epsilon must be greater than or equal to 0 and less than or equal to 1.")
 
     def vector_to_factor_dict(self, vector):
         """
@@ -602,14 +606,15 @@ class FacilitySizingMaxService(Problem):
 
     def check_installation_costs(self):
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
-            return False
+            raise ValueError("The length of installation_costs must equal n_fac")
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
-            return False
+            raise ValueError("All elements in installation_costs must be greater than or equal to 0.")
         else:
             return True
 
     def check_installation_budget(self):
-        return self.factors["installation_budget"] > 0
+        if self.factors["installation_budget"] <= 0:
+            raise ValueError("installation_budget must be greater than 0.")
 
     def vector_to_factor_dict(self, vector):
         """
