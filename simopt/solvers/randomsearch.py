@@ -48,7 +48,7 @@ class RandomSearch(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name: str = "RNDSRCH", fixed_factors: dict = {}):
+    def __init__(self, name: str = "RNDSRCH", fixed_factors: dict | None = None) -> None:
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "stochastic"

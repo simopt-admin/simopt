@@ -45,7 +45,7 @@ class ChessMatchmaking(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None):
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "CHESS"
@@ -264,10 +264,12 @@ class ChessAvgDifference(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        # Handle default arguments.
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.dim = 1
         self.n_objectives = 1

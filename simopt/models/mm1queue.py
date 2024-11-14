@@ -272,7 +272,13 @@ class MM1MinMeanSojournTime(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "MM1-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+    def __init__(self, name: str = "MM1-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.dim = 1
         self.n_objectives = 1

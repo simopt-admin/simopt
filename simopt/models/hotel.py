@@ -40,7 +40,7 @@ class Hotel(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         self.name = "HOTEL"
         self.n_rngs = 1
         self.n_responses = 1
@@ -164,7 +164,7 @@ class Hotel(Model):
                 return False
         return len(self.factors["booking_limits"]) == self.factors["num_products"]
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -301,7 +301,13 @@ class HotelRevenue(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "HOTEL-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+    def __init__(self, name: str = "HOTEL-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

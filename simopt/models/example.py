@@ -39,7 +39,9 @@ class ExampleModel(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "EXAMPLE"
         self.n_rngs = 1
         self.n_responses = 1
@@ -64,7 +66,7 @@ class ExampleModel(Model):
     def check_simulatable_factors(self):
         return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Evaluate a deterministic function f(x) with stochastic noise.
 
@@ -162,7 +164,13 @@ class ExampleProblem(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "EXAMPLE-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+    def __init__(self, name: str = "EXAMPLE-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.n_objectives = 1
         self.n_stochastic_constraints = 0

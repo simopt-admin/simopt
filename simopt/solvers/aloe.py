@@ -51,7 +51,7 @@ class ALOE(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None):
+    def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None) -> None:
         if fixed_factors is None:
             fixed_factors = {}
         self.name = name

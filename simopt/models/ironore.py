@@ -48,7 +48,9 @@ class IronOre(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "IRONORE"
         self.n_rngs = 1
         self.n_responses = 3
@@ -183,7 +185,7 @@ class IronOre(Model):
     def check_simulatable_factors(self):
         return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -330,7 +332,13 @@ class IronOreMaxRev(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "IRONORE-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+    def __init__(self, name: str = "IRONORE-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.dim = 4
         self.n_objectives = 1
@@ -590,7 +598,13 @@ class IronOreMaxRevCnt(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "IRONORECONT-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+    def __init__(self, name: str = "IRONORECONT-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.dim = 3
         self.n_objectives = 1
