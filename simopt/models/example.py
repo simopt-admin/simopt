@@ -4,11 +4,13 @@ Summary
 Simulate a synthetic problem with a deterministic objective function
 evaluated with noise.
 """
+
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class ExampleModel(Model):
@@ -39,6 +41,7 @@ class ExampleModel(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors: dict | None = None) -> None:
         if fixed_factors is None:
             fixed_factors = {}
@@ -50,12 +53,10 @@ class ExampleModel(Model):
             "x": {
                 "description": "point to evaluate",
                 "datatype": tuple,
-                "default": (2.0, 2.0)
+                "default": (2.0, 2.0),
             }
         }
-        self.check_factor_list = {
-            "x": self.check_x
-        }
+        self.check_factor_list = {"x": self.check_x}
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
@@ -164,7 +165,13 @@ class ExampleProblem(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "EXAMPLE-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+
+    def __init__(
+        self,
+        name: str = "EXAMPLE-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
         # Handle default arguments.
         if fixed_factors is None:
             fixed_factors = {}
@@ -186,17 +193,17 @@ class ExampleProblem(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (2.0, 2.0)
+                "default": (2.0, 2.0),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         self.dim = len(self.factors["initial_solution"])
@@ -206,7 +213,6 @@ class ExampleProblem(Problem):
         self.model = ExampleModel(self.model_fixed_factors)
         self.optimal_value = (0,)  # Change if f is changed.
         self.optimal_solution = (0,) * self.dim  # Change if f is changed.
-
 
     def vector_to_factor_dict(self, vector):
         """
@@ -222,9 +228,7 @@ class ExampleProblem(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "x": vector[:]
-        }
+        factor_dict = {"x": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -357,5 +361,11 @@ class ExampleProblem(Problem):
             vector of decision variables
         """
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
-        x = tuple(rand_sol_rng.mvnormalvariate(mean_vec=np.zeros(self.dim), cov=np.eye(self.dim), factorized=False))
+        x = tuple(
+            rand_sol_rng.mvnormalvariate(
+                mean_vec=np.zeros(self.dim),
+                cov=np.eye(self.dim),
+                factorized=False,
+            )
+        )
         return x

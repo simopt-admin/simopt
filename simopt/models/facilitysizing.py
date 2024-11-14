@@ -5,11 +5,13 @@ Simulate demand at facilities.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/facilitysizing.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class FacilitySize(Model):
@@ -42,6 +44,7 @@ class FacilitySize(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors: dict | None = None) -> None:
         if fixed_factors is None:
             fixed_factors = {}
@@ -52,29 +55,33 @@ class FacilitySize(Model):
             "mean_vec": {
                 "description": "location parameters of the multivariate normal distribution",
                 "datatype": list,
-                "default": [100, 100, 100]
+                "default": [100, 100, 100],
             },
             "cov": {
                 "description": "covariance of multivariate normal distribution",
                 "datatype": list,
-                "default": [[2000, 1500, 500], [1500, 2000, 750], [500, 750, 2000]]
+                "default": [
+                    [2000, 1500, 500],
+                    [1500, 2000, 750],
+                    [500, 750, 2000],
+                ],
             },
             "capacity": {
                 "description": "capacity",
                 "datatype": list,
-                "default": [150, 300, 400]
+                "default": [150, 300, 400],
             },
             "n_fac": {
                 "description": "number of facilities",
                 "datatype": int,
-                "default": 3
-            }
+                "default": 3,
+            },
         }
         self.check_factor_list = {
             "mean_vec": self.check_mean_vec,
             "cov": self.check_cov,
             "capacity": self.check_capacity,
-            "n_fac": self.check_n_fac
+            "n_fac": self.check_n_fac,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -87,7 +94,7 @@ class FacilitySize(Model):
             np.linalg.cholesky(np.matrix(self.factors["cov"]))
             return True
         except np.linalg.linalg.LinAlgError as err:
-            if 'Matrix is not positive definite' in err.message:
+            if "Matrix is not positive definite" in err.message:
                 return False
             else:
                 raise
@@ -136,9 +143,13 @@ class FacilitySize(Model):
         n_fac_stockout = 0
         n_cut = 0
         # Generate random demands at facilities from truncated multivariate normal distribution.
-        demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
+        demand = demand_rng.mvnormalvariate(
+            self.factors["mean_vec"], self.factors["cov"], factorized=False
+        )
         while np.any(demand < 0):
-            demand = demand_rng.mvnormalvariate(self.factors["mean_vec"], self.factors["cov"], factorized=False)
+            demand = demand_rng.mvnormalvariate(
+                self.factors["mean_vec"], self.factors["cov"], factorized=False
+            )
         # Check for stockouts.
         for i in range(self.factors["n_fac"]):
             if demand[i] > self.factors["capacity"][i]:
@@ -146,10 +157,17 @@ class FacilitySize(Model):
                 stockout_flag = 1
                 n_cut += demand[i] - self.factors["capacity"][i]
         # Compose responses and gradients.
-        responses = {'stockout_flag': stockout_flag,
-                     'n_fac_stockout': n_fac_stockout,
-                     'n_cut': n_cut}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "stockout_flag": stockout_flag,
+            "n_fac_stockout": n_fac_stockout,
+            "n_cut": n_cut,
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -226,7 +244,13 @@ class FacilitySizingTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "FACSIZE-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+
+    def __init__(
+        self,
+        name: str = "FACSIZE-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
         # Handle default arguments.
         if fixed_factors is None:
             fixed_factors = {}
@@ -249,29 +273,29 @@ class FacilitySizingTotalCost(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (300, 300, 300)
+                "default": (300, 300, 300),
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
-                "default": (1, 1, 1)
+                "default": (1, 1, 1),
             },
             "epsilon": {
                 "description": "Maximum allowed probability of stocking out.",
                 "datatype": float,
-                "default": 0.05
-            }
+                "default": 0.05,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon
+            "epsilon": self.check_epsilon,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -281,7 +305,10 @@ class FacilitySizingTotalCost(Problem):
         self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
     def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
+        if (
+            len(self.factors["installation_costs"])
+            != self.model.factors["n_fac"]
+        ):
             return False
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
             return False
@@ -305,9 +332,7 @@ class FacilitySizingTotalCost(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "capacity": vector[:]
-        }
+        factor_dict = {"capacity": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -481,9 +506,13 @@ class FacilitySizingTotalCost(Problem):
             vector of decision variables
         """
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
-        x = rand_sol_rng.mvnormalvariate(self.factors["initial_solution"], cov_matrix, factorized=False)
+        x = rand_sol_rng.mvnormalvariate(
+            self.factors["initial_solution"], cov_matrix, factorized=False
+        )
         while np.any(x < 0):
-            x = rand_sol_rng.mvnormalvariate(self.factors["initial_solution"], cov_matrix, factorized=False)
+            x = rand_sol_rng.mvnormalvariate(
+                self.factors["initial_solution"], cov_matrix, factorized=False
+            )
         return tuple(x)
 
 
@@ -560,7 +589,13 @@ class FacilitySizingMaxService(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "FACSIZE-2", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+
+    def __init__(
+        self,
+        name: str = "FACSIZE-2",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
         # Handle default arguments.
         if fixed_factors is None:
             fixed_factors = {}
@@ -583,29 +618,29 @@ class FacilitySizingMaxService(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (100, 100, 100)
+                "default": (100, 100, 100),
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
-                "default": (1, 1, 1)
+                "default": (1, 1, 1),
             },
             "installation_budget": {
                 "description": "Total budget for installation costs.",
                 "datatype": float,
-                "default": 500.0
-            }
+                "default": 500.0,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "installation_costs": self.check_installation_costs,
-            "installation_budget": self.check_installation_budget
+            "installation_budget": self.check_installation_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -615,7 +650,10 @@ class FacilitySizingMaxService(Problem):
         self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
 
     def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
+        if (
+            len(self.factors["installation_costs"])
+            != self.model.factors["n_fac"]
+        ):
             return False
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
             return False
@@ -639,9 +677,7 @@ class FacilitySizingMaxService(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "capacity": vector[:]
-        }
+        factor_dict = {"capacity": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -753,7 +789,10 @@ class FacilitySizingMaxService(Problem):
             indicates if solution `x` satisfies the deterministic constraints.
         """
         # Check budget constraint.
-        budget_feasible = np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"]
+        budget_feasible = (
+            np.dot(self.factors["installation_costs"], x)
+            <= self.factors["installation_budget"]
+        )
         # Check box constraints.
         box_feasible = super().check_deterministic_constraints(x)
         return budget_feasible * box_feasible
@@ -774,8 +813,9 @@ class FacilitySizingMaxService(Problem):
         """
         # Generate random vector of length # of facilities of continuous values
         # summing to less than or equal to installation budget.
-        x = rand_sol_rng.continuous_random_vector_from_simplex(n_elements=self.model.factors["n_fac"],
-                                                               summation=self.factors["installation_budget"],
-                                                               exact_sum=False
-                                                               )
+        x = rand_sol_rng.continuous_random_vector_from_simplex(
+            n_elements=self.model.factors["n_fac"],
+            summation=self.factors["installation_budget"],
+            exact_sum=False,
+        )
         return x

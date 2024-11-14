@@ -5,12 +5,14 @@ A detailed description of the model/problem can be found
 """
 
 from __future__ import annotations
+
+import math as math
 from typing import Any
 
 import numpy as np
-import math as math
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class AmusementPark(Model):
@@ -137,7 +139,9 @@ class AmusementPark(Model):
     # Check for simulatable factors.
     def check_park_capacity(self) -> None:
         if self.factors["park_capacity"] < 0:
-            raise ValueError("Park capacity must be greater than or equal to 0.")
+            raise ValueError(
+                "Park capacity must be greater than or equal to 0."
+            )
 
     def check_number_attractions(self) -> None:
         if self.factors["number_attractions"] < 0:
@@ -155,7 +159,9 @@ class AmusementPark(Model):
             len(self.factors["depart_probabilities"])
             != self.factors["number_attractions"]
         ):
-            raise ValueError("The number of departure probabilities must match the number of attractions.")
+            raise ValueError(
+                "The number of departure probabilities must match the number of attractions."
+            )
         else:
             return all(
                 [
@@ -169,7 +175,9 @@ class AmusementPark(Model):
             len(self.factors["arrival_gammas"])
             != self.factors["number_attractions"]
         ):
-            raise ValueError("The number of arrivals must match the number of attractions.")
+            raise ValueError(
+                "The number of arrivals must match the number of attractions."
+            )
         else:
             return all([gamma >= 0 for gamma in self.factors["arrival_gammas"]])
 
@@ -189,14 +197,18 @@ class AmusementPark(Model):
         ):
             return True
         else:
-            raise ValueError("The values you entered are invalid. Check that each row and depart probability sums to 1.")
+            raise ValueError(
+                "The values you entered are invalid. Check that each row and depart probability sums to 1."
+            )
 
     def check_erlang_shape(self) -> bool:
         if (
             len(self.factors["erlang_shape"])
             != self.factors["number_attractions"]
         ):
-            raise ValueError("The number of attractions must equal the number of Erlang shape parameters.")
+            raise ValueError(
+                "The number of attractions must equal the number of Erlang shape parameters."
+            )
         else:
             return all([gamma >= 0 for gamma in self.factors["erlang_shape"]])
 
@@ -205,7 +217,9 @@ class AmusementPark(Model):
             len(self.factors["erlang_scale"])
             != self.factors["number_attractions"]
         ):
-            raise ValueError("The number of attractions must equal the number of Erlang scales.")
+            raise ValueError(
+                "The number of attractions must equal the number of Erlang scales."
+            )
         else:
             return all([gamma >= 0 for gamma in self.factors["erlang_scale"]])
 
@@ -214,7 +228,10 @@ class AmusementPark(Model):
             sum(self.factors["queue_capacities"])
             > self.factors["park_capacity"]
         ):
-            raise ValueError("The sum of the queue capacities must be less than or equal to the park capacity")
+            raise ValueError(
+                "The sum of the queue capacities must be less than or equal to the park capacity"
+            )
+        return True
 
     def replicate(
         self, rng_list: list[MRG32k3a]
@@ -274,7 +291,9 @@ class AmusementPark(Model):
         # initialize time average and utilization quantities.
         in_system = 0
         time_average = 0
-        cumulative_util = [0 for _ in range(self.factors["number_attractions"])]
+        cumulative_util = [
+            0.0 for _ in range(self.factors["number_attractions"])
+        ]
 
         # Run simulation over time horizon.
         while (
@@ -600,7 +619,7 @@ class AmusementParkMinDepart(Problem):
             vector of LHSs of stochastic constraint
 
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(
@@ -622,7 +641,7 @@ class AmusementParkMinDepart(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = None
+        det_objectives_gradients = ()
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(
@@ -645,8 +664,8 @@ class AmusementParkMinDepart(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
@@ -683,10 +702,11 @@ class AmusementParkMinDepart(Problem):
         x : tuple
             vector of decision variables
         """
-        return tuple(
-            rand_sol_rng.integer_random_vector_from_simplex(
-                n_elements=self.model.factors["number_attractions"],
-                summation=self.model.factors["park_capacity"],
-                with_zero=False,
-            )
-        )
+        num_elements: int = self.model.factors["number_attractions"]
+        summation: int = self.model.factors["park_capacity"]
+        # TODO: see if this issue still exists after the next release of MRG32k3a
+        # If it does, create a fix and PR it to the MRG32k3a repo.
+        vector: list[int] = rand_sol_rng.integer_random_vector_from_simplex(
+            n_elements=num_elements, summation=summation, with_zero=False
+        )  # type: ignore
+        return tuple(vector)

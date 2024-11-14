@@ -9,9 +9,10 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import numpy as np
-from scipy import special
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+from scipy import special
+
+from simopt.base import Model, Problem
 
 
 class ChessMatchmaking(Model):
@@ -88,25 +89,33 @@ class ChessMatchmaking(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_elo_mean(self):
+    def check_elo_mean(self) -> None:
         if self.factors["elo_mean"] <= 0:
-            raise ValueError("Mean of normal distribution for Elo rating must be greater than 0.")
+            raise ValueError(
+                "Mean of normal distribution for Elo rating must be greater than 0."
+            )
 
-    def check_elo_sd(self):
+    def check_elo_sd(self) -> None:
         if self.factors["elo_sd"] <= 0:
-            raise ValueError("Standard deviation of normal distribution for Elo rating must be greater than 0.")
+            raise ValueError(
+                "Standard deviation of normal distribution for Elo rating must be greater than 0."
+            )
 
-    def check_poisson_rate(self):
+    def check_poisson_rate(self) -> None:
         if self.factors["poisson_rate"] <= 0:
-            raise ValueError("Rate of Poisson process for player arrivals must be greater than 0.")
+            raise ValueError(
+                "Rate of Poisson process for player arrivals must be greater than 0."
+            )
 
-    def check_num_players(self):
+    def check_num_players(self) -> None:
         if self.factors["num_players"] <= 0:
             raise ValueError("Number of players must be greater than 0.")
 
-    def check_allowable_diff(self):
+    def check_allowable_diff(self) -> None:
         if self.factors["allowable_diff"] <= 0:
-            raise ValueError("The maximum mallowable different between Elo ratings must be greater than 0.")
+            raise ValueError(
+                "The maximum mallowable different between Elo ratings must be greater than 0."
+            )
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -311,9 +320,11 @@ class ChessAvgDifference(Problem):
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = ChessMatchmaking(self.model_fixed_factors)
 
-    def check_upper_time(self):
+    def check_upper_time(self) -> None:
         if self.factors["upper_time"] <= 0:
-            raise ValueError("The upper bound on wait time must be greater than 0.")
+            raise ValueError(
+                "The upper bound on wait time must be greater than 0."
+            )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
@@ -427,7 +438,7 @@ class ChessAvgDifference(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = None
+        det_objectives_gradients = ()
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
@@ -444,7 +455,8 @@ class ChessAvgDifference(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x >= 0
+        is_greater_than_zero: list[bool] = [x_val > 0 for x_val in x]
+        return all(is_greater_than_zero)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """

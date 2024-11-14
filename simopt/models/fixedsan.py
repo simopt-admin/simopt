@@ -5,11 +5,13 @@ Simulate duration of a stochastic activity network (SAN).
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/san.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class FixedSAN(Model):
@@ -42,6 +44,7 @@ class FixedSAN(Model):
     --------
     base.Model
     """
+
     def __init__(self, fixed_factors: dict | None = None) -> None:
         self.name = "FIXEDSAN"
         self.n_rngs = 1
@@ -50,23 +53,23 @@ class FixedSAN(Model):
             "num_arcs": {
                 "description": "number of arcs",
                 "datatype": int,
-                "default": 13
+                "default": 13,
             },
             "num_nodes": {
                 "description": "number of nodes",
                 "datatype": int,
-                "default": 9
+                "default": 9,
             },
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1,) * 13
-            }
+                "default": (1,) * 13,
+            },
         }
         self.check_factor_list = {
             "num_arcs": self.check_num_arcs,
             "num_nodes": self.check_num_nodes,
-            "arc_means": self.check_arc_means
+            "arc_means": self.check_arc_means,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
@@ -81,7 +84,9 @@ class FixedSAN(Model):
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & x > 0
-        return (len(self.factors["arc_means"]) != self.factors["num_arcs"]) & positive
+        return (
+            len(self.factors["arc_means"]) != self.factors["num_arcs"]
+        ) & positive
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -172,7 +177,12 @@ class FixedSAN(Model):
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         gradients["longest_path_length"]["arc_means"] = longest_path_gradient
 
         return responses, gradients
@@ -250,7 +260,13 @@ class FixedSANLongestPath(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "FIXEDSAN-1", fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+
+    def __init__(
+        self,
+        name: str = "FIXEDSAN-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
         # Handle default arguments.
         if fixed_factors is None:
             fixed_factors = {}
@@ -273,23 +289,23 @@ class FixedSANLongestPath(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (10,) * 13
+                "default": (10,) * 13,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
             },
             "arc_costs": {
                 "description": "cost associated to each arc",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-            }
+                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "arc_costs": self.check_arc_costs
+            "arc_costs": self.check_arc_costs,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
@@ -302,7 +318,9 @@ class FixedSANLongestPath(Problem):
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+        return (
+            len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
+        ) & positive
 
     def vector_to_factor_dict(self, vector):
         """
@@ -318,9 +336,7 @@ class FixedSANLongestPath(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "arc_means": vector[:]
-        }
+        factor_dict = {"arc_means": vector[:]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict):
@@ -394,7 +410,9 @@ class FixedSANLongestPath(Problem):
             vector of gradients of deterministic components of stochastic constraints
         """
         det_stoch_constraints = None
-        det_stoch_constraints_gradients = ((0,) * self.dim,)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints_gradients = (
+            (0,) * self.dim,
+        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(self, x):
@@ -413,8 +431,12 @@ class FixedSANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
+        det_objectives = (
+            np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+        )
+        det_objectives_gradients = (
+            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
+        )
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x):
@@ -447,5 +469,10 @@ class FixedSANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+                for _ in range(self.dim)
+            ]
+        )
         return x
