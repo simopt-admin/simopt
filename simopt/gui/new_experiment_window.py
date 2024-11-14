@@ -501,30 +501,6 @@ class NewExperimentWindow(Toplevel):
             row=1, column=2, sticky="nsew", rowspan=3
         )
 
-        # # Create a ttk frame style for each color
-        # # We have to do this instead of setting the bg color because the
-        # # widgets are ttk objects and thus don't have a bg attribute
-        # self.style_colors = []
-        # for color in [
-        #     "red",
-        #     "orange",
-        #     "yellow",
-        #     "green",
-        #     "blue",
-        #     "purple",
-        #     "pink",
-        # ]:
-        #     style = ttk.Style()
-        #     style.configure(f"{color}.TFrame", background=color)
-        #     self.style_colors.append(color)
-        # # Apply the styles
-        # index = 0
-        # for frame in self.frames.values():
-        #     frame.configure(style=f"{self.style_colors[index]}.TFrame")
-        #     index += 1
-        #     if index >= len(self.style_colors):
-        #         index = 0
-
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
         # Exit if this is called during setup
@@ -571,99 +547,6 @@ class NewExperimentWindow(Toplevel):
         solver_class: ABCMeta = self.valid_solvers[solver_name]  # type: ignore
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
-
-    def update_compatible_problem_list(self) -> None:
-        pass
-        # # create temp objects for current selected solvers and all possilble problems
-        # temp_solvers = []
-        # for solver_group in self.root_solver_dict:
-        #     dp_0 = self.root_solver_dict[solver_group][
-        #         0
-        #     ]  # frist design point if design, only design pt if no design
-        #     solver_name = dp_0[1]
-        #     temp_solver = solver_directory[solver_name]()
-        #     temp_solvers.append(temp_solver)
-        # # check solver selections based on which tab is open
-        # current_tab = self.sol_prob_book.index("current")
-        # if current_tab == 0:
-        #     selected_solver = self.solver_var.get()
-        # if current_tab == 2:
-        #     selected_solver = self.selected_solver.get()
-        # if selected_solver != "Solver":
-        #     temp_solver = solver_unabbreviated_directory[selected_solver]()
-        #     temp_solvers.append(temp_solver)
-        # all_problems = problem_unabbreviated_directory
-        # self.problem_list = {}  # clear current problem selection options
-        # for problem_name in all_problems:
-        #     temp_problem = [all_problems[problem_name]()]
-        #     temp_exp = ProblemsSolvers(
-        #         solvers=temp_solvers, problems=temp_problem
-        #     )  # temp experiment to run check compatibility
-        #     error = temp_exp.check_compatibility()
-        #     if not error:
-        #         self.problem_list[problem_name] = all_problems[problem_name]
-
-        # # update problem & problem datafarming selections
-        # self.problem_select_menu.destroy()
-        # self.problem_select_menu = ttk.OptionMenu(
-        #     self.problem_selection_frame,
-        #     self.problem_var,
-        #     "Problem",
-        #     *self.problem_list,
-        #     command=self.show_problem_factors,
-        # )
-        # self.problem_select_menu.grid(row=0, column=1)
-        # self.problem_datafarm_select_menu.destroy()
-        # self.problem_datafarm_select_menu = ttk.OptionMenu(
-        #     self.problem_datafarm_selection_frame,
-        #     self.selected_problem,
-        #     "Problem",
-        #     *self.problem_list,
-        #     command=self.show_problem_datafarm,
-        # )
-        # self.problem_datafarm_select_menu.grid(row=0, column=1)
-
-    def check_solver_compatibility(self) -> None:
-        pass
-        # # create temp objects for current selected solvers and all possilble problems
-        # temp_problems = []
-        # for problem_group in self.root_problem_dict:
-        #     dp_0 = self.root_problem_dict[problem_group][
-        #         0
-        #     ]  # frist design point if design, only design pt if no design
-        #     problem_name = dp_0[1]
-        #     temp_problem = problem_directory[problem_name]()
-        #     temp_problems.append(temp_problem)
-        # # check problem selections based on which tab is open
-        # current_tab = self.sol_prob_book.index("current")
-        # if current_tab == 1:
-        #     selected_problem = self.problem_var.get()
-        # if current_tab == 3:
-        #     selected_problem = self.selected_problem.get()
-        # if selected_problem != "Problem":
-        #     temp_problem = problem_unabbreviated_directory[selected_problem]()
-        #     temp_problems.append(temp_problem)
-        # all_solvers = solver_unabbreviated_directory
-        # self.solver_list = {}  # clear current problem selection options
-        # for solver_name in all_solvers:
-        #     temp_solver = [all_solvers[solver_name]()]
-        #     temp_exp = ProblemsSolvers(
-        #         solvers=temp_solver, problems=temp_problems
-        #     )  # temp experiment to run check compatibility
-        #     error = temp_exp.check_compatibility()
-        #     if not error:
-        #         self.solver_list[solver_name] = all_solvers[solver_name]
-
-        # # update solver & solver datafarming selections
-        # self.solver_selection_dropdown.destroy()
-        # self.solver_selection_dropdown = ttk.OptionMenu(
-        #     self.solver_datafarm_selection_frame,
-        #     self.selected_solver,
-        #     "Solver",
-        #     *self.solver_list,
-        #     command=self.show_solver_datafarm,
-        # )
-        # self.solver_selection_dropdown.grid(row=0, column=1)
 
     def _add_with_default_options(self) -> None:
         # Delete all existing children of the frame
@@ -1294,7 +1177,7 @@ class NewExperimentWindow(Toplevel):
         for child in children:
             child.destroy()
 
-    def insert_factor_headers(
+    def __insert_factor_headers(
         self,
         frame: ttk.Frame,
         first_row: int = 0,
@@ -1344,7 +1227,7 @@ class NewExperimentWindow(Toplevel):
         )
         return first_row + 1
 
-    def insert_factors(
+    def __insert_factors(
         self,
         frame: ttk.Frame,
         factor_dict: dict[str, DFFactor],
@@ -1631,9 +1514,9 @@ class NewExperimentWindow(Toplevel):
         self.factor_dict = spec_dict_to_df_dict(specifications)
 
         # Add all the column headers
-        self.insert_factor_headers(frame=frame)
+        self.__insert_factor_headers(frame=frame)
         # Add all the factors
-        self.insert_factors(
+        self.__insert_factors(
             frame=frame,
             factor_dict=self.factor_dict,
         )
