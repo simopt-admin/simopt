@@ -7,12 +7,14 @@ A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/strong.html>`__.
 """
 from __future__ import annotations
+
+import math
 import sys
 
-from numpy.linalg import norm
 import numpy as np
-import math
-from simopt.base import Solver, Problem, Solution
+from numpy.linalg import norm
+
+from simopt.base import Problem, Solution, Solver
 
 
 class STRONG(Solver):
@@ -115,7 +117,7 @@ class STRONG(Solver):
                 "default": 2
             },
             "lambda_2": {
-                "description": "magnifying factor for n_r in stage I and stage II",
+                "description": "magnifying factor for n_r in stage I and stage II (>1)",
                 "datatype": float,
                 "default": 1.01
             }
