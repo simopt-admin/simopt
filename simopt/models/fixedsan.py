@@ -187,7 +187,8 @@ class FixedSAN(Model):
         responses = {"longest_path_length": longest_path}
         gradients = {
             response_key: {
-                factor_key: np.zeros(len(self.specifications)) for factor_key in self.specifications
+                factor_key: np.zeros(len(self.specifications))
+                for factor_key in self.specifications
             }
             for response_key in responses
         }

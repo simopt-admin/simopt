@@ -6,10 +6,12 @@ An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
+
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Solver, Problem, Solution
+
+from simopt.base import Problem, Solution, Solver
 
 
 class ADAM(Solver):
@@ -50,7 +52,12 @@ class ADAM(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name: str = "ADAM", fixed_factors: dict = {}):
+
+    def __init__(
+        self, name: str = "ADAM", fixed_factors: dict | None = None
+    ) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = name
         self.objective_type = "single"
         self.constraint_type = "box"
@@ -60,38 +67,38 @@ class ADAM(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "r": {
                 "description": "number of replications taken at each solution",
                 "datatype": int,
-                "default": 30
+                "default": 30,
             },
             "beta_1": {
                 "description": "exponential decay of the rate for the first moment estimates",
                 "datatype": float,
-                "default": 0.9
+                "default": 0.9,
             },
             "beta_2": {
                 "description": "exponential decay rate for the second-moment estimates",
                 "datatype": float,
-                "default": 0.999
+                "default": 0.999,
             },
             "alpha": {
                 "description": "step size",
                 "datatype": float,
-                "default": 0.5  # Changing the step size matters a lot.
+                "default": 0.5,  # Changing the step size matters a lot.
             },
             "epsilon": {
                 "description": "a small value to prevent zero-division",
                 "datatype": float,
-                "default": 10**(-8)
+                "default": 10 ** (-8),
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds",
                 "datatype": float,
-                "default": 10**(-7)
-            }
+                "default": 10 ** (-7),
+            },
         }
         self.check_factor_list = {
             "crn_across_solns": self.check_crn_across_solns,
@@ -100,31 +107,33 @@ class ADAM(Solver):
             "beta_2": self.check_beta_2,
             "alpha": self.check_alpha,
             "epsilon": self.check_epsilon,
-            "sensitivity": self.check_sensitivity
+            "sensitivity": self.check_sensitivity,
         }
         super().__init__(fixed_factors)
 
-    def check_r(self):
+    def check_r(self) -> None:
         if self.factors["r"] <= 0:
-            raise ValueError("The number of replications taken at each solution must be greater than 0.")
+            raise ValueError(
+                "The number of replications taken at each solution must be greater than 0."
+            )
 
-    def check_beta_1(self):
+    def check_beta_1(self) -> None:
         if self.factors["beta_1"] <= 0 or self.factors["beta_1"] >= 1:
             raise ValueError("Beta 1 must be between 0 and 1.")
 
-    def check_beta_2(self):
+    def check_beta_2(self) -> None:
         if self.factors["beta_2"] > 0 & self.factors["beta_2"] >= 1:
             raise ValueError("Beta 2 must be less than 1.")
 
-    def check_alpha(self):
+    def check_alpha(self) -> None:
         if self.factors["alpha"] <= 0:
             raise ValueError("Alpha must be greater than 0.")
 
-    def check_epsilon(self):
+    def check_epsilon(self) -> None:
         if self.factors["epsilon"] <= 0:
             raise ValueError("Epsilon must be greater than 0.")
 
-    def check_sensitivity(self):
+    def check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("Sensitivity must be greater than 0.")
 
@@ -151,18 +160,20 @@ class ADAM(Solver):
         expended_budget = 0
 
         # Default values.
-        r = self.factors["r"]
-        beta_1 = self.factors["beta_1"]
-        beta_2 = self.factors["beta_2"]
-        alpha = self.factors["alpha"]
-        epsilon = self.factors["epsilon"]
+        r: int = self.factors["r"]
+        beta_1: float = self.factors["beta_1"]
+        beta_2: float = self.factors["beta_2"]
+        alpha: float = self.factors["alpha"]
+        epsilon: float = self.factors["epsilon"]
 
         # Upper bound and lower bound.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
+        new_solution = self.create_new_solution(
+            problem.factors["initial_solution"], problem
+        )
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
         problem.simulate(new_solution, r)
@@ -179,17 +190,27 @@ class ADAM(Solver):
             t = t + 1
             new_x = new_solution.x
             # Check variable bounds.
-            forward = np.isclose(new_x, lower_bound, atol = self.factors["sensitivity"]).astype(int)
-            backward = np.isclose(new_x, upper_bound, atol = self.factors["sensitivity"]).astype(int)
+            forward = np.isclose(
+                new_x, lower_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
+            backward = np.isclose(
+                new_x, upper_bound, atol=self.factors["sensitivity"]
+            ).astype(int)
             # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            BdsCheck = np.subtract(forward, backward)
+            bounds_check = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -1 * problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = (
+                    -1
+                    * problem.minmax[0]
+                    * new_solution.objectives_gradients_mean[0]
+                )
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(new_solution, BdsCheck, problem)
-                expended_budget += (2 * problem.dim - np.sum(BdsCheck != 0)) * r
+                grad = self.finite_diff(new_solution, bounds_check, problem)
+                expended_budget += (
+                    2 * problem.dim - np.sum(bounds_check != 0)
+                ) * r
 
             # Convert new_x from tuple to list.
             new_x = list(new_x)
@@ -198,20 +219,29 @@ class ADAM(Solver):
                 # Update biased first moment estimate.
                 m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
                 # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i]**2
+                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i] ** 2
                 # Compute bias-corrected first moment estimate.
                 mhat = m[i] / (1 - beta_1**t)
                 # Compute bias-corrected second raw moment estimate.
                 vhat = v[i] / (1 - beta_2**t)
                 # Update new_x and adjust it for box constraints.
-                new_x[i] = min(max(new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound[i]), upper_bound[i])
+                new_x[i] = min(
+                    max(
+                        new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon),
+                        lower_bound[i],
+                    ),
+                    upper_bound[i],
+                )
 
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (problem.minmax[0] * new_solution.objectives_mean > problem.minmax[0] * best_solution.objectives_mean):
+            if (
+                problem.minmax[0] * new_solution.objectives_mean
+                > problem.minmax[0] * best_solution.objectives_mean
+            ):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -222,15 +252,17 @@ class ADAM(Solver):
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(self, new_solution, BdsCheck, problem):
-        r = self.factors['r']
-        alpha = self.factors['alpha']
+    def finite_diff(
+        self, new_solution: Solution, bounds_check: np.ndarray, problem: Problem
+    ) -> np.ndarray:
+        r = self.factors["r"]
+        alpha = self.factors["alpha"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
         new_x = new_solution.x
         # Store values for each dimension.
-        FnPlusMinus = np.zeros((problem.dim, 3))
+        function_diff = np.zeros((problem.dim, 3))
         grad = np.zeros(problem.dim)
 
         for i in range(problem.dim):
@@ -250,48 +282,56 @@ class ADAM(Solver):
 
             # Decide stepsize.
             # Central diff.
-            if BdsCheck[i] == 0:
-                FnPlusMinus[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+            if bounds_check[i] == 0:
+                function_diff[i, 2] = min(steph1, steph2)
+                x1[i] = x1[i] + function_diff[i, 2]
+                x2[i] = x2[i] - function_diff[i, 2]
             # Forward diff.
-            elif BdsCheck[i] == 1:
-                FnPlusMinus[i, 2] = steph1
-                x1[i] = x1[i] + FnPlusMinus[i, 2]
+            elif bounds_check[i] == 1:
+                function_diff[i, 2] = steph1
+                x1[i] = x1[i] + function_diff[i, 2]
             # Backward diff.
             else:
-                FnPlusMinus[i, 2] = steph2
-                x2[i] = x2[i] - FnPlusMinus[i, 2]
+                function_diff[i, 2] = steph2
+                x2[i] = x2[i] - function_diff[i, 2]
             x1_solution = self.create_new_solution(tuple(x1), problem)
-            if BdsCheck[i] != -1:
+            if bounds_check[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
                 fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
                 # First column is f(x+h,y).
-                FnPlusMinus[i, 0] = (fn1[0] if isinstance(fn1, np.ndarray) else fn1)
+                function_diff[i, 0] = (
+                    fn1[0] if isinstance(fn1, np.ndarray) else fn1
+                )
             x2_solution = self.create_new_solution(tuple(x2), problem)
-            if BdsCheck[i] != 1:
+            if bounds_check[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
                 fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
                 # Second column is f(x-h,y).
-                FnPlusMinus[i, 1] = (fn2[0] if isinstance(fn2, np.ndarray) else fn2)
+                function_diff[i, 1] = (
+                    fn2[0] if isinstance(fn2, np.ndarray) else fn2
+                )
 
             # Calculate gradient.
-            fn_divisor = FnPlusMinus[i, 2][0] if isinstance(FnPlusMinus[i, 2], np.ndarray) else FnPlusMinus[i, 2]
-            if BdsCheck[i] == 0:
-                fn_diff = fn1 - fn2 # type: ignore
+            fn_divisor = (
+                function_diff[i, 2][0]
+                if isinstance(function_diff[i, 2], np.ndarray)
+                else function_diff[i, 2]
+            )
+            if bounds_check[i] == 0:
+                fn_diff = fn1 - fn2  # type: ignore
                 fn_divisor = 2 * fn_divisor
                 if isinstance(fn_diff, np.ndarray):
                     grad[i] = fn_diff[0] / fn_divisor
                 else:
                     grad[i] = fn_diff / fn_divisor
-            elif BdsCheck[i] == 1:
-                fn_diff = fn1 - fn # type: ignore
+            elif bounds_check[i] == 1:
+                fn_diff = fn1 - fn  # type: ignore
                 if isinstance(fn_diff, np.ndarray):
                     grad[i] = fn_diff[0] / fn_divisor
                 else:
                     grad[i] = fn_diff / fn_divisor
-            elif BdsCheck[i] == -1:
-                fn_diff = fn - fn2 # type: ignore
+            elif bounds_check[i] == -1:
+                fn_diff = fn - fn2  # type: ignore
                 if isinstance(fn_diff, np.ndarray):
                     grad[i] = fn_diff[0] / fn_divisor
                 else:

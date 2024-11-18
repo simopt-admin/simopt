@@ -14,14 +14,14 @@ This version does not require a delta_max, instead it estimates the maximum step
 
 from __future__ import annotations
 
-from numpy.linalg import pinv
-from numpy.linalg import norm
-import numpy as np
-from math import log, ceil
-from scipy.optimize import NonlinearConstraint
-from scipy.optimize import minimize
-from simopt.base import Solver, Problem, Solution
+from math import ceil, log
 from typing import Callable
+
+import numpy as np
+from numpy.linalg import norm, pinv
+from scipy.optimize import NonlinearConstraint, minimize
+
+from simopt.base import Problem, Solution, Solver
 
 
 class ASTRODF(Solver):
@@ -128,7 +128,7 @@ class ASTRODF(Solver):
         }
         # TODO: fix so we don't have to type ignore the check_crn_across_solns
         self.check_factor_list: dict[str, Callable[[], None]] = {
-            "crn_across_solns": self.check_crn_across_solns, # type: ignore
+            "crn_across_solns": self.check_crn_across_solns,  # type: ignore
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
@@ -172,7 +172,9 @@ class ASTRODF(Solver):
         arr[v_no] = 1.0
         return arr
 
-    def get_rotated_basis(self, first_basis, rotate_index) -> np.ndarray:
+    def get_rotated_basis(
+        self, first_basis: np.ndarray, rotate_index: np.ndarray
+    ) -> np.ndarray:
         """
         Generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
         """
@@ -197,7 +199,7 @@ class ASTRODF(Solver):
 
         return rotate_matrix
 
-    def evaluate_model(self, x_k, q) -> np.ndarray:
+    def evaluate_model(self, x_k: np.ndarray, q: np.ndarray) -> np.ndarray:
         """
         Compute the local model value with a linear interpolation with a diagonal Hessian
         """
@@ -206,7 +208,9 @@ class ASTRODF(Solver):
         x_val = np.append(x_val, np.array(x_k) ** 2)
         return np.matmul(x_val, q)
 
-    def get_stopping_time(self, k, sig2, delta: float, kappa, dim: int) -> int:
+    def get_stopping_time(
+        self, k: int, sig2: float, delta: float, kappa: float, dim: int
+    ) -> int:
         """
         Compute the sample size based on adaptive sampling stopping rule using the optimality gap
         """
@@ -217,9 +221,7 @@ class ASTRODF(Solver):
         ) * max(log(k + 0.1, 10) ** (1.01), 1)
 
         # compute sample size
-        raw_sample_size = max(
-            lambda_k, lambda_k * sig2 / (kappa**2 * delta**4)
-        )
+        raw_sample_size = max(lambda_k, lambda_k * sig2 / (kappa**2 * delta**4))
         # Convert out of ndarray if it is
         if isinstance(raw_sample_size, np.ndarray):
             raw_sample_size = raw_sample_size[0]
@@ -229,15 +231,25 @@ class ASTRODF(Solver):
 
     def construct_model(
         self,
-        x_k,
+        x_k: tuple[int | float, ...],
         delta: float,
         k: int,
         problem: Problem,
-        expended_budget,
-        kappa,
+        expended_budget: int,
+        kappa: float,
         new_solution: Solution,
         visited_pts_list: list,
-    ):
+    ) -> tuple[
+        list[float],
+        list,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        float,
+        int,
+        list[Solution],
+        list[Solution],
+    ]:
         """
         construct the "qualified" local model for each iteration k with the center point x_k
         reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
@@ -251,12 +263,12 @@ class ASTRODF(Solver):
         beta = 10  # self.factors["beta"]
         criticality_threshold = 0.1  # self.factors["criticality_threshold"]
         skip_criticality = True  # self.factors["skip_criticality"]
-
-        reuse_points = self.factors["reuse_points"]
-        lambda_min = self.factors["lambda_min"]
-
         j = 0
-        budget = problem.factors["budget"]
+        # Problem and solver factors
+        reuse_points: bool = self.factors["reuse_points"]
+        lambda_min: int = self.factors["lambda_min"]
+        budget: int = problem.factors["budget"]
+
         lambda_max = budget - expended_budget
         # lambda_max = budget / (15 * sqrt(problem.dim))
 
@@ -295,7 +307,7 @@ class ASTRODF(Solver):
                     x_k, delta_k, problem
                 )
                 var_z = self.get_coordinate_basis_interpolation_points(
-                    np.zeros(problem.dim), delta_k, problem
+                    tuple(np.zeros(problem.dim)), delta_k, problem
                 )
             # Else if we will reuse one design point
             elif k > 1:
@@ -321,7 +333,7 @@ class ASTRODF(Solver):
 
                 # construct the interpolation set
                 var_y = self.get_rotated_basis_interpolation_points(
-                    x_k,
+                    np.array(x_k),
                     delta_k,
                     problem,
                     rotate_matrix,
@@ -452,7 +464,7 @@ class ASTRODF(Solver):
             # If a model gradient norm is zero, there is a possibility that the code stuck in this while loop
             if norm(grad) == 0:
                 break
-        
+
         beta_n_grad = float(beta * norm(grad))
         delta_k = min(max(beta_n_grad, delta_k), delta)
 
@@ -468,7 +480,9 @@ class ASTRODF(Solver):
             visited_pts_list,
         )
 
-    def get_model_coefficients(self, y_var: list, fval: list, problem: Problem) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_model_coefficients(
+        self, y_var: list, fval: list, problem: Problem
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the model coefficients using (2d+1) design points and their function estimates
         """
@@ -487,57 +501,78 @@ class ASTRODF(Solver):
         hessian = np.reshape(hessian, problem.dim)
         return q, grad, hessian
 
-    def get_coordinate_basis_interpolation_points(self, x_k, delta, problem):
+    def get_coordinate_basis_interpolation_points(
+        self, x_k: tuple[int | float, ...], delta: float, problem: Problem
+    ) -> list:
         """
         Compute the interpolation points (2d+1) using the coordinate basis
         """
         y_var = [[x_k]]
         epsilon = 0.01
-        for i in range(0, problem.dim):
-            plus = y_var[0] + delta * self.get_coordinate_vector(problem.dim, i)
-            minus = y_var[0] - delta * self.get_coordinate_vector(problem.dim, i)
+        num_decision_vars = problem.dim
+        is_block_constraint = sum(x_k) != 0
 
-            if sum(x_k) != 0:
+        for var_idx in range(num_decision_vars):
+            coord_vector = self.get_coordinate_vector(
+                num_decision_vars, var_idx
+            )
+            coord_diff = delta * coord_vector
+            minus = y_var[0] - coord_diff
+            plus = y_var[0] + coord_diff
+
+            if is_block_constraint:
                 # block constraints
-                if minus[0][i] <= problem.lower_bounds[i]:
-                    minus[0][i] = problem.lower_bounds[i] + epsilon
-                if plus[0][i] >= problem.upper_bounds[i]:
-                    plus[0][i] = problem.upper_bounds[i] - epsilon
+                if minus[0][var_idx] <= problem.lower_bounds[var_idx]:
+                    minus[0][var_idx] = problem.lower_bounds[var_idx] + epsilon
+                if plus[0][var_idx] >= problem.upper_bounds[var_idx]:
+                    plus[0][var_idx] = problem.upper_bounds[var_idx] - epsilon
 
-            y_var.append(plus)
-            y_var.append(minus)
+            y_var.append(list(plus))
+            y_var.append(list(minus))
         return y_var
 
     def get_rotated_basis_interpolation_points(
-        self, x_k, delta, problem, rotate_matrix, reused_x
-    ):
+        self,
+        x_k: np.ndarray,
+        delta: float,
+        problem: Problem,
+        rotate_matrix: np.ndarray,
+        reused_x: np.ndarray,
+    ) -> list[list[np.ndarray]]:
         """
         Compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point)
         """
-        Y = [[x_k]]
+        y_var = [[x_k]]
         epsilon = 0.01
-        for i in range(0, problem.dim):
+        is_block_constraint = sum(x_k) != 0
+        num_decision_vars = problem.dim
+
+        for i in range(num_decision_vars):
+            rotate_matrix_delta: np.ndarray = delta * rotate_matrix[i]
+
             if i == 0:
-                plus = [np.array(reused_x)]
+                plus = tuple([np.array(reused_x)])
             else:
-                plus = Y[0] + delta * rotate_matrix[i]
-            minus = Y[0] - delta * rotate_matrix[i]
+                plus = y_var[0] + rotate_matrix_delta
+            minus = y_var[0] - rotate_matrix_delta
 
-            if sum(x_k) != 0:
+            if is_block_constraint:
                 # block constraints
-                for j in range(problem.dim):
-                    if minus[0][j] <= problem.lower_bounds[j]:
-                        minus[0][j] = problem.lower_bounds[j] + epsilon
-                    elif minus[0][j] >= problem.upper_bounds[j]:
-                        minus[0][j] = problem.upper_bounds[j] - epsilon
-                    if plus[0][j] <= problem.lower_bounds[j]:
-                        plus[0][j] = problem.lower_bounds[j] + epsilon
-                    elif plus[0][j] >= problem.upper_bounds[j]:
-                        plus[0][j] = problem.upper_bounds[j] - epsilon
+                for j in range(num_decision_vars):
+                    lower_bound = problem.lower_bounds[j]
+                    upper_bound = problem.upper_bounds[j]
+                    if minus[0][j] <= lower_bound:
+                        minus[0][j] = lower_bound + epsilon
+                    elif minus[0][j] >= upper_bound:
+                        minus[0][j] = upper_bound - epsilon
+                    if plus[0][j] <= lower_bound:
+                        plus[0][j] = lower_bound + epsilon
+                    elif plus[0][j] >= upper_bound:
+                        plus[0][j] = upper_bound - epsilon
 
-            Y.append(plus)
-            Y.append(minus)
-        return Y
+            y_var.append(list(plus))
+            y_var.append(list(minus))
+        return y_var
 
     def iterate(
         self,
@@ -547,23 +582,33 @@ class ASTRODF(Solver):
         problem: Problem,
         visited_pts_list: list,
         new_x: tuple[int | float, ...],
-        expended_budget,
-        budget_limit,
+        expended_budget: int,
+        budget_limit: int,
         recommended_solns: list,
         intermediate_budgets: list,
-        kappa,
+        kappa: float,
         new_solution: Solution,
-    ):
+    ) -> tuple[
+        float,
+        float,
+        list[Solution],
+        list[int],
+        int,
+        tuple[int | float, ...],
+        float,
+        Solution,
+        list[Solution],
+    ]:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
         """
         # default values
-        eta_1 = self.factors["eta_1"]
-        eta_2 = self.factors["eta_2"]
-        gamma_1 = self.factors["gamma_1"]
-        gamma_2 = self.factors["gamma_2"]
-        easy_solve = self.factors["easy_solve"]
-        lambda_min = self.factors["lambda_min"]
+        eta_1: float = self.factors["eta_1"]
+        eta_2: float = self.factors["eta_2"]
+        gamma_1: float = self.factors["gamma_1"]
+        gamma_2: float = self.factors["gamma_2"]
+        easy_solve: bool = self.factors["easy_solve"]
+        lambda_min: int = self.factors["lambda_min"]
         lambda_max = budget_limit - expended_budget
         # lambda_max = budget_limit / (15 * sqrt(problem.dim))
         pilot_run = ceil(
@@ -639,15 +684,15 @@ class ASTRODF(Solver):
             candidate_x = new_x - tau * delta_k * grad / norm(grad)
         else:
             # Search engine - solve subproblem
-            def subproblem(s):
+            def subproblem(s: np.ndarray) -> float:
                 s_grad_dot: np.ndarray = np.dot(s, grad)
                 s_hessian_dot: np.ndarray = np.dot(np.multiply(s, hessian), s)
                 result = fval[0] + s_grad_dot + s_hessian_dot
-                return result
+                return float(result[0])
 
-            def con_f(s) -> float:
+            def con_f(s: np.ndarray) -> float:
                 return float(norm(s))
-            
+
             nlc = NonlinearConstraint(con_f, 0, delta_k)
             solve_subproblem = minimize(
                 subproblem,
