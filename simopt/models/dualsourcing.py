@@ -170,8 +170,8 @@ class DualSourcing(Model):
             raise ValueError("cost_exp must be greater than 0.")
 
     def check_lead_reg(self):
-        if self.factors["lead_reg"] < 0:
-            raise ValueError("lead_reg must be greater than or equal to 0.")
+        if self.factors["lead_reg"] <= 0:
+            raise ValueError("lead_reg must be greater than 0.")
 
     def check_lead_exp(self):
         if self.factors["lead_exp"] < 0:

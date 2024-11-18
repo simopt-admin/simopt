@@ -68,6 +68,7 @@ class AmusementPark(Model):
                 "description": "The number of attractions in the park.",
                 "datatype": int,
                 "default": 7,
+                "isDatafarmable" : False
             },
             "time_open": {
                 "description": "The number of minutes per day the park is open.",
