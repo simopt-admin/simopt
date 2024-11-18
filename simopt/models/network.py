@@ -89,7 +89,8 @@ class Network(Model):
             "n_networks": {
                 "description": "number of networks",
                 "datatype": int,
-                "default": 10
+                "default": 10, 
+                "isDatafarmable": False
             },
         }
 

@@ -51,7 +51,8 @@ class RMITD(Model):
             "time_horizon": {
                 "description": "time horizon",
                 "datatype": int,
-                "default": 3
+                "default": 3,
+                "isDatafarmable": False
             },
             "prices": {
                 "description": "prices for each period",

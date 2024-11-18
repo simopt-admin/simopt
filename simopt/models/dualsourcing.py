@@ -202,7 +202,7 @@ class DualSourcing(Model):
             raise ValueError("order_level_exp must be greater than or equal to 0.")
 
     def check_simulatable_factors(self):
-        if (self.factors["lead_exp"] > self.factors["lead_reg"]) or (self.factors["cost_exp"] < self.factors["cost_reg"]):
+        if (self.factors["lead_exp"] >= self.factors["lead_reg"]) or (self.factors["cost_exp"] <= self.factors["cost_reg"]):
             raise ValueError("lead_exp must be less than lead_reg and cost_exp must be greater than cost_reg")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:

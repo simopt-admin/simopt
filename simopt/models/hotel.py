@@ -48,7 +48,8 @@ class Hotel(Model):
             "num_products": {
                 "description": "number of products: (rate, length of stay)",
                 "datatype": int,
-                "default": 56
+                "default": 56,
+                "isDatafarmable": False
             },
             "lambda": {
                 "description": "arrival rates for each product",
