@@ -31,9 +31,9 @@ class Toplevel(tk.Toplevel):
             self.protocol("WM_DELETE_WINDOW", self.destroy)
         # Set title and theme
         self.title(title)
-        self.set_theme()
+        self.set_style()
 
-    def set_theme(self) -> None:
+    def set_style(self) -> None:
         """Set the theme of the GUI."""
         # Configure the theme of the GUI
         self.style = ttk.Style()

@@ -74,7 +74,7 @@ class MainMenuWindow(Toplevel):
         # Button to open new experiment window
         self.new_experiment_button = tk.Button(
             master=self.menu_frame,
-            text="Data Farm Solvers, Problems, and Models",
+            text="Data Farm Problems and Solvers",
             font=option_font,
             command=self.open_new_experiment,
         )

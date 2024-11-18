@@ -1,9 +1,9 @@
-from abc import ABCMeta
 import ast
 import os
 import pickle
 import re
 import tkinter as tk
+from abc import ABCMeta
 from tkinter import filedialog, ttk
 from tkinter.font import nametofont
 from typing import Callable, Literal
@@ -172,6 +172,7 @@ class NewExperimentWindow(Toplevel):
         self.notebooks: dict[str, ttk.Notebook] = {}
         self.frames: dict[str, ttk.Frame] = {}
         self.scrollbars: dict[str, ttk.Scrollbar] = {}
+        self.option_dropdowns: dict[str, ttk.OptionMenu] = {}
 
         # Setup the main frame
         self._initialize_main_frame()
@@ -246,7 +247,7 @@ class NewExperimentWindow(Toplevel):
         self.frames["curr_exp"].grid_rowconfigure(1, weight=1)
         self.labels["curr_exp.header"] = ttk.Label(
             self.frames["curr_exp"],
-            text="Current Experiment",
+            text="Current Experiment Workspace",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
@@ -479,10 +480,15 @@ class NewExperimentWindow(Toplevel):
             self.frames["design_opts"], text="Design Type ", anchor="e"
         )
         self.labels["design_opts.type"].grid(row=1, column=0, sticky="ew")
-        self.entries["design_opts.type"] = ttk.Entry(
-            self.frames["design_opts"], textvariable=self.design_type
+        # TODO: update to be more flexible for future design options
+        options = ["nolhs"]
+        self.option_dropdowns["design_opts.type"] = ttk.OptionMenu(
+            self.frames["design_opts"],
+            self.design_type,
+            options[0],
+            *options,
         )
-        self.entries["design_opts.type"].grid(row=1, column=1, sticky="ew")
+        self.option_dropdowns["design_opts.type"].grid(row=1, column=1, sticky="ew")
         self.labels["design_opts.num_stacks"] = ttk.Label(
             self.frames["design_opts"], text="# of Stacks ", anchor="e"
         )
@@ -525,12 +531,14 @@ class NewExperimentWindow(Toplevel):
         # Switch on the tab name
         if tab_name == "Add Problem":
             self.selected_problem_name.set("")
+            self._destroy_widget_children(self.canvases["ntbk.ps_adding.problem.factors"])
             self.buttons["design_opts.generate"].configure(
                 text="Add Experiment", command=self.create_problem_design
             )
 
         elif tab_name == "Add Solver":
             self.selected_solver_name.set("")
+            self._destroy_widget_children(self.canvases["ntbk.ps_adding.solver.factors"])
             self.buttons["design_opts.generate"].configure(
                 text="Add Experiment", command=self.create_solver_design
             )
@@ -1563,7 +1571,7 @@ class NewExperimentWindow(Toplevel):
         # )
 
         # get n stacks and design type from user input
-        n_stacks = int(self.stack_count.get())
+        n_stacks = self.design_num_stacks.get()
         design_type = self.design_type.get()
 
         """ Determine factors included in design """
@@ -1726,7 +1734,7 @@ class NewExperimentWindow(Toplevel):
         )
 
         # get n stacks and design type from user input
-        n_stacks = int(self.stack_count.get())
+        n_stacks = self.design_num_stacks.get()
         design_type = self.design_type.get()
 
         """ Determine factors included in design """
@@ -2540,7 +2548,7 @@ class NewExperimentWindow(Toplevel):
             "Simopt Graphical User Interface - Experiment Options Defaults"
         )
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
 
         self.main_frame = tk.Frame(master=self.experiment_defaults_window)
         self.main_frame.grid(row=0, column=0)
@@ -2781,7 +2789,7 @@ class NewExperimentWindow(Toplevel):
             "Simopt Graphical User Interface - Experiment Options"
         )
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
 
         self.main_frame = tk.Frame(master=self.post_processing_window)
         self.main_frame.grid(row=0, column=0)
@@ -3060,7 +3068,7 @@ class NewExperimentWindow(Toplevel):
         # Set the screen width and height
         # Scaled down slightly so the whole window fits on the screen
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
 
         # Configure the grid layout to expand properly
         self.plotting_window.grid_rowconfigure(0, weight=1)

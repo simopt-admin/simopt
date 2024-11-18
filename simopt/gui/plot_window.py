@@ -1048,7 +1048,7 @@ class PlotWindow(Toplevel):
     def plot_button(self) -> None:
         self.postrep_window = Toplevel(self)
         self.postrep_window.center_window(0.8)
-        self.postrep_window.set_theme()
+        self.postrep_window.set_style()
         self.postrep_window.title("Plotting Page")
         # have one plot and have arrow to scroll through each
         # one plot solver per row
@@ -1083,7 +1083,7 @@ class PlotWindow(Toplevel):
     def view_one_plot(self, path_name: os.PathLike | str) -> None:
         self.postrep_window = Toplevel(self)
         self.postrep_window.center_window(0.8)
-        self.postrep_window.set_theme()
+        self.postrep_window.set_style()
         self.postrep_window.title("View One Plot")
 
         ro = 0
