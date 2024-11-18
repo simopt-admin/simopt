@@ -215,11 +215,12 @@ class SAN(Model):
         responses = {"longest_path_length": longest_path}
         gradients = {
             response_key: {
-                factor_key: np.nan for factor_key in self.specifications
+                factor_key: np.zeros(len(self.specifications))
+                for factor_key in self.specifications
             }
             for response_key in responses
         }
-        gradients["longest_path_length"]["arc_means"] = float(gradient)
+        gradients["longest_path_length"]["arc_means"] = gradient
         return responses, gradients
 
 
@@ -389,7 +390,7 @@ class SANLongestPath(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["arc_means"])
+        vector = factor_dict["arc_means"]
         return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
