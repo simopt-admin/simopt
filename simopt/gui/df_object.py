@@ -407,7 +407,6 @@ class DFBoolean(DFFactor):
     
     def _toggle_fields(self) -> None:
         super()._toggle_fields()
-        print(self.ent_default.state())
         if self.ent_default.state() != ["disabled"]:
             self.ent_default.state(["readonly"])
 
