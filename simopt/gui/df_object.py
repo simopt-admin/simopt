@@ -46,7 +46,7 @@ class DFFactor(ABC):
         return None
 
     @property
-    def include_default_state(self) -> Literal["normal", "disabled", None]:
+    def include_default_state(self) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the default field is enabled."""
         if self.include is None:
             return None
@@ -55,7 +55,7 @@ class DFFactor(ABC):
         return "normal"
 
     @property
-    def include_datafarm_state(self) -> Literal["normal", "disabled", None]:
+    def include_datafarm_state(self) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the datafarm fields are enabled."""
         if self.include is None:
             return None
@@ -341,6 +341,25 @@ class DFBoolean(DFFactor):
     def default_eval(self) -> bool:
         """Evaluated default value of the factor."""
         return self.default.get()
+    
+    @property
+    def include_default_state(self) -> Literal["readonly", "disabled", None]:
+        """Whether or not the default field is enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "disabled"
+        return "readonly"
+
+    @property
+    def include_datafarm_state(self) -> Literal["readonly", "disabled", None]:
+        """Whether or not the datafarm fields are enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "readonly"
+        return "disabled"
+
 
     def __init__(self, name: str, description: str, default: bool) -> None:
         """Initialize the boolean factor class.
@@ -385,6 +404,12 @@ class DFBoolean(DFFactor):
             )
             self.ent_default.current(0 if self.default.get() else 1)
         return self.ent_default
+    
+    def _toggle_fields(self) -> None:
+        super()._toggle_fields()
+        print(self.ent_default.state())
+        if self.ent_default.state() != ["disabled"]:
+            self.ent_default.state(["readonly"])
 
 
 class DFInteger(DFFactor):
