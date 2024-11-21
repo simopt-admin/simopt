@@ -26,7 +26,7 @@ def main():
     # Example with random search solver on continuous newsvendor problem.
     # -----------------------------------------------
     solver_name = "RNDSRCH"  # Random search solver
-    problem_name = "CNTNEWS-1"  # Continuous newsvendor problem
+    problem_name = "CONTAM-1"  # Continuous newsvendor problem
     # -----------------------------------------------
 
     print(f"Testing solver {solver_name} on problem {problem_name}.")
@@ -39,7 +39,8 @@ def main():
     myexperiment = ProblemSolver(solver_name, problem_name)
 
     # Run a fixed number of macroreplications of the solver on the problem.
-    myexperiment.run(n_macroreps=10)
+    n_macroreps=10
+    myexperiment.run(n_macroreps)
 
     # If the solver runs have already been performed, uncomment the
     # following pair of lines (and uncommmen the myexperiment.run(...)
@@ -48,19 +49,27 @@ def main():
 
     print("Post-processing results.")
     # Run a fixed number of postreplications at all recommended solutions.
-    myexperiment.post_replicate(n_postreps=200)
+    myexperiment.post_replicate(n_postreps=100)
     # Find an optimal solution x* for normalization.
     post_normalize([myexperiment], n_postreps_init_opt=200)
 
     # Log results.
     myexperiment.log_experiment_results()
+    
+    # print stoch lhs values
+    for mrep in range(n_macroreps):
+        for indx, mean in enumerate(myexperiment.all_stoch_lhs_means[mrep]):
+            print(f"The mean of the lhs of constraint {indx+1} for mrep {mrep} is {round(mean,4)} ")
+        for indx, sd in enumerate(myexperiment.all_stoch_lhs_sds[mrep]):
+            print(f"The sd of the lhs of constraint {indx+1} for mrep {mrep} is {round(sd,4)} ")
+            
 
     print("Plotting results.")
-    # Produce basic plots of the solver on the problem.
-    plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
-    plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
-    plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
-    plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
+    # # Produce basic plots of the solver on the problem. 
+    # plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
+    # plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+    # plot_progress_curves(experiments=[myexperiment], plot_type="quantile", beta=0.90, normalize=False)
+    # plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1)
 
     # Plots will be saved in the folder experiments/plots.
     print("Finished. Plots can be found in experiments/plots folder.")

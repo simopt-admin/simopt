@@ -1293,6 +1293,8 @@ class ProblemSolver:
         self.crn_across_macroreps = crn_across_macroreps
         # Initialize variables
         self.all_post_replicates = [[] for _ in range(self.n_macroreps)]
+        self.all_stoch_lhs_means = [[] for _ in range(self.n_macroreps)]
+        self.all_stoch_lhs_sds = [[] for _ in range(self.n_macroreps)]
         for mrep in range(self.n_macroreps):
             self.all_post_replicates[mrep] = [] * len(
                 self.all_intermediate_budgets[mrep]
@@ -1314,10 +1316,9 @@ class ProblemSolver:
 
             # Grab all the data out of the result
             for mrep in range(self.n_macroreps):
-                self.all_post_replicates[mrep], self.timings[mrep] = (
+                self.all_post_replicates[mrep], self.timings[mrep], self.all_stoch_lhs_means[mrep], self.all_stoch_lhs_sds[mrep] = (
                     result.get()[mrep]
                 )
-
             # # The all post replicates is tricky because it is a dictionary of lists of lists
             # # We need to convert it to a list of lists of lists
             # self.all_post_replicates = [self.all_post_replicates[i] for i in range(len(self.all_post_replicates.keys()))]
@@ -1422,12 +1423,21 @@ class ProblemSolver:
             post_replicates.append(
                 list(fresh_soln.objectives[: fresh_soln.n_reps][:, 0])
             )  # 0 <- assuming only one objective
+            
+            # save stochastic constraint information
+            stoch_lhs_mean = [] #holds mean of the lhs for each of the stochastic constraints in the problem
+            stoch_lhs_sd = [] #holds standard deviation of the lha for each of the stochastic constraints in the problem
+            for stc_idx in range(self.problem.n_stochastic_constraints):
+                stoch_lhs_mean.append(fresh_soln.stoch_constraints_mean[stc_idx])
+                stoch_lhs_sd.append(fresh_soln.stoch_constraints_stderr[stc_idx])
+            
         toc = time.perf_counter()
         runtime = toc - tic
+        
         print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
         # Return tuple (post_replicates, runtime)
-        return (post_replicates, runtime)
+        return (post_replicates, runtime, stoch_lhs_mean, stoch_lhs_sd)
 
     def bootstrap_sample(
         self, bootstrap_rng: MRG32k3a, normalize: bool = True
