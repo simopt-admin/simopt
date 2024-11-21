@@ -252,6 +252,10 @@ class NewExperimentWindow(Toplevel):
         )
         self.tk_frames["exps.list"].grid(row=1, column=0, sticky="nsew")
         self.tk_frames["exps.list"].grid_columnconfigure(0, weight=1)
+        self.tk_canvases["exps.list"] = tk.Canvas(
+            self.tk_frames["exps.list"],
+        )
+        self.tk_canvases["exps.list"].grid(row=0, column=0, sticky="nsew")
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
         )
@@ -260,7 +264,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["exps.fields.default_opts"] = ttk.Button(
             self.tk_frames["exps.fields"],
             text="Change Default Experiment Options",
-            command=self.change_experiment_defaults,
+            command=self.open_defaults_window,
         )
         self.tk_buttons["exps.fields.default_opts"].grid(
             row=0, column=0, sticky="ew"
@@ -2299,14 +2303,22 @@ class NewExperimentWindow(Toplevel):
         self.root_problem_name_list = []
         self.root_solver_dict = {}
         self.root_problem_dict = {}
-        self._destroy_widget_children(self.solver_list_canvas)
-        self._destroy_widget_children(self.problem_list_canvas)
+        self._destroy_widget_children(
+            self.tk_canvases["curr_exp.lists.problems"]
+        )
+        self._destroy_widget_children(
+            self.tk_canvases["curr_exp.lists.solvers"]
+        )
+        new_name = self.get_unique_name(
+            self.root_experiment_dict, self.DEFAULT_EXP_NAME
+        )
+        self.curr_exp_name.set(new_name)
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
-        experiment_row = self.experiment_display_canvas.grid_size()[1]
+        experiment_row = self.tk_canvases["exps.list"].grid_size()[1]
         self.current_experiment_frame = tk.Frame(
-            master=self.experiment_display_canvas
+            master=self.tk_canvases["exps.list"]
         )
         self.current_experiment_frame.grid(row=experiment_row, column=0)
         self.experiment_list_label = tk.Label(
@@ -2629,34 +2641,47 @@ class NewExperimentWindow(Toplevel):
         # update macro entry widgets
         for var in self.macro_vars:
             var.set(self.macro_default)
-
-    def find_option_setting(
-        self, exp_name: str, search_dict: dict[str, any], default_val: any
-    ) -> any:
+    
+    # Functionally the same as the below function, but for boolean values
+    def _find_option_setting_bool(
+            self,
+            exp_name: str,
+            search_dict: dict[str, tk.BooleanVar],
+            default_val: bool,
+    ) -> bool:
         if exp_name in search_dict:
-            value = search_dict[exp_name].get()
-        else:
-            value = default_val
-        return value
+            return search_dict[exp_name].get()
+        return default_val
+    
+    # Functionally the same as the above function, but for integers
+    def _find_option_setting_int(
+            self,
+            exp_name: str,
+            search_dict: dict[str, tk.IntVar],
+            default_val: int,
+    ) -> int:
+        if exp_name in search_dict:
+            return search_dict[exp_name].get()
+        return default_val
 
     def open_post_processing_window(self, experiment_name: str) -> None:
         # check if options have already been set
-        n_macroreps = self.find_option_setting(
+        n_macroreps: int = self._find_option_setting_int(
             experiment_name, self.macro_reps, self.macro_default
         )
-        n_postreps = self.find_option_setting(
+        n_postreps: int = self._find_option_setting_int(
             experiment_name, self.post_reps, self.post_default
         )
-        crn_budget = self.find_option_setting(
+        crn_budget = self._find_option_setting_bool(
             experiment_name, self.crn_budgets, self.crn_budget_default
         )
-        crn_macro = self.find_option_setting(
+        crn_macro = self._find_option_setting_bool(
             experiment_name, self.crn_macros, self.crn_macro_default
         )
-        n_initreps = self.find_option_setting(
+        n_initreps = self._find_option_setting_int(
             experiment_name, self.init_post_reps, self.init_default
         )
-        crn_init = self.find_option_setting(
+        crn_init = self._find_option_setting_bool(
             experiment_name, self.crn_inits, self.crn_init_default
         )
         if experiment_name in self.solve_tols:
@@ -2667,7 +2692,7 @@ class NewExperimentWindow(Toplevel):
             solve_tols = self.solve_tols_default
 
         # create new winow
-        self.post_processing_window = Toplevel(self)
+        self.post_processing_window = Toplevel(self.root)
         self.post_processing_window.title(
             "Simopt Graphical User Interface - Experiment Options"
         )
