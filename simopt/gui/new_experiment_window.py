@@ -2285,20 +2285,21 @@ class NewExperimentWindow(Toplevel):
                 return False
 
         def exp_all(name: str) -> None:
-            if not exp_run(name):
-                return
-            if not exp_post_process(name):
-                return
-            if not exp_post_norm(name):
-                return
-            if not exp_log(name):
-                return
+            self.tk_buttons[all_bttn_name].configure(state="disabled")
+            if (
+                not exp_run(name)
+                or not exp_post_process(name)
+                or not exp_post_norm(name)
+                or not exp_log(name)
+            ):
+                # We already printed the error message in the individual steps
+                self.tk_buttons[all_bttn_name].configure(state="normal")
 
         def delete_experiment(
             experiment_name: str, experiment_frame: tk.Frame
         ) -> None:
             del self.root_experiment_dict[experiment_name]
-            self._destroy_widget_children(experiment_frame)
+            experiment_frame.destroy()
 
         # Setup initial action button state
         self.tk_buttons[action_bttn_name] = ttk.Button(
@@ -2481,10 +2482,10 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_2_var = tk.StringVar()
         self.solve_tol_3_var = tk.StringVar()
         self.solve_tol_4_var = tk.StringVar()
-        self.solve_tol_1_var.set(self.solve_tols_default[0])
-        self.solve_tol_2_var.set(self.solve_tols_default[1])
-        self.solve_tol_3_var.set(self.solve_tols_default[2])
-        self.solve_tol_4_var.set(self.solve_tols_default[3])
+        self.solve_tol_1_var.set(str(self.solve_tols_default[0]))
+        self.solve_tol_2_var.set(str(self.solve_tols_default[1]))
+        self.solve_tol_3_var.set(str(self.solve_tols_default[2]))
+        self.solve_tol_4_var.set(str(self.solve_tols_default[3]))
         self.solve_tol_1_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
