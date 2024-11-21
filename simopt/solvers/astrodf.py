@@ -130,7 +130,7 @@ class ASTRODF(Solver):
             raise ValueError("Eta 2 must be greater than Eta 1.")
 
     def check_gamma_1(self):
-        if self.factors("gamma_1") <=1:
+        if self.factors["gamma_1"] <=1:
             raise ValueError("Gamma 1 must be greater than 1.")
 
     def check_gamma_2(self):

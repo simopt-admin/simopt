@@ -146,6 +146,8 @@ class Solver(ABC):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
+        # Make sure each factor has a check function.
+        assert len(self.specifications) == len(self.check_factor_list)
 
     def __eq__(self, other: Solver) -> bool:
         """Check if two solvers are equivalent.
@@ -233,10 +235,10 @@ class Solver(ABC):
             True if the solver factor is permissible, otherwise False.
 
         """
-        return (
-            self.check_factor_datatype(factor_name)
-            and self.check_factor_list[factor_name]()
-        )
+        if not self.check_factor_datatype(factor_name):
+            return False
+        self.check_factor_list[factor_name]()
+        return True
 
     # TODO: Figure out if this should be abstract or not
     # @abstractmethod
@@ -266,10 +268,8 @@ class Solver(ABC):
             True if factor is of specified data type, otherwise False.
 
         """
-        return isinstance(
-            self.factors[factor_name],
-            type(self.specifications[factor_name]["datatype"])
-        )
+        expected_data_type = self.specifications[factor_name]["datatype"]
+        return isinstance(self.factors[factor_name], expected_data_type)
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
         """Run all checks for the solver factors.
@@ -291,24 +291,21 @@ class Solver(ABC):
 
         if not is_joint_factors:
             error_msg = "There is a joint setting of a solver factor that is not permissible"
-            print(error_msg)
-            return False
+            raise ValueError(error_msg)
 
         # check datatypes for all factors
         for factor in factor_names:
             is_right_type = self.check_factor_datatype(factor)
             if not is_right_type:
                 error_msg = (
-                    f"Solver factor {factor} is not a permissible data type."
+                    f"Solver factor {factor} is not the correct data type."
                 )
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
             is_permissible = self.check_solver_factor(factor)
             if not is_permissible:
                 error_msg = f"Solver factor {factor} is not permissible."
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
         # Return true if no issues
         return True
@@ -674,6 +671,8 @@ class Problem(ABC):
                 model_fixed_factors[key] = self.model_default_factors[key]
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
+        # Make sure each factor has a check function.
+        assert len(self.specifications) == len(self.check_factor_list)
 
     def __eq__(self, other: Problem) -> bool:
         """Check if two problems are equivalent.
@@ -696,7 +695,6 @@ class Problem(ABC):
             )
             for factor in non_decision_factors:
                 if self.model.factors[factor] != other.model.factors[factor]:
-                    # print("Model factors do not match")
                     return False
             return True
         else:
@@ -767,10 +765,10 @@ class Problem(ABC):
             True if problem factor is permissible, otherwise False.
 
         """
-        return (
-            self.check_factor_datatype(factor_name)
-            and self.check_factor_list[factor_name]()
-        )
+        if not self.check_factor_datatype(factor_name):
+            return False
+        self.check_factor_list[factor_name]()
+        return True
 
     # TODO: Figure out if this should be abstract or not
     # @abstractmethod
@@ -824,21 +822,18 @@ class Problem(ABC):
         )  # check all joint factor settings
         if not is_joint_factors:
             error_msg = "There is a joint setting of a problem factor that is not permissible"
-            print(error_msg)
-            return False
+            raise ValueError(error_msg)
 
         is_initial_sol = self.check_initial_solution()
         if not is_initial_sol:
             error_msg = "The initial solution is not feasible and/or not correct dimension"
-            print(error_msg)
-            return False
+            raise ValueError(error_msg)
 
         is_budget = self.check_budget()
         if not is_budget:
             error_msg = "The budget is not positive."
-            print(error_msg)
-            return False
-
+            raise ValueError(error_msg)
+        
         # check datatypes for all factors
         for factor in factor_names:
             is_permissible = self.check_problem_factor(factor)
@@ -848,13 +843,11 @@ class Problem(ABC):
                 error_msg = (
                     f"Problem factor {factor} is not a permissible data type."
                 )
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
             if not is_permissible:
                 error_msg = f"Problem factor {factor} is not permissible."
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
         return True
 
@@ -1125,8 +1118,6 @@ class Problem(ABC):
                 )
             ]
             if self.gradient_available:
-                # print(self.response_dict_to_objectives_gradients(vector_gradients))
-                # print(solution.det_objectives_gradients)
                 solution.objectives_gradients[solution.n_reps] = [
                     [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
                     for stoch_obj, det_obj in zip(
@@ -1285,6 +1276,8 @@ class Model(ABC):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
+        # Make sure each factor has a check function.
+        assert len(self.specifications) == len(self.check_factor_list)
 
     def __eq__(self, other: Model) -> bool:
         """Check if two models are equivalent.
@@ -1390,8 +1383,7 @@ class Model(ABC):
 
         if not is_joint_factors:
             error_msg = "There is a joint setting of a model factor that is not permissible"
-            print(error_msg)
-            return False
+            raise ValueError(error_msg)
 
         # check datatypes for all factors
         for factor in factor_names:
@@ -1400,14 +1392,12 @@ class Model(ABC):
                 error_msg = (
                     f"Model factor {factor} is not a permissible data type."
                 )
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
             is_permissible = self.check_simulatable_factor(factor)
             if not is_permissible:
                 error_msg = f"Model factor {factor} is not permissible."
-                print(error_msg)
-                return False
+                raise ValueError(error_msg)
 
         return True
 
