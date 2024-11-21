@@ -34,54 +34,6 @@ from simopt.experiment_base import (
 from simopt.gui.df_object import DFFactor, spec_dict_to_df_dict
 from simopt.gui.toplevel_custom import Toplevel
 
-# Layout:
-# -----------------------------------------------------------------------------
-# |     Created Experiments     |           Problem/Solver Notebook           |
-# | --------------------------- | | Add Prob | Add Solver | Add Defaults |    |
-# | |                         | | ------------------------------------------- |
-# | |    Experiment List      | | |                                         | |
-# | |                         | | |                                         | |
-# | --------------------------- | |           Notebook Contents             | |
-# | [     Change Defaults     ] | |                                         | |
-# | [  Open Plotting Window   ] | |                                         | |
-# | [     Load Experiment     ] | ------------------------------------------- |
-# |-----------------------------|---------------------------------------------|
-# |     Current Experiment      |                                             |
-# | --------------------------- |                                             |
-# |   Problems   |   Solvers    |              Generated Design               |
-# | ------------ | ------------ |    (merged w/ notebook when not in use)     |
-# | |  Problem | | |  Solver  | |                                             |
-# | |   List   | | |   List   | |                                             |
-# | ------------ | ------------ |                                             |
-# | [       Load Design       ] |                                             |
-# | [       Clear List        ] |---------------------------------------------|
-# | Exper Name    [___________] | Design Type: [______^]                      |
-# | Make Pickle?  [___________] | # of Stacks: [_______]  [ Generate Design ] |
-# | [    Create Experiment    ] | Design Name: [_______]                      |
-# -----------------------------------------------------------------------------
-
-# Frames in the Window:
-# main
-# |--Experiments (exps)
-# |  |--Experiment List (list)
-# |  |--Experiment Fields (fields)
-# |--Current Experiment (curr_exp)
-# |  |--Problem/Solver Lists (lists)
-# |  |  |--Problem List (problems)
-# |  |  |--Solver List (solvers)
-# |  |--Current Experiment Fields (fields)
-# |--Notebook (ntbk)
-# |  |--Problem/Solver Adding (Notebook) (ps_adding)
-# |     |--Add Problem (problem)
-# |     |  |--Problem Factors (factors)
-# |     |--Add Solver (solver)
-# |     |  |--Solver Factors (factors)
-# |     |--Quick-Add Problems/Solvers (quick_add)
-# |        |--Problem Selection (problems)
-# |        |--Solver Selection (solvers)
-# |--Generated Design (gen_design)
-# |--Design Options (design_opts)
-
 
 class NewExperimentWindow(Toplevel):
     """New Experiment Window."""
