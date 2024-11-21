@@ -4,7 +4,7 @@ import pickle
 import re
 import tkinter as tk
 from abc import ABCMeta
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 from tkinter.font import nametofont
 from typing import Callable, Final, Literal
 
@@ -181,20 +181,42 @@ class NewExperimentWindow(Toplevel):
         self._initialize_notebook_frame()
         self._initialize_generated_design_frame()
         self._initialize_design_options()
+        # Grid each subframe
+        self.frames["exps"].grid(row=0, sticky="nsew")
+        self.frames["curr_exp"].grid(row=1, sticky="nsew")
+        self.frames["ntbk"].grid(row=0, sticky="nsew")
+        self.frames["design_opts"].grid(row=1, sticky="nsew")
+        self.frames["gen_design"].grid(row=2, sticky="nsew")
+        self.frames["gen_design"].grid_forget()
 
     def _initialize_main_frame(self) -> None:
+        if "main" in self.frames:
+            self.frames["main"].destroy()
         self.frames["main"] = ttk.Frame(self)
         self.frames["main"].pack(fill="both", expand=True)
-        self.frames["main"].grid_rowconfigure(0, weight=1)
-        self.frames["main"].grid_rowconfigure(1, weight=1)
         self.frames["main"].grid_columnconfigure(0, weight=1)
         self.frames["main"].grid_columnconfigure(1, weight=2)
+        self.frames["main"].grid_rowconfigure(0, weight=1)
+        # Configure the left side of the window
+        self.frames["left"] = ttk.Frame(self.frames["main"])
+        self.frames["left"].grid(row=0, column=0, sticky="nsew")
+        self.frames["left"].grid_columnconfigure(0, weight=1)
+        self.frames["left"].grid_rowconfigure(0, weight=1)
+        self.frames["left"].grid_rowconfigure(1, weight=1)
+        # Configure the right side of the window
+        self.frames["right"] = ttk.Frame(self.frames["main"])
+        self.frames["right"].grid(row=0, column=1, sticky="nsew")
+        self.frames["right"].grid_columnconfigure(0, weight=1)
+        self.frames["right"].grid_rowconfigure(0, weight=1)
+        self.frames["right"].grid_rowconfigure(1, weight=0)
+        self.frames["right"].grid_rowconfigure(2, weight=0)
 
     def _initialize_experiment_frame(self) -> None:
+        if "exps" in self.frames:
+            self.frames["exps"].destroy()
         self.frames["exps"] = ttk.Frame(
-            self.frames["main"], borderwidth=1, relief="solid"
+            self.frames["left"], borderwidth=1, relief="solid"
         )
-        self.frames["exps"].grid(row=0, column=0, sticky="nsew")
         self.frames["exps"].grid_columnconfigure(0, weight=1)
         self.frames["exps"].grid_rowconfigure(1, weight=1)
         self.labels["exps.header"] = ttk.Label(
@@ -238,10 +260,11 @@ class NewExperimentWindow(Toplevel):
         self.buttons["exps.fields.load_exp"].grid(row=2, column=0, sticky="ew")
 
     def _initialize_current_experiment_frame(self) -> None:
+        if "curr_exp" in self.frames:
+            self.frames["curr_exp"].destroy()
         self.frames["curr_exp"] = ttk.Frame(
-            self.frames["main"], borderwidth=1, relief="solid"
+            self.frames["left"], borderwidth=1, relief="solid"
         )
-        self.frames["curr_exp"].grid(row=1, column=0, sticky="nsew", rowspan=2)
         self.frames["curr_exp"].grid_columnconfigure(0, weight=1)
         self.frames["curr_exp"].grid_rowconfigure(1, weight=1)
         self.labels["curr_exp.header"] = ttk.Label(
@@ -343,10 +366,11 @@ class NewExperimentWindow(Toplevel):
         )
 
     def _initialize_notebook_frame(self) -> None:
+        if "ntbk" in self.frames:
+            self.frames["ntbk"].destroy()
         self.frames["ntbk"] = ttk.Frame(
-            self.frames["main"], borderwidth=1, relief="solid"
+            self.frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["ntbk"].grid(row=0, column=1, sticky="nsew")
         self.frames["ntbk"].grid_propagate(False)
         self.frames["ntbk"].grid_columnconfigure(0, weight=1)
         self.frames["ntbk"].grid_rowconfigure(1, weight=1)
@@ -439,10 +463,11 @@ class NewExperimentWindow(Toplevel):
         )
 
     def _initialize_generated_design_frame(self) -> None:
+        if "gen_design" in self.frames:
+            self.frames["gen_design"].destroy()
         self.frames["gen_design"] = ttk.Frame(
-            self.frames["main"], borderwidth=1, relief="solid"
+            self.frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
         self.frames["gen_design"].grid_columnconfigure(0, weight=1)
         self.frames["gen_design"].grid_rowconfigure(1, weight=1)
         self.labels["gen_design.header"] = ttk.Label(
@@ -464,10 +489,11 @@ class NewExperimentWindow(Toplevel):
         self.frames["gen_design.display"].grid(row=0, column=0, sticky="nsew")
 
     def _initialize_design_options(self) -> None:
+        if "design_opts" in self.frames:
+            self.frames["design_opts"].destroy()
         self.frames["design_opts"] = ttk.Frame(
-            self.frames["main"], borderwidth=1, relief="solid"
+            self.frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["design_opts"].grid(row=2, column=1, sticky="nsew")
         self.frames["design_opts"].grid_columnconfigure(1, weight=1)
         self.labels["design_opts.header"] = ttk.Label(
             self.frames["design_opts"],
@@ -519,11 +545,9 @@ class NewExperimentWindow(Toplevel):
 
     def _hide_gen_design(self) -> None:
         self.frames["gen_design"].grid_forget()
-        self.frames["ntbk"].grid(rowspan=2)
 
     def _show_gen_design(self) -> None:
-        self.frames["ntbk"].grid(rowspan=1)
-        self.frames["gen_design"].grid(row=1, column=1, sticky="nsew")
+        self.frames["gen_design"].grid(row=2, sticky="nsew")
 
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
@@ -543,7 +567,7 @@ class NewExperimentWindow(Toplevel):
                 self.canvases["ntbk.ps_adding.problem.factors"]
             )
             self.buttons["design_opts.generate"].configure(
-                text="Add Experiment", command=self.create_problem_design
+                text="Generate Problem Design", command=self.create_problem_design
             )
 
         elif tab_name == "Add Solver":
@@ -552,7 +576,7 @@ class NewExperimentWindow(Toplevel):
                 self.canvases["ntbk.ps_adding.solver.factors"]
             )
             self.buttons["design_opts.generate"].configure(
-                text="Add Experiment", command=self.create_solver_design
+                text="Generate Solver Design", command=self.create_solver_design
             )
 
         elif tab_name == "Quick-Add Problems/Solvers":
@@ -569,7 +593,12 @@ class NewExperimentWindow(Toplevel):
     # Event handler for when the user changes the problem combobox
     def _on_problem_combobox_change(self, _: tk.Event) -> None:
         problem_name = self.selected_problem_name.get()
-        problem = self.valid_problems[problem_name]
+        # Initialize problem for later. This is needed since the problem has
+        # many of its attributes set in the __init__ method, and if it is not
+        # initialized here, the problem will not have the correct attributes
+        # TODO: remove the need to do this
+        problem_class: ABCMeta = self.valid_problems[problem_name]  # type: ignore
+        problem: Problem = problem_class()
         self._create_problem_factors_canvas(problem)
 
     def _on_solver_combobox_change(self, _: tk.Event) -> None:
@@ -1179,7 +1208,7 @@ class NewExperimentWindow(Toplevel):
         )
 
         # load pickle
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Loading",
             "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
         )
@@ -1332,131 +1361,9 @@ class NewExperimentWindow(Toplevel):
                     break
         return row_index
 
-    def _create_problem_factors_canvas(self, event: tk.Event) -> None:
-        # Clear the canvas
-        canvas = self.canvases["ntbk.ps_adding.problem.factors"]
-        self._destroy_widget_children(canvas)
-
-        # Initialize the frames and headers
-        self.frames["ntbk.ps_adding.problem.factors.problems"] = ttk.Frame(
-            master=canvas
-        )
-        self.frames["ntbk.ps_adding.problem.factors.problems"].grid(
-            row=0, column=0, sticky=tk.N + tk.W
-        )
-        self.frames["ntbk.ps_adding.problem.factors.models"] = ttk.Frame(
-            master=canvas
-        )
-
-        self.problem_frame = tk.Frame(master=self.problem_notebook_frame)
-        self.problem_frame.grid(row=1, column=0, sticky=tk.N + tk.W)
-        self.model_frame = tk.Frame(master=self.problem_notebook_frame)
-        self.model_frame.grid(row=2, column=0, sticky=tk.N + tk.W)
-
-        # self.IsSolver = False #used when adding problem to experiment list
-
-        self.datafarm_prob_button = tk.Button(
-            master=self.problem_selection_frame, text="Data Farm this Problem"
-        )
-        self.datafarm_prob_button.grid(row=1, column=0)
-
-        self.datafarm_mod_button = tk.Button(
-            master=self.problem_selection_frame, text="Data Farm this Model"
-        )
-        self.datafarm_mod_button.grid(row=1, column=2)
-
-        # Create column for solver factor names
-        self.problem_headername_label = tk.Label(
-            master=self.problem_frame,
-            text="Problem Factors",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.problem_headername_label.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # self.model_headername_label = tk.Label(master = self.model_frame, text = 'Model Factors', font = f"{TEXT_FAMILY} 13 bold", width = 20, anchor = 'w')
-        # self.model_headername_label.grid(row = 0, column = 0, sticky = tk.N + tk.W)
-
-        # Create column for factor type
-        self.header_lbl_type = tk.Label(
-            master=self.problem_frame,
-            text="Factor Type",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor=tk.N + tk.W,
-        )
-        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
-
-        # Create column for factor default values
-        self.header_lbl_include = tk.Label(
-            master=self.problem_frame,
-            text="Default Value",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor=tk.N + tk.W,
-        )
-        self.header_lbl_include.grid(row=0, column=2, sticky=tk.N + tk.W)
-
-        """ Get problem information from directory and display"""
-        # Get problem info from directory
-        self.selected_problem_name = self.problem_var.get()
-        self.problem_object = self.problem_list[self.selected_problem_name]()
-
-        # show problem factors and store default widgets and values to this dict
-        self.problem_defaults, last_row = self._show_factor_defaults(
-            self.problem_object, self.problem_frame
-        )
-
-        # Create column for solver factor names
-        self.problem_headername_label = tk.Label(
-            master=self.problem_frame,
-            text="Model Factors",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor=tk.N + tk.W,
-        )
-        self.problem_headername_label.grid(
-            row=last_row + 1, column=0, sticky=tk.N + tk.W
-        )
-
-        """ Get model information from dicrectory and display"""
-        # self.model_problem_dict = model_problem_class_directory # directory that relates problem name to model class
-        # self.model_object = self.model_problem_dict[self.selected_problem]()
-        # # show model factors and store default widgets and default values to these
-        self.model_defaults, new_last_row = self._show_factor_defaults(
-            base_object=self.problem_object,
-            frame=self.problem_frame,
-            is_model=True,
-            first_row=last_row + 2,
-        )
-        # combine default dictionaries
-        self.problem_defaults.update(self.model_defaults)
-        # entry for problem name and add problem button
-        self.problem_name_label = tk.Label(
-            master=self.model_frame,
-            text="problem Name",
-            width=20,
-        )
-        self.problem_name_label.grid(row=new_last_row + 1, column=0)
-        self.problem_name_var = tk.StringVar()
-        # get unique problem name
-        problem_name = self.get_unique_name(
-            self.root_problem_dict, self.problem_object.name
-        )
-        self.problem_name_var.set(problem_name)
-        self.problem_name_entry = tk.Entry(
-            master=self.model_frame,
-            textvariable=self.problem_name_var,
-            width=20,
-        )
-        self.problem_name_entry.grid(row=new_last_row + 1, column=1)
-        self.add_prob_to_exp_button = tk.Button(
-            master=self.model_frame,
-            text="Add this problem to experiment",
-            command=self.add_problem_to_experiment,
-        )
-        self.add_prob_to_exp_button.grid(row=new_last_row + 2, column=0)
+    def _create_problem_factors_canvas(self, problem: Problem) -> None:
+        # TODO: implement this as a mirror of the solver function
+        return
 
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
@@ -1562,26 +1469,23 @@ class NewExperimentWindow(Toplevel):
         for i in range(len(self.factor_dict) + 1):
             frame.grid_rowconfigure(i, weight=1)
 
-    def show_problem_datafarm(self, option: tk.StringVar | None = None) -> None:
-        self.__show_data_farming_core(base_object="Problem")
-
-    def show_solver_datafarm(self, option: tk.StringVar | None = None) -> None:
-        self.__show_data_farming_core(base_object="Solver")
-
     def create_solver_design(self) -> None:
+        # Check to see if the user has selected a solver
+        if self.selected_solver_name.get() == "":
+            messagebox.showerror(
+                "Error",
+                "Please select a solver from the dropdown list.",
+            )
+            return
+        # Check if the design name already exists
         if self.design_name.get() in self.root_solver_dict:
-            tk.messagebox.showerror(
+            messagebox.showerror(
                 "Error",
                 "A design with this name already exists. Please choose a different name.",
             )
             return
 
         self.solver_design_name = self.design_name.get()
-        # # Get unique solver design name
-        # self.solver_design_name = self.get_unique_name(
-        #     self.root_solver_dict, self.design_name.get()
-        # )
-
         # Get the number of stacks, the name of the solver, and the type of design
         num_stacks = self.design_num_stacks.get()
         solver_design_type = self.design_type.get()
@@ -1721,7 +1625,7 @@ class NewExperimentWindow(Toplevel):
                 )
             except Exception as e:
                 # Give error message if design creation fails
-                tk.messagebox.showerror("Error Creating Design", str(e))
+                messagebox.showerror("Error Creating Design", str(e))
                 return
             # display design tree
             filename = os.path.join(
@@ -1729,10 +1633,6 @@ class NewExperimentWindow(Toplevel):
             )
             self.display_design_tree(
                 csv_filename=filename,
-                master_frame=self.frames["gen_design.display"],
-                row=999,
-                column=0,
-                columnspan=8,
             )
             # # button to add solver design to experiment
             # self.add_solver_design_button = tk.Button(
@@ -1888,7 +1788,7 @@ class NewExperimentWindow(Toplevel):
                 )
             except Exception as e:
                 # Give error message if design creation fails
-                tk.messagebox.showerror("Error Creating Design", str(e))
+                messagebox.showerror("Error Creating Design", str(e))
                 return
             # display design tree
             self.display_design_tree(
@@ -1915,14 +1815,27 @@ class NewExperimentWindow(Toplevel):
     def display_design_tree(
         self,
         csv_filename: str,
-        master_frame: ttk.Frame,
-        row: int = 0,
-        column: int = 0,
-        columnspan: int = 1,
+        master_frame: ttk.Frame | None = None,
     ) -> None:
-        # Show the design tree in the frame
+        if master_frame is None:
+            master_frame = self.frames["gen_design.display"]
+        # Read the design table from the csv file
+        design_table = pd.read_csv(csv_filename, index_col="design_num")
+        # Drop the last 3 columns from the design table since they're not needed
+        design_table.drop(
+            columns=["name", "design_type", "num_stacks"], inplace=True
+        )
+
+        # Unhide the generated design frame
         self._show_gen_design()
-        # Initialize design tree
+
+        # Modify the header to show the # of design points and # of duplicates
+        unique_design_points = design_table.drop_duplicates().shape[0]
+        num_duplicates = design_table.shape[0] - unique_design_points
+        plural_s = "" if num_duplicates == 1 else "s"
+        self.labels["gen_design.header"].configure(
+            text=f"Generated Design - {len(design_table)} Design Points ({num_duplicates} Duplicate{plural_s})"
+        )
 
         self.design_tree = ttk.Treeview(master=master_frame)
         self.design_tree.grid(row=1, column=0, sticky="nsew", padx=10)
@@ -1931,36 +1844,31 @@ class NewExperimentWindow(Toplevel):
             "Treeview.Heading",
             font=nametofont("TkHeadingFont"),
         )
-        self.style.configure(
-            "Treeview",
-            foreground="black",
-            font=nametofont("TkTextFont"),
-        )
         self.design_tree.heading("#0", text="Design #")
-
-        # Get design point values from csv
-        design_table = pd.read_csv(csv_filename, index_col="design_num")
-        num_dp = len(design_table)  # used for label
-        self.create_design_label = tk.Label(
-            master=master_frame,
-            text=f"Total Design Points: {num_dp}",
-            font=nametofont("TkHeadingFont"),
-            width=50,
-        )
-        self.create_design_label.grid(row=0, column=0, sticky=tk.W)
+        # Change row height to 30
+        std_font_size = nametofont("TkDefaultFont").cget("size")
+        # TODO: see if this is the right scaling
+        height = 30 * std_font_size / 12
+        self.style.configure("Treeview", rowheight=int(height))
 
         # Enter design values into treeview
-        self.design_tree["columns"] = tuple(design_table.columns)[:-3]
+        self.design_tree["columns"] = tuple(design_table.columns)
 
-        for column in design_table.columns[:-3]:
+        for column in design_table.columns:
             self.design_tree.heading(column, text=column)
             self.design_tree.column(column, width=100)
 
         for index, row in design_table.iterrows():
-            self.design_tree.insert(
-                "", index, text=index, values=tuple(row)[:-3]
-            )
+            self.design_tree.insert("", index, text=index, values=tuple(row))
 
+        # Set the size of each column to the width of the longest entry
+        for column in design_table.columns:
+            max_width = max(
+                design_table[column].astype(str).map(len).max(), len(column)
+            )
+            header_font_size = nametofont("TkHeadingFont").cget("size")
+            width = max_width * header_font_size * 0.8 + 10
+            self.design_tree.column(column, width=int(width))
         # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(
             master=master_frame,
@@ -2018,104 +1926,6 @@ class NewExperimentWindow(Toplevel):
                     converted_fixed_factors[factor] = False
 
         return converted_fixed_factors
-
-    def add_solver_to_experiment(self) -> None:
-        # get solver name entered by user & ensure it is unique
-        solver_name = self.get_unique_name(
-            self.root_solver_dict, self.solver_name_var.get()
-        )
-        # convert factor values to proper data type
-        fixed_factors = self.convert_proper_datatype(
-            self.solver_defaults, self.solver_object
-        )
-
-        solver_list = []  # holds dictionary of dps and solver name
-        solver_list.append(fixed_factors)
-        solver_list.append(self.solver_object.name)
-
-        solver_holder_list = []  # used so solver list matches datafarming format
-        solver_holder_list.append(solver_list)
-
-        self.root_solver_dict[solver_name] = solver_holder_list
-        # add solver name to solver index
-        solver_row = len(self.root_solver_dict) - 1
-        self.solver_list_label = tk.Label(
-            master=self.solver_list_canvas,
-            text=solver_name,
-        )
-        self.solver_list_label.grid(row=solver_row, column=1)
-        self.solver_list_labels[solver_name] = self.solver_list_label
-
-        # add delete and view/edit buttons
-        self.solver_edit_button = tk.Button(
-            master=self.solver_list_canvas,
-            text="View/Edit",
-            command=lambda: self.edit_solver(solver_name),
-        )
-        self.solver_edit_button.grid(row=solver_row, column=2)
-        self.solver_edit_buttons[solver_name] = self.solver_edit_button
-        self.solver_del_button = tk.Button(
-            master=self.solver_list_canvas,
-            text="Delete",
-            command=lambda: self.delete_solver(solver_name),
-        )
-        self.solver_del_button.grid(row=solver_row, column=3)
-        self.solver_del_buttons[solver_name] = self.solver_del_button
-
-        # refresh solver name entry box
-        self.solver_name_var.set(
-            self.get_unique_name(self.root_solver_dict, solver_name)
-        )
-
-    def add_problem_to_experiment(self) -> None:
-        # Convect problem and model factor values to proper data type
-        prob_fixed_factors = self.convert_proper_datatype(
-            self.problem_defaults, self.problem_object
-        )
-        # mod_fixed_factors = self.convert_proper_datatype(self.model_defaults, self.model_object.specifications)
-
-        # get problem name and ensure it is unique
-        problem_name = self.get_unique_name(
-            self.root_problem_dict, self.problem_name_var.get()
-        )
-
-        problem_list = []  # holds dictionary of dps and solver name
-        problem_list.append(prob_fixed_factors)
-        problem_list.append(self.problem_object.name)
-
-        problem_holder_list = []  # used so solver list matches datafarming format
-        problem_holder_list.append(problem_list)
-
-        self.root_problem_dict[problem_name] = problem_holder_list
-
-        # add problem name to problem index
-        problem_row = len(self.root_problem_dict) - 1
-        self.problem_list_label = tk.Label(
-            master=self.problem_list_canvas,
-            text=problem_name,
-        )
-        self.problem_list_label.grid(row=problem_row, column=1)
-        self.problem_list_labels[problem_name] = self.problem_list_label
-
-        # add delete and view/edit buttons
-        self.problem_edit_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="View/Edit",
-        )
-        self.problem_edit_button.grid(row=problem_row, column=2)
-        self.problem_edit_buttons[problem_name] = self.problem_edit_button
-        self.problem_del_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="Delete",
-            command=lambda: self.delete_problem(problem_name),
-        )
-        self.problem_del_button.grid(row=problem_row, column=3)
-        self.problem_del_buttons[problem_name] = self.problem_del_button
-
-        # refresh problem name entry box
-        self.problem_name_var.set(
-            self.get_unique_name(self.root_problem_dict, problem_name)
-        )
 
     def add_problem_design_to_experiment(self) -> None:
         problem_design_name = self.problem_design_name
@@ -4323,7 +4133,7 @@ class NewExperimentWindow(Toplevel):
                 text = "Please select problems to plot."
 
             # show popup message
-            tk.messagebox.showerror("Error", text)
+            messagebox.showerror("Error", text)
         else:  # create plots
             # get selected solvers & problems
             exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
@@ -4502,7 +4312,7 @@ class NewExperimentWindow(Toplevel):
                 if (
                     len(self.selected_solvers) > 7 and all_in
                 ):  # check if too many solvers selected
-                    tk.messagebox.showerror(
+                    messagebox.showerror(
                         "Exceeds Solver Limit",
                         "Area scatter plot can plot at most 7 solvers at one time. Please select fewer solvers and plot again.",
                     )
@@ -6268,7 +6078,7 @@ class NewExperimentWindow(Toplevel):
                 selected_plots.append(file_path)
 
         if len(selected_plots) == 0:
-            tk.messagebox.showerror(
+            messagebox.showerror(
                 "No Plots Selected",
                 " No plots were selected. Please check boxes next to plots you wish to display.",
             )
