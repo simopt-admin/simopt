@@ -74,12 +74,6 @@ class NewExperimentWindow(Toplevel):
         self.solver_del_buttons = {}
         self.problem_edit_buttons = {}
         self.problem_del_buttons = {}
-        self.run_buttons = {}
-        self.post_process_opt_buttons = {}
-        self.post_process_buttons = {}
-        self.post_norm_buttons = {}
-        self.log_buttons = {}
-        self.all_buttons = {}
         self.macro_vars = []  # list used for updated macro entries when default is changed
 
         # Default experiment options (can be changed in GUI)
@@ -2265,7 +2259,6 @@ class NewExperimentWindow(Toplevel):
             self.root_experiment_dict, self.DEFAULT_EXP_NAME
         )
         self.curr_exp_name.set(new_name)
-    
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
@@ -2273,7 +2266,9 @@ class NewExperimentWindow(Toplevel):
         self.current_experiment_frame = tk.Frame(
             master=self.tk_canvases["exps.list"]
         )
-        self.current_experiment_frame.grid(row=experiment_row, column=0, sticky="nsew")
+        self.current_experiment_frame.grid(
+            row=experiment_row, column=0, sticky="nsew"
+        )
         self.current_experiment_frame.grid_columnconfigure(0, weight=0)
         self.current_experiment_frame.grid_columnconfigure(1, weight=1)
         self.current_experiment_frame.grid_columnconfigure(2, weight=1)
@@ -2286,17 +2281,22 @@ class NewExperimentWindow(Toplevel):
         name_text_step_3 = self.experiment_name + "\n(Post-Normalized)"
         name_text_step_4 = self.experiment_name + "\n(Logged)"
 
-        lbl_name = self.experiment_name + ".name"
-        action_bttn_name = self.experiment_name + ".action"
-        all_bttn_name = self.experiment_name + ".all"
-        
+        name_base = "exp." + self.experiment_name
+        lbl_name = name_base + ".name"
+        action_bttn_name = name_base + ".action"
+        all_bttn_name = name_base + ".all"
+        opt_bttn_name = name_base + ".options"
+        del_bttn_name = name_base + ".delete"
+
         self.tk_labels[lbl_name] = ttk.Label(
             master=self.current_experiment_frame,
             text=name_text_step_0,
             justify="center",
             anchor="center",
         )
-        self.tk_labels[lbl_name].grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.tk_labels[lbl_name].grid(
+            row=0, column=0, padx=5, pady=5, sticky="nsew"
+        )
 
         bttn_text_run_all = "Run All\nRemaining Steps"
         bttn_text_run = "Run\nExperiment"
@@ -2315,40 +2315,60 @@ class NewExperimentWindow(Toplevel):
             self.update()
             try:
                 self.run_experiment(experiment_name=name)
-                action_button.configure(text=bttn_text_post_process, state="normal", command=lambda name=name: exp_post_process(name))
+                action_button.configure(
+                    text=bttn_text_post_process,
+                    state="normal",
+                    command=lambda name=name: exp_post_process(name),
+                )
                 self.tk_labels[lbl_name].configure(text=name_text_step_1)
                 return True
             except Exception as e:
                 messagebox.showerror("Error", str(e))
                 action_button.configure(text=bttn_text_run, state="normal")
                 return False
-        
+
         def exp_post_process(name: str) -> bool:
             action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_post_processing, state="disabled")
+            action_button.configure(
+                text=bttn_text_post_processing, state="disabled"
+            )
             self.update()
             try:
                 self.post_process(experiment_name=name)
-                action_button.configure(text=bttn_text_post_norm, state="normal", command=lambda name=name: exp_post_norm(name))
+                action_button.configure(
+                    text=bttn_text_post_norm,
+                    state="normal",
+                    command=lambda name=name: exp_post_norm(name),
+                )
                 self.tk_labels[lbl_name].configure(text=name_text_step_2)
                 return True
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_post_process, state="normal")
+                action_button.configure(
+                    text=bttn_text_post_process, state="normal"
+                )
                 return False
 
         def exp_post_norm(name: str) -> bool:
             action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_post_normalizing, state="disabled")
+            action_button.configure(
+                text=bttn_text_post_normalizing, state="disabled"
+            )
             self.update()
             try:
                 self.post_normalize(experiment_name=name)
-                action_button.configure(text=bttn_text_log, state="normal", command=lambda name=name: exp_log(name))
+                action_button.configure(
+                    text=bttn_text_log,
+                    state="normal",
+                    command=lambda name=name: exp_log(name),
+                )
                 self.tk_labels[lbl_name].configure(text=name_text_step_3)
                 return True
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_post_norm, state="normal")
+                action_button.configure(
+                    text=bttn_text_post_norm, state="normal"
+                )
                 return False
 
         def exp_log(name: str) -> bool:
@@ -2375,6 +2395,19 @@ class NewExperimentWindow(Toplevel):
                 return
             if not exp_log(name):
                 return
+            
+        def delete_experiment(
+            experiment_name: str, experiment_frame: tk.Frame
+        ) -> None:
+            del self.root_experiment_dict[experiment_name]
+            self._destroy_widget_children(experiment_frame)
+            # move up other frames below deleted one
+            row = experiment_frame.grid_info()["row"]
+            experiment_frames = self.tk_canvases["exps.list"].winfo_children()
+            for frame in experiment_frames:
+                current_row = frame.grid_info()["row"]
+                if current_row > row:
+                    frame.grid(row=current_row - 1, column=0)
 
         # Setup initial action button state
         self.tk_buttons[action_bttn_name] = ttk.Button(
@@ -2382,7 +2415,9 @@ class NewExperimentWindow(Toplevel):
             text=bttn_text_run,
             command=lambda name=self.experiment_name: exp_run(name),
         )
-        self.tk_buttons[action_bttn_name].grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        self.tk_buttons[action_bttn_name].grid(
+            row=0, column=1, padx=5, pady=5, sticky="nsew"
+        )
 
         # all in one
         self.tk_buttons[all_bttn_name] = ttk.Button(
@@ -2390,38 +2425,30 @@ class NewExperimentWindow(Toplevel):
             text=bttn_text_run_all,
             command=lambda name=self.experiment_name: exp_all(name),
         )
-        self.tk_buttons[all_bttn_name].grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+        self.tk_buttons[all_bttn_name].grid(
+            row=0, column=2, padx=5, pady=5, sticky="nsew"
+        )
         # experiment options button
-        option_bttn_name = self.experiment_name + ".options"
-        self.tk_buttons[option_bttn_name] = ttk.Button(
+        self.tk_buttons[opt_bttn_name] = ttk.Button(
             master=self.current_experiment_frame,
             text="Options",
             command=lambda name=self.experiment_name: self.open_post_processing_window(
                 name
             ),
         )
-        self.tk_buttons[option_bttn_name].grid(row=0, column=3, padx=5, pady=5, sticky="nsew")
+        self.tk_buttons[opt_bttn_name].grid(
+            row=0, column=3, padx=5, pady=5, sticky="nsew"
+        )
         # delete experiment
-        self.delete_exp_button = ttk.Button(
+        self.tk_buttons[del_bttn_name] = ttk.Button(
             master=self.current_experiment_frame,
             text="Delete",
             command=lambda name=self.experiment_name,
-            f=self.current_experiment_frame: self.delete_experiment(name, f),
+            frame=self.current_experiment_frame: delete_experiment(name, frame),
         )
-        self.delete_exp_button.grid(row=0, column=4, padx=5, pady=5, sticky="nsew")
-
-    def delete_experiment(
-        self, experiment_name: str, experiment_frame: tk.Frame
-    ) -> None:
-        del self.root_experiment_dict[experiment_name]
-        self._destroy_widget_children(experiment_frame)
-        # move up other frames below deleted one
-        row = experiment_frame.grid_info()["row"]
-        experiment_frames = self.tk_canvases["exps.list"].winfo_children()
-        for frame in experiment_frames:
-            current_row = frame.grid_info()["row"]
-            if current_row > row:
-                frame.grid(row=current_row - 1, column=0)
+        self.tk_buttons[del_bttn_name].grid(
+            row=0, column=4, padx=5, pady=5, sticky="nsew"
+        )
 
     def run_experiment(self, experiment_name: str) -> None:
         # get experiment object from master dict
@@ -2640,24 +2667,24 @@ class NewExperimentWindow(Toplevel):
         # update macro entry widgets
         for var in self.macro_vars:
             var.set(self.macro_default)
-    
+
     # Functionally the same as the below function, but for boolean values
     def _find_option_setting_bool(
-            self,
-            exp_name: str,
-            search_dict: dict[str, tk.BooleanVar],
-            default_val: bool,
+        self,
+        exp_name: str,
+        search_dict: dict[str, tk.BooleanVar],
+        default_val: bool,
     ) -> bool:
         if exp_name in search_dict:
             return search_dict[exp_name].get()
         return default_val
-    
+
     # Functionally the same as the above function, but for integers
     def _find_option_setting_int(
-            self,
-            exp_name: str,
-            search_dict: dict[str, tk.IntVar],
-            default_val: int,
+        self,
+        exp_name: str,
+        search_dict: dict[str, tk.IntVar],
+        default_val: int,
     ) -> int:
         if exp_name in search_dict:
             return search_dict[exp_name].get()
