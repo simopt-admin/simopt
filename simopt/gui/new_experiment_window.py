@@ -814,6 +814,9 @@ class NewExperimentWindow(Toplevel):
                 self.solver_checkboxes[solver_name].configure(state="normal")
 
     def create_cross_design(self) -> None:
+        # Check to see if anything is selected before creating the cross design
+        # TODO: this check
+
         for solver in self.solver_check_vars:
             checkstate = self.solver_check_vars[solver].get()
             if (
@@ -1643,18 +1646,28 @@ class NewExperimentWindow(Toplevel):
             # # button to add solver design to experiment
             self.tk_buttons["gen_design.add"] = ttk.Button(
                 master=self.tk_frames["gen_design.display"],
-                text="Add Design Points\nto Experiment",
+                text="Add Design Points to Experiment",
                 command=self.add_solver_design_to_experiment,
             )
             self.tk_buttons["gen_design.add"].grid(
-                row=0, column=1, sticky="nsew"
+                row=1, column=0, sticky="nsew"
             )
 
     def create_problem_design(self) -> None:
-        # Get unique solver design name
-        self.problem_design_name = self.get_unique_name(
-            self.root_problem_dict, self.design_name.get()
-        )
+        # Check to see if the user has selected a solver
+        if self.selected_problem_name.get() == "":
+            messagebox.showerror(
+                "Error",
+                "Please select a problem from the dropdown list.",
+            )
+            return
+        # Check if the design name already exists
+        if self.design_name.get() in self.root_problem_dict:
+            messagebox.showerror(
+                "Error",
+                "A design with this name already exists. Please choose a different name.",
+            )
+            return
 
         # get n stacks and design type from user input
         n_stacks = self.design_num_stacks.get()
@@ -1878,16 +1891,6 @@ class NewExperimentWindow(Toplevel):
             header_font_size = nametofont("TkHeadingFont").cget("size")
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
-        # Create a horizontal scrollbar
-        xscrollbar = ttk.Scrollbar(
-            master=master_frame,
-            orient="horizontal",
-            command=self.design_tree.xview,
-        )
-        xscrollbar.grid(row=2, column=0, sticky="nsew")
-
-        # Configure the Treeview to use the horizontal scrollbar
-        self.design_tree.configure(xscrollcommand=xscrollbar.set)
 
     def convert_proper_datatype(
         self,
@@ -2067,6 +2070,14 @@ class NewExperimentWindow(Toplevel):
             self.solver_del_buttons[solver_group].grid(row=row, column=3)
 
     def create_experiment(self) -> None:
+        # Check to make sure theres at least one problem and solver
+        if len(self.root_solver_dict) == 0 or len(self.root_problem_dict) == 0:
+            messagebox.showerror(
+                "Error",
+                "Please add at least one solver and one problem to the experiment.",
+            )
+            return
+
         # get unique experiment name
         old_name = self.curr_exp_name.get()
         self.experiment_name = self.get_unique_name(

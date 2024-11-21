@@ -6696,10 +6696,6 @@ def create_design(
 
     # Check if Ruby is installed on the system.
     installed_via_wsl: bool = validate_ruby_install()
-    # if installed_via_wsl:
-    #     print("Detected Ruby on WSL.")
-    # else:
-    #     print("Detected Ruby on the system path.")
     # Check if the datafarming gem is installed
     command_file: str = validate_gem_install(design_type, installed_via_wsl)
 
