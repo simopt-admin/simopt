@@ -278,7 +278,9 @@ class NewExperimentWindow(Toplevel):
             text="Load Experiment",
             command=self.load_experiment,
         )
-        self.tk_buttons["exps.fields.load_exp"].grid(row=2, column=0, sticky="ew")
+        self.tk_buttons["exps.fields.load_exp"].grid(
+            row=2, column=0, sticky="ew"
+        )
 
     def _initialize_current_experiment_frame(self) -> None:
         if "curr_exp" in self.tk_frames:
@@ -402,7 +404,9 @@ class NewExperimentWindow(Toplevel):
             font=nametofont("TkHeadingFont"),
         )
         self.tk_labels["ntbk.header"].grid(row=0, column=0, sticky="nsew")
-        self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(self.tk_frames["ntbk"])
+        self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(
+            self.tk_frames["ntbk"]
+        )
         self.tk_notebooks["ntbk.ps_adding"].grid(row=1, column=0, sticky="nsew")
         self.tk_frames["ntbk.ps_adding.problem"] = ttk.Frame(
             self.tk_notebooks["ntbk.ps_adding"]
@@ -410,7 +414,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_notebooks["ntbk.ps_adding"].add(
             self.tk_frames["ntbk.ps_adding.problem"], text="Add Problem"
         )
-        self.tk_frames["ntbk.ps_adding.problem"].grid_columnconfigure(1, weight=1)
+        self.tk_frames["ntbk.ps_adding.problem"].grid_columnconfigure(
+            1, weight=1
+        )
         self.tk_frames["ntbk.ps_adding.problem"].grid_rowconfigure(1, weight=1)
         self.tk_labels["ntbk.ps_adding.problem.select"] = ttk.Label(
             self.tk_frames["ntbk.ps_adding.problem"], text="Selected Problem"
@@ -444,7 +450,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_notebooks["ntbk.ps_adding"].add(
             self.tk_frames["ntbk.ps_adding.solver"], text="Add Solver"
         )
-        self.tk_frames["ntbk.ps_adding.solver"].grid_columnconfigure(1, weight=1)
+        self.tk_frames["ntbk.ps_adding.solver"].grid_columnconfigure(
+            1, weight=1
+        )
         self.tk_frames["ntbk.ps_adding.solver"].grid_rowconfigure(1, weight=1)
         self.tk_labels["ntbk.ps_adding.solver.select"] = ttk.Label(
             self.tk_frames["ntbk.ps_adding.solver"], text="Selected Solver"
@@ -501,7 +509,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["gen_design.display"] = ttk.Frame(
             self.tk_frames["gen_design"]
         )
-        self.tk_frames["gen_design.display"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["gen_design.display"].grid(
+            row=1, column=0, sticky="nsew"
+        )
         self.tk_frames["gen_design.display"].grid_columnconfigure(0, weight=1)
         self.tk_frames["gen_design.display"].grid_columnconfigure(1, weight=0)
         self.tk_frames["gen_design.display"].grid_rowconfigure(0, weight=1)
@@ -533,11 +543,15 @@ class NewExperimentWindow(Toplevel):
             values=sorted(self.design_types),
             state="readonly",
         )
-        self.tk_comboboxes["design_opts.type"].grid(row=1, column=1, sticky="ew")
+        self.tk_comboboxes["design_opts.type"].grid(
+            row=1, column=1, sticky="ew"
+        )
         self.tk_labels["design_opts.num_stacks"] = ttk.Label(
             self.tk_frames["design_opts"], text="# of Stacks ", anchor="e"
         )
-        self.tk_labels["design_opts.num_stacks"].grid(row=2, column=0, sticky="ew")
+        self.tk_labels["design_opts.num_stacks"].grid(
+            row=2, column=0, sticky="ew"
+        )
         self.tk_entries["design_opts.num_stacks"] = ttk.Entry(
             self.tk_frames["design_opts"], textvariable=self.design_num_stacks
         )
@@ -573,7 +587,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["design_opts.type"].configure(state="disabled")
         self.tk_entries["design_opts.num_stacks"].configure(state="disabled")
         self.tk_entries["design_opts.name"].configure(state="disabled")
-        
+
     def _enable_design_opts(self) -> None:
         self.tk_comboboxes["design_opts.type"].configure(state="readonly")
         self.tk_entries["design_opts.num_stacks"].configure(state="normal")
@@ -587,7 +601,7 @@ class NewExperimentWindow(Toplevel):
         # Reset the design options to the default values
         self.design_type.set(self.design_types[0])
         self.design_num_stacks.set(self.DEFAULT_NUM_STACKS)
-        self.design_name.set("")    # Blank out the design name
+        self.design_name.set("")  # Blank out the design name
 
         # Figure out what tab is being switched to
         tab_name = event.widget.tab(event.widget.select(), "text")
@@ -648,12 +662,16 @@ class NewExperimentWindow(Toplevel):
 
     def _add_with_default_options(self) -> None:
         # Delete all existing children of the frame
-        for child in self.tk_frames["ntbk.ps_adding.quick_add"].winfo_children():
+        for child in self.tk_frames[
+            "ntbk.ps_adding.quick_add"
+        ].winfo_children():
             child.destroy()
         # Configure the grid layout to expand properly
         problem_frame_weight = 2
         solver_frame_weight = 1
-        self.tk_frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(2, weight=1)
+        self.tk_frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(
+            2, weight=1
+        )
         self.tk_frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
             0, weight=problem_frame_weight
         )
@@ -738,7 +756,8 @@ class NewExperimentWindow(Toplevel):
             - checkbox_size
         )
         solver_frame_wrap = (
-            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale
+            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
+            * solver_scale
             - checkbox_size
         )
 
@@ -751,7 +770,9 @@ class NewExperimentWindow(Toplevel):
             ].grid_size()[1]
             checkstate = tk.BooleanVar()
             problem_checkbox = tk.Checkbutton(
-                master=self.tk_frames["ntbk.ps_adding.quick_add.problems_frame"],
+                master=self.tk_frames[
+                    "ntbk.ps_adding.quick_add.problems_frame"
+                ],
                 text=problem,
                 variable=checkstate,
                 command=self.cross_design_solver_compatibility,
@@ -1675,7 +1696,9 @@ class NewExperimentWindow(Toplevel):
                 text="Add Design Points\nto Experiment",
                 command=self.add_solver_design_to_experiment,
             )
-            self.tk_buttons["gen_design.add"].grid(row=0, column=1, sticky="nsew")
+            self.tk_buttons["gen_design.add"].grid(
+                row=0, column=1, sticky="nsew"
+            )
 
     def create_problem_design(self) -> None:
         # Get unique solver design name
@@ -1895,7 +1918,7 @@ class NewExperimentWindow(Toplevel):
 
         for index, row in design_table.iterrows():
             # TODO: figure out a better (non-warning raising) way to do this
-            self.design_tree.insert("", index, text=index, values=tuple(row)) # type: ignore
+            self.design_tree.insert("", index, text=index, values=tuple(row))  # type: ignore
 
         # Set the size of each column to the width of the longest entry
         for column in design_table.columns:
@@ -2260,7 +2283,9 @@ class NewExperimentWindow(Toplevel):
         self.root_experiment_dict[self.experiment_name] = self.experiment
 
         # reset default experiment name for next experiment
-        new_name = self.get_unique_name(self.root_experiment_dict, self.DEFAULT_EXP_NAME)
+        new_name = self.get_unique_name(
+            self.root_experiment_dict, self.DEFAULT_EXP_NAME
+        )
         self.curr_exp_name.set(new_name)
 
         # add exp to row
