@@ -62,6 +62,9 @@ class Toplevel(tk.Toplevel):
         nametofont("TkMenuFont").configure(size=font_medium)
         nametofont("TkSmallCaptionFont").configure(size=font_small)
 
+        # Change the default button behavior to center text
+        self.style.configure("TButton", justify="center")
+
     def center_window(self, scale: float) -> None:
         """Centers the window to the main display/monitor.
 

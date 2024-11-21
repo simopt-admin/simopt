@@ -2313,6 +2313,7 @@ class NewExperimentWindow(Toplevel):
             self.root_experiment_dict, self.DEFAULT_EXP_NAME
         )
         self.curr_exp_name.set(new_name)
+    
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
@@ -2320,88 +2321,142 @@ class NewExperimentWindow(Toplevel):
         self.current_experiment_frame = tk.Frame(
             master=self.tk_canvases["exps.list"]
         )
-        self.current_experiment_frame.grid(row=experiment_row, column=0)
-        self.experiment_list_label = tk.Label(
-            master=self.current_experiment_frame,
-            text=self.experiment_name,
-        )
-        self.experiment_list_label.grid(row=0, column=0)
+        self.current_experiment_frame.grid(row=experiment_row, column=0, sticky="nsew")
+        self.current_experiment_frame.grid_columnconfigure(0, weight=0)
+        self.current_experiment_frame.grid_columnconfigure(1, weight=1)
+        self.current_experiment_frame.grid_columnconfigure(2, weight=1)
+        self.current_experiment_frame.grid_columnconfigure(3, weight=1)
+        self.current_experiment_frame.grid_columnconfigure(4, weight=1)
 
-        # run button
-        self.run_experiment_button = tk.Button(
+        name_text_step_0 = self.experiment_name + "\n(Initialized)"
+        name_text_step_1 = self.experiment_name + "\n(Ran)"
+        name_text_step_2 = self.experiment_name + "\n(Post-Replicated)"
+        name_text_step_3 = self.experiment_name + "\n(Post-Normalized)"
+        name_text_step_4 = self.experiment_name + "\n(Logged)"
+
+        lbl_name = self.experiment_name + ".name"
+        action_bttn_name = self.experiment_name + ".action"
+        all_bttn_name = self.experiment_name + ".all"
+        
+        self.tk_labels[lbl_name] = ttk.Label(
             master=self.current_experiment_frame,
-            text="Run",
-            command=lambda name=self.experiment_name: self.run_experiment(
-                experiment_name=name
-            ),
+            text=name_text_step_0,
+            justify="center",
+            anchor="center",
         )
-        self.run_experiment_button.grid(row=0, column=2, pady=10)
-        self.run_buttons[self.experiment_name] = (
-            self.run_experiment_button
-        )  # add run button to widget dict
-        # experiment options button
-        self.post_process_opt_button = tk.Button(
+        self.tk_labels[lbl_name].grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+
+        bttn_text_run_all = "Run All\nRemaining Steps"
+        bttn_text_run = "Run\nExperiment"
+        bttn_text_running = "Running..."
+        bttn_text_post_process = "Post-Replicate"
+        bttn_text_post_processing = "Post-Replicating..."
+        bttn_text_post_norm = "Post-Normalize"
+        bttn_text_post_normalizing = "Post-Normalizing..."
+        bttn_text_log = "Log\nResults"
+        bttn_text_logging = "Logging..."
+        bttn_text_done = "Done"
+
+        def exp_run(name: str) -> bool:
+            action_button = self.tk_buttons[action_bttn_name]
+            action_button.configure(text=bttn_text_running, state="disabled")
+            self.update()
+            try:
+                self.run_experiment(experiment_name=name)
+                action_button.configure(text=bttn_text_post_process, state="normal", command=lambda name=name: exp_post_process(name))
+                self.tk_labels[lbl_name].configure(text=name_text_step_1)
+                return True
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                action_button.configure(text=bttn_text_run, state="normal")
+                return False
+        
+        def exp_post_process(name: str) -> bool:
+            action_button = self.tk_buttons[action_bttn_name]
+            action_button.configure(text=bttn_text_post_processing, state="disabled")
+            self.update()
+            try:
+                self.post_process(experiment_name=name)
+                action_button.configure(text=bttn_text_post_norm, state="normal", command=lambda name=name: exp_post_norm(name))
+                self.tk_labels[lbl_name].configure(text=name_text_step_2)
+                return True
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                action_button.configure(text=bttn_text_post_process, state="normal")
+                return False
+
+        def exp_post_norm(name: str) -> bool:
+            action_button = self.tk_buttons[action_bttn_name]
+            action_button.configure(text=bttn_text_post_normalizing, state="disabled")
+            self.update()
+            try:
+                self.post_normalize(experiment_name=name)
+                action_button.configure(text=bttn_text_log, state="normal", command=lambda name=name: exp_log(name))
+                self.tk_labels[lbl_name].configure(text=name_text_step_3)
+                return True
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                action_button.configure(text=bttn_text_post_norm, state="normal")
+                return False
+
+        def exp_log(name: str) -> bool:
+            action_button = self.tk_buttons[action_bttn_name]
+            action_button.configure(text=bttn_text_logging, state="disabled")
+            self.update()
+            try:
+                self.log_results(experiment_name=name)
+                action_button.configure(text=bttn_text_done, state="disabled")
+                self.tk_buttons[all_bttn_name].configure(state="disabled")
+                self.tk_labels[lbl_name].configure(text=name_text_step_4)
+                return True
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                action_button.configure(text=bttn_text_log, state="normal")
+                return False
+
+        def exp_all(name: str) -> None:
+            if not exp_run(name):
+                return
+            if not exp_post_process(name):
+                return
+            if not exp_post_norm(name):
+                return
+            if not exp_log(name):
+                return
+
+        # Setup initial action button state
+        self.tk_buttons[action_bttn_name] = ttk.Button(
             master=self.current_experiment_frame,
-            text="Experiment Options",
+            text=bttn_text_run,
+            command=lambda name=self.experiment_name: exp_run(name),
+        )
+        self.tk_buttons[action_bttn_name].grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+
+        # all in one
+        self.tk_buttons[all_bttn_name] = ttk.Button(
+            master=self.current_experiment_frame,
+            text=bttn_text_run_all,
+            command=lambda name=self.experiment_name: exp_all(name),
+        )
+        self.tk_buttons[all_bttn_name].grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+        # experiment options button
+        option_bttn_name = self.experiment_name + ".options"
+        self.tk_buttons[option_bttn_name] = ttk.Button(
+            master=self.current_experiment_frame,
+            text="Options",
             command=lambda name=self.experiment_name: self.open_post_processing_window(
                 name
             ),
         )
-        self.post_process_opt_button.grid(row=0, column=1)
-        self.post_process_opt_buttons[self.experiment_name] = (
-            self.post_process_opt_button
-        )  # add option button to widget dict
-        # post replication button
-        self.post_process_button = tk.Button(
-            master=self.current_experiment_frame,
-            text="Post-Replicate",
-            command=lambda name=self.experiment_name: self.post_process(name),
-        )
-        self.post_process_button.grid(row=0, column=3)
-        self.post_process_button.configure(state="disabled")
-        self.post_process_buttons[self.experiment_name] = (
-            self.post_process_button
-        )  # add post process button to widget dict
-        # post normalize button
-        self.post_norm_button = tk.Button(
-            master=self.current_experiment_frame,
-            text="Post-Normalize",
-            command=lambda name=self.experiment_name: self.post_normalize(name),
-        )
-        self.post_norm_button.grid(row=0, column=4)
-        self.post_norm_button.configure(state="disabled")
-        self.post_norm_buttons[self.experiment_name] = (
-            self.post_norm_button
-        )  # add post process button to widget dict
-        # log results button
-        self.log_button = tk.Button(
-            master=self.current_experiment_frame,
-            text="Log Results",
-            command=lambda name=self.experiment_name: self.log_results(name),
-        )
-        self.log_button.grid(row=0, column=5)
-        self.log_button.configure(state="disabled")
-        self.log_buttons[self.experiment_name] = (
-            self.log_button
-        )  # add post process button to widget dict
-        # all in one
-        self.all_button = tk.Button(
-            master=self.current_experiment_frame,
-            text="All",
-            command=lambda name=self.experiment_name: self.do_all_steps(name),
-        )
-        self.all_button.grid(row=0, column=6)
-        self.all_buttons[self.experiment_name] = (
-            self.all_button
-        )  # add post process button to widget dict
+        self.tk_buttons[option_bttn_name].grid(row=0, column=3, padx=5, pady=5, sticky="nsew")
         # delete experiment
-        self.delete_exp_button = tk.Button(
+        self.delete_exp_button = ttk.Button(
             master=self.current_experiment_frame,
-            text="Delete Experiment",
+            text="Delete",
             command=lambda name=self.experiment_name,
             f=self.current_experiment_frame: self.delete_experiment(name, f),
         )
-        self.delete_exp_button.grid(row=0, column=7)
+        self.delete_exp_button.grid(row=0, column=4, padx=5, pady=5, sticky="nsew")
 
     def delete_experiment(
         self, experiment_name: str, experiment_frame: tk.Frame
@@ -2410,7 +2465,7 @@ class NewExperimentWindow(Toplevel):
         self._destroy_widget_children(experiment_frame)
         # move up other frames below deleted one
         row = experiment_frame.grid_info()["row"]
-        experiment_frames = self.experiment_display_canvas.winfo_children()
+        experiment_frames = self.tk_canvases["exps.list"].winfo_children()
         for frame in experiment_frames:
             current_row = frame.grid_info()["row"]
             if current_row > row:
@@ -2427,14 +2482,6 @@ class NewExperimentWindow(Toplevel):
             n_macroreps = self.macro_default
         # use ProblemsSolvers run
         experiment.run(n_macroreps=n_macroreps)
-        # disable run buttons
-        self.run_buttons[experiment_name].configure(state="disabled")
-
-        # enable post-processing buttons
-        self.post_process_buttons[experiment_name].configure(state="normal")
-
-        # disable all button
-        self.all_buttons[experiment_name].configure(state="disabled")
 
     def open_defaults_window(self) -> None:
         # create new winow
@@ -2905,10 +2952,6 @@ class NewExperimentWindow(Toplevel):
             crn_across_macroreps=crn_macro,
         )
 
-        # disable post processing button & enable normalize buttons
-        self.post_process_buttons[experiment_name].configure(state="disabled")
-        self.post_norm_buttons[experiment_name].configure(state="normal")
-
     def post_normalize(self, experiment_name: str) -> None:
         # get experiment object from master dict
         experiment = self.root_experiment_dict[experiment_name]
@@ -2932,10 +2975,6 @@ class NewExperimentWindow(Toplevel):
             n_postreps_init_opt=reps, crn_across_init_opt=crn
         )
 
-        # disable post normalization button
-        self.post_norm_buttons[experiment_name].configure(state="disabled")
-        self.log_buttons[experiment_name].configure(state="normal")
-
     def log_results(self, experiment_name: str) -> None:
         # get experiment object from master dict
         experiment = self.root_experiment_dict[experiment_name]
@@ -2953,19 +2992,6 @@ class NewExperimentWindow(Toplevel):
         # log results
         experiment.log_group_experiment_results()
         experiment.report_group_statistics(solve_tols=solve_tols)
-
-        # disable log button
-        self.log_buttons[experiment_name].configure(state="disabled")
-
-    def do_all_steps(self, experiment_name: str) -> None:
-        # run experiment
-        self.run_experiment(experiment_name)
-        # post replicate experiment
-        self.post_process(experiment_name)
-        # post normalize experiment
-        self.post_normalize(experiment_name)
-        # log experiment results
-        self.log_results(experiment_name)
 
     def open_plotting_window(self) -> None:
         # create new window
