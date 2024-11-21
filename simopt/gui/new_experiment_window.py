@@ -2022,133 +2022,13 @@ class NewExperimentWindow(Toplevel):
             self.get_unique_name(self.root_solver_dict, solver_design_name)
         )
 
+    def edit_problem(self, problem_save_name: str) -> None:
+        error_msg = "Edit problem function not yet implemented."
+        messagebox.showerror("Error", error_msg)
+
     def edit_solver(self, solver_save_name: str) -> None:
-        # clear previous selections
-        self._destroy_widget_children(self.solver_frame)
-
-        """ Initialize frames and headers"""
-
-        self.solver_frame = tk.Frame(master=self.solver_notebook_frame)
-        self.solver_frame.grid(row=1, column=0)
-        self.factor_display_canvas = tk.Canvas(master=self.solver_frame)
-        self.factor_display_canvas.grid(row=1, column=0)
-
-        # Create column for solver factor names
-        self.header_lbl_name = tk.Label(
-            master=self.solver_frame,
-            text="Solver Factors",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.header_lbl_name.grid(row=0, column=0, sticky=tk.N + tk.W)
-
-        # Create column for factor type
-        self.header_lbl_type = tk.Label(
-            master=self.solver_frame,
-            text="Factor Type",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-            anchor="w",
-        )
-        self.header_lbl_type.grid(row=0, column=1, sticky=tk.N + tk.W)
-
-        # Create column for factor default values
-        self.headerdefault_label = tk.Label(
-            master=self.solver_frame,
-            text="Default Value",
-            font=nametofont("TkHeadingFont"),
-            width=20,
-        )
-        self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
-
-        """ Get solver information from master solver dict and display"""
-        solver = self.root_solver_dict[solver_save_name][0][1]
-
-        self.solver_object = solver_directory[solver]()
-
-        # show problem factors and store default widgets to this dict
-        self.solver_defaults = self._show_factor_defaults(
-            self.solver_object,
-            self.factor_display_canvas,
-            factor_dict=self.root_solver_dict[solver_save_name][0][0],
-        )
-
-        # save previous name if user edits name
-        self.solver_prev_name = solver_save_name
-
-        # entry for solver name and add solver button
-        self.solver_name_label = tk.Label(
-            master=self.solver_frame,
-            text="Solver Name",
-            width=20,
-        )
-        self.solver_name_label.grid(row=2, column=0)
-        self.solver_name_var = tk.StringVar()
-        self.solver_name_var.set(solver_save_name)
-        self.solver_name_entry = tk.Entry(
-            master=self.solver_frame,
-            textvariable=self.solver_name_var,
-            width=20,
-        )
-        self.solver_name_entry.grid(row=2, column=1)
-        self.add_sol_to_exp_button = tk.Button(
-            master=self.solver_frame,
-            text="Save Edits",
-            command=self.save_solver_edits,
-        )
-        self.add_sol_to_exp_button.grid(row=3, column=0)
-
-    def save_solver_edits(self) -> None:
-        # convert factor values to proper data type
-        fixed_factors = self.convert_proper_datatype(
-            self.solver_defaults, self.solver_object
-        )
-
-        # Update fixed factors in solver master dict
-        self.root_solver_dict[self.solver_prev_name][0][0] = fixed_factors
-
-        # Change solver save name if applicable
-        new_solver_name = self.solver_name_var.get()
-        if new_solver_name != self.solver_prev_name:
-            self.root_solver_dict[new_solver_name] = self.root_solver_dict[
-                self.solver_prev_name
-            ]
-            del self.root_solver_dict[self.solver_prev_name]
-            # change solver name in labels & buttons
-            self.solver_list_labels[self.solver_prev_name].configure(
-                text=new_solver_name
-            )
-            self.solver_list_labels[new_solver_name] = self.solver_list_labels[
-                self.solver_prev_name
-            ]
-            self.solver_edit_buttons[new_solver_name] = (
-                self.solver_edit_buttons[self.solver_prev_name]
-            )
-            self.solver_del_buttons[new_solver_name] = self.solver_del_buttons[
-                self.solver_prev_name
-            ]
-            del self.solver_list_labels[self.solver_prev_name]
-            del self.solver_edit_buttons[self.solver_prev_name]
-            del self.solver_del_buttons[self.solver_prev_name]
-
-    def delete_solver(self, solver_name: str) -> None:
-        # delete from master list
-        del self.root_solver_dict[solver_name]
-
-        # delete label & edit/delete buttons
-        self.solver_list_labels[solver_name].destroy()
-        self.solver_edit_buttons[solver_name].destroy()
-        self.solver_del_buttons[solver_name].destroy()
-        del self.solver_list_labels[solver_name]
-        del self.solver_edit_buttons[solver_name]
-        del self.solver_del_buttons[solver_name]
-
-        # re-display solver labels & buttons
-        for row, solver_group in enumerate(self.solver_list_labels):
-            self.solver_list_labels[solver_group].grid(row=row, column=1)
-            self.solver_edit_buttons[solver_group].grid(row=row, column=2)
-            self.solver_del_buttons[solver_group].grid(row=row, column=3)
+        error_msg = "Edit solver function not yet implemented."
+        messagebox.showerror("Error", error_msg)
 
     def delete_problem(self, problem_name: str) -> None:
         # delete from master list
@@ -2167,6 +2047,24 @@ class NewExperimentWindow(Toplevel):
             self.problem_list_labels[problem_group].grid(row=row, column=1)
             self.problem_edit_buttons[problem_group].grid(row=row, column=2)
             self.problem_del_buttons[problem_group].grid(row=row, column=3)
+
+    def delete_solver(self, solver_name: str) -> None:
+        # delete from master list
+        del self.root_solver_dict[solver_name]
+
+        # delete label & edit/delete buttons
+        self.solver_list_labels[solver_name].destroy()
+        self.solver_edit_buttons[solver_name].destroy()
+        self.solver_del_buttons[solver_name].destroy()
+        del self.solver_list_labels[solver_name]
+        del self.solver_edit_buttons[solver_name]
+        del self.solver_del_buttons[solver_name]
+
+        # re-display solver labels & buttons
+        for row, solver_group in enumerate(self.solver_list_labels):
+            self.solver_list_labels[solver_group].grid(row=row, column=1)
+            self.solver_edit_buttons[solver_group].grid(row=row, column=2)
+            self.solver_del_buttons[solver_group].grid(row=row, column=3)
 
     def create_experiment(self) -> None:
         # get unique experiment name
@@ -2395,19 +2293,12 @@ class NewExperimentWindow(Toplevel):
                 return
             if not exp_log(name):
                 return
-            
+
         def delete_experiment(
             experiment_name: str, experiment_frame: tk.Frame
         ) -> None:
             del self.root_experiment_dict[experiment_name]
             self._destroy_widget_children(experiment_frame)
-            # move up other frames below deleted one
-            row = experiment_frame.grid_info()["row"]
-            experiment_frames = self.tk_canvases["exps.list"].winfo_children()
-            for frame in experiment_frames:
-                current_row = frame.grid_info()["row"]
-                if current_row > row:
-                    frame.grid(row=current_row - 1, column=0)
 
         # Setup initial action button state
         self.tk_buttons[action_bttn_name] = ttk.Button(
