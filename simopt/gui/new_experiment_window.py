@@ -86,6 +86,10 @@ from simopt.gui.toplevel_custom import Toplevel
 class NewExperimentWindow(Toplevel):
     """New Experiment Window."""
 
+    # Constants
+    DEFAULT_NUM_STACKS: Final[int] = 1
+    DEFAULT_EXP_NAME: Final[str] = "Experiment"
+
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
         super().__init__(
@@ -136,8 +140,6 @@ class NewExperimentWindow(Toplevel):
         self.solve_tols_default = [0.05, 0.10, 0.20, 0.50]
 
         # Variables used by the GUI
-        self.current_experiment_name = tk.StringVar()
-        self.current_experiment_enable_pickle = tk.BooleanVar()
         # Add the name of the problem/solver to the displayed description
         # TODO: update the problem/solver implementations so that "name" is an
         # attribute of the class, as currently it is only initialized in the
@@ -151,11 +153,15 @@ class NewExperimentWindow(Toplevel):
             f"{solver().name} - {key}": solver  # type: ignore
             for key, solver in solver_unabbreviated_directory.items()
         }
+        # TODO: replace root lists/dicts with more descriptive names
+        # All exp variables
+        # self.all_exp_problems = []
         # Current exp variables
-        self.current_exp_problems = []
-        self.current_exp_solvers = []
-        self.current_exp_name = tk.StringVar()
-        self.current_exp_pickle = tk.BooleanVar()
+        # self.current_exp_problems = []
+        # self.current_exp_solvers = []
+        self.curr_exp_name = tk.StringVar()
+        self.curr_exp_name.set(self.DEFAULT_EXP_NAME)
+        self.curr_exp_is_pickled = tk.BooleanVar()
         # Notebook variables
         self.selected_problem_name = tk.StringVar()
         self.selected_solver_name = tk.StringVar()
@@ -164,21 +170,20 @@ class NewExperimentWindow(Toplevel):
         self.design_type = tk.StringVar()
         self.design_type.set(self.design_types[0])
         self.design_num_stacks = tk.IntVar()
-        self.design_num_stacks.set(1)
+        self.design_num_stacks.set(self.DEFAULT_NUM_STACKS)
         self.design_name = tk.StringVar()
 
         # Using dictionaries to store TK variables so they don't clutter
-        # the namespace with this.____
-        self.labels: dict[str, ttk.Label] = {}
-        self.buttons: dict[str, ttk.Button] = {}
-        self.entries: dict[str, ttk.Entry] = {}
-        self.checkbuttons: dict[str, ttk.Checkbutton] = {}
-        self.canvases: dict[str, tk.Canvas] = {}
-        self.comboboxes: dict[str, ttk.Combobox] = {}
-        self.notebooks: dict[str, ttk.Notebook] = {}
-        self.frames: dict[str, ttk.Frame] = {}
-        self.scrollbars: dict[str, ttk.Scrollbar] = {}
-        self.option_dropdowns: dict[str, ttk.OptionMenu] = {}
+        # the namespace and can easily be accessed by name
+        self.tk_buttons: dict[str, ttk.Button] = {}
+        self.tk_canvases: dict[str, tk.Canvas] = {}
+        self.tk_checkbuttons: dict[str, ttk.Checkbutton] = {}
+        self.tk_comboboxes: dict[str, ttk.Combobox] = {}
+        self.tk_entries: dict[str, ttk.Entry] = {}
+        self.tk_frames: dict[str, ttk.Frame] = {}
+        self.tk_labels: dict[str, ttk.Label] = {}
+        self.tk_notebooks: dict[str, ttk.Notebook] = {}
+        # self.tk_scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
         self._initialize_main_frame()
@@ -189,390 +194,390 @@ class NewExperimentWindow(Toplevel):
         self._initialize_generated_design_frame()
         self._initialize_design_options()
         # Grid each subframe
-        self.frames["exps"].grid(row=0, sticky="nsew", pady=5)
-        self.frames["curr_exp"].grid(row=1, sticky="nsew", pady=5)
-        self.frames["ntbk"].grid(row=0, sticky="nsew", pady=5)
-        self.frames["design_opts"].grid(row=1, sticky="nsew", pady=5)
-        self.frames["gen_design"].grid(row=2, sticky="nsew", pady=5)
-        self.frames["gen_design"].grid_remove()
+        self.tk_frames["exps"].grid(row=0, sticky="nsew", pady=5)
+        self.tk_frames["curr_exp"].grid(row=1, sticky="nsew", pady=5)
+        self.tk_frames["ntbk"].grid(row=0, sticky="nsew", pady=5)
+        self.tk_frames["design_opts"].grid(row=1, sticky="nsew", pady=5)
+        self.tk_frames["gen_design"].grid(row=2, sticky="nsew", pady=5)
+        self.tk_frames["gen_design"].grid_remove()
 
     def _initialize_main_frame(self) -> None:
-        if "main" in self.frames:
-            self.frames["main"].destroy()
+        if "main" in self.tk_frames:
+            self.tk_frames["main"].destroy()
         # Setup the main frame
-        self.frames["main"] = ttk.Frame(self)
-        self.frames["main"].pack(fill="both", expand=True)
-        self.frames["main"].grid_columnconfigure(0, weight=1)
-        self.frames["main"].grid_columnconfigure(1, weight=2)
-        self.frames["main"].grid_rowconfigure(0, weight=1)
+        self.tk_frames["main"] = ttk.Frame(self)
+        self.tk_frames["main"].pack(fill="both", expand=True)
+        self.tk_frames["main"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["main"].grid_columnconfigure(1, weight=2)
+        self.tk_frames["main"].grid_rowconfigure(0, weight=1)
         # Configure the left side of the window
-        self.frames["left"] = ttk.Frame(self.frames["main"])
-        self.frames["left"].grid(row=0, column=0, sticky="nsew", padx=5)
-        self.frames["left"].grid_columnconfigure(0, weight=1)
-        self.frames["left"].grid_rowconfigure(0, weight=1)
-        self.frames["left"].grid_rowconfigure(1, weight=1)
-        self.frames["left"].grid_propagate(False)
+        self.tk_frames["left"] = ttk.Frame(self.tk_frames["main"])
+        self.tk_frames["left"].grid(row=0, column=0, sticky="nsew", padx=5)
+        self.tk_frames["left"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["left"].grid_rowconfigure(0, weight=1)
+        self.tk_frames["left"].grid_rowconfigure(1, weight=1)
+        self.tk_frames["left"].grid_propagate(False)
         # Configure the right side of the window
-        self.frames["right"] = ttk.Frame(self.frames["main"])
-        self.frames["right"].grid(row=0, column=1, sticky="nsew", padx=5)
-        self.frames["right"].grid_columnconfigure(0, weight=1)
-        self.frames["right"].grid_rowconfigure(0, weight=1)
-        self.frames["right"].grid_rowconfigure(1, weight=0)
-        self.frames["right"].grid_rowconfigure(2, weight=0)
-        self.frames["right"].grid_propagate(False)
+        self.tk_frames["right"] = ttk.Frame(self.tk_frames["main"])
+        self.tk_frames["right"].grid(row=0, column=1, sticky="nsew", padx=5)
+        self.tk_frames["right"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["right"].grid_rowconfigure(0, weight=1)
+        self.tk_frames["right"].grid_rowconfigure(1, weight=0)
+        self.tk_frames["right"].grid_rowconfigure(2, weight=0)
+        self.tk_frames["right"].grid_propagate(False)
         # Apply a custom theme to each frame to achieve a grid-like appearance
         border_style = ttk.Style()
         border_style.configure("Main.TFrame", background="white")
-        self.frames["main"].configure(style="Main.TFrame")
-        self.frames["left"].configure(style="Main.TFrame")
-        self.frames["right"].configure(style="Main.TFrame")
+        self.tk_frames["main"].configure(style="Main.TFrame")
+        self.tk_frames["left"].configure(style="Main.TFrame")
+        self.tk_frames["right"].configure(style="Main.TFrame")
 
     def _initialize_experiment_frame(self) -> None:
-        if "exps" in self.frames:
-            self.frames["exps"].destroy()
-        self.frames["exps"] = ttk.Frame(
-            self.frames["left"], borderwidth=1, relief="solid"
+        if "exps" in self.tk_frames:
+            self.tk_frames["exps"].destroy()
+        self.tk_frames["exps"] = ttk.Frame(
+            self.tk_frames["left"], borderwidth=1, relief="solid"
         )
-        self.frames["exps"].grid_columnconfigure(0, weight=1)
-        self.frames["exps"].grid_rowconfigure(1, weight=1)
-        self.labels["exps.header"] = ttk.Label(
-            self.frames["exps"],
+        self.tk_frames["exps"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["exps"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["exps.header"] = ttk.Label(
+            self.tk_frames["exps"],
             text="Created Experiments",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["exps.header"].grid(row=0, column=0, sticky="nsew")
-        self.frames["exps.list"] = ttk.Frame(
-            self.frames["exps"],
+        self.tk_labels["exps.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_frames["exps.list"] = ttk.Frame(
+            self.tk_frames["exps"],
         )
-        self.frames["exps.list"].grid(row=1, column=0, sticky="nsew")
-        self.frames["exps.list"].grid_columnconfigure(0, weight=1)
-        self.frames["exps.fields"] = ttk.Frame(
-            self.frames["exps"],
+        self.tk_frames["exps.list"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["exps.list"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["exps.fields"] = ttk.Frame(
+            self.tk_frames["exps"],
         )
-        self.frames["exps.fields"].grid(row=2, column=0, sticky="nsew")
-        self.frames["exps.fields"].grid_columnconfigure(0, weight=1)
-        self.buttons["exps.fields.default_opts"] = ttk.Button(
-            self.frames["exps.fields"],
+        self.tk_frames["exps.fields"].grid(row=2, column=0, sticky="nsew")
+        self.tk_frames["exps.fields"].grid_columnconfigure(0, weight=1)
+        self.tk_buttons["exps.fields.default_opts"] = ttk.Button(
+            self.tk_frames["exps.fields"],
             text="Change Default Experiment Options",
             command=self.change_experiment_defaults,
         )
-        self.buttons["exps.fields.default_opts"].grid(
+        self.tk_buttons["exps.fields.default_opts"].grid(
             row=0, column=0, sticky="ew"
         )
-        self.buttons["exps.fields.open_plot_win"] = ttk.Button(
-            self.frames["exps.fields"],
+        self.tk_buttons["exps.fields.open_plot_win"] = ttk.Button(
+            self.tk_frames["exps.fields"],
             text="Open Plotting Window",
             command=self.open_plotting_window,
         )
-        self.buttons["exps.fields.open_plot_win"].grid(
+        self.tk_buttons["exps.fields.open_plot_win"].grid(
             row=1, column=0, sticky="ew"
         )
-        self.buttons["exps.fields.load_exp"] = ttk.Button(
-            self.frames["exps.fields"],
+        self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
+            self.tk_frames["exps.fields"],
             text="Load Experiment",
             command=self.load_experiment,
         )
-        self.buttons["exps.fields.load_exp"].grid(row=2, column=0, sticky="ew")
+        self.tk_buttons["exps.fields.load_exp"].grid(row=2, column=0, sticky="ew")
 
     def _initialize_current_experiment_frame(self) -> None:
-        if "curr_exp" in self.frames:
-            self.frames["curr_exp"].destroy()
-        self.frames["curr_exp"] = ttk.Frame(
-            self.frames["left"], borderwidth=1, relief="solid"
+        if "curr_exp" in self.tk_frames:
+            self.tk_frames["curr_exp"].destroy()
+        self.tk_frames["curr_exp"] = ttk.Frame(
+            self.tk_frames["left"], borderwidth=1, relief="solid"
         )
-        self.frames["curr_exp"].grid_columnconfigure(0, weight=1)
-        self.frames["curr_exp"].grid_rowconfigure(1, weight=1)
-        self.labels["curr_exp.header"] = ttk.Label(
-            self.frames["curr_exp"],
+        self.tk_frames["curr_exp"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["curr_exp"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["curr_exp.header"] = ttk.Label(
+            self.tk_frames["curr_exp"],
             text="Current Experiment Workspace",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["curr_exp.header"].grid(row=0, column=0, sticky="nsew")
-        self.frames["curr_exp.lists"] = ttk.Frame(self.frames["curr_exp"])
-        self.frames["curr_exp.lists"].grid(row=1, column=0, sticky="nsew")
-        self.frames["curr_exp.lists"].grid_propagate(False)
-        self.frames["curr_exp.lists"].grid_columnconfigure(0, weight=1)
-        self.frames["curr_exp.lists"].grid_columnconfigure(1, weight=1)
-        self.labels["curr_exp.lists.problem_header"] = ttk.Label(
-            self.frames["curr_exp.lists"],
+        self.tk_labels["curr_exp.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_frames["curr_exp.lists"] = ttk.Frame(self.tk_frames["curr_exp"])
+        self.tk_frames["curr_exp.lists"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["curr_exp.lists"].grid_propagate(False)
+        self.tk_frames["curr_exp.lists"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["curr_exp.lists"].grid_columnconfigure(1, weight=1)
+        self.tk_labels["curr_exp.lists.problem_header"] = ttk.Label(
+            self.tk_frames["curr_exp.lists"],
             text="Problems",
             anchor="center",
         )
-        self.labels["curr_exp.lists.problem_header"].grid(
+        self.tk_labels["curr_exp.lists.problem_header"].grid(
             row=0, column=0, sticky="nsew"
         )
-        self.labels["curr_exp.lists.solver_header"] = ttk.Label(
-            self.frames["curr_exp.lists"], text="Solvers", anchor="center"
+        self.tk_labels["curr_exp.lists.solver_header"] = ttk.Label(
+            self.tk_frames["curr_exp.lists"], text="Solvers", anchor="center"
         )
-        self.labels["curr_exp.lists.solver_header"].grid(
+        self.tk_labels["curr_exp.lists.solver_header"].grid(
             row=0, column=1, sticky="nsew"
         )
-        self.canvases["curr_exp.lists.problems"] = tk.Canvas(
-            self.frames["curr_exp.lists"],
+        self.tk_canvases["curr_exp.lists.problems"] = tk.Canvas(
+            self.tk_frames["curr_exp.lists"],
         )
-        self.canvases["curr_exp.lists.problems"].grid(
+        self.tk_canvases["curr_exp.lists.problems"].grid(
             row=1, column=0, sticky="nsew"
         )
-        self.canvases["curr_exp.lists.solvers"] = tk.Canvas(
-            self.frames["curr_exp.lists"],
+        self.tk_canvases["curr_exp.lists.solvers"] = tk.Canvas(
+            self.tk_frames["curr_exp.lists"],
         )
-        self.canvases["curr_exp.lists.solvers"].grid(
+        self.tk_canvases["curr_exp.lists.solvers"].grid(
             row=1, column=1, sticky="nsew"
         )
-        self.frames["curr_exp.fields"] = ttk.Frame(
-            self.frames["curr_exp"],
+        self.tk_frames["curr_exp.fields"] = ttk.Frame(
+            self.tk_frames["curr_exp"],
         )
-        self.frames["curr_exp.fields"].grid(row=2, column=0, sticky="nsew")
-        self.frames["curr_exp.fields"].grid_columnconfigure(1, weight=1)
-        self.buttons["curr_exp.fields.load_design"] = ttk.Button(
-            self.frames["curr_exp.fields"],
+        self.tk_frames["curr_exp.fields"].grid(row=2, column=0, sticky="nsew")
+        self.tk_frames["curr_exp.fields"].grid_columnconfigure(1, weight=1)
+        self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
+            self.tk_frames["curr_exp.fields"],
             text="Load Design from CSV",
             command=self.load_design,
         )
-        self.buttons["curr_exp.fields.load_design"].grid(
+        self.tk_buttons["curr_exp.fields.load_design"].grid(
             row=0, column=0, columnspan=2, sticky="ew"
         )
-        self.buttons["curr_exp.fields.clear_list"] = ttk.Button(
-            self.frames["curr_exp.fields"],
+        self.tk_buttons["curr_exp.fields.clear_list"] = ttk.Button(
+            self.tk_frames["curr_exp.fields"],
             text="Clear Problem/Solver Lists",
             command=self.clear_experiment,
         )
-        self.buttons["curr_exp.fields.clear_list"].grid(
+        self.tk_buttons["curr_exp.fields.clear_list"].grid(
             row=1, column=0, columnspan=2, sticky="ew"
         )
-        self.labels["curr_exp.fields.exp_name"] = ttk.Label(
-            self.frames["curr_exp.fields"],
+        self.tk_labels["curr_exp.fields.exp_name"] = ttk.Label(
+            self.tk_frames["curr_exp.fields"],
             text="Experiment Name ",
             anchor="e",
         )
-        self.labels["curr_exp.fields.exp_name"].grid(
+        self.tk_labels["curr_exp.fields.exp_name"].grid(
             row=2, column=0, sticky="ew"
         )
-        self.entries["curr_exp.fields.exp_name"] = ttk.Entry(
-            self.frames["curr_exp.fields"],
-            textvariable=self.current_experiment_name,
+        self.tk_entries["curr_exp.fields.exp_name"] = ttk.Entry(
+            self.tk_frames["curr_exp.fields"],
+            textvariable=self.curr_exp_name,
         )
-        self.entries["curr_exp.fields.exp_name"].grid(
+        self.tk_entries["curr_exp.fields.exp_name"].grid(
             row=2, column=1, sticky="ew"
         )
-        self.labels["curr_exp.fields.make_pickle"] = ttk.Label(
-            self.frames["curr_exp.fields"],
+        self.tk_labels["curr_exp.fields.make_pickle"] = ttk.Label(
+            self.tk_frames["curr_exp.fields"],
             text="Create Pickles for each pair? ",
             anchor="e",
         )
-        self.labels["curr_exp.fields.make_pickle"].grid(
+        self.tk_labels["curr_exp.fields.make_pickle"].grid(
             row=3, column=0, sticky="ew"
         )
-        self.checkbuttons["curr_exp.fields.make_pickle"] = ttk.Checkbutton(
-            self.frames["curr_exp.fields"],
-            variable=self.current_experiment_enable_pickle,
+        self.tk_checkbuttons["curr_exp.fields.make_pickle"] = ttk.Checkbutton(
+            self.tk_frames["curr_exp.fields"],
+            variable=self.curr_exp_is_pickled,
         )
-        self.checkbuttons["curr_exp.fields.make_pickle"].grid(
+        self.tk_checkbuttons["curr_exp.fields.make_pickle"].grid(
             row=3, column=1, sticky="w"
         )
-        self.buttons["curr_exp.fields.create_exp"] = ttk.Button(
-            self.frames["curr_exp.fields"],
+        self.tk_buttons["curr_exp.fields.create_exp"] = ttk.Button(
+            self.tk_frames["curr_exp.fields"],
             text="Create Experiment",
             command=self.create_experiment,
         )
-        self.buttons["curr_exp.fields.create_exp"].grid(
+        self.tk_buttons["curr_exp.fields.create_exp"].grid(
             row=4, column=0, columnspan=2, sticky="ew"
         )
 
     def _initialize_notebook_frame(self) -> None:
-        if "ntbk" in self.frames:
-            self.frames["ntbk"].destroy()
-        self.frames["ntbk"] = ttk.Frame(
-            self.frames["right"], borderwidth=1, relief="solid"
+        if "ntbk" in self.tk_frames:
+            self.tk_frames["ntbk"].destroy()
+        self.tk_frames["ntbk"] = ttk.Frame(
+            self.tk_frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["ntbk"].grid_propagate(False)
-        self.frames["ntbk"].grid_columnconfigure(0, weight=1)
-        self.frames["ntbk"].grid_rowconfigure(1, weight=1)
-        self.labels["ntbk.header"] = ttk.Label(
-            self.frames["ntbk"],
+        self.tk_frames["ntbk"].grid_propagate(False)
+        self.tk_frames["ntbk"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["ntbk"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["ntbk.header"] = ttk.Label(
+            self.tk_frames["ntbk"],
             text="Create Problems/Solvers",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["ntbk.header"].grid(row=0, column=0, sticky="nsew")
-        self.notebooks["ntbk.ps_adding"] = ttk.Notebook(self.frames["ntbk"])
-        self.notebooks["ntbk.ps_adding"].grid(row=1, column=0, sticky="nsew")
-        self.frames["ntbk.ps_adding.problem"] = ttk.Frame(
-            self.notebooks["ntbk.ps_adding"]
+        self.tk_labels["ntbk.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(self.tk_frames["ntbk"])
+        self.tk_notebooks["ntbk.ps_adding"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["ntbk.ps_adding.problem"] = ttk.Frame(
+            self.tk_notebooks["ntbk.ps_adding"]
         )
-        self.notebooks["ntbk.ps_adding"].add(
-            self.frames["ntbk.ps_adding.problem"], text="Add Problem"
+        self.tk_notebooks["ntbk.ps_adding"].add(
+            self.tk_frames["ntbk.ps_adding.problem"], text="Add Problem"
         )
-        self.frames["ntbk.ps_adding.problem"].grid_columnconfigure(1, weight=1)
-        self.frames["ntbk.ps_adding.problem"].grid_rowconfigure(1, weight=1)
-        self.labels["ntbk.ps_adding.problem.select"] = ttk.Label(
-            self.frames["ntbk.ps_adding.problem"], text="Selected Problem"
+        self.tk_frames["ntbk.ps_adding.problem"].grid_columnconfigure(1, weight=1)
+        self.tk_frames["ntbk.ps_adding.problem"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["ntbk.ps_adding.problem.select"] = ttk.Label(
+            self.tk_frames["ntbk.ps_adding.problem"], text="Selected Problem"
         )
-        self.labels["ntbk.ps_adding.problem.select"].grid(
+        self.tk_labels["ntbk.ps_adding.problem.select"].grid(
             row=0, column=0, padx=5
         )
         # Setting this to readonly prevents the user from typing in the combobox
-        self.comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
-            self.frames["ntbk.ps_adding.problem"],
+        self.tk_comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
+            self.tk_frames["ntbk.ps_adding.problem"],
             textvariable=self.selected_problem_name,
             values=sorted(list(self.valid_problems.keys())),
             state="readonly",
         )
-        self.comboboxes["ntbk.ps_adding.problem.select"].grid(
+        self.tk_comboboxes["ntbk.ps_adding.problem.select"].grid(
             row=0, column=1, sticky="ew", padx=5
         )
-        self.comboboxes["ntbk.ps_adding.problem.select"].bind(
+        self.tk_comboboxes["ntbk.ps_adding.problem.select"].bind(
             "<<ComboboxSelected>>", self._on_problem_combobox_change
         )
-        self.canvases["ntbk.ps_adding.problem.factors"] = tk.Canvas(
-            self.frames["ntbk.ps_adding.problem"]
+        self.tk_canvases["ntbk.ps_adding.problem.factors"] = tk.Canvas(
+            self.tk_frames["ntbk.ps_adding.problem"]
         )
-        self.canvases["ntbk.ps_adding.problem.factors"].grid(
+        self.tk_canvases["ntbk.ps_adding.problem.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
 
-        self.frames["ntbk.ps_adding.solver"] = ttk.Frame(
-            self.notebooks["ntbk.ps_adding"]
+        self.tk_frames["ntbk.ps_adding.solver"] = ttk.Frame(
+            self.tk_notebooks["ntbk.ps_adding"]
         )
-        self.notebooks["ntbk.ps_adding"].add(
-            self.frames["ntbk.ps_adding.solver"], text="Add Solver"
+        self.tk_notebooks["ntbk.ps_adding"].add(
+            self.tk_frames["ntbk.ps_adding.solver"], text="Add Solver"
         )
-        self.frames["ntbk.ps_adding.solver"].grid_columnconfigure(1, weight=1)
-        self.frames["ntbk.ps_adding.solver"].grid_rowconfigure(1, weight=1)
-        self.labels["ntbk.ps_adding.solver.select"] = ttk.Label(
-            self.frames["ntbk.ps_adding.solver"], text="Selected Solver"
+        self.tk_frames["ntbk.ps_adding.solver"].grid_columnconfigure(1, weight=1)
+        self.tk_frames["ntbk.ps_adding.solver"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["ntbk.ps_adding.solver.select"] = ttk.Label(
+            self.tk_frames["ntbk.ps_adding.solver"], text="Selected Solver"
         )
-        self.labels["ntbk.ps_adding.solver.select"].grid(
+        self.tk_labels["ntbk.ps_adding.solver.select"].grid(
             row=0, column=0, padx=5
         )
         # Setting this to readonly prevents the user from typing in the combobox
-        self.comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
-            self.frames["ntbk.ps_adding.solver"],
+        self.tk_comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
+            self.tk_frames["ntbk.ps_adding.solver"],
             textvariable=self.selected_solver_name,
             values=sorted(list(self.valid_solvers.keys())),
             state="readonly",
         )
-        self.comboboxes["ntbk.ps_adding.solver.select"].grid(
+        self.tk_comboboxes["ntbk.ps_adding.solver.select"].grid(
             row=0, column=1, sticky="ew", padx=5
         )
-        self.comboboxes["ntbk.ps_adding.solver.select"].bind(
+        self.tk_comboboxes["ntbk.ps_adding.solver.select"].bind(
             "<<ComboboxSelected>>", self._on_solver_combobox_change
         )
-        self.canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
-            self.frames["ntbk.ps_adding.solver"]
+        self.tk_canvases["ntbk.ps_adding.solver.factors"] = tk.Canvas(
+            self.tk_frames["ntbk.ps_adding.solver"]
         )
-        self.canvases["ntbk.ps_adding.solver.factors"].grid(
+        self.tk_canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
 
-        self.frames["ntbk.ps_adding.quick_add"] = ttk.Frame(
-            self.notebooks["ntbk.ps_adding"]
+        self.tk_frames["ntbk.ps_adding.quick_add"] = ttk.Frame(
+            self.tk_notebooks["ntbk.ps_adding"]
         )
-        self.notebooks["ntbk.ps_adding"].add(
-            self.frames["ntbk.ps_adding.quick_add"],
+        self.tk_notebooks["ntbk.ps_adding"].add(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
             text="Quick-Add Problems/Solvers",
         )
-        self.notebooks["ntbk.ps_adding"].bind(
+        self.tk_notebooks["ntbk.ps_adding"].bind(
             "<<NotebookTabChanged>>", self._on_notebook_tab_change
         )
 
     def _initialize_generated_design_frame(self) -> None:
-        if "gen_design" in self.frames:
-            self.frames["gen_design"].destroy()
-        self.frames["gen_design"] = ttk.Frame(
-            self.frames["right"], borderwidth=1, relief="solid"
+        if "gen_design" in self.tk_frames:
+            self.tk_frames["gen_design"].destroy()
+        self.tk_frames["gen_design"] = ttk.Frame(
+            self.tk_frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["gen_design"].grid_columnconfigure(0, weight=1)
-        self.frames["gen_design"].grid_rowconfigure(1, weight=1)
-        self.labels["gen_design.header"] = ttk.Label(
-            self.frames["gen_design"],
+        self.tk_frames["gen_design"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["gen_design"].grid_rowconfigure(1, weight=1)
+        self.tk_labels["gen_design.header"] = ttk.Label(
+            self.tk_frames["gen_design"],
             text="Generated Design",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["gen_design.header"].grid(row=0, column=0, sticky="nsew")
-        self.frames["gen_design.display"] = ttk.Frame(
-            self.frames["gen_design"]
+        self.tk_labels["gen_design.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_frames["gen_design.display"] = ttk.Frame(
+            self.tk_frames["gen_design"]
         )
-        self.frames["gen_design.display"].grid(row=1, column=0, sticky="nsew")
-        self.frames["gen_design.display"].grid_columnconfigure(0, weight=1)
-        self.frames["gen_design.display"].grid_columnconfigure(1, weight=0)
-        self.frames["gen_design.display"].grid_rowconfigure(0, weight=1)
+        self.tk_frames["gen_design.display"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["gen_design.display"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["gen_design.display"].grid_columnconfigure(1, weight=0)
+        self.tk_frames["gen_design.display"].grid_rowconfigure(0, weight=1)
 
     def _initialize_design_options(self) -> None:
-        if "design_opts" in self.frames:
-            self.frames["design_opts"].destroy()
-        self.frames["design_opts"] = ttk.Frame(
-            self.frames["right"], borderwidth=1, relief="solid"
+        if "design_opts" in self.tk_frames:
+            self.tk_frames["design_opts"].destroy()
+        self.tk_frames["design_opts"] = ttk.Frame(
+            self.tk_frames["right"], borderwidth=1, relief="solid"
         )
-        self.frames["design_opts"].grid_columnconfigure(1, weight=1)
-        self.labels["design_opts.header"] = ttk.Label(
-            self.frames["design_opts"],
+        self.tk_frames["design_opts"].grid_columnconfigure(1, weight=1)
+        self.tk_labels["design_opts.header"] = ttk.Label(
+            self.tk_frames["design_opts"],
             text="Design Options",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["design_opts.header"].grid(
+        self.tk_labels["design_opts.header"].grid(
             row=0, column=0, sticky="nsew", columnspan=3
         )
-        self.labels["design_opts.type"] = ttk.Label(
-            self.frames["design_opts"], text="Design Type ", anchor="e"
+        self.tk_labels["design_opts.type"] = ttk.Label(
+            self.tk_frames["design_opts"], text="Design Type ", anchor="e"
         )
-        self.labels["design_opts.type"].grid(row=1, column=0, sticky="ew")
+        self.tk_labels["design_opts.type"].grid(row=1, column=0, sticky="ew")
         # Setting this to readonly prevents the user from typing in the combobox
-        self.comboboxes["design_opts.type"] = ttk.Combobox(
-            self.frames["design_opts"],
+        self.tk_comboboxes["design_opts.type"] = ttk.Combobox(
+            self.tk_frames["design_opts"],
             textvariable=self.design_type,
             values=sorted(self.design_types),
             state="readonly",
         )
-        self.comboboxes["design_opts.type"].grid(row=1, column=1, sticky="ew")
-        self.labels["design_opts.num_stacks"] = ttk.Label(
-            self.frames["design_opts"], text="# of Stacks ", anchor="e"
+        self.tk_comboboxes["design_opts.type"].grid(row=1, column=1, sticky="ew")
+        self.tk_labels["design_opts.num_stacks"] = ttk.Label(
+            self.tk_frames["design_opts"], text="# of Stacks ", anchor="e"
         )
-        self.labels["design_opts.num_stacks"].grid(row=2, column=0, sticky="ew")
-        self.entries["design_opts.num_stacks"] = ttk.Entry(
-            self.frames["design_opts"], textvariable=self.design_num_stacks
+        self.tk_labels["design_opts.num_stacks"].grid(row=2, column=0, sticky="ew")
+        self.tk_entries["design_opts.num_stacks"] = ttk.Entry(
+            self.tk_frames["design_opts"], textvariable=self.design_num_stacks
         )
-        self.entries["design_opts.num_stacks"].grid(
+        self.tk_entries["design_opts.num_stacks"].grid(
             row=2, column=1, sticky="ew"
         )
-        self.labels["design_opts.name"] = ttk.Label(
-            self.frames["design_opts"], text="Design Name ", anchor="e"
+        self.tk_labels["design_opts.name"] = ttk.Label(
+            self.tk_frames["design_opts"], text="Design Name ", anchor="e"
         )
-        self.labels["design_opts.name"].grid(row=3, column=0, sticky="ew")
-        self.entries["design_opts.name"] = ttk.Entry(
-            self.frames["design_opts"], textvariable=self.design_name
+        self.tk_labels["design_opts.name"].grid(row=3, column=0, sticky="ew")
+        self.tk_entries["design_opts.name"] = ttk.Entry(
+            self.tk_frames["design_opts"], textvariable=self.design_name
         )
-        self.entries["design_opts.name"].grid(row=3, column=1, sticky="ew")
-        self.buttons["design_opts.generate"] = ttk.Button(
-            self.frames["design_opts"],
+        self.tk_entries["design_opts.name"].grid(row=3, column=1, sticky="ew")
+        self.tk_buttons["design_opts.generate"] = ttk.Button(
+            self.tk_frames["design_opts"],
             text="Generate Design",
             width=40,
         )
-        self.buttons["design_opts.generate"].grid(
+        self.tk_buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
 
     def _hide_gen_design(self) -> None:
-        self.frames["gen_design"].grid_remove()
+        self.tk_frames["gen_design"].grid_remove()
 
     def _show_gen_design(self) -> None:
         # We don't need to pass any settings to grid since grid_remove
         # remembers the previous settings
-        self.frames["gen_design"].grid()
+        self.tk_frames["gen_design"].grid()
 
     def _disable_design_opts(self) -> None:
-        self.comboboxes["design_opts.type"].configure(state="disabled")
-        self.entries["design_opts.num_stacks"].configure(state="disabled")
-        self.entries["design_opts.name"].configure(state="disabled")
+        self.tk_comboboxes["design_opts.type"].configure(state="disabled")
+        self.tk_entries["design_opts.num_stacks"].configure(state="disabled")
+        self.tk_entries["design_opts.name"].configure(state="disabled")
         
     def _enable_design_opts(self) -> None:
-        self.comboboxes["design_opts.type"].configure(state="readonly")
-        self.entries["design_opts.num_stacks"].configure(state="normal")
-        self.entries["design_opts.name"].configure(state="normal")
+        self.tk_comboboxes["design_opts.type"].configure(state="readonly")
+        self.tk_entries["design_opts.num_stacks"].configure(state="normal")
+        self.tk_entries["design_opts.name"].configure(state="normal")
 
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
@@ -581,8 +586,8 @@ class NewExperimentWindow(Toplevel):
 
         # Reset the design options to the default values
         self.design_type.set(self.design_types[0])
-        self.design_num_stacks.set(1)
-        self.design_name.set("")    # Overriden when selecting a problem/solver
+        self.design_num_stacks.set(self.DEFAULT_NUM_STACKS)
+        self.design_name.set("")    # Blank out the design name
 
         # Figure out what tab is being switched to
         tab_name = event.widget.tab(event.widget.select(), "text")
@@ -591,9 +596,9 @@ class NewExperimentWindow(Toplevel):
             self.selected_problem_name.set("")
             self._enable_design_opts()
             self._destroy_widget_children(
-                self.canvases["ntbk.ps_adding.problem.factors"]
+                self.tk_canvases["ntbk.ps_adding.problem.factors"]
             )
-            self.buttons["design_opts.generate"].configure(
+            self.tk_buttons["design_opts.generate"].configure(
                 text="Generate Problem Design",
                 command=self.create_problem_design,
             )
@@ -602,16 +607,16 @@ class NewExperimentWindow(Toplevel):
             self.selected_solver_name.set("")
             self._enable_design_opts()
             self._destroy_widget_children(
-                self.canvases["ntbk.ps_adding.solver.factors"]
+                self.tk_canvases["ntbk.ps_adding.solver.factors"]
             )
-            self.buttons["design_opts.generate"].configure(
+            self.tk_buttons["design_opts.generate"].configure(
                 text="Generate Solver Design", command=self.create_solver_design
             )
 
         elif tab_name == "Quick-Add Problems/Solvers":
             self._disable_design_opts()
             self._add_with_default_options()
-            self.buttons["design_opts.generate"].configure(
+            self.tk_buttons["design_opts.generate"].configure(
                 text="Add Cross Design to Experiment",
                 command=self.create_cross_design,
             )
@@ -643,81 +648,81 @@ class NewExperimentWindow(Toplevel):
 
     def _add_with_default_options(self) -> None:
         # Delete all existing children of the frame
-        for child in self.frames["ntbk.ps_adding.quick_add"].winfo_children():
+        for child in self.tk_frames["ntbk.ps_adding.quick_add"].winfo_children():
             child.destroy()
         # Configure the grid layout to expand properly
         problem_frame_weight = 2
         solver_frame_weight = 1
-        self.frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(2, weight=1)
-        self.frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
+        self.tk_frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(2, weight=1)
+        self.tk_frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
             0, weight=problem_frame_weight
         )
-        self.frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
+        self.tk_frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
             1, weight=solver_frame_weight
         )
 
         # Create labels for the title and the column headers
         title_text = "Select problems/solvers to be included in cross-design."
         title_text += "\nThese will be added with default factor settings."
-        self.labels["ntbk.ps_adding.quick_add.title"] = ttk.Label(
-            self.frames["ntbk.ps_adding.quick_add"],
+        self.tk_labels["ntbk.ps_adding.quick_add.title"] = ttk.Label(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
             text=title_text,
             anchor="center",
             justify="center",
         )
-        self.labels["ntbk.ps_adding.quick_add.title"].grid(
+        self.tk_labels["ntbk.ps_adding.quick_add.title"].grid(
             row=0, column=0, columnspan=2
         )
-        self.labels["ntbk.ps_adding.quick_add.problems"] = ttk.Label(
-            self.frames["ntbk.ps_adding.quick_add"],
+        self.tk_labels["ntbk.ps_adding.quick_add.problems"] = ttk.Label(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
             text="Problems",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["ntbk.ps_adding.quick_add.problems"].grid(
+        self.tk_labels["ntbk.ps_adding.quick_add.problems"].grid(
             row=1, column=0, sticky="ew"
         )
-        self.labels["ntbk.ps_adding.quick_add.solvers"] = ttk.Label(
-            self.frames["ntbk.ps_adding.quick_add"],
+        self.tk_labels["ntbk.ps_adding.quick_add.solvers"] = ttk.Label(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
             text="Solvers",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.labels["ntbk.ps_adding.quick_add.solvers"].grid(
+        self.tk_labels["ntbk.ps_adding.quick_add.solvers"].grid(
             row=1, column=1, sticky="ew"
         )
 
         # Create canvases for the problems and solvers
-        self.canvases["ntbk.ps_adding.quick_add.problems"] = tk.Canvas(
-            self.frames["ntbk.ps_adding.quick_add"]
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"] = tk.Canvas(
+            self.tk_frames["ntbk.ps_adding.quick_add"]
         )
-        self.canvases["ntbk.ps_adding.quick_add.problems"].grid(
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"].grid(
             row=2, column=0, sticky="nsew"
         )
-        self.canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
-            self.frames["ntbk.ps_adding.quick_add"]
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
+            self.tk_frames["ntbk.ps_adding.quick_add"]
         )
-        self.canvases["ntbk.ps_adding.quick_add.solvers"].grid(
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].grid(
             row=2, column=1, sticky="nsew"
         )
 
         # create master frame inside the canvas
-        self.frames["ntbk.ps_adding.quick_add.problems_frame"] = ttk.Frame(
-            self.canvases["ntbk.ps_adding.quick_add.problems"],
+        self.tk_frames["ntbk.ps_adding.quick_add.problems_frame"] = ttk.Frame(
+            self.tk_canvases["ntbk.ps_adding.quick_add.problems"],
             width=0,
         )
-        self.canvases["ntbk.ps_adding.quick_add.problems"].create_window(
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"].create_window(
             (0, 0),
-            window=self.frames["ntbk.ps_adding.quick_add.problems_frame"],
+            window=self.tk_frames["ntbk.ps_adding.quick_add.problems_frame"],
             anchor="nw",
         )
-        self.frames["ntbk.ps_adding.quick_add.solvers_frame"] = ttk.Frame(
-            self.canvases["ntbk.ps_adding.quick_add.solvers"],
+        self.tk_frames["ntbk.ps_adding.quick_add.solvers_frame"] = ttk.Frame(
+            self.tk_canvases["ntbk.ps_adding.quick_add.solvers"],
             width=0,
         )
-        self.canvases["ntbk.ps_adding.quick_add.solvers"].create_window(
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].create_window(
             (0, 0),
-            window=self.frames["ntbk.ps_adding.quick_add.solvers_frame"],
+            window=self.tk_frames["ntbk.ps_adding.quick_add.solvers_frame"],
             anchor="nw",
         )
 
@@ -728,12 +733,12 @@ class NewExperimentWindow(Toplevel):
         problem_scale = problem_frame_weight / total_scale
         solver_scale = solver_frame_weight / total_scale
         problem_frame_wrap = (
-            self.frames["ntbk.ps_adding.quick_add"].winfo_width()
+            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
             * problem_scale
             - checkbox_size
         )
         solver_frame_wrap = (
-            self.frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale
+            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width() * solver_scale
             - checkbox_size
         )
 
@@ -741,12 +746,12 @@ class NewExperimentWindow(Toplevel):
         self.problem_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
         self.problem_check_vars = {}  # holds check boolvars, store as dictonary for now
         for problem in problem_unabbreviated_directory:
-            row = self.frames[
+            row = self.tk_frames[
                 "ntbk.ps_adding.quick_add.problems_frame"
             ].grid_size()[1]
             checkstate = tk.BooleanVar()
             problem_checkbox = tk.Checkbutton(
-                master=self.frames["ntbk.ps_adding.quick_add.problems_frame"],
+                master=self.tk_frames["ntbk.ps_adding.quick_add.problems_frame"],
                 text=problem,
                 variable=checkstate,
                 command=self.cross_design_solver_compatibility,
@@ -761,12 +766,12 @@ class NewExperimentWindow(Toplevel):
         self.solver_check_vars = {}  # holds check boolvars, store as dictonary for now
         # display all potential solvers
         for solver in solver_unabbreviated_directory:
-            row = self.frames[
+            row = self.tk_frames[
                 "ntbk.ps_adding.quick_add.solvers_frame"
             ].grid_size()[1]
             checkstate = tk.BooleanVar()
             solver_checkbox = tk.Checkbutton(
-                master=self.frames["ntbk.ps_adding.quick_add.solvers_frame"],
+                master=self.tk_frames["ntbk.ps_adding.quick_add.solvers_frame"],
                 text=solver,
                 variable=checkstate,
                 command=self.cross_design_problem_compatibility,
@@ -858,7 +863,7 @@ class NewExperimentWindow(Toplevel):
                 # add solver row to list display
                 solver_row = len(self.root_solver_dict) - 1
                 self.solver_list_label = tk.Label(
-                    master=self.canvases["curr_exp.lists.solvers"],
+                    master=self.tk_canvases["curr_exp.lists.solvers"],
                     text=solver_save_name,
                 )
                 self.solver_list_label.grid(row=solver_row, column=1)
@@ -868,7 +873,7 @@ class NewExperimentWindow(Toplevel):
 
                 # add delete and view/edit buttons
                 self.solver_edit_button = tk.Button(
-                    master=self.canvases["curr_exp.lists.solvers"],
+                    master=self.tk_canvases["curr_exp.lists.solvers"],
                     text="View/Edit",
                     command=lambda solver_name=solver_save_name: self.edit_solver(
                         solver_name
@@ -879,7 +884,7 @@ class NewExperimentWindow(Toplevel):
                     self.solver_edit_button
                 )
                 self.solver_del_button = tk.Button(
-                    master=self.canvases["curr_exp.lists.solvers"],
+                    master=self.tk_canvases["curr_exp.lists.solvers"],
                     text="Delete",
                     command=lambda solver_name=solver_save_name: self.delete_solver(
                         solver_name
@@ -913,7 +918,7 @@ class NewExperimentWindow(Toplevel):
                 # add problem row to list display
                 problem_row = len(self.root_problem_dict) - 1
                 self.problem_list_label = tk.Label(
-                    master=self.canvases["curr_exp.lists.problems"],
+                    master=self.tk_canvases["curr_exp.lists.problems"],
                     text=problem_save_name,
                 )
                 self.problem_list_label.grid(row=problem_row, column=1)
@@ -923,7 +928,7 @@ class NewExperimentWindow(Toplevel):
 
                 # add delete and view/edit buttons
                 self.problem_edit_button = tk.Button(
-                    master=self.canvases["curr_exp.lists.problems"],
+                    master=self.tk_canvases["curr_exp.lists.problems"],
                     text="View/Edit",
                     command=lambda problem_name=problem_save_name: self.edit_problem(
                         problem_name
@@ -934,7 +939,7 @@ class NewExperimentWindow(Toplevel):
                     self.problem_edit_button
                 )
                 self.problem_del_button = tk.Button(
-                    master=self.canvases["curr_exp.lists.problems"],
+                    master=self.tk_canvases["curr_exp.lists.problems"],
                     text="Delete",
                     command=lambda problem_name=problem_save_name: self.delete_problem(
                         problem_name
@@ -1398,29 +1403,29 @@ class NewExperimentWindow(Toplevel):
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
         self._destroy_widget_children(
-            self.canvases["ntbk.ps_adding.solver.factors"]
+            self.tk_canvases["ntbk.ps_adding.solver.factors"]
         )
 
         # Initialize the frames and headers
-        self.frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
-            master=self.canvases["ntbk.ps_adding.solver.factors"],
+        self.tk_frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
+            master=self.tk_canvases["ntbk.ps_adding.solver.factors"],
         )
-        self.frames["ntbk.ps_adding.solver.factors.solvers"].grid(
+        self.tk_frames["ntbk.ps_adding.solver.factors.solvers"].grid(
             row=0, column=0, sticky="nsew"
         )
 
         # show problem factors and store default widgets to this dict
         self.__show_data_farming_core(
             solver,
-            frame=self.frames["ntbk.ps_adding.solver.factors.solvers"],
+            frame=self.tk_frames["ntbk.ps_adding.solver.factors.solvers"],
             row=1,
         )
 
         # Update the design name to be unique
         unique_name = self.get_unique_name(self.root_solver_dict, solver.name)
         self.design_name.set(unique_name)
-        self.entries["design_opts.name"].delete(0, tk.END)
-        self.entries["design_opts.name"].insert(0, unique_name)
+        self.tk_entries["design_opts.name"].delete(0, tk.END)
+        self.tk_entries["design_opts.name"].insert(0, unique_name)
 
     def get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
         """Determine unique name from dictionary.
@@ -1569,7 +1574,7 @@ class NewExperimentWindow(Toplevel):
             # add solver name to solver index
             solver_row = len(self.root_solver_dict) - 1
             self.solver_list_label = tk.Label(
-                master=self.canvases["curr_exp.lists.solvers"],
+                master=self.tk_canvases["curr_exp.lists.solvers"],
                 text=self.solver_design_name,
             )
             self.solver_list_label.grid(row=solver_row, column=1)
@@ -1579,7 +1584,7 @@ class NewExperimentWindow(Toplevel):
 
             # add delete and view/edit buttons
             self.solver_edit_button = tk.Button(
-                master=self.canvases["curr_exp.lists.solvers"],
+                master=self.tk_canvases["curr_exp.lists.solvers"],
                 text="View/Edit",
                 command=lambda solver_design_name=self.solver_design_name: self.edit_solver(
                     solver_design_name
@@ -1590,7 +1595,7 @@ class NewExperimentWindow(Toplevel):
                 self.solver_edit_button
             )
             self.solver_del_button = tk.Button(
-                master=self.canvases["curr_exp.lists.solvers"],
+                master=self.tk_canvases["curr_exp.lists.solvers"],
                 text="Delete",
                 command=lambda solver_design_name=self.solver_design_name: self.delete_solver(
                     solver_design_name
@@ -1665,12 +1670,12 @@ class NewExperimentWindow(Toplevel):
                 csv_filename=filename,
             )
             # # button to add solver design to experiment
-            self.buttons["gen_design.add"] = ttk.Button(
-                master=self.frames["gen_design.display"],
+            self.tk_buttons["gen_design.add"] = ttk.Button(
+                master=self.tk_frames["gen_design.display"],
                 text="Add Design Points\nto Experiment",
                 command=self.add_solver_design_to_experiment,
             )
-            self.buttons["gen_design.add"].grid(row=0, column=1, sticky="nsew")
+            self.tk_buttons["gen_design.add"].grid(row=0, column=1, sticky="nsew")
 
     def create_problem_design(self) -> None:
         # Get unique solver design name
@@ -1848,7 +1853,7 @@ class NewExperimentWindow(Toplevel):
         master_frame: ttk.Frame | None = None,
     ) -> None:
         if master_frame is None:
-            master_frame = self.frames["gen_design.display"]
+            master_frame = self.tk_frames["gen_design.display"]
         # Read the design table from the csv file
         design_table = pd.read_csv(csv_filename, index_col="design_num")
         # Drop the last 3 columns from the design table since they're not needed
@@ -1863,7 +1868,7 @@ class NewExperimentWindow(Toplevel):
         unique_design_points = design_table.drop_duplicates().shape[0]
         num_duplicates = design_table.shape[0] - unique_design_points
         plural_s = "" if num_duplicates == 1 else "s"
-        self.labels["gen_design.header"].configure(
+        self.tk_labels["gen_design.header"].configure(
             text=f"Generated Design - {len(design_table)} Design Points ({num_duplicates} Duplicate{plural_s})"
         )
 
@@ -2018,7 +2023,7 @@ class NewExperimentWindow(Toplevel):
         # add solver name to solver index
         solver_row = len(self.root_solver_dict) - 1
         self.solver_list_label = tk.Label(
-            master=self.canvases["curr_exp.lists.solvers"],
+            master=self.tk_canvases["curr_exp.lists.solvers"],
             text=solver_design_name,
         )
         self.solver_list_label.grid(row=solver_row, column=1)
@@ -2026,13 +2031,13 @@ class NewExperimentWindow(Toplevel):
 
         # add delete and view/edit buttons
         self.solver_edit_button = tk.Button(
-            master=self.canvases["curr_exp.lists.solvers"],
+            master=self.tk_canvases["curr_exp.lists.solvers"],
             text="View/Edit",
         )
         self.solver_edit_button.grid(row=solver_row, column=2)
         self.solver_edit_buttons[solver_design_name] = self.solver_edit_button
         self.solver_del_button = tk.Button(
-            master=self.canvases["curr_exp.lists.solvers"],
+            master=self.tk_canvases["curr_exp.lists.solvers"],
             text="Delete",
             command=lambda: self.delete_solver(solver_design_name),
         )
@@ -2192,12 +2197,14 @@ class NewExperimentWindow(Toplevel):
 
     def create_experiment(self) -> None:
         # get unique experiment name
+        old_name = self.curr_exp_name.get()
         self.experiment_name = self.get_unique_name(
-            self.root_experiment_dict, self.experiment_name
+            self.root_experiment_dict, old_name
         )
+        self.curr_exp_name.set(self.experiment_name)
 
         # get pickle checkstate
-        pickle_checkstate = self.current_experiment_enable_pickle.get()
+        pickle_checkstate = self.curr_exp_is_pickled.get()
 
         # Extract solver and problem information from master dictionaries
         master_solver_factor_list = []  # holds dict of factors for each dp
@@ -2253,11 +2260,8 @@ class NewExperimentWindow(Toplevel):
         self.root_experiment_dict[self.experiment_name] = self.experiment
 
         # reset default experiment name for next experiment
-        self.experiment_name_var.set(
-            self.get_unique_name(
-                self.root_experiment_dict, self.experiment_name
-            )
-        )
+        new_name = self.get_unique_name(self.root_experiment_dict, self.DEFAULT_EXP_NAME)
+        self.curr_exp_name.set(new_name)
 
         # add exp to row
         self.add_exp_row()
