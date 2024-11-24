@@ -50,7 +50,8 @@ class SAN(Model):
             "num_nodes": {
                 "description": "number of nodes",
                 "datatype": int,
-                "default": 9
+                "default": 9,
+                "isDatafarmable": False
             },
             "arcs": {
                 "description": "list of arcs",

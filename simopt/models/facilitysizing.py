@@ -65,7 +65,8 @@ class FacilitySize(Model):
             "n_fac": {
                 "description": "number of facilities",
                 "datatype": int,
-                "default": 3
+                "default": 3,
+                "isDatafarmable": False
             }
         }
         self.check_factor_list = {

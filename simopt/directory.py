@@ -63,7 +63,7 @@ solver_unabbreviated_directory: dict[str, Solver] = {
     "ADAM (SBCN)": ADAM,
     "ALOE (SBCN)": ALOE,
 }
-
+ 
 problem_directory: dict[str, Problem] = {
     "EXAMPLE-1": ExampleProblem,
     "CNTNEWS-1": CntNVMaxProfit,

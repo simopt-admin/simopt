@@ -99,9 +99,10 @@ class MM1Queue(Model):
             raise ValueError("people must be greater than or equal to 1.")
 
     def check_simulatable_factors(self):
-        # demo for condition that queue must be stable
-        # return self.factors["mu"] > self.factors["lambda"]
-        return True
+        if self.factors["mu"] <= self.factors["lambda"]:
+            raise ValueError("lambda must be less than mu.")
+        else: 
+            return True
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """

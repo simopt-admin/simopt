@@ -47,7 +47,7 @@ class AmusementPark(Model):
     base.Model
 
     """
-
+  
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Amusement Park Model."""
         if fixed_factors is None:

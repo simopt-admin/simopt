@@ -1327,6 +1327,7 @@ class Model(ABC):
             True if model specified by factors is simulatable, otherwise False.
 
         """
+        
         return (
             self.check_factor_datatype(factor_name)
             and self.check_factor_list[factor_name]()
@@ -1403,11 +1404,16 @@ class Model(ABC):
                 print(error_msg)
                 return False
 
-            is_permissible = self.check_simulatable_factor(factor)
+            try: 
+                self.check_simulatable_factor(factor)
+            except ValueError as e:
+                print(f"An error occurred: {e}")
+                return
+            '''is_permissible = self.check_simulatable_factor(factor)
             if not is_permissible:
                 error_msg = f"Model factor {factor} is not permissible."
                 print(error_msg)
-                return False
+                return False'''
 
         return True
 

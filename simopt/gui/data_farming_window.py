@@ -14,7 +14,8 @@ from simopt.directory import (
 from simopt.experiment_base import (
     create_design,
 )
-from simopt.gui.toplevel_custom import Toplevel
+from simopt.gui.toplevel_custom import Toplevel 
+from simopt.base import Model
 
 
 class DataFarmingWindow(Toplevel):
@@ -688,6 +689,8 @@ class DataFarmingWindow(Toplevel):
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable")
 
             # Values to help with formatting
             entry_width = 10
@@ -710,7 +713,7 @@ class DataFarmingWindow(Toplevel):
                 padx=10,
             )
 
-            if self.factor_datatype is float:
+            if self.factor_datatype is float and self.factor_isDatafarmable is not False:
                 self.factors_frame.grid_rowconfigure(
                     self.factor_que_length, weight=1
                 )
@@ -845,7 +848,7 @@ class DataFarmingWindow(Toplevel):
 
                 self.factor_que_length += 1
 
-            elif self.factor_datatype is int:
+            elif self.factor_datatype is int and self.factor_isDatafarmable is not False:
                 self.factors_frame.grid_rowconfigure(
                     self.factor_que_length, weight=1
                 )
@@ -950,12 +953,17 @@ class DataFarmingWindow(Toplevel):
 
                 self.factor_que_length += 1
 
-            elif self.factor_datatype is list:
+            elif self.factor_datatype is list or self.factor_isDatafarmable is False:
                 self.factors_frame.grid_rowconfigure(
                     self.factor_que_length, weight=1
                 )
 
-                self.str_type = "list"
+                if self.factor_datatype is list:
+                    self.str_type = "list"
+                elif self.factor_datatype is int:
+                    self.str_type = "int"
+                elif self.factor_datatype is float:
+                    self.str_type = "float"
 
                 # Add label for factor type
                 self.factortype_label = tk.Label(
@@ -1219,6 +1227,9 @@ class DataFarmingWindow(Toplevel):
             factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
+            factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
             factor_include = check_values[factor_index]
 
             # get user inputs for design factors
@@ -1226,7 +1237,7 @@ class DataFarmingWindow(Toplevel):
             if factor_include:
                 self.factor_names.append(factor)
 
-                if factor_datatype in (float, int):
+                if factor_datatype in (float, int) and factor_isDatafarmable is not False:
                     factor_min = str(min_values[maxmin_index])
                     factor_max = str(max_values[maxmin_index])
                     maxmin_index += 1
@@ -1296,6 +1307,7 @@ class DataFarmingWindow(Toplevel):
         """
         # Specify a common number of replications to run of the model at each
         # design point.
+        
         n_reps = int(self.rep_var.get())
 
         # Specify whether to use common random numbers across different versions
@@ -1364,9 +1376,12 @@ class DataFarmingWindow(Toplevel):
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
 
             # Disable / enable experiment option widgets depending on factor type
-            if self.factor_datatype in (int, float):
+            if self.factor_datatype in (int, float) and self.factor_isDatafarmable is not False:
                 self.current_min_entry = self.min_widgets[factor]
                 self.current_max_entry = self.max_widgets[factor]
 
