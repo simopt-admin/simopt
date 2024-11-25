@@ -9,6 +9,25 @@ from copy import deepcopy
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
+def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
+    # Check if factor is of permissible data type.
+    datatype_check = self.check_factor_datatype(factor_name)
+    if not datatype_check:
+        return False
+    # Check if the factor check exists
+    if factor_name not in self.check_factor_list:
+        # If the factor is a boolean, it's fine
+        if self.specifications[factor_name]["datatype"] is bool:
+            return True
+        else:
+            # Raise an error since there's an error in the check list
+            error_msg = f"Missing check for factor {factor_name} of type {self.specifications[factor_name]['datatype']}"
+            raise ValueError(error_msg)
+    # Otherwise, the factor exists in the check list and should be checked
+    # This will raise an error if the factor is not permissible
+    self.check_factor_list[factor_name]()
+    # Return true if we successfully checked the factor
+    return True
 
 class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
@@ -233,10 +252,7 @@ class Solver(ABC):
             True if the solver factor is permissible, otherwise False.
 
         """
-        if not self.check_factor_datatype(factor_name):
-            return False
-        self.check_factor_list[factor_name]()
-        return True
+        return _factor_check(self, factor_name)
 
     # TODO: Figure out if this should be abstract or not
     # @abstractmethod
@@ -761,12 +777,11 @@ class Problem(ABC):
             True if problem factor is permissible, otherwise False.
 
         """
-        if not self.check_factor_datatype(factor_name):
-            return False
-        self.check_factor_list[factor_name]()
-        return True
+        return _factor_check(self, factor_name)
 
-    # TODO: Figure out if this should be abstract or not
+    # NOTE: This was originally supposed to be an abstract method, but only
+    # SPSA actually implements it. It's currently not clear if this
+    # method should be implemented in other Problems as well.
     # @abstractmethod
     def check_problem_factors(self) -> bool:
         """Determine if the joint settings of problem factors are permissible.
@@ -1314,10 +1329,7 @@ class Model(ABC):
             True if model specified by factors is simulatable, otherwise False.
 
         """
-        return (
-            self.check_factor_datatype(factor_name)
-            and self.check_factor_list[factor_name]()
-        )
+        return _factor_check(self, factor_name)
 
     @abstractmethod
     def check_simulatable_factors(self) -> bool:
