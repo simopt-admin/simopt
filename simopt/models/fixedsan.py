@@ -83,7 +83,10 @@ class FixedSAN(Model):
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & x > 0
-        return (len(self.factors["arc_means"]) != self.factors["num_arcs"]) & positive
+        return positive
+    
+    def check_simulatable_factors(self):
+        return len(self.factors["arc_means"]) != self.factors["num_arcs"]
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """

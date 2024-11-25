@@ -146,17 +146,6 @@ class Solver(ABC):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        # Make sure each factor has a check function.
-        spec_keys = set(self.specifications.keys())
-        check_keys = set(self.check_factor_list.keys())
-        spec_only = spec_keys - check_keys
-        check_only = check_keys - spec_keys
-        if len(spec_only) > 0:
-            error_msg = f"{self.name} is missing check functions for {spec_only}."
-            raise Exception(error_msg)
-        if len(check_only) > 0:
-            error_msg = f"{self.name} has check functions for non-existent factors {check_only}."
-            raise Exception(error_msg)
 
     def __eq__(self, other: Solver) -> bool:
         """Check if two solvers are equivalent.
@@ -680,17 +669,6 @@ class Problem(ABC):
                 model_fixed_factors[key] = self.model_default_factors[key]
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
-        # Make sure each factor has a check function.
-        spec_keys = set(self.specifications.keys())
-        check_keys = set(self.check_factor_list.keys())
-        spec_only = spec_keys - check_keys
-        check_only = check_keys - spec_keys
-        if len(spec_only) > 0:
-            error_msg = f"{self.name} is missing check functions for {spec_only}."
-            raise Exception(error_msg)
-        if len(check_only) > 0:
-            error_msg = f"{self.name} has check functions for non-existent factors {check_only}."
-            raise Exception(error_msg)
         
     def __eq__(self, other: Problem) -> bool:
         """Check if two problems are equivalent.
@@ -1294,17 +1272,6 @@ class Model(ABC):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
-        # Make sure each factor has a check function.
-        spec_keys = set(self.specifications.keys())
-        check_keys = set(self.check_factor_list.keys())
-        spec_only = spec_keys - check_keys
-        check_only = check_keys - spec_keys
-        if len(spec_only) > 0:
-            error_msg = f"{self.name} is missing check functions for {spec_only}."
-            raise Exception(error_msg)
-        if len(check_only) > 0:
-            error_msg = f"{self.name} has check functions for non-existent factors {check_only}."
-            raise Exception(error_msg)
         
     def __eq__(self, other: Model) -> bool:
         """Check if two models are equivalent.
@@ -1352,8 +1319,7 @@ class Model(ABC):
             and self.check_factor_list[factor_name]()
         )
 
-    # TODO: Figure out if this should be abstract or not
-    # @abstractmethod
+    @abstractmethod
     def check_simulatable_factors(self) -> bool:
         """Determine if a simulation replication can be run with the given factors.
 
@@ -1367,7 +1333,6 @@ class Model(ABC):
             True if model specified by factors is simulatable, otherwise False.
 
         """
-        return True
         raise NotImplementedError
 
     def check_factor_datatype(self, factor_name: str) -> bool:

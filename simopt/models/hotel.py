@@ -128,8 +128,6 @@ class Hotel(Model):
         for i in self.factors["lambda"]:
             if i <= 0:
                 raise ValueError("All elements in lambda must be greater than 0.")
-        if len(self.factors["lambda"]) != self.factors["num_products"]:
-            raise ValueError("The length of lambda must equal num_products.")
         
     def check_num_rooms(self):
         if self.factors["num_rooms"] <= 0:
@@ -149,15 +147,11 @@ class Hotel(Model):
             for j in range(n):
                 if self.factors["product_incidence"][i, j] <= 0:
                     raise ValueError("All elements in product_incidence must be greater than 0.")
-        if m * n != self.factors["num_products"]:
-            raise ValueError("The number of elements in product_incidence must equal num_products.")
 
     def check_time_limit(self):
         for i in self.factors["time_limit"]:
             if i <= 0:
                 raise ValueError("All elements in time_limit must be greater than 0.")
-        if len(self.factors["time_limit"]) != self.factors["num_products"]:
-            raise ValueError("The length of time_limit must equal num_products.")
 
     def check_time_before(self):
         if self.factors["time_before"] <= 0:
@@ -171,8 +165,17 @@ class Hotel(Model):
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
                 raise ValueError("All elements in booking_limits must be greater than 0 and less than num_rooms.")
+        
+    def check_simulatable_factors(self):
+        if len(self.factors["lambda"]) != self.factors["num_products"]:
+            raise ValueError("The length of lambda must equal num_products.")
+        if len(self.factors["time_limit"]) != self.factors["num_products"]:
+            raise ValueError("The length of time_limit must equal num_products.")
         if len(self.factors["booking_limits"]) != self.factors["num_products"]:
             raise ValueError("The length of booking_limits must equal num_products.")
+        m, n = self.factors["product_incidence"].shape
+        if m * n != self.factors["num_products"]:
+            raise ValueError("The number of elements in product_incidence must equal num_products.")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """

@@ -101,7 +101,11 @@ class SAN(Model):
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive & (x > 0)
-        return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
+        return positive
+    
+    def check_simulatable_factors(self):
+        if len(self.factors["arc_means"]) != len(self.factors["arcs"]):
+            raise ValueError("The length of arc_means must be equal to the length of arcs.")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
