@@ -41,6 +41,7 @@ class NewExperimentWindow(Toplevel):
     # Constants
     DEFAULT_NUM_STACKS: Final[int] = 1
     DEFAULT_EXP_NAME: Final[str] = "Experiment"
+    DEFAULT_EXP_CHECK: Final[bool] = False
 
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
@@ -68,8 +69,6 @@ class NewExperimentWindow(Toplevel):
         self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
 
         # widget lists for enable/delete functions
-        self.solver_list_labels = {}  # holds widgets for solver name labels in solver list display
-        self.problem_list_labels = {}  # holds widgets for problem name labels in problem list display
         self.solver_edit_buttons = {}
         self.solver_del_buttons = {}
         self.problem_edit_buttons = {}
@@ -108,6 +107,7 @@ class NewExperimentWindow(Toplevel):
         self.curr_exp_name = tk.StringVar()
         self.curr_exp_name.set(self.DEFAULT_EXP_NAME)
         self.curr_exp_is_pickled = tk.BooleanVar()
+        self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)
         # Notebook variables
         self.selected_problem_name = tk.StringVar()
         self.selected_solver_name = tk.StringVar()
@@ -129,6 +129,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames: dict[str, ttk.Frame] = {}
         self.tk_labels: dict[str, ttk.Label] = {}
         self.tk_notebooks: dict[str, ttk.Notebook] = {}
+        self.tk_var_bools: dict[str, tk.BooleanVar] = {}
         # self.tk_scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
@@ -609,6 +610,80 @@ class NewExperimentWindow(Toplevel):
         solver_class: ABCMeta = self.valid_solvers[solver_name]  # type: ignore
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
+    
+    def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
+        # Make sure the unique name is in the root problem dict
+        if unique_name not in self.root_problem_dict:
+            error_msg = f"Problem {unique_name} not found in root problem dict"
+            raise ValueError(error_msg)
+        # Add the problem to the GUI
+        tk_base_name = f"curr_exp.lists.problems.{unique_name}"
+        list_entries = self.tk_canvases["curr_exp.lists.problems"].winfo_children()
+        problem_row = len(list_entries) // 3
+        # Add name label
+        name_label_name = f"{tk_base_name}.name"
+        self.tk_labels[name_label_name] = ttk.Label(
+            master=self.tk_canvases["curr_exp.lists.problems"],
+            text=unique_name,
+        )
+        self.tk_labels[name_label_name].grid(row=problem_row, column=1)
+        # Add edit button
+        edit_button_name = f"{tk_base_name}.edit"
+        self.tk_buttons[edit_button_name] = ttk.Button(
+            master=self.tk_canvases["curr_exp.lists.problems"],
+            text="View/Edit",
+            command=lambda problem_name=unique_name: self.edit_problem(
+                problem_name
+            ),
+        )
+        self.tk_buttons[edit_button_name].grid(row=problem_row, column=2)
+        # Add delete button
+        del_button_name = f"{tk_base_name}.del"
+        self.tk_buttons[del_button_name] = ttk.Button(
+            master=self.tk_canvases["curr_exp.lists.problems"],
+            text="Delete",
+            command=lambda problem_name=unique_name: self.delete_problem(
+                problem_name
+            ),
+        )
+        self.tk_buttons[del_button_name].grid(row=problem_row, column=3)
+
+    def add_solver_to_curr_exp_list(self, unique_name: str) -> None:
+        # Make sure the unique name is in the root solver dict
+        if unique_name not in self.root_solver_dict:
+            error_msg = f"Solver {unique_name} not found in root solver dict"
+            raise ValueError(error_msg)
+        # Add the solver to the GUI
+        tk_base_name = f"curr_exp.lists.solvers.{unique_name}"
+        list_entries = self.tk_canvases["curr_exp.lists.solvers"].winfo_children()
+        solver_row = len(list_entries) // 3
+        # Add name label
+        name_label_name = f"{tk_base_name}.name"
+        self.tk_labels[name_label_name] = ttk.Label(
+            master=self.tk_canvases["curr_exp.lists.solvers"],
+            text=unique_name,
+        )
+        self.tk_labels[name_label_name].grid(row=solver_row, column=1)
+        # Add edit button
+        edit_button_name = f"{tk_base_name}.edit"
+        self.tk_buttons[edit_button_name] = ttk.Button(
+            master=self.tk_canvases["curr_exp.lists.solvers"],
+            text="View/Edit",
+            command=lambda solver_name=unique_name: self.edit_solver(
+                solver_name
+            ),
+        )
+        self.tk_buttons[edit_button_name].grid(row=solver_row, column=2)
+        # Add delete button
+        del_button_name = f"{tk_base_name}.del"
+        self.tk_buttons[del_button_name] = ttk.Button(
+            master=self.tk_canvases["curr_exp.lists.solvers"],
+            text="Delete",
+            command=lambda solver_name=unique_name: self.delete_solver(
+                solver_name
+            ),
+        )
+        self.tk_buttons[del_button_name].grid(row=solver_row, column=3)
 
     def _add_with_default_options(self) -> None:
         # Delete all existing children of the frame
@@ -696,62 +771,70 @@ class NewExperimentWindow(Toplevel):
 
         # Calculate how much space for text to wrap
         # TODO: make this check happen whenever the window is resized
-        checkbox_size = 50
-        total_scale = problem_frame_weight + solver_frame_weight
-        problem_scale = problem_frame_weight / total_scale
-        solver_scale = solver_frame_weight / total_scale
-        problem_frame_wrap = (
-            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
-            * problem_scale
-            - checkbox_size
-        )
-        solver_frame_wrap = (
-            self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
-            * solver_scale
-            - checkbox_size
-        )
+        # checkbox_size = 50
+        # total_scale = problem_frame_weight + solver_frame_weight
+        # problem_scale = problem_frame_weight / total_scale
+        # solver_scale = solver_frame_weight / total_scale
+        # problem_frame_wrap = (
+        #     self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
+        #     * problem_scale
+        #     - checkbox_size
+        # )
+        # solver_frame_wrap = (
+        #     self.tk_frames["ntbk.ps_adding.quick_add"].winfo_width()
+        #     * solver_scale
+        #     - checkbox_size
+        # )
 
         # display all potential problems
-        self.problem_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
-        self.problem_check_vars = {}  # holds check boolvars, store as dictonary for now
-        for problem in problem_unabbreviated_directory:
+        problem_list = [
+            f"{problem().name} - {key}"  # type: ignore
+            for key, problem in problem_unabbreviated_directory.items()
+        ]
+        sorted_problems = sorted(problem_list)
+        for problem_name in sorted_problems:
             row = self.tk_frames[
                 "ntbk.ps_adding.quick_add.problems_frame"
             ].grid_size()[1]
-            checkstate = tk.BooleanVar()
-            problem_checkbox = tk.Checkbutton(
+            shortened_name = problem_name.split(" - ")[0]
+            tk_name = f"ntbk.ps_adding.quick_add.problems_frame.{shortened_name}"
+            self.tk_var_bools[tk_name] = tk.BooleanVar()
+            self.tk_checkbuttons[tk_name] = ttk.Checkbutton(
                 master=self.tk_frames[
                     "ntbk.ps_adding.quick_add.problems_frame"
                 ],
-                text=problem,
-                variable=checkstate,
+                text=problem_name,
+                variable=self.tk_var_bools[tk_name],
                 command=self.cross_design_solver_compatibility,
-                wraplength=problem_frame_wrap,
-                justify="left",
             )
-            problem_checkbox.grid(row=row, column=0, sticky="w", padx=10)
-            self.problem_checkboxes[problem] = problem_checkbox
-            self.problem_check_vars[problem] = checkstate
+            self.tk_checkbuttons[tk_name].grid(
+                row=row, column=0, sticky="w", padx=10
+            )
         # display all potential solvers
-        self.solver_checkboxes = {}  # holds checkbutton widgets, store as dictonary for now
-        self.solver_check_vars = {}  # holds check boolvars, store as dictonary for now
-        # display all potential solvers
-        for solver in solver_unabbreviated_directory:
+        solver_list = [
+            f"{solver().name} - {key}"  # type: ignore
+            for key, solver in solver_unabbreviated_directory.items()
+        ]
+        sorted_solvers = sorted(solver_list)
+        for solver_name in sorted_solvers:
             row = self.tk_frames[
                 "ntbk.ps_adding.quick_add.solvers_frame"
             ].grid_size()[1]
-            checkstate = tk.BooleanVar()
-            solver_checkbox = tk.Checkbutton(
+            shortened_name = solver_name.split(" - ")[0]
+            tk_name = f"ntbk.ps_adding.quick_add.problems_frame.{shortened_name}"
+            self.tk_var_bools[tk_name] = tk.BooleanVar()
+            self.tk_checkbuttons[tk_name] = ttk.Checkbutton(
                 master=self.tk_frames["ntbk.ps_adding.quick_add.solvers_frame"],
-                text=solver,
-                variable=checkstate,
+                text=solver_name,
+                variable=self.tk_var_bools[tk_name],
                 command=self.cross_design_problem_compatibility,
-                wraplength=solver_frame_wrap,
-                justify="left",
             )
-            solver_checkbox.grid(row=row, column=0, sticky="w", padx=10)
-            self.solver_checkboxes[solver] = solver_checkbox
-            self.solver_check_vars[solver] = checkstate
+            self.tk_checkbuttons[tk_name].grid(
+                row=row, column=0, sticky="w", padx=10
+            )
+        # Run the compatibility checks
+        self.cross_design_problem_compatibility()
+        self.cross_design_solver_compatibility()
 
     def cross_design_problem_compatibility(self) -> None:
         # create temp objects for current selected solvers and all possilble problems
@@ -762,27 +845,29 @@ class NewExperimentWindow(Toplevel):
                 0
             ]  # frist design point if design, only design pt if no design
             solver_name = dp_0[1]
-            temp_solver = solver_directory[solver_name]()
+            temp_solver = solver_directory[solver_name]()  # type: ignore
             temp_solvers.append(temp_solver)
-        # solvers currently added to cross design
-        for solver in self.solver_check_vars:
-            checkstate = self.solver_check_vars[solver].get()
+        # Add all selected solvers to the temp list
+        for solver_name in solver_directory:
+            dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{solver_name}"
+            checkstate = self.tk_var_bools[dict_name].get()
             if checkstate:
-                temp_solver = solver_unabbreviated_directory[solver]()
+                temp_solver = solver_directory[solver_name]()  # type: ignore
                 temp_solvers.append(temp_solver)
-        all_problems = problem_unabbreviated_directory
-        for problem_name in all_problems:
-            temp_problem = [all_problems[problem_name]()]
+        # Attempt to create a temp experiment with the current solvers and all problems
+        for problem_name in problem_directory:
+            temp_problem = [problem_directory[problem_name]()]  # type: ignore
             temp_exp = ProblemsSolvers(
                 solvers=temp_solvers, problems=temp_problem
             )  # temp experiment to run check compatibility
             error = temp_exp.check_compatibility()
+            dict_name = (
+                f"ntbk.ps_adding.quick_add.problems_frame.{problem_name}"
+            )
             if error:
-                self.problem_checkboxes[problem_name].configure(
-                    state="disabled"
-                )
+                self.tk_checkbuttons[dict_name].configure(state="disabled")
             else:
-                self.problem_checkboxes[problem_name].configure(state="normal")
+                self.tk_checkbuttons[dict_name].configure(state="normal")
 
     def cross_design_solver_compatibility(self) -> None:
         # create temp objects for current selected solvers and all possilble problems
@@ -793,136 +878,83 @@ class NewExperimentWindow(Toplevel):
                 0
             ]  # frist design point if design, only design pt if no design
             problem_name = dp_0[1]
-            temp_problem = problem_directory[problem_name]()
+            temp_problem = problem_directory[problem_name]()  # type: ignore
             temp_problems.append(temp_problem)
         # problems currently added to cross design
-        for problem in self.problem_check_vars:
-            checkstate = self.problem_check_vars[problem].get()
+        for problem in problem_directory:
+            dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{problem}"
+            checkstate = self.tk_var_bools[dict_name].get()
             if checkstate:
-                temp_problem = problem_unabbreviated_directory[problem]()
+                temp_problem = problem_directory[problem]()  # type: ignore
                 temp_problems.append(temp_problem)
-        all_solvers = solver_unabbreviated_directory
-        for solver_name in all_solvers:
-            temp_solver = [all_solvers[solver_name]()]
+        # Attempt to create a temp experiment with the current solvers and all problems
+        for solver_name in solver_directory:
+            temp_solver = [solver_directory[solver_name]()]  # type: ignore
             temp_exp = ProblemsSolvers(
                 solvers=temp_solver, problems=temp_problems
             )  # temp experiment to run check compatibility
             error = temp_exp.check_compatibility()
+            dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{solver_name}"
             if error:
-                self.solver_checkboxes[solver_name].configure(state="disabled")
+                self.tk_checkbuttons[dict_name].configure(state="disabled")
             else:
-                self.solver_checkboxes[solver_name].configure(state="normal")
+                self.tk_checkbuttons[dict_name].configure(state="normal")
 
     def create_cross_design(self) -> None:
-        # Check to see if anything is selected before creating the cross design
-        # TODO: this check
+        for solver_name in solver_directory:
+            dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{solver_name}"
+            checkstate = self.tk_var_bools[dict_name].get()
+            # Move on if the solver is not selected
+            if not checkstate:
+                continue
+            # Otherwise, add the solver with default factor settings to the master dict
+            solver = solver_directory[solver_name]()  # type: ignore
+            factors = {
+                factor: value["default"]
+                for factor, value in solver.specifications.items()
+            }
+            solver_save_name = self.get_unique_name(
+                self.root_solver_dict, solver.name
+            )
+            self.root_solver_dict[solver_save_name] = [[factors, solver_name]]
+            # add solver row to list display
+            self.add_solver_to_curr_exp_list(solver_save_name)
 
-        for solver in self.solver_check_vars:
-            checkstate = self.solver_check_vars[solver].get()
-            if (
-                checkstate
-            ):  # add solver with default factor settings to master dict
-                temp_solver = solver_unabbreviated_directory[solver]()
-                factors = {
-                    factor: value["default"]
-                    for factor, value in temp_solver.specifications.items()
-                }
-                solver_name = temp_solver.name
-                solver_save_name = self.get_unique_name(
-                    self.root_solver_dict, solver_name
-                )
-                self.root_solver_dict[solver_save_name] = [
-                    [factors, solver_name]
-                ]
-                # add solver row to list display
-                solver_row = len(self.root_solver_dict) - 1
-                self.solver_list_label = tk.Label(
-                    master=self.tk_canvases["curr_exp.lists.solvers"],
-                    text=solver_save_name,
-                )
-                self.solver_list_label.grid(row=solver_row, column=1)
-                self.solver_list_labels[solver_save_name] = (
-                    self.solver_list_label
-                )
+        for problem in problem_directory:
+            dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{problem}"
+            checkstate = self.tk_var_bools[dict_name].get()
+            # Move on if the problem is not selected
+            if not checkstate:
+                continue
+            # Otherwise, add the problem with default factor settings to the master dict
+            temp_problem = problem_directory[problem]()  # type: ignore
+            factors = {
+                factor: value["default"]
+                for factor, value in temp_problem.specifications.items()
+            }
+            model_factors = {
+                factor: value["default"]
+                for factor, value in temp_problem.model.specifications.items()
+            }
+            factors.update(model_factors)
+            problem_name = temp_problem.name
+            problem_save_name = self.get_unique_name(
+                self.root_problem_dict, problem_name
+            )
+            self.root_problem_dict[problem_save_name] = [
+                [factors, problem_name]
+            ]
+            # add problem row to list display
+            self.add_problem_to_curr_exp_list(problem_save_name)
 
-                # add delete and view/edit buttons
-                self.solver_edit_button = tk.Button(
-                    master=self.tk_canvases["curr_exp.lists.solvers"],
-                    text="View/Edit",
-                    command=lambda solver_name=solver_save_name: self.edit_solver(
-                        solver_name
-                    ),
-                )
-                self.solver_edit_button.grid(row=solver_row, column=2)
-                self.solver_edit_buttons[solver_save_name] = (
-                    self.solver_edit_button
-                )
-                self.solver_del_button = tk.Button(
-                    master=self.tk_canvases["curr_exp.lists.solvers"],
-                    text="Delete",
-                    command=lambda solver_name=solver_save_name: self.delete_solver(
-                        solver_name
-                    ),
-                )
-                self.solver_del_button.grid(row=solver_row, column=3)
-                self.solver_del_buttons[solver_save_name] = (
-                    self.solver_del_button
-                )
-
-        for problem in self.problem_check_vars:
-            checkstate = self.problem_check_vars[problem].get()
-            if checkstate:  # add problem with default factor settings to master dict, ignore disabled boxes
-                temp_problem = problem_unabbreviated_directory[problem]()
-                factors = {
-                    factor: value["default"]
-                    for factor, value in temp_problem.specifications.items()
-                }
-                model_factors = {
-                    factor: value["default"]
-                    for factor, value in temp_problem.model.specifications.items()
-                }
-                factors.update(model_factors)
-                problem_name = temp_problem.name
-                problem_save_name = self.get_unique_name(
-                    self.root_problem_dict, problem_name
-                )
-                self.root_problem_dict[problem_save_name] = [
-                    [factors, problem_name]
-                ]
-                # add problem row to list display
-                problem_row = len(self.root_problem_dict) - 1
-                self.problem_list_label = tk.Label(
-                    master=self.tk_canvases["curr_exp.lists.problems"],
-                    text=problem_save_name,
-                )
-                self.problem_list_label.grid(row=problem_row, column=1)
-                self.problem_list_labels[problem_save_name] = (
-                    self.problem_list_label
-                )
-
-                # add delete and view/edit buttons
-                self.problem_edit_button = tk.Button(
-                    master=self.tk_canvases["curr_exp.lists.problems"],
-                    text="View/Edit",
-                    command=lambda problem_name=problem_save_name: self.edit_problem(
-                        problem_name
-                    ),
-                )
-                self.problem_edit_button.grid(row=problem_row, column=2)
-                self.problem_edit_buttons[problem_save_name] = (
-                    self.problem_edit_button
-                )
-                self.problem_del_button = tk.Button(
-                    master=self.tk_canvases["curr_exp.lists.problems"],
-                    text="Delete",
-                    command=lambda problem_name=problem_save_name: self.delete_problem(
-                        problem_name
-                    ),
-                )
-                self.problem_del_button.grid(row=problem_row, column=3)
-                self.problem_del_buttons[problem_save_name] = (
-                    self.problem_del_button
-                )
+        # Reset the quick-add frame
+        self._add_with_default_options()
+        # Reset all the booleans
+        for key in self.tk_var_bools:
+            if "ntbk.ps_adding.quick_add.problems_frame" in key:
+                self.tk_var_bools[key].set(False)
+            if "ntbk.ps_adding.quick_add.solvers_frame" in key:
+                self.tk_var_bools[key].set(False)
 
     def load_design(self) -> None:
         # Open file dialog to select design file
@@ -941,9 +973,7 @@ class NewExperimentWindow(Toplevel):
         # Get design information from table
         name = self.design_df.at[1, "name"]
         if name in solver_directory:  # loaded a solver
-            self.obj = solver_directory[
-                name
-            ]()  # create placeholder objects of the solver to get factor names
+            self.obj = solver_directory[name]()  # type: ignore # create placeholder objects of the solver to get factor names
             is_problem = False
             factors = self.obj.specifications
             self.initialize_solver_frame()
@@ -952,9 +982,7 @@ class NewExperimentWindow(Toplevel):
             self.sol_prob_book.select(0)  # change view to solver tab
 
         elif name in problem_directory:  # loaded a problem
-            self.obj = problem_directory[
-                name
-            ]()  # create placeholder objects of the problem to get factor names
+            self.obj = problem_directory[name]()  # type: ignore # create placeholder objects of the problem to get factor names
             is_problem = True
             model_factors = self.obj.model.specifications
             problem_factors = self.obj.specifications
@@ -965,6 +993,10 @@ class NewExperimentWindow(Toplevel):
             )
             self.design_tree_frame.grid(row=3, column=0)
             self.sol_prob_book.select(1)  # change view to problem tab
+        else:
+            raise ValueError(
+                "Loaded file does not match any solver or problem in the directory"
+            )
 
         # drop columns that aren't factor names
         drop_col = []
@@ -1110,7 +1142,8 @@ class NewExperimentWindow(Toplevel):
         # update design tree
         self.design_tree.destroy()
         self.display_design_tree(
-            csv_filename, master_frame=self.tree_frame, row=4
+            csv_filename,
+            master_frame=self.tree_frame,
         )
 
     def add_loaded_solver_to_experiment(self) -> None:
@@ -1488,13 +1521,24 @@ class NewExperimentWindow(Toplevel):
             return
         # Check if the design name already exists
         if self.design_name.get() in self.root_solver_dict:
-            messagebox.showerror(
-                "Error",
-                "A design with this name already exists. Please choose a different name.",
+            # Generate a new name
+            new_name = self.get_unique_name(self.root_solver_dict, self.design_name.get())
+            # Ask the user if they want to use the new name
+            prompt_text = f"A design with the name {self.design_name.get()}"
+            prompt_text += " already exists. Would you like to use the name "
+            prompt_text += f"{new_name} instead?\nNote: If you choose 'No',"
+            prompt_text += " you will need to choose a different name."
+            use_new_name = messagebox.askyesno(
+                "Name Exists",
+                prompt_text,
             )
-            return
-
-        self.solver_design_name = self.design_name.get()
+            if use_new_name:
+                self.design_name.set(new_name)
+            else:
+                return
+        
+        # Get the name of the design
+        design_name = self.design_name.get()
         # Get the number of stacks, the name of the solver, and the type of design
         num_stacks = self.design_num_stacks.get()
         solver_design_type = self.design_type.get()
@@ -1543,47 +1587,15 @@ class NewExperimentWindow(Toplevel):
                     solver_list.append(str(solver))
                     break
 
-            self.root_solver_dict[self.solver_design_name] = [solver_list]
+            self.root_solver_dict[design_name] = [solver_list]
 
-            # add solver name to solver index
-            solver_row = len(self.root_solver_dict) - 1
-            self.solver_list_label = tk.Label(
-                master=self.tk_canvases["curr_exp.lists.solvers"],
-                text=self.solver_design_name,
-            )
-            self.solver_list_label.grid(row=solver_row, column=1)
-            self.solver_list_labels[self.solver_design_name] = (
-                self.solver_list_label
-            )
-
-            # add delete and view/edit buttons
-            self.solver_edit_button = tk.Button(
-                master=self.tk_canvases["curr_exp.lists.solvers"],
-                text="View/Edit",
-                command=lambda solver_design_name=self.solver_design_name: self.edit_solver(
-                    solver_design_name
-                ),
-            )
-            self.solver_edit_button.grid(row=solver_row, column=2)
-            self.solver_edit_buttons[self.solver_design_name] = (
-                self.solver_edit_button
-            )
-            self.solver_del_button = tk.Button(
-                master=self.tk_canvases["curr_exp.lists.solvers"],
-                text="Delete",
-                command=lambda solver_design_name=self.solver_design_name: self.delete_solver(
-                    solver_design_name
-                ),
-            )
-            self.solver_del_button.grid(row=solver_row, column=3)
-            self.solver_del_buttons[self.solver_design_name] = (
-                self.solver_del_button
-            )
+            # add solver row to list display
+            self.add_solver_to_curr_exp_list(design_name)
 
             # refresh solver name entry box
             self.design_name.set(
                 self.get_unique_name(
-                    self.root_solver_dict, self.solver_design_name
+                    self.root_solver_dict, design_name
                 )
             )
 
@@ -1594,7 +1606,7 @@ class NewExperimentWindow(Toplevel):
                 os.makedirs(DATA_FARMING_DIR)
             # If file already exists, clear it and make a new, empty file of the same name
             filepath = os.path.join(
-                DATA_FARMING_DIR, f"{self.solver_design_name}.txt"
+                DATA_FARMING_DIR, f"{design_name}.txt"
             )
             if os.path.exists(filepath):
                 os.remove(filepath)
@@ -1625,7 +1637,7 @@ class NewExperimentWindow(Toplevel):
                 self.solver_design_list = create_design(
                     name=solver_name,
                     factor_headers=self.design_factors,
-                    factor_settings_filename=self.solver_design_name,
+                    factor_settings_filename=design_name,
                     fixed_factors=self.fixed_factors,
                     cross_design_factors=self.cross_design_factors,
                     n_stacks=num_stacks,
@@ -1638,7 +1650,7 @@ class NewExperimentWindow(Toplevel):
                 return
             # display design tree
             filename = os.path.join(
-                DATA_FARMING_DIR, f"{self.solver_design_name}_design.csv"
+                DATA_FARMING_DIR, f"{design_name}_design.csv"
             )
             self.display_design_tree(
                 csv_filename=filename,
@@ -1955,7 +1967,7 @@ class NewExperimentWindow(Toplevel):
         self.add_problem_design_to_list()
 
     def add_problem_design_to_list(self) -> None:
-        problem_design_name = self.problem_design_name
+        solver_design_name = self.problem_design_name
 
         # add solver name to solver index
         problem_row = len(self.root_problem_dict) - 1
@@ -1986,44 +1998,27 @@ class NewExperimentWindow(Toplevel):
         # refresh problem design name entry box
 
     def add_solver_design_to_experiment(self) -> None:
-        solver_design_name = self.solver_design_name
+        design_name = self.design_name.get()
 
         solver_holder_list = []  # used so solver list matches datafarming format
         for dp in self.solver_design_list:
             solver_list = []  # holds dictionary of dps and solver name
             solver_list.append(dp)
-            solver_list.append(solver_design_name)
+            solver_list.append(design_name)
             solver_holder_list.append(solver_list)
 
-        self.root_solver_dict[solver_design_name] = solver_holder_list
-        # add solver name to solver index
-        solver_row = len(self.root_solver_dict) - 1
-        self.solver_list_label = tk.Label(
-            master=self.tk_canvases["curr_exp.lists.solvers"],
-            text=solver_design_name,
-        )
-        self.solver_list_label.grid(row=solver_row, column=1)
-        self.solver_list_labels[solver_design_name] = self.solver_list_label
+        self.root_solver_dict[design_name] = solver_holder_list
 
-        # add delete and view/edit buttons
-        self.solver_edit_button = tk.Button(
-            master=self.tk_canvases["curr_exp.lists.solvers"],
-            text="View/Edit",
-        )
-        self.solver_edit_button.grid(row=solver_row, column=2)
-        self.solver_edit_buttons[solver_design_name] = self.solver_edit_button
-        self.solver_del_button = tk.Button(
-            master=self.tk_canvases["curr_exp.lists.solvers"],
-            text="Delete",
-            command=lambda: self.delete_solver(solver_design_name),
-        )
-        self.solver_del_button.grid(row=solver_row, column=3)
-        self.solver_del_buttons[solver_design_name] = self.solver_del_button
+        # Add solver row to list display
+        self.add_solver_to_curr_exp_list(design_name)
 
         # refresh solver design name entry box
         self.design_name.set(
-            self.get_unique_name(self.root_solver_dict, solver_design_name)
+            self.get_unique_name(self.root_solver_dict, design_name)
         )
+
+        # Hide the design tree
+        self._hide_gen_design()
 
     def edit_problem(self, problem_save_name: str) -> None:
         error_msg = "Edit problem function not yet implemented."
@@ -2034,40 +2029,52 @@ class NewExperimentWindow(Toplevel):
         messagebox.showerror("Error", error_msg)
 
     def delete_problem(self, problem_name: str) -> None:
-        # delete from master list
+        # Delete from master list
         del self.root_problem_dict[problem_name]
-
-        # delete label & edit/delete buttons
-        self.problem_list_labels[problem_name].destroy()
-        self.problem_edit_buttons[problem_name].destroy()
-        self.problem_del_buttons[problem_name].destroy()
-        del self.problem_list_labels[problem_name]
-        del self.problem_edit_buttons[problem_name]
-        del self.problem_del_buttons[problem_name]
-
-        # re-display problem labels & buttons
-        for row, problem_group in enumerate(self.problem_list_labels):
-            self.problem_list_labels[problem_group].grid(row=row, column=1)
-            self.problem_edit_buttons[problem_group].grid(row=row, column=2)
-            self.problem_del_buttons[problem_group].grid(row=row, column=3)
-
-    def delete_solver(self, solver_name: str) -> None:
-        # delete from master list
-        del self.root_solver_dict[solver_name]
-
-        # delete label & edit/delete buttons
-        self.solver_list_labels[solver_name].destroy()
-        self.solver_edit_buttons[solver_name].destroy()
-        self.solver_del_buttons[solver_name].destroy()
-        del self.solver_list_labels[solver_name]
-        del self.solver_edit_buttons[solver_name]
-        del self.solver_del_buttons[solver_name]
-
-        # re-display solver labels & buttons
-        for row, solver_group in enumerate(self.solver_list_labels):
-            self.solver_list_labels[solver_group].grid(row=row, column=1)
-            self.solver_edit_buttons[solver_group].grid(row=row, column=2)
-            self.solver_del_buttons[solver_group].grid(row=row, column=3)
+        # Delete label & edit/delete buttons
+        tk_base_name = f"curr_exp.lists.problems.{problem_name}"
+        tk_lbl_name = f"{tk_base_name}.name"
+        tk_edit_name = f"{tk_base_name}.edit"
+        tk_del_name = f"{tk_base_name}.del"
+        self.tk_labels[tk_lbl_name].destroy()
+        self.tk_buttons[tk_edit_name].destroy()
+        self.tk_buttons[tk_del_name].destroy()
+        del self.tk_labels[tk_lbl_name]
+        del self.tk_buttons[tk_edit_name]
+        del self.tk_buttons[tk_del_name]
+        # Clear the canvas
+        self._destroy_widget_children(
+            self.tk_canvases["curr_exp.lists.problems"]
+        )
+        # Add all the problems back to the canvas
+        for _, problem_group_name in enumerate(self.root_problem_dict):
+            self.add_problem_to_curr_exp_list(
+                problem_group_name
+            )
+    
+    def delete_solver(self, unique_solver_name: str) -> None:
+        # Delete from master list
+        del self.root_solver_dict[unique_solver_name]
+        # Delete label & edit/delete buttons
+        tk_base_name = f"curr_exp.lists.solvers.{unique_solver_name}"
+        tk_lbl_name = f"{tk_base_name}.name"
+        tk_edit_name = f"{tk_base_name}.edit"
+        tk_del_name = f"{tk_base_name}.del"
+        self.tk_labels[tk_lbl_name].destroy()
+        self.tk_buttons[tk_edit_name].destroy()
+        self.tk_buttons[tk_del_name].destroy()
+        del self.tk_labels[tk_lbl_name]
+        del self.tk_buttons[tk_edit_name]
+        del self.tk_buttons[tk_del_name]
+        # Clear the canvas
+        self._destroy_widget_children(
+            self.tk_canvases["curr_exp.lists.solvers"]
+        )
+        # Add all the solvers back to the canvas
+        for _, solver_group_name in enumerate(self.root_solver_dict):
+            self.add_solver_to_curr_exp_list(
+                solver_group_name
+            )
 
     def create_experiment(self) -> None:
         # Check to make sure theres at least one problem and solver
@@ -2141,33 +2148,30 @@ class NewExperimentWindow(Toplevel):
         # add to master experiment list
         self.root_experiment_dict[self.experiment_name] = self.experiment
 
-        # reset default experiment name for next experiment
-        new_name = self.get_unique_name(
-            self.root_experiment_dict, self.DEFAULT_EXP_NAME
-        )
-        self.curr_exp_name.set(new_name)
-
         # add exp to row
         self.add_exp_row()
 
+        # Clear the current experiment
+        self.clear_experiment()
+
     def clear_experiment(self) -> None:
-        # clear solver and problem lists
-        self.root_solver_factor_list = []
-        self.root_solver_name_list = []
-        self.root_problem_factor_list = []
-        self.root_problem_name_list = []
-        self.root_solver_dict = {}
+        # Clear dictionaries
         self.root_problem_dict = {}
+        self.root_solver_dict = {}
+        # Clear the GUI lists
         self._destroy_widget_children(
             self.tk_canvases["curr_exp.lists.problems"]
         )
         self._destroy_widget_children(
             self.tk_canvases["curr_exp.lists.solvers"]
         )
+        # Reset the experiment name
         new_name = self.get_unique_name(
             self.root_experiment_dict, self.DEFAULT_EXP_NAME
         )
         self.curr_exp_name.set(new_name)
+        # Set default pickle checkstate
+        self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
