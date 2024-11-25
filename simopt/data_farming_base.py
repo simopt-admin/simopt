@@ -263,7 +263,7 @@ class DataFarmingExperiment:
         # Initialize model object with fixed factors.
         self.model = model_directory[model_name](
             fixed_factors=model_fixed_factors
-        )  # type: ignore
+        )
         if design_filepath is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
@@ -560,7 +560,9 @@ class DataFarmingMetaExperiment:
         if cross_design_factors is None:
             cross_design_factors = {}
         if solver_name is not None:
-            self.solver_object = solver_directory[solver_name]()  # type: ignore # creates solver object
+            self.solver_object = solver_directory[
+                solver_name
+            ]()  # creates solver object
         # TO DO: Extend to allow a design on problem/model factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None and csv_filename is None:
@@ -617,6 +619,7 @@ class DataFarmingMetaExperiment:
                 )
                 if (
                     factor not in solver_fixed_str
+                    and solver_factor_headers is not None
                     and factor not in solver_factor_headers
                 ):
                     print("default from df base", default)
@@ -745,7 +748,7 @@ class DataFarmingMetaExperiment:
                 solver_name = row[-1 * num_extra_col]
                 dp = row[1 : -1 * num_extra_col]
                 dp_index = 0
-                self.solver_object = solver_directory[solver_name]()  # type: ignore # make this less bulky later
+                self.solver_object = solver_directory[solver_name]()
                 for factor in all_solver_factor_names:
                     solver_factors_str[factor] = dp[dp_index]
                     dp_index += 1

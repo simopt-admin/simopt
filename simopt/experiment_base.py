@@ -958,7 +958,7 @@ class ProblemSolver:
                 raise ValueError(error_msg)
             self.solver = solver_directory[solver_name](
                 fixed_factors=solver_fixed_factors
-            )  # type: ignore
+            )
         # Rename solver if necessary.
         if solver_rename is not None:
             if solver_rename == "":
@@ -979,7 +979,7 @@ class ProblemSolver:
             self.problem = problem_directory[problem_name](
                 fixed_factors=problem_fixed_factors,
                 model_fixed_factors=model_fixed_factors,
-            )  # type: ignore
+            )
         # Rename problem if necessary.
         if problem_rename is not None:
             if problem_rename == "":
@@ -5552,7 +5552,7 @@ class ProblemsSolvers:
                 # Get corresponding name of solver from names.
                 solver_name = solver_names[index]
                 # Assign all factor values from current dp to solver object.
-                solver = solver_directory[solver_name](fixed_factors=dp)  # type: ignore
+                solver = solver_directory[solver_name](fixed_factors=dp)
                 solvers.append(solver)
 
             # Create problems list.
@@ -5566,7 +5566,7 @@ class ProblemsSolvers:
                 fixed_factors = {}  # Will hold problem factor values for current dp.
                 model_fixed_factors = {}  # Will hold model factor values for current dp.
                 # Create default instances of problem and model to compare factor names.
-                default_problem = problem_directory[problem_name]()  # type: ignore
+                default_problem = problem_directory[problem_name]()
                 default_model = default_problem.model
 
                 # Set factor values for current dp using problem/model specifications
@@ -5580,7 +5580,7 @@ class ProblemsSolvers:
                 problem = problem_directory[problem_name](
                     fixed_factors=fixed_factors,
                     model_fixed_factors=model_fixed_factors,
-                )  # type: ignore
+                )
                 problems.append(problem)
             # rename problems and solvers if applicable
             if solver_renames is not None:
@@ -6682,17 +6682,17 @@ def create_design(
         if name not in solver_directory:
             error_msg = f"Solver name {name} not found in solver directory."
             raise ValueError(error_msg)
-        design_object = solver_directory[name]()  # type: ignore
+        design_object = solver_directory[name]()
     elif class_type == "problem":
         if name not in problem_directory:
             error_msg = f"Problem name {name} not found in problem directory."
             raise ValueError(error_msg)
-        design_object = problem_directory[name]()  # type: ignore
+        design_object = problem_directory[name]()
     elif class_type == "model":
         if name not in model_directory:
             error_msg = f"Model name {name} not found in model directory."
             raise ValueError(error_msg)
-        design_object = model_directory[name]()  # type: ignore
+        design_object = model_directory[name]()
 
     # Check if Ruby is installed on the system.
     installed_via_wsl: bool = validate_ruby_install()

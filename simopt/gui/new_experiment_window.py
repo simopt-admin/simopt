@@ -87,11 +87,11 @@ class NewExperimentWindow(Toplevel):
         # __init__ method of the class. This will eliminate the need to
         # instantiate the class to get the name.
         self.valid_problems = {
-            f"{problem().name} - {key}": problem  # type: ignore
+            f"{problem().name} - {key}": problem
             for key, problem in problem_unabbreviated_directory.items()
         }
         self.valid_solvers = {
-            f"{solver().name} - {key}": solver  # type: ignore
+            f"{solver().name} - {key}": solver
             for key, solver in solver_unabbreviated_directory.items()
         }
         # TODO: replace root lists/dicts with more descriptive names
@@ -595,8 +595,7 @@ class NewExperimentWindow(Toplevel):
         # Initialize problem for later. This is needed since the problem has
         # many of its attributes set in the __init__ method, and if it is not
         # initialized here, the problem will not have the correct attributes
-        # TODO: remove the need to do this
-        problem_class: ABCMeta = self.valid_problems[problem_name]  # type: ignore
+        problem_class: ABCMeta = self.valid_problems[problem_name]
         problem: Problem = problem_class()
         self._create_problem_factors_canvas(problem)
         self._hide_gen_design()
@@ -606,8 +605,7 @@ class NewExperimentWindow(Toplevel):
         # Initialize solver for later. This is needed since the solver has many
         # of its attributes set in the __init__ method, and if it is not
         # initialized here, the solver will not have the correct attributes
-        # TODO: remove the need to do this
-        solver_class: ABCMeta = self.valid_solvers[solver_name]  # type: ignore
+        solver_class: ABCMeta = self.valid_solvers[solver_name]
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
         self._hide_gen_design()
@@ -793,7 +791,7 @@ class NewExperimentWindow(Toplevel):
 
         # display all potential problems
         problem_list = [
-            f"{problem().name} - {key}"  # type: ignore
+            f"{problem().name} - {key}"
             for key, problem in problem_unabbreviated_directory.items()
         ]
         sorted_problems = sorted(problem_list)
@@ -819,7 +817,7 @@ class NewExperimentWindow(Toplevel):
             )
         # display all potential solvers
         solver_list = [
-            f"{solver().name} - {key}"  # type: ignore
+            f"{solver().name} - {key}"
             for key, solver in solver_unabbreviated_directory.items()
         ]
         sorted_solvers = sorted(solver_list)
@@ -857,18 +855,18 @@ class NewExperimentWindow(Toplevel):
                 0
             ]  # frist design point if design, only design pt if no design
             solver_name = dp_0[1]
-            temp_solver = solver_directory[solver_name]()  # type: ignore
+            temp_solver = solver_directory[solver_name]()
             temp_solvers.append(temp_solver)
         # Add all selected solvers to the temp list
         for solver_name in solver_directory:
             dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{solver_name}"
             checkstate = self.tk_var_bools[dict_name].get()
             if checkstate:
-                temp_solver = solver_directory[solver_name]()  # type: ignore
+                temp_solver = solver_directory[solver_name]()
                 temp_solvers.append(temp_solver)
         # Attempt to create a temp experiment with the current solvers and all problems
         for problem_name in problem_directory:
-            temp_problem = [problem_directory[problem_name]()]  # type: ignore
+            temp_problem = [problem_directory[problem_name]()]
             temp_exp = ProblemsSolvers(
                 solvers=temp_solvers, problems=temp_problem
             )  # temp experiment to run check compatibility
@@ -893,18 +891,18 @@ class NewExperimentWindow(Toplevel):
                 0
             ]  # first design point if design, only design pt if no design
             problem_name = dp_0[1]
-            temp_problem = problem_directory[problem_name]()  # type: ignore
+            temp_problem = problem_directory[problem_name]()
             temp_problems.append(temp_problem)
         # problems currently added to cross design
         for problem in problem_directory:
             dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{problem}"
             checkstate = self.tk_var_bools[dict_name].get()
             if checkstate:
-                temp_problem = problem_directory[problem]()  # type: ignore
+                temp_problem = problem_directory[problem]()
                 temp_problems.append(temp_problem)
         # Attempt to create a temp experiment with the current solvers and all problems
         for solver_name in solver_directory:
-            temp_solver = [solver_directory[solver_name]()]  # type: ignore
+            temp_solver = [solver_directory[solver_name]()]
             temp_exp = ProblemsSolvers(
                 solvers=temp_solver, problems=temp_problems
             )  # temp experiment to run check compatibility
@@ -925,7 +923,7 @@ class NewExperimentWindow(Toplevel):
                 continue
             any_added = True
             # Otherwise, add the solver with default factor settings to the master dict
-            solver = solver_directory[solver_name]()  # type: ignore
+            solver = solver_directory[solver_name]()
             factors = {
                 factor: value["default"]
                 for factor, value in solver.specifications.items()
@@ -945,7 +943,7 @@ class NewExperimentWindow(Toplevel):
                 continue
             any_added = True
             # Otherwise, add the problem with default factor settings to the master dict
-            temp_problem = problem_directory[problem]()  # type: ignore
+            temp_problem = problem_directory[problem]()
             factors = {
                 factor: value["default"]
                 for factor, value in temp_problem.specifications.items()
@@ -998,7 +996,7 @@ class NewExperimentWindow(Toplevel):
         # Get design information from table
         name = self.design_df.at[1, "name"]
         if name in solver_directory:  # loaded a solver
-            self.obj = solver_directory[name]()  # type: ignore # create placeholder objects of the solver to get factor names
+            self.obj = solver_directory[name]() # create placeholder objects of the solver to get factor names
             is_problem = False
             factors = self.obj.specifications
             self.initialize_solver_frame()
@@ -1007,7 +1005,7 @@ class NewExperimentWindow(Toplevel):
             self.sol_prob_book.select(0)  # change view to solver tab
 
         elif name in problem_directory:  # loaded a problem
-            self.obj = problem_directory[name]()  # type: ignore # create placeholder objects of the problem to get factor names
+            self.obj = problem_directory[name]() # create placeholder objects of the problem to get factor names
             is_problem = True
             model_factors = self.obj.model.specifications
             problem_factors = self.obj.specifications

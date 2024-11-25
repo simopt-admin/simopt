@@ -1113,6 +1113,7 @@ class Problem(ABC):
             # Generate one replication at x.
             responses, gradients = self.model.replicate(solution.rng_list)
             # Convert gradient subdictionaries to vectors mapping to decision variables.
+            vector_gradients = {}
             if self.gradient_available:
                 vector_gradients = {
                     keys: self.factor_dict_to_vector_gradients(gradient_dict)
@@ -1139,7 +1140,7 @@ class Problem(ABC):
                         [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
                         for stoch_obj, det_obj in zip(
                             self.response_dict_to_objectives_gradients(
-                                vector_gradients  # type: ignore
+                                vector_gradients
                             ),
                             solution.det_objectives_gradients,
                         )
