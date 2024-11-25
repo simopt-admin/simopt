@@ -9,8 +9,9 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class Contamination(Model):
@@ -106,34 +107,40 @@ class Contamination(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_contam_rate_alpha(self):
+    def check_contam_rate_alpha(self) -> bool:
         return self.factors["contam_rate_alpha"] > 0
 
-    def check_contam_rate_beta(self):
+    def check_contam_rate_beta(self) -> bool:
         return self.factors["contam_rate_beta"] > 0
 
-    def check_restore_rate_alpha(self):
+    def check_restore_rate_alpha(self) -> bool:
         return self.factors["restore_rate_alpha"] > 0
 
-    def check_restore_rate_beta(self):
+    def check_restore_rate_beta(self) -> bool:
         return self.factors["restore_rate_beta"] > 0
 
-    def check_initial_rate_alpha(self):
+    def check_initial_rate_alpha(self) -> bool:
         return self.factors["initial_rate_alpha"] > 0
 
-    def check_initial_rate_beta(self):
+    def check_initial_rate_beta(self) -> bool:
         return self.factors["initial_rate_beta"] > 0
 
-    def check_prev_cost(self):
-        return all(cost > 0 for cost in self.factors["prev_cost"])
+    def check_prev_cost(self) -> bool:
+        cost_above_zero: list[bool] = [
+            cost > 0 for cost in self.factors["prev_cost"]
+        ]
+        return all(cost_above_zero)
 
-    def check_stages(self):
+    def check_stages(self) -> bool:
         return self.factors["stages"] > 0
 
-    def check_prev_decision(self):
-        return all(u >= 0 & u <= 1 for u in self.factors["prev_decision"])
+    def check_prev_decision(self) -> bool:
+        between_0_and_1: list[bool] = [
+            0 <= u <= 1 for u in self.factors["prev_decision"]
+        ]
+        return all(between_0_and_1)
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         # Check for matching number of stages.
         return len(self.factors["prev_decision"]) == self.factors["stages"]
 
@@ -264,9 +271,15 @@ class ContaminationTotalCostDisc(Problem):
     def __init__(
         self,
         name: str = "CONTAM-1",
-        fixed_factors: dict = {},
-        model_fixed_factors: dict = {},
-    ):
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.n_objectives = 1
         self.minmax = (-1,)
@@ -320,7 +333,7 @@ class ContaminationTotalCostDisc(Problem):
         self.lower_bounds = (0,) * self.model.factors["stages"]
         self.upper_bounds = (1,) * self.model.factors["stages"]
 
-    def check_prev_cost(self):
+    def check_prev_cost(self) -> bool:
         if len(self.factors["prev_cost"]) != self.dim:
             return False
         elif any([elem < 0 for elem in self.factors["prev_cost"]]):
@@ -328,7 +341,7 @@ class ContaminationTotalCostDisc(Problem):
         else:
             return True
 
-    def check_error_prob(self):
+    def check_error_prob(self) -> bool:
         if len(self.factors["error_prob"]) != self.dim:
             return False
         elif all(error < 0 for error in self.factors["error_prob"]):
@@ -336,7 +349,7 @@ class ContaminationTotalCostDisc(Problem):
         else:
             return True
 
-    def check_upper_thres(self):
+    def check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
@@ -517,7 +530,8 @@ class ContaminationTotalCostDisc(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 1)
+        between_0_and_1: list[bool] = [0 <= u <= 1 for u in x]
+        return all(between_0_and_1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
@@ -607,9 +621,15 @@ class ContaminationTotalCostCont(Problem):
     def __init__(
         self,
         name: str = "CONTAM-2",
-        fixed_factors: dict = {},
-        model_fixed_factors: dict = {},
-    ):
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.n_objectives = 1
         self.minmax = (-1,)
@@ -663,7 +683,7 @@ class ContaminationTotalCostCont(Problem):
         self.lower_bounds = (0,) * self.model.factors["stages"]
         self.upper_bounds = (1,) * self.model.factors["stages"]
 
-    def check_initial_solution(self):
+    def check_initial_solution(self) -> bool:
         if len(self.factors["initial_solution"]) != self.dim:
             return False
         elif all(u < 0 or u > 1 for u in self.factors["initial_solution"]):
@@ -671,7 +691,7 @@ class ContaminationTotalCostCont(Problem):
         else:
             return True
 
-    def check_prev_cost(self):
+    def check_prev_cost(self) -> bool:
         if len(self.factors["prev_cost"]) != self.dim:
             return False
         elif any([elem < 0 for elem in self.factors["prev_cost"]]):
@@ -679,10 +699,10 @@ class ContaminationTotalCostCont(Problem):
         else:
             return True
 
-    def check_budget(self):
+    def check_budget(self) -> bool:
         return self.factors["budget"] > 0
 
-    def check_error_prob(self):
+    def check_error_prob(self) -> bool:
         if len(self.factors["error_prob"]) != self.dim:
             return False
         elif all(error < 0 for error in self.factors["error_prob"]):
@@ -690,10 +710,10 @@ class ContaminationTotalCostCont(Problem):
         else:
             return True
 
-    def check_upper_thres(self):
+    def check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.lower_bounds) != self.dim:
             return False
         elif len(self.upper_bounds) != self.dim:
@@ -842,7 +862,7 @@ class ContaminationTotalCostCont(Problem):
         )
         det_stoch_constraints_gradients = (
             (0,),
-        )  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def deterministic_objectives_and_gradients(
@@ -881,7 +901,8 @@ class ContaminationTotalCostCont(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 1)
+        between_0_and_1: list[bool] = [0 <= u <= 1 for u in x]
+        return all(between_0_and_1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """

@@ -131,7 +131,7 @@ class Solver(ABC):
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
 
-    def __init__(self, fixed_factors: dict) -> None:
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
         Parameters
@@ -140,6 +140,8 @@ class Solver(ABC):
             Dictionary of user-specified solver factors.
 
         """
+        if fixed_factors is None:
+            fixed_factors = {}
         # Set factors of the solver.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -147,20 +149,22 @@ class Solver(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: Solver) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
         ----------
-        other : ``base.Solver``
-            Other Solver object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
         bool
-            True if the two solvers are equivalent, otherwise False.
+            True if the two objects are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Solver):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
@@ -560,21 +564,21 @@ class Problem(ABC):
         self.__gradient_available = value
 
     @property
-    def optimal_value(self) -> float:
+    def optimal_value(self) -> float | None:
         """Optimal objective function value."""
         return self.__optimal_value
 
     @optimal_value.setter
-    def optimal_value(self, value: float) -> None:
+    def optimal_value(self, value: float | None) -> None:
         self.__optimal_value = value
 
     @property
-    def optimal_solution(self) -> tuple:
+    def optimal_solution(self) -> tuple | None:
         """Optimal solution."""
         return self.__optimal_solution
 
     @optimal_solution.setter
-    def optimal_solution(self, value: tuple) -> None:
+    def optimal_solution(self, value: tuple | None) -> None:
         self.__optimal_solution = value
 
     @property
@@ -675,12 +679,12 @@ class Problem(ABC):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
 
-    def __eq__(self, other: Problem) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
 
         Parameters
         ----------
-        other : ``base.Problem``
+        other : object
             Other ``base.Problem`` objects to compare to self.
 
         Returns
@@ -689,6 +693,8 @@ class Problem(ABC):
             True if the two problems are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Problem):
+            return False
         if type(self) is type(other) and self.factors == other.factors:
             # Check if non-decision-variable factors of models are the same.
             non_decision_factors = (
@@ -739,7 +745,7 @@ class Problem(ABC):
         return len(
             self.factors["initial_solution"]
         ) == self.dim and self.check_deterministic_constraints(
-            decision_variables=self.factors["initial_solution"]
+            x=self.factors["initial_solution"]
         )
 
     def check_budget(self) -> bool:
@@ -981,13 +987,13 @@ class Problem(ABC):
         raise NotImplementedError
 
     def deterministic_objectives_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1005,13 +1011,13 @@ class Problem(ABC):
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of stochastic constraints for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1029,13 +1035,13 @@ class Problem(ABC):
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1049,9 +1055,9 @@ class Problem(ABC):
             np.prod(
                 [
                     self.lower_bounds[idx]
-                    <= decision_variables[idx]
+                    <= x[idx]
                     <= self.upper_bounds[idx]
-                    for idx in range(len(decision_variables))
+                    for idx in range(len(x))
                 ]
             )
         )
@@ -1127,16 +1133,20 @@ class Problem(ABC):
             if self.gradient_available:
                 # print(self.response_dict_to_objectives_gradients(vector_gradients))
                 # print(solution.det_objectives_gradients)
-                solution.objectives_gradients[solution.n_reps] = [
-                    [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
-                    for stoch_obj, det_obj in zip(
-                        self.response_dict_to_objectives_gradients(
-                            vector_gradients
-                        ),
-                        solution.det_objectives_gradients,
-                    )
-                ]
-                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                # TODO: Ensure that this never happens
+                if "vector_gradients" not in locals():
+                    raise ValueError("vector_gradients not defined")
+                else:
+                    solution.objectives_gradients[solution.n_reps] = [
+                        [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
+                        for stoch_obj, det_obj in zip(
+                            self.response_dict_to_objectives_gradients(
+                                vector_gradients # type: ignore
+                            ),
+                            solution.det_objectives_gradients,
+                        )
+                    ]
+                    # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
             if (
                 self.n_stochastic_constraints > 0
                 and solution.stoch_constraints is not None
@@ -1286,13 +1296,13 @@ class Model(ABC):
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
 
-    def __eq__(self, other: Model) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
 
         Parameters
         ----------
-        other : ``base.Model``
-            Other ``base.Model`` object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
@@ -1300,6 +1310,8 @@ class Model(ABC):
             True if the two models are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Model):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:

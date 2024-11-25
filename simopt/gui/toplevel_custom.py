@@ -31,13 +31,12 @@ class Toplevel(tk.Toplevel):
             self.protocol("WM_DELETE_WINDOW", self.destroy)
         # Set title and theme
         self.title(title)
-        self.set_theme()
+        self.set_style()
 
-    def set_theme(self) -> None:
+    def set_style(self) -> None:
         """Set the theme of the GUI."""
         # Configure the theme of the GUI
         self.style = ttk.Style()
-        self.style.theme_use("alt")
         # Configure the default fonts based on screen size
         # https://tkinter-docs.readthedocs.io/en/latest/generic/fonts.html
         # Scale by width because it's easy to scroll vertically, but scrolling
@@ -62,6 +61,9 @@ class Toplevel(tk.Toplevel):
         nametofont("TkIconFont").configure(size=font_medium)
         nametofont("TkMenuFont").configure(size=font_medium)
         nametofont("TkSmallCaptionFont").configure(size=font_small)
+
+        # Change the default button behavior to center text
+        self.style.configure("TButton", justify="center")
 
     def center_window(self, scale: float) -> None:
         """Centers the window to the main display/monitor.

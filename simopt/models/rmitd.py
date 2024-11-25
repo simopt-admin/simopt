@@ -6,11 +6,13 @@ A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/rmitd.html>`__.
 
 """
+
 from __future__ import annotations
 
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import Model, Problem
 
 
 class RMITD(Model):
@@ -43,7 +45,10 @@ class RMITD(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        if fixed_factors is None:
+            fixed_factors = {}
         self.name = "RMITD"
         self.n_rngs = 2
         self.n_responses = 1
@@ -51,43 +56,43 @@ class RMITD(Model):
             "time_horizon": {
                 "description": "time horizon",
                 "datatype": int,
-                "default": 3
+                "default": 3,
             },
             "prices": {
                 "description": "prices for each period",
                 "datatype": list,
-                "default": [100, 300, 400]
+                "default": [100, 300, 400],
             },
             "demand_means": {
                 "description": "mean demand for each period",
                 "datatype": list,
-                "default": [50, 20, 30]
+                "default": [50, 20, 30],
             },
             "cost": {
                 "description": "cost per unit of capacity at t = 0",
                 "datatype": float,
-                "default": 80.0
+                "default": 80.0,
             },
             "gamma_shape": {
                 "description": "shape parameter of gamma distribution",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "gamma_scale": {
                 "description": "scale parameter of gamma distribution",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "initial_inventory": {
                 "description": "initial inventory",
                 "datatype": int,
-                "default": 100
+                "default": 100,
             },
             "reservation_qtys": {
                 "description": "inventory to reserve going into periods 2, 3, ..., T",
                 "datatype": list,
-                "default": [50, 30]
-            }
+                "default": [50, 30],
+            },
         }
         self.check_factor_list = {
             "time_horizon": self.check_time_horizon,
@@ -97,56 +102,76 @@ class RMITD(Model):
             "gamma_shape": self.check_gamma_shape,
             "gamma_scale": self.check_gamma_scale,
             "initial_inventory": self.check_initial_inventory,
-            "reservation_qtys": self.check_reservation_qtys
+            "reservation_qtys": self.check_reservation_qtys,
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
 
-    def check_time_horizon(self):
+    def check_time_horizon(self) -> bool:
         return self.factors["time_horizon"] > 0
 
-    def check_prices(self):
+    def check_prices(self) -> bool:
         return all(price > 0 for price in self.factors["prices"])
 
-    def check_demand_means(self):
-        return all(demand_mean > 0 for demand_mean in self.factors["demand_means"])
+    def check_demand_means(self) -> bool:
+        return all(
+            demand_mean > 0 for demand_mean in self.factors["demand_means"]
+        )
 
-    def check_cost(self):
+    def check_cost(self) -> bool:
         return self.factors["cost"] > 0
 
-    def check_gamma_shape(self):
+    def check_gamma_shape(self) -> bool:
         return self.factors["gamma_shape"] > 0
 
-    def check_gamma_scale(self):
+    def check_gamma_scale(self) -> bool:
         return self.factors["gamma_scale"] > 0
 
-    def check_initial_inventory(self):
+    def check_initial_inventory(self) -> bool:
         return self.factors["initial_inventory"] > 0
 
-    def check_reservation_qtys(self):
-        return all(reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"])
+    def check_reservation_qtys(self) -> bool:
+        return all(
+            reservation_qty > 0
+            for reservation_qty in self.factors["reservation_qtys"]
+        )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         # Check for matching number of periods.
         if len(self.factors["prices"]) != self.factors["time_horizon"]:
             return False
         elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
             return False
-        elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
+        elif (
+            len(self.factors["reservation_qtys"])
+            != self.factors["time_horizon"] - 1
+        ):
             return False
         # Check that first reservation level is less than initial inventory.
-        elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
+        elif (
+            self.factors["initial_inventory"]
+            < self.factors["reservation_qtys"][0]
+        ):
             return False
         # Check for non-increasing reservation levels.
-        elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
+        elif any(
+            self.factors["reservation_qtys"][idx]
+            < self.factors["reservation_qtys"][idx + 1]
+            for idx in range(self.factors["time_horizon"] - 2)
+        ):
             return False
         # Check that gamma_shape*gamma_scale = 1.
-        elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
+        elif (
+            np.isclose(
+                self.factors["gamma_shape"] * self.factors["gamma_scale"], 1
+            )
+            is False
+        ):
             return False
         else:
             return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -165,14 +190,19 @@ class RMITD(Model):
         """
         # Designate separate random number generators.
         # Outputs will be coupled when generating demand.
-        X_rng = rng_list[0]
-        Y_rng = rng_list[1]
+        x_rng = rng_list[0]
+        y_rng = rng_list[1]
         # Generate X and Y (to use for computing demand).
         # random.gammavariate takes two inputs: alpha and beta.
         #     alpha = k = gamma_shape
         #     beta = 1/theta = 1/gamma_scale
-        X = X_rng.gammavariate(alpha=self.factors["gamma_shape"], beta=1./self.factors["gamma_scale"])
-        Y = [Y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])]
+        x_demand = x_rng.gammavariate(
+            alpha=self.factors["gamma_shape"],
+            beta=1.0 / self.factors["gamma_scale"],
+        )
+        y_demand = [
+            y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])
+        ]
         # Track inventory over time horizon.
         remaining_inventory = self.factors["initial_inventory"]
         # Append "no reservations" for decision-making in final period.
@@ -181,14 +211,25 @@ class RMITD(Model):
         # Simulate over the time horizon and calculate the realized revenue.
         revenue = 0
         for period in range(self.factors["time_horizon"]):
-            demand = self.factors["demand_means"][period]*X*Y[period]
-            sell = min(max(remaining_inventory-reservations[period], 0), demand)
+            demand = (
+                self.factors["demand_means"][period]
+                * x_demand
+                * y_demand[period]
+            )
+            sell = min(
+                max(remaining_inventory - reservations[period], 0), demand
+            )
             remaining_inventory = remaining_inventory - sell
-            revenue += sell*self.factors["prices"][period]
-        revenue -= self.factors["cost"]*self.factors["initial_inventory"]
+            revenue += sell * self.factors["prices"][period]
+        revenue -= self.factors["cost"] * self.factors["initial_inventory"]
         # Compose responses and gradients.
         responses = {"revenue": revenue}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -265,7 +306,19 @@ class RMITDMaxRevenue(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "RMITD-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
+
+    def __init__(
+        self,
+        name: str = "RMITD-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Handle default arguments.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+        # Set problem attributes.
         self.name = name
         self.dim = 3
         self.n_objectives = 1
@@ -285,23 +338,23 @@ class RMITDMaxRevenue(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (100, 50, 30)
+                "default": (100, 50, 30),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
-            }
+                "default": 10000,
+            },
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = RMITD(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -317,11 +370,11 @@ class RMITDMaxRevenue(Problem):
         """
         factor_dict = {
             "initial_inventory": vector[0],
-            "reservation_qtys": list(vector[0:])
+            "reservation_qtys": list(vector[0:]),
         }
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -336,10 +389,13 @@ class RMITDMaxRevenue(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["initial_inventory"],) + tuple(factor_dict["reservation_qtys"])
+        vector = (
+            factor_dict["initial_inventory"],
+            *tuple(factor_dict["reservation_qtys"]),
+        )
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -357,7 +413,7 @@ class RMITDMaxRevenue(Problem):
         objectives = (response_dict["revenue"],)
         return objectives
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -373,7 +429,7 @@ class RMITDMaxRevenue(Problem):
         """
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -389,12 +445,12 @@ class RMITDMaxRevenue(Problem):
         """
         # Generate random solution using acceptable/rejection.
         while True:
-            x = tuple([200*rand_sol_rng.random() for _ in range(self.dim)])
+            x = tuple([200 * rand_sol_rng.random() for _ in range(self.dim)])
             if self.check_deterministic_constraints(x):
                 break
         return x
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
