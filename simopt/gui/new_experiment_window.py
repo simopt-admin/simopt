@@ -901,12 +901,14 @@ class NewExperimentWindow(Toplevel):
                 self.tk_checkbuttons[dict_name].configure(state="normal")
 
     def create_cross_design(self) -> None:
+        any_added = False
         for solver_name in solver_directory:
             dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{solver_name}"
             checkstate = self.tk_var_bools[dict_name].get()
             # Move on if the solver is not selected
             if not checkstate:
                 continue
+            any_added = True
             # Otherwise, add the solver with default factor settings to the master dict
             solver = solver_directory[solver_name]()  # type: ignore
             factors = {
@@ -926,6 +928,7 @@ class NewExperimentWindow(Toplevel):
             # Move on if the problem is not selected
             if not checkstate:
                 continue
+            any_added = True
             # Otherwise, add the problem with default factor settings to the master dict
             temp_problem = problem_directory[problem]()  # type: ignore
             factors = {
@@ -946,6 +949,13 @@ class NewExperimentWindow(Toplevel):
             ]
             # add problem row to list display
             self.add_problem_to_curr_exp_list(problem_save_name)
+
+        if not any_added:
+            messagebox.showerror(
+                "No Problems/Solvers Added",
+                "No problems or solvers were selected to be added to the experiment.",
+            )
+            return
 
         # Reset the quick-add frame
         self._add_with_default_options()
@@ -2051,6 +2061,8 @@ class NewExperimentWindow(Toplevel):
             self.add_problem_to_curr_exp_list(
                 problem_group_name
             )
+        # Rerun compatibility check
+        self.cross_design_solver_compatibility()
     
     def delete_solver(self, unique_solver_name: str) -> None:
         # Delete from master list
@@ -2075,6 +2087,8 @@ class NewExperimentWindow(Toplevel):
             self.add_solver_to_curr_exp_list(
                 solver_group_name
             )
+        # Rerun compatibility check
+        self.cross_design_problem_compatibility()
 
     def create_experiment(self) -> None:
         # Check to make sure theres at least one problem and solver
