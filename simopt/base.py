@@ -45,7 +45,7 @@ class Solver(ABC):
     def name(self) -> str:
         """Name of solver."""
         return self.__name
-    
+
     @name.setter
     def name(self, value: str) -> None:
         self.__name = value
@@ -54,7 +54,7 @@ class Solver(ABC):
     def objective_type(self) -> str:
         """Description of objective types: "single" or "multi"."""
         return self.__objective_type
-    
+
     @objective_type.setter
     def objective_type(self, value: str) -> None:
         self.__objective_type = value
@@ -63,7 +63,7 @@ class Solver(ABC):
     def constraint_type(self) -> str:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
         return self.__constraint_type
-    
+
     @constraint_type.setter
     def constraint_type(self, value: str) -> None:
         self.__constraint_type = value
@@ -72,7 +72,7 @@ class Solver(ABC):
     def variable_type(self) -> str:
         """Description of variable types: "discrete", "continuous", "mixed"."""
         return self.__variable_type
-    
+
     @variable_type.setter
     def variable_type(self, value: str) -> None:
         self.__variable_type = value
@@ -81,7 +81,7 @@ class Solver(ABC):
     def gradient_needed(self) -> bool:
         """True if gradient of objective function is needed, otherwise False."""
         return self.__gradient_needed
-    
+
     @gradient_needed.setter
     def gradient_needed(self, value: bool) -> None:
         self.__gradient_needed = value
@@ -90,16 +90,18 @@ class Solver(ABC):
     def factors(self) -> dict:
         """Changeable factors (i.e., parameters) of the solver."""
         return self.__factors
-    
+
     @factors.setter
     def factors(self, value: dict) -> None:
         self.__factors = value
 
     @property
-    def specifications(self) -> dict[str, dict[str, str | type | int | float | bool]]:
+    def specifications(
+        self,
+    ) -> dict[str, dict[str, str | type | int | float | bool]]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         return self.__specifications
-    
+
     @specifications.setter
     def specifications(self, value: dict) -> None:
         self.__specifications = value
@@ -108,7 +110,7 @@ class Solver(ABC):
     def rng_list(self) -> list[MRG32k3a]:
         """List of RNGs used for the solver's internal purposes."""
         return self.__rng_list
-    
+
     @rng_list.setter
     def rng_list(self, value: list[MRG32k3a]) -> None:
         self.__rng_list = value
@@ -117,7 +119,7 @@ class Solver(ABC):
     def solution_progenitor_rngs(self) -> list[MRG32k3a]:
         """List of RNGs used as a baseline for simulating solutions."""
         return self.__solution_progenitor_rngs
-    
+
     @solution_progenitor_rngs.setter
     def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
         self.__solution_progenitor_rngs = value
@@ -126,7 +128,7 @@ class Solver(ABC):
     def check_factor_list(self) -> dict:
         """Dictionary of functions to check if a factor is permissible."""
         return self.__check_factor_list
-    
+
     @check_factor_list.setter
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
@@ -272,7 +274,7 @@ class Solver(ABC):
         """
         return isinstance(
             self.factors[factor_name],
-            type(self.specifications[factor_name]["datatype"])
+            type(self.specifications[factor_name]["datatype"]),
         )
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
@@ -486,7 +488,7 @@ class Problem(ABC):
     def dim(self) -> int:
         """Number of decision variables."""
         return self.__dim
-    
+
     @dim.setter
     def dim(self, value: int) -> None:
         self.__dim = value
@@ -495,7 +497,7 @@ class Problem(ABC):
     def n_objectives(self) -> int:
         """Number of objectives."""
         return self.__n_objectives
-    
+
     @n_objectives.setter
     def n_objectives(self, value: int) -> None:
         self.__n_objectives = value
@@ -504,7 +506,7 @@ class Problem(ABC):
     def n_stochastic_constraints(self) -> int:
         """Number of stochastic constraints."""
         return self.__n_stochastic_constraints
-    
+
     @n_stochastic_constraints.setter
     def n_stochastic_constraints(self, value: int) -> None:
         self.__n_stochastic_constraints = value
@@ -513,7 +515,7 @@ class Problem(ABC):
     def minmax(self) -> tuple[int]:
         """Indicators of maximization (+1) or minimization (-1) for each objective."""
         return self.__minmax
-    
+
     @minmax.setter
     def minmax(self, value: tuple[int]) -> None:
         self.__minmax = value
@@ -522,7 +524,7 @@ class Problem(ABC):
     def constraint_type(self) -> str:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
         return self.__constraint_type
-    
+
     @constraint_type.setter
     def constraint_type(self, value: str) -> None:
         self.__constraint_type = value
@@ -531,7 +533,7 @@ class Problem(ABC):
     def variable_type(self) -> str:
         """Description of variable types: "discrete", "continuous", "mixed"."""
         return self.__variable_type
-    
+
     @variable_type.setter
     def variable_type(self, value: str) -> None:
         self.__variable_type = value
@@ -558,7 +560,7 @@ class Problem(ABC):
     def gradient_available(self) -> bool:
         """True if direct gradient of objective function is available, otherwise False."""
         return self.__gradient_available
-    
+
     @gradient_available.setter
     def gradient_available(self, value: bool) -> None:
         self.__gradient_available = value
@@ -585,7 +587,7 @@ class Problem(ABC):
     def model(self) -> Model:
         """Associated simulation model that generates replications."""
         return self.__model
-    
+
     @model.setter
     def model(self, value: Model) -> None:
         self.__model = value
@@ -1034,9 +1036,7 @@ class Problem(ABC):
         )
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(
-        self, x: tuple
-    ) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Parameters
@@ -1054,9 +1054,7 @@ class Problem(ABC):
         return bool(
             np.prod(
                 [
-                    self.lower_bounds[idx]
-                    <= x[idx]
-                    <= self.upper_bounds[idx]
+                    self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx]
                     for idx in range(len(x))
                 ]
             )
@@ -1141,7 +1139,7 @@ class Problem(ABC):
                         [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
                         for stoch_obj, det_obj in zip(
                             self.response_dict_to_objectives_gradients(
-                                vector_gradients # type: ignore
+                                vector_gradients  # type: ignore
                             ),
                             solution.det_objectives_gradients,
                         )

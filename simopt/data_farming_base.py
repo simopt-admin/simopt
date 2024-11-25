@@ -21,8 +21,10 @@ from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
 
 DATA_FARMING_DIR = os.path.join(EXPERIMENT_DIR, "data_farming")
 
+
 class DesignType(Enum):
     nolhs = "nolhs"
+
 
 class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
@@ -261,11 +263,13 @@ class DataFarmingExperiment:
         # Initialize model object with fixed factors.
         self.model = model_directory[model_name](
             fixed_factors=model_fixed_factors
-        ) # type: ignore
+        )  # type: ignore
         if design_filepath is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            filepath_core = os.path.join(DATA_FARMING_DIR, factor_settings_filename)
+            filepath_core = os.path.join(
+                DATA_FARMING_DIR, factor_settings_filename
+            )
             source_filepath = filepath_core + ".txt"
             design_filepath = filepath_core + "_design.txt"
             command = f"stack_{design_type}.rb -s {stacks} {source_filepath} > {design_filepath}"
@@ -494,12 +498,11 @@ class DataFarmingMetaExperiment:
         if not isinstance(solver_name, (str, type(None))):
             error_msg = "solver_name must be a string."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_factor_headers, (list, type(None)))
-            or (isinstance(solver_factor_headers, list)
+        if not isinstance(solver_factor_headers, (list, type(None))) or (
+            isinstance(solver_factor_headers, list)
             and not all(
                 isinstance(header, str) for header in solver_factor_headers
-            ))
+            )
         ):
             error_msg = "solver_factor_headers must be a dictionary."
             raise TypeError(error_msg)
@@ -557,9 +560,7 @@ class DataFarmingMetaExperiment:
         if cross_design_factors is None:
             cross_design_factors = {}
         if solver_name is not None:
-            self.solver_object = solver_directory[
-                solver_name
-            ]()  # type: ignore # creates solver object
+            self.solver_object = solver_directory[solver_name]()  # type: ignore # creates solver object
         # TO DO: Extend to allow a design on problem/model factors too.
         # Currently supports designs on solver factors only.
         if design_filename is None and csv_filename is None:
@@ -744,9 +745,7 @@ class DataFarmingMetaExperiment:
                 solver_name = row[-1 * num_extra_col]
                 dp = row[1 : -1 * num_extra_col]
                 dp_index = 0
-                self.solver_object = solver_directory[
-                    solver_name
-                ]()  # type: ignore # make this less bulky later
+                self.solver_object = solver_directory[solver_name]()  # type: ignore # make this less bulky later
                 for factor in all_solver_factor_names:
                     solver_factors_str[factor] = dp[dp_index]
                     dp_index += 1
@@ -906,10 +905,9 @@ class DataFarmingMetaExperiment:
 
         """
         # Type checking
-        if (
-            not isinstance(solve_tols, (list, type(None)))
-            or (isinstance(solve_tols, list)
-            and not all(isinstance(tol, float) for tol in solve_tols))
+        if not isinstance(solve_tols, (list, type(None))) or (
+            isinstance(solve_tols, list)
+            and not all(isinstance(tol, float) for tol in solve_tols)
         ):
             error_msg = "solve_tols must be a list of floats."
             raise TypeError(error_msg)

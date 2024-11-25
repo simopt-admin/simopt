@@ -3,45 +3,45 @@
 
 from __future__ import annotations
 
-# import solvers
-from simopt.solvers.astrodf import ASTRODF
-from simopt.solvers.randomsearch import RandomSearch
-from simopt.solvers.neldmd import NelderMead
-from simopt.solvers.strong import STRONG
-from simopt.solvers.spsa import SPSA
-from simopt.solvers.adam import ADAM
-from simopt.solvers.aloe import ALOE
+# Import the base classes
+from simopt.base import Model, Problem, Solver
 
-# import models and problems
-from simopt.models.example import ExampleModel, ExampleProblem
+# Import Models
+from simopt.models.amusementpark import AmusementPark, AmusementParkMinDepart
+from simopt.models.chessmm import ChessAvgDifference, ChessMatchmaking
 from simopt.models.cntnv import CntNV, CntNVMaxProfit
-from simopt.models.mm1queue import MM1Queue, MM1MinMeanSojournTime
-from simopt.models.facilitysizing import (
-    FacilitySize,
-    FacilitySizingTotalCost,
-    FacilitySizingMaxService,
-)
-from simopt.models.rmitd import RMITD, RMITDMaxRevenue
-from simopt.models.sscont import SSCont, SSContMinCost
-from simopt.models.ironore import IronOre, IronOreMaxRev, IronOreMaxRevCnt
-from simopt.models.dynamnews import DynamNews, DynamNewsMaxProfit
-from simopt.models.dualsourcing import DualSourcing, DualSourcingMinCost
 from simopt.models.contam import (
     Contamination,
-    ContaminationTotalCostDisc,
     ContaminationTotalCostCont,
+    ContaminationTotalCostDisc,
 )
-from simopt.models.chessmm import ChessMatchmaking, ChessAvgDifference
-from simopt.models.san import SAN, SANLongestPath
-from simopt.models.hotel import Hotel, HotelRevenue
-from simopt.models.tableallocation import TableAllocation, TableAllocationMaxRev
-from simopt.models.paramesti import ParameterEstimation, ParamEstiMaxLogLik
+from simopt.models.dualsourcing import DualSourcing, DualSourcingMinCost
+from simopt.models.dynamnews import DynamNews, DynamNewsMaxProfit
+from simopt.models.example import ExampleModel, ExampleProblem
+from simopt.models.facilitysizing import (
+    FacilitySize,
+    FacilitySizingMaxService,
+    FacilitySizingTotalCost,
+)
 from simopt.models.fixedsan import FixedSAN, FixedSANLongestPath
+from simopt.models.hotel import Hotel, HotelRevenue
+from simopt.models.ironore import IronOre, IronOreMaxRev, IronOreMaxRevCnt
+from simopt.models.mm1queue import MM1MinMeanSojournTime, MM1Queue
 from simopt.models.network import Network, NetworkMinTotalCost
-from simopt.models.amusementpark import AmusementPark, AmusementParkMinDepart
+from simopt.models.paramesti import ParamEstiMaxLogLik, ParameterEstimation
+from simopt.models.rmitd import RMITD, RMITDMaxRevenue
+from simopt.models.san import SAN, SANLongestPath
+from simopt.models.sscont import SSCont, SSContMinCost
+from simopt.models.tableallocation import TableAllocation, TableAllocationMaxRev
 
-# Import base
-from simopt.base import Model, Problem, Solver
+# Import Solvers
+from simopt.solvers.adam import ADAM
+from simopt.solvers.aloe import ALOE
+from simopt.solvers.astrodf import ASTRODF
+from simopt.solvers.neldmd import NelderMead
+from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers.spsa import SPSA
+from simopt.solvers.strong import STRONG
 
 # directory dictionaries
 solver_directory: dict[str, Solver] = {

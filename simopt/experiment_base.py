@@ -958,7 +958,7 @@ class ProblemSolver:
                 raise ValueError(error_msg)
             self.solver = solver_directory[solver_name](
                 fixed_factors=solver_fixed_factors
-            ) # type: ignore
+            )  # type: ignore
         # Rename solver if necessary.
         if solver_rename is not None:
             if solver_rename == "":
@@ -979,7 +979,7 @@ class ProblemSolver:
             self.problem = problem_directory[problem_name](
                 fixed_factors=problem_fixed_factors,
                 model_fixed_factors=model_fixed_factors,
-            ) # type: ignore
+            )  # type: ignore
         # Rename problem if necessary.
         if problem_rename is not None:
             if problem_rename == "":
@@ -2066,7 +2066,9 @@ def post_normalize(
             )
             # Normalize by initial optimality gap.
             if initial_opt_gap == 0:
-                print("Warning: Divide by zero during post-normalization (initial_opt_gap is 0).")
+                print(
+                    "Warning: Divide by zero during post-normalization (initial_opt_gap is 0)."
+                )
                 norm_est_objectives = []
                 for est_objective in est_objectives:
                     est_diff = est_objective - opt_obj_val
@@ -3977,7 +3979,7 @@ def plot_solvability_profiles(
                             experiments=[experiments[solver_idx]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type=plot_type, # type: ignore
+                            plot_type=plot_type,  # type: ignore
                             solve_tol=solve_tol,
                             beta=beta,
                             estimator=solver_curve,
@@ -4075,7 +4077,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type, # type: ignore
+                                plot_type=plot_type,  # type: ignore
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -4199,7 +4201,7 @@ def plot_solvability_profiles(
                             experiments=[experiments[solver_idx]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type=plot_type, # type: ignore
+                            plot_type=plot_type,  # type: ignore
                             solve_tol=solve_tol,
                             beta=beta,
                             estimator=solver_curve,
@@ -4301,7 +4303,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type, # type: ignore
+                                plot_type=plot_type,  # type: ignore
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -5079,10 +5081,8 @@ def save_plot(
     if not isinstance(normalize, bool):
         error_msg = "Normalize must be a boolean."
         raise TypeError(error_msg)
-    if (
-        not isinstance(extra, (float, list, type(None)))
-        or (isinstance(extra, list)
-        and not all(isinstance(e, float) for e in extra))
+    if not isinstance(extra, (float, list, type(None))) or (
+        isinstance(extra, list) and not all(isinstance(e, float) for e in extra)
     ):
         error_msg = "Extra must be a float, list of floats, or None."
         raise TypeError(error_msg)
@@ -5439,70 +5439,61 @@ class ProblemsSolvers:
 
         """
         # Type checking
-        if (
-            not isinstance(solver_factors, (list, type(None)))
-            or (isinstance(solver_factors, list)
-            and not all(isinstance(dp, dict) for dp in solver_factors))
+        if not isinstance(solver_factors, (list, type(None))) or (
+            isinstance(solver_factors, list)
+            and not all(isinstance(dp, dict) for dp in solver_factors)
         ):
             error_msg = "Solver factors must be a list of dictionaries or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_factors, (list, type(None)))
-            or (isinstance(problem_factors, list)
-            and not all(isinstance(dp, dict) for dp in problem_factors))
+        if not isinstance(problem_factors, (list, type(None))) or (
+            isinstance(problem_factors, list)
+            and not all(isinstance(dp, dict) for dp in problem_factors)
         ):
             error_msg = (
                 "Problem factors must be a list of dictionaries or None."
             )
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_names, (list, type(None)))
-            or (isinstance(solver_names, list)
-            and not all(isinstance(name, str) for name in solver_names))
+        if not isinstance(solver_names, (list, type(None))) or (
+            isinstance(solver_names, list)
+            and not all(isinstance(name, str) for name in solver_names)
         ):
             error_msg = "Solver names must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_names, (list, type(None)))
-            or (isinstance(problem_names, list)
-            and not all(isinstance(name, str) for name in problem_names))
+        if not isinstance(problem_names, (list, type(None))) or (
+            isinstance(problem_names, list)
+            and not all(isinstance(name, str) for name in problem_names)
         ):
             error_msg = "Problem names must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_renames, (list, type(None)))
-            or (isinstance(solver_renames, list)
-            and not all(isinstance(name, str) for name in solver_renames))
+        if not isinstance(solver_renames, (list, type(None))) or (
+            isinstance(solver_renames, list)
+            and not all(isinstance(name, str) for name in solver_renames)
         ):
             error_msg = "Solver renames must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_renames, (list, type(None)))
-            or (isinstance(problem_renames, list)
-            and not all(isinstance(name, str) for name in problem_renames))
+        if not isinstance(problem_renames, (list, type(None))) or (
+            isinstance(problem_renames, list)
+            and not all(isinstance(name, str) for name in problem_renames)
         ):
             error_msg = "Problem renames must be a list of strings or None."
             raise TypeError(error_msg)
         if not isinstance(fixed_factors_filename, (str, type(None))):
             error_msg = "Fixed factors filename must be a string or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solvers, (list, type(None)))
-            or (isinstance(solvers, list)
-            and not all(isinstance(solver, Solver) for solver in solvers))
+        if not isinstance(solvers, (list, type(None))) or (
+            isinstance(solvers, list)
+            and not all(isinstance(solver, Solver) for solver in solvers)
         ):
             error_msg = "Solvers must be a list of Solver objects or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problems, (list, type(None)))
-            or (isinstance(problems, list)
-            and not all(isinstance(problem, Problem) for problem in problems))
+        if not isinstance(problems, (list, type(None))) or (
+            isinstance(problems, list)
+            and not all(isinstance(problem, Problem) for problem in problems)
         ):
             error_msg = "Problems must be a list of Problem objects or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(experiments, (list, type(None)))
-            or (isinstance(experiments, list)
+        if not isinstance(experiments, (list, type(None))) or (
+            isinstance(experiments, list)
             and not all(
                 isinstance(experiment_list, list)
                 for experiment_list in experiments
@@ -5511,7 +5502,7 @@ class ProblemsSolvers:
                 isinstance(experiment, ProblemSolver)
                 for experiment_list in experiments
                 for experiment in experiment_list
-            ))
+            )
         ):
             error_msg = "Experiments must be a list of lists of ProblemSolver objects or None."
             raise TypeError(error_msg)
@@ -5561,7 +5552,7 @@ class ProblemsSolvers:
                 # Get corresponding name of solver from names.
                 solver_name = solver_names[index]
                 # Assign all factor values from current dp to solver object.
-                solver = solver_directory[solver_name](fixed_factors=dp) # type: ignore
+                solver = solver_directory[solver_name](fixed_factors=dp)  # type: ignore
                 solvers.append(solver)
 
             # Create problems list.
@@ -5575,7 +5566,7 @@ class ProblemsSolvers:
                 fixed_factors = {}  # Will hold problem factor values for current dp.
                 model_fixed_factors = {}  # Will hold model factor values for current dp.
                 # Create default instances of problem and model to compare factor names.
-                default_problem = problem_directory[problem_name]() # type: ignore
+                default_problem = problem_directory[problem_name]()  # type: ignore
                 default_model = default_problem.model
 
                 # Set factor values for current dp using problem/model specifications
@@ -5589,7 +5580,7 @@ class ProblemsSolvers:
                 problem = problem_directory[problem_name](
                     fixed_factors=fixed_factors,
                     model_fixed_factors=model_fixed_factors,
-                ) # type: ignore
+                )  # type: ignore
                 problems.append(problem)
             # rename problems and solvers if applicable
             if solver_renames is not None:
@@ -6691,17 +6682,17 @@ def create_design(
         if name not in solver_directory:
             error_msg = f"Solver name {name} not found in solver directory."
             raise ValueError(error_msg)
-        design_object = solver_directory[name]() # type: ignore
+        design_object = solver_directory[name]()  # type: ignore
     elif class_type == "problem":
         if name not in problem_directory:
             error_msg = f"Problem name {name} not found in problem directory."
             raise ValueError(error_msg)
-        design_object = problem_directory[name]() # type: ignore
+        design_object = problem_directory[name]()  # type: ignore
     elif class_type == "model":
         if name not in model_directory:
             error_msg = f"Model name {name} not found in model directory."
             raise ValueError(error_msg)
-        design_object = model_directory[name]() # type: ignore
+        design_object = model_directory[name]()  # type: ignore
 
     # Check if Ruby is installed on the system.
     installed_via_wsl: bool = validate_ruby_install()
