@@ -145,56 +145,43 @@ class IronOre(Model):
             raise ValueError("Mean iron ore price per unit must be greater than 0.")
 
     def check_max_price(self):
-        if self.factors["max_price"] <= 0:
-            raise ValueError("max_price must be greater than 0.")
+        return self.factors["max_price"] > 0
 
     def check_min_price(self):
-        if self.factors["min_price"] < 0:
-            raise ValueError("min_price must be greater than or equal to 0.")
+        return self.factors["min_price"] >= 0
 
     def check_capacity(self):
-        if self.factors["capacity"] < 0:
-            raise ValueError("capacity must be greater than or equal to 0.")
+        return self.factors["capacity"] >= 0
 
     def check_st_dev(self):
-        if self.factors["st_dev"] <= 0:
-            raise ValueError("st_dev must be greater than 0.")
+        return self.factors["st_dev"] > 0
 
     def check_holding_cost(self):
-        if self.factors["holding_cost"] <= 0:
-            raise ValueError("holding_cost must be greater than 0.")
+        return self.factors["holding_cost"] > 0
 
     def check_prod_cost(self):
-        if self.factors["prod_cost"] <= 0:
-            raise ValueError("prod_cost must be greater than 0.")
+        return self.factors["prod_cost"] > 0
 
     def check_max_prod_perday(self):
-        if self.factors["max_prod_perday"] <= 0:
-            raise ValueError("max_prod_perday must be greater than 0.")
+        return self.factors["max_prod_perday"] > 0
 
     def check_price_prod(self):
-        if self.factors["price_prod"] <= 0:
-            raise ValueError("price_prod must be greater than 0.")
+        return self.factors["price_prod"] > 0
 
     def check_inven_stop(self):
-        if self.factors["inven_stop"] <= 0:
-            raise ValueError("inven_stop must be greater than 0.")
+        return self.factors["inven_stop"] > 0
 
     def check_price_stop(self):
-        if self.factors["price_stop"] <= 0:
-            raise ValueError("price_stop must be greater than 0.")
+        return self.factors["price_stop"] > 0
 
     def check_price_sell(self):
-        if self.factors["price_sell"] <= 0:
-            raise ValueError("price_sell must be greater than 0.")
+        return self.factors["price_sell"] > 0
 
     def check_n_days(self):
-        if self.factors["n_days"] < 1:
-            raise ValueError("n_days must be greater than or equal to 1.")
+        return self.factors["n_days"] >= 1
 
     def check_simulatable_factors(self):
-        if (self.factors["min_price"] > self.factors["mean_price"]) or (self.factors["mean_price"] > self.factors["max_price"]):
-            raise ValueError("mean_price must be greater than or equal to min_price and less than or equal to max_price.")
+        return (self.factors["min_price"] <= self.factors["mean_price"]) & (self.factors["mean_price"] <= self.factors["max_price"])
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """

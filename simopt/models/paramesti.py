@@ -66,19 +66,17 @@ class ParameterEstimation(Model):
         super().__init__(fixed_factors)
 
     def check_xstar(self):
-        if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
-            raise ValueError("All elements in xstar must be greater than 0.")
+        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
 
     def check_x(self):
-        if any(x_i <= 0 for x_i in self.factors["x"]):
-            raise ValueError("All elements in x must be greater than 0.")
+        return all(x_i > 0 for x_i in self.factors["x"])
 
     def check_simulatable_factors(self):
         # Check for dimension of x and xstar.
         if len(self.factors["x"]) != 2:
-            raise ValueError("The length of x must equal 2.")
+            return False
         elif len(self.factors["xstar"]) != 2:
-            raise ValueError("The length of xstar must equal 2.")
+            return False
         else:
             return True
 

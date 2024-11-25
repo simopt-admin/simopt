@@ -141,48 +141,37 @@ class SSCont(Model):
 
     # Check for simulatable factors
     def check_demand_mean(self):
-        if self.factors["demand_mean"] <= 0:
-            raise ValueError("demand_mean must be greater than 0.")
+        return self.factors["demand_mean"] > 0
 
     def check_lead_mean(self):
-        if self.factors["lead_mean"] <= 0:
-            raise ValueError("lead_mean must be greater than 0.")
+        return self.factors["lead_mean"] > 0
 
     def check_backorder_cost(self):
-        if self.factors["backorder_cost"] <= 0:
-            raise ValueError("backorder_cost must be greater than 0.")
+        return self.factors["backorder_cost"] > 0
 
     def check_holding_cost(self):
-        if self.factors["holding_cost"] <= 0:
-            raise ValueError("holding_cost must be greater than 0.")
+        return self.factors["holding_cost"] > 0
 
     def check_fixed_cost(self):
-        if self.factors["fixed_cost"] <= 0:
-            raise ValueError("fixed_cost must be greater than 0.")
+        return self.factors["fixed_cost"] > 0
 
     def check_variable_cost(self):
-        if self.factors["variable_cost"] <= 0:
-            raise ValueError("variable_cost must be greater than 0.")
+        return self.factors["variable_cost"] > 0
 
     def check_s(self):
-        if self.factors["s"] <= 0:
-            raise ValueError("s must be greater than 0.")
+        return self.factors["s"] > 0
 
     def check_S(self):
-        if self.factors["S"] <= 0:
-            raise ValueError("S must be greater than 0.")
+        return self.factors["S"] > 0
 
     def check_n_days(self):
-        if self.factors["n_days"] < 1:
-            raise ValueError("n_days must be greater than or equal to 1.")
+        return self.factors["n_days"] >= 1
 
     def check_warmup(self):
-        if self.factors["warmup"] < 0:
-            raise ValueError("warmup must be greater than or equal to 0.")
+        return self.factors["warmup"] >= 0
 
     def check_simulatable_factors(self):
-        if self.factors["s"] >= self.factors["S"]:
-            raise ValueError("s must be less than S.")
+        return self.factors["s"] < self.factors["S"]
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """

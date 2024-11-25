@@ -73,8 +73,7 @@ class SAN(Model):
         super().__init__(fixed_factors)
 
     def check_num_nodes(self):
-        if self.factors["num_nodes"] <= 0:
-            raise ValueError("num_nodes must be greater than 0.")
+        return self.factors["num_nodes"] > 0
 
     def dfs(self, graph, start, visited=None):
         if visited is None:
@@ -87,7 +86,7 @@ class SAN(Model):
 
     def check_arcs(self):
         if len(self.factors["arcs"]) <= 0:
-            raise ValueError("The length of arcs must be greater than 0.")
+            return False
         # Check graph is connected.
         graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:

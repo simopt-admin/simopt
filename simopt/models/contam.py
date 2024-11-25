@@ -107,45 +107,35 @@ class Contamination(Model):
         super().__init__(fixed_factors)
 
     def check_contam_rate_alpha(self):
-        if self.factors["contam_rate_alpha"] <= 0:
-         raise ValueError("contam_rate_alpha must be greater than 0.")
+        return self.factors["contam_rate_alpha"] > 0
 
     def check_contam_rate_beta(self):
-        if self.factors["contam_rate_beta"] <= 0:
-            raise ValueError("contam_rate_beta must be greater than 0.")
+        return self.factors["contam_rate_beta"] > 0
 
     def check_restore_rate_alpha(self):
-        if self.factors["restore_rate_alpha"] <= 0:
-            raise ValueError("restore_rate_alpha must be greater than 0.")
+        return self.factors["restore_rate_alpha"] > 0
 
     def check_restore_rate_beta(self):
-        if self.factors["restore_rate_beta"] <= 0:
-            raise ValueError("restore_rate_beta must be greater than 0.")
+        return self.factors["restore_rate_beta"] > 0
 
     def check_initial_rate_alpha(self):
-        if self.factors["initial_rate_alpha"] <= 0:
-            raise ValueError("initial_rate_alpha must be greater than 0.")
+        return self.factors["initial_rate_alpha"] > 0
 
     def check_initial_rate_beta(self):
-        if self.factors["initial_rate_beta"] <= 0:
-            raise ValueError("initial_rate_beta must be greater than 0.")
+        return self.factors["initial_rate_beta"] > 0
 
     def check_prev_cost(self):
-        if any(cost <= 0 for cost in self.factors["prev_cost"]):
-            raise ValueError("All costs in prev_cost must be greater than 0.")
+        return all(cost > 0 for cost in self.factors["prev_cost"])
 
     def check_stages(self):
-        if self.factors["stages"] <= 0:
-            raise ValueError("Stages must be greater than 0.")
+        return self.factors["stages"] > 0
 
     def check_prev_decision(self):
-        if any(u < 0 or u > 1 for u in self.factors["prev_decision"]):
-            raise ValueError("All elements in prev_decision must be between 0 and 1.")
+        return all(u >= 0 & u <= 1 for u in self.factors["prev_decision"])
 
     def check_simulatable_factors(self):
         # Check for matching number of stages.
-        if len(self.factors["prev_decision"]) != self.factors["stages"]:
-            raise ValueError("The number of stages must be equal to the length of the previous decision tuple.")
+        return len(self.factors["prev_decision"]) == self.factors["stages"]
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -705,7 +695,7 @@ class ContaminationTotalCostCont(Problem):
 
     def check_simulatable_factors(self):
         if len(self.lower_bounds) != self.dim:
-            return False 
+            return False
         elif len(self.upper_bounds) != self.dim:
             return False
         else:

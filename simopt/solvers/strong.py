@@ -134,40 +134,31 @@ class STRONG(Solver):
         super().__init__(fixed_factors)
 
     def check_n_r(self):
-        if self.factors["n_r"] <= 0:
-            raise ValueError("The number of replications taken at each solution must be greater than 0.")
+        return self.factors["n_r"] > 0
 
     def check_sensitivity(self):
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("sensitivity must be greater than 0.")
+        return self.factors["sensitivity"] > 0
 
     def check_delta_threshold(self):
-        if self.factors["delta_threshold"] <= 0:
-            raise ValueError("delta_threshold must be greater than 0.")
+        return self.factors["delta_threshold"] > 0
 
     def check_delta_T(self):
-        if self.factors["delta_T"] <= self.factors["delta_threshold"]:
-            raise ValueError("delta_T must be greater than delta_threshold")
+        return self.factors["delta_T"] > self.factors["delta_threshold"]
 
     def check_eta_0(self):
-        if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
-            raise ValueError("eta_0 must be between 0 and 1.")
+        return self.factors["eta_0"] > 0 and self.factors["eta_0"] < 1
 
     def check_eta_1(self):
-        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
-            raise ValueError("eta_1 must be between eta_0 and 1.")
+        return self.factors["eta_1"] < 1 and self.factors["eta_1"] > self.factors["eta_0"]
 
     def check_gamma_1(self):
-        if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
-            raise ValueError("gamma_1 must be between 0 and 1.")
+        return self.factors["gamma_1"] > 0 and self.factors["gamma_1"] < 1
 
     def check_gamma_2(self):
-        if self.factors["gamma_2"] <= 1:
-            raise ValueError("gamma_2 must be greater than 1.")
+        return self.factors["gamma_2"] > 1
 
     def check_lambda(self):
-        if self.factors["lambda"] <= 1:
-            raise ValueError("lambda must be greater than 1.")
+        return self.factors["lambda"] > 1
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
