@@ -103,46 +103,54 @@ class RMITD(Model):
         super().__init__(fixed_factors)
 
     def check_time_horizon(self):
-        return self.factors["time_horizon"] > 0
+        if self.factors["time_horizon"] <= 0:
+            raise ValueError("time_horizon must be greater than 0.")
 
     def check_prices(self):
-        return all(price > 0 for price in self.factors["prices"])
+        if any(price <= 0 for price in self.factors["prices"]):
+            raise ValueError("All elements in prices must be greater than 0.")
 
     def check_demand_means(self):
-        return all(demand_mean > 0 for demand_mean in self.factors["demand_means"])
+        if any(demand_mean <= 0 for demand_mean in self.factors["demand_means"]):
+            raise ValueError("All elements in demand_means must be greater than 0.")
 
     def check_cost(self):
-        return self.factors["cost"] > 0
+        if self.factors["cost"] <= 0:
+            raise ValueError("cost must be greater than 0.")
 
     def check_gamma_shape(self):
-        return self.factors["gamma_shape"] > 0
+        if self.factors["gamma_shape"] <= 0:
+            raise ValueError("gamma_shape must be greater than 0.")
 
     def check_gamma_scale(self):
-        return self.factors["gamma_scale"] > 0
+        if self.factors["gamma_scale"] <= 0:
+            raise ValueError("gamma_scale must be greater than 0.")
 
     def check_initial_inventory(self):
-        return self.factors["initial_inventory"] > 0
+        if self.factors["initial_inventory"] <= 0:
+            raise ValueError("initial_inventory must be greater than 0.")
 
     def check_reservation_qtys(self):
-        return all(reservation_qty > 0 for reservation_qty in self.factors["reservation_qtys"])
+        if any(reservation_qty <= 0 for reservation_qty in self.factors["reservation_qtys"]):
+            raise ValueError("All elements in reservation_qtys must be greater than 0.")
 
     def check_simulatable_factors(self):
         # Check for matching number of periods.
         if len(self.factors["prices"]) != self.factors["time_horizon"]:
-            return False
+            raise ValueError("The length of prices must be equal to time_horizon.")
         elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
-            return False
+            raise ValueError("The length of demand_means must be equal to time_horizon.")
         elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
-            return False
+            raise ValueError("The length of reservation_qtys must be equal to the time_horizon minus 1.")
         # Check that first reservation level is less than initial inventory.
         elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
-            return False
+            raise ValueError("The initial_inventory must be greater than or equal to the first element in reservation_qtys.")
         # Check for non-increasing reservation levels.
         elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
-            return False
+            raise ValueError("Each value in reservation_qtys must be greater than the next value in the list.")
         # Check that gamma_shape*gamma_scale = 1.
         elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
-            return False
+            raise ValueError("gamma_shape times gamma_scale should be close to 1.")
         else:
             return True
 
