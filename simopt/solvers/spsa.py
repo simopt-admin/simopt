@@ -100,6 +100,7 @@ class SPSA(Solver):
             }
         }
         self.check_factor_list = {
+            "crn_across_solns": self.check_crn_across_solns,
             "alpha": self.check_alpha,
             "gamma": self.check_gamma,
             "step": self.check_step,
@@ -110,7 +111,7 @@ class SPSA(Solver):
             "iter_pct": self.check_iter_pct
         }
         super().__init__(fixed_factors)
-
+    
     def check_alpha(self):
         if self.factors["alpha"] <= 0:
             raise ValueError("Alpha must be greater than 0.")

@@ -297,10 +297,16 @@ class MM1MinMeanSojournTime(Problem):
             }
         }
         self.check_factor_list = {
+            "cost": self.check_cost,
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget
         }
         super().__init__(fixed_factors, model_fixed_factors)
+
+    def check_cost(self):
+        if self.factors["cost"] <=0:
+            raise ValueError("cost must be greater than 0.")
+            
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = MM1Queue(self.model_fixed_factors)
 

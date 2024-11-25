@@ -120,6 +120,8 @@ class STRONG(Solver):
             }
         }
         self.check_factor_list = {
+            "n0": self.check_n0,
+            "lambda_2": self.check_lambda_2,
             "crn_across_solns": self.check_crn_across_solns,
             "n_r": self.check_n_r,
             "sensitivity": self.check_sensitivity,
@@ -132,6 +134,14 @@ class STRONG(Solver):
             "lambda": self.check_lambda
         }
         super().__init__(fixed_factors)
+
+    def check_lambda_2(self):
+        if self.factors["lambda_2"]<1:
+            raise ValueError("lambda_2 must be greater than or equal to 1.")
+    
+    def check_n0(self):
+        if self.factors["n0"]<=0:
+            raise ValueError("n0 must be greater than 0.")
 
     def check_n_r(self):
         return self.factors["n_r"] > 0
