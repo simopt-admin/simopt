@@ -69,10 +69,6 @@ class NewExperimentWindow(Toplevel):
         self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
 
         # widget lists for enable/delete functions
-        self.solver_edit_buttons = {}
-        self.solver_del_buttons = {}
-        self.problem_edit_buttons = {}
-        self.problem_del_buttons = {}
         self.macro_vars = []  # list used for updated macro entries when default is changed
 
         # Default experiment options (can be changed in GUI)
@@ -441,6 +437,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_notebooks["ntbk.ps_adding"].bind(
             "<<NotebookTabChanged>>", self._on_notebook_tab_change
         )
+        # Initialize the quick-add tab
+        # If this doesn't get initialized, the compatability checks will fail
+        self._add_with_default_options()
 
     def _initialize_generated_design_frame(self) -> None:
         if "gen_design" in self.tk_frames:
@@ -600,6 +599,7 @@ class NewExperimentWindow(Toplevel):
         problem_class: ABCMeta = self.valid_problems[problem_name]  # type: ignore
         problem: Problem = problem_class()
         self._create_problem_factors_canvas(problem)
+        self._hide_gen_design()
 
     def _on_solver_combobox_change(self, _: tk.Event) -> None:
         solver_name = self.selected_solver_name.get()
@@ -610,6 +610,7 @@ class NewExperimentWindow(Toplevel):
         solver_class: ABCMeta = self.valid_solvers[solver_name]  # type: ignore
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
+        self._hide_gen_design()
     
     def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
         # Make sure the unique name is in the root problem dict
@@ -837,6 +838,9 @@ class NewExperimentWindow(Toplevel):
         self.cross_design_solver_compatibility()
 
     def cross_design_problem_compatibility(self) -> None:
+        # If we don't have the tab open, return
+        # if self.tk_notebooks["ntbk.ps_adding"].select() != "Quick-Add Problems/Solvers":
+        #     return
         # create temp objects for current selected solvers and all possilble problems
         temp_solvers = []
         # solvers previously added to experiment
@@ -870,13 +874,16 @@ class NewExperimentWindow(Toplevel):
                 self.tk_checkbuttons[dict_name].configure(state="normal")
 
     def cross_design_solver_compatibility(self) -> None:
+        # If we don't have the tab open, return
+        # if self.tk_notebooks["ntbk.ps_adding"].select() != "Quick-Add Problems/Solvers":
+        #     return
         # create temp objects for current selected solvers and all possilble problems
         temp_problems = []
         # solvers previously added to experiment
         for problem_group in self.root_problem_dict:
             dp_0 = self.root_problem_dict[problem_group][
                 0
-            ]  # frist design point if design, only design pt if no design
+            ]  # first design point if design, only design pt if no design
             problem_name = dp_0[1]
             temp_problem = problem_directory[problem_name]()  # type: ignore
             temp_problems.append(temp_problem)
@@ -1414,8 +1421,31 @@ class NewExperimentWindow(Toplevel):
         return row_index
 
     def _create_problem_factors_canvas(self, problem: Problem) -> None:
-        # TODO: implement this as a mirror of the solver function
-        return
+        # Clear the canvas
+        self._destroy_widget_children(
+            self.tk_canvases["ntbk.ps_adding.problem.factors"]
+        )
+
+        # Initialize the frames and headers
+        self.tk_frames["ntbk.ps_adding.problem.factors.problems"] = ttk.Frame(
+            master=self.tk_canvases["ntbk.ps_adding.problem.factors"],
+        )
+        self.tk_frames["ntbk.ps_adding.problem.factors.problems"].grid(
+            row=0, column=0, sticky="nsew"
+        )
+
+        # show problem factors and store default widgets to this dict
+        self.__show_data_farming_core(
+            problem,
+            frame=self.tk_frames["ntbk.ps_adding.problem.factors.problems"],
+            row=1,
+        )
+
+        # Update the design name to be unique
+        unique_name = self.get_unique_name(self.root_problem_dict, problem.name)
+        self.design_name.set(unique_name)
+        self.tk_entries["design_opts.name"].delete(0, tk.END)
+        self.tk_entries["design_opts.name"].insert(0, unique_name)
 
     def _create_solver_factors_canvas(self, solver: Solver) -> None:
         # Clear the canvas
@@ -1520,21 +1550,30 @@ class NewExperimentWindow(Toplevel):
         # Set all the columns to automatically expand if there's room
         for i in range(len(self.factor_dict) + 1):
             frame.grid_rowconfigure(i, weight=1)
+    
+    def __create_design_core(self, base_object: str) -> None:
+        # Check if the base object is a Problem or Solver
+        if base_object not in ("Problem", "Solver"):
+            error_msg = "base_object must be 'Problem' or 'Solver'."
+            error_msg += f" Received {base_object}."
+            raise TypeError(error_msg)
+        
+        base_dropdown = self.selected_problem_name.get() if base_object == "Problem" else self.selected_solver_name.get()
+        root_dict = self.root_problem_dict if base_object == "Problem" else self.root_solver_dict
 
-    def create_solver_design(self) -> None:
-        # Check to see if the user has selected a solver
-        if self.selected_solver_name.get() == "":
+        # Check to see if the user has selected a problem or solver
+        if base_dropdown == "":
             messagebox.showerror(
                 "Error",
-                "Please select a solver from the dropdown list.",
+                f"Please select a {base_object} from the dropdown list.",
             )
             return
-        # Check if the design name already exists
-        if self.design_name.get() in self.root_solver_dict:
+        # Check to see if the design name already exists
+        if self.design_name.get() in root_dict:
             # Generate a new name
-            new_name = self.get_unique_name(self.root_solver_dict, self.design_name.get())
+            new_name = self.get_unique_name(root_dict, self.design_name.get())
             # Ask the user if they want to use the new name
-            prompt_text = f"A design with the name {self.design_name.get()}"
+            prompt_text = f"A {base_object} with the name {self.design_name.get()}"
             prompt_text += " already exists. Would you like to use the name "
             prompt_text += f"{new_name} instead?\nNote: If you choose 'No',"
             prompt_text += " you will need to choose a different name."
@@ -1549,18 +1588,16 @@ class NewExperimentWindow(Toplevel):
         
         # Get the name of the design
         design_name = self.design_name.get()
-        # Get the number of stacks, the name of the solver, and the type of design
+        # Get the number of stacks and the type of design
         num_stacks = self.design_num_stacks.get()
-        solver_design_type = self.design_type.get()
-        # Extract the solver name from the dropdown box
-        solver_dropdown = self.selected_solver_name.get()
-        solver_name = solver_dropdown.split(" - ")[0]
+        design_type = self.design_type.get()
+        # Extract the name of the problem or solver from the dropdown box
+        base_name = base_dropdown.split(" - ")[0]
 
         """ Determine factors included in design """
         # List of names of factors included in the design
         self.design_factors: list[str] = []
         # Dict of cross design factors w/ lists of possible values
-        # TODO: figure out if this will ever be anything other than bools
         self.cross_design_factors: dict[str, list[str]] = {}
         # Dict of factors not included in the design
         # Key is the factor name, value is the default value
@@ -1569,7 +1606,7 @@ class NewExperimentWindow(Toplevel):
             # If the factor is not included in the design, it's a fixed factor
             if (
                 self.factor_dict[factor].include is None
-                or not self.factor_dict[factor].include.get()  # type: ignore
+                or not self.factor_dict[factor].include.get() # type: ignore
             ):
                 fixed_val = self.factor_dict[factor].default.get()
                 self.fixed_factors[factor] = fixed_val
@@ -1579,48 +1616,38 @@ class NewExperimentWindow(Toplevel):
                     self.design_factors.append(factor)
                 elif self.factor_dict[factor].type.get() == "bool":
                     self.cross_design_factors[factor] = ["True", "False"]
-
+        
         """ Check if there are any factors included in the design """
         if not self.design_factors and not self.cross_design_factors:
-            # Create a non-datafarmed solver design
-            solver_list = []
-            solver_list.append(self.fixed_factors)
+            # Create a non-datafarmed design
+            design_list = []
+            design_list.append(self.fixed_factors)
+            design_list.append(base_name)
 
-            # Nested loop to search for the right solver without knowing its name
-            design_factors = set(self.factor_dict)
-            for solver in solver_directory:
-                # Set of factors for the solver
-                solver_object = solver_directory[solver]()  # type: ignore
-                solver_factors = set(solver_object.specifications.keys())
-                # If the sets are equal, we have found the right solver
-                if solver_factors == design_factors:
-                    solver_list.append(str(solver))
-                    break
+            root_dict[design_name] = [design_list]
 
-            self.root_solver_dict[design_name] = [solver_list]
-
-            # add solver row to list display
-            self.add_solver_to_curr_exp_list(design_name)
-
-            # refresh solver name entry box
+            # Add the design to the list display
+            if base_object == "Problem":
+                self.add_problem_to_curr_exp_list(design_name)
+            else:
+                self.add_solver_to_curr_exp_list(design_name)
+            
+            # Refresh the design name entry box
             self.design_name.set(
-                self.get_unique_name(
-                    self.root_solver_dict, design_name
-                )
+                self.get_unique_name(root_dict, design_name)
             )
-
         else:
-            """ Create factor settings txt file"""
-            # Check if folder exists, if not create it
+            # Create the factor settings txt file
+            # Check if the folder exists, if not create it
             if not os.path.exists(DATA_FARMING_DIR):
                 os.makedirs(DATA_FARMING_DIR)
-            # If file already exists, clear it and make a new, empty file of the same name
+            # If the file already exists, clear it and make a new, empty file of the same name
             filepath = os.path.join(
                 DATA_FARMING_DIR, f"{design_name}.txt"
             )
             if os.path.exists(filepath):
                 os.remove(filepath)
-
+            
             # Write the factor settings to the file
             with open(filepath, "x") as settings_file:
                 # For each factor, write the min, max, and decimal values to the file
@@ -1637,223 +1664,63 @@ class NewExperimentWindow(Toplevel):
                         dec_val = factor.num_decimals.get()
                     else:
                         dec_val = "0"
-
+                    
                     # Write the values to the file
                     data_insert = f"{min_val} {max_val} {dec_val}\n"
                     settings_file.write(data_insert)
-
+            
             try:
-                # Lookup the original solver via the dropdown menu at the top
-                self.solver_design_list = create_design(
-                    name=solver_name,
+                # Create the design
+                if base_object == "Problem":
+                    self.problem_design_list = create_design(
+                        name=base_name,
+                        factor_headers=self.design_factors,
+                        factor_settings_filename=design_name,
+                        fixed_factors=self.fixed_factors,
+                        cross_design_factors=self.cross_design_factors,
+                        n_stacks=num_stacks,
+                        design_type=design_type,  # type: ignore
+                        class_type="problem",
+                    )
+                else:
+                    self.solver_design_list = create_design(
+                    name=base_name,
                     factor_headers=self.design_factors,
                     factor_settings_filename=design_name,
                     fixed_factors=self.fixed_factors,
                     cross_design_factors=self.cross_design_factors,
                     n_stacks=num_stacks,
-                    design_type=solver_design_type,  # type: ignore
+                    design_type=design_type,  # type: ignore
                     class_type="solver",
                 )
             except Exception as e:
-                # Give error message if design creation fails
-                messagebox.showerror("Error Creating Design", str(e))
+                messagebox.showerror(
+                    "Error",
+                    f"An error occurred while creating the design: {e}",
+                )
                 return
-            # display design tree
-            filename = os.path.join(
-                DATA_FARMING_DIR, f"{design_name}_design.csv"
-            )
+            
+            # Display the design tree
+            filename = os.path.join(DATA_FARMING_DIR, f"{design_name}_design.csv")
             self.display_design_tree(
                 csv_filename=filename,
             )
-            # # button to add solver design to experiment
+            # Button to add the design to the experiment
+            command = self.add_problem_design_to_experiment if base_object == "Problem" else self.add_solver_design_to_experiment
             self.tk_buttons["gen_design.add"] = ttk.Button(
                 master=self.tk_frames["gen_design.display"],
-                text="Add Design Points to Experiment",
-                command=self.add_solver_design_to_experiment,
+                text=f"Add this {base_object} design to experiment",
+                command=command,
             )
             self.tk_buttons["gen_design.add"].grid(
                 row=1, column=0, sticky="nsew"
             )
 
+    def create_solver_design(self) -> None:
+        self.__create_design_core("Solver")
+
     def create_problem_design(self) -> None:
-        # Check to see if the user has selected a solver
-        if self.selected_problem_name.get() == "":
-            messagebox.showerror(
-                "Error",
-                "Please select a problem from the dropdown list.",
-            )
-            return
-        # Check if the design name already exists
-        if self.design_name.get() in self.root_problem_dict:
-            messagebox.showerror(
-                "Error",
-                "A design with this name already exists. Please choose a different name.",
-            )
-            return
-
-        # get n stacks and design type from user input
-        n_stacks = self.design_num_stacks.get()
-        design_type = self.design_type.get()
-
-        """ Determine factors included in design """
-        # List of names of factors included in the design
-        self.design_factors: list[str] = []
-        # Dict of cross design factors w/ lists of possible values
-        # TODO: figure out if this will ever be anything other than bools
-        self.cross_design_factors: dict[str, list[str]] = {}
-        # Dict of factors not included in the design
-        # Key is the factor name, value is the default value
-        self.fixed_factors: dict[str, bool | float | int] = {}
-        for factor in self.factor_dict:
-            # If the factor is not included in the design, it's a fixed factor
-            if (
-                self.factor_dict[factor].include is None
-                or not self.factor_dict[factor].include.get()  # type: ignore
-            ):
-                fixed_val = self.factor_dict[factor].default_eval
-                self.fixed_factors[factor] = fixed_val
-            # If the factor is included in the design, add it to the list of factors
-            else:
-                if self.factor_dict[factor].type.get() in ("int", "float"):
-                    self.design_factors.append(factor)
-                elif self.factor_dict[factor].type.get() == "bool":
-                    self.cross_design_factors[factor] = ["True", "False"]
-
-        """ Check if there are any factors included in the design """
-        if not self.design_factors and not self.cross_design_factors:
-            # Create a non-datafarmed problem design
-            problem_list = []
-            problem_list.append(self.fixed_factors)
-
-            # Nested loop to search for the right solver without knowing its name
-            design_factors = set(self.factor_dict)
-            for problem in problem_directory:
-                # Set of factors for the solver
-                problem_object = problem_directory[problem]()
-                problem_factors = set(
-                    problem_object.specifications.keys()
-                ).union(set(problem_object.model.specifications.keys()))
-                # If the sets are equal, we have found the right solver
-                if problem_factors == design_factors:
-                    problem_list.append(str(problem))
-                    break
-            assert (
-                len(problem_list) == 2
-            ), "Unable to find problem in problem directory"
-
-            self.root_problem_dict[self.problem_design_name] = [problem_list]
-
-            # add solver name to solver index
-            problem_row = len(self.root_problem_dict) - 1
-            self.problem_list_label = tk.Label(
-                master=self.problem_list_canvas,
-                text=self.problem_design_name,
-            )
-            self.problem_list_label.grid(row=problem_row, column=1)
-            self.problem_list_labels[self.problem_design_name] = (
-                self.problem_list_label
-            )
-
-            # add delete and view/edit buttons
-            self.problem_edit_button = tk.Button(
-                master=self.problem_list_canvas,
-                text="View/Edit",
-                command=lambda problem_design_name=self.problem_design_name: self.edit_problem(
-                    problem_design_name
-                ),
-            )
-            self.problem_edit_button.grid(row=problem_row, column=2)
-            self.problem_edit_buttons[self.problem_design_name] = (
-                self.problem_edit_button
-            )
-            self.problem_del_button = tk.Button(
-                master=self.problem_list_canvas,
-                text="Delete",
-                command=lambda problem_design_name=self.problem_design_name: self.delete_problem(
-                    problem_design_name
-                ),
-            )
-            self.problem_del_button.grid(row=problem_row, column=3)
-            self.problem_del_buttons[self.problem_design_name] = (
-                self.problem_del_button
-            )
-
-            # refresh solver name entry box
-            self.design_name.set(
-                self.get_unique_name(
-                    self.root_problem_dict, self.problem_design_name
-                )
-            )
-
-        else:
-            """ Create factor settings txt file"""
-            # Check if folder exists, if not create it
-            if not os.path.exists(DATA_FARMING_DIR):
-                os.makedirs(DATA_FARMING_DIR)
-            # If file already exists, clear it and make a new, empty file of the same name
-            filepath = os.path.join(
-                DATA_FARMING_DIR, f"{self.problem_design_name}.txt"
-            )
-            if os.path.exists(filepath):
-                os.remove(filepath)
-
-            # Write the factor settings to the file
-            with open(filepath, "x") as settings_file:
-                # For each factor, write the min, max, and decimal values to the file
-                for factor_name in self.design_factors:
-                    # Lookup the factor in the dictionary
-                    factor = self.factor_dict[factor_name]
-                    # Make sure the factor has a minimum and maximum value
-                    assert factor.minimum is not None
-                    assert factor.maximum is not None
-                    min_val = factor.minimum.get()
-                    max_val = factor.maximum.get()
-                    if factor.type.get() == "float":
-                        assert factor.num_decimals is not None
-                        dec_val = factor.num_decimals.get()
-                    else:
-                        dec_val = "0"
-
-                    # Write the values to the file
-                    data_insert = f"{min_val} {max_val} {dec_val}\n"
-                    settings_file.write(data_insert)
-
-            try:
-                self.problem_design_list = create_design(
-                    name=self.problem_save_for_later.name,
-                    factor_headers=self.design_factors,
-                    factor_settings_filename=self.problem_design_name,
-                    fixed_factors=self.fixed_factors,
-                    cross_design_factors=self.cross_design_factors,
-                    n_stacks=n_stacks,
-                    design_type=design_type,
-                    class_type="problem",
-                )
-            except Exception as e:
-                # Give error message if design creation fails
-                messagebox.showerror("Error Creating Design", str(e))
-                return
-            # display design tree
-            self.display_design_tree(
-                os.path.join(
-                    DATA_FARMING_DIR, f"{self.problem_design_name}_design.csv"
-                ),
-                self.factor_frame,
-                row=999,
-                column=0,
-                columnspan=8,
-            )
-            # button to add solver design to experiment
-            self.add_problem_design_button = tk.Button(
-                master=self.factor_frame,
-                text="Add this problem to experiment",
-                command=self.add_problem_design_to_experiment,
-            )
-            self.add_problem_design_button.grid(
-                row=1000, column=0, columnspan=8
-            )
-            # disable design name entry
-            self.design_name_entry.configure(state="disabled")
+        self.__create_design_core("Problem")
 
     def display_design_tree(
         self,
@@ -1962,59 +1829,40 @@ class NewExperimentWindow(Toplevel):
         return converted_fixed_factors
 
     def add_problem_design_to_experiment(self) -> None:
-        problem_design_name = self.problem_design_name
+        design_name = self.design_name.get()
+        selected_name = self.selected_problem_name.get()
+        selected_name_short = selected_name.split(" - ")[0]
 
         problem_holder_list = []  # holds all problem lists within design name
-        for _, dp in enumerate(self.problem_design_list):
-            dp_list = []  # holds dictionary of factors for current dp
-            dp_list.append(dp)  # append problem factors
-            dp_list.append(self.design_name.get())  # append name of problem
-            problem_holder_list.append(
-                dp_list
-            )  # add current dp information to holder list
+        for dp in self.problem_design_list:
+            problem_list = []  # holds dictionary of dps and solver name
+            problem_list.append(dp)
+            problem_list.append(selected_name_short)
+            problem_holder_list.append(problem_list)
 
-        self.root_problem_dict[problem_design_name] = problem_holder_list
-        self.add_problem_design_to_list()
+        self.root_problem_dict[design_name] = problem_holder_list
 
-    def add_problem_design_to_list(self) -> None:
-        solver_design_name = self.problem_design_name
-
-        # add solver name to solver index
-        problem_row = len(self.root_problem_dict) - 1
-        self.problem_list_label = tk.Label(
-            master=self.problem_list_canvas,
-            text=problem_design_name,
-        )
-        self.problem_list_label.grid(row=problem_row, column=1)
-        self.problem_list_labels[problem_design_name] = self.problem_list_label
-
-        # add delete and view/edit buttons
-        self.problem_edit_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="View/Edit",
-        )
-        self.problem_edit_button.grid(row=problem_row, column=2)
-        self.problem_edit_buttons[problem_design_name] = (
-            self.problem_edit_button
-        )
-        self.problem_del_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="Delete",
-            command=lambda: self.delete_problem(problem_design_name),
-        )
-        self.problem_del_button.grid(row=problem_row, column=3)
-        self.problem_del_buttons[problem_design_name] = self.problem_del_button
+        # Add problem row to list display
+        self.add_problem_to_curr_exp_list(design_name)
 
         # refresh problem design name entry box
+        self.design_name.set(
+            self.get_unique_name(self.root_problem_dict, design_name)
+        )
+
+        # Hide the design tree
+        self._hide_gen_design()
 
     def add_solver_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
+        selected_name = self.selected_solver_name.get()
+        selected_name_short = selected_name.split(" - ")[0]
 
         solver_holder_list = []  # used so solver list matches datafarming format
         for dp in self.solver_design_list:
             solver_list = []  # holds dictionary of dps and solver name
             solver_list.append(dp)
-            solver_list.append(design_name)
+            solver_list.append(selected_name_short)
             solver_holder_list.append(solver_list)
 
         self.root_solver_dict[design_name] = solver_holder_list
