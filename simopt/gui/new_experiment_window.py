@@ -4022,7 +4022,7 @@ class NewExperimentWindow(Toplevel):
             selected_items = self.solver_tree.selection()
             self.selected_solvers = []
             for item in selected_items:
-                solver_index = self.solver_tree.item(item, "text")
+                solver_index = int(self.solver_tree.item(item, "text"))
                 solver = self.plot_experiment.solvers[
                     solver_index
                 ]  # get corresponding solver from experiment
@@ -4039,7 +4039,7 @@ class NewExperimentWindow(Toplevel):
             selected_items = self.problem_tree.selection()
             self.selected_problems = []
             for item in selected_items:
-                problem_index = self.problem_tree.item(item, "text")
+                problem_index = int(self.problem_tree.item(item, "text"))
                 problem = self.plot_experiment.problems[
                     problem_index
                 ]  # get corresponding problem from experiment
