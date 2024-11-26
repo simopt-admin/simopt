@@ -22,6 +22,7 @@ from simopt.directory import (
     solver_unabbreviated_directory,
 )
 from simopt.experiment_base import (
+    ProblemSolver,
     ProblemsSolvers,
     create_design,
     plot_area_scatterplots,
@@ -610,13 +611,71 @@ class NewExperimentWindow(Toplevel):
         self._create_solver_factors_canvas(solver)
         self._hide_gen_design()
 
-    def add_problem_to_curr_exp(self, unique_name: str, problem_list: list) -> None:
+    def __update_problem_dropdown(self) -> None:
+        possible_problems = sorted(list(self.problem_full_name_to_class.keys()))
+        # For each solver in the current experiment, check all the possible
+        # problems and remove the ones that are not compatible
+        # Grab the name (index 1) out of the first element (index 0) of the
+        # dictionary (looked up by key) to get the solver class name
+        solver_class_list = [self.root_solver_dict[key][0][1] for key in self.root_solver_dict]
+        for solver_name in solver_class_list:
+            solver_class: ABCMeta = solver_directory[solver_name]
+            solver: Solver = solver_class()
+            problem_list = possible_problems.copy()
+            for problem_name in problem_list:
+                short_problem_name = problem_name.split(" - ")[0]
+                problem_class: ABCMeta = problem_directory[short_problem_name]
+                problem: Problem = problem_class()
+                # Create a new ProblemSolver object to check compatibility
+                problem_solver = ProblemSolver(
+                    problem=problem, solver=solver
+                )
+                # If there was an error, remove it from the options
+                if len(problem_solver.check_compatibility()) > 0:
+                    possible_problems.remove(problem_name)
+        self.tk_comboboxes["ntbk.ps_adding.problem.select"].configure(
+            values=possible_problems
+        )
+
+    def __update_solver_dropdown(self) -> None:
+        possible_options = sorted(list(self.solver_full_name_to_class.keys()))
+        # For each problem in the current experiment, check all the possible
+        # solvers and remove the ones that are not compatible
+        # Grab the name (index 1) out of the first element (index 0) of the
+        # dictionary (looked up by key) to get the problem class name
+        problem_class_list = [self.root_problem_dict[key][0][1] for key in self.root_problem_dict]
+        for problem_name in problem_class_list:
+            problem_class: ABCMeta = problem_directory[problem_name]
+            problem: Problem = problem_class()
+            solver_list = possible_options.copy()
+            for solver_name in solver_list:
+                short_solver_name = solver_name.split(" - ")[0]
+                solver_class: ABCMeta = solver_directory[short_solver_name]
+                solver: Solver = solver_class()
+                # Create a new ProblemSolver object to check compatibility
+                problem_solver = ProblemSolver(
+                    problem=problem, solver=solver
+                )
+                # If there was an error, remove it from the options
+                if len(problem_solver.check_compatibility()) > 0:
+                    possible_options.remove(solver_name)
+        self.tk_comboboxes["ntbk.ps_adding.solver.select"].configure(
+            values=possible_options
+        )
+
+    def add_problem_to_curr_exp(
+        self, unique_name: str, problem_list: list
+    ) -> None:
         self.root_problem_dict[unique_name] = problem_list
         self.add_problem_to_curr_exp_list(unique_name)
+        self.__update_solver_dropdown()
 
-    def add_solver_to_curr_exp(self, unique_name: str, solver_list: list) -> None:
+    def add_solver_to_curr_exp(
+        self, unique_name: str, solver_list: list
+    ) -> None:
         self.root_solver_dict[unique_name] = solver_list
         self.add_solver_to_curr_exp_list(unique_name)
+        self.__update_problem_dropdown()
 
     def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
         # Make sure the unique name is in the root problem dict
@@ -1002,7 +1061,9 @@ class NewExperimentWindow(Toplevel):
         # Get design information from table
         name = self.design_df.at[1, "name"]
         if name in solver_directory:  # loaded a solver
-            self.obj = solver_directory[name]() # create placeholder objects of the solver to get factor names
+            self.obj = solver_directory[
+                name
+            ]()  # create placeholder objects of the solver to get factor names
             is_problem = False
             factors = self.obj.specifications
             self.initialize_solver_frame()
@@ -1011,7 +1072,9 @@ class NewExperimentWindow(Toplevel):
             self.sol_prob_book.select(0)  # change view to solver tab
 
         elif name in problem_directory:  # loaded a problem
-            self.obj = problem_directory[name]() # create placeholder objects of the problem to get factor names
+            self.obj = problem_directory[
+                name
+            ]()  # create placeholder objects of the problem to get factor names
             is_problem = True
             model_factors = self.obj.model.specifications
             problem_factors = self.obj.specifications
@@ -1351,7 +1414,6 @@ class NewExperimentWindow(Toplevel):
                     converted_fixed_factors[factor] = False
 
         return converted_fixed_factors
-
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1852,7 +1914,6 @@ class NewExperimentWindow(Toplevel):
             header_font_size = nametofont("TkHeadingFont").cget("size")
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
-
 
     def add_problem_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
@@ -3413,7 +3474,7 @@ class NewExperimentWindow(Toplevel):
             )
             self.solve_tol_label.grid(row=2, column=0)
             self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set("0.1") # default value
+            self.solve_tol_var.set("0.1")  # default value
             self.solve_tol_entry = tk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
