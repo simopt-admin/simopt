@@ -221,10 +221,15 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["exps.fields.open_plot_win"].grid(
             row=1, column=0, sticky="ew"
         )
+        # self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
+        #     self.tk_frames["exps.fields"],
+        #     text="Load Experiment",
+        #     command=self.load_experiment,
+        # )
         self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
             self.tk_frames["exps.fields"],
             text="Load Experiment",
-            command=self.load_experiment,
+            command=self.raise_not_yet_implemented_error,
         )
         self.tk_buttons["exps.fields.load_exp"].grid(
             row=2, column=0, sticky="ew"
@@ -281,10 +286,15 @@ class NewExperimentWindow(Toplevel):
         )
         self.tk_frames["curr_exp.fields"].grid(row=2, column=0, sticky="nsew")
         self.tk_frames["curr_exp.fields"].grid_columnconfigure(1, weight=1)
+        # self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
+        #     self.tk_frames["curr_exp.fields"],
+        #     text="Load Design from CSV",
+        #     command=self.load_design,
+        # )
         self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
             self.tk_frames["curr_exp.fields"],
             text="Load Design from CSV",
-            command=self.load_design,
+            command=self.raise_not_yet_implemented_error,
         )
         self.tk_buttons["curr_exp.fields.load_design"].grid(
             row=0, column=0, columnspan=2, sticky="ew"
@@ -1043,6 +1053,10 @@ class NewExperimentWindow(Toplevel):
                 self.tk_var_bools[key].set(False)
             if "ntbk.ps_adding.quick_add.solvers_frame" in key:
                 self.tk_var_bools[key].set(False)
+
+    def raise_not_yet_implemented_error(self) -> None:
+        error_msg = "This feature has not yet been implemented."
+        messagebox.showerror("Not Yet Implemented", error_msg)
 
     def load_design(self) -> None:
         # Open file dialog to select design file
@@ -1962,12 +1976,10 @@ class NewExperimentWindow(Toplevel):
         self._hide_gen_design()
 
     def edit_problem(self, problem_save_name: str) -> None:
-        error_msg = "Edit problem function not yet implemented."
-        messagebox.showerror("Error", error_msg)
+        self.raise_not_yet_implemented_error()
 
     def edit_solver(self, solver_save_name: str) -> None:
-        error_msg = "Edit solver function not yet implemented."
-        messagebox.showerror("Error", error_msg)
+        self.raise_not_yet_implemented_error()
 
     def delete_problem(self, problem_name: str) -> None:
         # Delete from master list
