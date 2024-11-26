@@ -6756,7 +6756,7 @@ def create_design(
     design_table.columns = factor_headers  # Add factor headers names to dt.
 
     # Combine model and problem specifications for problems
-    if class_type == "problem":
+    if isinstance(design_object, Problem):
         specifications = {
             **design_object.specifications,
             **design_object.model.specifications,

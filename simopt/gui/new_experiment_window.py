@@ -1297,6 +1297,54 @@ class NewExperimentWindow(Toplevel):
                 state="normal"
             )
 
+    def convert_proper_datatype(
+        self,
+        fixed_factors: dict,
+        base_object: Problem | Solver | Model,
+        var: bool = False,
+    ) -> dict:
+        # TODO: figure out if VAR is supposed to be true or false
+        converted_fixed_factors = {}
+
+        for factor in fixed_factors:
+            if (
+                var
+            ):  # determine if factors are still variable objects or strings
+                fixed_val = fixed_factors[factor].get()
+            else:
+                fixed_val = fixed_factors[factor]
+            if factor in base_object.specifications:
+                datatype = base_object.specifications[factor].get("datatype")
+            else:
+                datatype = base_object.model.specifications[factor].get(
+                    "datatype"
+                )
+
+            if datatype in (int, float):
+                converted_fixed_factors[factor] = datatype(fixed_val)
+            if datatype is list:
+                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
+            if datatype is tuple:
+                last_val = fixed_val[-2]
+                tuple_str = fixed_val[1:-1].split(",")
+                # determine if last tuple value is empty
+                if last_val != ",":
+                    converted_fixed_factors[factor] = tuple(
+                        float(s) for s in tuple_str
+                    )
+                else:
+                    tuple_exclude_last = tuple_str[:-1]
+                    float_tuple = [float(s) for s in tuple_exclude_last]
+                    converted_fixed_factors[factor] = tuple(float_tuple)
+            if datatype is bool:
+                if fixed_val == "True":
+                    converted_fixed_factors[factor] = True
+                else:
+                    converted_fixed_factors[factor] = False
+
+        return converted_fixed_factors
+
+
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
 
@@ -1799,52 +1847,6 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
-    def convert_proper_datatype(
-        self,
-        fixed_factors: dict,
-        base_object: Problem | Solver | Model,
-        var: bool = False,
-    ) -> dict:
-        # TODO: figure out if VAR is supposed to be true or false
-        converted_fixed_factors = {}
-
-        for factor in fixed_factors:
-            if (
-                var
-            ):  # determine if factors are still variable objects or strings
-                fixed_val = fixed_factors[factor].get()
-            else:
-                fixed_val = fixed_factors[factor]
-            if factor in base_object.specifications:
-                datatype = base_object.specifications[factor].get("datatype")
-            else:
-                datatype = base_object.model.specifications[factor].get(
-                    "datatype"
-                )
-
-            if datatype in (int, float):
-                converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype is list:
-                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
-            if datatype is tuple:
-                last_val = fixed_val[-2]
-                tuple_str = fixed_val[1:-1].split(",")
-                # determine if last tuple value is empty
-                if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
-                else:
-                    tuple_exclude_last = tuple_str[:-1]
-                    float_tuple = [float(s) for s in tuple_exclude_last]
-                    converted_fixed_factors[factor] = tuple(float_tuple)
-            if datatype is bool:
-                if fixed_val == "True":
-                    converted_fixed_factors[factor] = True
-                else:
-                    converted_fixed_factors[factor] = False
-
-        return converted_fixed_factors
 
     def add_problem_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
