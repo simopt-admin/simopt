@@ -1997,9 +1997,12 @@ class NewExperimentWindow(Toplevel):
                 # Set of factors for the solver
                 solver_object = solver_directory[solver]()
                 solver_factors = set(solver_object.specifications.keys())
+                
                 # If the sets are equal, we have found the right solver
                 if solver_factors == design_factors:
                     solver_list.append(str(solver))
+                    # run check function
+                    solver_directory[solver](fixed_factors=self.fixed_factors)
                     break
 
             self.root_solver_dict[self.solver_design_name] = [solver_list]
@@ -2165,6 +2168,8 @@ class NewExperimentWindow(Toplevel):
                 # If the sets are equal, we have found the right solver
                 if problem_factors == design_factors:
                     problem_list.append(str(problem))
+                    # run check functions
+                    problem_directory[problem](fixed_factors=self.fixed_factors)
                     break
             assert (
                 len(problem_list) == 2

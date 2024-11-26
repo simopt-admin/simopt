@@ -164,8 +164,8 @@ class Solver(ABC):
         self.factors = fixed_factors
         for key in self.specifications:
             if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
-
+                self.factors[key] = self.specifications[key]["default"]      
+        self.run_all_checks(factor_names = fixed_factors.keys())
     def __eq__(self, other: Solver) -> bool:
         """Check if two solvers are equivalent.
 
@@ -686,6 +686,9 @@ class Problem(ABC):
         self.model_fixed_factors = model_fixed_factors
         # super().__init__()
         
+        # run all check functions
+        self.run_all_checks(factor_names = fixed_factors.keys())
+        
     def __eq__(self, other: Problem) -> bool:
         """Check if two problems are equivalent.
 
@@ -749,7 +752,7 @@ class Problem(ABC):
         return len(
             self.factors["initial_solution"]
         ) == self.dim and self.check_deterministic_constraints(
-            decision_variables=self.factors["initial_solution"]
+            self.factors["initial_solution"]
         )
 
     def check_budget(self) -> bool:
@@ -1287,6 +1290,9 @@ class Model(ABC):
         for key in self.specifications:
             if key not in fixed_factors:
                 self.factors[key] = self.specifications[key]["default"]
+                
+        # run all check functions
+        self.run_all_checks(factor_names = fixed_factors.keys())
         
     def __eq__(self, other: Model) -> bool:
         """Check if two models are equivalent.
