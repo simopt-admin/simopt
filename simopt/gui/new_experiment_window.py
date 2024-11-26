@@ -1142,7 +1142,7 @@ class NewExperimentWindow(Toplevel):
         self.change_fixed_factors_button.grid(row=3, column=0)
         # display design tre
         self.display_design_tree(
-            csv_filename=design_file, master_frame=self.tree_frame, row=4
+            csv_filename=design_file, master_frame=self.tree_frame
         )
 
     def change_fixed_factors(self) -> None:
@@ -1314,8 +1314,10 @@ class NewExperimentWindow(Toplevel):
             else:
                 fixed_val = fixed_factors[factor]
             if factor in base_object.specifications:
+                assert isinstance(base_object, (Solver, Model))
                 datatype = base_object.specifications[factor].get("datatype")
             else:
+                assert isinstance(base_object, Problem)
                 datatype = base_object.model.specifications[factor].get(
                     "datatype"
                 )
@@ -2617,10 +2619,14 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_2_var = tk.StringVar()
         self.solve_tol_3_var = tk.StringVar()
         self.solve_tol_4_var = tk.StringVar()
-        self.solve_tol_1_var.set(solve_tols[0])
-        self.solve_tol_2_var.set(solve_tols[1])
-        self.solve_tol_3_var.set(solve_tols[2])
-        self.solve_tol_4_var.set(solve_tols[3])
+        solve_tol_1_str = str(solve_tols[0])
+        solve_tol_2_str = str(solve_tols[1])
+        solve_tol_3_str = str(solve_tols[2])
+        solve_tol_4_str = str(solve_tols[3])
+        self.solve_tol_1_var.set(solve_tol_1_str)
+        self.solve_tol_2_var.set(solve_tol_2_str)
+        self.solve_tol_3_var.set(solve_tol_3_str)
+        self.solve_tol_4_var.set(solve_tol_4_str)
         self.solve_tol_1_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
@@ -3179,7 +3185,7 @@ class NewExperimentWindow(Toplevel):
                 row = [solver.name]  # list to hold data for this row
                 for factor in solver.factors:
                     row.append(solver.factors[factor])
-                self.solver_tree.insert("", index, text=index, values=row)
+                self.solver_tree.insert("", index, text=str(index), values=row)
         else:
             self.solver_tree["columns"] = [
                 "Solver Name"
@@ -3187,7 +3193,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_tree.heading("Solver Name", text="Solver Name")
             for index, solver in enumerate(self.plot_experiment.solvers):
                 self.solver_tree.insert(
-                    "", index, text=index, values=[solver.name]
+                    "", index, text=str(index), values=[solver.name]
                 )
 
         # clear previous values in the problem tree
@@ -3218,7 +3224,7 @@ class NewExperimentWindow(Toplevel):
                     row.append(problem.factors[factor])
                 for factor in problem.model.factors:
                     row.append(problem.model.factors[factor])
-                self.problem_tree.insert("", index, text=index, values=row)
+                self.problem_tree.insert("", index, text=str(index), values=row)
         else:
             self.problem_tree["columns"] = ["Problem Name"]
             self.problem_tree.heading(
@@ -3226,7 +3232,7 @@ class NewExperimentWindow(Toplevel):
             )  # set heading for name column
             for index, problem in enumerate(self.plot_experiment.problems):
                 self.problem_tree.insert(
-                    "", index, text=index, values=[problem.name]
+                    "", index, text=str(index), values=[problem.name]
                 )
 
     def show_plot_options(self, plot_type: str) -> None:
@@ -3407,7 +3413,7 @@ class NewExperimentWindow(Toplevel):
             )
             self.solve_tol_label.grid(row=2, column=0)
             self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set(0.1)
+            self.solve_tol_var.set("0.1") # default value
             self.solve_tol_entry = tk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
@@ -3923,7 +3929,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.configure(state="normal")
         elif plot_type == "all":
             self.boot_entry.configure(state="disabled")
-            self.con_level_entry.configure(sate="disabled")
+            self.con_level_entry.configure(state="disabled")
             self.plot_CI_menu.configure(state="disabled")
             self.plot_hw_menu.configure(state="disabled")
 
@@ -4001,14 +4007,14 @@ class NewExperimentWindow(Toplevel):
                 len(self.selected_problems) == 0
                 and len(self.selected_solvers) == 0
             ):
-                text = "Please select solvers and problems to plot."
+                text = "problems and solvers"
             elif len(self.selected_solvers) == 0:
-                text = "Please select solvers to plot."
-            elif len(self.selected_problems) == 0:
-                text = "Please select problems to plot."
+                text = "solvers"
+            else:
+                text = "problems"
 
             # show popup message
-            messagebox.showerror("Error", text)
+            messagebox.showerror("Error", f"Please select {text} to plot.")
         else:  # create plots
             # get selected solvers & problems
             exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
