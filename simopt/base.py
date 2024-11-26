@@ -656,7 +656,7 @@ class Problem(ABC):
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
 
-    def __init__(self, fixed_factors: dict, model_fixed_factors: dict) -> None:
+    def __init__(self, fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
         """Initialize a problem object.
 
         Parameters
@@ -667,6 +667,11 @@ class Problem(ABC):
             Subset of user-specified non-decision factors to pass through to the model.
 
         """
+        # Set default values for optional parameters.
+        if fixed_factors is None:
+            fixed_factors = {}
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
         # Set factors of the problem.
         # Fill in missing factors with default values.
         self.factors = fixed_factors
@@ -1279,7 +1284,7 @@ class Model(ABC):
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
 
-    def __init__(self, fixed_factors: dict) -> None:
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a model object.
 
         Parameters
@@ -1288,6 +1293,9 @@ class Model(ABC):
             Dictionary of user-specified model factors.
 
         """
+        # Set default values for optional parameters.
+        if fixed_factors is None:
+            fixed_factors = {}
         # Set factors of the simulation model.
         # Fill in missing factors with default values.
         self.factors = fixed_factors

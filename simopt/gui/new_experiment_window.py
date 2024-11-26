@@ -22,6 +22,7 @@ from simopt.directory import (
     solver_unabbreviated_directory,
 )
 from simopt.experiment_base import (
+    ProblemSolver,
     ProblemsSolvers,
     create_design,
     plot_area_scatterplots,
@@ -86,11 +87,11 @@ class NewExperimentWindow(Toplevel):
         # attribute of the class, as currently it is only initialized in the
         # __init__ method of the class. This will eliminate the need to
         # instantiate the class to get the name.
-        self.valid_problems = {
+        self.problem_full_name_to_class = {
             f"{problem().name} - {key}": problem
             for key, problem in problem_unabbreviated_directory.items()
         }
-        self.valid_solvers = {
+        self.solver_full_name_to_class = {
             f"{solver().name} - {key}": solver
             for key, solver in solver_unabbreviated_directory.items()
         }
@@ -375,7 +376,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.problem"],
             textvariable=self.selected_problem_name,
-            values=sorted(list(self.valid_problems.keys())),
+            values=sorted(list(self.problem_full_name_to_class.keys())),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.problem.select"].grid(
@@ -411,7 +412,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.solver"],
             textvariable=self.selected_solver_name,
-            values=sorted(list(self.valid_solvers.keys())),
+            values=sorted(list(self.solver_full_name_to_class.keys())),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.solver.select"].grid(
@@ -595,7 +596,7 @@ class NewExperimentWindow(Toplevel):
         # Initialize problem for later. This is needed since the problem has
         # many of its attributes set in the __init__ method, and if it is not
         # initialized here, the problem will not have the correct attributes
-        problem_class: ABCMeta = self.valid_problems[problem_name]
+        problem_class: ABCMeta = self.problem_full_name_to_class[problem_name]
         problem: Problem = problem_class()
         self._create_problem_factors_canvas(problem)
         self._hide_gen_design()
@@ -605,10 +606,76 @@ class NewExperimentWindow(Toplevel):
         # Initialize solver for later. This is needed since the solver has many
         # of its attributes set in the __init__ method, and if it is not
         # initialized here, the solver will not have the correct attributes
-        solver_class: ABCMeta = self.valid_solvers[solver_name]
+        solver_class: ABCMeta = self.solver_full_name_to_class[solver_name]
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
         self._hide_gen_design()
+
+    def __update_problem_dropdown(self) -> None:
+        possible_problems = sorted(list(self.problem_full_name_to_class.keys()))
+        # For each solver in the current experiment, check all the possible
+        # problems and remove the ones that are not compatible
+        # Grab the name (index 1) out of the first element (index 0) of the
+        # dictionary (looked up by key) to get the solver class name
+        solver_class_list = [self.root_solver_dict[key][0][1] for key in self.root_solver_dict]
+        for solver_name in solver_class_list:
+            solver_class: ABCMeta = solver_directory[solver_name]
+            solver: Solver = solver_class()
+            problem_list = possible_problems.copy()
+            for problem_name in problem_list:
+                short_problem_name = problem_name.split(" - ")[0]
+                problem_class: ABCMeta = problem_directory[short_problem_name]
+                problem: Problem = problem_class()
+                # Create a new ProblemSolver object to check compatibility
+                problem_solver = ProblemSolver(
+                    problem=problem, solver=solver
+                )
+                # If there was an error, remove it from the options
+                if len(problem_solver.check_compatibility()) > 0:
+                    possible_problems.remove(problem_name)
+        self.tk_comboboxes["ntbk.ps_adding.problem.select"].configure(
+            values=possible_problems
+        )
+
+    def __update_solver_dropdown(self) -> None:
+        possible_options = sorted(list(self.solver_full_name_to_class.keys()))
+        # For each problem in the current experiment, check all the possible
+        # solvers and remove the ones that are not compatible
+        # Grab the name (index 1) out of the first element (index 0) of the
+        # dictionary (looked up by key) to get the problem class name
+        problem_class_list = [self.root_problem_dict[key][0][1] for key in self.root_problem_dict]
+        for problem_name in problem_class_list:
+            problem_class: ABCMeta = problem_directory[problem_name]
+            problem: Problem = problem_class()
+            solver_list = possible_options.copy()
+            for solver_name in solver_list:
+                short_solver_name = solver_name.split(" - ")[0]
+                solver_class: ABCMeta = solver_directory[short_solver_name]
+                solver: Solver = solver_class()
+                # Create a new ProblemSolver object to check compatibility
+                problem_solver = ProblemSolver(
+                    problem=problem, solver=solver
+                )
+                # If there was an error, remove it from the options
+                if len(problem_solver.check_compatibility()) > 0:
+                    possible_options.remove(solver_name)
+        self.tk_comboboxes["ntbk.ps_adding.solver.select"].configure(
+            values=possible_options
+        )
+
+    def add_problem_to_curr_exp(
+        self, unique_name: str, problem_list: list
+    ) -> None:
+        self.root_problem_dict[unique_name] = problem_list
+        self.add_problem_to_curr_exp_list(unique_name)
+        self.__update_solver_dropdown()
+
+    def add_solver_to_curr_exp(
+        self, unique_name: str, solver_list: list
+    ) -> None:
+        self.root_solver_dict[unique_name] = solver_list
+        self.add_solver_to_curr_exp_list(unique_name)
+        self.__update_problem_dropdown()
 
     def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
         # Make sure the unique name is in the root problem dict
@@ -853,7 +920,7 @@ class NewExperimentWindow(Toplevel):
         for solver_group in self.root_solver_dict:
             dp_0 = self.root_solver_dict[solver_group][
                 0
-            ]  # frist design point if design, only design pt if no design
+            ]  # first design point if design, only design pt if no design
             solver_name = dp_0[1]
             temp_solver = solver_directory[solver_name]()
             temp_solvers.append(temp_solver)
@@ -931,9 +998,9 @@ class NewExperimentWindow(Toplevel):
             solver_save_name = self.get_unique_name(
                 self.root_solver_dict, solver.name
             )
-            self.root_solver_dict[solver_save_name] = [[factors, solver_name]]
-            # add solver row to list display
-            self.add_solver_to_curr_exp_list(solver_save_name)
+            # Add the solver to the experiment
+            factor_list = [[factors, solver.name]]
+            self.add_solver_to_curr_exp(solver_save_name, factor_list)
 
         for problem in problem_directory:
             dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{problem}"
@@ -957,11 +1024,9 @@ class NewExperimentWindow(Toplevel):
             problem_save_name = self.get_unique_name(
                 self.root_problem_dict, problem_name
             )
-            self.root_problem_dict[problem_save_name] = [
-                [factors, problem_name]
-            ]
-            # add problem row to list display
-            self.add_problem_to_curr_exp_list(problem_save_name)
+            # Add the problem to the experiment
+            factor_list = [[factors, problem_name]]
+            self.add_problem_to_curr_exp(problem_save_name, factor_list)
 
         if not any_added:
             messagebox.showerror(
@@ -996,7 +1061,9 @@ class NewExperimentWindow(Toplevel):
         # Get design information from table
         name = self.design_df.at[1, "name"]
         if name in solver_directory:  # loaded a solver
-            self.obj = solver_directory[name]() # create placeholder objects of the solver to get factor names
+            self.obj = solver_directory[
+                name
+            ]()  # create placeholder objects of the solver to get factor names
             is_problem = False
             factors = self.obj.specifications
             self.initialize_solver_frame()
@@ -1005,7 +1072,9 @@ class NewExperimentWindow(Toplevel):
             self.sol_prob_book.select(0)  # change view to solver tab
 
         elif name in problem_directory:  # loaded a problem
-            self.obj = problem_directory[name]() # create placeholder objects of the problem to get factor names
+            self.obj = problem_directory[
+                name
+            ]()  # create placeholder objects of the problem to get factor names
             is_problem = True
             model_factors = self.obj.model.specifications
             problem_factors = self.obj.specifications
@@ -1142,7 +1211,7 @@ class NewExperimentWindow(Toplevel):
         self.change_fixed_factors_button.grid(row=3, column=0)
         # display design tre
         self.display_design_tree(
-            csv_filename=design_file, master_frame=self.tree_frame, row=4
+            csv_filename=design_file, master_frame=self.tree_frame
         )
 
     def change_fixed_factors(self) -> None:
@@ -1296,6 +1365,55 @@ class NewExperimentWindow(Toplevel):
             self.post_norm_buttons[self.experiment_name].configure(
                 state="normal"
             )
+
+    def convert_proper_datatype(
+        self,
+        fixed_factors: dict,
+        base_object: Problem | Solver | Model,
+        var: bool = False,
+    ) -> dict:
+        # TODO: figure out if VAR is supposed to be true or false
+        converted_fixed_factors = {}
+
+        for factor in fixed_factors:
+            if (
+                var
+            ):  # determine if factors are still variable objects or strings
+                fixed_val = fixed_factors[factor].get()
+            else:
+                fixed_val = fixed_factors[factor]
+            if factor in base_object.specifications:
+                assert isinstance(base_object, (Solver, Model))
+                datatype = base_object.specifications[factor].get("datatype")
+            else:
+                assert isinstance(base_object, Problem)
+                datatype = base_object.model.specifications[factor].get(
+                    "datatype"
+                )
+
+            if datatype in (int, float):
+                converted_fixed_factors[factor] = datatype(fixed_val)
+            if datatype is list:
+                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
+            if datatype is tuple:
+                last_val = fixed_val[-2]
+                tuple_str = fixed_val[1:-1].split(",")
+                # determine if last tuple value is empty
+                if last_val != ",":
+                    converted_fixed_factors[factor] = tuple(
+                        float(s) for s in tuple_str
+                    )
+                else:
+                    tuple_exclude_last = tuple_str[:-1]
+                    float_tuple = [float(s) for s in tuple_exclude_last]
+                    converted_fixed_factors[factor] = tuple(float_tuple)
+            if datatype is bool:
+                if fixed_val == "True":
+                    converted_fixed_factors[factor] = True
+                else:
+                    converted_fixed_factors[factor] = False
+
+        return converted_fixed_factors
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1640,13 +1758,11 @@ class NewExperimentWindow(Toplevel):
             design_list.append(self.fixed_factors)
             design_list.append(base_name)
 
-            root_dict[design_name] = [design_list]
-
             # Add the design to the list display
             if base_object == "Problem":
-                self.add_problem_to_curr_exp_list(design_name)
+                self.add_problem_to_curr_exp(design_name, [design_list])
             else:
-                self.add_solver_to_curr_exp_list(design_name)
+                self.add_solver_to_curr_exp(design_name, [design_list])
 
             # Refresh the design name entry box
             self.design_name.set(self.get_unique_name(root_dict, design_name))
@@ -1799,53 +1915,6 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
-    def convert_proper_datatype(
-        self,
-        fixed_factors: dict,
-        base_object: Problem | Solver | Model,
-        var: bool = False,
-    ) -> dict:
-        # TODO: figure out if VAR is supposed to be true or false
-        converted_fixed_factors = {}
-
-        for factor in fixed_factors:
-            if (
-                var
-            ):  # determine if factors are still variable objects or strings
-                fixed_val = fixed_factors[factor].get()
-            else:
-                fixed_val = fixed_factors[factor]
-            if factor in base_object.specifications:
-                datatype = base_object.specifications[factor].get("datatype")
-            else:
-                datatype = base_object.model.specifications[factor].get(
-                    "datatype"
-                )
-
-            if datatype in (int, float):
-                converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype is list:
-                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
-            if datatype is tuple:
-                last_val = fixed_val[-2]
-                tuple_str = fixed_val[1:-1].split(",")
-                # determine if last tuple value is empty
-                if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
-                else:
-                    tuple_exclude_last = tuple_str[:-1]
-                    float_tuple = [float(s) for s in tuple_exclude_last]
-                    converted_fixed_factors[factor] = tuple(float_tuple)
-            if datatype is bool:
-                if fixed_val == "True":
-                    converted_fixed_factors[factor] = True
-                else:
-                    converted_fixed_factors[factor] = False
-
-        return converted_fixed_factors
-
     def add_problem_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
         selected_name = self.selected_problem_name.get()
@@ -1858,10 +1927,8 @@ class NewExperimentWindow(Toplevel):
             problem_list.append(selected_name_short)
             problem_holder_list.append(problem_list)
 
-        self.root_problem_dict[design_name] = problem_holder_list
-
-        # Add problem row to list display
-        self.add_problem_to_curr_exp_list(design_name)
+        # Add the problem to the current experiment
+        self.add_problem_to_curr_exp(design_name, problem_holder_list)
 
         # refresh problem design name entry box
         self.design_name.set(
@@ -1883,10 +1950,8 @@ class NewExperimentWindow(Toplevel):
             solver_list.append(selected_name_short)
             solver_holder_list.append(solver_list)
 
-        self.root_solver_dict[design_name] = solver_holder_list
-
         # Add solver row to list display
-        self.add_solver_to_curr_exp_list(design_name)
+        self.add_solver_to_curr_exp(design_name, solver_holder_list)
 
         # refresh solver design name entry box
         self.design_name.set(
@@ -2048,6 +2113,12 @@ class NewExperimentWindow(Toplevel):
         self.curr_exp_name.set(new_name)
         # Set default pickle checkstate
         self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)
+        # Run all update functions for ensuring compatible options now that the
+        # experiment is empty
+        self.cross_design_problem_compatibility()
+        self.cross_design_solver_compatibility()
+        self.__update_problem_dropdown()
+        self.__update_solver_dropdown()
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
@@ -2615,10 +2686,14 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_2_var = tk.StringVar()
         self.solve_tol_3_var = tk.StringVar()
         self.solve_tol_4_var = tk.StringVar()
-        self.solve_tol_1_var.set(solve_tols[0])
-        self.solve_tol_2_var.set(solve_tols[1])
-        self.solve_tol_3_var.set(solve_tols[2])
-        self.solve_tol_4_var.set(solve_tols[3])
+        solve_tol_1_str = str(solve_tols[0])
+        solve_tol_2_str = str(solve_tols[1])
+        solve_tol_3_str = str(solve_tols[2])
+        solve_tol_4_str = str(solve_tols[3])
+        self.solve_tol_1_var.set(solve_tol_1_str)
+        self.solve_tol_2_var.set(solve_tol_2_str)
+        self.solve_tol_3_var.set(solve_tol_3_str)
+        self.solve_tol_4_var.set(solve_tol_4_str)
         self.solve_tol_1_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
@@ -3177,7 +3252,7 @@ class NewExperimentWindow(Toplevel):
                 row = [solver.name]  # list to hold data for this row
                 for factor in solver.factors:
                     row.append(solver.factors[factor])
-                self.solver_tree.insert("", index, text=index, values=row)
+                self.solver_tree.insert("", index, text=str(index), values=row)
         else:
             self.solver_tree["columns"] = [
                 "Solver Name"
@@ -3185,7 +3260,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_tree.heading("Solver Name", text="Solver Name")
             for index, solver in enumerate(self.plot_experiment.solvers):
                 self.solver_tree.insert(
-                    "", index, text=index, values=[solver.name]
+                    "", index, text=str(index), values=[solver.name]
                 )
 
         # clear previous values in the problem tree
@@ -3216,7 +3291,7 @@ class NewExperimentWindow(Toplevel):
                     row.append(problem.factors[factor])
                 for factor in problem.model.factors:
                     row.append(problem.model.factors[factor])
-                self.problem_tree.insert("", index, text=index, values=row)
+                self.problem_tree.insert("", index, text=str(index), values=row)
         else:
             self.problem_tree["columns"] = ["Problem Name"]
             self.problem_tree.heading(
@@ -3224,7 +3299,7 @@ class NewExperimentWindow(Toplevel):
             )  # set heading for name column
             for index, problem in enumerate(self.plot_experiment.problems):
                 self.problem_tree.insert(
-                    "", index, text=index, values=[problem.name]
+                    "", index, text=str(index), values=[problem.name]
                 )
 
     def show_plot_options(self, plot_type: str) -> None:
@@ -3405,7 +3480,7 @@ class NewExperimentWindow(Toplevel):
             )
             self.solve_tol_label.grid(row=2, column=0)
             self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set(0.1)
+            self.solve_tol_var.set("0.1")  # default value
             self.solve_tol_entry = tk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
@@ -3921,7 +3996,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.configure(state="normal")
         elif plot_type == "all":
             self.boot_entry.configure(state="disabled")
-            self.con_level_entry.configure(sate="disabled")
+            self.con_level_entry.configure(state="disabled")
             self.plot_CI_menu.configure(state="disabled")
             self.plot_hw_menu.configure(state="disabled")
 
@@ -3999,14 +4074,14 @@ class NewExperimentWindow(Toplevel):
                 len(self.selected_problems) == 0
                 and len(self.selected_solvers) == 0
             ):
-                text = "Please select solvers and problems to plot."
+                text = "problems and solvers"
             elif len(self.selected_solvers) == 0:
-                text = "Please select solvers to plot."
-            elif len(self.selected_problems) == 0:
-                text = "Please select problems to plot."
+                text = "solvers"
+            else:
+                text = "problems"
 
             # show popup message
-            messagebox.showerror("Error", text)
+            messagebox.showerror("Error", f"Please select {text} to plot.")
         else:  # create plots
             # get selected solvers & problems
             exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
