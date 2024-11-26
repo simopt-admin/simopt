@@ -86,11 +86,11 @@ class NewExperimentWindow(Toplevel):
         # attribute of the class, as currently it is only initialized in the
         # __init__ method of the class. This will eliminate the need to
         # instantiate the class to get the name.
-        self.valid_problems = {
+        self.problem_full_name_to_class = {
             f"{problem().name} - {key}": problem
             for key, problem in problem_unabbreviated_directory.items()
         }
-        self.valid_solvers = {
+        self.solver_full_name_to_class = {
             f"{solver().name} - {key}": solver
             for key, solver in solver_unabbreviated_directory.items()
         }
@@ -375,7 +375,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.problem"],
             textvariable=self.selected_problem_name,
-            values=sorted(list(self.valid_problems.keys())),
+            values=sorted(list(self.problem_full_name_to_class.keys())),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.problem.select"].grid(
@@ -411,7 +411,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.solver"],
             textvariable=self.selected_solver_name,
-            values=sorted(list(self.valid_solvers.keys())),
+            values=sorted(list(self.solver_full_name_to_class.keys())),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.solver.select"].grid(
@@ -595,7 +595,7 @@ class NewExperimentWindow(Toplevel):
         # Initialize problem for later. This is needed since the problem has
         # many of its attributes set in the __init__ method, and if it is not
         # initialized here, the problem will not have the correct attributes
-        problem_class: ABCMeta = self.valid_problems[problem_name]
+        problem_class: ABCMeta = self.problem_full_name_to_class[problem_name]
         problem: Problem = problem_class()
         self._create_problem_factors_canvas(problem)
         self._hide_gen_design()
@@ -605,10 +605,18 @@ class NewExperimentWindow(Toplevel):
         # Initialize solver for later. This is needed since the solver has many
         # of its attributes set in the __init__ method, and if it is not
         # initialized here, the solver will not have the correct attributes
-        solver_class: ABCMeta = self.valid_solvers[solver_name]
+        solver_class: ABCMeta = self.solver_full_name_to_class[solver_name]
         solver: Solver = solver_class()
         self._create_solver_factors_canvas(solver)
         self._hide_gen_design()
+
+    def add_problem_to_curr_exp(self, unique_name: str, problem_list: list) -> None:
+        self.root_problem_dict[unique_name] = problem_list
+        self.add_problem_to_curr_exp_list(unique_name)
+
+    def add_solver_to_curr_exp(self, unique_name: str, solver_list: list) -> None:
+        self.root_solver_dict[unique_name] = solver_list
+        self.add_solver_to_curr_exp_list(unique_name)
 
     def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
         # Make sure the unique name is in the root problem dict
@@ -931,9 +939,9 @@ class NewExperimentWindow(Toplevel):
             solver_save_name = self.get_unique_name(
                 self.root_solver_dict, solver.name
             )
-            self.root_solver_dict[solver_save_name] = [[factors, solver_name]]
-            # add solver row to list display
-            self.add_solver_to_curr_exp_list(solver_save_name)
+            # Add the solver to the experiment
+            factor_list = [[factors, solver.name]]
+            self.add_solver_to_curr_exp(solver_save_name, factor_list)
 
         for problem in problem_directory:
             dict_name = f"ntbk.ps_adding.quick_add.problems_frame.{problem}"
@@ -957,11 +965,9 @@ class NewExperimentWindow(Toplevel):
             problem_save_name = self.get_unique_name(
                 self.root_problem_dict, problem_name
             )
-            self.root_problem_dict[problem_save_name] = [
-                [factors, problem_name]
-            ]
-            # add problem row to list display
-            self.add_problem_to_curr_exp_list(problem_save_name)
+            # Add the problem to the experiment
+            factor_list = [[factors, problem_name]]
+            self.add_problem_to_curr_exp(problem_save_name, factor_list)
 
         if not any_added:
             messagebox.showerror(
@@ -1690,13 +1696,11 @@ class NewExperimentWindow(Toplevel):
             design_list.append(self.fixed_factors)
             design_list.append(base_name)
 
-            root_dict[design_name] = [design_list]
-
             # Add the design to the list display
             if base_object == "Problem":
-                self.add_problem_to_curr_exp_list(design_name)
+                self.add_problem_to_curr_exp(design_name, [design_list])
             else:
-                self.add_solver_to_curr_exp_list(design_name)
+                self.add_solver_to_curr_exp(design_name, [design_list])
 
             # Refresh the design name entry box
             self.design_name.set(self.get_unique_name(root_dict, design_name))
@@ -1862,10 +1866,8 @@ class NewExperimentWindow(Toplevel):
             problem_list.append(selected_name_short)
             problem_holder_list.append(problem_list)
 
-        self.root_problem_dict[design_name] = problem_holder_list
-
-        # Add problem row to list display
-        self.add_problem_to_curr_exp_list(design_name)
+        # Add the problem to the current experiment
+        self.add_problem_to_curr_exp(design_name, problem_holder_list)
 
         # refresh problem design name entry box
         self.design_name.set(
@@ -1887,10 +1889,8 @@ class NewExperimentWindow(Toplevel):
             solver_list.append(selected_name_short)
             solver_holder_list.append(solver_list)
 
-        self.root_solver_dict[design_name] = solver_holder_list
-
         # Add solver row to list display
-        self.add_solver_to_curr_exp_list(design_name)
+        self.add_solver_to_curr_exp(design_name, solver_holder_list)
 
         # refresh solver design name entry box
         self.design_name.set(
