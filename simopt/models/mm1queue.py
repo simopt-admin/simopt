@@ -308,6 +308,10 @@ class MM1MinMeanSojournTime(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = MM1Queue(self.model_fixed_factors)
 
+    def check_cost(self):
+        if self.factors["cost"] <= 0:
+            raise ValueError("cost must be greater than 0.")
+            
     def vector_to_factor_dict(self, vector):
         """
         Convert a vector of variables to a dictionary with factor keys

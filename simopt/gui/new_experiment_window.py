@@ -2168,8 +2168,17 @@ class NewExperimentWindow(Toplevel):
                 # If the sets are equal, we have found the right solver
                 if problem_factors == design_factors:
                     problem_list.append(str(problem))
-                    # run check functions
-                    problem_directory[problem](fixed_factors=self.fixed_factors)
+                    # split problem and model factors
+                    problem_factors = {}
+                    model_factors = {}
+                    # initialize to run checks
+                    for factor in self.fixed_factors:
+                        if factor in problem_object.specifications.keys():
+                            problem_factors[factor] = self.fixed_factors[factor]
+                        else:
+                            model_factors[factor] = self.fixed_factors[factor]
+                            
+                    problem_directory[problem](fixed_factors=problem_factors, model_fixed_factors=model_factors)
                     break
             assert (
                 len(problem_list) == 2

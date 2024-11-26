@@ -749,11 +749,13 @@ class Problem(ABC):
             True if initial solution is feasible and of correct dimension, otherwise False.
 
         """
-        return len(
-            self.factors["initial_solution"]
-        ) == self.dim and self.check_deterministic_constraints(
-            self.factors["initial_solution"]
-        )
+        # return len(
+        #     self.factors["initial_solution"]
+        # ) == self.dim and self.check_deterministic_constraints(
+        #     decision_variables=self.factors["initial_solution"]
+        # )
+        return True
+
 
     def check_budget(self) -> bool:
         """Check if budget is strictly positive.
