@@ -1617,14 +1617,14 @@ class NewExperimentWindow(Toplevel):
         self.cross_design_factors: dict[str, list[str]] = {}
         # Dict of factors not included in the design
         # Key is the factor name, value is the default value
-        self.fixed_factors: dict[str, bool | float | int] = {}
+        self.fixed_factors: dict[str, object] = {}
         for factor in self.factor_dict:
             # If the factor is not included in the design, it's a fixed factor
             if (
                 self.factor_dict[factor].include is None
                 or not self.factor_dict[factor].include.get()  # type: ignore
             ):
-                fixed_val = self.factor_dict[factor].default.get()
+                fixed_val = self.factor_dict[factor].default_eval
                 self.fixed_factors[factor] = fixed_val
             # If the factor is included in the design, add it to the list of factors
             else:
