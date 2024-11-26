@@ -920,7 +920,7 @@ class NewExperimentWindow(Toplevel):
         for solver_group in self.root_solver_dict:
             dp_0 = self.root_solver_dict[solver_group][
                 0
-            ]  # frist design point if design, only design pt if no design
+            ]  # first design point if design, only design pt if no design
             solver_name = dp_0[1]
             temp_solver = solver_directory[solver_name]()
             temp_solvers.append(temp_solver)
@@ -2113,6 +2113,12 @@ class NewExperimentWindow(Toplevel):
         self.curr_exp_name.set(new_name)
         # Set default pickle checkstate
         self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)
+        # Run all update functions for ensuring compatible options now that the
+        # experiment is empty
+        self.cross_design_problem_compatibility()
+        self.cross_design_solver_compatibility()
+        self.__update_problem_dropdown()
+        self.__update_solver_dropdown()
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
