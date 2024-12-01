@@ -83,16 +83,20 @@ class MM1Queue(Model):
         super().__init__(fixed_factors)
 
     def check_lambda(self):
-        return self.factors["lambda"] > 0
+        if self.factors["lambda"] <= 0:
+            raise ValueError("lambda must be greater than 0.")
 
     def check_mu(self):
-        return self.factors["mu"] > 0
+        if self.factors["mu"] <= 0:
+            raise ValueError("mu must be greater than 0.")
 
     def check_warmup(self):
-        return self.factors["warmup"] >= 0
+        if self.factors["warmup"] < 0:
+            raise ValueError("warmup must be greater than or equal to 0.")
 
     def check_people(self):
-        return self.factors["people"] >= 1
+        if self.factors["people"] < 1:
+            raise ValueError("people must be greater than or equal to 1.")
 
     def check_simulatable_factors(self):
         # demo for condition that queue must be stable
@@ -310,6 +314,10 @@ class MM1MinMeanSojournTime(Problem):
         # Instantiate model with fixed factors and overwritten defaults.
         self.model = MM1Queue(self.model_fixed_factors)
 
+    def check_cost(self):
+        if self.factors["cost"] <= 0:
+            raise ValueError("cost must be greater than 0.")
+            
     def vector_to_factor_dict(self, vector):
         """
         Convert a vector of variables to a dictionary with factor keys

@@ -144,31 +144,40 @@ class STRONG(Solver):
             raise ValueError("n0 must be greater than 0.")
 
     def check_n_r(self):
-        return self.factors["n_r"] > 0
+        if self.factors["n_r"] <= 0:
+            raise ValueError("The number of replications taken at each solution must be greater than 0.")
 
     def check_sensitivity(self):
-        return self.factors["sensitivity"] > 0
+        if self.factors["sensitivity"] <= 0:
+            raise ValueError("sensitivity must be greater than 0.")
 
     def check_delta_threshold(self):
-        return self.factors["delta_threshold"] > 0
+        if self.factors["delta_threshold"] <= 0:
+            raise ValueError("delta_threshold must be greater than 0.")
 
     def check_delta_T(self):
-        return self.factors["delta_T"] > self.factors["delta_threshold"]
+        if self.factors["delta_T"] <= self.factors["delta_threshold"]:
+            raise ValueError("delta_T must be greater than delta_threshold")
 
     def check_eta_0(self):
-        return self.factors["eta_0"] > 0 and self.factors["eta_0"] < 1
+        if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
+            raise ValueError("eta_0 must be between 0 and 1.")
 
     def check_eta_1(self):
-        return self.factors["eta_1"] < 1 and self.factors["eta_1"] > self.factors["eta_0"]
+        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
+            raise ValueError("eta_1 must be between eta_0 and 1.")
 
     def check_gamma_1(self):
-        return self.factors["gamma_1"] > 0 and self.factors["gamma_1"] < 1
+        if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
+            raise ValueError("gamma_1 must be between 0 and 1.")
 
     def check_gamma_2(self):
-        return self.factors["gamma_2"] > 1
+        if self.factors["gamma_2"] <= 1:
+            raise ValueError("gamma_2 must be greater than 1.")
 
     def check_lambda(self):
-        return self.factors["lambda"] > 1
+        if self.factors["lambda"] <= 1:
+            raise ValueError("lambda must be greater than 1.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
@@ -259,7 +268,7 @@ class STRONG(Solver):
                 if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new) <= 0):
                     # The solution fails either the RC or SR test, the center point reamins and the trust region shrinks.
                     delta_T = gamma_1 * delta_T
-                elif (eta_0 <= rho) & (rho < eta_1):
+                elif (eta_0 <= rho) and (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.
@@ -358,7 +367,7 @@ class STRONG(Solver):
                             result_solution = new_solution
                             result_x = new_x
 
-                        elif (eta_0 <= rrho) & (rrho < eta_1):
+                        elif (eta_0 <= rrho) and (rrho < eta_1):
                             # Accept the solution and remains the size of trust region.
                             result_solution = try_solution
                             result_x = try_x
@@ -376,7 +385,7 @@ class STRONG(Solver):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
-                elif (eta_0 <= rho) & (rho < eta_1):
+                elif (eta_0 <= rho) and (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.

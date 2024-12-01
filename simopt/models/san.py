@@ -73,7 +73,8 @@ class SAN(Model):
         super().__init__(fixed_factors)
 
     def check_num_nodes(self):
-        return self.factors["num_nodes"] > 0
+        if self.factors["num_nodes"] <= 0:
+            raise ValueError("num_nodes must be greater than 0.")
 
     def dfs(self, graph, start, visited=None):
         if visited is None:
@@ -86,7 +87,7 @@ class SAN(Model):
 
     def check_arcs(self):
         if len(self.factors["arcs"]) <= 0:
-            return False
+            raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
         graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:
@@ -99,8 +100,12 @@ class SAN(Model):
     def check_arc_means(self):
         positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & (x > 0)
-        return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
+            positive = positive and (x > 0)
+        return positive
+    
+    def check_simulatable_factors(self):
+        if len(self.factors["arc_means"]) != len(self.factors["arcs"]):
+            raise ValueError("The length of arc_means must be equal to the length of arcs.")
 
     def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
         """
@@ -296,8 +301,8 @@ class SANLongestPath(Problem):
     def check_arc_costs(self):
         positive = True
         for x in list(self.factors["arc_costs"]):
-            positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+            positive = positive and x > 0
+        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) and positive
 
     def vector_to_factor_dict(self, vector):
         """

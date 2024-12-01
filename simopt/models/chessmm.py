@@ -107,6 +107,10 @@ class ChessMatchmaking(Model):
     def check_allowable_diff(self):
         if self.factors["allowable_diff"] <= 0:
             raise ValueError("The maximum mallowable different between Elo ratings must be greater than 0.")
+        
+    def check_simulatable_factors(self):
+        # No factors need cross-checked
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
