@@ -1704,13 +1704,13 @@ class NewExperimentWindow(Toplevel):
 
     def add_solver_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
-        if design_name in self.root_problem_dict:
+        if design_name in self.root_solver_dict:
             messagebox.showerror(
                 "Error",
                 f"The design name {design_name} is already in use. Please choose a different name.",
             )
             return
-        selected_name = self.selected_problem_name.get()
+        selected_name = self.selected_solver_name.get()
         selected_name_short = selected_name.split(" - ")[0]
 
         # Create the list of problems by reading the design table
