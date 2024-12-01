@@ -6709,11 +6709,6 @@ def create_design(
             raise ValueError(error_msg)
         design_object = model_directory[name]()
 
-    # Check if Ruby is installed on the system.
-    installed_via_wsl: bool = validate_ruby_install()
-    # Check if the datafarming gem is installed
-    command_file: str = validate_gem_install(design_type, installed_via_wsl)
-
     # Make directory to store the current design file.
     data_farming_path = os.path.join(EXPERIMENT_DIR, "data_farming")
     if not os.path.exists(data_farming_path):
@@ -6730,45 +6725,62 @@ def create_design(
     if os.path.exists(design_file):
         os.remove(design_file)
 
-    # Create solver factor design from .txt file of factor settings.
-    if installed_via_wsl:
-        # Replace the drive letter with the WSL equivalent
-        windows_drive_letter = os.path.splitdrive(data_farming_path)[0]
-        linux_drive_letter = f"/mnt/{windows_drive_letter.strip(':').lower()}"
-        source_file_wsl = source_file.replace(
-            windows_drive_letter, linux_drive_letter
+    # Only run the Ruby script if there are factors to change
+    if len(factor_headers) > 0:
+        # Check if Ruby is installed on the system.
+        installed_via_wsl: bool = validate_ruby_install()
+        # Check if the datafarming gem is installed
+        command_file: str = validate_gem_install(design_type, installed_via_wsl)
+
+        # Create solver factor design from .txt file of factor settings.
+        if installed_via_wsl:
+            # Replace the drive letter with the WSL equivalent
+            windows_drive_letter = os.path.splitdrive(data_farming_path)[0]
+            linux_drive_letter = (
+                f"/mnt/{windows_drive_letter.strip(':').lower()}"
+            )
+            source_file_wsl = source_file.replace(
+                windows_drive_letter, linux_drive_letter
+            )
+            design_file_wsl = design_file.replace(
+                windows_drive_letter, linux_drive_letter
+            )
+            # Replace backslashes with forward slashes
+            source_file_wsl = source_file_wsl.replace("\\", "/")
+            design_file_wsl = design_file_wsl.replace("\\", "/")
+            command = f"{command_file} -s {n_stacks} {source_file_wsl} > {design_file_wsl}"
+            command = f'wsl -e bash -lic "{command}"'
+        else:
+            command = (
+                f"{command_file} -s {n_stacks} {source_file} > {design_file}"
+            )
+        completed_process = subprocess.run(
+            command, capture_output=True, shell=True
         )
-        design_file_wsl = design_file.replace(
-            windows_drive_letter, linux_drive_letter
-        )
-        # Replace backslashes with forward slashes
-        source_file_wsl = source_file_wsl.replace("\\", "/")
-        design_file_wsl = design_file_wsl.replace("\\", "/")
-        command = f"{command_file} -s {n_stacks} {source_file_wsl} > {design_file_wsl}"
-        command = f'wsl -e bash -lic "{command}"'
+        # If the design file doesn't exist, there was an error in the Ruby script.
+        if not os.path.exists(design_file):
+            error_msg = completed_process.stderr.decode("utf-8")
+            raise Exception(
+                f"Ruby script did not complete successfully.\nError:\n{error_msg}"
+            )
+
+        # Read in design matrix from .txt file. Result is a pandas DataFrame.
+        try:
+            design_table = pd.read_csv(
+                design_file,
+                header=None,
+                delimiter="\t",
+                encoding="utf-8",
+            )
+        except pd.errors.EmptyDataError:
+            error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
+            raise Exception(error_msg) from pd.errors.EmptyDataError
+        design_table.columns = factor_headers  # Add factor headers names to dt.
     else:
-        command = f"{command_file} -s {n_stacks} {source_file} > {design_file}"
-    completed_process = subprocess.run(command, capture_output=True, shell=True)
-    # If the design file doesn't exist, there was an error in the Ruby script.
-    if not os.path.exists(design_file):
-        error_msg = completed_process.stderr.decode("utf-8")
-        raise Exception(
-            f"Ruby script did not complete successfully.\nError:\n{error_msg}"
-        )
-
-    # Read in design matrix from .txt file. Result is a pandas DataFrame.
-    try:
-        design_table = pd.read_csv(
-            design_file,
-            header=None,
-            delimiter="\t",
-            encoding="utf-8",
-        )
-    except pd.errors.EmptyDataError:
-        error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
-        raise Exception(error_msg) from pd.errors.EmptyDataError
-
-    design_table.columns = factor_headers  # Add factor headers names to dt.
+        # Grab one key/value pair from the specifications
+        first_item = design_object.specifications
+        # Create a DataFrame with the key/value pair
+        design_table = pd.DataFrame(first_item, index=[0])
 
     # Combine model and problem specifications for problems
     if isinstance(design_object, Problem):
@@ -6779,13 +6791,13 @@ def create_design(
     else:
         specifications = design_object.specifications
 
-    for factor in (
-        specifications
-    ):  # Add default values to str dict for unspecified factors.
+    # Add default values to str dict for unspecified factors.
+    for factor in specifications:
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-    # Add fixed factors to dt.
+    
+    # Add all the fixed factors to the design table
     for factor in fixed_factors:
         design_table[factor] = str(
             fixed_factors[factor]

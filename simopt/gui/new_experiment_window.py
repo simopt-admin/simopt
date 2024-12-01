@@ -1534,29 +1534,21 @@ class NewExperimentWindow(Toplevel):
                     settings_file.write(data_insert)
 
             try:
+                # Get the base object name in lowercase
+                base_object_lower = base_object.lower()
+                assert base_object_lower in ("problem", "solver")
                 # Create the design
-                if base_object == "Problem":
-                    self.problem_design_list = create_design(
-                        name=base_name,
-                        factor_headers=self.design_factors,
-                        factor_settings_filename=design_name,
-                        fixed_factors=self.fixed_factors,
-                        cross_design_factors=self.cross_design_factors,
-                        n_stacks=num_stacks,
-                        design_type=design_type,  # type: ignore
-                        class_type="problem",
-                    )
-                else:
-                    self.solver_design_list = create_design(
-                        name=base_name,
-                        factor_headers=self.design_factors,
-                        factor_settings_filename=design_name,
-                        fixed_factors=self.fixed_factors,
-                        cross_design_factors=self.cross_design_factors,
-                        n_stacks=num_stacks,
-                        design_type=design_type,  # type: ignore
-                        class_type="solver",
-                    )
+                create_design(
+                    name=base_name,
+                    factor_headers=self.design_factors,
+                    factor_settings_filename=design_name,
+                    fixed_factors=self.fixed_factors,
+                    cross_design_factors=self.cross_design_factors,
+                    n_stacks=num_stacks,
+                    design_type=design_type,  # type: ignore
+                    class_type=base_object_lower,
+                )
+
             except Exception as e:
                 messagebox.showerror(
                     "Error",
