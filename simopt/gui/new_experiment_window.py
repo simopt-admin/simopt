@@ -699,8 +699,8 @@ class NewExperimentWindow(Toplevel):
         edit_button_name = f"{tk_base_name}.edit"
         self.tk_buttons[edit_button_name] = ttk.Button(
             master=self.tk_canvases["curr_exp.lists.problems"],
-            text="View/Edit",
-            command=lambda problem_name=unique_name: self.edit_problem(
+            text="View",
+            command=lambda problem_name=unique_name: self.view_problem_design(
                 problem_name
             ),
         )
@@ -738,8 +738,8 @@ class NewExperimentWindow(Toplevel):
         edit_button_name = f"{tk_base_name}.edit"
         self.tk_buttons[edit_button_name] = ttk.Button(
             master=self.tk_canvases["curr_exp.lists.solvers"],
-            text="View/Edit",
-            command=lambda solver_name=unique_name: self.edit_solver(
+            text="View",
+            command=lambda solver_name=unique_name: self.view_solver_design(
                 solver_name
             ),
         )
@@ -1576,17 +1576,26 @@ class NewExperimentWindow(Toplevel):
 
     def display_design_tree(
         self,
-        csv_filename: str,
+        csv_filename: str | None = None,
+        design_table: pd.DataFrame | None = None,
         master_frame: ttk.Frame | None = None,
     ) -> None:
+        if csv_filename is None and design_table is None:
+            error_msg = "Either csv_filename or dataframe must be provided."
+            raise ValueError(error_msg)
+        # If the CSV filename is provided, read the design table from the CSV
+        if csv_filename is not None:
+            # Read  the design table from the csv file
+            design_table = pd.read_csv(csv_filename, index_col="design_num")
+            # Now drop the 'name', 'design_type', and 'num_stacks' columns
+            design_table.drop(
+                columns=["name", "design_type", "num_stacks"], inplace=True
+            )
+        assert design_table is not None
+
+        # Set the master frame to the general design display frame if not provided
         if master_frame is None:
             master_frame = self.tk_frames["gen_design.display"]
-        # Read the design table from the csv file
-        design_table = pd.read_csv(csv_filename, index_col="design_num")
-        # Now drop the 'name', 'design_type', and 'num_stacks' columns
-        design_table.drop(
-            columns=["name", "design_type", "num_stacks"], inplace=True
-        )
 
         # Unhide the generated design frame
         self._show_gen_design()
@@ -1594,9 +1603,10 @@ class NewExperimentWindow(Toplevel):
         # Modify the header to show the # of design points and # of duplicates
         unique_design_points = design_table.drop_duplicates().shape[0]
         num_duplicates = design_table.shape[0] - unique_design_points
-        plural_s = "" if num_duplicates == 1 else "s"
+        point_plural = "" if unique_design_points == 1 else "s"
+        duplicate_plural = "" if num_duplicates == 1 else "s"
         self.tk_labels["gen_design.header"].configure(
-            text=f"Generated Design - {len(design_table)} Design Points ({num_duplicates} Duplicate{plural_s})"
+            text=f"Generated Design - {len(design_table)} Design Point{point_plural} ({num_duplicates} Duplicate{duplicate_plural})"
         )
 
         self.design_tree = ttk.Treeview(master=master_frame)
@@ -1705,11 +1715,32 @@ class NewExperimentWindow(Toplevel):
         # Hide the design tree
         self._hide_gen_design()
 
-    def edit_problem(self, problem_save_name: str) -> None:
-        self.raise_not_yet_implemented_error()
+    def __view_design(self, root_dict: dict) -> None:
+        # Create an empty dataframe to display the design tree
+        column_names = list(root_dict[0][0].keys())
+        num_rows = len(root_dict)
+        dataframe = pd.DataFrame(columns=column_names, index=range(num_rows))
+        # Populate the design tree
+        for index, dp in enumerate(root_dict):
+            dataframe.loc[index] = dp[0]
+        # Convert to a string for display
+        dataframe_string = dataframe.astype(str)
+        # Display the design tree
+        self.display_design_tree(
+            design_table=dataframe_string,
+        )
+        # If the add button exists, destroy it
+        if "gen_design.add" in self.tk_buttons:
+            self.tk_buttons["gen_design.add"].destroy()
+            del self.tk_buttons["gen_design.add"]
 
-    def edit_solver(self, solver_save_name: str) -> None:
-        self.raise_not_yet_implemented_error()
+    def view_problem_design(self, problem_save_name: str) -> None:
+        problem = self.root_problem_dict[problem_save_name]
+        self.__view_design(problem)
+        
+    def view_solver_design(self, solver_save_name: str) -> None:
+        solver = self.root_solver_dict[solver_save_name]
+        self.__view_design(solver)
 
     def delete_problem(self, problem_name: str) -> None:
         # Delete from master list
