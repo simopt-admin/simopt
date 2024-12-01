@@ -8,10 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+NUM_PRODUCTS: Final[int] = 10
 
 
 class DynamNews(Model):
@@ -56,7 +60,7 @@ class DynamNews(Model):
             "num_prod": {
                 "description": "number of products",
                 "datatype": int,
-                "default": 10,
+                "default": NUM_PRODUCTS,
             },
             "num_customer": {
                 "description": "number of customers",
@@ -66,7 +70,7 @@ class DynamNews(Model):
             "c_utility": {
                 "description": "constant of each product's utility",
                 "datatype": list,
-                "default": [5 + j for j in range(1, 11)],
+                "default": [6 + j for j in range(NUM_PRODUCTS)],
             },
             "mu": {
                 "description": "mu for calculating Gumbel random variable",
@@ -76,17 +80,17 @@ class DynamNews(Model):
             "init_level": {
                 "description": "initial inventory level",
                 "datatype": list,
-                "default": list(3 * np.ones(10)),
+                "default": [3] * NUM_PRODUCTS,
             },
             "price": {
                 "description": "sell price of products",
                 "datatype": list,
-                "default": list(9 * np.ones(10)),
+                "default": [9] * NUM_PRODUCTS,
             },
             "cost": {
                 "description": "cost of products",
                 "datatype": list,
-                "default": list(5 * np.ones(10)),
+                "default": [5] * NUM_PRODUCTS,
             },
         }
         self.check_factor_list = {
@@ -318,7 +322,7 @@ class DynamNewsMaxProfit(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": tuple(3 * np.ones(10)),
+                "default": (3,) * NUM_PRODUCTS,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",

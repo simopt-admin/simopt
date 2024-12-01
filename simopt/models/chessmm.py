@@ -8,11 +8,16 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy import special
 
 from simopt.base import Model, Problem
+
+MEAN_ELO: Final[int] = 1200
+MAX_ALLOWABLE_DIFF: Final[int] = 150
 
 
 class ChessMatchmaking(Model):
@@ -56,12 +61,14 @@ class ChessMatchmaking(Model):
             "elo_mean": {
                 "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200.0,
+                "default": MEAN_ELO,
             },
             "elo_sd": {
                 "description": "standard deviation of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50)),
+                "default": round(
+                    MEAN_ELO / (np.sqrt(2) * special.erfcinv(1 / 50)), 1
+                ),
             },
             "poisson_rate": {
                 "description": "rate of Poisson process for player arrivals",
@@ -76,7 +83,7 @@ class ChessMatchmaking(Model):
             "allowable_diff": {
                 "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
-                "default": 150.0,
+                "default": MAX_ALLOWABLE_DIFF,
             },
         }
         self.check_factor_list = {
@@ -298,7 +305,7 @@ class ChessAvgDifference(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (150,),
+                "default": (MAX_ALLOWABLE_DIFF,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
