@@ -1763,6 +1763,7 @@ class NewExperimentWindow(Toplevel):
             self.add_problem_to_curr_exp_list(problem_group_name)
         # Rerun compatibility check
         self.cross_design_solver_compatibility()
+        self.__update_solver_dropdown()
 
     def delete_solver(self, unique_solver_name: str) -> None:
         # Delete from master list
@@ -1787,6 +1788,7 @@ class NewExperimentWindow(Toplevel):
             self.add_solver_to_curr_exp_list(solver_group_name)
         # Rerun compatibility check
         self.cross_design_problem_compatibility()
+        self.__update_problem_dropdown()
 
     def create_experiment(self) -> None:
         # Check to make sure theres at least one problem and solver
