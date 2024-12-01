@@ -1,4 +1,3 @@
-import ast
 import os
 import pickle
 import re
@@ -13,7 +12,7 @@ import pandas as pd
 from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageTk
 
-from simopt.base import Model, Problem, Solver
+from simopt.base import Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
 from simopt.directory import (
     problem_directory,
@@ -25,6 +24,7 @@ from simopt.experiment_base import (
     ProblemSolver,
     ProblemsSolvers,
     create_design,
+    create_design_list_from_table,
     plot_area_scatterplots,
     plot_progress_curves,
     plot_solvability_cdfs,
@@ -221,15 +221,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["exps.fields.open_plot_win"].grid(
             row=1, column=0, sticky="ew"
         )
-        # self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
-        #     self.tk_frames["exps.fields"],
-        #     text="Load Experiment",
-        #     command=self.load_experiment,
-        # )
         self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
             self.tk_frames["exps.fields"],
             text="Load Experiment",
-            command=self.raise_not_yet_implemented_error,
+            command=self.load_experiment,
         )
         self.tk_buttons["exps.fields.load_exp"].grid(
             row=2, column=0, sticky="ew"
@@ -291,11 +286,6 @@ class NewExperimentWindow(Toplevel):
             text="Load Design from CSV",
             command=self.load_design,
         )
-        # self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
-        #     self.tk_frames["curr_exp.fields"],
-        #     text="Load Design from CSV",
-        #     command=self.raise_not_yet_implemented_error,
-        # )
         self.tk_buttons["curr_exp.fields.load_design"].grid(
             row=0, column=0, columnspan=2, sticky="ew"
         )
@@ -1005,9 +995,7 @@ class NewExperimentWindow(Toplevel):
                 factor: value["default"]
                 for factor, value in solver.specifications.items()
             }
-            solver_save_name = self.get_unique_name(
-                self.root_solver_dict, solver.name
-            )
+            solver_save_name = self.get_unique_solver_name(solver.name)
             # Add the solver to the experiment
             factor_list = [[factors, solver.name]]
             self.add_solver_to_curr_exp(solver_save_name, factor_list)
@@ -1031,9 +1019,7 @@ class NewExperimentWindow(Toplevel):
             }
             factors.update(model_factors)
             problem_name = temp_problem.name
-            problem_save_name = self.get_unique_name(
-                self.root_problem_dict, problem_name
-            )
+            problem_save_name = self.get_unique_problem_name(problem_name)
             # Add the problem to the experiment
             factor_list = [[factors, problem_name]]
             self.add_problem_to_curr_exp(problem_save_name, factor_list)
@@ -1092,7 +1078,10 @@ class NewExperimentWindow(Toplevel):
             self.update()
             # Find the unabbreviated name and set the combobox
             for unabbreviated_name in problem_unabbreviated_directory:
-                if problem_unabbreviated_directory[unabbreviated_name]().name == name:
+                if (
+                    problem_unabbreviated_directory[unabbreviated_name]().name
+                    == name
+                ):
                     name = name + " - " + unabbreviated_name
                     break
             self.tk_comboboxes["ntbk.ps_adding.problem.select"].set(name)
@@ -1100,10 +1089,20 @@ class NewExperimentWindow(Toplevel):
             # Create the frame
             self._create_gen_design_frame(design_file, "Problem")
         elif name in solver_directory:
-            # TODO: make the tab index not hardcoded
+            # Select the correct tab
             self.tk_notebooks["ntbk.ps_adding"].select(1)
+            self.update()
+            # Find the unabbreviated name and set the combobox
+            for unabbreviated_name in solver_unabbreviated_directory:
+                if (
+                    solver_unabbreviated_directory[unabbreviated_name]().name
+                    == name
+                ):
+                    name = name + " - " + unabbreviated_name
+                    break
             self.tk_comboboxes["ntbk.ps_adding.solver.select"].set(name)
             self.update()
+            # Create the frame
             self._create_gen_design_frame(design_file, "Solver")
         else:
             messagebox.showerror(
@@ -1112,89 +1111,39 @@ class NewExperimentWindow(Toplevel):
             )
 
     def load_experiment(self) -> None:
-        # ask user for pickle file location
-        file_path = filedialog.askopenfilename()
-        base = os.path.basename(file_path)
-        exp_name = os.path.splitext(base)[0]
+        self.raise_not_yet_implemented_error()
+        # # ask user for pickle file location
+        # file_path = filedialog.askopenfilename()
+        # base = os.path.basename(file_path)
+        # exp_name = os.path.splitext(base)[0]
 
-        # make sure name is unique
-        self.experiment_name = self.get_unique_name(
-            self.root_experiment_dict, exp_name
-        )
+        # # make sure name is unique
+        # self.experiment_name = self.get_unique_experiment_name(exp_name)
 
-        # load pickle
-        messagebox.showinfo(
-            "Loading",
-            "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
-        )
-        with open(file_path, "rb") as f:
-            exp = pickle.load(f)
+        # # load pickle
+        # messagebox.showinfo(
+        #     "Loading",
+        #     "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
+        # )
+        # with open(file_path, "rb") as f:
+        #     exp = pickle.load(f)
 
-        self.root_experiment_dict[self.experiment_name] = exp
-        self.add_exp_row()
+        # self.root_experiment_dict[self.experiment_name] = exp
+        # self.add_exp_row()
 
-        # determine if exp has been post processed and post normalized and set display
-        self.run_buttons[self.experiment_name].configure(state="disabled")
-        self.all_buttons[self.experiment_name].configure(state="disabled")
-        post_rep = exp.check_postreplicate()
-        post_norm = exp.check_postnormalize()
-        if not post_rep:
-            self.post_process_buttons[self.experiment_name].configure(
-                state="normal"
-            )
-        if post_rep and not post_norm:
-            self.post_norm_buttons[self.experiment_name].configure(
-                state="normal"
-            )
-
-    def convert_proper_datatype(
-        self,
-        fixed_factors: dict,
-        base_object: Problem | Solver | Model,
-        var: bool = False,
-    ) -> dict:
-        # TODO: figure out if VAR is supposed to be true or false
-        converted_fixed_factors = {}
-
-        for factor in fixed_factors:
-            if (
-                var
-            ):  # determine if factors are still variable objects or strings
-                fixed_val = fixed_factors[factor].get()
-            else:
-                fixed_val = fixed_factors[factor]
-            if factor in base_object.specifications:
-                assert isinstance(base_object, (Solver, Model))
-                datatype = base_object.specifications[factor].get("datatype")
-            else:
-                assert isinstance(base_object, Problem)
-                datatype = base_object.model.specifications[factor].get(
-                    "datatype"
-                )
-
-            if datatype in (int, float):
-                converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype is list:
-                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
-            if datatype is tuple:
-                last_val = fixed_val[-2]
-                tuple_str = fixed_val[1:-1].split(",")
-                # determine if last tuple value is empty
-                if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
-                else:
-                    tuple_exclude_last = tuple_str[:-1]
-                    float_tuple = [float(s) for s in tuple_exclude_last]
-                    converted_fixed_factors[factor] = tuple(float_tuple)
-            if datatype is bool:
-                if fixed_val == "True":
-                    converted_fixed_factors[factor] = True
-                else:
-                    converted_fixed_factors[factor] = False
-
-        return converted_fixed_factors
+        # # determine if exp has been post processed and post normalized and set display
+        # self.run_buttons[self.experiment_name].configure(state="disabled")
+        # self.all_buttons[self.experiment_name].configure(state="disabled")
+        # post_rep = exp.check_postreplicate()
+        # post_norm = exp.check_postnormalize()
+        # if not post_rep:
+        #     self.post_process_buttons[self.experiment_name].configure(
+        #         state="normal"
+        #     )
+        # if post_rep and not post_norm:
+        #     self.post_norm_buttons[self.experiment_name].configure(
+        #         state="normal"
+        #     )
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1343,11 +1292,10 @@ class NewExperimentWindow(Toplevel):
         self.__show_data_farming_core(
             problem,
             frame=self.tk_frames["ntbk.ps_adding.problem.factors.problems"],
-            row=1,
         )
 
         # Update the design name to be unique
-        unique_name = self.get_unique_name(self.root_problem_dict, problem.name)
+        unique_name = self.get_unique_problem_name(problem.name)
         self.design_name.set(unique_name)
         self.tk_entries["design_opts.name"].delete(0, tk.END)
         self.tk_entries["design_opts.name"].insert(0, unique_name)
@@ -1370,16 +1318,15 @@ class NewExperimentWindow(Toplevel):
         self.__show_data_farming_core(
             solver,
             frame=self.tk_frames["ntbk.ps_adding.solver.factors.solvers"],
-            row=1,
         )
 
         # Update the design name to be unique
-        unique_name = self.get_unique_name(self.root_solver_dict, solver.name)
+        unique_name = self.get_unique_solver_name(solver.name)
         self.design_name.set(unique_name)
         self.tk_entries["design_opts.name"].delete(0, tk.END)
         self.tk_entries["design_opts.name"].insert(0, unique_name)
 
-    def get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
+    def __get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
         """Determine unique name from dictionary.
 
         Parameters
@@ -1416,8 +1363,17 @@ class NewExperimentWindow(Toplevel):
 
         return new_name
 
+    def get_unique_experiment_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_experiment_dict, base_name)
+
+    def get_unique_problem_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_problem_dict, base_name)
+
+    def get_unique_solver_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_solver_dict, base_name)
+
     def __show_data_farming_core(
-        self, base_object: Solver | Problem, frame: ttk.Frame, row: int = 1
+        self, base_object: Solver | Problem, frame: ttk.Frame
     ) -> None:
         """Show data farming options for a solver or problem.
 
@@ -1463,16 +1419,14 @@ class NewExperimentWindow(Toplevel):
             error_msg += f" Received {base_object}."
             raise TypeError(error_msg)
 
-        base_dropdown = (
-            self.selected_problem_name.get()
-            if base_object == "Problem"
-            else self.selected_solver_name.get()
-        )
-        root_dict = (
-            self.root_problem_dict
-            if base_object == "Problem"
-            else self.root_solver_dict
-        )
+        if base_object == "Problem":
+            base_dropdown = self.selected_problem_name.get()
+            root_dict = self.root_problem_dict
+            get_unique_name = self.get_unique_problem_name
+        else:
+            base_dropdown = self.selected_solver_name.get()
+            root_dict = self.root_solver_dict
+            get_unique_name = self.get_unique_solver_name
 
         # Check to see if the user has selected a problem or solver
         if base_dropdown == "":
@@ -1481,14 +1435,15 @@ class NewExperimentWindow(Toplevel):
                 f"Please select a {base_object} from the dropdown list.",
             )
             return
+
+        # Get the design name
+        design_name = self.design_name.get()
         # Check to see if the design name already exists
-        if self.design_name.get() in root_dict:
-            # Generate a new name
-            new_name = self.get_unique_name(root_dict, self.design_name.get())
+        if design_name in root_dict:
+            # Get a unique name
+            new_name = get_unique_name(design_name)
             # Ask the user if they want to use the new name
-            prompt_text = (
-                f"A {base_object} with the name {self.design_name.get()}"
-            )
+            prompt_text = f"A {base_object} with the name {design_name}"
             prompt_text += " already exists. Would you like to use the name "
             prompt_text += f"{new_name} instead?\nNote: If you choose 'No',"
             prompt_text += " you will need to choose a different name."
@@ -1498,11 +1453,10 @@ class NewExperimentWindow(Toplevel):
             )
             if use_new_name:
                 self.design_name.set(new_name)
+                design_name = new_name
             else:
                 return
 
-        # Get the name of the design
-        design_name = self.design_name.get()
         # Get the number of stacks and the type of design
         num_stacks = self.design_num_stacks.get()
         design_type = self.design_type.get()
@@ -1546,7 +1500,8 @@ class NewExperimentWindow(Toplevel):
                 self.add_solver_to_curr_exp(design_name, [design_list])
 
             # Refresh the design name entry box
-            self.design_name.set(self.get_unique_name(root_dict, design_name))
+            unique_name = get_unique_name(design_name)
+            self.design_name.set(unique_name)
         else:
             # Create the factor settings txt file
             # Check if the folder exists, if not create it
@@ -1707,7 +1662,7 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
-    def __get_design_table(self) -> pd.DataFrame:
+    def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
         design_table = pd.DataFrame(columns=self.design_tree["columns"])
         for child in self.design_tree.get_children():
@@ -1717,21 +1672,18 @@ class NewExperimentWindow(Toplevel):
 
     def add_problem_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
+        if design_name in self.root_problem_dict:
+            messagebox.showerror(
+                "Error",
+                f"The design name {design_name} is already in use. Please choose a different name.",
+            )
+            return
         selected_name = self.selected_problem_name.get()
         selected_name_short = selected_name.split(" - ")[0]
 
         # Create the list of problems by reading the design table
-        design_list = []
-        design_table = self.__get_design_table()   
-        dp_dict = design_table.to_dict(
-            orient="list"
-        )
-        for dp in range(len(design_table)):
-            dp_factors = {}
-            for factor in dp_dict:
-                factor_str = str(dp_dict[factor][dp])
-                dp_factors[factor] = ast.literal_eval(factor_str)
-            design_list.append(dp_factors)
+        design_table = self.__read_in_generated_design()
+        design_list = create_design_list_from_table(design_table)
 
         problem_holder_list = []  # used so problem list matches datafarming format
         for dp in design_list:
@@ -1744,20 +1696,29 @@ class NewExperimentWindow(Toplevel):
         self.add_problem_to_curr_exp(design_name, problem_holder_list)
 
         # refresh problem design name entry box
-        self.design_name.set(
-            self.get_unique_name(self.root_problem_dict, design_name)
-        )
+        new_problem_name = self.get_unique_problem_name(design_name)
+        self.design_name.set(new_problem_name)
 
         # Hide the design tree
         self._hide_gen_design()
 
     def add_solver_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
-        selected_name = self.selected_solver_name.get()
+        if design_name in self.root_problem_dict:
+            messagebox.showerror(
+                "Error",
+                f"The design name {design_name} is already in use. Please choose a different name.",
+            )
+            return
+        selected_name = self.selected_problem_name.get()
         selected_name_short = selected_name.split(" - ")[0]
 
+        # Create the list of problems by reading the design table
+        design_table = self.__read_in_generated_design()
+        design_list = create_design_list_from_table(design_table)
+
         solver_holder_list = []  # used so solver list matches datafarming format
-        for dp in self.solver_design_list:
+        for dp in design_list:
             solver_list = []  # holds dictionary of dps and solver name
             solver_list.append(dp)
             solver_list.append(selected_name_short)
@@ -1767,9 +1728,8 @@ class NewExperimentWindow(Toplevel):
         self.add_solver_to_curr_exp(design_name, solver_holder_list)
 
         # refresh solver design name entry box
-        self.design_name.set(
-            self.get_unique_name(self.root_solver_dict, design_name)
-        )
+        new_solver_name = self.get_unique_solver_name(design_name)
+        self.design_name.set(new_solver_name)
 
         # Hide the design tree
         self._hide_gen_design()
@@ -1839,9 +1799,7 @@ class NewExperimentWindow(Toplevel):
 
         # get unique experiment name
         old_name = self.curr_exp_name.get()
-        self.experiment_name = self.get_unique_name(
-            self.root_experiment_dict, old_name
-        )
+        self.experiment_name = self.get_unique_experiment_name(old_name)
         self.curr_exp_name.set(self.experiment_name)
 
         # get pickle checkstate
@@ -1918,9 +1876,7 @@ class NewExperimentWindow(Toplevel):
             self.tk_canvases["curr_exp.lists.solvers"]
         )
         # Reset the experiment name
-        new_name = self.get_unique_name(
-            self.root_experiment_dict, self.DEFAULT_EXP_NAME
-        )
+        new_name = self.get_unique_experiment_name(self.DEFAULT_EXP_NAME)
         self.curr_exp_name.set(new_name)
         # Set default pickle checkstate
         self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)

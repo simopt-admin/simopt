@@ -6580,6 +6580,21 @@ def validate_gem_install(design_type: str, installed_via_wsl: bool) -> str:
         raise ValueError(error_msg)
 
 
+def create_design_list_from_table(design_table: pd.DataFrame) -> list:
+    # Create list of solver or problem objects for each dp using design_table.
+    design_list = []
+    dp_dict = design_table.to_dict(
+        orient="list"
+    )  # Creates dictonary of table to convert values to proper datatypes.
+    for dp in range(len(design_table)):
+        dp_factors = {}
+        for factor in dp_dict:
+            factor_str = str(dp_dict[factor][dp])
+            dp_factors[factor] = ast.literal_eval(factor_str)
+        design_list.append(dp_factors)
+    return design_list
+
+
 def create_design(
     name: str,
     factor_headers: list[str],
@@ -6803,17 +6818,7 @@ def create_design(
 
         design_table = new_design_table
 
-    # Create list of solver or problem objects for each dp using design_table.
-    design_list = []
-    dp_dict = design_table.to_dict(
-        orient="list"
-    )  # Creates dictonary of table to convert values to proper datatypes.
-    for dp in range(len(design_table)):
-        dp_factors = {}
-        for factor in dp_dict:
-            factor_str = str(dp_dict[factor][dp])
-            dp_factors[factor] = ast.literal_eval(factor_str)
-        design_list.append(dp_factors)
+    design_list = create_design_list_from_table(design_table)
 
     # print("Design List", design_list, sep="\n\t")
 
