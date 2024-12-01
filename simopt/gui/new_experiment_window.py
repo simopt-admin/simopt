@@ -1069,8 +1069,14 @@ class NewExperimentWindow(Toplevel):
                 f"An error occurred while reading the file. Please ensure the file is a CSV file and try again. Error: {e}",
             )
             return
-        # Check if the file is a problem or solver design
-        name = design_df.at[0, "name"]
+        # Grab the values for 'name', 'design_type', and 'num_stacks' from the first row
+        name = design_df["name"].iloc[0]
+        design_type = design_df["design_type"].iloc[0]
+        num_stacks = design_df["num_stacks"].iloc[0]
+        # Set the name, design type, and number of stacks in the GUI
+        self.design_name.set(name)
+        self.design_type.set(design_type)
+        self.design_num_stacks.set(num_stacks)
         # Check if the first line is a problem or a solver
         if name in problem_directory:
             # Select the correct tab
@@ -1422,11 +1428,11 @@ class NewExperimentWindow(Toplevel):
         if base_object == "Problem":
             base_dropdown = self.selected_problem_name.get()
             root_dict = self.root_problem_dict
-            get_unique_name = self.get_unique_problem_name
+            generate_unique_name_func = self.get_unique_problem_name
         else:
             base_dropdown = self.selected_solver_name.get()
             root_dict = self.root_solver_dict
-            get_unique_name = self.get_unique_solver_name
+            generate_unique_name_func = self.get_unique_solver_name
 
         # Check to see if the user has selected a problem or solver
         if base_dropdown == "":
@@ -1441,7 +1447,7 @@ class NewExperimentWindow(Toplevel):
         # Check to see if the design name already exists
         if design_name in root_dict:
             # Get a unique name
-            new_name = get_unique_name(design_name)
+            new_name = generate_unique_name_func(design_name)
             # Ask the user if they want to use the new name
             prompt_text = f"A {base_object} with the name {design_name}"
             prompt_text += " already exists. Would you like to use the name "
@@ -1486,89 +1492,62 @@ class NewExperimentWindow(Toplevel):
                 elif self.factor_dict[factor].type.get() == "bool":
                     self.cross_design_factors[factor] = ["True", "False"]
 
-        """ Check if there are any factors included in the design """
-        if not self.design_factors and not self.cross_design_factors:
-            # Create a non-datafarmed design
-            design_list = []
-            design_list.append(self.fixed_factors)
-            design_list.append(base_name)
+        # Create the factor settings txt file
+        # Check if the folder exists, if not create it
+        if not os.path.exists(DATA_FARMING_DIR):
+            os.makedirs(DATA_FARMING_DIR)
+        # If the file already exists, clear it and make a new, empty file of the same name
+        filepath = os.path.join(DATA_FARMING_DIR, f"{design_name}.txt")
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
-            # Add the design to the list display
-            if base_object == "Problem":
-                self.add_problem_to_curr_exp(design_name, [design_list])
-            else:
-                self.add_solver_to_curr_exp(design_name, [design_list])
-
-            # Refresh the design name entry box
-            unique_name = get_unique_name(design_name)
-            self.design_name.set(unique_name)
-        else:
-            # Create the factor settings txt file
-            # Check if the folder exists, if not create it
-            if not os.path.exists(DATA_FARMING_DIR):
-                os.makedirs(DATA_FARMING_DIR)
-            # If the file already exists, clear it and make a new, empty file of the same name
-            filepath = os.path.join(DATA_FARMING_DIR, f"{design_name}.txt")
-            if os.path.exists(filepath):
-                os.remove(filepath)
-
-            # Write the factor settings to the file
-            with open(filepath, "x") as settings_file:
-                # For each factor, write the min, max, and decimal values to the file
-                for factor_name in self.design_factors:
-                    # Lookup the factor in the dictionary
-                    factor = self.factor_dict[factor_name]
-                    # Make sure the factor has a minimum and maximum value
-                    assert factor.minimum is not None
-                    assert factor.maximum is not None
-                    min_val = factor.minimum.get()
-                    max_val = factor.maximum.get()
-                    if factor.type.get() == "float":
-                        assert factor.num_decimals is not None
-                        dec_val = factor.num_decimals.get()
-                    else:
-                        dec_val = "0"
-
-                    # Write the values to the file
-                    data_insert = f"{min_val} {max_val} {dec_val}\n"
-                    settings_file.write(data_insert)
-
-            try:
-                # Create the design
-                if base_object == "Problem":
-                    self.problem_design_list = create_design(
-                        name=base_name,
-                        factor_headers=self.design_factors,
-                        factor_settings_filename=design_name,
-                        fixed_factors=self.fixed_factors,
-                        cross_design_factors=self.cross_design_factors,
-                        n_stacks=num_stacks,
-                        design_type=design_type,  # type: ignore
-                        class_type="problem",
-                    )
+        # Write the factor settings to the file
+        with open(filepath, "x") as settings_file:
+            # For each factor, write the min, max, and decimal values to the file
+            for factor_name in self.design_factors:
+                # Lookup the factor in the dictionary
+                factor = self.factor_dict[factor_name]
+                # Make sure the factor has a minimum and maximum value
+                assert factor.minimum is not None
+                assert factor.maximum is not None
+                min_val = factor.minimum.get()
+                max_val = factor.maximum.get()
+                if factor.type.get() == "float":
+                    assert factor.num_decimals is not None
+                    dec_val = factor.num_decimals.get()
                 else:
-                    self.solver_design_list = create_design(
-                        name=base_name,
-                        factor_headers=self.design_factors,
-                        factor_settings_filename=design_name,
-                        fixed_factors=self.fixed_factors,
-                        cross_design_factors=self.cross_design_factors,
-                        n_stacks=num_stacks,
-                        design_type=design_type,  # type: ignore
-                        class_type="solver",
-                    )
-            except Exception as e:
-                messagebox.showerror(
-                    "Error",
-                    f"An error occurred while creating the design: {e}",
-                )
-                return
+                    dec_val = "0"
 
-            # Display the design tree
-            filename = os.path.join(
-                DATA_FARMING_DIR, f"{design_name}_design.csv"
+                # Write the values to the file
+                data_insert = f"{min_val} {max_val} {dec_val}\n"
+                settings_file.write(data_insert)
+
+        try:
+            # Get the base object name in lowercase
+            base_object_lower = base_object.lower()
+            assert base_object_lower in ("problem", "solver")
+            # Create the design
+            create_design(
+                name=base_name,
+                factor_headers=self.design_factors,
+                factor_settings_filename=design_name,
+                fixed_factors=self.fixed_factors,
+                cross_design_factors=self.cross_design_factors,
+                n_stacks=num_stacks,
+                design_type=design_type,  # type: ignore
+                class_type=base_object_lower,
             )
-            self._create_gen_design_frame(filename, base_object)
+
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"An error occurred while creating the design: {e}",
+            )
+            return
+
+        # Display the design tree
+        filename = os.path.join(DATA_FARMING_DIR, f"{design_name}_design.csv")
+        self._create_gen_design_frame(filename, base_object)
 
     def _create_gen_design_frame(
         self, filename: str, base_object: Literal["Problem", "Solver"]
@@ -1604,14 +1583,6 @@ class NewExperimentWindow(Toplevel):
             master_frame = self.tk_frames["gen_design.display"]
         # Read the design table from the csv file
         design_table = pd.read_csv(csv_filename, index_col="design_num")
-        # Grab the values for 'name', 'design_type', and 'num_stacks' from the first row
-        name = design_table["name"].iloc[0]
-        design_type = design_table["design_type"].iloc[0]
-        num_stacks = design_table["num_stacks"].iloc[0]
-        # Set the name, design type, and number of stacks in the GUI
-        self.design_name.set(name)
-        self.design_type.set(design_type)
-        self.design_num_stacks.set(num_stacks)
         # Now drop the 'name', 'design_type', and 'num_stacks' columns
         design_table.drop(
             columns=["name", "design_type", "num_stacks"], inplace=True
@@ -1763,6 +1734,7 @@ class NewExperimentWindow(Toplevel):
             self.add_problem_to_curr_exp_list(problem_group_name)
         # Rerun compatibility check
         self.cross_design_solver_compatibility()
+        self.__update_solver_dropdown()
 
     def delete_solver(self, unique_solver_name: str) -> None:
         # Delete from master list
@@ -1787,6 +1759,7 @@ class NewExperimentWindow(Toplevel):
             self.add_solver_to_curr_exp_list(solver_group_name)
         # Rerun compatibility check
         self.cross_design_problem_compatibility()
+        self.__update_problem_dropdown()
 
     def create_experiment(self) -> None:
         # Check to make sure theres at least one problem and solver
