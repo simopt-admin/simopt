@@ -1,4 +1,3 @@
-import ast
 import os
 import pickle
 import re
@@ -13,7 +12,7 @@ import pandas as pd
 from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageTk
 
-from simopt.base import Model, Problem, Solver
+from simopt.base import Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
 from simopt.directory import (
     problem_directory,
@@ -25,6 +24,7 @@ from simopt.experiment_base import (
     ProblemSolver,
     ProblemsSolvers,
     create_design,
+    create_design_list_from_table,
     plot_area_scatterplots,
     plot_progress_curves,
     plot_solvability_cdfs,
@@ -221,15 +221,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["exps.fields.open_plot_win"].grid(
             row=1, column=0, sticky="ew"
         )
-        # self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
-        #     self.tk_frames["exps.fields"],
-        #     text="Load Experiment",
-        #     command=self.load_experiment,
-        # )
         self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
             self.tk_frames["exps.fields"],
             text="Load Experiment",
-            command=self.raise_not_yet_implemented_error,
+            command=self.load_experiment,
         )
         self.tk_buttons["exps.fields.load_exp"].grid(
             row=2, column=0, sticky="ew"
@@ -286,15 +281,10 @@ class NewExperimentWindow(Toplevel):
         )
         self.tk_frames["curr_exp.fields"].grid(row=2, column=0, sticky="nsew")
         self.tk_frames["curr_exp.fields"].grid_columnconfigure(1, weight=1)
-        # self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
-        #     self.tk_frames["curr_exp.fields"],
-        #     text="Load Design from CSV",
-        #     command=self.load_design,
-        # )
         self.tk_buttons["curr_exp.fields.load_design"] = ttk.Button(
             self.tk_frames["curr_exp.fields"],
             text="Load Design from CSV",
-            command=self.raise_not_yet_implemented_error,
+            command=self.load_design,
         )
         self.tk_buttons["curr_exp.fields.load_design"].grid(
             row=0, column=0, columnspan=2, sticky="ew"
@@ -627,7 +617,9 @@ class NewExperimentWindow(Toplevel):
         # problems and remove the ones that are not compatible
         # Grab the name (index 1) out of the first element (index 0) of the
         # dictionary (looked up by key) to get the solver class name
-        solver_class_list = [self.root_solver_dict[key][0][1] for key in self.root_solver_dict]
+        solver_class_list = [
+            self.root_solver_dict[key][0][1] for key in self.root_solver_dict
+        ]
         for solver_name in solver_class_list:
             solver_class: ABCMeta = solver_directory[solver_name]
             solver: Solver = solver_class()
@@ -637,9 +629,7 @@ class NewExperimentWindow(Toplevel):
                 problem_class: ABCMeta = problem_directory[short_problem_name]
                 problem: Problem = problem_class()
                 # Create a new ProblemSolver object to check compatibility
-                problem_solver = ProblemSolver(
-                    problem=problem, solver=solver
-                )
+                problem_solver = ProblemSolver(problem=problem, solver=solver)
                 # If there was an error, remove it from the options
                 if len(problem_solver.check_compatibility()) > 0:
                     possible_problems.remove(problem_name)
@@ -653,7 +643,9 @@ class NewExperimentWindow(Toplevel):
         # solvers and remove the ones that are not compatible
         # Grab the name (index 1) out of the first element (index 0) of the
         # dictionary (looked up by key) to get the problem class name
-        problem_class_list = [self.root_problem_dict[key][0][1] for key in self.root_problem_dict]
+        problem_class_list = [
+            self.root_problem_dict[key][0][1] for key in self.root_problem_dict
+        ]
         for problem_name in problem_class_list:
             problem_class: ABCMeta = problem_directory[problem_name]
             problem: Problem = problem_class()
@@ -663,9 +655,7 @@ class NewExperimentWindow(Toplevel):
                 solver_class: ABCMeta = solver_directory[short_solver_name]
                 solver: Solver = solver_class()
                 # Create a new ProblemSolver object to check compatibility
-                problem_solver = ProblemSolver(
-                    problem=problem, solver=solver
-                )
+                problem_solver = ProblemSolver(problem=problem, solver=solver)
                 # If there was an error, remove it from the options
                 if len(problem_solver.check_compatibility()) > 0:
                     possible_options.remove(solver_name)
@@ -1005,9 +995,7 @@ class NewExperimentWindow(Toplevel):
                 factor: value["default"]
                 for factor, value in solver.specifications.items()
             }
-            solver_save_name = self.get_unique_name(
-                self.root_solver_dict, solver.name
-            )
+            solver_save_name = self.get_unique_solver_name(solver.name)
             # Add the solver to the experiment
             factor_list = [[factors, solver.name]]
             self.add_solver_to_curr_exp(solver_save_name, factor_list)
@@ -1031,9 +1019,7 @@ class NewExperimentWindow(Toplevel):
             }
             factors.update(model_factors)
             problem_name = temp_problem.name
-            problem_save_name = self.get_unique_name(
-                self.root_problem_dict, problem_name
-            )
+            problem_save_name = self.get_unique_problem_name(problem_name)
             # Add the problem to the experiment
             factor_list = [[factors, problem_name]]
             self.add_problem_to_curr_exp(problem_save_name, factor_list)
@@ -1064,370 +1050,100 @@ class NewExperimentWindow(Toplevel):
         design_file = filedialog.askopenfilename(
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
         )
-        # Return if no file is selected
-        if design_file == "":
+        # Exit w/o message if no file selected
+        if design_file == "" or not design_file:
             return
-        # Convert whatever is in the file to a dataframe
-        self.design_df = pd.read_csv(design_file, index_col=False)
-        # Read in the filename and the directory path
-        file_name = os.path.basename(design_file)
-        self.dir_path = os.path.dirname(design_file)
-        # Get design information from table
-        name = self.design_df.at[1, "name"]
-        if name in solver_directory:  # loaded a solver
-            self.obj = solver_directory[
-                name
-            ]()  # create placeholder objects of the solver to get factor names
-            is_problem = False
-            factors = self.obj.specifications
-            self.initialize_solver_frame()
-            self.design_tree_frame = tk.Frame(master=self.solver_notebook_frame)
-            self.design_tree_frame.grid(row=2, column=0)
-            self.sol_prob_book.select(0)  # change view to solver tab
-
-        elif name in problem_directory:  # loaded a problem
-            self.obj = problem_directory[
-                name
-            ]()  # create placeholder objects of the problem to get factor names
-            is_problem = True
-            model_factors = self.obj.model.specifications
-            problem_factors = self.obj.specifications
-            factors = model_factors | problem_factors
-            self.initialize_problem_frame()
-            self.design_tree_frame = tk.Frame(
-                master=self.problem_notebook_frame
+        # Exit w/ message if file does not exist
+        if not os.path.exists(design_file):
+            messagebox.showerror(
+                "File Not Found",
+                "The selected file does not exist. Please select a different file.",
             )
-            self.design_tree_frame.grid(row=3, column=0)
-            self.sol_prob_book.select(1)  # change view to problem tab
+            return
+        # Open the file with Pandas
+        try:
+            design_df = pd.read_csv(design_file)
+        except Exception as e:
+            messagebox.showerror(
+                "Error Reading File",
+                f"An error occurred while reading the file. Please ensure the file is a CSV file and try again. Error: {e}",
+            )
+            return
+        # Check if the file is a problem or solver design
+        name = design_df.at[0, "name"]
+        # Check if the first line is a problem or a solver
+        if name in problem_directory:
+            # Select the correct tab
+            self.tk_notebooks["ntbk.ps_adding"].select(0)
+            self.update()
+            # Find the unabbreviated name and set the combobox
+            for unabbreviated_name in problem_unabbreviated_directory:
+                if (
+                    problem_unabbreviated_directory[unabbreviated_name]().name
+                    == name
+                ):
+                    name = name + " - " + unabbreviated_name
+                    break
+            self.tk_comboboxes["ntbk.ps_adding.problem.select"].set(name)
+            self.update()
+            # Create the frame
+            self._create_gen_design_frame(design_file, "Problem")
+        elif name in solver_directory:
+            # Select the correct tab
+            self.tk_notebooks["ntbk.ps_adding"].select(1)
+            self.update()
+            # Find the unabbreviated name and set the combobox
+            for unabbreviated_name in solver_unabbreviated_directory:
+                if (
+                    solver_unabbreviated_directory[unabbreviated_name]().name
+                    == name
+                ):
+                    name = name + " - " + unabbreviated_name
+                    break
+            self.tk_comboboxes["ntbk.ps_adding.solver.select"].set(name)
+            self.update()
+            # Create the frame
+            self._create_gen_design_frame(design_file, "Solver")
         else:
-            raise ValueError(
-                "Loaded file does not match any solver or problem in the directory"
+            messagebox.showerror(
+                "Invalid Design File",
+                f"The name variable in the design file ({name}) is not recognized as a problem or solver. Please ensure the file is a valid design file.",
             )
-
-        # drop columns that aren't factor names
-        drop_col = []
-        for col in self.design_df.columns:
-            if col not in factors:
-                drop_col.append(col)
-        self.filtered_design_df = self.design_df.drop(columns=drop_col)
-
-        # determine design factors & default values
-        self.design_factors = []
-        problem_defaults = {}  # only for factors that do not change in design
-        model_defaults = {}
-        solver_defaults = {}
-        for col in self.filtered_design_df.columns:
-            factor_set = set(
-                self.filtered_design_df[col]
-            )  # determine if all factor values are the same
-            if len(factor_set) > 1:
-                self.design_factors.append(col)
-            else:  # factor is not part of design (only has one value)
-                if is_problem:
-                    if col in problem_factors:
-                        problem_defaults[col] = self.filtered_design_df.at[
-                            1, col
-                        ]
-                    elif col in model_factors:
-                        model_defaults[col] = self.filtered_design_df.at[1, col]
-                else:
-                    solver_defaults[col] = self.filtered_design_df.at[1, col]
-
-        if is_problem:
-            # show problem factors and store default widgets and values to this dict
-            self.design_defaults, last_row = self._show_factor_defaults(
-                self.obj,
-                self.problem_factor_display_canvas,
-                factor_dict=problem_defaults,
-                design_factors=self.design_factors,
-            )
-            # # show model factors and store default widgets and default values to these
-            self.model_defaults, new_last_row = self._show_factor_defaults(
-                base_object=self.obj,
-                frame=self.problem_factor_display_canvas,
-                IsModel=True,
-                first_row=last_row + 1,
-                factor_dict=model_defaults,
-                design_factors=self.design_factors,
-            )
-            # combine default dictionaries
-            self.design_defaults.update(self.model_defaults)
-            # entry for problem name and add problem button
-            self.problem_name_label = tk.Label(
-                master=self.model_frame,
-                text="Problem Name",
-                width=20,
-            )
-            self.problem_name_label.grid(row=2, column=0)
-            self.design_name = tk.StringVar()
-            # get unique problem name
-            problem_name = self.get_unique_name(
-                self.root_problem_dict, file_name
-            )
-            self.design_name.set(problem_name)
-            self.problem_name_entry = tk.Entry(
-                master=self.model_frame,
-                textvariable=self.design_name,
-                width=20,
-            )
-            self.problem_name_entry.grid(row=2, column=1)
-            self.add_prob_to_exp_button = tk.Button(
-                master=self.model_frame,
-                text="Add this problem design to experiment",
-                command=self.add_loaded_problem_to_experiment,
-            )
-            self.add_prob_to_exp_button.grid(row=5, column=0)
-            # display problem name in menu
-            self.problem_var.set(name)
-            self.tree_frame = self.model_frame  # use when calling design tree
-
-        else:
-            # show problem factors and store default widgets to this dict
-            self.design_defaults, last_row = self._show_factor_defaults(
-                self.obj,
-                self.factor_display_canvas,
-                factor_dict=solver_defaults,
-                design_factors=self.design_factors,
-            )
-
-            # entry for solver name and add solver button
-            self.solver_name_label = tk.Label(
-                master=self.solver_frame,
-                text="Solver Name",
-                width=20,
-            )
-            self.solver_name_label.grid(row=2, column=0)
-            self.design_name = tk.StringVar()
-            # get unique solver name
-            solver_name = self.get_unique_name(self.root_solver_dict, file_name)
-            self.design_name.set(solver_name)
-            self.solver_name_entry = tk.Entry(
-                master=self.solver_frame,
-                textvariable=self.design_name,
-                width=20,
-            )
-            self.solver_name_entry.grid(row=2, column=1)
-            self.add_sol_to_exp_button = tk.Button(
-                master=self.solver_frame,
-                text="Add this solver design to experiment",
-                command=self.add_loaded_solver_to_experiment,
-            )
-            self.add_sol_to_exp_button.grid(row=5, column=0)
-            # display solver name in menu
-            self.solver_var.set(name)
-            self.tree_frame = self.solver_frame  # use when calling design tree
-        # modify fixed factors button
-        self.change_fixed_factors_button = tk.Button(
-            master=self.tree_frame,
-            text="Modify Fixed Factors",
-            command=self.change_fixed_factors,
-        )
-        self.change_fixed_factors_button.grid(row=3, column=0)
-        # display design tre
-        self.display_design_tree(
-            csv_filename=design_file, master_frame=self.tree_frame
-        )
-
-    def change_fixed_factors(self) -> None:
-        # get new fixed factors
-        fixed_factors = {}
-        for factor in self.design_defaults:
-            if factor not in self.design_factors:
-                fixed_val = self.design_defaults[factor].get()
-                fixed_factors[factor] = fixed_val
-
-        # update design df
-        for factor in fixed_factors:  # update both versions of the data frame
-            self.filtered_design_df[factor] = fixed_factors[factor]
-            self.design_df[factor] = fixed_factors[factor]
-
-        # create new design csv file that follows original format
-        csv_filename = f"{self.dir_path}/{self.design_name.get()}.csv"
-        self.design_df.to_csv(csv_filename, mode="w", header=True, index=False)
-
-        # update design tree
-        self.design_tree.destroy()
-        self.display_design_tree(
-            csv_filename,
-            master_frame=self.tree_frame,
-        )
-
-    def add_loaded_solver_to_experiment(self) -> None:
-        # convert df to list of dictionaries
-        self.design_list = self.filtered_design_df.to_dict(orient="records")
-
-        design_name = self.design_name.get()
-
-        solver_holder_list = []  # used so solver list matches datafarming format
-        for dp in self.design_list:
-            converted_dp = self.convert_proper_datatype(dp, self.obj, var=False)
-            solver_list = []  # holds dictionary of dps and solver name
-            solver_list.append(converted_dp)
-            solver_list.append(self.obj.name)
-            solver_holder_list.append(solver_list)
-
-        self.root_solver_dict[design_name] = solver_holder_list
-
-        # add solver name to solver index
-        solver_row = len(self.root_solver_dict) - 1
-        self.solver_list_label = tk.Label(
-            master=self.solver_list_canvas,
-            text=design_name,
-        )
-        self.solver_list_label.grid(row=solver_row, column=1)
-        self.solver_list_labels[design_name] = self.solver_list_label
-
-        # add delete and view/edit buttons
-        self.solver_edit_button = tk.Button(
-            master=self.solver_list_canvas,
-            text="View/Edit",
-        )
-        self.solver_edit_button.grid(row=solver_row, column=2)
-        self.solver_edit_buttons[design_name] = self.solver_edit_button
-        self.solver_del_button = tk.Button(
-            master=self.solver_list_canvas,
-            text="Delete",
-            command=lambda: self.delete_solver(design_name),
-        )
-        self.solver_del_button.grid(row=solver_row, column=3)
-        self.solver_del_buttons[design_name] = self.solver_del_button
-
-        # refresh solver design name entry box
-        self.design_name.set(
-            self.get_unique_name(self.root_solver_dict, design_name)
-        )
-
-    def add_loaded_problem_to_experiment(self) -> None:
-        # convert df to list of dictionaries
-        self.design_list = self.filtered_design_df.to_dict(orient="records")
-
-        design_name = self.design_name.get()
-
-        problem_holder_list = []  # holds all problem lists within design name
-        for dp in self.design_list:
-            dp_list = []  # holds dictionary of factors for current dp
-            converted_dp = self.convert_proper_datatype(dp, self.obj, var=False)
-            dp_list.append(converted_dp)  # append problem factors
-            dp_list.append(self.obj.name)  # append name of problem
-            problem_holder_list.append(
-                dp_list
-            )  # add current dp information to holder list
-
-        self.root_problem_dict[design_name] = problem_holder_list
-
-        # add solver name to solver index
-        problem_row = len(self.root_problem_dict) - 1
-        self.problem_list_label = tk.Label(
-            master=self.problem_list_canvas,
-            text=design_name,
-        )
-        self.problem_list_label.grid(row=problem_row, column=1)
-        self.problem_list_labels[design_name] = self.problem_list_label
-
-        # add delete and view/edit buttons
-        self.problem_edit_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="View/Edit",
-        )
-        self.problem_edit_button.grid(row=problem_row, column=2)
-        self.problem_edit_buttons[design_name] = self.problem_edit_button
-        self.problem_del_button = tk.Button(
-            master=self.problem_list_canvas,
-            text="Delete",
-            command=lambda: self.delete_problem(design_name),
-        )
-        self.problem_del_button.grid(row=problem_row, column=3)
-        self.problem_del_buttons[design_name] = self.problem_del_button
-
-        # refresh problem design name entry box
-        self.problem_design_name_var.set(
-            self.get_unique_name(self.root_problem_dict, design_name)
-        )
 
     def load_experiment(self) -> None:
-        # ask user for pickle file location
-        file_path = filedialog.askopenfilename()
-        base = os.path.basename(file_path)
-        exp_name = os.path.splitext(base)[0]
+        self.raise_not_yet_implemented_error()
+        # # ask user for pickle file location
+        # file_path = filedialog.askopenfilename()
+        # base = os.path.basename(file_path)
+        # exp_name = os.path.splitext(base)[0]
 
-        # make sure name is unique
-        self.experiment_name = self.get_unique_name(
-            self.root_experiment_dict, exp_name
-        )
+        # # make sure name is unique
+        # self.experiment_name = self.get_unique_experiment_name(exp_name)
 
-        # load pickle
-        messagebox.showinfo(
-            "Loading",
-            "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
-        )
-        with open(file_path, "rb") as f:
-            exp = pickle.load(f)
+        # # load pickle
+        # messagebox.showinfo(
+        #     "Loading",
+        #     "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
+        # )
+        # with open(file_path, "rb") as f:
+        #     exp = pickle.load(f)
 
-        self.root_experiment_dict[self.experiment_name] = exp
-        self.add_exp_row()
+        # self.root_experiment_dict[self.experiment_name] = exp
+        # self.add_exp_row()
 
-        # determine if exp has been post processed and post normalized and set display
-        self.run_buttons[self.experiment_name].configure(state="disabled")
-        self.all_buttons[self.experiment_name].configure(state="disabled")
-        post_rep = exp.check_postreplicate()
-        post_norm = exp.check_postnormalize()
-        if not post_rep:
-            self.post_process_buttons[self.experiment_name].configure(
-                state="normal"
-            )
-        if post_rep and not post_norm:
-            self.post_norm_buttons[self.experiment_name].configure(
-                state="normal"
-            )
-
-    def convert_proper_datatype(
-        self,
-        fixed_factors: dict,
-        base_object: Problem | Solver | Model,
-        var: bool = False,
-    ) -> dict:
-        # TODO: figure out if VAR is supposed to be true or false
-        converted_fixed_factors = {}
-
-        for factor in fixed_factors:
-            if (
-                var
-            ):  # determine if factors are still variable objects or strings
-                fixed_val = fixed_factors[factor].get()
-            else:
-                fixed_val = fixed_factors[factor]
-            if factor in base_object.specifications:
-                assert isinstance(base_object, (Solver, Model))
-                datatype = base_object.specifications[factor].get("datatype")
-            else:
-                assert isinstance(base_object, Problem)
-                datatype = base_object.model.specifications[factor].get(
-                    "datatype"
-                )
-
-            if datatype in (int, float):
-                converted_fixed_factors[factor] = datatype(fixed_val)
-            if datatype is list:
-                converted_fixed_factors[factor] = ast.literal_eval(fixed_val)
-            if datatype is tuple:
-                last_val = fixed_val[-2]
-                tuple_str = fixed_val[1:-1].split(",")
-                # determine if last tuple value is empty
-                if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
-                else:
-                    tuple_exclude_last = tuple_str[:-1]
-                    float_tuple = [float(s) for s in tuple_exclude_last]
-                    converted_fixed_factors[factor] = tuple(float_tuple)
-            if datatype is bool:
-                if fixed_val == "True":
-                    converted_fixed_factors[factor] = True
-                else:
-                    converted_fixed_factors[factor] = False
-
-        return converted_fixed_factors
+        # # determine if exp has been post processed and post normalized and set display
+        # self.run_buttons[self.experiment_name].configure(state="disabled")
+        # self.all_buttons[self.experiment_name].configure(state="disabled")
+        # post_rep = exp.check_postreplicate()
+        # post_norm = exp.check_postnormalize()
+        # if not post_rep:
+        #     self.post_process_buttons[self.experiment_name].configure(
+        #         state="normal"
+        #     )
+        # if post_rep and not post_norm:
+        #     self.post_norm_buttons[self.experiment_name].configure(
+        #         state="normal"
+        #     )
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1576,11 +1292,10 @@ class NewExperimentWindow(Toplevel):
         self.__show_data_farming_core(
             problem,
             frame=self.tk_frames["ntbk.ps_adding.problem.factors.problems"],
-            row=1,
         )
 
         # Update the design name to be unique
-        unique_name = self.get_unique_name(self.root_problem_dict, problem.name)
+        unique_name = self.get_unique_problem_name(problem.name)
         self.design_name.set(unique_name)
         self.tk_entries["design_opts.name"].delete(0, tk.END)
         self.tk_entries["design_opts.name"].insert(0, unique_name)
@@ -1603,16 +1318,15 @@ class NewExperimentWindow(Toplevel):
         self.__show_data_farming_core(
             solver,
             frame=self.tk_frames["ntbk.ps_adding.solver.factors.solvers"],
-            row=1,
         )
 
         # Update the design name to be unique
-        unique_name = self.get_unique_name(self.root_solver_dict, solver.name)
+        unique_name = self.get_unique_solver_name(solver.name)
         self.design_name.set(unique_name)
         self.tk_entries["design_opts.name"].delete(0, tk.END)
         self.tk_entries["design_opts.name"].insert(0, unique_name)
 
-    def get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
+    def __get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
         """Determine unique name from dictionary.
 
         Parameters
@@ -1649,8 +1363,17 @@ class NewExperimentWindow(Toplevel):
 
         return new_name
 
+    def get_unique_experiment_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_experiment_dict, base_name)
+
+    def get_unique_problem_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_problem_dict, base_name)
+
+    def get_unique_solver_name(self, base_name: str) -> str:
+        return self.__get_unique_name(self.root_solver_dict, base_name)
+
     def __show_data_farming_core(
-        self, base_object: Solver | Problem, frame: ttk.Frame, row: int = 1
+        self, base_object: Solver | Problem, frame: ttk.Frame
     ) -> None:
         """Show data farming options for a solver or problem.
 
@@ -1696,16 +1419,14 @@ class NewExperimentWindow(Toplevel):
             error_msg += f" Received {base_object}."
             raise TypeError(error_msg)
 
-        base_dropdown = (
-            self.selected_problem_name.get()
-            if base_object == "Problem"
-            else self.selected_solver_name.get()
-        )
-        root_dict = (
-            self.root_problem_dict
-            if base_object == "Problem"
-            else self.root_solver_dict
-        )
+        if base_object == "Problem":
+            base_dropdown = self.selected_problem_name.get()
+            root_dict = self.root_problem_dict
+            get_unique_name = self.get_unique_problem_name
+        else:
+            base_dropdown = self.selected_solver_name.get()
+            root_dict = self.root_solver_dict
+            get_unique_name = self.get_unique_solver_name
 
         # Check to see if the user has selected a problem or solver
         if base_dropdown == "":
@@ -1714,14 +1435,15 @@ class NewExperimentWindow(Toplevel):
                 f"Please select a {base_object} from the dropdown list.",
             )
             return
+
+        # Get the design name
+        design_name = self.design_name.get()
         # Check to see if the design name already exists
-        if self.design_name.get() in root_dict:
-            # Generate a new name
-            new_name = self.get_unique_name(root_dict, self.design_name.get())
+        if design_name in root_dict:
+            # Get a unique name
+            new_name = get_unique_name(design_name)
             # Ask the user if they want to use the new name
-            prompt_text = (
-                f"A {base_object} with the name {self.design_name.get()}"
-            )
+            prompt_text = f"A {base_object} with the name {design_name}"
             prompt_text += " already exists. Would you like to use the name "
             prompt_text += f"{new_name} instead?\nNote: If you choose 'No',"
             prompt_text += " you will need to choose a different name."
@@ -1731,11 +1453,10 @@ class NewExperimentWindow(Toplevel):
             )
             if use_new_name:
                 self.design_name.set(new_name)
+                design_name = new_name
             else:
                 return
 
-        # Get the name of the design
-        design_name = self.design_name.get()
         # Get the number of stacks and the type of design
         num_stacks = self.design_num_stacks.get()
         design_type = self.design_type.get()
@@ -1779,7 +1500,8 @@ class NewExperimentWindow(Toplevel):
                 self.add_solver_to_curr_exp(design_name, [design_list])
 
             # Refresh the design name entry box
-            self.design_name.set(self.get_unique_name(root_dict, design_name))
+            unique_name = get_unique_name(design_name)
+            self.design_name.set(unique_name)
         else:
             # Create the factor settings txt file
             # Check if the folder exists, if not create it
@@ -1846,23 +1568,26 @@ class NewExperimentWindow(Toplevel):
             filename = os.path.join(
                 DATA_FARMING_DIR, f"{design_name}_design.csv"
             )
-            self.display_design_tree(
-                csv_filename=filename,
-            )
-            # Button to add the design to the experiment
-            command = (
-                self.add_problem_design_to_experiment
-                if base_object == "Problem"
-                else self.add_solver_design_to_experiment
-            )
-            self.tk_buttons["gen_design.add"] = ttk.Button(
-                master=self.tk_frames["gen_design.display"],
-                text=f"Add this {base_object} design to experiment",
-                command=command,
-            )
-            self.tk_buttons["gen_design.add"].grid(
-                row=1, column=0, sticky="nsew"
-            )
+            self._create_gen_design_frame(filename, base_object)
+
+    def _create_gen_design_frame(
+        self, filename: str, base_object: Literal["Problem", "Solver"]
+    ) -> None:
+        self.display_design_tree(
+            csv_filename=filename,
+        )
+        # Button to add the design to the experiment
+        command = (
+            self.add_problem_design_to_experiment
+            if base_object == "Problem"
+            else self.add_solver_design_to_experiment
+        )
+        self.tk_buttons["gen_design.add"] = ttk.Button(
+            master=self.tk_frames["gen_design.display"],
+            text=f"Add this {base_object} design to experiment",
+            command=command,
+        )
+        self.tk_buttons["gen_design.add"].grid(row=1, column=0, sticky="nsew")
 
     def create_solver_design(self) -> None:
         self.__create_design_core("Solver")
@@ -1879,7 +1604,15 @@ class NewExperimentWindow(Toplevel):
             master_frame = self.tk_frames["gen_design.display"]
         # Read the design table from the csv file
         design_table = pd.read_csv(csv_filename, index_col="design_num")
-        # Drop the last 3 columns from the design table since they're not needed
+        # Grab the values for 'name', 'design_type', and 'num_stacks' from the first row
+        name = design_table["name"].iloc[0]
+        design_type = design_table["design_type"].iloc[0]
+        num_stacks = design_table["num_stacks"].iloc[0]
+        # Set the name, design type, and number of stacks in the GUI
+        self.design_name.set(name)
+        self.design_type.set(design_type)
+        self.design_num_stacks.set(num_stacks)
+        # Now drop the 'name', 'design_type', and 'num_stacks' columns
         design_table.drop(
             columns=["name", "design_type", "num_stacks"], inplace=True
         )
@@ -1929,13 +1662,31 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
+    def __read_in_generated_design(self) -> pd.DataFrame:
+        # Get the design table from the treeview
+        design_table = pd.DataFrame(columns=self.design_tree["columns"])
+        for child in self.design_tree.get_children():
+            values = self.design_tree.item(child)["values"]
+            design_table.loc[child] = values
+        return design_table
+
     def add_problem_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
+        if design_name in self.root_problem_dict:
+            messagebox.showerror(
+                "Error",
+                f"The design name {design_name} is already in use. Please choose a different name.",
+            )
+            return
         selected_name = self.selected_problem_name.get()
         selected_name_short = selected_name.split(" - ")[0]
 
-        problem_holder_list = []  # holds all problem lists within design name
-        for dp in self.problem_design_list:
+        # Create the list of problems by reading the design table
+        design_table = self.__read_in_generated_design()
+        design_list = create_design_list_from_table(design_table)
+
+        problem_holder_list = []  # used so problem list matches datafarming format
+        for dp in design_list:
             problem_list = []  # holds dictionary of dps and solver name
             problem_list.append(dp)
             problem_list.append(selected_name_short)
@@ -1945,20 +1696,29 @@ class NewExperimentWindow(Toplevel):
         self.add_problem_to_curr_exp(design_name, problem_holder_list)
 
         # refresh problem design name entry box
-        self.design_name.set(
-            self.get_unique_name(self.root_problem_dict, design_name)
-        )
+        new_problem_name = self.get_unique_problem_name(design_name)
+        self.design_name.set(new_problem_name)
 
         # Hide the design tree
         self._hide_gen_design()
 
     def add_solver_design_to_experiment(self) -> None:
         design_name = self.design_name.get()
+        if design_name in self.root_solver_dict:
+            messagebox.showerror(
+                "Error",
+                f"The design name {design_name} is already in use. Please choose a different name.",
+            )
+            return
         selected_name = self.selected_solver_name.get()
         selected_name_short = selected_name.split(" - ")[0]
 
+        # Create the list of problems by reading the design table
+        design_table = self.__read_in_generated_design()
+        design_list = create_design_list_from_table(design_table)
+
         solver_holder_list = []  # used so solver list matches datafarming format
-        for dp in self.solver_design_list:
+        for dp in design_list:
             solver_list = []  # holds dictionary of dps and solver name
             solver_list.append(dp)
             solver_list.append(selected_name_short)
@@ -1968,9 +1728,8 @@ class NewExperimentWindow(Toplevel):
         self.add_solver_to_curr_exp(design_name, solver_holder_list)
 
         # refresh solver design name entry box
-        self.design_name.set(
-            self.get_unique_name(self.root_solver_dict, design_name)
-        )
+        new_solver_name = self.get_unique_solver_name(design_name)
+        self.design_name.set(new_solver_name)
 
         # Hide the design tree
         self._hide_gen_design()
@@ -2040,9 +1799,7 @@ class NewExperimentWindow(Toplevel):
 
         # get unique experiment name
         old_name = self.curr_exp_name.get()
-        self.experiment_name = self.get_unique_name(
-            self.root_experiment_dict, old_name
-        )
+        self.experiment_name = self.get_unique_experiment_name(old_name)
         self.curr_exp_name.set(self.experiment_name)
 
         # get pickle checkstate
@@ -2119,9 +1876,7 @@ class NewExperimentWindow(Toplevel):
             self.tk_canvases["curr_exp.lists.solvers"]
         )
         # Reset the experiment name
-        new_name = self.get_unique_name(
-            self.root_experiment_dict, self.DEFAULT_EXP_NAME
-        )
+        new_name = self.get_unique_experiment_name(self.DEFAULT_EXP_NAME)
         self.curr_exp_name.set(new_name)
         # Set default pickle checkstate
         self.curr_exp_is_pickled.set(self.DEFAULT_EXP_CHECK)
