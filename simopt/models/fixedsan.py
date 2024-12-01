@@ -82,7 +82,7 @@ class FixedSAN(Model):
     def check_arc_means(self):
         positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & x > 0
+            positive = positive and x > 0
         return positive
     
     def check_simulatable_factors(self):
@@ -300,8 +300,8 @@ class FixedSANLongestPath(Problem):
     def check_arc_costs(self):
         positive = True
         for x in list(self.factors["arc_costs"]):
-            positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+            positive = positive and x > 0
+        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) and positive
 
     def vector_to_factor_dict(self, vector):
         """

@@ -249,7 +249,7 @@ class IronOre(Model):
                     profit[day] = profit[day] - prod[day] * self.factors["prod_cost"]
             # If production is not currently underway...
             else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) & (stock[day] < self.factors["inven_stop"])):
+                if ((mkt_price[day] >= self.factors["price_prod"]) and (stock[day] < self.factors["inven_stop"])):
                     producing[day] = 1
                     prod[day] = min(self.factors["max_prod_perday"], self.factors["capacity"] - stock[day])
                     stock[day] = stock[day] + prod[day]

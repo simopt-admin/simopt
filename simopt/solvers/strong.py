@@ -258,7 +258,7 @@ class STRONG(Solver):
                 if (rho < eta_0) | ((g_old - g_new) <= 0) | ((r_old - r_new) <= 0):
                     # The solution fails either the RC or SR test, the center point reamins and the trust region shrinks.
                     delta_T = gamma_1 * delta_T
-                elif (eta_0 <= rho) & (rho < eta_1):
+                elif (eta_0 <= rho) and (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.
@@ -357,7 +357,7 @@ class STRONG(Solver):
                             result_solution = new_solution
                             result_x = new_x
 
-                        elif (eta_0 <= rrho) & (rrho < eta_1):
+                        elif (eta_0 <= rrho) and (rrho < eta_1):
                             # Accept the solution and remains the size of trust region.
                             result_solution = try_solution
                             result_x = try_x
@@ -375,7 +375,7 @@ class STRONG(Solver):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
-                elif (eta_0 <= rho) & (rho < eta_1):
+                elif (eta_0 <= rho) and (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.

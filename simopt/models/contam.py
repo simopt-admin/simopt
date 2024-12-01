@@ -527,7 +527,7 @@ class ContaminationTotalCostDisc(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 1)
+        return np.all(x >= 0) and np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
@@ -891,7 +891,7 @@ class ContaminationTotalCostCont(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(x >= 0) & np.all(x <= 1)
+        return np.all(x >= 0) and np.all(x <= 1)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """

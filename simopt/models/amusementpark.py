@@ -183,7 +183,7 @@ class AmusementPark(Model):
                 len(row) == len(self.factors["transition_probabilities"])
                 for row in self.factors["transition_probabilities"]
             ]
-        ) & all(
+        ) and all(
             transition_sums[i] + self.factors["depart_probabilities"][i] == 1
             for i in range(self.factors["number_attractions"])
         ):

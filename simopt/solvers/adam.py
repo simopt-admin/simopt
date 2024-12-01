@@ -113,7 +113,7 @@ class ADAM(Solver):
             raise ValueError("Beta 1 must be between 0 and 1.")
 
     def check_beta_2(self):
-        if self.factors["beta_2"] > 0 & self.factors["beta_2"] >= 1:
+        if self.factors["beta_2"] > 0 and self.factors["beta_2"] >= 1:
             raise ValueError("Beta 2 must be less than 1.")
 
     def check_alpha(self):
