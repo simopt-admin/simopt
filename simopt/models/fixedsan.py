@@ -8,10 +8,15 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+# TODO: figure out if this should ever be anything other than 13
+NUM_ARCS: Final[int] = 13
 
 
 class FixedSAN(Model):
@@ -55,7 +60,7 @@ class FixedSAN(Model):
             "num_arcs": {
                 "description": "number of arcs",
                 "datatype": int,
-                "default": 13,
+                "default": NUM_ARCS,
             },
             "num_nodes": {
                 "description": "number of nodes",
@@ -65,7 +70,7 @@ class FixedSAN(Model):
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1,) * 13,
+                "default": (1,) * NUM_ARCS,
             },
         }
         self.check_factor_list = {
@@ -308,7 +313,7 @@ class FixedSANLongestPath(Problem):
             "arc_costs": {
                 "description": "cost associated to each arc",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+                "default": (1,) * 13,
             },
         }
         self.check_factor_list = {

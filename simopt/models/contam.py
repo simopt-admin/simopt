@@ -8,10 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+NUM_STAGES: Final[int] = 5
 
 
 class Contamination(Model):
@@ -61,7 +65,7 @@ class Contamination(Model):
             "contam_rate_beta": {
                 "description": "beta parameter of beta distribution for growth rate of contamination at each stage",
                 "datatype": float,
-                "default": 17 / 3,
+                "default": round(17 / 3, 2),
             },
             "restore_rate_alpha": {
                 "description": "alpha parameter of beta distribution for rate that contamination decreases by after prevention effort",
@@ -71,7 +75,7 @@ class Contamination(Model):
             "restore_rate_beta": {
                 "description": "beta parameter of beta distribution for rate that contamination decreases by after prevention effort",
                 "datatype": float,
-                "default": 3 / 7,
+                "default": round(3 / 7, 3),
             },
             "initial_rate_alpha": {
                 "description": "alpha parameter of beta distribution for initial contamination fraction",
@@ -86,12 +90,12 @@ class Contamination(Model):
             "stages": {
                 "description": "stage of food supply chain",
                 "datatype": int,
-                "default": 5,
+                "default": NUM_STAGES,
             },
             "prev_decision": {
                 "description": "prevention decision",
                 "datatype": tuple,
-                "default": (0, 0, 0, 0, 0),
+                "default": (0,) * NUM_STAGES,
             },
         }
         self.check_factor_list = {
@@ -295,7 +299,7 @@ class ContaminationTotalCostDisc(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1),
+                "default": (1,) * NUM_STAGES,
             },
             "budget": {
                 "description": "max # of replications for a solver to take.",
@@ -305,17 +309,17 @@ class ContaminationTotalCostDisc(Problem):
             "prev_cost": {
                 "description": "cost of prevention in each stage",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1],
+                "default": [1] * NUM_STAGES,
             },
             "error_prob": {
                 "description": "allowable error probability in each stage",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2],
+                "default": [0.2] * NUM_STAGES,
             },
             "upper_thres": {
                 "description": "upper limit of amount of contamination in each stage",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1],
+                "default": [0.1] * NUM_STAGES,
             },
         }
         self.check_factor_list = {
@@ -645,7 +649,7 @@ class ContaminationTotalCostCont(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (1, 1, 1, 1, 1),
+                "default": (1,) * NUM_STAGES,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -655,17 +659,17 @@ class ContaminationTotalCostCont(Problem):
             "prev_cost": {
                 "description": "cost of prevention",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1],
+                "default": [1] * NUM_STAGES,
             },
             "error_prob": {
                 "description": "error probability",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2],
+                "default": [0.2] * NUM_STAGES,
             },
             "upper_thres": {
                 "description": "upper limit of amount of contamination",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1],
+                "default": [0.1] * NUM_STAGES,
             },
         }
         self.check_factor_list = {

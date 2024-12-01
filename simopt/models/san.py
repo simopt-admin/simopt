@@ -8,10 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+NUM_ARCS: Final[int] = 13
 
 
 class SAN(Model):
@@ -79,7 +83,7 @@ class SAN(Model):
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1,) * 13,
+                "default": (1,) * NUM_ARCS,
             },
         }
         self.check_factor_list = {
@@ -325,7 +329,7 @@ class SANLongestPath(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (8,) * 13,
+                "default": (8,) * NUM_ARCS,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -335,7 +339,7 @@ class SANLongestPath(Problem):
             "arc_costs": {
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
-                "default": (1,) * 13,
+                "default": (1,) * NUM_ARCS,
             },
         }
         self.check_factor_list = {

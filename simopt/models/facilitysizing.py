@@ -8,10 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+NUM_FACILITIES: Final[int] = 3
 
 
 class FacilitySize(Model):
@@ -51,11 +55,12 @@ class FacilitySize(Model):
         self.name = "FACSIZE"
         self.n_rngs = 1
         self.n_responses = 3
+        # TODO: change cov and capacity to scale with number of facilities
         self.specifications = {
             "mean_vec": {
                 "description": "location parameters of the multivariate normal distribution",
                 "datatype": list,
-                "default": [100, 100, 100],
+                "default": [100] * NUM_FACILITIES,
             },
             "cov": {
                 "description": "covariance of multivariate normal distribution",
@@ -74,7 +79,7 @@ class FacilitySize(Model):
             "n_fac": {
                 "description": "number of facilities",
                 "datatype": int,
-                "default": 3,
+                "default": NUM_FACILITIES,
             },
         }
         self.check_factor_list = {
@@ -272,7 +277,7 @@ class FacilitySizingTotalCost(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (300, 300, 300),
+                "default": (300,) * NUM_FACILITIES,
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -282,7 +287,7 @@ class FacilitySizingTotalCost(Problem):
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
-                "default": (1, 1, 1),
+                "default": (1,) * NUM_FACILITIES,
             },
             "epsilon": {
                 "description": "Maximum allowed probability of stocking out.",
@@ -623,7 +628,7 @@ class FacilitySizingMaxService(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (100, 100, 100),
+                "default": (100,) * NUM_FACILITIES,
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -633,7 +638,7 @@ class FacilitySizingMaxService(Problem):
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",
                 "datatype": tuple,
-                "default": (1, 1, 1),
+                "default": (1,) * NUM_FACILITIES,
             },
             "installation_budget": {
                 "description": "Total budget for installation costs.",

@@ -7,12 +7,15 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import math as math
-from typing import Any
+from typing import Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+PARK_CAPACITY: Final[int] = 350
+NUM_ATTRACTIONS: Final[int] = 7
 
 
 class AmusementPark(Model):
@@ -58,18 +61,19 @@ class AmusementPark(Model):
         self.n_rngs = 3
         self.n_responses = 4
         self.factors = fixed_factors
+        # TODO: update transition_probabilities to scale with number of attractions
         self.specifications = {
             "park_capacity": {
                 "description": "The total number of tourists waiting for \
                                 attractions that can be maintained through \
                                 park facilities, distributed across the attractions.",
                 "datatype": int,
-                "default": 350,
+                "default": PARK_CAPACITY,
             },
             "number_attractions": {
                 "description": "The number of attractions in the park.",
                 "datatype": int,
-                "default": 7,
+                "default": NUM_ATTRACTIONS,
             },
             "time_open": {
                 "description": "The number of minutes per day the park is open.",
@@ -80,31 +84,31 @@ class AmusementPark(Model):
                 "description": "The shape parameter of the Erlang distribution for each attraction"
                 "duration.",
                 "datatype": list,
-                "default": [2, 2, 2, 2, 2, 2, 2],
+                "default": [2] * NUM_ATTRACTIONS,
             },
             "erlang_scale": {
                 "description": "The rate parameter of the Erlang distribution for each attraction"
                 "duration.",
                 "datatype": list,
-                "default": [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9],
+                "default": [1 / 9] * NUM_ATTRACTIONS,
             },
             "queue_capacities": {
                 "description": "The capacity of the queue for each attraction \
                                 based on the portion of facilities allocated.",
                 "datatype": list,
-                "default": [50, 50, 50, 50, 50, 50, 50],
+                "default": [50] * NUM_ATTRACTIONS,
             },
             "depart_probabilities": {
                 "description": "The probability that a tourist will depart the \
                                 park after visiting an attraction.",
                 "datatype": list,
-                "default": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+                "default": [0.2] * NUM_ATTRACTIONS,
             },
             "arrival_gammas": {
                 "description": "The gamma values for the poisson distributions dictating the rates at which \
                                 tourists entering the park arrive at each attraction",
                 "datatype": list,
-                "default": [1, 1, 1, 1, 1, 1, 1],
+                "default": [1] * NUM_ATTRACTIONS,
             },
             "transition_probabilities": {
                 "description": "The transition matrix that describes the probability \
@@ -528,7 +532,8 @@ class AmusementParkMinDepart(Problem):
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (344, 1, 1, 1, 1, 1, 1),
+                "default": (PARK_CAPACITY - NUM_ATTRACTIONS + 1,)
+                + (1,) * (NUM_ATTRACTIONS - 1),
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
@@ -552,7 +557,7 @@ class AmusementParkMinDepart(Problem):
             for _ in range(self.model.factors["number_attractions"])
         )
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict[str, Any]:
+    def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:
         """Convert a vector of variables to a dictionary with factor keys.
 
         Parameters
@@ -562,7 +567,7 @@ class AmusementParkMinDepart(Problem):
 
         Returns
         -------
-        dict[str, Any]
+        dict[str, tuple]
             dictionary with factor keys and associated values
 
         """

@@ -8,10 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model, Problem
+
+NUM_NETWORKS: Final = 10
 
 
 class Network(Model):
@@ -54,54 +58,32 @@ class Network(Model):
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+                "default": [0.1] * NUM_NETWORKS,
             },
             "cost_process": {
                 "description": "message processing cost of network i",
                 "datatype": list,
-                "default": [
-                    1,
-                    1 / 2,
-                    1 / 3,
-                    1 / 4,
-                    1 / 5,
-                    1 / 6,
-                    1 / 7,
-                    1 / 8,
-                    1 / 9,
-                    1 / 10,
-                ],
+                "default": [0.1 / (x + 1) for x in range(NUM_NETWORKS)],
             },
             "cost_time": {
                 "description": "cost for the length of time a message spends in a network i per each unit of time",
                 "datatype": list,
-                "default": [
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                    0.005,
-                ],
+                "default": [0.005] * NUM_NETWORKS,
             },
             "mode_transit_time": {
                 "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
-                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "default": [x + 1 for x in range(NUM_NETWORKS)],
             },
             "lower_limits_transit_time": {
                 "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5],
+                "default": [0.5 + x for x in range(NUM_NETWORKS)],
             },
             "upper_limits_transit_time": {
                 "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5],
+                "default": [1.5 + x for x in range(NUM_NETWORKS)],
             },
             "arrival_rate": {
                 "description": "arrival rate of messages following a Poisson process",
@@ -116,7 +98,7 @@ class Network(Model):
             "n_networks": {
                 "description": "number of networks",
                 "datatype": int,
-                "default": 10,
+                "default": NUM_NETWORKS,
             },
         }
 
@@ -413,7 +395,7 @@ class NetworkMinTotalCost(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
+                "default": (0.1,) * NUM_NETWORKS,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
