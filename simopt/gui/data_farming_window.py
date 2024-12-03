@@ -426,7 +426,11 @@ class DataFarmingWindow(Toplevel):
                 width=20,
             )
             self.create_design_button.grid(row=0, column=4)
-
+            
+            if all((self.model_object.specifications[factor].get("isDatafarmable") is False) or  
+                   (self.model_object.specifications[factor].get("datatype") in (list, tuple)) for factor in self.model_object.specifications):
+                self.create_design_button.config(state="disabled")
+               
         # Modify and continue design button for loaded designs
         if self.loaded_design:
             self.mod_design_button = tk.Button(
