@@ -1164,23 +1164,23 @@ class NewExperimentWindow(Toplevel):
                 "The file selected is not a valid experiment file. Please select a different file.",
             )
             return
-        
+
         # Grab the name from the experiment
-        name = experiment.experiment_name
+        loaded_name = experiment.experiment_name
 
         # Get a unique name for the experiment
-        experiment_name = self.get_unique_experiment_name(name)
+        unique_name = self.get_unique_experiment_name(loaded_name)
         # If the name already exists, make the user change it
-        if experiment_name != name:
-            msg = f"The experiment name '{name}' already exists."
-            msg += f" Would you like to rename the experiment to '{experiment_name}'?"
+        if unique_name != loaded_name:
+            msg = f"The experiment name '{loaded_name}' already exists."
+            msg += f" Would you like to rename the experiment to '{unique_name}'?"
             msg += "\n\nIf you select 'No', the experiment will not be added."
             response = messagebox.askyesno("Name Conflict", msg)
             if not response:
                 return
 
-        self.root_experiment_dict[experiment_name] = experiment
-        self.add_exp_row(experiment_name)
+        self.root_experiment_dict[unique_name] = experiment
+        self.add_exp_row(unique_name)
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
