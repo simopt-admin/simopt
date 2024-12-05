@@ -2048,6 +2048,31 @@ class NewExperimentWindow(Toplevel):
             experiment = self.root_experiment_dict[experiment_name]
             # Loop through the problems and solvers and combine any that were
             # datafarmed
+            problem_dict: dict[str, list[list]] = {}
+            for problem in experiment.problems:
+                assert isinstance(problem, Problem)
+                # Create the list of factors in the right format
+                problem_factors = problem.factors
+                model_factors = problem.model.factors
+                factors = {**problem_factors, **model_factors}
+                # Reverse lookup the string for the class in the dictionary
+                key = None
+                for key, value in problem_directory.items():
+                    if value == problem.__class__:
+                        name = key
+                        break
+                factor_list = [factors, key]
+                # Check for datafarming
+                if "_dp_" in problem.name:
+                    name = problem.name.split("_dp_")[0]
+                else:
+                    name = problem.name
+                # If the name is already in the dictionary, append the factors
+                if name in problem_dict:
+                    problem_dict[name].append(factor_list)
+                # Otherwise, create a new entry
+                else:
+                    problem_dict[name] = [factor_list]
             solver_dict: dict[str, list[list]] = {}
             for solver in experiment.solvers:
                 assert isinstance(solver, Solver)
@@ -2073,6 +2098,8 @@ class NewExperimentWindow(Toplevel):
                     solver_dict[name] = [factor_list]
 
             # Add the problems and solvers to the GUI
+            for name, factors in problem_dict.items():
+                self.add_problem_to_curr_exp(name, factors)
             for name, factors in solver_dict.items():
                 self.add_solver_to_curr_exp(name, factors)
 
@@ -2133,12 +2160,12 @@ class NewExperimentWindow(Toplevel):
         )
 
         # View the experiment
-        self.tk_buttons[opt_bttn_name] = ttk.Button(
+        self.tk_buttons[view_bttn_name] = ttk.Button(
             master=list_frame,
             text="View",
             command=lambda name=experiment_name: view(name),
         )
-        self.tk_buttons[opt_bttn_name].grid(
+        self.tk_buttons[view_bttn_name].grid(
             row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
         )
 
