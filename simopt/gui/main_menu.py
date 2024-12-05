@@ -31,23 +31,12 @@ class MainMenuWindow(Toplevel):
         self.menu_frame.pack(anchor="center", expand=True)
 
         # Create new style for the labels and buttons
-        header_font = nametofont("TkHeadingFont").copy()
-        header_font_size = header_font.cget("size")
-        scaled_header_font_size = int(header_font_size * FONT_SCALE)
-        header_font.configure(size=scaled_header_font_size)
+        self.set_main_menu_style_changes()
 
-        option_font = nametofont("TkTextFont").copy()
-        option_font_size = option_font.cget("size")
-        scaled_option_font_size = int(option_font_size * FONT_SCALE)
-        option_font.configure(size=scaled_option_font_size)
-        self.style.configure("TButton", font=option_font)
-        button_padding = scaled_option_font_size
-
-        self.title_label = tk.Label(
+        self.title_label = ttk.Label(
             master=self.menu_frame,
             text="Welcome to SimOpt Library Graphic User Interface",
             justify="center",
-            font=header_font,
         )
         self.title_label.grid(row=0, column=0, pady=10, sticky="nsew")
 
@@ -67,8 +56,8 @@ class MainMenuWindow(Toplevel):
             column=0,
             pady=10,
             sticky="nsew",
-            ipadx=button_padding,
-            ipady=button_padding,
+            ipadx=20,
+            ipady=20,
         )
 
         # Button to open new experiment window
@@ -82,17 +71,37 @@ class MainMenuWindow(Toplevel):
             column=0,
             pady=10,
             sticky="nsew",
-            ipadx=button_padding,
-            ipady=button_padding,
+            ipadx=20,
+            ipady=20,
         )
+
+    def set_main_menu_style_changes(self) -> None:
+        self.header_font = nametofont("TkHeadingFont").copy()
+        header_font_size = self.header_font.cget("size")
+        scaled_header_font_size = int(header_font_size * FONT_SCALE)
+        self.header_font.configure(size=scaled_header_font_size)
+        self.style.configure("TLabel", font=self.header_font)
+
+        self.option_font = nametofont("TkTextFont").copy()
+        option_font_size = self.option_font.cget("size")
+        scaled_option_font_size = int(option_font_size * FONT_SCALE)
+        self.option_font.configure(size=scaled_option_font_size)
+        self.style.configure("TButton", font=self.option_font)
+
+    def reset_main_menu_style_changes(self) -> None:
+        """Reset the style of the buttons."""
+        self.style.configure("TLabel", font=nametofont("TkTextFont"))
+        self.style.configure("TButton", font=nametofont("TkTextFont"))
 
     def open_model_datafarming(self) -> None:
         """Open the model data farming window."""
+        self.reset_main_menu_style_changes()
         DataFarmingWindow(self.root)
         # Configure the exit button to close the window and close the menu
         self.destroy()
 
     def open_new_experiment(self) -> None:
+        self.reset_main_menu_style_changes()
         """Open the new experiment window."""
         NewExperimentWindow(self.root)
         # Configure the exit button to close the window and close the menu
