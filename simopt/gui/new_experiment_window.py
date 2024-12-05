@@ -1173,14 +1173,16 @@ class NewExperimentWindow(Toplevel):
         # If the name already exists, make the user change it
         if unique_name != loaded_name:
             msg = f"The experiment name '{loaded_name}' already exists."
-            msg += f" Would you like to rename the experiment to '{unique_name}'?"
+            msg += (
+                f" Would you like to rename the experiment to '{unique_name}'?"
+            )
             msg += "\n\nIf you select 'No', the experiment will not be added."
             response = messagebox.askyesno("Name Conflict", msg)
             if not response:
                 return
 
         self.root_experiment_dict[unique_name] = experiment
-        self.add_exp_row(unique_name)
+        self.add_exp_row(unique_name, is_imported=True)
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1838,7 +1840,9 @@ class NewExperimentWindow(Toplevel):
         # If the name already exists, make the user change it
         if unique_name != entered_name:
             msg = f"The experiment name '{entered_name}' already exists."
-            msg += f" Would you like to rename the experiment to '{unique_name}'?"
+            msg += (
+                f" Would you like to rename the experiment to '{unique_name}'?"
+            )
             msg += "\n\nIf you select 'No', the experiment will not be added."
             response = messagebox.askyesno("Name Conflict", msg)
             if not response:
@@ -1929,17 +1933,29 @@ class NewExperimentWindow(Toplevel):
         self.__update_problem_dropdown()
         self.__update_solver_dropdown()
 
-    def add_exp_row(self, experiment_name: str) -> None:
+    def add_exp_row(self, experiment_name: str, is_imported: bool = False) -> None:
         """Display experiment in list."""
         list_frame = self.tk_frames["exps.list_canvas.list"]
         row_idx = list_frame.grid_size()[1]
 
         # Format:
         # (past_tense, present_tense, future_tense, function)
-        bttn_text_steps: Final[list[tuple[str, str, str, Callable[[str], None]]]] = [
+        bttn_text_steps: Final[
+            list[tuple[str, str, str, Callable[[str], None]]]
+        ] = [
             ("Run", "Running", "Ran", self.run_experiment),
-            ("Post-Replicate", "Post-Replicating", "Post-Replicated", self.post_process),
-            ("Post-Normalize", "Post-Normalizing", "Post-Normalized", self.post_normalize),
+            (
+                "Post-Replicate",
+                "Post-Replicating",
+                "Post-Replicated",
+                self.post_process,
+            ),
+            (
+                "Post-Normalize",
+                "Post-Normalizing",
+                "Post-Normalized",
+                self.post_normalize,
+            ),
             ("Log Results", "Logging", "Logged", self.log_results),
         ]
 
@@ -1973,7 +1989,9 @@ class NewExperimentWindow(Toplevel):
 
         def action(name: str, step: int = 0) -> bool:
             # Lookup all the verbage for the current step
-            past_tense, present_tense, future_tense, function = bttn_text_steps[step]
+            past_tense, present_tense, future_tense, function = bttn_text_steps[
+                step
+            ]
             # Get the buttons and update them for the current step
             action_button = self.tk_buttons[action_bttn_name]
             all_button = self.tk_buttons[all_bttn_name]
@@ -1985,15 +2003,15 @@ class NewExperimentWindow(Toplevel):
                 function(name)
                 # Set the name to include the updated status
                 name_label = self.tk_labels[lbl_name]
-                name_label.configure(
-                    text=name + "\n(" + future_tense + ")"
-                )
+                name_label.configure(text=name + "\n(" + future_tense + ")")
                 # If there are more steps, setup the next step
                 if step < len(bttn_text_steps) - 1:
                     # Figure out what the next step is
                     next_past_tense, _, _, _ = bttn_text_steps[step + 1]
                     action_button.configure(
-                        text=next_past_tense, state="normal", command=lambda: action(name, step + 1)
+                        text=next_past_tense,
+                        state="normal",
+                        command=lambda: action(name, step + 1),
                     )
                     all_button.configure(state="normal")
                 else:
@@ -2006,7 +2024,7 @@ class NewExperimentWindow(Toplevel):
                 action_button.configure(text=past_tense, state="normal")
                 all_button.configure(state="normal")
                 return False
-        
+
         def all_actions(name: str) -> None:
             for step in range(len(bttn_text_steps)):
                 if not action(name, step):
@@ -2024,7 +2042,7 @@ class NewExperimentWindow(Toplevel):
                     del self.tk_buttons[name]
             del self.root_experiment_dict[experiment_name]
 
-        # Setup initial action button state
+        # Action button (changes based on step)
         self.tk_buttons[action_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run,
@@ -2033,8 +2051,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[action_bttn_name].grid(
             row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
         )
-
-        # all in one
+        # All button (complete all remaining steps)
         self.tk_buttons[all_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run_all,
@@ -2043,7 +2060,17 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[all_bttn_name].grid(
             row=row_idx, column=2, padx=5, pady=5, sticky="nsew"
         )
-        # experiment options button
+
+        # If the experiment was loaded, assume it's already completed
+        if is_imported:
+            name_label = self.tk_labels[lbl_name]
+            action_button = self.tk_buttons[action_bttn_name]
+            all_button = self.tk_buttons[all_bttn_name]
+            name_label.configure(text=experiment_name + "\n(Imported)")
+            action_button.configure(text="Done", state="disabled")
+            all_button.configure(state="disabled")
+
+        # Open the options window
         self.tk_buttons[opt_bttn_name] = ttk.Button(
             master=list_frame,
             text="Options",
@@ -2054,7 +2081,8 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[opt_bttn_name].grid(
             row=row_idx, column=3, padx=5, pady=5, sticky="nsew"
         )
-        # delete experiment
+
+        # Delete the experiment
         self.tk_buttons[del_bttn_name] = ttk.Button(
             master=list_frame,
             text="Delete",
