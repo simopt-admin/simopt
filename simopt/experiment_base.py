@@ -553,7 +553,6 @@ def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
     return max_diff
 
 
-# TODO: investigate all_est_objective's numpy array [numpy array] typing
 class ProblemSolver:
     """Base class for running one solver on one problem.
 

@@ -1833,9 +1833,16 @@ class NewExperimentWindow(Toplevel):
             return
 
         # get unique experiment name
-        old_name = self.curr_exp_name.get()
-        self.experiment_name = self.get_unique_experiment_name(old_name)
-        self.curr_exp_name.set(self.experiment_name)
+        entered_name = self.curr_exp_name.get()
+        unique_name = self.get_unique_experiment_name(entered_name)
+        # If the name already exists, make the user change it
+        if unique_name != entered_name:
+            msg = f"The experiment name '{entered_name}' already exists."
+            msg += f" Would you like to rename the experiment to '{unique_name}'?"
+            msg += "\n\nIf you select 'No', the experiment will not be added."
+            response = messagebox.askyesno("Name Conflict", msg)
+            if not response:
+                return
 
         # get pickle checkstate
         pickle_checkstate = self.curr_exp_is_pickled.get()
@@ -1883,7 +1890,7 @@ class NewExperimentWindow(Toplevel):
             problem_names=master_problem_name_list,
             solver_renames=solver_renames,
             problem_renames=problem_renames,
-            experiment_name=self.experiment_name,
+            experiment_name=unique_name,
             create_pair_pickles=pickle_checkstate,
         )
 
@@ -1891,10 +1898,10 @@ class NewExperimentWindow(Toplevel):
         experiment.check_compatibility()
 
         # add to master experiment list
-        self.root_experiment_dict[self.experiment_name] = experiment
+        self.root_experiment_dict[unique_name] = experiment
 
         # add exp to row
-        self.add_exp_row(self.experiment_name)
+        self.add_exp_row(unique_name)
 
         # Clear the current experiment
         self.clear_experiment()
@@ -1927,14 +1934,14 @@ class NewExperimentWindow(Toplevel):
         list_frame = self.tk_frames["exps.list_canvas.list"]
         row_idx = list_frame.grid_size()[1]
 
-        # Create text for each step
-        # TODO: make these characteristics of the experiment object instead of
-        # hardcoding them here
-        name_text_step_0: Final[str] = experiment_name + "\n(Initialized)"
-        name_text_step_1: Final[str] = experiment_name + "\n(Ran)"
-        name_text_step_2: Final[str] = experiment_name + "\n(Post-Replicated)"
-        name_text_step_3: Final[str] = experiment_name + "\n(Post-Normalized)"
-        name_text_step_4: Final[str] = experiment_name + "\n(Logged)"
+        # Format:
+        # (past_tense, present_tense, future_tense, function)
+        bttn_text_steps: Final[list[tuple[str, str, str, Callable[[str], None]]]] = [
+            ("Run", "Running", "Ran", self.run_experiment),
+            ("Post-Replicate", "Post-Replicating", "Post-Replicated", self.post_process),
+            ("Post-Normalize", "Post-Normalizing", "Post-Normalized", self.post_normalize),
+            ("Log Results", "Logging", "Logged", self.log_results),
+        ]
 
         name_base: Final[str] = "exp." + experiment_name
         lbl_name: Final[str] = name_base + ".name"
@@ -1953,7 +1960,7 @@ class NewExperimentWindow(Toplevel):
 
         self.tk_labels[lbl_name] = ttk.Label(
             master=list_frame,
-            text=name_text_step_0,
+            text=experiment_name + "\n(Initialized)",
             justify="center",
             anchor="center",
         )
@@ -1963,102 +1970,47 @@ class NewExperimentWindow(Toplevel):
 
         bttn_text_run_all = "Run All\nRemaining Steps"
         bttn_text_run = "Run\nExperiment"
-        bttn_text_running = "Running..."
-        bttn_text_post_process = "Post-Replicate"
-        bttn_text_post_processing = "Post-Replicating..."
-        bttn_text_post_norm = "Post-Normalize"
-        bttn_text_post_normalizing = "Post-Normalizing..."
-        bttn_text_log = "Log\nResults"
-        bttn_text_logging = "Logging..."
-        bttn_text_done = "Done"
 
-        def exp_run(name: str) -> bool:
+        def action(name: str, step: int = 0) -> bool:
+            # Lookup all the verbage for the current step
+            past_tense, present_tense, future_tense, function = bttn_text_steps[step]
+            # Get the buttons and update them for the current step
             action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_running, state="disabled")
+            all_button = self.tk_buttons[all_bttn_name]
+            action_button.configure(text=present_tense, state="disabled")
+            all_button.configure(state="disabled")
             self.update()
+            # Run the function
             try:
-                self.run_experiment(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_post_process,
-                    state="normal",
-                    command=lambda name=name: exp_post_process(name),
+                function(name)
+                # Set the name to include the updated status
+                name_label = self.tk_labels[lbl_name]
+                name_label.configure(
+                    text=name + "\n(" + future_tense + ")"
                 )
-                self.tk_labels[lbl_name].configure(text=name_text_step_1)
+                # If there are more steps, setup the next step
+                if step < len(bttn_text_steps) - 1:
+                    # Figure out what the next step is
+                    next_past_tense, _, _, _ = bttn_text_steps[step + 1]
+                    action_button.configure(
+                        text=next_past_tense, state="normal", command=lambda: action(name, step + 1)
+                    )
+                    all_button.configure(state="normal")
+                else:
+                    action_button.configure(text="Done")
                 return True
+
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_run, state="normal")
+                # Set the button text back to past tense and reactivate buttons
+                action_button.configure(text=past_tense, state="normal")
+                all_button.configure(state="normal")
                 return False
-
-        def exp_post_process(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(
-                text=bttn_text_post_processing, state="disabled"
-            )
-            self.update()
-            try:
-                self.post_process(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_post_norm,
-                    state="normal",
-                    command=lambda name=name: exp_post_norm(name),
-                )
-                self.tk_labels[lbl_name].configure(text=name_text_step_2)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(
-                    text=bttn_text_post_process, state="normal"
-                )
-                return False
-
-        def exp_post_norm(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(
-                text=bttn_text_post_normalizing, state="disabled"
-            )
-            self.update()
-            try:
-                self.post_normalize(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_log,
-                    state="normal",
-                    command=lambda name=name: exp_log(name),
-                )
-                self.tk_labels[lbl_name].configure(text=name_text_step_3)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(
-                    text=bttn_text_post_norm, state="normal"
-                )
-                return False
-
-        def exp_log(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_logging, state="disabled")
-            self.update()
-            try:
-                self.log_results(experiment_name=name)
-                action_button.configure(text=bttn_text_done, state="disabled")
-                self.tk_buttons[all_bttn_name].configure(state="disabled")
-                self.tk_labels[lbl_name].configure(text=name_text_step_4)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_log, state="normal")
-                return False
-
-        def exp_all(name: str) -> None:
-            self.tk_buttons[all_bttn_name].configure(state="disabled")
-            if (
-                not exp_run(name)
-                or not exp_post_process(name)
-                or not exp_post_norm(name)
-                or not exp_log(name)
-            ):
-                # We already printed the error message in the individual steps
-                self.tk_buttons[all_bttn_name].configure(state="normal")
+        
+        def all_actions(name: str) -> None:
+            for step in range(len(bttn_text_steps)):
+                if not action(name, step):
+                    break
 
         def delete_experiment(experiment_name: str) -> None:
             for name in tk_names:
@@ -2076,7 +2028,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[action_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run,
-            command=lambda name=experiment_name: exp_run(name),
+            command=lambda name=experiment_name: action(name),
         )
         self.tk_buttons[action_bttn_name].grid(
             row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
@@ -2086,7 +2038,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[all_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run_all,
-            command=lambda name=experiment_name: exp_all(name),
+            command=lambda name=experiment_name: all_actions(name),
         )
         self.tk_buttons[all_bttn_name].grid(
             row=row_idx, column=2, padx=5, pady=5, sticky="nsew"
