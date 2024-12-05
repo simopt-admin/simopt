@@ -2923,6 +2923,9 @@ class NewExperimentWindow(Toplevel):
                 frame.grid(row=current_row - 1, column=0)
 
     def run_experiment(self, experiment_name: str) -> None:
+        
+        self.experiment_defaults_button.config(state="disable")
+        
         # get experiment object from master dict
         experiment = self.root_experiment_dict[experiment_name]
 
@@ -3009,6 +3012,7 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
+        self.crn_budget_var.set("yes")
         self.crn_budget_opt.grid(row=3, column=1)
 
         # CRN across macroreps
@@ -3025,6 +3029,7 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
+        self.crn_macro_var.set("yes")
         self.crn_macro_opt.grid(row=4, column=1)
 
         # Post reps at inital & optimal solution input
@@ -3057,6 +3062,7 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
+        self.crn_init_var.set("yes")
         self.crn_init_opt.grid(row=6, column=1)
 
         # solve tols
