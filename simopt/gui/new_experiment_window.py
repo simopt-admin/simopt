@@ -57,20 +57,34 @@ class NewExperimentWindow(Toplevel):
         # the GUI
         self.design_types: Final[list[str]] = ["nolhs"]
 
-        # master list variables
-        self.root_solver_dict = {}  # for each name of solver or solver design has list that includes: [[solver factors], solver name]
-        self.root_problem_dict = {}  # for each name of solver or solver design has list that includes: [[problem factors], [model factors], problem name]
-        self.root_experiment_dict = {}  # dictionary of experiment name and related solver/problem lists (solver_factor_list, problem_factor_list, solver_name_list, problem_name_list)
-        self.macro_reps = {}  # dict that contains user specified macroreps for each experiment
-        self.post_reps = {}  # dict that contains user specified postrep numbers for each experiment
-        self.init_post_reps = {}  # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
-        self.crn_budgets = {}  # contains bool val for if crn is used across budget for each experiment
-        self.crn_macros = {}  # contains bool val for if crn is used across macroreps for each experiment
-        self.crn_inits = {}  # contains bool val for if crn is used across initial and optimal solution for each experiment
-        self.solve_tols = {}  # solver tolerance gaps for each experiment (inserted as list)
+        # Dictionary to store all the experiments in the GUI
+        self.root_experiment_dict: dict[str, ProblemsSolvers] = {}
+        # Dictionary to store all the problems and solvers for the current experiment
+        # for each name of solver or solver design has list that
+        # includes: [[solver factors], solver name]
+        self.root_solver_dict: dict[str, list[list]] = {}
+        # for each name of solver or solver design has list that
+        # includes: [[problem factors], [model factors], problem name]
+        self.root_problem_dict: dict[str, list[list]] = {}
 
-        # widget lists for enable/delete functions
-        self.macro_vars = []  # list used for updated macro entries when default is changed
+        # Dictionaries to keep track of custom settings for each experiment
+        # If a custom setting is not found (not in the dictionary), the default
+        # setting is used
+        # dict that contains user specified macroreps for each experiment
+        self.custom_macro_reps: dict[str, tk.IntVar] = {}
+        # dict that contains user specified postrep numbers for each experiment
+        self.custom_post_reps: dict[str, tk.IntVar] = {}
+        # dict that contains number of postreps to take at initial & optimal solution for normalization for each experiment
+        self.custom_init_post_reps: dict[str, tk.IntVar] = {}
+        # contains bool val for if crn is used across budget for each experiment
+        self.custom_crn_budgets: dict[str, tk.StringVar] = {}
+        # contains bool val for if crn is used across macroreps for each experiment
+        self.custom_crn_macros: dict[str, tk.StringVar] = {}
+        # contains bool val for if crn is used across initial and optimal solution for each experiment
+        self.custom_crn_inits: dict[str, tk.StringVar] = {}
+        # solver tolerance gaps for each experiment (inserted as list)
+        # TODO: add checks to ensure that solve_tol lists are always 4 long
+        self.custom_solve_tols: dict[str, list[tk.StringVar]] = {}
 
         # Default experiment options (can be changed in GUI)
         self.macro_default = 10
@@ -95,12 +109,7 @@ class NewExperimentWindow(Toplevel):
             f"{solver().name} - {key}": solver
             for key, solver in solver_unabbreviated_directory.items()
         }
-        # TODO: replace root lists/dicts with more descriptive names
-        # All exp variables
-        # self.all_exp_problems = []
         # Current exp variables
-        # self.current_exp_problems = []
-        # self.current_exp_solvers = []
         self.curr_exp_name = tk.StringVar()
         self.curr_exp_name.set(self.DEFAULT_EXP_NAME)
         self.curr_exp_is_pickled = tk.BooleanVar()
@@ -675,14 +684,14 @@ class NewExperimentWindow(Toplevel):
         )
 
     def add_problem_to_curr_exp(
-        self, unique_name: str, problem_list: list
+        self, unique_name: str, problem_list: list[list]
     ) -> None:
         self.root_problem_dict[unique_name] = problem_list
         self.add_problem_to_curr_exp_list(unique_name)
         self.__update_solver_dropdown()
 
     def add_solver_to_curr_exp(
-        self, unique_name: str, solver_list: list
+        self, unique_name: str, solver_list: list[list]
     ) -> None:
         self.root_solver_dict[unique_name] = solver_list
         self.add_solver_to_curr_exp_list(unique_name)
@@ -2185,8 +2194,8 @@ class NewExperimentWindow(Toplevel):
         experiment = self.root_experiment_dict[experiment_name]
 
         # get specified number of macro reps
-        if experiment_name in self.macro_reps:
-            n_macroreps = int(self.macro_reps[experiment_name].get())
+        if experiment_name in self.custom_macro_reps:
+            n_macroreps = int(self.custom_macro_reps[experiment_name].get())
         else:
             n_macroreps = self.macro_default
         # use ProblemsSolvers run
@@ -2394,19 +2403,18 @@ class NewExperimentWindow(Toplevel):
             solve_tol_4,
         ]
 
-        # update macro entry widgets
-        for var in self.macro_vars:
-            var.set(self.macro_default)
-
     # Functionally the same as the below function, but for boolean values
     def _find_option_setting_bool(
         self,
         exp_name: str,
-        search_dict: dict[str, tk.BooleanVar],
+        search_dict: dict[str, tk.StringVar],
         default_val: bool,
     ) -> bool:
         if exp_name in search_dict:
-            return search_dict[exp_name].get()
+            value = search_dict[exp_name].get()
+            true_vals = ["yes", "true", "1"]
+            is_true = value.lower() in true_vals
+            return is_true
         return default_val
 
     # Functionally the same as the above function, but for integers
@@ -2423,26 +2431,26 @@ class NewExperimentWindow(Toplevel):
     def open_post_processing_window(self, experiment_name: str) -> None:
         # check if options have already been set
         n_macroreps: int = self._find_option_setting_int(
-            experiment_name, self.macro_reps, self.macro_default
+            experiment_name, self.custom_macro_reps, self.macro_default
         )
         n_postreps: int = self._find_option_setting_int(
-            experiment_name, self.post_reps, self.post_default
+            experiment_name, self.custom_post_reps, self.post_default
         )
         crn_budget = self._find_option_setting_bool(
-            experiment_name, self.crn_budgets, self.crn_budget_default
+            experiment_name, self.custom_crn_budgets, self.crn_budget_default
         )
         crn_macro = self._find_option_setting_bool(
-            experiment_name, self.crn_macros, self.crn_macro_default
+            experiment_name, self.custom_crn_macros, self.crn_macro_default
         )
         n_initreps = self._find_option_setting_int(
-            experiment_name, self.init_post_reps, self.init_default
+            experiment_name, self.custom_init_post_reps, self.init_default
         )
         crn_init = self._find_option_setting_bool(
-            experiment_name, self.crn_inits, self.crn_init_default
+            experiment_name, self.custom_crn_inits, self.crn_init_default
         )
-        if experiment_name in self.solve_tols:
+        if experiment_name in self.custom_solve_tols:
             solve_tols = []
-            for tol in self.solve_tols[experiment_name]:
+            for tol in self.custom_solve_tols[experiment_name]:
                 solve_tols.append(tol.get())
         else:
             solve_tols = self.solve_tols_default
@@ -2609,18 +2617,18 @@ class NewExperimentWindow(Toplevel):
 
     def save_experiment_options(self, experiment_name: str) -> None:
         # get user specified values and save to dictionaries
-        self.post_reps[experiment_name] = self.post_rep_var
-        self.init_post_reps[experiment_name] = self.init_post_rep_var
+        self.custom_post_reps[experiment_name] = self.post_rep_var
+        self.custom_init_post_reps[experiment_name] = self.init_post_rep_var
 
-        self.crn_budgets[experiment_name] = self.crn_budget_var
+        self.custom_crn_budgets[experiment_name] = self.crn_budget_var
 
-        self.macro_reps[experiment_name] = self.macro_rep_var
+        self.custom_macro_reps[experiment_name] = self.macro_rep_var
 
-        self.crn_macros[experiment_name] = self.crn_macro_var
+        self.custom_crn_macros[experiment_name] = self.crn_macro_var
 
-        self.crn_inits[experiment_name] = self.crn_init_var
+        self.custom_crn_inits[experiment_name] = self.crn_init_var
 
-        self.solve_tols[experiment_name] = [
+        self.custom_solve_tols[experiment_name] = [
             self.solve_tol_1_var,
             self.solve_tol_2_var,
             self.solve_tol_3_var,
@@ -2632,12 +2640,12 @@ class NewExperimentWindow(Toplevel):
         experiment = self.root_experiment_dict[experiment_name]
 
         # get user specified options
-        if experiment_name in self.post_reps:
-            post_reps = self.post_reps[experiment_name].get()
+        if experiment_name in self.custom_post_reps:
+            post_reps = self.custom_post_reps[experiment_name].get()
         else:
             post_reps = self.post_default
-        if experiment_name in self.crn_budgets:
-            crn_budget_str = self.crn_budgets[experiment_name].get()
+        if experiment_name in self.custom_crn_budgets:
+            crn_budget_str = self.custom_crn_budgets[experiment_name].get()
             if crn_budget_str == "yes":
                 crn_budget = True
             else:
@@ -2649,8 +2657,8 @@ class NewExperimentWindow(Toplevel):
         else:
             crn_budget = False
 
-        if experiment_name in self.crn_macros:
-            crn_macro_str = self.crn_macros[experiment_name].get()
+        if experiment_name in self.custom_crn_macros:
+            crn_macro_str = self.custom_crn_macros[experiment_name].get()
             if crn_macro_str == "yes":
                 crn_macro = True
             else:
@@ -2670,12 +2678,12 @@ class NewExperimentWindow(Toplevel):
         experiment = self.root_experiment_dict[experiment_name]
 
         # get user specified options
-        if experiment_name in self.init_post_reps:
-            reps = self.init_post_reps[experiment_name].get()
+        if experiment_name in self.custom_init_post_reps:
+            reps = self.custom_init_post_reps[experiment_name].get()
         else:
             reps = self.init_default
-        if experiment_name in self.crn_inits:
-            crn_str = self.crn_inits[experiment_name].get()
+        if experiment_name in self.custom_crn_inits:
+            crn_str = self.custom_crn_inits[experiment_name].get()
             if crn_str == "yes":
                 crn = True
             else:
@@ -2693,11 +2701,11 @@ class NewExperimentWindow(Toplevel):
         experiment = self.root_experiment_dict[experiment_name]
 
         # get user specified options
-        if experiment_name in self.solve_tols:
-            tol_1 = self.solve_tols[experiment_name][0].get()
-            tol_2 = self.solve_tols[experiment_name][1].get()
-            tol_3 = self.solve_tols[experiment_name][2].get()
-            tol_4 = self.solve_tols[experiment_name][3].get()
+        if experiment_name in self.custom_solve_tols:
+            tol_1 = self.custom_solve_tols[experiment_name][0].get()
+            tol_2 = self.custom_solve_tols[experiment_name][1].get()
+            tol_3 = self.custom_solve_tols[experiment_name][2].get()
+            tol_4 = self.custom_solve_tols[experiment_name][3].get()
             solve_tols = [tol_1, tol_2, tol_3, tol_4]
         else:
             solve_tols = self.solve_tols_default
