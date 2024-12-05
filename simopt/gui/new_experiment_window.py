@@ -1127,39 +1127,41 @@ class NewExperimentWindow(Toplevel):
             )
 
     def load_experiment(self) -> None:
-        self.raise_not_yet_implemented_error()
-        # # ask user for pickle file location
-        # file_path = filedialog.askopenfilename()
-        # base = os.path.basename(file_path)
-        # exp_name = os.path.splitext(base)[0]
+        # Open file dialog to select design file
+        # Pickle files only, but all files can be selected (in case someone forgets to change file type)
+        experiment_file = filedialog.askopenfilename(
+            filetypes=[("Pickle files", "*.pkl"), ("All files", "*.*")]
+        )
+        # Exit w/o message if no file selected
+        if experiment_file == "" or not experiment_file:
+            return
+        # Exit w/ message if file does not exist
+        if not os.path.exists(experiment_file):
+            messagebox.showerror(
+                "File Not Found",
+                "The selected file does not exist. Please select a different file.",
+            )
+            return
+        # Open the file with pickle
+        try:
+            with open(experiment_file, "rb") as f:
+                experiment = pickle.load(f)
+        except Exception as e:
+            messagebox.showerror(
+                "Error Reading File",
+                f"An error occurred while reading the file. Please ensure the file is a pickled experiment and try again. Error: {e}",
+            )
+            return
 
-        # # make sure name is unique
-        # self.experiment_name = self.get_unique_experiment_name(exp_name)
+        # Get the name of the experiment (remove extension first!)
+        file_name_with_extension = os.path.basename(experiment_file)
+        file_name = os.path.splitext(file_name_with_extension)[0]
 
-        # # load pickle
-        # messagebox.showinfo(
-        #     "Loading",
-        #     "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
-        # )
-        # with open(file_path, "rb") as f:
-        #     exp = pickle.load(f)
+        # Ensure a unique experiment name
+        experiment_name = self.get_unique_experiment_name(file_name)
 
-        # self.root_experiment_dict[self.experiment_name] = exp
-        # self.add_exp_row()
-
-        # # determine if exp has been post processed and post normalized and set display
-        # self.run_buttons[self.experiment_name].configure(state="disabled")
-        # self.all_buttons[self.experiment_name].configure(state="disabled")
-        # post_rep = exp.check_postreplicate()
-        # post_norm = exp.check_postnormalize()
-        # if not post_rep:
-        #     self.post_process_buttons[self.experiment_name].configure(
-        #         state="normal"
-        #     )
-        # if post_rep and not post_norm:
-        #     self.post_norm_buttons[self.experiment_name].configure(
-        #         state="normal"
-        #     )
+        self.root_experiment_dict[experiment_name] = experiment
+        self.add_exp_row(experiment_name)
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1873,7 +1875,7 @@ class NewExperimentWindow(Toplevel):
         self.root_experiment_dict[self.experiment_name] = experiment
 
         # add exp to row
-        self.add_exp_row()
+        self.add_exp_row(self.experiment_name)
 
         # Clear the current experiment
         self.clear_experiment()
@@ -1901,20 +1903,21 @@ class NewExperimentWindow(Toplevel):
         self.__update_problem_dropdown()
         self.__update_solver_dropdown()
 
-    def add_exp_row(self) -> None:
+    def add_exp_row(self, experiment_name: str) -> None:
         """Display experiment in list."""
         list_frame = self.tk_frames["exps.list_canvas.list"]
         row_idx = list_frame.grid_size()[1]
-        exp_name = self.experiment_name
 
         # Create text for each step
-        name_text_step_0: Final[str] = exp_name + "\n(Initialized)"
-        name_text_step_1: Final[str] = exp_name + "\n(Ran)"
-        name_text_step_2: Final[str] = exp_name + "\n(Post-Replicated)"
-        name_text_step_3: Final[str] = exp_name + "\n(Post-Normalized)"
-        name_text_step_4: Final[str] = exp_name + "\n(Logged)"
+        # TODO: make these characteristics of the experiment object instead of
+        # hardcoding them here
+        name_text_step_0: Final[str] = experiment_name + "\n(Initialized)"
+        name_text_step_1: Final[str] = experiment_name + "\n(Ran)"
+        name_text_step_2: Final[str] = experiment_name + "\n(Post-Replicated)"
+        name_text_step_3: Final[str] = experiment_name + "\n(Post-Normalized)"
+        name_text_step_4: Final[str] = experiment_name + "\n(Logged)"
 
-        name_base: Final[str] = "exp." + exp_name
+        name_base: Final[str] = "exp." + experiment_name
         lbl_name: Final[str] = name_base + ".name"
         action_bttn_name: Final[str] = name_base + ".action"
         all_bttn_name: Final[str] = name_base + ".all"
@@ -2050,12 +2053,11 @@ class NewExperimentWindow(Toplevel):
                     del self.tk_buttons[name]
             del self.root_experiment_dict[experiment_name]
 
-
         # Setup initial action button state
         self.tk_buttons[action_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run,
-            command=lambda name=exp_name: exp_run(name),
+            command=lambda name=experiment_name: exp_run(name),
         )
         self.tk_buttons[action_bttn_name].grid(
             row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
@@ -2065,7 +2067,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[all_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run_all,
-            command=lambda name=exp_name: exp_all(name),
+            command=lambda name=experiment_name: exp_all(name),
         )
         self.tk_buttons[all_bttn_name].grid(
             row=row_idx, column=2, padx=5, pady=5, sticky="nsew"
@@ -2074,7 +2076,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[opt_bttn_name] = ttk.Button(
             master=list_frame,
             text="Options",
-            command=lambda name=exp_name: self.open_post_processing_window(
+            command=lambda name=experiment_name: self.open_post_processing_window(
                 name
             ),
         )
@@ -2085,9 +2087,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[del_bttn_name] = ttk.Button(
             master=list_frame,
             text="Delete",
-            command=lambda name=exp_name: delete_experiment(
-                name
-            ),
+            command=lambda name=experiment_name: delete_experiment(name),
         )
         self.tk_buttons[del_bttn_name].grid(
             row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
