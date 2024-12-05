@@ -5522,8 +5522,12 @@ class ProblemsSolvers:
         self.create_pair_pickles = create_pair_pickles
         if experiment_name is not None:
             self.file_header = f"{experiment_name}_"
+            self.experiment_name = experiment_name
         else:
             self.file_header = ""
+            self.experiment_name = ""
+        # For some reason some of these variables weren't being assigned to the
+        # class attributes. TODO: Fix this.
 
         output_dir = os.path.join(EXPERIMENT_DIR, "outputs")
         if not os.path.exists(output_dir):
@@ -6796,7 +6800,7 @@ def create_design(
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-    
+
     # Add all the fixed factors to the design table
     for factor in fixed_factors:
         design_table[factor] = str(

@@ -1128,9 +1128,13 @@ class NewExperimentWindow(Toplevel):
 
     def load_experiment(self) -> None:
         # Open file dialog to select design file
-        # Pickle files only, but all files can be selected (in case someone forgets to change file type)
+        # Pickle files only, but all files can be selected (in case someone
+        # forgets to change file type)
+        # NOTE: For some reason we use both .pickle and .pkl extensions so we
+        # need to make sure we accept both
+        # TODO: standardize Pickle file extension (see GitHub issue #71)
         experiment_file = filedialog.askopenfilename(
-            filetypes=[("Pickle files", "*.pkl"), ("All files", "*.*")]
+            filetypes=[("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")]
         )
         # Exit w/o message if no file selected
         if experiment_file == "" or not experiment_file:
@@ -1153,12 +1157,27 @@ class NewExperimentWindow(Toplevel):
             )
             return
 
-        # Get the name of the experiment (remove extension first!)
-        file_name_with_extension = os.path.basename(experiment_file)
-        file_name = os.path.splitext(file_name_with_extension)[0]
+        # Make sure the contents of the file are a valid experiment
+        if not isinstance(experiment, ProblemsSolvers):
+            messagebox.showerror(
+                "Invalid File",
+                "The file selected is not a valid experiment file. Please select a different file.",
+            )
+            return
+        
+        # Grab the name from the experiment
+        name = experiment.experiment_name
 
-        # Ensure a unique experiment name
-        experiment_name = self.get_unique_experiment_name(file_name)
+        # Get a unique name for the experiment
+        experiment_name = self.get_unique_experiment_name(name)
+        # If the name already exists, make the user change it
+        if experiment_name != name:
+            msg = f"The experiment name '{name}' already exists."
+            msg += f" Would you like to rename the experiment to '{experiment_name}'?"
+            msg += "\n\nIf you select 'No', the experiment will not be added."
+            response = messagebox.askyesno("Name Conflict", msg)
+            if not response:
+                return
 
         self.root_experiment_dict[experiment_name] = experiment
         self.add_exp_row(experiment_name)
@@ -4436,6 +4455,10 @@ class NewExperimentWindow(Toplevel):
     def load_plot(self) -> None:
         # ask user for pickle file location
         file_path = filedialog.askopenfilename()
+
+        # if no file selected, return
+        if not file_path or file_path == "":
+            return
 
         # load plot pickle
         with open(file_path, "rb") as f:
