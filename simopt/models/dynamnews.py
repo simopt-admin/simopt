@@ -291,11 +291,53 @@ class DynamNewsMaxProfit(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000
+            },
+            "num_prod": {
+                "description": "number of products",
+                "datatype": int,
+                "default": 10
+            },
+            "num_customer": {
+                "description": "number of customers",
+                "datatype": int,
+                "default": 30
+            },
+            "c_utility": {
+                "description": "constant of each product's utility",
+                "datatype": list,
+                "default": [5 + j for j in range(1, 11)]
+            },
+            "mu": {
+                "description": "mu for calculating Gumbel random variable",
+                "datatype": float,
+                "default": 1.0
+            },
+            "init_level": {
+                "description": "initial inventory level",
+                "datatype": list,
+                "default": list(3 * np.ones(10))
+            },
+            "price": {
+                "description": "sell price of products",
+                "datatype": list,
+                "default": list(9 * np.ones(10))
+            },
+            "cost": {
+                "description": "cost of products",
+                "datatype": list,
+                "default": list(5 * np.ones(10))
             }
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
+            "num_prod": self.check_num_prod,
+            "num_customer": self.check_num_customer,
+            "c_utility": self.check_c_utility,
+            "mu": self.check_mu,
+            "init_level": self.check_init_level,
+            "price": self.check_price,
+            "cost": self.check_cost
         }
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and overwritten defaults.
@@ -303,6 +345,37 @@ class DynamNewsMaxProfit(Problem):
         self.dim = self.model.factors["num_prod"]
         self.lower_bounds = (0,) * self.dim
         self.upper_bounds = (np.inf,) * self.dim
+
+    def check_num_prod(self):
+        if self.factors["num_prod"] <= 0:
+            raise ValueError("num_prod must be greater than 0.")
+
+    def check_num_customer(self):
+        if self.factors["num_customer"] <= 0:
+            raise ValueError("num_customer must be greater than 0.")
+
+    def check_c_utility(self):
+        if len(self.factors["c_utility"]) != self.factors["num_prod"]:
+            raise ValueError("The length of c_utility must be equal to num_prod.")
+
+    def check_init_level(self):
+        if any (np.array(self.factors["init_level"]) < 0) or (len(self.factors["init_level"]) != self.factors["num_prod"]):
+            raise ValueError("The length of init_level must be equal to num_prod and every element in init_level must be greater than or equal to zero.")
+
+    def check_mu(self):
+        return True
+
+    def check_price(self):
+        if any(np.array(self.factors["price"]) < 0) or (len(self.factors["price"]) != self.factors["num_prod"]):
+            raise ValueError("The length of price must be equal to num_prod and every element in price must be greater than or equal to zero.")
+
+    def check_cost(self):
+        if any(np.array(self.factors["cost"]) < 0) or (len(self.factors["cost"]) != self.factors["num_prod"]):
+            raise ValueError("The length of cost must be equal to num_prod and every element in cost must be greater than or equal to 0.")
+
+    def check_simulatable_factors(self):
+        if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
+            raise ValueError("Each element in price must be greater than its corresponding element in cost.")
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

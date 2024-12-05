@@ -86,7 +86,7 @@ class STRONG(Solver):
             "delta_T": {
                 "description": "initial size of trust region",
                 "datatype": float,
-                "default": 2
+                "default": 2.0
             },
             "eta_0": {
                 "description": "constant for accepting",

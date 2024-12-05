@@ -125,7 +125,7 @@ class CntNV(Model):
         ):
             return True
         else:
-            raise ValueError("The salvage cost per unit must be greater than the purchasing cost per unit, which must be greater than the sales price per unit.")
+            raise ValueError("The salvage cost per unit must be less than the purchasing cost per unit, which must be less than the sales price per unit.")
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

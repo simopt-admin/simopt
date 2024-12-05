@@ -115,7 +115,7 @@ class Hotel(Model):
             "time_limit": self.check_time_limit,
             "time_before": self.check_time_before,
             "runlength": self.check_runlength,
-            "booking_limits": self.check_booking_limits
+            "booking_limits": self.check_booking_limits 
         }
         # Set factors of the simulation model.
         super().__init__(fixed_factors)

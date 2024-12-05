@@ -141,7 +141,8 @@ class SPSA(Solver):
             raise ValueError("eval_pct must be between 0 and 1.")
 
     def check_iter_pct(self):
-        return 0 < self.factors["iter_pct"] <= 1
+        if 0 >= self.factors["iter_pct"] or self.factors["iter_pct"] > 1:
+            raise ValueError("iter_pct must be between 0 and 1.")
 
     def check_problem_factors(self):
         # Check divisibility for the for loop.

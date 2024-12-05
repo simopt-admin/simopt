@@ -47,7 +47,7 @@ class MM1Queue(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
+    def __init__(self, fixed_factors: dict = {}): 
         self.name = "MM1"
         self.n_rngs = 2
         self.n_responses = 3

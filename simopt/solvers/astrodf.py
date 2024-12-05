@@ -111,7 +111,6 @@ class ASTRODF(Solver):
             
         }
         self.check_factor_list = {
-            "reuse_points": self.check_reuse_points, 
             "crn_across_solns": self.check_crn_across_solns,
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,

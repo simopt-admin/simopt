@@ -17,7 +17,7 @@ def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     # Check if the factor check exists
     if factor_name not in self.check_factor_list:
         # If the factor is a boolean, it's fine
-        if self.specifications[factor_name]["datatype"] is bool:
+        if self.specifications[factor_name]["datatype"] is bool: 
             return True
         else:
             # Raise an error since there's an error in the check list
@@ -304,7 +304,7 @@ class Solver(ABC):
         )  # check all joint factor settings
 
         if not is_joint_factors:
-            error_msg = "There is a joint setting of a solver factor that is not permissible"
+            error_msg = "There is a joint setting of a solver factor that is not permissible" 
             raise ValueError(error_msg)
 
         # check datatypes for all factors
@@ -684,7 +684,8 @@ class Problem(ABC):
             if key not in model_fixed_factors:
                 model_fixed_factors[key] = self.model_default_factors[key]
         self.model_fixed_factors = model_fixed_factors
-        # super().__init__()
+        
+        #super().__init__()
         
         # run all check functions
         self.run_all_checks(factor_names = fixed_factors.keys())
@@ -1389,16 +1390,16 @@ class Model(ABC):
             defines if all checks came back as true.
 
         """
-        is_joint_factors = (
-            self.check_simulatable_factors()
-        )  # check all joint factor settings
+        #is_joint_factors = (
+            #self.check_simulatable_factors()
+        #)   check all joint factor settings
 
-        if not is_joint_factors:
-            error_msg = "There is a joint setting of a model factor that is not permissible"
-            raise ValueError(error_msg)
+        #if not is_joint_factors:
+            #error_msg = "There is a joint setting of a model factor that is not permissible"
+            #raise ValueError(error_msg)
 
         # check datatypes for all factors
-        for factor in factor_names:
+        """for factor in factor_names:
             is_right_type = self.check_factor_datatype(factor)
             if not is_right_type:
                 error_msg = (
@@ -1411,7 +1412,7 @@ class Model(ABC):
                 error_msg = f"Model factor {factor} is not permissible."
                 raise ValueError(error_msg)
 
-        return True
+        return True"""
 
     @abstractmethod
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
