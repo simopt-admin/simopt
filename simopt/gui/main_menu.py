@@ -75,6 +75,9 @@ class MainMenuWindow(Toplevel):
             ipady=20,
         )
 
+        # Prevent window from getting launched in the background
+        self.lift()
+
     def set_main_menu_style_changes(self) -> None:
         self.header_font = nametofont("TkHeadingFont").copy()
         header_font_size = self.header_font.cget("size")
