@@ -1966,6 +1966,7 @@ class NewExperimentWindow(Toplevel):
         action_bttn_name: Final[str] = name_base + ".action"
         all_bttn_name: Final[str] = name_base + ".all"
         opt_bttn_name: Final[str] = name_base + ".options"
+        view_bttn_name: Final[str] = name_base + ".view"
         del_bttn_name: Final[str] = name_base + ".delete"
         # Put all tk names in a list for easy access
         tk_names = [
@@ -1973,6 +1974,7 @@ class NewExperimentWindow(Toplevel):
             action_bttn_name,
             all_bttn_name,
             opt_bttn_name,
+            view_bttn_name,
             del_bttn_name,
         ]
 
@@ -2032,6 +2034,52 @@ class NewExperimentWindow(Toplevel):
                 if not action(name, step):
                     break
 
+        def view(experiment_name: str) -> None:
+            # Check if there's an experiment in progress
+            if (
+                len(self.root_problem_dict) > 0
+                or len(self.root_solver_dict) > 0
+            ):
+                messagebox.showerror(
+                    "Error",
+                    "Please clear the current experiment before viewing another.",
+                )
+                return
+            experiment = self.root_experiment_dict[experiment_name]
+            # Loop through the problems and solvers and combine any that were
+            # datafarmed
+            solver_dict: dict[str, list[list]] = {}
+            for solver in experiment.solvers:
+                assert isinstance(solver, Solver)
+                # Create the list of factors in the right format
+                factors = solver.factors
+                # Reverse lookup the string for the class in the dictionary
+                key = None
+                for key, value in solver_directory.items():
+                    if value == solver.__class__:
+                        name = key
+                        break
+                factor_list = [factors, key]
+                # Check for datafarming
+                if "_dp_" in solver.name:
+                    name = solver.name.split("_dp_")[0]
+                else:
+                    name = solver.name
+                # If the name is already in the dictionary, append the factors
+                if name in solver_dict:
+                    solver_dict[name].append(factor_list)
+                # Otherwise, create a new entry
+                else:
+                    solver_dict[name] = [factor_list]
+
+            # Add the problems and solvers to the GUI
+            for name, factors in solver_dict.items():
+                self.add_solver_to_curr_exp(name, factors)
+
+            # Set all the options
+            self.curr_exp_name.set(experiment_name)
+            self.curr_exp_is_pickled.set(experiment.create_pair_pickles)
+
         def delete_experiment(experiment_name: str) -> None:
             for name in tk_names:
                 # If it's a label, delete it from the label dict
@@ -2084,6 +2132,16 @@ class NewExperimentWindow(Toplevel):
             row=row_idx, column=3, padx=5, pady=5, sticky="nsew"
         )
 
+        # View the experiment
+        self.tk_buttons[opt_bttn_name] = ttk.Button(
+            master=list_frame,
+            text="View",
+            command=lambda name=experiment_name: view(name),
+        )
+        self.tk_buttons[opt_bttn_name].grid(
+            row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
+        )
+
         # Delete the experiment
         self.tk_buttons[del_bttn_name] = ttk.Button(
             master=list_frame,
@@ -2091,7 +2149,7 @@ class NewExperimentWindow(Toplevel):
             command=lambda name=experiment_name: delete_experiment(name),
         )
         self.tk_buttons[del_bttn_name].grid(
-            row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=5, padx=5, pady=5, sticky="nsew"
         )
 
     def run_experiment(self, experiment_name: str) -> None:

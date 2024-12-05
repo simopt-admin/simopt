@@ -841,11 +841,6 @@ class ProblemSolver:
     def has_postnormalized(self, has_postnormalized: bool) -> None:
         self.__has_postnormalized = has_postnormalized
 
-    # Set the minimum number of CPU cores for multiprocessing to be enabled
-    CPU_COUNT_LIMIT = 2
-    # Set the maximum number of active threads to be running at once
-    ACTIVE_THREAD_LIMIT_DEFAULT = 4
-
     def __init__(
         self,
         solver_name: str | None = None,
