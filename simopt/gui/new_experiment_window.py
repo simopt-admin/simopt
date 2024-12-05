@@ -1504,12 +1504,12 @@ class NewExperimentWindow(Toplevel):
 
         """ Determine factors included in design """
         # List of names of factors included in the design
-        self.design_factors: list[str] = []
+        design_factors: list[str] = []
         # Dict of cross design factors w/ lists of possible values
-        self.cross_design_factors: dict[str, list[str]] = {}
+        cross_design_factors: dict[str, list[str]] = {}
         # Dict of factors not included in the design
         # Key is the factor name, value is the default value
-        self.fixed_factors: dict[str, object] = {}
+        fixed_factors: dict[str, object] = {}
         for factor in self.factor_dict:
             # If the factor is not included in the design, it's a fixed factor
             if (
@@ -1517,13 +1517,13 @@ class NewExperimentWindow(Toplevel):
                 or not self.factor_dict[factor].include.get()  # type: ignore
             ):
                 fixed_val = self.factor_dict[factor].default_eval
-                self.fixed_factors[factor] = fixed_val
+                fixed_factors[factor] = fixed_val
             # If the factor is included in the design, add it to the list of factors
             else:
                 if self.factor_dict[factor].type.get() in ("int", "float"):
-                    self.design_factors.append(factor)
+                    design_factors.append(factor)
                 elif self.factor_dict[factor].type.get() == "bool":
-                    self.cross_design_factors[factor] = ["True", "False"]
+                    cross_design_factors[factor] = ["True", "False"]
 
         # Create the factor settings txt file
         # Check if the folder exists, if not create it
@@ -1537,7 +1537,7 @@ class NewExperimentWindow(Toplevel):
         # Write the factor settings to the file
         with open(filepath, "x") as settings_file:
             # For each factor, write the min, max, and decimal values to the file
-            for factor_name in self.design_factors:
+            for factor_name in design_factors:
                 # Lookup the factor in the dictionary
                 factor = self.factor_dict[factor_name]
                 # Make sure the factor has a minimum and maximum value
@@ -1562,10 +1562,10 @@ class NewExperimentWindow(Toplevel):
             # Create the design
             create_design(
                 name=base_name,
-                factor_headers=self.design_factors,
+                factor_headers=design_factors,
                 factor_settings_filename=design_name,
-                fixed_factors=self.fixed_factors,
-                cross_design_factors=self.cross_design_factors,
+                fixed_factors=fixed_factors,
+                cross_design_factors=cross_design_factors,
                 n_stacks=num_stacks,
                 design_type=design_type,  # type: ignore
                 class_type=base_object_lower,
@@ -1933,7 +1933,9 @@ class NewExperimentWindow(Toplevel):
         self.__update_problem_dropdown()
         self.__update_solver_dropdown()
 
-    def add_exp_row(self, experiment_name: str, is_imported: bool = False) -> None:
+    def add_exp_row(
+        self, experiment_name: str, is_imported: bool = False
+    ) -> None:
         """Display experiment in list."""
         list_frame = self.tk_frames["exps.list_canvas.list"]
         row_idx = list_frame.grid_size()[1]
