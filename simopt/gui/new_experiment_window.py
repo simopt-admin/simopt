@@ -136,7 +136,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_labels: dict[str, ttk.Label] = {}
         self.tk_notebooks: dict[str, ttk.Notebook] = {}
         self.tk_var_bools: dict[str, tk.BooleanVar] = {}
-        # self.tk_scrollbars: dict[str, ttk.Scrollbar] = {}
+        self.tk_scrollbars: dict[str, ttk.Scrollbar] = {}
 
         # Setup the main frame
         self._initialize_main_frame()
@@ -212,6 +212,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["exps.list_canvas"].grid(
             row=0, column=0, sticky="nsew"
         )
+        self._update_canvas_scrollability(self.tk_canvases["exps.list_canvas"])
         self.tk_frames["exps.list_canvas.list"] = ttk.Frame(
             self.tk_canvases["exps.list_canvas"],
         )
@@ -219,6 +220,17 @@ class NewExperimentWindow(Toplevel):
             (0, 0),
             window=self.tk_frames["exps.list_canvas.list"],
             anchor="nw",
+        )
+        self.tk_scrollbars["exps.list_canvas"] = ttk.Scrollbar(
+            self.tk_frames["exps.list_canvas"],
+            orient="vertical",
+            command=self.tk_canvases["exps.list_canvas"].yview,
+        )
+        self.tk_canvases["exps.list_canvas"].config(
+            yscrollcommand=self.tk_scrollbars["exps.list_canvas"].set
+        )
+        self.tk_scrollbars["exps.list_canvas"].grid(
+            row=0, column=1, sticky="ns"
         )
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
@@ -486,6 +498,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["gen_design.display"].grid_columnconfigure(0, weight=1)
         self.tk_frames["gen_design.display"].grid_columnconfigure(1, weight=0)
         self.tk_frames["gen_design.display"].grid_rowconfigure(0, weight=1)
+
+    def _update_canvas_scrollability(self, canvas: tk.Canvas) -> None:
+        canvas.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
 
     def _initialize_design_options(self) -> None:
         if "design_opts" in self.tk_frames:
@@ -1758,13 +1774,13 @@ class NewExperimentWindow(Toplevel):
         # Hide the design tree
         self._hide_gen_design()
 
-    def __view_design(self, root_dict: dict) -> None:
+    def __view_design(self, design_list: list[list]) -> None:
         # Create an empty dataframe to display the design tree
-        column_names = list(root_dict[0][0].keys())
-        num_rows = len(root_dict)
+        column_names = list(design_list[0][0].keys())
+        num_rows = len(design_list)
         dataframe = pd.DataFrame(columns=column_names, index=range(num_rows))
         # Populate the design tree
-        for index, dp in enumerate(root_dict):
+        for index, dp in enumerate(design_list):
             dataframe.loc[index] = dp[0]
         # Convert to a string for display
         dataframe_string = dataframe.astype(str)
@@ -2128,6 +2144,9 @@ class NewExperimentWindow(Toplevel):
                     self.tk_buttons[name].destroy()
                     del self.tk_buttons[name]
             del self.root_experiment_dict[experiment_name]
+            # Make sure we can't scroll past the end of the canvas
+            canvas = self.tk_canvases["exps.list_canvas"]
+            self._update_canvas_scrollability(canvas)
 
         # Action button (changes based on step)
         self.tk_buttons[action_bttn_name] = ttk.Button(
@@ -2188,6 +2207,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[del_bttn_name].grid(
             row=row_idx, column=5, padx=5, pady=5, sticky="nsew"
         )
+
+        # Update the scroll region
+        canvas = self.tk_canvases["exps.list_canvas"]
+        self._update_canvas_scrollability(canvas)
 
     def run_experiment(self, experiment_name: str) -> None:
         # get experiment object from master dict
