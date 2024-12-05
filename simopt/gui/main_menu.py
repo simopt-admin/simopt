@@ -93,16 +93,18 @@ class MainMenuWindow(Toplevel):
         self.style.configure("TLabel", font=nametofont("TkTextFont"))
         self.style.configure("TButton", font=nametofont("TkTextFont"))
 
+    def __open_window(self, class_name: type) -> None:
+        """Open a new window."""
+        self.reset_main_menu_style_changes()
+        new_window = class_name(self.root)
+        self.destroy()
+        # Bring new window to front
+        new_window.lift()
+
     def open_model_datafarming(self) -> None:
         """Open the model data farming window."""
-        self.reset_main_menu_style_changes()
-        DataFarmingWindow(self.root)
-        # Configure the exit button to close the window and close the menu
-        self.destroy()
+        self.__open_window(DataFarmingWindow)
 
     def open_new_experiment(self) -> None:
-        self.reset_main_menu_style_changes()
         """Open the new experiment window."""
-        NewExperimentWindow(self.root)
-        # Configure the exit button to close the window and close the menu
-        self.destroy()
+        self.__open_window(NewExperimentWindow)
