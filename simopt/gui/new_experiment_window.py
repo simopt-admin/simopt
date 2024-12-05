@@ -191,15 +191,25 @@ class NewExperimentWindow(Toplevel):
             font=nametofont("TkHeadingFont"),
         )
         self.tk_labels["exps.header"].grid(row=0, column=0, sticky="nsew")
-        self.tk_frames["exps.list"] = ttk.Frame(
+        self.tk_frames["exps.list_canvas"] = ttk.Frame(
             self.tk_frames["exps"],
         )
-        self.tk_frames["exps.list"].grid(row=1, column=0, sticky="nsew")
-        self.tk_frames["exps.list"].grid_columnconfigure(0, weight=1)
-        self.tk_canvases["exps.list"] = tk.Canvas(
-            self.tk_frames["exps.list"],
+        self.tk_frames["exps.list_canvas"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["exps.list_canvas"].grid_columnconfigure(0, weight=1)
+        self.tk_canvases["exps.list_canvas"] = tk.Canvas(
+            self.tk_frames["exps.list_canvas"],
         )
-        self.tk_canvases["exps.list"].grid(row=0, column=0, sticky="nsew")
+        self.tk_canvases["exps.list_canvas"].grid(
+            row=0, column=0, sticky="nsew"
+        )
+        self.tk_frames["exps.list_canvas.list"] = ttk.Frame(
+            self.tk_canvases["exps.list_canvas"],
+        )
+        self.tk_canvases["exps.list_canvas"].create_window(
+            (0, 0),
+            window=self.tk_frames["exps.list_canvas.list"],
+            anchor="nw",
+        )
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
         )
@@ -1737,7 +1747,7 @@ class NewExperimentWindow(Toplevel):
     def view_problem_design(self, problem_save_name: str) -> None:
         problem = self.root_problem_dict[problem_save_name]
         self.__view_design(problem)
-        
+
     def view_solver_design(self, solver_save_name: str) -> None:
         solver = self.root_solver_dict[solver_save_name]
         self.__view_design(solver)
@@ -1845,7 +1855,7 @@ class NewExperimentWindow(Toplevel):
                 problem_renames.append(problem_rename)
 
         # use ProblemsSolvers to initialize exp
-        self.experiment = ProblemsSolvers(
+        experiment = ProblemsSolvers(
             solver_factors=master_solver_factor_list,
             problem_factors=master_problem_factor_list,
             solver_names=master_solver_name_list,
@@ -1857,10 +1867,10 @@ class NewExperimentWindow(Toplevel):
         )
 
         # run check on solver/problem compatibility
-        self.experiment.check_compatibility()
+        experiment.check_compatibility()
 
         # add to master experiment list
-        self.root_experiment_dict[self.experiment_name] = self.experiment
+        self.root_experiment_dict[self.experiment_name] = experiment
 
         # add exp to row
         self.add_exp_row()
@@ -1893,40 +1903,40 @@ class NewExperimentWindow(Toplevel):
 
     def add_exp_row(self) -> None:
         """Display experiment in list."""
-        experiment_row = self.tk_canvases["exps.list"].grid_size()[1]
-        self.current_experiment_frame = tk.Frame(
-            master=self.tk_canvases["exps.list"]
-        )
-        self.current_experiment_frame.grid(
-            row=experiment_row, column=0, sticky="nsew"
-        )
-        self.current_experiment_frame.grid_columnconfigure(0, weight=0)
-        self.current_experiment_frame.grid_columnconfigure(1, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(2, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(3, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(4, weight=1)
+        list_frame = self.tk_frames["exps.list_canvas.list"]
+        row_idx = list_frame.grid_size()[1]
+        exp_name = self.experiment_name
 
-        name_text_step_0 = self.experiment_name + "\n(Initialized)"
-        name_text_step_1 = self.experiment_name + "\n(Ran)"
-        name_text_step_2 = self.experiment_name + "\n(Post-Replicated)"
-        name_text_step_3 = self.experiment_name + "\n(Post-Normalized)"
-        name_text_step_4 = self.experiment_name + "\n(Logged)"
+        # Create text for each step
+        name_text_step_0: Final[str] = exp_name + "\n(Initialized)"
+        name_text_step_1: Final[str] = exp_name + "\n(Ran)"
+        name_text_step_2: Final[str] = exp_name + "\n(Post-Replicated)"
+        name_text_step_3: Final[str] = exp_name + "\n(Post-Normalized)"
+        name_text_step_4: Final[str] = exp_name + "\n(Logged)"
 
-        name_base = "exp." + self.experiment_name
-        lbl_name = name_base + ".name"
-        action_bttn_name = name_base + ".action"
-        all_bttn_name = name_base + ".all"
-        opt_bttn_name = name_base + ".options"
-        del_bttn_name = name_base + ".delete"
+        name_base: Final[str] = "exp." + exp_name
+        lbl_name: Final[str] = name_base + ".name"
+        action_bttn_name: Final[str] = name_base + ".action"
+        all_bttn_name: Final[str] = name_base + ".all"
+        opt_bttn_name: Final[str] = name_base + ".options"
+        del_bttn_name: Final[str] = name_base + ".delete"
+        # Put all tk names in a list for easy access
+        tk_names = [
+            lbl_name,
+            action_bttn_name,
+            all_bttn_name,
+            opt_bttn_name,
+            del_bttn_name,
+        ]
 
         self.tk_labels[lbl_name] = ttk.Label(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text=name_text_step_0,
             justify="center",
             anchor="center",
         )
         self.tk_labels[lbl_name].grid(
-            row=0, column=0, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=0, padx=5, pady=5, sticky="nsew"
         )
 
         bttn_text_run_all = "Run All\nRemaining Steps"
@@ -2028,51 +2038,59 @@ class NewExperimentWindow(Toplevel):
                 # We already printed the error message in the individual steps
                 self.tk_buttons[all_bttn_name].configure(state="normal")
 
-        def delete_experiment(
-            experiment_name: str, experiment_frame: tk.Frame
-        ) -> None:
+        def delete_experiment(experiment_name: str) -> None:
+            for name in tk_names:
+                # If it's a label, delete it from the label dict
+                if name in self.tk_labels:
+                    self.tk_labels[name].destroy()
+                    del self.tk_labels[name]
+                # if it's a button, delete it from the button dict
+                elif name in self.tk_buttons:
+                    self.tk_buttons[name].destroy()
+                    del self.tk_buttons[name]
             del self.root_experiment_dict[experiment_name]
-            experiment_frame.destroy()
+
 
         # Setup initial action button state
         self.tk_buttons[action_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text=bttn_text_run,
-            command=lambda name=self.experiment_name: exp_run(name),
+            command=lambda name=exp_name: exp_run(name),
         )
         self.tk_buttons[action_bttn_name].grid(
-            row=0, column=1, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
         )
 
         # all in one
         self.tk_buttons[all_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text=bttn_text_run_all,
-            command=lambda name=self.experiment_name: exp_all(name),
+            command=lambda name=exp_name: exp_all(name),
         )
         self.tk_buttons[all_bttn_name].grid(
-            row=0, column=2, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=2, padx=5, pady=5, sticky="nsew"
         )
         # experiment options button
         self.tk_buttons[opt_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text="Options",
-            command=lambda name=self.experiment_name: self.open_post_processing_window(
+            command=lambda name=exp_name: self.open_post_processing_window(
                 name
             ),
         )
         self.tk_buttons[opt_bttn_name].grid(
-            row=0, column=3, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=3, padx=5, pady=5, sticky="nsew"
         )
         # delete experiment
         self.tk_buttons[del_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text="Delete",
-            command=lambda name=self.experiment_name,
-            frame=self.current_experiment_frame: delete_experiment(name, frame),
+            command=lambda name=exp_name: delete_experiment(
+                name
+            ),
         )
         self.tk_buttons[del_bttn_name].grid(
-            row=0, column=4, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
         )
 
     def run_experiment(self, experiment_name: str) -> None:
