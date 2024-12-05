@@ -151,8 +151,8 @@ class NewExperimentWindow(Toplevel):
         # Setup the main frame
         self.tk_frames["main"] = ttk.Frame(self)
         self.tk_frames["main"].pack(fill="both", expand=True)
-        self.tk_frames["main"].grid_columnconfigure(0, weight=1)
-        self.tk_frames["main"].grid_columnconfigure(1, weight=2)
+        self.tk_frames["main"].grid_columnconfigure(0, weight=3)
+        self.tk_frames["main"].grid_columnconfigure(1, weight=5)
         self.tk_frames["main"].grid_rowconfigure(0, weight=1)
         # Configure the left side of the window
         self.tk_frames["left"] = ttk.Frame(self.tk_frames["main"])
@@ -196,6 +196,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.tk_frames["exps.list_canvas"].grid(row=1, column=0, sticky="nsew")
         self.tk_frames["exps.list_canvas"].grid_columnconfigure(0, weight=1)
+        self.tk_frames["exps.list_canvas"].grid_rowconfigure(0, weight=1)
         self.tk_canvases["exps.list_canvas"] = tk.Canvas(
             self.tk_frames["exps.list_canvas"],
         )
