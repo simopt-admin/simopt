@@ -191,15 +191,25 @@ class NewExperimentWindow(Toplevel):
             font=nametofont("TkHeadingFont"),
         )
         self.tk_labels["exps.header"].grid(row=0, column=0, sticky="nsew")
-        self.tk_frames["exps.list"] = ttk.Frame(
+        self.tk_frames["exps.list_canvas"] = ttk.Frame(
             self.tk_frames["exps"],
         )
-        self.tk_frames["exps.list"].grid(row=1, column=0, sticky="nsew")
-        self.tk_frames["exps.list"].grid_columnconfigure(0, weight=1)
-        self.tk_canvases["exps.list"] = tk.Canvas(
-            self.tk_frames["exps.list"],
+        self.tk_frames["exps.list_canvas"].grid(row=1, column=0, sticky="nsew")
+        self.tk_frames["exps.list_canvas"].grid_columnconfigure(0, weight=1)
+        self.tk_canvases["exps.list_canvas"] = tk.Canvas(
+            self.tk_frames["exps.list_canvas"],
         )
-        self.tk_canvases["exps.list"].grid(row=0, column=0, sticky="nsew")
+        self.tk_canvases["exps.list_canvas"].grid(
+            row=0, column=0, sticky="nsew"
+        )
+        self.tk_frames["exps.list_canvas.list"] = ttk.Frame(
+            self.tk_canvases["exps.list_canvas"],
+        )
+        self.tk_canvases["exps.list_canvas"].create_window(
+            (0, 0),
+            window=self.tk_frames["exps.list_canvas.list"],
+            anchor="nw",
+        )
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
         )
@@ -1117,39 +1127,62 @@ class NewExperimentWindow(Toplevel):
             )
 
     def load_experiment(self) -> None:
-        self.raise_not_yet_implemented_error()
-        # # ask user for pickle file location
-        # file_path = filedialog.askopenfilename()
-        # base = os.path.basename(file_path)
-        # exp_name = os.path.splitext(base)[0]
+        # Open file dialog to select design file
+        # Pickle files only, but all files can be selected (in case someone
+        # forgets to change file type)
+        # NOTE: For some reason we use both .pickle and .pkl extensions so we
+        # need to make sure we accept both
+        # TODO: standardize Pickle file extension (see GitHub issue #71)
+        experiment_file = filedialog.askopenfilename(
+            filetypes=[("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")]
+        )
+        # Exit w/o message if no file selected
+        if experiment_file == "" or not experiment_file:
+            return
+        # Exit w/ message if file does not exist
+        if not os.path.exists(experiment_file):
+            messagebox.showerror(
+                "File Not Found",
+                "The selected file does not exist. Please select a different file.",
+            )
+            return
+        # Open the file with pickle
+        try:
+            with open(experiment_file, "rb") as f:
+                experiment = pickle.load(f)
+        except Exception as e:
+            messagebox.showerror(
+                "Error Reading File",
+                f"An error occurred while reading the file. Please ensure the file is a pickled experiment and try again. Error: {e}",
+            )
+            return
 
-        # # make sure name is unique
-        # self.experiment_name = self.get_unique_experiment_name(exp_name)
+        # Make sure the contents of the file are a valid experiment
+        if not isinstance(experiment, ProblemsSolvers):
+            messagebox.showerror(
+                "Invalid File",
+                "The file selected is not a valid experiment file. Please select a different file.",
+            )
+            return
 
-        # # load pickle
-        # messagebox.showinfo(
-        #     "Loading",
-        #     "Loading pickle file. This may take a few minutes. Experiment will appear within created experiments list once loaded.",
-        # )
-        # with open(file_path, "rb") as f:
-        #     exp = pickle.load(f)
+        # Grab the name from the experiment
+        loaded_name = experiment.experiment_name
 
-        # self.root_experiment_dict[self.experiment_name] = exp
-        # self.add_exp_row()
+        # Get a unique name for the experiment
+        unique_name = self.get_unique_experiment_name(loaded_name)
+        # If the name already exists, make the user change it
+        if unique_name != loaded_name:
+            msg = f"The experiment name '{loaded_name}' already exists."
+            msg += (
+                f" Would you like to rename the experiment to '{unique_name}'?"
+            )
+            msg += "\n\nIf you select 'No', the experiment will not be added."
+            response = messagebox.askyesno("Name Conflict", msg)
+            if not response:
+                return
 
-        # # determine if exp has been post processed and post normalized and set display
-        # self.run_buttons[self.experiment_name].configure(state="disabled")
-        # self.all_buttons[self.experiment_name].configure(state="disabled")
-        # post_rep = exp.check_postreplicate()
-        # post_norm = exp.check_postnormalize()
-        # if not post_rep:
-        #     self.post_process_buttons[self.experiment_name].configure(
-        #         state="normal"
-        #     )
-        # if post_rep and not post_norm:
-        #     self.post_norm_buttons[self.experiment_name].configure(
-        #         state="normal"
-        #     )
+        self.root_experiment_dict[unique_name] = experiment
+        self.add_exp_row(unique_name, is_imported=True)
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
         """_Destroy all children of a widget._
@@ -1471,12 +1504,12 @@ class NewExperimentWindow(Toplevel):
 
         """ Determine factors included in design """
         # List of names of factors included in the design
-        self.design_factors: list[str] = []
+        design_factors: list[str] = []
         # Dict of cross design factors w/ lists of possible values
-        self.cross_design_factors: dict[str, list[str]] = {}
+        cross_design_factors: dict[str, list[str]] = {}
         # Dict of factors not included in the design
         # Key is the factor name, value is the default value
-        self.fixed_factors: dict[str, object] = {}
+        fixed_factors: dict[str, object] = {}
         for factor in self.factor_dict:
             # If the factor is not included in the design, it's a fixed factor
             if (
@@ -1484,13 +1517,13 @@ class NewExperimentWindow(Toplevel):
                 or not self.factor_dict[factor].include.get()  # type: ignore
             ):
                 fixed_val = self.factor_dict[factor].default_eval
-                self.fixed_factors[factor] = fixed_val
+                fixed_factors[factor] = fixed_val
             # If the factor is included in the design, add it to the list of factors
             else:
                 if self.factor_dict[factor].type.get() in ("int", "float"):
-                    self.design_factors.append(factor)
+                    design_factors.append(factor)
                 elif self.factor_dict[factor].type.get() == "bool":
-                    self.cross_design_factors[factor] = ["True", "False"]
+                    cross_design_factors[factor] = ["True", "False"]
 
         # Create the factor settings txt file
         # Check if the folder exists, if not create it
@@ -1504,7 +1537,7 @@ class NewExperimentWindow(Toplevel):
         # Write the factor settings to the file
         with open(filepath, "x") as settings_file:
             # For each factor, write the min, max, and decimal values to the file
-            for factor_name in self.design_factors:
+            for factor_name in design_factors:
                 # Lookup the factor in the dictionary
                 factor = self.factor_dict[factor_name]
                 # Make sure the factor has a minimum and maximum value
@@ -1529,10 +1562,10 @@ class NewExperimentWindow(Toplevel):
             # Create the design
             create_design(
                 name=base_name,
-                factor_headers=self.design_factors,
+                factor_headers=design_factors,
                 factor_settings_filename=design_name,
-                fixed_factors=self.fixed_factors,
-                cross_design_factors=self.cross_design_factors,
+                fixed_factors=fixed_factors,
+                cross_design_factors=cross_design_factors,
                 n_stacks=num_stacks,
                 design_type=design_type,  # type: ignore
                 class_type=base_object_lower,
@@ -1737,7 +1770,7 @@ class NewExperimentWindow(Toplevel):
     def view_problem_design(self, problem_save_name: str) -> None:
         problem = self.root_problem_dict[problem_save_name]
         self.__view_design(problem)
-        
+
     def view_solver_design(self, solver_save_name: str) -> None:
         solver = self.root_solver_dict[solver_save_name]
         self.__view_design(solver)
@@ -1802,9 +1835,18 @@ class NewExperimentWindow(Toplevel):
             return
 
         # get unique experiment name
-        old_name = self.curr_exp_name.get()
-        self.experiment_name = self.get_unique_experiment_name(old_name)
-        self.curr_exp_name.set(self.experiment_name)
+        entered_name = self.curr_exp_name.get()
+        unique_name = self.get_unique_experiment_name(entered_name)
+        # If the name already exists, make the user change it
+        if unique_name != entered_name:
+            msg = f"The experiment name '{entered_name}' already exists."
+            msg += (
+                f" Would you like to rename the experiment to '{unique_name}'?"
+            )
+            msg += "\n\nIf you select 'No', the experiment will not be added."
+            response = messagebox.askyesno("Name Conflict", msg)
+            if not response:
+                return
 
         # get pickle checkstate
         pickle_checkstate = self.curr_exp_is_pickled.get()
@@ -1845,25 +1887,25 @@ class NewExperimentWindow(Toplevel):
                 problem_renames.append(problem_rename)
 
         # use ProblemsSolvers to initialize exp
-        self.experiment = ProblemsSolvers(
+        experiment = ProblemsSolvers(
             solver_factors=master_solver_factor_list,
             problem_factors=master_problem_factor_list,
             solver_names=master_solver_name_list,
             problem_names=master_problem_name_list,
             solver_renames=solver_renames,
             problem_renames=problem_renames,
-            experiment_name=self.experiment_name,
+            experiment_name=unique_name,
             create_pair_pickles=pickle_checkstate,
         )
 
         # run check on solver/problem compatibility
-        self.experiment.check_compatibility()
+        experiment.check_compatibility()
 
         # add to master experiment list
-        self.root_experiment_dict[self.experiment_name] = self.experiment
+        self.root_experiment_dict[unique_name] = experiment
 
         # add exp to row
-        self.add_exp_row()
+        self.add_exp_row(unique_name)
 
         # Clear the current experiment
         self.clear_experiment()
@@ -1891,188 +1933,250 @@ class NewExperimentWindow(Toplevel):
         self.__update_problem_dropdown()
         self.__update_solver_dropdown()
 
-    def add_exp_row(self) -> None:
+    def add_exp_row(
+        self, experiment_name: str, is_imported: bool = False
+    ) -> None:
         """Display experiment in list."""
-        experiment_row = self.tk_canvases["exps.list"].grid_size()[1]
-        self.current_experiment_frame = tk.Frame(
-            master=self.tk_canvases["exps.list"]
-        )
-        self.current_experiment_frame.grid(
-            row=experiment_row, column=0, sticky="nsew"
-        )
-        self.current_experiment_frame.grid_columnconfigure(0, weight=0)
-        self.current_experiment_frame.grid_columnconfigure(1, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(2, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(3, weight=1)
-        self.current_experiment_frame.grid_columnconfigure(4, weight=1)
+        list_frame = self.tk_frames["exps.list_canvas.list"]
+        row_idx = list_frame.grid_size()[1]
 
-        name_text_step_0 = self.experiment_name + "\n(Initialized)"
-        name_text_step_1 = self.experiment_name + "\n(Ran)"
-        name_text_step_2 = self.experiment_name + "\n(Post-Replicated)"
-        name_text_step_3 = self.experiment_name + "\n(Post-Normalized)"
-        name_text_step_4 = self.experiment_name + "\n(Logged)"
+        # Format:
+        # (past_tense, present_tense, future_tense, function)
+        bttn_text_steps: Final[
+            list[tuple[str, str, str, Callable[[str], None]]]
+        ] = [
+            ("Run", "Running", "Ran", self.run_experiment),
+            (
+                "Post-Replicate",
+                "Post-Replicating",
+                "Post-Replicated",
+                self.post_process,
+            ),
+            (
+                "Post-Normalize",
+                "Post-Normalizing",
+                "Post-Normalized",
+                self.post_normalize,
+            ),
+            ("Log Results", "Logging", "Logged", self.log_results),
+        ]
 
-        name_base = "exp." + self.experiment_name
-        lbl_name = name_base + ".name"
-        action_bttn_name = name_base + ".action"
-        all_bttn_name = name_base + ".all"
-        opt_bttn_name = name_base + ".options"
-        del_bttn_name = name_base + ".delete"
+        name_base: Final[str] = "exp." + experiment_name
+        lbl_name: Final[str] = name_base + ".name"
+        action_bttn_name: Final[str] = name_base + ".action"
+        all_bttn_name: Final[str] = name_base + ".all"
+        opt_bttn_name: Final[str] = name_base + ".options"
+        view_bttn_name: Final[str] = name_base + ".view"
+        del_bttn_name: Final[str] = name_base + ".delete"
+        # Put all tk names in a list for easy access
+        tk_names = [
+            lbl_name,
+            action_bttn_name,
+            all_bttn_name,
+            opt_bttn_name,
+            view_bttn_name,
+            del_bttn_name,
+        ]
 
         self.tk_labels[lbl_name] = ttk.Label(
-            master=self.current_experiment_frame,
-            text=name_text_step_0,
+            master=list_frame,
+            text=experiment_name + "\n(Initialized)",
             justify="center",
             anchor="center",
         )
         self.tk_labels[lbl_name].grid(
-            row=0, column=0, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=0, padx=5, pady=5, sticky="nsew"
         )
 
         bttn_text_run_all = "Run All\nRemaining Steps"
         bttn_text_run = "Run\nExperiment"
-        bttn_text_running = "Running..."
-        bttn_text_post_process = "Post-Replicate"
-        bttn_text_post_processing = "Post-Replicating..."
-        bttn_text_post_norm = "Post-Normalize"
-        bttn_text_post_normalizing = "Post-Normalizing..."
-        bttn_text_log = "Log\nResults"
-        bttn_text_logging = "Logging..."
-        bttn_text_done = "Done"
 
-        def exp_run(name: str) -> bool:
+        def action(name: str, step: int = 0) -> bool:
+            # Lookup all the verbage for the current step
+            past_tense, present_tense, future_tense, function = bttn_text_steps[
+                step
+            ]
+            # Get the buttons and update them for the current step
             action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_running, state="disabled")
+            all_button = self.tk_buttons[all_bttn_name]
+            action_button.configure(text=present_tense, state="disabled")
+            all_button.configure(state="disabled")
             self.update()
+            # Run the function
             try:
-                self.run_experiment(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_post_process,
-                    state="normal",
-                    command=lambda name=name: exp_post_process(name),
-                )
-                self.tk_labels[lbl_name].configure(text=name_text_step_1)
+                function(name)
+                # Set the name to include the updated status
+                name_label = self.tk_labels[lbl_name]
+                name_label.configure(text=name + "\n(" + future_tense + ")")
+                # If there are more steps, setup the next step
+                if step < len(bttn_text_steps) - 1:
+                    # Figure out what the next step is
+                    next_past_tense, _, _, _ = bttn_text_steps[step + 1]
+                    action_button.configure(
+                        text=next_past_tense,
+                        state="normal",
+                        command=lambda: action(name, step + 1),
+                    )
+                    all_button.configure(state="normal")
+                else:
+                    action_button.configure(text="Done")
                 return True
+
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_run, state="normal")
+                # Set the button text back to past tense and reactivate buttons
+                action_button.configure(text=past_tense, state="normal")
+                all_button.configure(state="normal")
                 return False
 
-        def exp_post_process(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(
-                text=bttn_text_post_processing, state="disabled"
-            )
-            self.update()
-            try:
-                self.post_process(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_post_norm,
-                    state="normal",
-                    command=lambda name=name: exp_post_norm(name),
-                )
-                self.tk_labels[lbl_name].configure(text=name_text_step_2)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(
-                    text=bttn_text_post_process, state="normal"
-                )
-                return False
+        def all_actions(name: str) -> None:
+            for step in range(len(bttn_text_steps)):
+                if not action(name, step):
+                    break
 
-        def exp_post_norm(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(
-                text=bttn_text_post_normalizing, state="disabled"
-            )
-            self.update()
-            try:
-                self.post_normalize(experiment_name=name)
-                action_button.configure(
-                    text=bttn_text_log,
-                    state="normal",
-                    command=lambda name=name: exp_log(name),
-                )
-                self.tk_labels[lbl_name].configure(text=name_text_step_3)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(
-                    text=bttn_text_post_norm, state="normal"
-                )
-                return False
-
-        def exp_log(name: str) -> bool:
-            action_button = self.tk_buttons[action_bttn_name]
-            action_button.configure(text=bttn_text_logging, state="disabled")
-            self.update()
-            try:
-                self.log_results(experiment_name=name)
-                action_button.configure(text=bttn_text_done, state="disabled")
-                self.tk_buttons[all_bttn_name].configure(state="disabled")
-                self.tk_labels[lbl_name].configure(text=name_text_step_4)
-                return True
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                action_button.configure(text=bttn_text_log, state="normal")
-                return False
-
-        def exp_all(name: str) -> None:
-            self.tk_buttons[all_bttn_name].configure(state="disabled")
+        def view(experiment_name: str) -> None:
+            # Check if there's an experiment in progress
             if (
-                not exp_run(name)
-                or not exp_post_process(name)
-                or not exp_post_norm(name)
-                or not exp_log(name)
+                len(self.root_problem_dict) > 0
+                or len(self.root_solver_dict) > 0
             ):
-                # We already printed the error message in the individual steps
-                self.tk_buttons[all_bttn_name].configure(state="normal")
+                messagebox.showerror(
+                    "Error",
+                    "Please clear the current experiment before viewing another.",
+                )
+                return
+            experiment = self.root_experiment_dict[experiment_name]
+            # Loop through the problems and solvers and combine any that were
+            # datafarmed
+            problem_dict: dict[str, list[list]] = {}
+            for problem in experiment.problems:
+                assert isinstance(problem, Problem)
+                # Create the list of factors in the right format
+                problem_factors = problem.factors
+                model_factors = problem.model.factors
+                factors = {**problem_factors, **model_factors}
+                # Reverse lookup the string for the class in the dictionary
+                key = None
+                for key, value in problem_directory.items():
+                    if value == problem.__class__:
+                        name = key
+                        break
+                factor_list = [factors, key]
+                # Check for datafarming
+                if "_dp_" in problem.name:
+                    name = problem.name.split("_dp_")[0]
+                else:
+                    name = problem.name
+                # If the name is already in the dictionary, append the factors
+                if name in problem_dict:
+                    problem_dict[name].append(factor_list)
+                # Otherwise, create a new entry
+                else:
+                    problem_dict[name] = [factor_list]
+            solver_dict: dict[str, list[list]] = {}
+            for solver in experiment.solvers:
+                assert isinstance(solver, Solver)
+                # Create the list of factors in the right format
+                factors = solver.factors
+                # Reverse lookup the string for the class in the dictionary
+                key = None
+                for key, value in solver_directory.items():
+                    if value == solver.__class__:
+                        name = key
+                        break
+                factor_list = [factors, key]
+                # Check for datafarming
+                if "_dp_" in solver.name:
+                    name = solver.name.split("_dp_")[0]
+                else:
+                    name = solver.name
+                # If the name is already in the dictionary, append the factors
+                if name in solver_dict:
+                    solver_dict[name].append(factor_list)
+                # Otherwise, create a new entry
+                else:
+                    solver_dict[name] = [factor_list]
 
-        def delete_experiment(
-            experiment_name: str, experiment_frame: tk.Frame
-        ) -> None:
+            # Add the problems and solvers to the GUI
+            for name, factors in problem_dict.items():
+                self.add_problem_to_curr_exp(name, factors)
+            for name, factors in solver_dict.items():
+                self.add_solver_to_curr_exp(name, factors)
+
+            # Set all the options
+            self.curr_exp_name.set(experiment_name)
+            self.curr_exp_is_pickled.set(experiment.create_pair_pickles)
+
+        def delete_experiment(experiment_name: str) -> None:
+            for name in tk_names:
+                # If it's a label, delete it from the label dict
+                if name in self.tk_labels:
+                    self.tk_labels[name].destroy()
+                    del self.tk_labels[name]
+                # if it's a button, delete it from the button dict
+                elif name in self.tk_buttons:
+                    self.tk_buttons[name].destroy()
+                    del self.tk_buttons[name]
             del self.root_experiment_dict[experiment_name]
-            experiment_frame.destroy()
 
-        # Setup initial action button state
+        # Action button (changes based on step)
         self.tk_buttons[action_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text=bttn_text_run,
-            command=lambda name=self.experiment_name: exp_run(name),
+            command=lambda name=experiment_name: action(name),
         )
         self.tk_buttons[action_bttn_name].grid(
-            row=0, column=1, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
         )
-
-        # all in one
+        # All button (complete all remaining steps)
         self.tk_buttons[all_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text=bttn_text_run_all,
-            command=lambda name=self.experiment_name: exp_all(name),
+            command=lambda name=experiment_name: all_actions(name),
         )
         self.tk_buttons[all_bttn_name].grid(
-            row=0, column=2, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=2, padx=5, pady=5, sticky="nsew"
         )
-        # experiment options button
+
+        # If the experiment was loaded, assume it's already completed
+        if is_imported:
+            name_label = self.tk_labels[lbl_name]
+            action_button = self.tk_buttons[action_bttn_name]
+            all_button = self.tk_buttons[all_bttn_name]
+            name_label.configure(text=experiment_name + "\n(Imported)")
+            action_button.configure(text="Done", state="disabled")
+            all_button.configure(state="disabled")
+
+        # Open the options window
         self.tk_buttons[opt_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text="Options",
-            command=lambda name=self.experiment_name: self.open_post_processing_window(
+            command=lambda name=experiment_name: self.open_post_processing_window(
                 name
             ),
         )
         self.tk_buttons[opt_bttn_name].grid(
-            row=0, column=3, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=3, padx=5, pady=5, sticky="nsew"
         )
-        # delete experiment
+
+        # View the experiment
+        self.tk_buttons[view_bttn_name] = ttk.Button(
+            master=list_frame,
+            text="View",
+            command=lambda name=experiment_name: view(name),
+        )
+        self.tk_buttons[view_bttn_name].grid(
+            row=row_idx, column=4, padx=5, pady=5, sticky="nsew"
+        )
+
+        # Delete the experiment
         self.tk_buttons[del_bttn_name] = ttk.Button(
-            master=self.current_experiment_frame,
+            master=list_frame,
             text="Delete",
-            command=lambda name=self.experiment_name,
-            frame=self.current_experiment_frame: delete_experiment(name, frame),
+            command=lambda name=experiment_name: delete_experiment(name),
         )
         self.tk_buttons[del_bttn_name].grid(
-            row=0, column=4, padx=5, pady=5, sticky="nsew"
+            row=row_idx, column=5, padx=5, pady=5, sticky="nsew"
         )
 
     def run_experiment(self, experiment_name: str) -> None:
@@ -4418,6 +4522,10 @@ class NewExperimentWindow(Toplevel):
     def load_plot(self) -> None:
         # ask user for pickle file location
         file_path = filedialog.askopenfilename()
+
+        # if no file selected, return
+        if not file_path or file_path == "":
+            return
 
         # load plot pickle
         with open(file_path, "rb") as f:

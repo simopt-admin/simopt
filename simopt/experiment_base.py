@@ -553,7 +553,6 @@ def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
     return max_diff
 
 
-# TODO: investigate all_est_objective's numpy array [numpy array] typing
 class ProblemSolver:
     """Base class for running one solver on one problem.
 
@@ -841,11 +840,6 @@ class ProblemSolver:
     @has_postnormalized.setter
     def has_postnormalized(self, has_postnormalized: bool) -> None:
         self.__has_postnormalized = has_postnormalized
-
-    # Set the minimum number of CPU cores for multiprocessing to be enabled
-    CPU_COUNT_LIMIT = 2
-    # Set the maximum number of active threads to be running at once
-    ACTIVE_THREAD_LIMIT_DEFAULT = 4
 
     def __init__(
         self,
@@ -5522,8 +5516,12 @@ class ProblemsSolvers:
         self.create_pair_pickles = create_pair_pickles
         if experiment_name is not None:
             self.file_header = f"{experiment_name}_"
+            self.experiment_name = experiment_name
         else:
             self.file_header = ""
+            self.experiment_name = ""
+        # For some reason some of these variables weren't being assigned to the
+        # class attributes. TODO: Fix this.
 
         output_dir = os.path.join(EXPERIMENT_DIR, "outputs")
         if not os.path.exists(output_dir):
@@ -6796,7 +6794,7 @@ def create_design(
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-    
+
     # Add all the fixed factors to the design table
     for factor in fixed_factors:
         design_table[factor] = str(
