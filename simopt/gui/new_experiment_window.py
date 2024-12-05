@@ -282,9 +282,15 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["curr_exp.lists"].grid(row=1, column=0, sticky="nsew")
         self.tk_frames["curr_exp.lists"].grid_propagate(False)
         # Only let the columns with lists expand
-        self.tk_frames["curr_exp.lists"].grid_columnconfigure(0, weight=1)
-        self.tk_frames["curr_exp.lists"].grid_columnconfigure(3, weight=1)
+        curr_exp_list_uniformity = "curr_exp_list_col_size_uniformity"
+        self.tk_frames["curr_exp.lists"].grid_columnconfigure(
+            0, weight=1, uniform=curr_exp_list_uniformity
+        )
+        self.tk_frames["curr_exp.lists"].grid_columnconfigure(
+            3, weight=1, uniform=curr_exp_list_uniformity
+        )
         self.tk_frames["curr_exp.lists"].grid_rowconfigure(1, weight=1)
+
         self.tk_labels["curr_exp.lists.problem_header"] = ttk.Label(
             self.tk_frames["curr_exp.lists"],
             text="Problems",
@@ -292,6 +298,12 @@ class NewExperimentWindow(Toplevel):
         )
         self.tk_labels["curr_exp.lists.problem_header"].grid(
             row=0, column=0, columnspan=2, sticky="nsew"
+        )
+        self.tk_separators["curr_exp.lists"] = ttk.Separator(
+            self.tk_frames["curr_exp.lists"], orient="vertical"
+        )
+        self.tk_separators["curr_exp.lists"].grid(
+            row=0, column=2, rowspan=2, sticky="ns", padx=10
         )
         self.tk_labels["curr_exp.lists.solver_header"] = ttk.Label(
             self.tk_frames["curr_exp.lists"], text="Solvers", anchor="center"
@@ -327,13 +339,6 @@ class NewExperimentWindow(Toplevel):
         )
         self.__update_problem_list_scroll_region()
 
-        self.tk_separators["curr_exp.lists"] = ttk.Separator(
-            self.tk_frames["curr_exp.lists"], orient="vertical"
-        )
-        self.tk_separators["curr_exp.lists"].grid(
-            row=1, column=2, rowspan=2, sticky="ns", padx=10
-        )
-
         self.tk_canvases["curr_exp.lists.solvers"] = tk.Canvas(
             self.tk_frames["curr_exp.lists"],
         )
@@ -359,7 +364,6 @@ class NewExperimentWindow(Toplevel):
         self.tk_scrollbars["curr_exp.lists.solvers"].grid(
             row=1, column=4, sticky="ns"
         )
-
         self.__update_solver_list_scroll_region()
 
         self.tk_frames["curr_exp.fields"] = ttk.Frame(
@@ -560,7 +564,7 @@ class NewExperimentWindow(Toplevel):
             raise ValueError(error_msg)
         canvas = self.tk_canvases[canvas_name]
         # Update the scroll region
-        canvas.update_idletasks()
+        canvas.update()
         canvas.config(scrollregion=canvas.bbox("all"))
 
     def __update_exp_list_scroll_region(self) -> None:
@@ -782,43 +786,54 @@ class NewExperimentWindow(Toplevel):
         self.add_solver_to_curr_exp_list(unique_name)
         self.__update_problem_dropdown()
 
+    def __add_item_to_curr_exp_list(
+        self,
+        unique_name: str,
+        list_name: str,
+        view_func: Callable,
+        del_func: Callable,
+    ) -> None:
+        # Get all the information needed to add the item to the GUI
+        list_name = f"curr_exp.lists.{list_name}"
+        base_name = f"{list_name}.{unique_name}"
+        parent_frame = self.tk_frames[list_name]
+        insert_row = parent_frame.grid_size()[1]
+        # Add the name label
+        name_label_name = f"{base_name}.name"
+        self.tk_labels[name_label_name] = ttk.Label(
+            master=parent_frame,
+            text=unique_name,
+        )
+        self.tk_labels[name_label_name].grid(row=insert_row, column=1)
+        # Add the view button
+        view_button_name = f"{base_name}.view"
+        self.tk_buttons[view_button_name] = ttk.Button(
+            master=parent_frame,
+            text="View",
+            command=lambda unique_name=unique_name: view_func(unique_name),
+        )
+        self.tk_buttons[view_button_name].grid(row=insert_row, column=2)
+        # Add the delete button
+        del_button_name = f"{base_name}.del"
+        self.tk_buttons[del_button_name] = ttk.Button(
+            master=parent_frame,
+            text="Delete",
+            command=lambda unique_name=unique_name: del_func(unique_name),
+        )
+        self.tk_buttons[del_button_name].grid(row=insert_row, column=3)
+
     def add_problem_to_curr_exp_list(self, unique_name: str) -> None:
         # Make sure the unique name is in the root problem dict
         if unique_name not in self.root_problem_dict:
             error_msg = f"Problem {unique_name} not found in root problem dict"
             raise ValueError(error_msg)
         # Add the problem to the GUI
-        tk_list_name = "curr_exp.lists.problems"
-        tk_base_name = f"{tk_list_name}.{unique_name}"
-        parent_frame = self.tk_canvases[tk_list_name]
-        problem_row = parent_frame.grid_size()[1]
-        # Add name label
-        name_label_name = f"{tk_base_name}.name"
-        self.tk_labels[name_label_name] = ttk.Label(
-            master=parent_frame,
-            text=unique_name,
+        self.__add_item_to_curr_exp_list(
+            unique_name,
+            "problems",
+            self.view_problem_design,
+            self.delete_problem,
         )
-        self.tk_labels[name_label_name].grid(row=problem_row, column=1)
-        # Add edit button
-        edit_button_name = f"{tk_base_name}.edit"
-        self.tk_buttons[edit_button_name] = ttk.Button(
-            master=parent_frame,
-            text="View",
-            command=lambda problem_name=unique_name: self.view_problem_design(
-                problem_name
-            ),
-        )
-        self.tk_buttons[edit_button_name].grid(row=problem_row, column=2)
-        # Add delete button
-        del_button_name = f"{tk_base_name}.del"
-        self.tk_buttons[del_button_name] = ttk.Button(
-            master=parent_frame,
-            text="Delete",
-            command=lambda problem_name=unique_name: self.delete_problem(
-                problem_name
-            ),
-        )
-        self.tk_buttons[del_button_name].grid(row=problem_row, column=3)
         self.__update_problem_list_scroll_region()
 
     def add_solver_to_curr_exp_list(self, unique_name: str) -> None:
@@ -827,37 +842,12 @@ class NewExperimentWindow(Toplevel):
             error_msg = f"Solver {unique_name} not found in root solver dict"
             raise ValueError(error_msg)
         # Add the solver to the GUI
-        tk_list_name = "curr_exp.lists.solvers"
-        tk_base_name = f"{tk_list_name}.{unique_name}"
-        parent_frame = self.tk_frames[tk_list_name]
-        solver_row = parent_frame.grid_size()[1]
-        # Add name label
-        name_label_name = f"{tk_base_name}.name"
-        self.tk_labels[name_label_name] = ttk.Label(
-            master=parent_frame,
-            text=unique_name,
+        self.__add_item_to_curr_exp_list(
+            unique_name,
+            "solvers",
+            self.view_solver_design,
+            self.delete_solver,
         )
-        self.tk_labels[name_label_name].grid(row=solver_row, column=1)
-        # Add edit button
-        edit_button_name = f"{tk_base_name}.edit"
-        self.tk_buttons[edit_button_name] = ttk.Button(
-            master=parent_frame,
-            text="View",
-            command=lambda solver_name=unique_name: self.view_solver_design(
-                solver_name
-            ),
-        )
-        self.tk_buttons[edit_button_name].grid(row=solver_row, column=2)
-        # Add delete button
-        del_button_name = f"{tk_base_name}.del"
-        self.tk_buttons[del_button_name] = ttk.Button(
-            master=parent_frame,
-            text="Delete",
-            command=lambda solver_name=unique_name: self.delete_solver(
-                solver_name
-            ),
-        )
-        self.tk_buttons[del_button_name].grid(row=solver_row, column=3)
         self.__update_solver_list_scroll_region()
 
     def _add_with_default_options(self) -> None:
@@ -1878,7 +1868,7 @@ class NewExperimentWindow(Toplevel):
         # Delete from GUI
         base_name = f"{list_name}.{save_name}"
         lbl_name = f"{base_name}.name"
-        edit_bttn_name = f"{base_name}.edit"
+        edit_bttn_name = f"{base_name}.view"
         del_bttn_name = f"{base_name}.del"
         self.tk_labels[lbl_name].destroy()
         self.tk_buttons[edit_bttn_name].destroy()
@@ -1893,6 +1883,7 @@ class NewExperimentWindow(Toplevel):
             "curr_exp.lists.problems",
             problem_name,
         )
+        self.__update_problem_list_scroll_region()
         # Rerun compatibility check
         self.cross_design_solver_compatibility()
         self.__update_solver_dropdown()
@@ -1903,6 +1894,7 @@ class NewExperimentWindow(Toplevel):
             "curr_exp.lists.solvers",
             solver_name,
         )
+        self.__update_solver_list_scroll_region()
         # Rerun compatibility check
         self.cross_design_problem_compatibility()
         self.__update_problem_dropdown()
