@@ -3074,7 +3074,7 @@ class NewExperimentWindow(Toplevel):
         self.style.configure(
             "Treeview", foreground="black", font=nametofont("TkDefaultFont")
         )
-        self.problem_tree.bind("<<TreeviewSelect>>", self.set_selected_problems)
+        self.problem_tree.bind("<<TreeviewSelect>>", self.select_problem)
 
         # Create a horizontal scrollbar
         problem_xscrollbar = ttk.Scrollbar(
@@ -3340,7 +3340,12 @@ class NewExperimentWindow(Toplevel):
                     "", index, text=str(index), values=[problem.name]
                 )
 
-    def show_plot_options(self, plot_type: str) -> None:
+    def show_plot_options(self, plot_type_tk: tk.StringVar) -> None:
+        if isinstance(plot_type_tk, tk.StringVar):
+            plot_type = plot_type_tk.get()
+        else:
+            plot_type = plot_type_tk
+        
         self._destroy_widget_children(self.more_options_frame)
         self.more_options_frame.grid(row=1, column=0, columnspan=2)
 
@@ -3989,12 +3994,16 @@ class NewExperimentWindow(Toplevel):
         self.plot_button.grid(row=2, column=0)
 
     def disable_legend(
-        self, event: tk.Event
+        self, is_enabled_tk: tk.StringVar
     ) -> None:  # also enables/disables solver & problem group names
-        if (
-            self.all_var.get().lower() == "yes"
-            and self.plot_type != "Terminal Progress"
-        ):
+        if isinstance(is_enabled_tk, tk.StringVar):
+            is_enabled_str = is_enabled_tk.get()
+        else:
+            is_enabled_str = is_enabled_tk
+        is_enabled = is_enabled_str.lower() == "yes"
+        is_term_prog = self.plot_type == "Terminal Progress"
+
+        if is_enabled and not is_term_prog:
             self.legend_menu.configure(state="normal")
             self.solver_set_entry.configure(state="normal")
             if self.plot_type in [
@@ -4004,10 +4013,18 @@ class NewExperimentWindow(Toplevel):
             ]:
                 self.problem_set_entry.configure(state="normal")
         else:
+            # The code will error if this option is changed while terminal
+            # progress is selected, so for now we'll just do nothing
+            if is_term_prog:
+                return
             self.legend_menu.configure(state="disabled")
             self.solver_set_entry.configure(state="disabled")
 
-    def enable_ref_solver(self, plot_type: str) -> None:
+    def enable_ref_solver(self, plot_type_tk: tk.StringVar) -> None:
+        if isinstance(plot_type_tk, tk.StringVar):
+            plot_type = plot_type_tk.get()
+        else:
+            plot_type = plot_type_tk
         # enable reference solver option
         if plot_type in ["CDF Solvability", "Quantile Solvability"]:
             self.ref_solver_menu.configure(state="disabled")
@@ -4072,7 +4089,7 @@ class NewExperimentWindow(Toplevel):
         else:
             self.problem_tree.selection_remove(self.problem_tree.get_children())
 
-    def set_selected_problems(self, event: tk.Event) -> None:
+    def select_problem(self, _: tk.Event) -> None:
         all_problems = self.all_problems_var.get()
         if all_problems:
             self.selected_problems = self.plot_experiment.problems
