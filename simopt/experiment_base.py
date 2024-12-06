@@ -2339,10 +2339,14 @@ def bootstrap_procedure(
             bias_correction=True,
             overall_estimator=estimator,
         )
-        # Get the first and second float from the computed bootstrap.
-        # Assuming the value we want is in the first index of both lists.
-        float_1 = computed_bootstrap[0][0][0]
-        float_2 = computed_bootstrap[1][0][0]
+        # Get the first and second float values from the computed bootstrap.
+        float_1 = computed_bootstrap[0]
+        float_2 = computed_bootstrap[1]
+        # Keep indexing into them until they are floats.
+        while not isinstance(float_1, (int, float)):
+            float_1 = float_1[0]
+        while not isinstance(float_2, (int, float)):
+            float_2 = float_2[0]
         return float_1, float_2
     else:
         # Functional returns a curve.
@@ -2355,8 +2359,8 @@ def bootstrap_procedure(
                 ]
             )
         )
-        bs_conf_int_lower_bound_list = []
-        bs_conf_int_upper_bound_list = []
+        bs_conf_int_lower_bound_list: list[np.ndarray] = []
+        bs_conf_int_upper_bound_list: list[np.ndarray] = []
         for budget in unique_budget_list:
             budget_float = float(budget)
             bootstrap_subreplications = [
@@ -2379,11 +2383,15 @@ def bootstrap_procedure(
             )
             bs_conf_int_lower_bound_list.append(bs_conf_int_lower_bound)
             bs_conf_int_upper_bound_list.append(bs_conf_int_upper_bound)
+        # Create the curves for the lower and upper bounds of the bootstrap
+        # confidence intervals.
+        lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
         bs_conf_int_lower_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_lower_bound_list
+            x_vals=unique_budget_list, y_vals=lower_bound_list
         )
+        upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
         bs_conf_int_upper_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_upper_bound_list
+            x_vals=unique_budget_list, y_vals=upper_bound_list
         )
         return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
@@ -2691,6 +2699,11 @@ def compute_bootstrap_conf_int(
         q_upper = 1 - (1 - conf_level) / 2
     bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
     bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
+    # Sometimes quantile returns a scalar, so convert to array.
+    if not isinstance(bs_conf_int_lower_bound, np.ndarray):
+        bs_conf_int_lower_bound = np.array([bs_conf_int_lower_bound])
+    if not isinstance(bs_conf_int_upper_bound, np.ndarray):
+        bs_conf_int_upper_bound = np.array([bs_conf_int_upper_bound])
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound
 
 
