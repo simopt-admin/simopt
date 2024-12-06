@@ -940,6 +940,7 @@ class ProblemSolver:
         self.has_run = False
         self.has_postreplicated = False
         self.has_postnormalized = False
+        self.xstar = ()
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -2802,6 +2803,10 @@ def report_max_halfwidth(
     # Value checking
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+    # Make sure there's something in the list
+    if len(curve_pairs) == 0:
+        error_msg = "No curve pairs to report on."
         raise ValueError(error_msg)
 
     # Compute max halfwidth of bootstrap confidence intervals.
