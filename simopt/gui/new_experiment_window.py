@@ -487,7 +487,9 @@ class NewExperimentWindow(Toplevel):
             command=self.tk_canvases["ntbk.ps_adding.problem.factors"].yview,
         )
         self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
-            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.problem.factors"].set
+            yscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.problem.factors"
+            ].set
         )
         self.tk_scrollbars["ntbk.ps_adding.problem.factors"].grid(
             row=1, column=2, sticky="ns"
@@ -535,7 +537,9 @@ class NewExperimentWindow(Toplevel):
             command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
         )
         self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
-            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.solver.factors"].set
+            yscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.solver.factors"
+            ].set
         )
         self.tk_scrollbars["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=2, sticky="ns"
@@ -587,7 +591,7 @@ class NewExperimentWindow(Toplevel):
             error_msg = f"Canvas {canvas_name} not found in GUI"
             raise ValueError(error_msg)
         canvas = self.tk_canvases[canvas_name]
-        # Update the scroll region
+        # Make sure it's up to date before updating the scroll region
         canvas.update()
         canvas.config(scrollregion=canvas.bbox("all"))
 
@@ -605,7 +609,7 @@ class NewExperimentWindow(Toplevel):
 
     def __update_solver_factor_scroll_region(self) -> None:
         self.__update_canvas_scroll_region("ntbk.ps_adding.solver.factors")
-    
+
     def __update_quick_add_problems_scroll_region(self) -> None:
         self.__update_canvas_scroll_region("ntbk.ps_adding.quick_add.problems")
 
@@ -670,6 +674,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["design_opts.generate"].grid(
             row=1, column=2, sticky="nsew", rowspan=3
         )
+        # We start on the first tab (Add Problem) so we need to initialize the
+        # problem factors canvas
+        self.__refresh_problem_tab()
 
     def _hide_gen_design(self) -> None:
         self.tk_frames["gen_design"].grid_remove()
@@ -689,6 +696,39 @@ class NewExperimentWindow(Toplevel):
         self.tk_entries["design_opts.num_stacks"].configure(state="normal")
         self.tk_entries["design_opts.name"].configure(state="normal")
 
+    def __refresh_problem_tab(self) -> None:
+        self.selected_problem_name.set("")
+        self._enable_design_opts()
+        self._destroy_widget_children(
+            self.tk_canvases["ntbk.ps_adding.problem.factors"]
+        )
+        self.tk_buttons["design_opts.generate"].configure(
+            text="Generate Problem Design",
+            command=self.create_problem_design,
+        )
+        self.__update_problem_factor_scroll_region()
+
+    def __refresh_solver_tab(self) -> None:
+        self.selected_solver_name.set("")
+        self._enable_design_opts()
+        self._destroy_widget_children(
+            self.tk_canvases["ntbk.ps_adding.solver.factors"]
+        )
+        self.tk_buttons["design_opts.generate"].configure(
+            text="Generate Solver Design", command=self.create_solver_design
+        )
+        self.__update_solver_factor_scroll_region()
+
+    def __refresh_quick_add_tab(self) -> None:
+        self._disable_design_opts()
+        self.__initialize_quick_add()
+        self.tk_buttons["design_opts.generate"].configure(
+            text="Add Cross Design to Experiment",
+            command=self.create_cross_design,
+        )
+        self.__update_quick_add_problems_scroll_region()
+        self.__update_quick_add_solvers_scroll_region()
+
     # Event handler for when the user changes the notebook tab
     def _on_notebook_tab_change(self, event: tk.Event) -> None:
         # Hide the generated design frame
@@ -703,34 +743,11 @@ class NewExperimentWindow(Toplevel):
         tab_name = event.widget.tab(event.widget.select(), "text")
         # Switch on the tab name
         if tab_name == "Add Problem":
-            self.selected_problem_name.set("")
-            self._enable_design_opts()
-            self._destroy_widget_children(
-                self.tk_canvases["ntbk.ps_adding.problem.factors"]
-            )
-            self.tk_buttons["design_opts.generate"].configure(
-                text="Generate Problem Design",
-                command=self.create_problem_design,
-            )
-
+            self.__refresh_problem_tab()
         elif tab_name == "Add Solver":
-            self.selected_solver_name.set("")
-            self._enable_design_opts()
-            self._destroy_widget_children(
-                self.tk_canvases["ntbk.ps_adding.solver.factors"]
-            )
-            self.tk_buttons["design_opts.generate"].configure(
-                text="Generate Solver Design", command=self.create_solver_design
-            )
-
+            self.__refresh_solver_tab()
         elif tab_name == "Quick-Add Problems/Solvers":
-            self._disable_design_opts()
-            self.__initialize_quick_add()
-            self.tk_buttons["design_opts.generate"].configure(
-                text="Add Cross Design to Experiment",
-                command=self.create_cross_design,
-            )
-
+            self.__refresh_quick_add_tab()
         else:
             error_msg = f"Unknown tab name: {tab_name}"
             raise ValueError(error_msg)
@@ -954,7 +971,9 @@ class NewExperimentWindow(Toplevel):
             command=self.tk_canvases["ntbk.ps_adding.quick_add.problems"].yview,
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
-            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].set
+            yscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.problems"
+            ].set
         )
         self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].grid(
             row=2, column=1, sticky="ns"
@@ -972,7 +991,9 @@ class NewExperimentWindow(Toplevel):
             command=self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].yview,
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
-            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].set
+            yscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.solvers"
+            ].set
         )
         self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].grid(
             row=2, column=4, sticky="ns"
@@ -1065,6 +1086,9 @@ class NewExperimentWindow(Toplevel):
             self.tk_checkbuttons[tk_name].grid(
                 row=row, column=0, sticky="w", padx=10
             )
+        # Update the scroll region
+        self.__update_quick_add_problems_scroll_region()
+        self.__update_quick_add_solvers_scroll_region()
         # Run the compatibility checks
         self.cross_design_problem_compatibility()
         self.cross_design_solver_compatibility()
@@ -1376,15 +1400,16 @@ class NewExperimentWindow(Toplevel):
             "# Decimals",
         ]
         for heading in header_columns:
-            frame.grid_columnconfigure(header_columns.index(heading), weight=1)
-            label = tk.Label(
+            column_idx = header_columns.index(heading)
+            frame.grid_columnconfigure(column_idx, weight=1)
+            label = ttk.Label(
                 master=frame,
                 text=heading,
                 font=nametofont("TkHeadingFont"),
             )
             label.grid(
                 row=first_row,
-                column=header_columns.index(heading),
+                column=column_idx,
                 padx=10,
             )
         # Insert horizontal separator
@@ -1403,7 +1428,7 @@ class NewExperimentWindow(Toplevel):
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             Frame to display factors.
         factors : dict[str, DFFactor]
             Dictionary of factors.
@@ -1438,28 +1463,29 @@ class NewExperimentWindow(Toplevel):
             ]
 
             # If it's not the last row, add a separator
-            if factor_index != len(factor_dict) - 1:
+            last_row_idx = len(factor_dict) - 1
+            if factor_index != last_row_idx:
                 ttk.Separator(frame, orient="horizontal").grid(
                     row=row_index + 1,
                     column=0,
                     columnspan=len(column_functions),
-                    sticky=tk.E + tk.W,
+                    sticky="ew",
                 )
 
             # Loop through and insert the factor data into the frame
             for column_index, function in enumerate(column_functions):
                 widget = function(frame)
-                # Display the widget if it exists
-                if widget is not None:
-                    widget.grid(
-                        row=row_index,
-                        column=column_index,
-                        padx=10,
-                        pady=3,
-                        sticky="ew",
-                    )
-                else:
+                # Stop if we're out of widgets
+                if widget is None:
                     break
+                # Add the widget if it isn't none
+                widget.grid(
+                    row=row_index,
+                    column=column_index,
+                    padx=10,
+                    pady=3,
+                    sticky="ew",
+                )
         return row_index
 
     def _create_problem_factors_canvas(self, problem: Problem) -> None:
@@ -1472,8 +1498,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["ntbk.ps_adding.problem.factors.problems"] = ttk.Frame(
             master=self.tk_canvases["ntbk.ps_adding.problem.factors"],
         )
-        self.tk_frames["ntbk.ps_adding.problem.factors.problems"].grid(
-            row=0, column=0, sticky="nsew"
+        self.tk_canvases["ntbk.ps_adding.problem.factors"].create_window(
+            (0, 0),
+            window=self.tk_frames["ntbk.ps_adding.problem.factors.problems"],
+            anchor="nw",
         )
 
         # show problem factors and store default widgets to this dict
@@ -1481,6 +1509,8 @@ class NewExperimentWindow(Toplevel):
             problem,
             frame=self.tk_frames["ntbk.ps_adding.problem.factors.problems"],
         )
+        # Update the scroll region
+        self.__update_problem_factor_scroll_region()
 
         # Update the design name to be unique
         unique_name = self.get_unique_problem_name(problem.name)
@@ -1498,8 +1528,10 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["ntbk.ps_adding.solver.factors.solvers"] = ttk.Frame(
             master=self.tk_canvases["ntbk.ps_adding.solver.factors"],
         )
-        self.tk_frames["ntbk.ps_adding.solver.factors.solvers"].grid(
-            row=0, column=0, sticky="nsew"
+        self.tk_canvases["ntbk.ps_adding.solver.factors"].create_window(
+            (0, 0),
+            window=self.tk_frames["ntbk.ps_adding.solver.factors.solvers"],
+            anchor="nw",
         )
 
         # show problem factors and store default widgets to this dict
@@ -1507,6 +1539,8 @@ class NewExperimentWindow(Toplevel):
             solver,
             frame=self.tk_frames["ntbk.ps_adding.solver.factors.solvers"],
         )
+        # Update the scroll region
+        self.__update_solver_factor_scroll_region()
 
         # Update the design name to be unique
         unique_name = self.get_unique_solver_name(solver.name)
@@ -1526,7 +1560,7 @@ class NewExperimentWindow(Toplevel):
 
         Returns
         -------
-        new_name : str
+        str
             new unique name.
 
         """
@@ -1540,16 +1574,9 @@ class NewExperimentWindow(Toplevel):
                 test_name = base_name
                 count += 1
                 test_name = f"{base_name}_{count!s}"
-            new_name = test_name
+            return test_name
         else:
-            new_name = base_name
-
-        # if base_name != new_name:
-        #     print(
-        #         f"Name {base_name} already exists. New name: {new_name}"
-        #     )
-
-        return new_name
+            return base_name
 
     def get_unique_experiment_name(self, base_name: str) -> str:
         return self.__get_unique_name(self.root_experiment_dict, base_name)
