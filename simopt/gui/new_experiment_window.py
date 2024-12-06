@@ -1822,17 +1822,7 @@ class NewExperimentWindow(Toplevel):
 
         self.design_tree = ttk.Treeview(master=master_frame)
         self.design_tree.grid(row=0, column=0, sticky="nsew")
-        self.style = ttk.Style()
-        self.style.configure(
-            "Treeview.Heading",
-            font=nametofont("TkHeadingFont"),
-        )
         self.design_tree.heading("#0", text="Design #")
-        # Change row height to 30
-        std_font_size = nametofont("TkDefaultFont").cget("size")
-        # TODO: see if this is the right scaling
-        height = 30 * std_font_size / 12
-        self.style.configure("Treeview", rowheight=int(height))
 
         # Enter design values into treeview
         self.design_tree["columns"] = tuple(design_table.columns)
@@ -3238,7 +3228,12 @@ class NewExperimentWindow(Toplevel):
         )
 
     def update_plot_menu(self, tk_experiment_name: tk.StringVar) -> None:
-        experiment_name = tk_experiment_name.get()
+        # If we somehow get a string instead of a variable, just use the string
+        if isinstance(tk_experiment_name, str):
+            experiment_name = tk_experiment_name
+        else:
+            experiment_name = tk_experiment_name.get()
+
         self.plot_solver_options = [
             "All"
         ]  # holds names of potential solvers to plot

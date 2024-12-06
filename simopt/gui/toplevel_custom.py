@@ -65,6 +65,15 @@ class Toplevel(tk.Toplevel):
         # Change the default button behavior to center text
         self.style.configure("TButton", justify="center")
 
+        # Set Treeview style
+        # TODO: see if this is the right scaling
+        height = 30 * font_medium / 12
+        self.style.configure("Treeview", rowheight=int(height))
+        self.style.configure(
+            "Treeview.Heading",
+            font=nametofont("TkHeadingFont"),
+        )
+
     def center_window(self, scale: float) -> None:
         """Centers the window to the main display/monitor.
 
