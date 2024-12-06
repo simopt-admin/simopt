@@ -515,9 +515,7 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
         (curve_1.lookup(x_val) - curve_2.lookup(x_val))
         for x_val in unique_x_vals
     ]
-    difference_curve = Curve(
-        x_vals=unique_x_vals, y_vals=difference_y_vals
-    )
+    difference_curve = Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
     return difference_curve
 
 
@@ -2387,13 +2385,14 @@ def bootstrap_procedure(
             bs_conf_int_upper_bound_list.append(bs_conf_int_upper_bound)
         # Create the curves for the lower and upper bounds of the bootstrap
         # confidence intervals.
+        unique_budget_list_floats = [float(val) for val in unique_budget_list]
         lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
         bs_conf_int_lower_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=lower_bound_list
+            x_vals=unique_budget_list_floats, y_vals=lower_bound_list
         )
         upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
         bs_conf_int_upper_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=upper_bound_list
+            x_vals=unique_budget_list_floats, y_vals=upper_bound_list
         )
         return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
@@ -3000,7 +2999,7 @@ def plot_progress_curves(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
-    
+
     if legend_loc is None:
         legend_loc = "best"
 
@@ -3299,7 +3298,7 @@ def plot_solvability_cdfs(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
-    
+
     if legend_loc is None:
         legend_loc = "best"
 
@@ -4525,7 +4524,7 @@ def plot_terminal_progress(
                 y="Terminal",
                 data=terminal_data_df,
                 inner="stick",
-                density_norm='width',
+                density_norm="width",
                 cut=0.1,
             )
             if normalize:
@@ -4682,7 +4681,7 @@ def plot_terminal_scatterplots(
     if not isinstance(problem_set_name, str):
         error_msg = "Problem set name must be a string."
         raise TypeError(error_msg)
-    
+
     if legend_loc is None:
         legend_loc = "best"
 

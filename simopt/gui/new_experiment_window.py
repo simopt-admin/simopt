@@ -3345,7 +3345,7 @@ class NewExperimentWindow(Toplevel):
             plot_type = plot_type_tk.get()
         else:
             plot_type = plot_type_tk
-        
+
         self._destroy_widget_children(self.more_options_frame)
         self.more_options_frame.grid(row=1, column=0, columnspan=2)
 
