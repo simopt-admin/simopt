@@ -9,6 +9,7 @@ from typing import Callable, Final, Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.text import Text
 from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageTk
 
@@ -1852,7 +1853,7 @@ class NewExperimentWindow(Toplevel):
             header_font_size = nametofont("TkHeadingFont").cget("size")
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
-        
+
         # Add a horizontal scrollbar
         self.design_tree_scroll_x = ttk.Scrollbar(
             master=master_frame,
@@ -1876,7 +1877,6 @@ class NewExperimentWindow(Toplevel):
             command=self._hide_gen_design,
         )
         self.tk_buttons["gen_design.close"].grid(row=3, column=0, sticky="nsew")
-
 
     def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
@@ -2382,7 +2382,7 @@ class NewExperimentWindow(Toplevel):
 
     def open_defaults_window(self) -> None:
         # create new winow
-        self.experiment_defaults_window = Toplevel(self)
+        self.experiment_defaults_window = Toplevel(self.root)
         self.experiment_defaults_window.title(
             "Simopt Graphical User Interface - Experiment Options Defaults"
         )
@@ -2439,10 +2439,11 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_budget_label.grid(row=3, column=0)
         self.crn_budget_var = tk.StringVar()
+        crn_budget_str = "yes" if self.crn_budget_default else "no"
         self.crn_budget_opt = ttk.OptionMenu(
             self.main_frame,
             self.crn_budget_var,
-            self.crn_budget_default,
+            crn_budget_str,
             "yes",
             "no",
         )
@@ -2455,10 +2456,11 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_macro_label.grid(row=4, column=0)
         self.crn_macro_var = tk.StringVar()
+        crn_macro_default_str = "yes" if self.crn_macro_default else "no"
         self.crn_macro_opt = ttk.OptionMenu(
             self.main_frame,
             self.crn_macro_var,
-            self.crn_macro_default,
+            crn_macro_default_str,
             "yes",
             "no",
         )
@@ -2487,10 +2489,11 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_init_label.grid(row=6, column=0)
         self.crn_init_var = tk.StringVar()
+        crn_init_default_str = "yes" if self.crn_init_default else "no"
         self.crn_init_opt = ttk.OptionMenu(
             self.main_frame,
             self.crn_init_var,
-            self.crn_init_default,
+            crn_init_default_str,
             "yes",
             "no",
         )
@@ -2556,31 +2559,22 @@ class NewExperimentWindow(Toplevel):
         self.init_default = self.init_post_rep_var.get()
 
         crn_budget_str = self.crn_budget_var.get()
-        if crn_budget_str == "yes":
-            self.crn_budget_default = True
-        else:
-            self.crn_budget_default = False
+        self.crn_budget_default = crn_budget_str.lower() == "yes"
         crn_macro_str = self.crn_macro_var.get()
-        if crn_macro_str == "yes":
-            self.crn_macro_default = True
-        else:
-            self.crn_macro_default = False
+        self.crn_macro_default = crn_macro_str.lower() == "yes"
         crn_init_str = self.crn_init_var.get()
-        if crn_init_str == "yes":
-            self.crn_init_default = True
-        else:
-            self.crn_init_default = False
-
-        solve_tol_1 = float(self.solve_tol_1_var.get())
-        solve_tol_2 = float(self.solve_tol_2_var.get())
-        solve_tol_3 = float(self.solve_tol_3_var.get())
-        solve_tol_4 = float(self.solve_tol_4_var.get())
-        self.solve_tols_default = [
+        self.crn_init_default = crn_init_str.lower() == "yes"
+        solve_tol_1 = self.solve_tol_1_var.get()
+        solve_tol_2 = self.solve_tol_2_var.get()
+        solve_tol_3 = self.solve_tol_3_var.get()
+        solve_tol_4 = self.solve_tol_4_var.get()
+        tols = [
             solve_tol_1,
             solve_tol_2,
             solve_tol_3,
             solve_tol_4,
         ]
+        self.solve_tols_default = [float(tol) for tol in tols]
 
     # Functionally the same as the below function, but for boolean values
     def _find_option_setting_bool(
@@ -2692,8 +2686,9 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_budget_label.grid(row=3, column=0)
         self.crn_budget_var = tk.StringVar()
+        crn_budget_str = "yes" if crn_budget else "no"
         self.crn_budget_opt = ttk.OptionMenu(
-            self.main_frame, self.crn_budget_var, crn_budget, "yes", "no"
+            self.main_frame, self.crn_budget_var, crn_budget_str, "yes", "no"
         )
         self.crn_budget_opt.grid(row=3, column=1)
 
@@ -2704,8 +2699,9 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_macro_label.grid(row=4, column=0)
         self.crn_macro_var = tk.StringVar()
+        crn_macro_str = "yes" if crn_macro else "no"
         self.crn_macro_opt = ttk.OptionMenu(
-            self.main_frame, self.crn_macro_var, crn_macro, "yes", "no"
+            self.main_frame, self.crn_macro_var, crn_macro_str, "yes", "no"
         )
         self.crn_macro_opt.grid(row=4, column=1)
 
@@ -2732,8 +2728,9 @@ class NewExperimentWindow(Toplevel):
         )
         self.crn_init_label.grid(row=6, column=0)
         self.crn_init_var = tk.StringVar()
+        crn_init_str = "yes" if crn_init else "no"
         self.crn_init_opt = ttk.OptionMenu(
-            self.main_frame, self.crn_init_var, crn_init, "yes", "no"
+            self.main_frame, self.crn_init_var, crn_init_str, "yes", "no"
         )
         self.crn_init_opt.grid(row=6, column=1)
 
@@ -2823,25 +2820,16 @@ class NewExperimentWindow(Toplevel):
             post_reps = self.custom_post_reps[experiment_name].get()
         else:
             post_reps = self.post_default
+
         if experiment_name in self.custom_crn_budgets:
             crn_budget_str = self.custom_crn_budgets[experiment_name].get()
-            if crn_budget_str == "yes":
-                crn_budget = True
-            else:
-                crn_budget = False
+            crn_budget = crn_budget_str.lower() == "yes"
         else:
-            crn_budget_str = self.crn_budget_default
-        if crn_budget_str == "yes":
-            crn_budget = True
-        else:
-            crn_budget = False
+            crn_budget = self.crn_budget_default
 
         if experiment_name in self.custom_crn_macros:
             crn_macro_str = self.custom_crn_macros[experiment_name].get()
-            if crn_macro_str == "yes":
-                crn_macro = True
-            else:
-                crn_macro = False
+            crn_macro = crn_macro_str.lower() == "yes"
         else:
             crn_macro = self.crn_macro_default
 
@@ -2863,10 +2851,7 @@ class NewExperimentWindow(Toplevel):
             reps = self.init_default
         if experiment_name in self.custom_crn_inits:
             crn_str = self.custom_crn_inits[experiment_name].get()
-            if crn_str == "yes":
-                crn = True
-            else:
-                crn = False
+            crn = crn_str.lower() == "yes"
         else:
             crn = self.crn_init_default
 
@@ -2885,7 +2870,8 @@ class NewExperimentWindow(Toplevel):
             tol_2 = self.custom_solve_tols[experiment_name][1].get()
             tol_3 = self.custom_solve_tols[experiment_name][2].get()
             tol_4 = self.custom_solve_tols[experiment_name][3].get()
-            solve_tols = [tol_1, tol_2, tol_3, tol_4]
+            solve_tols_str = [tol_1, tol_2, tol_3, tol_4]
+            solve_tols = [float(tol) for tol in solve_tols_str]
         else:
             solve_tols = self.solve_tols_default
 
@@ -3251,7 +3237,8 @@ class NewExperimentWindow(Toplevel):
             scrollregion=self.plotting_canvas.bbox("all")
         )
 
-    def update_plot_menu(self, experiment_name: str) -> None:
+    def update_plot_menu(self, tk_experiment_name: tk.StringVar) -> None:
+        experiment_name = tk_experiment_name.get()
         self.plot_solver_options = [
             "All"
         ]  # holds names of potential solvers to plot
@@ -3274,27 +3261,19 @@ class NewExperimentWindow(Toplevel):
                 problem_factor_set.add(factor)
 
         # determine if all solvers in experiment have the same factor options
-        if len(solver_factor_set) == len(
-            self.plot_experiment.solvers[0].factors
-        ):  # if set length is the same as the fist solver in the experiment
-            self.all_same_solver = True
-        else:
-            self.all_same_solver = False
+        solver_set_len = len(solver_factor_set)
+        plot_exp_len = len(self.plot_experiment.solvers)
+        self.all_same_solver = solver_set_len == plot_exp_len
 
         # determine if all problems in experiment have the same factor options
-        n_prob_factors = len(self.plot_experiment.problems[0].factors) + len(
-            self.plot_experiment.problems[0].model.factors
-        )
-        if (
-            len(problem_factor_set) == n_prob_factors
-        ):  # if set length is the same as the fist problem in the experiment
-            self.all_same_problem = True
-        else:
-            self.all_same_problem = False
+        problem_set_len = len(problem_factor_set)
+        plot_exp_prob_len = len(self.plot_experiment.problems[0].factors)
+        plot_exp_model_len = len(self.plot_experiment.problems[0].model.factors)
+        total_prob_len = plot_exp_prob_len + plot_exp_model_len
+        self.all_same_problem = problem_set_len == total_prob_len
 
         # clear previous values in the solver tree
-        for row in self.solver_tree.get_children():
-            self.solver_tree.delete(row)
+        self._destroy_widget_children(self.solver_tree)
 
         # create first column of solver tree view
         self.solver_tree.column("#0", width=75)
@@ -3329,8 +3308,7 @@ class NewExperimentWindow(Toplevel):
                 )
 
         # clear previous values in the problem tree
-        for row in self.problem_tree.get_children():
-            self.problem_tree.delete(row)
+        self._destroy_widget_children(self.problem_tree)
 
         # create first column of problem tree view
         self.problem_tree.heading("#0", text="Problem #")
@@ -3808,7 +3786,7 @@ class NewExperimentWindow(Toplevel):
             )
             self.solve_tol_label.grid(row=7, column=0)
             self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set(0.1)
+            self.solve_tol_var.set("0.1")  # default value
             self.solve_tol_entry = tk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
@@ -3841,6 +3819,7 @@ class NewExperimentWindow(Toplevel):
             if len(self.selected_solvers) == 0:
                 solver_display = "No solvers selected"
             else:
+                solver_display = None
                 for solver in self.selected_solvers:
                     solver_options.append(solver.name)
                     solver_display = solver_options[0]
@@ -4018,7 +3997,7 @@ class NewExperimentWindow(Toplevel):
         self, event: tk.Event
     ) -> None:  # also enables/disables solver & problem group names
         if (
-            self.all_var.get() == "Yes"
+            self.all_var.get().lower() == "yes"
             and self.plot_type != "Terminal Progress"
         ):
             self.legend_menu.configure(state="normal")
@@ -4114,7 +4093,7 @@ class NewExperimentWindow(Toplevel):
                 saved_solver = solver_options[0]
         else:
             solver_options = ["No solvers selected"]
-            saved_solver = ["No solvers selected"]
+            saved_solver = "No solvers selected"
         self.ref_solver_var.set(saved_solver)
         # destroy old menu and create new one
         self.ref_solver_menu.destroy()
@@ -4164,11 +4143,7 @@ class NewExperimentWindow(Toplevel):
 
             # get user input common across all plot types
             all_str = self.all_var.get()
-            if all_str == "Yes":
-                all_in = True
-
-            else:
-                all_in = False
+            all_in = all_str.lower() == "yes"
 
             if (
                 all_in and self.plot_type != "Terminal Progress"
@@ -4192,23 +4167,13 @@ class NewExperimentWindow(Toplevel):
                 subplot_type = self.subplot_type_var.get()
                 beta = float(self.beta_var.get())
                 normalize_str = self.normalize_var.get()
-                if normalize_str == "Yes":
-                    norm = True
-                else:
-                    norm = False
-
+                norm = normalize_str.lower() == "yes"
                 n_boot = int(self.boot_var.get())
                 con_level = float(self.con_level_var.get())
                 plot_ci_str = self.plot_CI_var.get()
-                if plot_ci_str == "Yes":
-                    plot_ci = True
-                else:
-                    plot_ci = False
+                plot_ci = plot_ci_str.lower() == "yes"
                 plot_hw_str = self.plot_hw_var.get()
-                if plot_hw_str == "Yes":
-                    plot_hw = True
-                else:
-                    plot_hw = False
+                plot_hw = plot_hw_str.lower() == "yes"
                 parameters = {}  # holds relevant parameter info for display
                 parameters["Plot Type"] = subplot_type
                 parameters["Normalize Optimality Gaps"] = normalize_str
@@ -4265,15 +4230,9 @@ class NewExperimentWindow(Toplevel):
                 n_boot = int(self.boot_var.get())
                 con_level = float(self.con_level_var.get())
                 plot_ci_str = self.plot_CI_var.get()
-                if plot_ci_str == "Yes":
-                    plot_ci = True
-                else:
-                    plot_ci = False
+                plot_ci = plot_ci_str.lower() == "yes"
                 plot_hw_str = self.plot_hw_var.get()
-                if plot_hw_str == "Yes":
-                    plot_hw = True
-                else:
-                    plot_hw = False
+                plot_hw = plot_hw_str.lower() == "yes"
 
                 parameters = {}  # holds relevant parameter info for display
                 parameters["Solve Tolerance"] = solve_tol
@@ -4334,15 +4293,9 @@ class NewExperimentWindow(Toplevel):
                     n_boot = int(self.boot_var.get())
                     con_level = float(self.con_level_var.get())
                     plot_ci_str = self.plot_CI_var.get()
-                    if plot_ci_str == "Yes":
-                        plot_ci = True
-                    else:
-                        plot_ci = False
+                    plot_ci = plot_ci_str.lower() == "yes"
                     plot_hw_str = self.plot_hw_var.get()
-                    if plot_hw_str == "Yes":
-                        plot_hw = True
-                    else:
-                        plot_hw = False
+                    plot_hw = plot_hw_str.lower() == "yes"
                     parameters = {}  # holds relevant parameter info for display
                     parameters["Number Bootstrap Samples"] = n_boot
                     parameters["Confidence Level"] = con_level
@@ -4387,10 +4340,7 @@ class NewExperimentWindow(Toplevel):
                 # get user input
                 subplot_type = self.subplot_type_var.get()
                 normalize_str = self.normalize_var.get()
-                if normalize_str == "Yes":
-                    norm = True
-                else:
-                    norm = False
+                norm = normalize_str.lower() == "yes"
                 parameters = {}  # holds relevant parameter info for display
                 parameters["Plot Type"] = subplot_type
                 parameters["Normalize Optimality Gaps"] = normalize_str
@@ -4467,30 +4417,30 @@ class NewExperimentWindow(Toplevel):
                 )
 
             if self.plot_type == "Solvability Profile":
-                # get user input
+                # Select the correct subplot type
+                subplot_types = {
+                    "CDF Solvability": "cdf_solvability",
+                    "Quantile Solvability": "quantile_solvability",
+                    "Difference of CDF Solvablility": "diff_cdf_solvability",
+                    "Difference of Quantile Solvability": "diff_quantile_solvability",
+                }
                 subplot_type = self.subplot_type_var.get()
-                if subplot_type == "CDF Solvability":
-                    plot_input = "cdf_solvability"
-                elif subplot_type == "Quantile Solvability":
-                    plot_input = "quantile_solvability"
-                elif subplot_type == "Difference of CDF Solvablility":
-                    plot_input = "diff_cdf_solvability"
-                elif subplot_type == "Difference of Quantile Solvability":
-                    plot_input = "diff_quantile_solvability"
+                if subplot_type not in subplot_types:
+                    messagebox.showerror(
+                        "Error",
+                        "Invalid plot type selected. Please select a valid plot type.",
+                    )
+                    return
+                plot_input = subplot_types[subplot_type]
 
+                # Get user input
                 beta = float(self.beta_var.get())
                 n_boot = int(self.boot_var.get())
                 con_level = float(self.con_level_var.get())
                 plot_ci_str = self.plot_CI_var.get()
-                if plot_ci_str == "Yes":
-                    plot_ci = True
-                else:
-                    plot_ci = False
+                plot_ci = plot_ci_str.lower() == "yes"
                 plot_hw_str = self.plot_hw_var.get()
-                if plot_hw_str == "Yes":
-                    plot_hw = True
-                else:
-                    plot_hw = False
+                plot_hw = plot_hw_str.lower() == "yes"
                 solve_tol = float(self.solve_tol_var.get())
                 parameters = {}  # holds relevant parameter info for display
                 parameters["Plot Type"] = subplot_type
@@ -4835,6 +4785,7 @@ class NewExperimentWindow(Toplevel):
         plot_display.grid(row=0, column=0, padx=10, pady=10)
 
         # menu options supported by matplotlib
+        # TODO: import this from somewhere instead of hardcoding
         self.font_weight_options = [
             "ultralight",
             "light",
@@ -5558,7 +5509,7 @@ class NewExperimentWindow(Toplevel):
         self.edit_text_frame = tk.Frame(self.edit_text_window)
         self.edit_text_frame.grid(row=0, column=0)
         # load plot pickle
-        root, ext = os.path.splitext(file_path)
+        root, _ = os.path.splitext(file_path)
         pickle_path = f"{root}.pkl"
         with open(pickle_path, "rb") as f:
             fig = pickle.load(f)
@@ -5566,7 +5517,7 @@ class NewExperimentWindow(Toplevel):
         # test to make sure not editing title or axes
 
         # get current text info
-        text_objects = [i for i in ax.get_children() if isinstance(i, plt.Text)]
+        text_objects = [i for i in ax.get_children() if isinstance(i, Text)]
         filtered_text = [
             text
             for text in text_objects
@@ -5647,7 +5598,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_size_label.grid(row=2, column=0)
         self.text_font_size_var = tk.StringVar()
-        self.text_font_size_var.set(font_size)
+        font_size_str = str(font_size)
+        self.text_font_size_var.set(font_size_str)
         self.text_font_size_entry = tk.Entry(
             master=self.edit_text_frame, textvariable=self.text_font_size_var
         )
@@ -5674,11 +5626,12 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_weight_label.grid(row=4, column=0)
         self.text_font_weight_var = tk.StringVar()
-        self.text_font_weight_var.set(font_weight)
+        font_weight_str = str(font_weight)
+        self.text_font_weight_var.set(font_weight_str)
         self.text_font_weight_menu = ttk.OptionMenu(
             self.edit_text_frame,
             self.text_font_weight_var,
-            font_weight,
+            font_weight_str,
             *self.font_weight_options,
         )
         self.text_font_weight_menu.grid(row=4, column=1, padx=10)
@@ -5689,11 +5642,12 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_color_label.grid(row=5, column=0)
         self.text_font_color_var = tk.StringVar()
-        self.text_font_color_var.set(color)
+        color_str = str(color)
+        self.text_font_color_var.set(color_str)
         self.text_font_color_menu = ttk.OptionMenu(
             self.edit_text_frame,
             self.text_font_color_var,
-            color,
+            color_str,
             *self.color_options,
         )
         self.text_font_color_menu.grid(row=5, column=1, padx=10)
@@ -5704,6 +5658,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_align_label.grid(row=6, column=0)
         self.text_align_var = tk.StringVar()
+        # TODO: check if this is supposed to be alignment since color doesn't
+        # make a ton of sense in this context
         self.text_align_var.set(color)
         self.text_align_menu = ttk.OptionMenu(
             self.edit_text_frame,
@@ -5719,6 +5675,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_valign_label.grid(row=7, column=0)
         self.text_valign_var = tk.StringVar()
+        # TODO: check if this is supposed to be alignment since color doesn't
+        # make a ton of sense in this context
         self.text_valign_var.set(color)
         self.text_valign_menu = ttk.OptionMenu(
             self.edit_text_frame,
@@ -5734,7 +5692,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_position_x_label.grid(row=8, column=0)
         self.text_position_x_var = tk.StringVar()
-        self.text_position_x_var.set(position[0])
+        position_x_str = str(position[0])
+        self.text_position_x_var.set(position_x_str)
         self.text_position_x_entry = tk.Entry(
             master=self.edit_text_frame, textvariable=self.text_position_x_var
         )
@@ -5746,7 +5705,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_position_y_label.grid(row=9, column=0)
         self.text_position_y_var = tk.StringVar()
-        self.text_position_y_var.set(position[1])
+        position_y_str = str(position[1])
+        self.text_position_y_var.set(position_y_str)
         self.text_position_y_entry = tk.Entry(
             master=self.edit_text_frame, textvariable=self.text_position_y_var
         )
@@ -5758,11 +5718,12 @@ class NewExperimentWindow(Toplevel):
         )
         self.background_color_label.grid(row=10, column=0)
         self.background_color_var = tk.StringVar()
-        self.background_color_var.set(face_color)
+        face_color_str = str(face_color)
+        self.background_color_var.set(face_color_str)
         self.background_color_menu = ttk.OptionMenu(
             self.edit_text_frame,
             self.background_color_var,
-            face_color,
+            face_color_str,
             *([*self.color_options, "none"]),
         )
         self.background_color_menu.grid(row=10, column=1, padx=10)
@@ -5773,11 +5734,14 @@ class NewExperimentWindow(Toplevel):
         )
         self.border_color_label.grid(row=11, column=0)
         self.border_color_var = tk.StringVar()
-        self.border_color_var.set(face_color)
+        # TODO: check if this is supposed to be face color since the color menu
+        # uses edge color instead
+        self.border_color_var.set(face_color_str)
+        edge_color_str = str(edge_color)
         self.border_color_menu = ttk.OptionMenu(
             self.edit_text_frame,
             self.border_color_var,
-            edge_color,
+            edge_color_str,
             *([*self.color_options, "none"]),
         )
         self.border_color_menu.grid(row=11, column=1, padx=10)
@@ -5788,7 +5752,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.border_weight_label.grid(row=12, column=0)
         self.border_weight_var = tk.StringVar()
-        self.border_weight_var.set(line_width)
+        line_width_str = str(line_width)
+        self.border_weight_var.set(line_width_str)
         self.border_weight_menu = tk.Entry(
             master=self.edit_text_frame, textvariable=self.border_weight_var
         )
@@ -5800,7 +5765,8 @@ class NewExperimentWindow(Toplevel):
         )
         self.alpha_label.grid(row=13, column=0)
         self.alpha_var = tk.StringVar()
-        self.alpha_var.set(alpha)
+        alpha_str = str(alpha)
+        self.alpha_var.set(alpha_str)
         self.alpha_menu = tk.Entry(
             master=self.edit_text_frame, textvariable=self.alpha_var
         )
@@ -5829,7 +5795,7 @@ class NewExperimentWindow(Toplevel):
         pickle_path: os.PathLike | str,
         file_path: os.PathLike | str,
         image_frame: tk.Frame,
-        text: plt.Text,
+        text: Text,
         copy: bool = False,
     ) -> None:
         # get text properties from user inputs
