@@ -509,14 +509,13 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
         error_msg = "curve_2 must be a Curve object."
         raise TypeError(error_msg)
 
-    unique_x_vals = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals_np = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals = [float(x_val) for x_val in unique_x_vals_np]
     difference_y_vals = [
         (curve_1.lookup(x_val) - curve_2.lookup(x_val))
         for x_val in unique_x_vals
     ]
-    difference_curve = Curve(
-        x_vals=unique_x_vals.tolist(), y_vals=difference_y_vals
-    )
+    difference_curve = Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
     return difference_curve
 
 
@@ -939,6 +938,7 @@ class ProblemSolver:
         self.has_run = False
         self.has_postreplicated = False
         self.has_postnormalized = False
+        self.xstar = ()
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -2339,10 +2339,14 @@ def bootstrap_procedure(
             bias_correction=True,
             overall_estimator=estimator,
         )
-        # Get the first and second float from the computed bootstrap.
-        # Assuming the value we want is in the first index of both lists.
-        float_1 = computed_bootstrap[0][0][0]
-        float_2 = computed_bootstrap[1][0][0]
+        # Get the first and second float values from the computed bootstrap.
+        float_1 = computed_bootstrap[0]
+        float_2 = computed_bootstrap[1]
+        # Keep indexing into them until they are floats.
+        while not isinstance(float_1, (int, float)):
+            float_1 = float_1[0]
+        while not isinstance(float_2, (int, float)):
+            float_2 = float_2[0]
         return float_1, float_2
     else:
         # Functional returns a curve.
@@ -2355,8 +2359,8 @@ def bootstrap_procedure(
                 ]
             )
         )
-        bs_conf_int_lower_bound_list = []
-        bs_conf_int_upper_bound_list = []
+        bs_conf_int_lower_bound_list: list[np.ndarray] = []
+        bs_conf_int_upper_bound_list: list[np.ndarray] = []
         for budget in unique_budget_list:
             budget_float = float(budget)
             bootstrap_subreplications = [
@@ -2379,11 +2383,16 @@ def bootstrap_procedure(
             )
             bs_conf_int_lower_bound_list.append(bs_conf_int_lower_bound)
             bs_conf_int_upper_bound_list.append(bs_conf_int_upper_bound)
+        # Create the curves for the lower and upper bounds of the bootstrap
+        # confidence intervals.
+        unique_budget_list_floats = [float(val) for val in unique_budget_list]
+        lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
         bs_conf_int_lower_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_lower_bound_list
+            x_vals=unique_budget_list_floats, y_vals=lower_bound_list
         )
+        upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
         bs_conf_int_upper_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_upper_bound_list
+            x_vals=unique_budget_list_floats, y_vals=upper_bound_list
         )
         return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
@@ -2691,6 +2700,11 @@ def compute_bootstrap_conf_int(
         q_upper = 1 - (1 - conf_level) / 2
     bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
     bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
+    # Sometimes quantile returns a scalar, so convert to array.
+    if not isinstance(bs_conf_int_lower_bound, np.ndarray):
+        bs_conf_int_lower_bound = np.array([bs_conf_int_lower_bound])
+    if not isinstance(bs_conf_int_upper_bound, np.ndarray):
+        bs_conf_int_upper_bound = np.array([bs_conf_int_upper_bound])
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound
 
 
@@ -2789,6 +2803,10 @@ def report_max_halfwidth(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+    # Make sure there's something in the list
+    if len(curve_pairs) == 0:
+        error_msg = "No curve pairs to report on."
+        raise ValueError(error_msg)
 
     # Compute max halfwidth of bootstrap confidence intervals.
     min_lower_bound = np.inf
@@ -2870,7 +2888,7 @@ def plot_progress_curves(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -2956,8 +2974,8 @@ def plot_progress_curves(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -2981,6 +2999,9 @@ def plot_progress_curves(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
@@ -3183,7 +3204,7 @@ def plot_solvability_cdfs(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3255,8 +3276,8 @@ def plot_solvability_cdfs(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -3277,6 +3298,9 @@ def plot_solvability_cdfs(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
@@ -3749,7 +3773,7 @@ def plot_solvability_profiles(
     beta: float = 0.5,
     ref_solver: str | None = None,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3861,7 +3885,7 @@ def plot_solvability_profiles(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -3889,6 +3913,9 @@ def plot_solvability_profiles(
     if not 0 < beta < 1:
         error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
@@ -4497,8 +4524,7 @@ def plot_terminal_progress(
                 y="Terminal",
                 data=terminal_data_df,
                 inner="stick",
-                scale="width",
-                showmeans=True,
+                density_norm="width",
                 cut=0.1,
             )
             if normalize:
@@ -4574,7 +4600,7 @@ def plot_terminal_scatterplots(
     experiments: list[list[ProblemSolver]],
     all_in_one: float = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -4640,7 +4666,7 @@ def plot_terminal_scatterplots(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -4655,6 +4681,9 @@ def plot_terminal_scatterplots(
     if not isinstance(problem_set_name, str):
         error_msg = "Problem set name must be a string."
         raise TypeError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
