@@ -4510,8 +4510,7 @@ def plot_terminal_progress(
                 y="Terminal",
                 data=terminal_data_df,
                 inner="stick",
-                scale="width",
-                showmeans=True,
+                density_norm='width',
                 cut=0.1,
             )
             if normalize:

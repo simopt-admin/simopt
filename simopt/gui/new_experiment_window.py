@@ -4136,6 +4136,7 @@ class NewExperimentWindow(Toplevel):
             # show popup message
             messagebox.showerror("Error", f"Please select {text} to plot.")
         else:  # create plots
+            parameters = None
             # get selected solvers & problems
             exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
             for solver in self.selected_solvers:
