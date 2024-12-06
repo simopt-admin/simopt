@@ -470,7 +470,7 @@ class NewExperimentWindow(Toplevel):
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.problem.select"].grid(
-            row=0, column=1, sticky="ew", padx=5
+            row=0, column=1, sticky="ew", columnspan=2
         )
         self.tk_comboboxes["ntbk.ps_adding.problem.select"].bind(
             "<<ComboboxSelected>>", self._on_problem_combobox_change
@@ -481,6 +481,18 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.problem.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors"] = ttk.Scrollbar(
+            self.tk_frames["ntbk.ps_adding.problem"],
+            orient="vertical",
+            command=self.tk_canvases["ntbk.ps_adding.problem.factors"].yview,
+        )
+        self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
+            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.problem.factors"].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors"].grid(
+            row=1, column=2, sticky="ns"
+        )
+        self.__update_problem_factor_scroll_region()
 
         self.tk_frames["ntbk.ps_adding.solver"] = ttk.Frame(
             self.tk_notebooks["ntbk.ps_adding"]
@@ -506,7 +518,7 @@ class NewExperimentWindow(Toplevel):
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.solver.select"].grid(
-            row=0, column=1, sticky="ew", padx=5
+            row=0, column=1, sticky="ew", columnspan=2
         )
         self.tk_comboboxes["ntbk.ps_adding.solver.select"].bind(
             "<<ComboboxSelected>>", self._on_solver_combobox_change
@@ -517,6 +529,18 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors"] = ttk.Scrollbar(
+            self.tk_frames["ntbk.ps_adding.solver"],
+            orient="vertical",
+            command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
+        )
+        self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
+            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.solver.factors"].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors"].grid(
+            row=1, column=2, sticky="ns"
+        )
+        self.__update_solver_factor_scroll_region()
 
         self.tk_frames["ntbk.ps_adding.quick_add"] = ttk.Frame(
             self.tk_notebooks["ntbk.ps_adding"]
@@ -530,7 +554,7 @@ class NewExperimentWindow(Toplevel):
         )
         # Initialize the quick-add tab
         # If this doesn't get initialized, the compatability checks will fail
-        self._add_with_default_options()
+        self.__initialize_quick_add()
 
     def _initialize_generated_design_frame(self) -> None:
         if "gen_design" in self.tk_frames:
@@ -575,6 +599,18 @@ class NewExperimentWindow(Toplevel):
 
     def __update_solver_list_scroll_region(self) -> None:
         self.__update_canvas_scroll_region("curr_exp.lists.solvers")
+
+    def __update_problem_factor_scroll_region(self) -> None:
+        self.__update_canvas_scroll_region("ntbk.ps_adding.problem.factors")
+
+    def __update_solver_factor_scroll_region(self) -> None:
+        self.__update_canvas_scroll_region("ntbk.ps_adding.solver.factors")
+    
+    def __update_quick_add_problems_scroll_region(self) -> None:
+        self.__update_canvas_scroll_region("ntbk.ps_adding.quick_add.problems")
+
+    def __update_quick_add_solvers_scroll_region(self) -> None:
+        self.__update_canvas_scroll_region("ntbk.ps_adding.quick_add.solvers")
 
     def _initialize_design_options(self) -> None:
         if "design_opts" in self.tk_frames:
@@ -689,7 +725,7 @@ class NewExperimentWindow(Toplevel):
 
         elif tab_name == "Quick-Add Problems/Solvers":
             self._disable_design_opts()
-            self._add_with_default_options()
+            self.__initialize_quick_add()
             self.tk_buttons["design_opts.generate"].configure(
                 text="Add Cross Design to Experiment",
                 command=self.create_cross_design,
@@ -850,28 +886,26 @@ class NewExperimentWindow(Toplevel):
         )
         self.__update_solver_list_scroll_region()
 
-    def _add_with_default_options(self) -> None:
+    def __initialize_quick_add(self) -> None:
         # Delete all existing children of the frame
         for child in self.tk_frames[
             "ntbk.ps_adding.quick_add"
         ].winfo_children():
             child.destroy()
         # Configure the grid layout to expand properly
-        problem_frame_weight = 2
-        solver_frame_weight = 1
         self.tk_frames["ntbk.ps_adding.quick_add"].grid_rowconfigure(
             2, weight=1
         )
         self.tk_frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
-            0, weight=problem_frame_weight
+            0, weight=2
         )
         self.tk_frames["ntbk.ps_adding.quick_add"].grid_columnconfigure(
-            1, weight=solver_frame_weight
+            3, weight=1
         )
 
         # Create labels for the title and the column headers
         title_text = "Select problems/solvers to be included in cross-design."
-        title_text += "\nThese will be added with default factor settings."
+        title_text += " These will be added with default factor settings."
         self.tk_labels["ntbk.ps_adding.quick_add.title"] = ttk.Label(
             self.tk_frames["ntbk.ps_adding.quick_add"],
             text=title_text,
@@ -879,7 +913,7 @@ class NewExperimentWindow(Toplevel):
             justify="center",
         )
         self.tk_labels["ntbk.ps_adding.quick_add.title"].grid(
-            row=0, column=0, columnspan=2
+            row=0, column=0, columnspan=5, sticky="ew"
         )
         self.tk_labels["ntbk.ps_adding.quick_add.problems"] = ttk.Label(
             self.tk_frames["ntbk.ps_adding.quick_add"],
@@ -888,7 +922,14 @@ class NewExperimentWindow(Toplevel):
             font=nametofont("TkHeadingFont"),
         )
         self.tk_labels["ntbk.ps_adding.quick_add.problems"].grid(
-            row=1, column=0, sticky="ew"
+            row=1, column=0, sticky="ew", columnspan=2
+        )
+        self.tk_separators["ntbk.ps_adding.quick_add"] = ttk.Separator(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
+            orient="vertical",
+        )
+        self.tk_separators["ntbk.ps_adding.quick_add"].grid(
+            row=1, column=2, sticky="ns", rowspan=2, padx=10
         )
         self.tk_labels["ntbk.ps_adding.quick_add.solvers"] = ttk.Label(
             self.tk_frames["ntbk.ps_adding.quick_add"],
@@ -897,7 +938,7 @@ class NewExperimentWindow(Toplevel):
             font=nametofont("TkHeadingFont"),
         )
         self.tk_labels["ntbk.ps_adding.quick_add.solvers"].grid(
-            row=1, column=1, sticky="ew"
+            row=1, column=3, sticky="ew", columnspan=2
         )
 
         # Create canvases for the problems and solvers
@@ -907,11 +948,34 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].grid(
             row=2, column=0, sticky="nsew"
         )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"] = ttk.Scrollbar(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
+            orient="vertical",
+            command=self.tk_canvases["ntbk.ps_adding.quick_add.problems"].yview,
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
+            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].grid(
+            row=2, column=1, sticky="ns"
+        )
+
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
             self.tk_frames["ntbk.ps_adding.quick_add"]
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].grid(
-            row=2, column=1, sticky="nsew"
+            row=2, column=3, sticky="nsew"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"] = ttk.Scrollbar(
+            self.tk_frames["ntbk.ps_adding.quick_add"],
+            orient="vertical",
+            command=self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].yview,
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
+            yscrollcommand=self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].grid(
+            row=2, column=4, sticky="ns"
         )
 
         # create master frame inside the canvas
@@ -1127,7 +1191,7 @@ class NewExperimentWindow(Toplevel):
             return
 
         # Reset the quick-add frame
-        self._add_with_default_options()
+        self.__initialize_quick_add()
         # Reset all the booleans
         for key in self.tk_var_bools:
             if "ntbk.ps_adding.quick_add.problems_frame" in key:
