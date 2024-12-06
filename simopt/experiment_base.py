@@ -509,13 +509,14 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
         error_msg = "curve_2 must be a Curve object."
         raise TypeError(error_msg)
 
-    unique_x_vals = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals_np = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals = [float(x_val) for x_val in unique_x_vals_np]
     difference_y_vals = [
         (curve_1.lookup(x_val) - curve_2.lookup(x_val))
         for x_val in unique_x_vals
     ]
     difference_curve = Curve(
-        x_vals=unique_x_vals.tolist(), y_vals=difference_y_vals
+        x_vals=unique_x_vals, y_vals=difference_y_vals
     )
     return difference_curve
 
