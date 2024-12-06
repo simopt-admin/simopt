@@ -4120,283 +4120,197 @@ class NewExperimentWindow(Toplevel):
             self.ref_solver_menu.configure(state="disabled")
 
     def plot(self) -> None:
+        # Ensure that at least one solver and one problem are selected
+        if len(self.selected_problems) == 0:
+            error_msg = "Please select problems to plot."
+            messagebox.showerror("Error", error_msg)
+            return
+        elif len(self.selected_solvers) == 0:
+            error_msg = "Please select solvers to plot."
+            messagebox.showerror("Error", error_msg)
+            return
+        
+        parameters = None
+        # get selected solvers & problems
+        exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
+        for solver in self.selected_solvers:
+            solver_list = []
+            for problem in self.selected_problems:
+                for solver_group in self.plot_experiment.experiments:
+                    for dp in solver_group:
+                        if id(dp.solver) == id(solver) and id(
+                            dp.problem
+                        ) == id(problem):
+                            solver_list.append(dp)
+            exp_sublist.append(solver_list)
+        n_problems = len(exp_sublist[0])
+
+        # get user input common across all plot types
+        all_str = self.all_var.get()
+        all_in = all_str.lower() == "yes"
+
         if (
-            len(self.selected_problems) == 0 or len(self.selected_solvers) == 0
-        ):  # show message that no solvers or problems have been selected
-            if (
-                len(self.selected_problems) == 0
-                and len(self.selected_solvers) == 0
-            ):
-                text = "problems and solvers"
-            elif len(self.selected_solvers) == 0:
-                text = "solvers"
-            else:
-                text = "problems"
+            all_in and self.plot_type != "Terminal Progress"
+        ):  # only get legend location if all in one is selected
+            legend = self.legend_var.get()
+        else:
+            legend = None
+        ext = self.ext_var.get()  # file extension type
 
-            # show popup message
-            messagebox.showerror("Error", f"Please select {text} to plot.")
-        else:  # create plots
-            parameters = None
-            # get selected solvers & problems
-            exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
-            for solver in self.selected_solvers:
-                solver_list = []
-                for problem in self.selected_problems:
-                    for solver_group in self.plot_experiment.experiments:
-                        for dp in solver_group:
-                            if id(dp.solver) == id(solver) and id(
-                                dp.problem
-                            ) == id(problem):
-                                solver_list.append(dp)
-                exp_sublist.append(solver_list)
-            n_problems = len(exp_sublist[0])
+        # get solver set name (pass through even if all in is false, will just be ignored by plotting function)
+        solver_set_name = self.solver_set_var.get()
+        if self.plot_type in [
+            "Terminal Scatter Plot",
+            "Solvability Profile",
+            "Area Scatter Plot",
+        ]:
+            problem_set_name = self.problem_set_var.get()
 
-            # get user input common across all plot types
-            all_str = self.all_var.get()
-            all_in = all_str.lower() == "yes"
-
-            if (
-                all_in and self.plot_type != "Terminal Progress"
-            ):  # only get legend location if all in one is selected
-                legend = self.legend_var.get()
-            else:
-                legend = None
-            ext = self.ext_var.get()  # file extension type
-
-            # get solver set name (pass through even if all in is false, will just be ignored by plotting function)
-            solver_set_name = self.solver_set_var.get()
-            if self.plot_type in [
-                "Terminal Scatter Plot",
-                "Solvability Profile",
-                "Area Scatter Plot",
-            ]:
-                problem_set_name = self.problem_set_var.get()
-
-            if self.plot_type == "Progress Curve":
-                # get user input
-                subplot_type = self.subplot_type_var.get()
-                beta = float(self.beta_var.get())
-                normalize_str = self.normalize_var.get()
-                norm = normalize_str.lower() == "yes"
-                n_boot = int(self.boot_var.get())
-                con_level = float(self.con_level_var.get())
-                plot_ci_str = self.plot_CI_var.get()
-                plot_ci = plot_ci_str.lower() == "yes"
-                plot_hw_str = self.plot_hw_var.get()
-                plot_hw = plot_hw_str.lower() == "yes"
-                parameters = {}  # holds relevant parameter info for display
-                parameters["Plot Type"] = subplot_type
-                parameters["Normalize Optimality Gaps"] = normalize_str
-                if subplot_type == "quantile":
-                    parameters["Quantile Probability"] = beta
-                parameters["Number Bootstrap Samples"] = n_boot
-                parameters["Confidence Level"] = con_level
-                # create new plot for each problem
-                for i in range(n_problems):
-                    prob_list = []
-                    for solver_group in exp_sublist:
-                        prob_list.append(solver_group[i])
-                    returned_path = plot_progress_curves(
-                        experiments=prob_list,
-                        plot_type=subplot_type,
-                        beta=beta,
-                        normalize=norm,
-                        all_in_one=all_in,
-                        n_bootstraps=n_boot,
-                        conf_level=con_level,
-                        plot_conf_ints=plot_ci,
-                        print_max_hw=plot_hw,
-                        legend_loc=legend,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                    )
-                    # get plot info and call add plot
-                    file_path = [
-                        item for item in returned_path if item is not None
-                    ]  # remove None items from list
-                    n_plots = len(file_path)
-                    if all_in:
-                        solver_names = [solver_set_name]
-                    else:
-                        solver_names = []
-                        for i in range(n_plots):
-                            solver_names.append(prob_list[i].solver.name)
-                    problem_names = []
-                    for i in range(n_plots):
-                        problem_names.append(
-                            prob_list[i].problem.name
-                        )  # should all be the same
-
-                    self.add_plot(
-                        file_paths=file_path,
-                        solver_names=solver_names,
-                        problem_names=problem_names,
-                        parameters=parameters,
-                    )
-
-            if self.plot_type == "Solvability CDF":
-                solve_tol = float(self.solve_tol_var.get())
-                n_boot = int(self.boot_var.get())
-                con_level = float(self.con_level_var.get())
-                plot_ci_str = self.plot_CI_var.get()
-                plot_ci = plot_ci_str.lower() == "yes"
-                plot_hw_str = self.plot_hw_var.get()
-                plot_hw = plot_hw_str.lower() == "yes"
-
-                parameters = {}  # holds relevant parameter info for display
-                parameters["Solve Tolerance"] = solve_tol
-                parameters["Number Bootstrap Samples"] = n_boot
-                parameters["Confidence Level"] = con_level
-                # create a new plot for each problem
-                for i in range(n_problems):
-                    prob_list = []
-                    for solver_group in exp_sublist:
-                        prob_list.append(solver_group[i])
-                    returned_path = plot_solvability_cdfs(
-                        experiments=prob_list,
-                        solve_tol=solve_tol,
-                        all_in_one=all_in,
-                        n_bootstraps=n_boot,
-                        conf_level=con_level,
-                        plot_conf_ints=plot_ci,
-                        print_max_hw=plot_hw,
-                        legend_loc=legend,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                    )
-                    # get plot info and call add plot
-                    file_path = [
-                        item for item in returned_path if item is not None
-                    ]  # remove None items from list
-                    n_plots = len(file_path)
-                    if all_in:
-                        solver_names = [solver_set_name]
-                    else:
-                        solver_names = []
-                        for i in range(n_plots):
-                            solver_names.append(prob_list[i].solver.name)
-                    problem_names = []
-                    for i in range(n_plots):
-                        problem_names.append(
-                            prob_list[i].problem.name
-                        )  # should all be the same
-
-                    self.add_plot(
-                        file_paths=file_path,
-                        solver_names=solver_names,
-                        problem_names=problem_names,
-                        parameters=parameters,
-                    )
-
-            if self.plot_type == "Area Scatter Plot":
-                if (
-                    len(self.selected_solvers) > 7 and all_in
-                ):  # check if too many solvers selected
-                    messagebox.showerror(
-                        "Exceeds Solver Limit",
-                        "Area scatter plot can plot at most 7 solvers at one time. Please select fewer solvers and plot again.",
-                    )
+        if self.plot_type == "Progress Curve":
+            # get user input
+            subplot_type = self.subplot_type_var.get()
+            beta = float(self.beta_var.get())
+            normalize_str = self.normalize_var.get()
+            norm = normalize_str.lower() == "yes"
+            n_boot = int(self.boot_var.get())
+            con_level = float(self.con_level_var.get())
+            plot_ci_str = self.plot_CI_var.get()
+            plot_ci = plot_ci_str.lower() == "yes"
+            plot_hw_str = self.plot_hw_var.get()
+            plot_hw = plot_hw_str.lower() == "yes"
+            parameters = {}  # holds relevant parameter info for display
+            parameters["Plot Type"] = subplot_type
+            parameters["Normalize Optimality Gaps"] = normalize_str
+            if subplot_type == "quantile":
+                parameters["Quantile Probability"] = beta
+            parameters["Number Bootstrap Samples"] = n_boot
+            parameters["Confidence Level"] = con_level
+            # create new plot for each problem
+            for i in range(n_problems):
+                prob_list = []
+                for solver_group in exp_sublist:
+                    prob_list.append(solver_group[i])
+                returned_path = plot_progress_curves(
+                    experiments=prob_list,
+                    plot_type=subplot_type,
+                    beta=beta,
+                    normalize=norm,
+                    all_in_one=all_in,
+                    n_bootstraps=n_boot,
+                    conf_level=con_level,
+                    plot_conf_ints=plot_ci,
+                    print_max_hw=plot_hw,
+                    legend_loc=legend,
+                    save_as_pickle=True,
+                    ext=ext,
+                    solver_set_name=solver_set_name,
+                )
+                # get plot info and call add plot
+                file_path = [
+                    item for item in returned_path if item is not None
+                ]  # remove None items from list
+                n_plots = len(file_path)
+                if all_in:
+                    solver_names = [solver_set_name]
                 else:
-                    # get user input
-                    n_boot = int(self.boot_var.get())
-                    con_level = float(self.con_level_var.get())
-                    plot_ci_str = self.plot_CI_var.get()
-                    plot_ci = plot_ci_str.lower() == "yes"
-                    plot_hw_str = self.plot_hw_var.get()
-                    plot_hw = plot_hw_str.lower() == "yes"
-                    parameters = {}  # holds relevant parameter info for display
-                    parameters["Number Bootstrap Samples"] = n_boot
-                    parameters["Confidence Level"] = con_level
-                    # create plots
-                    returned_path = plot_area_scatterplots(
-                        experiments=exp_sublist,
-                        all_in_one=all_in,
-                        n_bootstraps=n_boot,
-                        conf_level=con_level,
-                        plot_conf_ints=plot_ci,
-                        print_max_hw=plot_hw,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                        problem_set_name=problem_set_name,
-                    )
-                    # get plot info and call add plot
-                    file_path = [
-                        item for item in returned_path if item is not None
-                    ]  # remove None items from list
-                    n_plots = len(file_path)
-                    if all_in:
-                        solver_names = [solver_set_name]
-                        problem_names = [problem_set_name]
-                    else:
-                        solver_names = []
-                        problem_names = []
-                        for i in range(n_plots):
-                            solver_names.append(
-                                exp_sublist[i][0].solver.name
-                            )  # get name of first solver since should all be the same
-                            problem_names.append(problem_set_name)
-
-                    self.add_plot(
-                        file_paths=file_path,
-                        solver_names=solver_names,
-                        problem_names=problem_names,
-                        parameters=parameters,
-                    )
-
-            if self.plot_type == "Terminal Progress":
-                # get user input
-                subplot_type = self.subplot_type_var.get()
-                normalize_str = self.normalize_var.get()
-                norm = normalize_str.lower() == "yes"
-                parameters = {}  # holds relevant parameter info for display
-                parameters["Plot Type"] = subplot_type
-                parameters["Normalize Optimality Gaps"] = normalize_str
-                # create a new plot for each problem
-                for i in range(n_problems):
-                    prob_list = []
-                    for solver_group in exp_sublist:
-                        prob_list.append(solver_group[i])
-                    returned_path = plot_terminal_progress(
-                        experiments=prob_list,
-                        plot_type=subplot_type,
-                        all_in_one=all_in,
-                        normalize=norm,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                    )
-                    # get plot info and call add plot
-                    file_path = [
-                        item for item in returned_path if item is not None
-                    ]  # remove None items from list
-                    n_plots = len(file_path)
-                    if all_in:
-                        solver_names = [solver_set_name]
-                    else:
-                        solver_names = []
-                        for i in range(n_plots):
-                            solver_names.append(prob_list[i].solver.name)
-                    problem_names = []
+                    solver_names = []
                     for i in range(n_plots):
-                        problem_names.append(
-                            prob_list[i].problem.name
-                        )  # should all be the same
+                        solver_names.append(prob_list[i].solver.name)
+                problem_names = []
+                for i in range(n_plots):
+                    problem_names.append(
+                        prob_list[i].problem.name
+                    )  # should all be the same
 
-                    self.add_plot(
-                        file_paths=file_path,
-                        solver_names=solver_names,
-                        problem_names=problem_names,
-                        parameters=parameters,
-                    )
+                self.add_plot(
+                    file_paths=file_path,
+                    solver_names=solver_names,
+                    problem_names=problem_names,
+                    parameters=parameters,
+                )
 
-            if self.plot_type == "Terminal Scatter Plot":
-                returned_path = plot_terminal_scatterplots(
+        if self.plot_type == "Solvability CDF":
+            solve_tol = float(self.solve_tol_var.get())
+            n_boot = int(self.boot_var.get())
+            con_level = float(self.con_level_var.get())
+            plot_ci_str = self.plot_CI_var.get()
+            plot_ci = plot_ci_str.lower() == "yes"
+            plot_hw_str = self.plot_hw_var.get()
+            plot_hw = plot_hw_str.lower() == "yes"
+
+            parameters = {}  # holds relevant parameter info for display
+            parameters["Solve Tolerance"] = solve_tol
+            parameters["Number Bootstrap Samples"] = n_boot
+            parameters["Confidence Level"] = con_level
+            # create a new plot for each problem
+            for i in range(n_problems):
+                prob_list = []
+                for solver_group in exp_sublist:
+                    prob_list.append(solver_group[i])
+                returned_path = plot_solvability_cdfs(
+                    experiments=prob_list,
+                    solve_tol=solve_tol,
+                    all_in_one=all_in,
+                    n_bootstraps=n_boot,
+                    conf_level=con_level,
+                    plot_conf_ints=plot_ci,
+                    print_max_hw=plot_hw,
+                    legend_loc=legend,
+                    save_as_pickle=True,
+                    ext=ext,
+                    solver_set_name=solver_set_name,
+                )
+                # get plot info and call add plot
+                file_path = [
+                    item for item in returned_path if item is not None
+                ]  # remove None items from list
+                n_plots = len(file_path)
+                if all_in:
+                    solver_names = [solver_set_name]
+                else:
+                    solver_names = []
+                    for i in range(n_plots):
+                        solver_names.append(prob_list[i].solver.name)
+                problem_names = []
+                for i in range(n_plots):
+                    problem_names.append(
+                        prob_list[i].problem.name
+                    )  # should all be the same
+
+                self.add_plot(
+                    file_paths=file_path,
+                    solver_names=solver_names,
+                    problem_names=problem_names,
+                    parameters=parameters,
+                )
+
+        if self.plot_type == "Area Scatter Plot":
+            if (
+                len(self.selected_solvers) > 7 and all_in
+            ):  # check if too many solvers selected
+                messagebox.showerror(
+                    "Exceeds Solver Limit",
+                    "Area scatter plot can plot at most 7 solvers at one time. Please select fewer solvers and plot again.",
+                )
+            else:
+                # get user input
+                n_boot = int(self.boot_var.get())
+                con_level = float(self.con_level_var.get())
+                plot_ci_str = self.plot_CI_var.get()
+                plot_ci = plot_ci_str.lower() == "yes"
+                plot_hw_str = self.plot_hw_var.get()
+                plot_hw = plot_hw_str.lower() == "yes"
+                parameters = {}  # holds relevant parameter info for display
+                parameters["Number Bootstrap Samples"] = n_boot
+                parameters["Confidence Level"] = con_level
+                # create plots
+                returned_path = plot_area_scatterplots(
                     experiments=exp_sublist,
                     all_in_one=all_in,
-                    legend_loc=legend,
+                    n_bootstraps=n_boot,
+                    conf_level=con_level,
+                    plot_conf_ints=plot_ci,
+                    print_max_hw=plot_hw,
                     save_as_pickle=True,
                     ext=ext,
                     solver_set_name=solver_set_name,
@@ -4426,97 +4340,44 @@ class NewExperimentWindow(Toplevel):
                     parameters=parameters,
                 )
 
-            if self.plot_type == "Solvability Profile":
-                # Select the correct subplot type
-                subplot_types = {
-                    "CDF Solvability": "cdf_solvability",
-                    "Quantile Solvability": "quantile_solvability",
-                    "Difference of CDF Solvablility": "diff_cdf_solvability",
-                    "Difference of Quantile Solvability": "diff_quantile_solvability",
-                }
-                subplot_type = self.subplot_type_var.get()
-                if subplot_type not in subplot_types:
-                    messagebox.showerror(
-                        "Error",
-                        "Invalid plot type selected. Please select a valid plot type.",
-                    )
-                    return
-                plot_input = subplot_types[subplot_type]
-
-                # Get user input
-                beta = float(self.beta_var.get())
-                n_boot = int(self.boot_var.get())
-                con_level = float(self.con_level_var.get())
-                plot_ci_str = self.plot_CI_var.get()
-                plot_ci = plot_ci_str.lower() == "yes"
-                plot_hw_str = self.plot_hw_var.get()
-                plot_hw = plot_hw_str.lower() == "yes"
-                solve_tol = float(self.solve_tol_var.get())
-                parameters = {}  # holds relevant parameter info for display
-                parameters["Plot Type"] = subplot_type
-                parameters["Solve Tolerance"] = solve_tol
-                parameters["Number Bootstrap Samples"] = n_boot
-                parameters["Confidence Level"] = con_level
-                parameters["Solve Tolerance"] = solve_tol
-                if subplot_type in [
-                    "Quantile Solvability",
-                    "Difference of Quantile Solvability",
-                ]:
-                    parameters["Quantile Probability"] = beta
-
-                if subplot_type in ["CDF Solvability", "Quantile Solvability"]:
-                    returned_path = plot_solvability_profiles(
-                        experiments=exp_sublist,
-                        plot_type=plot_input,
-                        all_in_one=all_in,
-                        n_bootstraps=n_boot,
-                        conf_level=con_level,
-                        plot_conf_ints=plot_ci,
-                        print_max_hw=plot_hw,
-                        legend_loc=legend,
-                        beta=beta,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                        problem_set_name=problem_set_name,
-                    )
-
-                else:  # performing a difference solvability profile
-                    ref_solver = self.ref_solver_var.get()
-                    parameters["Reference Solver"] = ref_solver
-                    returned_path = plot_solvability_profiles(
-                        experiments=exp_sublist,
-                        plot_type=plot_input,
-                        all_in_one=all_in,
-                        n_bootstraps=n_boot,
-                        conf_level=con_level,
-                        plot_conf_ints=plot_ci,
-                        print_max_hw=plot_hw,
-                        legend_loc=legend,
-                        beta=beta,
-                        ref_solver=ref_solver,
-                        save_as_pickle=True,
-                        ext=ext,
-                        solver_set_name=solver_set_name,
-                        problem_set_name=problem_set_name,
-                    )
+        if self.plot_type == "Terminal Progress":
+            # get user input
+            subplot_type = self.subplot_type_var.get()
+            normalize_str = self.normalize_var.get()
+            norm = normalize_str.lower() == "yes"
+            parameters = {}  # holds relevant parameter info for display
+            parameters["Plot Type"] = subplot_type
+            parameters["Normalize Optimality Gaps"] = normalize_str
+            # create a new plot for each problem
+            for i in range(n_problems):
+                prob_list = []
+                for solver_group in exp_sublist:
+                    prob_list.append(solver_group[i])
+                returned_path = plot_terminal_progress(
+                    experiments=prob_list,
+                    plot_type=subplot_type,
+                    all_in_one=all_in,
+                    normalize=norm,
+                    save_as_pickle=True,
+                    ext=ext,
+                    solver_set_name=solver_set_name,
+                )
                 # get plot info and call add plot
                 file_path = [
                     item for item in returned_path if item is not None
                 ]  # remove None items from list
                 n_plots = len(file_path)
-
                 if all_in:
                     solver_names = [solver_set_name]
-                    problem_names = [problem_set_name]
                 else:
                     solver_names = []
-                    problem_names = []
                     for i in range(n_plots):
-                        solver_names.append(
-                            exp_sublist[i][0].solver.name
-                        )  # get name of first solver since should all be the same
-                        problem_names.append(problem_set_name)
+                        solver_names.append(prob_list[i].solver.name)
+                problem_names = []
+                for i in range(n_plots):
+                    problem_names.append(
+                        prob_list[i].problem.name
+                    )  # should all be the same
 
                 self.add_plot(
                     file_paths=file_path,
@@ -4524,6 +4385,139 @@ class NewExperimentWindow(Toplevel):
                     problem_names=problem_names,
                     parameters=parameters,
                 )
+
+        if self.plot_type == "Terminal Scatter Plot":
+            returned_path = plot_terminal_scatterplots(
+                experiments=exp_sublist,
+                all_in_one=all_in,
+                legend_loc=legend,
+                save_as_pickle=True,
+                ext=ext,
+                solver_set_name=solver_set_name,
+                problem_set_name=problem_set_name,
+            )
+            # get plot info and call add plot
+            file_path = [
+                item for item in returned_path if item is not None
+            ]  # remove None items from list
+            n_plots = len(file_path)
+            if all_in:
+                solver_names = [solver_set_name]
+                problem_names = [problem_set_name]
+            else:
+                solver_names = []
+                problem_names = []
+                for i in range(n_plots):
+                    solver_names.append(
+                        exp_sublist[i][0].solver.name
+                    )  # get name of first solver since should all be the same
+                    problem_names.append(problem_set_name)
+
+            self.add_plot(
+                file_paths=file_path,
+                solver_names=solver_names,
+                problem_names=problem_names,
+                parameters=parameters,
+            )
+
+        if self.plot_type == "Solvability Profile":
+            # Select the correct subplot type
+            subplot_types = {
+                "CDF Solvability": "cdf_solvability",
+                "Quantile Solvability": "quantile_solvability",
+                "Difference of CDF Solvablility": "diff_cdf_solvability",
+                "Difference of Quantile Solvability": "diff_quantile_solvability",
+            }
+            subplot_type = self.subplot_type_var.get()
+            if subplot_type not in subplot_types:
+                messagebox.showerror(
+                    "Error",
+                    "Invalid plot type selected. Please select a valid plot type.",
+                )
+                return
+            plot_input = subplot_types[subplot_type]
+
+            # Get user input
+            beta = float(self.beta_var.get())
+            n_boot = int(self.boot_var.get())
+            con_level = float(self.con_level_var.get())
+            plot_ci_str = self.plot_CI_var.get()
+            plot_ci = plot_ci_str.lower() == "yes"
+            plot_hw_str = self.plot_hw_var.get()
+            plot_hw = plot_hw_str.lower() == "yes"
+            solve_tol = float(self.solve_tol_var.get())
+            parameters = {}  # holds relevant parameter info for display
+            parameters["Plot Type"] = subplot_type
+            parameters["Solve Tolerance"] = solve_tol
+            parameters["Number Bootstrap Samples"] = n_boot
+            parameters["Confidence Level"] = con_level
+            parameters["Solve Tolerance"] = solve_tol
+            if subplot_type in [
+                "Quantile Solvability",
+                "Difference of Quantile Solvability",
+            ]:
+                parameters["Quantile Probability"] = beta
+
+            if subplot_type in ["CDF Solvability", "Quantile Solvability"]:
+                returned_path = plot_solvability_profiles(
+                    experiments=exp_sublist,
+                    plot_type=plot_input,
+                    all_in_one=all_in,
+                    n_bootstraps=n_boot,
+                    conf_level=con_level,
+                    plot_conf_ints=plot_ci,
+                    print_max_hw=plot_hw,
+                    legend_loc=legend,
+                    beta=beta,
+                    save_as_pickle=True,
+                    ext=ext,
+                    solver_set_name=solver_set_name,
+                    problem_set_name=problem_set_name,
+                )
+
+            else:  # performing a difference solvability profile
+                ref_solver = self.ref_solver_var.get()
+                parameters["Reference Solver"] = ref_solver
+                returned_path = plot_solvability_profiles(
+                    experiments=exp_sublist,
+                    plot_type=plot_input,
+                    all_in_one=all_in,
+                    n_bootstraps=n_boot,
+                    conf_level=con_level,
+                    plot_conf_ints=plot_ci,
+                    print_max_hw=plot_hw,
+                    legend_loc=legend,
+                    beta=beta,
+                    ref_solver=ref_solver,
+                    save_as_pickle=True,
+                    ext=ext,
+                    solver_set_name=solver_set_name,
+                    problem_set_name=problem_set_name,
+                )
+            # get plot info and call add plot
+            file_path = [
+                item for item in returned_path if item is not None
+            ]  # remove None items from list
+            n_plots = len(file_path)
+
+            if all_in:
+                solver_names = [solver_set_name]
+                problem_names = [problem_set_name]
+            else:
+                solver_names = []
+                problem_names = []
+                for i in range(n_plots):
+                    solver_names.append(
+                        exp_sublist[i][0].solver.name
+                    )  # get name of first solver since should all be the same
+                    problem_names.append(problem_set_name)
+
+            self.add_plot(
+                file_paths=file_path,
+                solver_names=solver_names,
+                problem_names=problem_names,
+                parameters=parameters,
+            )
 
     def add_plot(
         self,
