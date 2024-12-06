@@ -51,7 +51,7 @@ class NewExperimentWindow(Toplevel):
         )
 
         self.center_window(0.8)
-        self.minsize(1280, 720)
+        self.minsize(1600, 900)
 
         # TODO: integrate this into a class somewhere so it's not based in
         # the GUI
@@ -2895,7 +2895,9 @@ class NewExperimentWindow(Toplevel):
 
     def open_plotting_window(self) -> None:
         # create new window
-        self.plotting_window = Toplevel(self)
+        self.plotting_window = Toplevel(self.root)
+        self.plotting_window.center_window(0.8)
+
         self.plotting_window.title(
             "Simopt Graphical User Interface - Experiment Plots"
         )
