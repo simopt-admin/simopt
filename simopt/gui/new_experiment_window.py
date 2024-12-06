@@ -3029,7 +3029,7 @@ class NewExperimentWindow(Toplevel):
             "Treeview", foreground="black", font=nametofont("TkDefaultFont")
         )
 
-        self.solver_tree.bind("<<TreeviewSelect>>", self.get_selected_solvers)
+        self.solver_tree.bind("<<TreeviewSelect>>", self.select_solver)
 
         # Create a horizontal scrollbar
         solver_xscrollbar = ttk.Scrollbar(
@@ -3046,7 +3046,7 @@ class NewExperimentWindow(Toplevel):
             master=self.plot_selection_frame,
             variable=self.all_solvers_var,
             text="Plot all solvers from this experiment",
-            command=self.get_selected_solvers,
+            command=self.toggle_all_solvers_selected,
         )
         self.all_solvers_check.grid(row=4, column=0, columnspan=2)
 
@@ -3074,7 +3074,7 @@ class NewExperimentWindow(Toplevel):
         self.style.configure(
             "Treeview", foreground="black", font=nametofont("TkDefaultFont")
         )
-        self.problem_tree.bind("<<TreeviewSelect>>", self.get_selected_problems)
+        self.problem_tree.bind("<<TreeviewSelect>>", self.set_selected_problems)
 
         # Create a horizontal scrollbar
         problem_xscrollbar = ttk.Scrollbar(
@@ -3091,7 +3091,7 @@ class NewExperimentWindow(Toplevel):
             master=self.plot_selection_frame,
             variable=self.all_problems_var,
             text="Plot all problems from this experiment",
-            command=self.get_selected_problems,
+            command=self.toggle_all_problems_selected,
         )
         self.all_problems_check.grid(row=8, column=0, columnspan=2)
 
@@ -4039,8 +4039,15 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.configure(state="disabled")
             self.plot_hw_menu.configure(state="disabled")
 
-    def get_selected_solvers(
-        self, event: tk.Event
+    def toggle_all_solvers_selected(self) -> None:
+        all_solvers = self.all_solvers_var.get()
+        if all_solvers:
+            self.solver_tree.selection_set(self.solver_tree.get_children())
+        else:
+            self.solver_tree.selection_remove(self.solver_tree.get_children())
+
+    def select_solver(
+        self, _: tk.Event
     ) -> None:  # upddates solver list and options menu for reference solver when relevant
         all_solvers = self.all_solvers_var.get()
         if all_solvers:
@@ -4058,7 +4065,14 @@ class NewExperimentWindow(Toplevel):
         if self.ref_menu_created:  # if reference solver menu exists update menu
             self.update_ref_solver()
 
-    def get_selected_problems(self, event: tk.Event) -> None:
+    def toggle_all_problems_selected(self) -> None:
+        all_problems = self.all_problems_var.get()
+        if all_problems:
+            self.problem_tree.selection_set(self.problem_tree.get_children())
+        else:
+            self.problem_tree.selection_remove(self.problem_tree.get_children())
+
+    def set_selected_problems(self, event: tk.Event) -> None:
         all_problems = self.all_problems_var.get()
         if all_problems:
             self.selected_problems = self.plot_experiment.problems
@@ -4582,12 +4596,12 @@ class NewExperimentWindow(Toplevel):
             ]  # access previously created experiment tab
             row = tab_frame.grid_size()[1]
 
+        parameter_list = []
         if parameters is not None:
-            display_str = []
             for parameter in parameters:
                 text = f"{parameter} = {parameters[parameter]}"
-                display_str.append(text)
-        para_display = " , ".join(display_str)
+                parameter_list.append(text)
+        para_display = "\n".join(parameter_list)
 
         # add plots to display
         for index, file_path in enumerate(file_paths):
