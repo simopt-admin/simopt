@@ -1770,13 +1770,11 @@ class NewExperimentWindow(Toplevel):
             if base_object == "Problem"
             else self.add_solver_design_to_experiment
         )
-        self.tk_buttons["gen_design.add"] = ttk.Button(
-            master=self.tk_frames["gen_design.display"],
+        self.tk_buttons["gen_design.add"].config(
             text=f"Add this {base_object} design to experiment",
             command=command,
         )
-        # Design tree is in row 0, horizontal scrollbar is in row 1
-        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.add"].grid()
 
     def create_solver_design(self) -> None:
         self.__create_design_core("Solver")
@@ -1807,6 +1805,8 @@ class NewExperimentWindow(Toplevel):
         if master_frame is None:
             master_frame = self.tk_frames["gen_design.display"]
 
+        # Reset the master frame
+        self._destroy_widget_children(master_frame)
         # Unhide the generated design frame
         self._show_gen_design()
 
@@ -1861,6 +1861,22 @@ class NewExperimentWindow(Toplevel):
         )
         self.design_tree_scroll_x.grid(row=1, column=0, sticky="ew")
         self.design_tree.configure(xscrollcommand=self.design_tree_scroll_x.set)
+
+        # Add the 'add' button to the frame but hide it for now
+        # Anything that wants to show it needs to add a command and text
+        self.tk_buttons["gen_design.add"] = ttk.Button(
+            master=self.tk_frames["gen_design.display"],
+        )
+        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.add"].grid_remove()
+        # Button to close the design tree (without adding)
+        self.tk_buttons["gen_design.close"] = ttk.Button(
+            master=self.tk_frames["gen_design.display"],
+            text="Close design tree",
+            command=self._hide_gen_design,
+        )
+        self.tk_buttons["gen_design.close"].grid(row=3, column=0, sticky="nsew")
+
 
     def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
@@ -1948,10 +1964,6 @@ class NewExperimentWindow(Toplevel):
         self.display_design_tree(
             design_table=dataframe_string,
         )
-        # If the add button exists, destroy it
-        if "gen_design.add" in self.tk_buttons:
-            self.tk_buttons["gen_design.add"].destroy()
-            del self.tk_buttons["gen_design.add"]
 
     def view_problem_design(self, problem_save_name: str) -> None:
         problem = self.root_problem_dict[problem_save_name]
