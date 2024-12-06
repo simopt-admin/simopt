@@ -2883,7 +2883,7 @@ def plot_progress_curves(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -2969,8 +2969,8 @@ def plot_progress_curves(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -2994,6 +2994,9 @@ def plot_progress_curves(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+    
+    if legend_loc is None:
+        legend_loc = "best"
 
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
@@ -3196,7 +3199,7 @@ def plot_solvability_cdfs(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3268,8 +3271,8 @@ def plot_solvability_cdfs(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -3290,6 +3293,9 @@ def plot_solvability_cdfs(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+    
+    if legend_loc is None:
+        legend_loc = "best"
 
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
@@ -3762,7 +3768,7 @@ def plot_solvability_profiles(
     beta: float = 0.5,
     ref_solver: str | None = None,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3874,7 +3880,7 @@ def plot_solvability_profiles(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -3902,6 +3908,9 @@ def plot_solvability_profiles(
     if not 0 < beta < 1:
         error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
@@ -4586,7 +4595,7 @@ def plot_terminal_scatterplots(
     experiments: list[list[ProblemSolver]],
     all_in_one: float = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -4652,7 +4661,7 @@ def plot_terminal_scatterplots(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -4667,6 +4676,9 @@ def plot_terminal_scatterplots(
     if not isinstance(problem_set_name, str):
         error_msg = "Problem set name must be a string."
         raise TypeError(error_msg)
+    
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
