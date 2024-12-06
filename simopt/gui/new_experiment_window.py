@@ -1775,7 +1775,8 @@ class NewExperimentWindow(Toplevel):
             text=f"Add this {base_object} design to experiment",
             command=command,
         )
-        self.tk_buttons["gen_design.add"].grid(row=1, column=0, sticky="nsew")
+        # Design tree is in row 0, horizontal scrollbar is in row 1
+        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew")
 
     def create_solver_design(self) -> None:
         self.__create_design_core("Solver")
@@ -1851,6 +1852,15 @@ class NewExperimentWindow(Toplevel):
             header_font_size = nametofont("TkHeadingFont").cget("size")
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
+        
+        # Add a horizontal scrollbar
+        self.design_tree_scroll_x = ttk.Scrollbar(
+            master=master_frame,
+            orient="horizontal",
+            command=self.design_tree.xview,
+        )
+        self.design_tree_scroll_x.grid(row=1, column=0, sticky="ew")
+        self.design_tree.configure(xscrollcommand=self.design_tree_scroll_x.set)
 
     def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
