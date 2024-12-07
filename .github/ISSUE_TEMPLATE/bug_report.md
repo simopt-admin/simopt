@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen
 
 ### Environment
 
-Please provide some details about your enviroment to help us replicate the bug:
+Please provide some details about your environment to help us replicate the bug:
 
 - Operating System: (e.g. Windows 11, macOS 15, Ubuntu 24.04)
 - Python Version: (e.g. 3.11.9)
