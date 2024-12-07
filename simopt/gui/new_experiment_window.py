@@ -48,11 +48,12 @@ class NewExperimentWindow(Toplevel):
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
         super().__init__(
-            root, title="SimOpt GUI - New Experiment", exit_on_close=True
+            root,
+            title="Simulation Optimization Experiments",
+            exit_on_close=True,
         )
 
         self.center_window(0.8)
-        self.minsize(1600, 900)
 
         # TODO: integrate this into a class somewhere so it's not based in
         # the GUI
@@ -223,16 +224,27 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["exps.list_canvas.list"],
             anchor="nw",
         )
-        self.tk_scrollbars["exps.list_canvas"] = ttk.Scrollbar(
+        self.tk_scrollbars["exps.list_canvas_vert"] = ttk.Scrollbar(
             self.tk_frames["exps.list_canvas"],
             orient="vertical",
             command=self.tk_canvases["exps.list_canvas"].yview,
         )
         self.tk_canvases["exps.list_canvas"].config(
-            yscrollcommand=self.tk_scrollbars["exps.list_canvas"].set
+            yscrollcommand=self.tk_scrollbars["exps.list_canvas_vert"].set
         )
-        self.tk_scrollbars["exps.list_canvas"].grid(
+        self.tk_scrollbars["exps.list_canvas_vert"].grid(
             row=0, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["exps.list_canvas_horiz"] = ttk.Scrollbar(
+            self.tk_frames["exps.list_canvas"],
+            orient="horizontal",
+            command=self.tk_canvases["exps.list_canvas"].xview,
+        )
+        self.tk_canvases["exps.list_canvas"].config(
+            xscrollcommand=self.tk_scrollbars["exps.list_canvas_horiz"].set
+        )
+        self.tk_scrollbars["exps.list_canvas_horiz"].grid(
+            row=1, column=0, sticky="ew"
         )
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
@@ -253,7 +265,7 @@ class NewExperimentWindow(Toplevel):
             command=self.open_plotting_window,
         )
         self.tk_buttons["exps.fields.open_plot_win"].grid(
-            row=1, column=0, sticky="ew"
+            row=2, column=0, sticky="ew"
         )
         self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
             self.tk_frames["exps.fields"],
@@ -261,7 +273,7 @@ class NewExperimentWindow(Toplevel):
             command=self.load_experiment,
         )
         self.tk_buttons["exps.fields.load_exp"].grid(
-            row=2, column=0, sticky="ew"
+            row=3, column=0, sticky="ew"
         )
 
     def _initialize_current_experiment_frame(self) -> None:
@@ -327,16 +339,31 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["curr_exp.lists.problems"],
             anchor="nw",
         )
-        self.tk_scrollbars["curr_exp.lists.problems"] = ttk.Scrollbar(
+        self.tk_scrollbars["curr_exp.lists.problems_vert"] = ttk.Scrollbar(
             self.tk_frames["curr_exp.lists"],
             orient="vertical",
             command=self.tk_canvases["curr_exp.lists.problems"].yview,
         )
         self.tk_canvases["curr_exp.lists.problems"].config(
-            yscrollcommand=self.tk_scrollbars["curr_exp.lists.problems"].set
+            yscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.problems_vert"
+            ].set
         )
-        self.tk_scrollbars["curr_exp.lists.problems"].grid(
+        self.tk_scrollbars["curr_exp.lists.problems_vert"].grid(
             row=1, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["curr_exp.lists.problems_horiz"] = ttk.Scrollbar(
+            self.tk_frames["curr_exp.lists"],
+            orient="horizontal",
+            command=self.tk_canvases["curr_exp.lists.problems"].xview,
+        )
+        self.tk_canvases["curr_exp.lists.problems"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.problems_horiz"
+            ].set
+        )
+        self.tk_scrollbars["curr_exp.lists.problems_horiz"].grid(
+            row=2, column=0, sticky="ew"
         )
         self.__update_problem_list_scroll_region()
 
@@ -354,16 +381,29 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["curr_exp.lists.solvers"],
             anchor="nw",
         )
-        self.tk_scrollbars["curr_exp.lists.solvers"] = ttk.Scrollbar(
+        self.tk_scrollbars["curr_exp.lists.solvers_vert"] = ttk.Scrollbar(
             self.tk_frames["curr_exp.lists"],
             orient="vertical",
             command=self.tk_canvases["curr_exp.lists.solvers"].yview,
         )
         self.tk_canvases["curr_exp.lists.solvers"].config(
-            yscrollcommand=self.tk_scrollbars["curr_exp.lists.solvers"].set
+            yscrollcommand=self.tk_scrollbars["curr_exp.lists.solvers_vert"].set
         )
-        self.tk_scrollbars["curr_exp.lists.solvers"].grid(
+        self.tk_scrollbars["curr_exp.lists.solvers_vert"].grid(
             row=1, column=4, sticky="ns"
+        )
+        self.tk_scrollbars["curr_exp.lists.solvers_horiz"] = ttk.Scrollbar(
+            self.tk_frames["curr_exp.lists"],
+            orient="horizontal",
+            command=self.tk_canvases["curr_exp.lists.solvers"].xview,
+        )
+        self.tk_canvases["curr_exp.lists.solvers"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.solvers_horiz"
+            ].set
+        )
+        self.tk_scrollbars["curr_exp.lists.solvers_horiz"].grid(
+            row=2, column=3, sticky="ew"
         )
         self.__update_solver_list_scroll_region()
 
@@ -436,13 +476,47 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["ntbk"].grid_propagate(False)
         self.tk_frames["ntbk"].grid_columnconfigure(0, weight=1)
         self.tk_frames["ntbk"].grid_rowconfigure(1, weight=1)
-        self.tk_labels["ntbk.header"] = ttk.Label(
-            self.tk_frames["ntbk"],
+        self.tk_frames["ntbk.header"] = ttk.Frame(self.tk_frames["ntbk"])
+        self.tk_frames["ntbk.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_frames["ntbk.header"].grid_columnconfigure(0, weight=1)
+        self.tk_labels["ntbk.header.title"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
             text="Create Problems/Solvers",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.tk_labels["ntbk.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_labels["ntbk.header.title"].grid(
+            row=0, column=0, rowspan=2, sticky="nsew"
+        )
+        self.tk_separators["ntbk.header.sep"] = ttk.Separator(
+            self.tk_frames["ntbk.header"], orient="vertical"
+        )
+        self.tk_separators["ntbk.header.sep"].grid(
+            row=0, column=1, rowspan=2, sticky="ns", padx=10
+        )
+        attr_desc_lines = [
+            "Objective: Single [S] | Multiple [M]",
+            "Constraint: Unconstrained [U] | Box [B] | Deterministic [D] | Stochastic [S]",
+            "Variable: Discrete [D] | Continuous [C] | Mixed [M]",
+            "Gradient Available: True [G] | False [N]",
+        ]
+        attribute_desc = "\n".join(attr_desc_lines)
+        self.tk_labels["ntbk.header.attr_desc"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
+            text=attribute_desc,
+            anchor="nw",
+        )
+        self.tk_labels["ntbk.header.attr_desc"].grid(
+            row=0, column=2, sticky="nsew"
+        )
+        self.tk_labels["ntbk.header.incomp_desc"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
+            text="incompatible problems/solvers will be unselectable",
+            anchor="center",
+        )
+        self.tk_labels["ntbk.header.incomp_desc"].grid(
+            row=1, column=2, sticky="nsew"
+        )
         self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(
             self.tk_frames["ntbk"]
         )
@@ -482,18 +556,42 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.problem.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
-        self.tk_scrollbars["ntbk.ps_adding.problem.factors"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.problem"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.problem.factors"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.problem"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.problem.factors"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.problem.factors"
+                "ntbk.ps_adding.problem.factors_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.problem.factors"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_vert"].grid(
             row=1, column=2, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.problem"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.problem.factors"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.problem.factors_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_horiz"].grid(
+            row=2,
+            column=0,
+            sticky="ew",
+            columnspan=2,
         )
         self.__update_problem_factor_scroll_region()
 
@@ -532,18 +630,35 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
-        self.tk_scrollbars["ntbk.ps_adding.solver.factors"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.solver"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.solver"],
+                orient="vertical",
+                command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.solver.factors"
+                "ntbk.ps_adding.solver.factors_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.solver.factors"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_vert"].grid(
             row=1, column=2, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.solver"],
+                orient="horizontal",
+                command=self.tk_canvases["ntbk.ps_adding.solver.factors"].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.solver.factors_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_horiz"].grid(
+            row=2, column=0, sticky="ew", columnspan=2
         )
         self.__update_solver_factor_scroll_region()
 
@@ -966,18 +1081,39 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].grid(
             row=2, column=0, sticky="nsew"
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.quick_add"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.quick_add.problems"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.problems"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.quick_add.problems"
+                "ntbk.ps_adding.quick_add.problems_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_vert"].grid(
             row=2, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.problems"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.problems_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_horiz"].grid(
+            row=3, column=0, sticky="ew"
         )
 
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
@@ -986,18 +1122,39 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].grid(
             row=2, column=3, sticky="nsew"
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.quick_add"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.solvers"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.quick_add.solvers"
+                "ntbk.ps_adding.quick_add.solvers_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_vert"].grid(
             row=2, column=4, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.solvers"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.solvers_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_horiz"].grid(
+            row=3, column=3, sticky="ew"
         )
 
         # create master frame inside the canvas
@@ -1844,6 +2001,16 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
+        # Add a vertical scrollbar
+        # It's scrollable without one, but it isn't intuitive
+        self.design_tree_scroll_y = ttk.Scrollbar(
+            master=master_frame,
+            orient="vertical",
+            command=self.design_tree.yview,
+        )
+        self.design_tree_scroll_y.grid(row=0, column=1, sticky="ns")
+        self.design_tree.configure(yscrollcommand=self.design_tree_scroll_y.set)
+
         # Add a horizontal scrollbar
         self.design_tree_scroll_x = ttk.Scrollbar(
             master=master_frame,
@@ -1858,7 +2025,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["gen_design.add"] = ttk.Button(
             master=self.tk_frames["gen_design.display"],
         )
-        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.add"].grid(
+            row=2, column=0, sticky="nsew", columnspan=2
+        )
         self.tk_buttons["gen_design.add"].grid_remove()
         # Button to close the design tree (without adding)
         self.tk_buttons["gen_design.close"] = ttk.Button(
@@ -1866,7 +2035,9 @@ class NewExperimentWindow(Toplevel):
             text="Close design tree",
             command=self._hide_gen_design,
         )
-        self.tk_buttons["gen_design.close"].grid(row=3, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.close"].grid(
+            row=3, column=0, sticky="nsew", columnspan=2
+        )
 
     def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
@@ -2371,63 +2542,77 @@ class NewExperimentWindow(Toplevel):
         experiment.run(n_macroreps=n_macroreps)
 
     def open_defaults_window(self) -> None:
-        # create new winow
-        self.experiment_defaults_window = Toplevel(self.root)
-        self.experiment_defaults_window.title(
+        # Create a new window
+        default_window_title = (
             "Simopt Graphical User Interface - Experiment Options Defaults"
         )
-        self.center_window(0.8)
-        self.set_style()
+        self.experiment_defaults_window = Toplevel(
+            root=self.root, title=default_window_title
+        )
+        self.experiment_defaults_window.center_window(0.4)
 
-        self.main_frame = tk.Frame(master=self.experiment_defaults_window)
-        self.main_frame.grid(row=0, column=0)
+        # Configure the main frame
+        self.experiment_defaults_window.columnconfigure(0, weight=1)
+        self.main_frame = ttk.Frame(master=self.experiment_defaults_window)
+        self.main_frame.grid(row=0, column=0, sticky="nsew")
+        self.main_frame.columnconfigure(1, weight=1)
 
         # Title label
+        title_text = "Default experiment options for all experiments."
+        title_text += "\nAny changes made will affect all future and current un-run or processed experiments."
         self.title_label = tk.Label(
             master=self.main_frame,
-            text=" Default experiment options for all experiments. Any changes made will affect all future and current un-run or processed experiments.",
+            text=title_text,
             font=nametofont("TkHeadingFont"),
+            justify="center",
         )
-        self.title_label.grid(row=0, column=0, sticky="nsew")
+        self.title_label.grid(row=0, column=0, columnspan=2, sticky="ew")
+
+        # Divider
+        self.divider = ttk.Separator(
+            master=self.main_frame, orient="horizontal"
+        )
+        self.divider.grid(row=1, column=0, columnspan=2, padx=10, sticky="ew")
 
         # Macro replication number input
-        self.macro_rep_label = tk.Label(
+        self.macro_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of macro-replications of the solver run on the problem",
         )
-        self.macro_rep_label.grid(row=1, column=0)
         self.macro_rep_var = tk.IntVar()
         self.macro_rep_var.set(self.macro_default)
         self.macro_rep_entry = tk.Entry(
             master=self.main_frame,
             textvariable=self.macro_rep_var,
             width=10,
-            justify="right",
+            justify="center",
         )
-        self.macro_rep_entry.grid(row=1, column=1)
+        self.macro_rep_label.grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        self.macro_rep_entry.grid(
+            row=2, column=1, padx=10, pady=10, sticky="ew"
+        )
 
         # Post replication number input
-        self.post_rep_label = tk.Label(
+        self.post_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of post-replications",
         )
-        self.post_rep_label.grid(row=2, column=0)
         self.post_rep_var = tk.IntVar()
         self.post_rep_var.set(self.post_default)
         self.post_rep_entry = tk.Entry(
             master=self.main_frame,
             textvariable=self.post_rep_var,
             width=10,
-            justify="right",
+            justify="center",
         )
-        self.post_rep_entry.grid(row=2, column=1)
+        self.post_rep_label.grid(row=3, column=0, padx=10, pady=10, sticky="e")
+        self.post_rep_entry.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
 
         # CRN across budget
-        self.crn_budget_label = tk.Label(
+        self.crn_budget_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for solutions recommended at different times?",
         )
-        self.crn_budget_label.grid(row=3, column=0)
         self.crn_budget_var = tk.StringVar()
         crn_budget_str = "yes" if self.crn_budget_default else "no"
         self.crn_budget_opt = ttk.OptionMenu(
@@ -2437,14 +2622,16 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
-        self.crn_budget_opt.grid(row=3, column=1)
+        self.crn_budget_label.grid(
+            row=4, column=0, padx=10, pady=10, sticky="e"
+        )
+        self.crn_budget_opt.grid(row=4, column=1, padx=10, pady=10, sticky="ew")
 
         # CRN across macroreps
-        self.crn_macro_label = tk.Label(
+        self.crn_macro_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for solutions recommended on different macro-replications?",
         )
-        self.crn_macro_label.grid(row=4, column=0)
         self.crn_macro_var = tk.StringVar()
         crn_macro_default_str = "yes" if self.crn_macro_default else "no"
         self.crn_macro_opt = ttk.OptionMenu(
@@ -2454,30 +2641,34 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
-        self.crn_macro_opt.grid(row=4, column=1)
+        self.crn_macro_label.grid(row=5, column=0, padx=10, pady=10, sticky="e")
+        self.crn_macro_opt.grid(row=5, column=1, padx=10, pady=10, sticky="ew")
 
         # Post reps at inital & optimal solution input
-        self.init_post_rep_label = tk.Label(
+        self.init_post_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of post-replications at initial and optimal solutions",
         )
-        self.init_post_rep_label.grid(row=5, column=0)
         self.init_post_rep_var = tk.IntVar()
         self.init_post_rep_var.set(self.init_default)
         self.init_post_rep_entry = tk.Entry(
             master=self.main_frame,
             textvariable=self.init_post_rep_var,
             width=10,
-            justify="right",
+            justify="center",
         )
-        self.init_post_rep_entry.grid(row=5, column=1)
+        self.init_post_rep_label.grid(
+            row=6, column=0, padx=10, pady=10, sticky="e"
+        )
+        self.init_post_rep_entry.grid(
+            row=6, column=1, padx=10, pady=10, sticky="ew"
+        )
 
         # CRN across init solutions
-        self.crn_init_label = tk.Label(
+        self.crn_init_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for initial and optimal solution?",
         )
-        self.crn_init_label.grid(row=6, column=0)
         self.crn_init_var = tk.StringVar()
         crn_init_default_str = "yes" if self.crn_init_default else "no"
         self.crn_init_opt = ttk.OptionMenu(
@@ -2487,16 +2678,31 @@ class NewExperimentWindow(Toplevel):
             "yes",
             "no",
         )
-        self.crn_init_opt.grid(row=6, column=1)
+        self.crn_init_label.grid(row=7, column=0, padx=10, pady=10, sticky="e")
+        self.crn_init_opt.grid(row=7, column=1, padx=10, pady=10, sticky="ew")
 
-        # solve tols
-        self.solve_tols_label = tk.Label(
-            master=self.main_frame,
-            text="Relative optimality gap(s) definining when a problem is solved; must be between 0 & 1, list in increasing order.",
+        # Solve tol frame
+        solve_tol_text = (
+            "Relative optimality gap(s) definining when a problem is solved"
         )
-        self.solve_tols_label.grid(row=7, column=1)
-        self.solve_tols_frame = tk.Frame(master=self.main_frame)
-        self.solve_tols_frame.grid(row=8, column=0, columnspan=2)
+        solve_tol_text += "\n(Must be between 0 & 1, list in increasing order)"
+        self.solve_tols_label = ttk.Label(
+            master=self.main_frame,
+            text=solve_tol_text,
+            justify="center",
+        )
+        self.solve_tols_frame = ttk.Frame(master=self.main_frame)
+        self.solve_tols_label.grid(
+            row=7, column=0, padx=10, pady=10, sticky="e"
+        )
+        self.solve_tols_frame.grid(
+            row=7, column=1, padx=5, pady=10, sticky="ew"
+        )
+        self.solve_tols_frame.columnconfigure(0, weight=1)
+        self.solve_tols_frame.columnconfigure(1, weight=1)
+        self.solve_tols_frame.columnconfigure(2, weight=1)
+        self.solve_tols_frame.columnconfigure(3, weight=1)
+        # Solve tol entries
         self.solve_tol_1_var = tk.StringVar()
         self.solve_tol_2_var = tk.StringVar()
         self.solve_tol_3_var = tk.StringVar()
@@ -2508,39 +2714,37 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_1_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
-            width=5,
-            justify="right",
+            justify="center",
         )
         self.solve_tol_2_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_2_var,
-            width=5,
-            justify="right",
+            justify="center",
         )
         self.solve_tol_3_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_3_var,
-            width=5,
-            justify="right",
+            justify="center",
         )
         self.solve_tol_4_entry = tk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_4_var,
-            width=5,
-            justify="right",
+            justify="center",
         )
-        self.solve_tol_1_entry.grid(row=0, column=0, padx=5)
-        self.solve_tol_2_entry.grid(row=0, column=1, padx=5)
-        self.solve_tol_3_entry.grid(row=0, column=2, padx=5)
-        self.solve_tol_4_entry.grid(row=0, column=3, padx=5)
+        self.solve_tol_1_entry.grid(row=0, column=0, padx=5, sticky="ew")
+        self.solve_tol_2_entry.grid(row=0, column=1, padx=5, sticky="ew")
+        self.solve_tol_3_entry.grid(row=0, column=2, padx=5, sticky="ew")
+        self.solve_tol_4_entry.grid(row=0, column=3, padx=5, sticky="ew")
 
         # set options as default for future experiments
-        self.set_as_default_button = tk.Button(
+        self.set_as_default_button = ttk.Button(
             master=self.main_frame,
             text="Set options as default for all experiments",
             command=self.change_experiment_defaults,
         )
-        self.set_as_default_button.grid(row=9, column=0)
+        self.set_as_default_button.grid(
+            row=8, column=0, columnspan=2, padx=10, pady=10, sticky="ew"
+        )
 
     def change_experiment_defaults(self) -> None:
         # Change default values to user input

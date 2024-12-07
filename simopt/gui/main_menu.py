@@ -25,7 +25,9 @@ class MainMenuWindow(Toplevel):
         super().__init__(
             root, title="SimOpt GUI - Main Menu", exit_on_close=True
         )
-        self.center_window(0.8)  # 80% scaling
+        # Set the size of the window to XX% of the screen size
+        size_percent = 50
+        self.center_window(size_percent/100.0)
 
         self.menu_frame = ttk.Frame(master=self)
         self.menu_frame.pack(anchor="center", expand=True)
@@ -63,7 +65,7 @@ class MainMenuWindow(Toplevel):
         # Button to open new experiment window
         self.new_experiment_button = ttk.Button(
             master=self.menu_frame,
-            text="Data Farm Problems and/or Solvers",
+            text="Simulation Optimization Experiments",
             command=self.open_new_experiment,
         )
         self.new_experiment_button.grid(
