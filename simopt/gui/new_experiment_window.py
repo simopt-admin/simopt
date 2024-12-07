@@ -48,11 +48,10 @@ class NewExperimentWindow(Toplevel):
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
         super().__init__(
-            root, title="SimOpt GUI - New Experiment", exit_on_close=True
+            root, title="Simulation Optimization Experiments", exit_on_close=True
         )
 
         self.center_window(0.8)
-        self.minsize(1600, 900)
 
         # TODO: integrate this into a class somewhere so it's not based in
         # the GUI
